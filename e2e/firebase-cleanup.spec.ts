@@ -49,6 +49,18 @@ test.describe('Firebase cleanup verification', () => {
     }
   });
 
+  test('nuxt.config.ts files should have Vercel image provider', () => {
+    const brands = ['ui-alquilatucarro', 'ui-alquilame', 'ui-alquicarros'];
+    for (const brand of brands) {
+      const configPath = resolve(root, 'packages', brand, 'nuxt.config.ts');
+      if (existsSync(configPath)) {
+        const content = readFileSync(configPath, 'utf-8');
+        expect(content).toContain("provider: 'vercel'");
+        expect(content).toContain("'@nuxt/image'");
+      }
+    }
+  });
+
   test('nuxt.config.ts files should have ISR route rules for city pages', () => {
     const brands = ['ui-alquilatucarro', 'ui-alquilame', 'ui-alquicarros'];
     const expectedCities = ['bogota', 'medellin', 'cali', 'barranquilla', 'cartagena'];

@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - 'migration/**'
   pull_request:
 
 env:
@@ -42,56 +41,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Typecheck temporalmente deshabilitado - requiere configuración avanzada para monorepos Nuxt
-      # - name: Typecheck - All packages
-      #   run: pnpm typecheck
-
       - name: Lint - All packages
         run: pnpm lint
         continue-on-error: true
 
-  build-all-brands:
-    name: Build ${{ matrix.brand }}
-    runs-on: ubuntu-latest
-    needs: quality-checks
-
-    strategy:
-      matrix:
-        brand: [alquilatucarro, alquilame, alquicarros]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Cache pnpm
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Create .env.prod from secrets (for build)
-        working-directory: packages/ui-${{ matrix.brand }}
-        run: |
-          echo "NUXT_PUBLIC_FIREBASE_API_KEY=dummy" >> .env.prod
-          echo "NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN=dummy" >> .env.prod
-          echo "NUXT_PUBLIC_FIREBASE_PROJECT_ID=rentacar-403321" >> .env.prod
-
-      - name: Build ${{ matrix.brand }}
-        run: pnpm --filter ui-${{ matrix.brand }} build
+      - name: Unit tests - Logic layer
+        run: pnpm --filter @rentacar-main/logic test

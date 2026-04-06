@@ -446,10 +446,10 @@ export default defineNuxtConfig({
 
   modules: ['@pinia/nuxt', '@nuxtjs/seo', '@nuxt/ui', '@nuxt/image', 'nuxt-llms', 'nuxt-vitalizer', '@nuxt/content'],
 
-  // Optimización de imágenes
+  // Optimización de imágenes — Vercel Image Optimization
   image: {
+    provider: 'vercel',
     quality: 80,
-    format: ['webp', 'avif'],
     screens: {
       xs: 320,
       sm: 640,
