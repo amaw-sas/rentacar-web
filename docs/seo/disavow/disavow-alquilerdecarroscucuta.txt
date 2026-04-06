@@ -1,0 +1,7 @@
+# Disavow para alquilerdecarroscucuta.com
+# Fecha: 2026-01-16
+# Razon: Backlinks toxicos pre-migracion a alquilatucarro.com
+# Sitio .gov.bi hackeado + dominio spam
+
+domain:mae.gov.bi
+domain:guadalajaramexicangrillpc.com

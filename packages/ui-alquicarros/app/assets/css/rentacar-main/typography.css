@@ -1,0 +1,255 @@
+/* ==========================================================================
+   Typography System - Alquicarros
+
+   Sistema de jerarquía tipográfica con soporte para fondos claros y oscuros.
+   Preparado para futura implementación de fuente personalizada.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Typography Scale Reference (Tailwind classes)
+   --------------------------------------------------------------------------
+
+   | Role              | Desktop      | Mobile       | Tailwind Class      |
+   |-------------------|--------------|--------------|---------------------|
+   | Hero Title        | 72px (5xl+)  | 36px (4xl)   | text-4xl lg:text-7xl|
+   | Section Title     | 30px (3xl)   | 24px (2xl)   | text-2xl md:text-3xl|
+   | Card Title        | 24px (2xl)   | 20px (xl)    | text-xl md:text-2xl |
+   | Subsection        | 20px (xl)    | 18px (lg)    | text-lg md:text-xl  |
+   | Body Large        | 18px (lg)    | 16px (base)  | text-base md:text-lg|
+   | Body Base         | 16px (base)  | 14px (sm)    | text-sm md:text-base|
+   | Body Small        | 14px (sm)    | 12px (xs)    | text-xs md:text-sm  |
+   | Caption           | 12px (xs)    | 12px (xs)    | text-xs             |
+
+   IMPORTANT: Use these sizes consistently across components.
+   - Accordion labels: text-base font-medium
+   - Accordion content: text-base
+   - Testimonial quotes: text-base (gray-700)
+   - User descriptions: text-sm (gray-600)
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   CSS Custom Properties (Variables)
+   -------------------------------------------------------------------------- */
+:root {
+    /* Text colors for light backgrounds */
+    --text-primary: #111827;      /* gray-900 - Headings, important text */
+    --text-secondary: #374151;    /* gray-700 - Body text */
+    --text-muted: #4b5563;        /* gray-600 - Captions, hints (≤#595959 for white bg contrast) */
+    --text-disabled: #4b5563;     /* gray-600 - Disabled states (WCAG AA compliant) */
+
+    /* Text colors for dark backgrounds */
+    --text-on-dark-primary: #ffffff;
+    --text-on-dark-secondary: #e5e7eb;   /* gray-200 */
+    --text-on-dark-muted: #9ca3af;       /* gray-400 */
+
+    /* Brand colors */
+    --text-brand: #dc2626;        /* red-600 */
+    --text-brand-dark: #b91c1c;   /* red-700 */
+
+    /* Font weights (for future custom font) */
+    --font-light: 300;
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --font-extrabold: 800;
+}
+
+/* --------------------------------------------------------------------------
+   Context Classes - Apply to parent containers
+   -------------------------------------------------------------------------- */
+
+/* Light background context (default) */
+.context-light {
+    --ctx-text-primary: var(--text-primary);
+    --ctx-text-secondary: var(--text-secondary);
+    --ctx-text-muted: var(--text-muted);
+}
+
+/* Dark background context */
+.context-dark {
+    --ctx-text-primary: var(--text-on-dark-primary);
+    --ctx-text-secondary: var(--text-on-dark-secondary);
+    --ctx-text-muted: var(--text-on-dark-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Heading Classes
+   -------------------------------------------------------------------------- */
+
+/* Hero/Display headings - largest text for hero sections */
+.heading-hero {
+    @apply text-4xl md:text-5xl lg:text-7xl font-extrabold leading-tight tracking-tight;
+    color: var(--ctx-text-primary, var(--text-primary));
+}
+
+/* Page title - main page headings */
+.heading-page {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold leading-tight;
+    color: var(--ctx-text-primary, var(--text-primary));
+}
+
+/* Section title - section headings */
+.heading-section {
+    @apply text-2xl md:text-3xl font-bold leading-snug;
+    color: var(--ctx-text-primary, var(--text-primary));
+}
+
+/* Card title - card and component headings */
+.heading-card {
+    @apply text-xl md:text-2xl font-semibold leading-snug;
+    color: var(--ctx-text-primary, var(--text-primary));
+}
+
+/* Subsection title - smaller headings */
+.heading-sub {
+    @apply text-lg md:text-xl font-semibold;
+    color: var(--ctx-text-primary, var(--text-primary));
+}
+
+/* Label/caption heading */
+.heading-label {
+    @apply text-sm font-medium uppercase tracking-wide;
+    color: var(--ctx-text-muted, var(--text-muted));
+}
+
+/* --------------------------------------------------------------------------
+   Body Text Classes
+   -------------------------------------------------------------------------- */
+
+/* Large body - intro paragraphs, important descriptions */
+.body-lg {
+    @apply text-lg md:text-xl leading-relaxed;
+    color: var(--ctx-text-secondary, var(--text-secondary));
+}
+
+/* Default body - standard paragraphs */
+.body-base {
+    @apply text-base leading-relaxed;
+    color: var(--ctx-text-secondary, var(--text-secondary));
+}
+
+/* Small body - secondary content */
+.body-sm {
+    @apply text-sm leading-normal;
+    color: var(--ctx-text-secondary, var(--text-secondary));
+}
+
+/* Extra small - captions, fine print */
+.body-xs {
+    @apply text-xs leading-normal;
+    color: var(--ctx-text-muted, var(--text-muted));
+}
+
+/* --------------------------------------------------------------------------
+   Text Color Utilities
+   -------------------------------------------------------------------------- */
+
+/* Primary text - highest emphasis */
+.text-emphasis-high {
+    color: var(--ctx-text-primary, var(--text-primary)) !important;
+}
+
+/* Secondary text - medium emphasis */
+.text-emphasis-medium {
+    color: var(--ctx-text-secondary, var(--text-secondary)) !important;
+}
+
+/* Muted text - low emphasis */
+.text-emphasis-low {
+    color: var(--ctx-text-muted, var(--text-muted)) !important;
+}
+
+/* Brand text */
+.text-brand {
+    color: var(--text-brand) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Interactive Text States
+   -------------------------------------------------------------------------- */
+
+/* Links on light backgrounds */
+.link-light {
+    @apply text-blue-600 hover:text-blue-800 underline-offset-2;
+    @apply hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+/* Links on dark backgrounds */
+.link-dark {
+    @apply text-blue-300 hover:text-blue-100 underline-offset-2;
+    @apply hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-gray-900;
+}
+
+/* --------------------------------------------------------------------------
+   Form Text
+   -------------------------------------------------------------------------- */
+
+/* Form labels */
+.form-label {
+    @apply text-sm font-medium;
+    color: var(--text-secondary);
+}
+
+/* Form helper text */
+.form-helper {
+    @apply text-xs;
+    color: var(--text-muted);
+}
+
+/* Form error text */
+.form-error {
+    @apply text-xs font-medium text-red-600;
+}
+
+/* --------------------------------------------------------------------------
+   Price Typography
+   -------------------------------------------------------------------------- */
+
+/* Large price display */
+.price-lg {
+    @apply text-2xl md:text-3xl font-bold tabular-nums;
+    color: var(--ctx-text-primary, var(--text-primary));
+}
+
+/* Medium price */
+.price-md {
+    @apply text-xl font-bold tabular-nums;
+    color: var(--ctx-text-primary, var(--text-primary));
+}
+
+/* Small/original price (strikethrough) */
+.price-original {
+    @apply text-sm line-through tabular-nums;
+    color: var(--text-muted);
+}
+
+/* Discount badge text */
+.price-discount {
+    @apply text-xs font-semibold;
+    color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Semantic Text Classes (for accessibility)
+   -------------------------------------------------------------------------- */
+
+/* Visually hidden but accessible to screen readers */
+.sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+    clip: rect(0, 0, 0, 0);
+}
+
+/* --------------------------------------------------------------------------
+   Dark Mode Support (future)
+   -------------------------------------------------------------------------- */
+
+/*
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-primary: #f9fafb;
+        --text-secondary: #e5e7eb;
+        --text-muted: #9ca3af;
+    }
+}
+*/

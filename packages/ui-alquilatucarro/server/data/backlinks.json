@@ -1,0 +1,75 @@
+{
+  "summary": {
+    "totalFollow": 3514,
+    "totalNofollow": 3480,
+    "gained60d": 4,
+    "lost60d": 16,
+    "netBalance60d": -12
+  },
+  "topBacklinks": [
+    {
+      "url": "https://social.msdn.microsoft.com/Profile/Unihonas",
+      "targetUrl": "/",
+      "anchorText": "alquilatucarro",
+      "pa": 57,
+      "follow": true,
+      "dateDiscovered": "2025-01-01",
+      "status": "active"
+    },
+    {
+      "url": "https://tinyurl.com/nqrwkv15",
+      "targetUrl": "/",
+      "anchorText": "alquilatucarro.com",
+      "pa": 54,
+      "follow": true,
+      "dateDiscovered": "2025-01-01",
+      "status": "active"
+    },
+    {
+      "url": "https://maps.google.com/",
+      "targetUrl": "/",
+      "anchorText": "alquilatucarro",
+      "pa": 51,
+      "follow": true,
+      "dateDiscovered": "2025-01-01",
+      "status": "active"
+    }
+  ],
+  "anchorTextDistribution": [
+    { "text": "http://alquilatucarro.com", "count": 124 },
+    { "text": "https://alquilatucarro.com", "count": 117 }
+  ],
+  "spamScoreDistribution": {
+    "low_1_10": 283,
+    "medium_11_30": 81,
+    "high_31_70": 37,
+    "spam_71_100": 13
+  },
+  "errors404WithBacklinks": [
+    {
+      "url": "/images/carros2.png",
+      "linkingDomains": 19,
+      "pa": 30,
+      "status": "redirected",
+      "redirectTo": "/",
+      "redirectedAt": "2026-01-19"
+    },
+    {
+      "url": "/imacion/ani2a.png",
+      "linkingDomains": 3,
+      "pa": 25,
+      "status": "redirected",
+      "redirectTo": "/",
+      "redirectedAt": "2026-01-19"
+    },
+    {
+      "url": "/-coche-en-espana/",
+      "linkingDomains": 1,
+      "pa": 23,
+      "status": "redirected",
+      "redirectTo": "/",
+      "redirectedAt": "2026-01-19"
+    }
+  ],
+  "lastUpdated": "2026-01-19"
+}

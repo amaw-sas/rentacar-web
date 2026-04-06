@@ -1,0 +1,632 @@
+/* ============================================
+   CRITICAL CSS - Previene FOUC en hero section
+   Estos estilos deben coincidir con los de Nuxt UI
+   ============================================ */
+
+/* H1 - Forzar tracking-tight desde el inicio */
+.hero-section h1 {
+    letter-spacing: -0.025em !important; /* tracking-tight */
+}
+
+/* Form fields - Forzar tamaño xl desde el inicio */
+.hero-section [data-slot="label"] {
+    font-size: 0.75rem !important; /* text-xs para size xl */
+    line-height: 1rem !important;
+}
+
+/* UFormField size xl - altura mínima consistente */
+.hero-section .bg-white {
+    min-height: 4.5rem;
+}
+
+/* Header SVGs - prevenir FOUC de banderas/logos enormes */
+header svg {
+    max-height: 3.5rem !important; /* h-14 máximo */
+    width: auto !important;
+}
+
+/* ============================================ */
+
+.mxs {
+    @apply text-xs;
+}
+
+/* Override highlighted text color to white - only for header/navigation */
+header .text-highlighted,
+.hero-section h1.text-highlighted,
+.hero-section h2.text-highlighted {
+    color: white !important;
+    --color-highlighted: white !important;
+}
+
+/* Keep highlighted text dark by default for dropdowns */
+:root {
+    --ui-text-highlighted: #1f2937;
+}
+
+.search-button {
+    @apply w-full bg-red-600 hover:bg-red-700 text-white font-bold justify-center;
+}
+
+/* Glow pulse animation for active search button */
+@keyframes glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(220, 38, 38, 0.6),
+                    0 0 16px rgba(220, 38, 38, 0.4),
+                    0 0 24px rgba(220, 38, 38, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(220, 38, 38, 0.9),
+                    0 0 32px rgba(220, 38, 38, 0.7),
+                    0 0 48px rgba(220, 38, 38, 0.4);
+    }
+}
+
+.search-button-glow {
+    animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .search-button-glow {
+        animation: none;
+        box-shadow: 0 0 16px rgba(220, 38, 38, 0.7),
+                    0 0 32px rgba(220, 38, 38, 0.5);
+    }
+}
+
+/* UHeader - reduce gap between logo and navigation (desktop) */
+@media (min-width: 1024px) {
+    header [data-slot="container"] {
+        justify-content: center !important;
+        gap: 1rem !important;
+    }
+    header [data-slot="left"] {
+        flex: none !important;
+    }
+    header [data-slot="right"] {
+        flex: none !important;
+        justify-content: flex-start !important;
+    }
+}
+
+/* UPageHero - reduce top padding to bring content closer to header */
+/* Only target hero (no ID), not regular sections */
+[data-slot="root"].relative.isolate:not(section[id]) [data-slot="container"] {
+    padding-top: 1rem !important;
+}
+@media (min-width: 1024px) {
+    [data-slot="root"].relative.isolate:not(section[id]) [data-slot="container"] {
+        padding-top: 2rem !important;
+    }
+}
+
+/* Fix: UHeader hamburger/desktop nav — Tailwind v4 scanner doesn't generate */
+/* hidden/block/lg:hidden/lg:block when used dynamically in templates. */
+/* Use structural selectors: first-child = desktop nav, last-child = hamburger */
+
+/* Desktop navigation: hidden on mobile, visible on desktop */
+header [data-slot="right"] > div > div:first-child {
+    display: none;
+}
+@media (min-width: 1024px) {
+    header [data-slot="right"] > div > div:first-child {
+        display: block !important;
+    }
+}
+
+/* Hamburger toggle: visible on mobile, hidden on desktop */
+header [data-slot="right"] > div > div:last-child {
+    display: block;
+}
+@media (min-width: 1024px) {
+    header [data-slot="right"] > div > div:last-child {
+        display: none !important;
+    }
+}
+
+/* Force white color on hamburger button and its Iconify icon */
+header [data-slot="right"] button {
+    color: white !important;
+}
+header [data-slot="right"] button .iconify {
+    background-color: white !important;
+}
+
+/* UHeader slideover panel - white background with dark text */
+/* Note: Close button uses data-slot="close" */
+header [role="dialog"] {
+    background-color: white !important;
+}
+header [role="dialog"] [data-slot="close"] {
+    color: #1f2937 !important;
+}
+header [role="dialog"] [data-slot="close"]:hover {
+    background-color: #f3f4f6 !important;
+}
+
+/* City Page - Reduce hero section internal container padding */
+.hero-section div[class*="max-w-"][class*="mx-auto"] {
+    padding-top: 2rem !important;
+    padding-bottom: 1rem !important;
+}
+@media (min-width: 1024px) {
+    .hero-section div[class*="max-w-"][class*="mx-auto"] {
+        padding-top: 3rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+}
+
+/* City Page - Reduce description section internal container padding */
+#descripcion div[class*="max-w-"][class*="mx-auto"] {
+    padding-top: 1rem !important;
+    padding-bottom: 2rem !important;
+}
+@media (min-width: 1024px) {
+    #descripcion div[class*="max-w-"][class*="mx-auto"] {
+        padding-top: 1.5rem !important;
+        padding-bottom: 3rem !important;
+    }
+}
+
+/* Animated gradient background - blue to cyan shift */
+.bg-animated-gradient {
+    background: linear-gradient(
+        135deg,
+        #000073 0%,
+        #0891b2 25%,
+        #000073 50%,
+        #0891b2 75%,
+        #000073 100%
+    );
+    background-size: 300% 300%;
+    animation: gradient-shift 12s ease infinite;
+}
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .bg-animated-gradient {
+        animation: none;
+        background: linear-gradient(to bottom, #000073, #1e40af, #1e3a8a);
+    }
+}
+
+/* Colombia text color sweep animation */
+/* PERF: animation-delay 1s defers animation until after LCP to avoid render blocking */
+.colombia-sweep {
+    background-image: linear-gradient(90deg,
+        white 0%,
+        white 10%,
+        #FCD116 15%,
+        #FCD116 22%,
+        #00D4FF 26%,
+        #CE1126 30%,
+        white 35%,
+        white 100%
+    );
+    background-size: 400% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: colombia-color-sweep 4s linear infinite;
+    animation-delay: 1s;
+}
+
+@keyframes colombia-color-sweep {
+    0% {
+        background-position: 0% 0;
+    }
+    100% {
+        background-position: 100% 0;
+    }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .colombia-sweep {
+        animation: none;
+        background-position: 100% 0;
+        -webkit-text-fill-color: white;
+    }
+}
+
+/* Searcher form - Force dark text on white background fields */
+.hero-section .bg-white {
+    color: #1f2937 !important;
+}
+
+.hero-section .bg-white button,
+.hero-section .bg-white button span,
+.hero-section .bg-white input,
+.hero-section .bg-white span,
+.hero-section .bg-white div {
+    color: #1f2937 !important;
+}
+
+/* Bold text for selected city in select-menu */
+.hero-section .bg-white [data-slot="value"],
+.hero-section .bg-white button > span:first-child,
+.hero-section .bg-white select {
+    font-weight: 600 !important;
+}
+
+/* Align select-menu content to the left */
+.hero-section .bg-white button[data-slot="base"] {
+    justify-content: flex-start !important;
+    text-align: left !important;
+}
+
+.hero-section .bg-white [data-slot="container"],
+.hero-section .bg-white [data-slot="wrapper"] {
+    text-align: left !important;
+}
+
+.hero-section .bg-white button {
+    justify-content: flex-start !important;
+}
+
+.hero-section .bg-white [data-slot="value"] {
+    text-align: left !important;
+    margin-right: auto !important;
+}
+
+/* Compact select-menu and date inputs on desktop */
+@media (min-width: 640px) {
+    .hero-section .bg-white button[data-slot="base"],
+    .hero-section .bg-white [data-slot="base"]:not(button) {
+        padding-top: 0.375rem !important;
+        padding-bottom: 0.375rem !important;
+    }
+}
+
+/* Ensure date input segments are visible and bold */
+.hero-section .bg-white [data-segment],
+.hero-section .bg-white [class*="segment"],
+.hero-section .bg-white input[type="date"] {
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+}
+
+/* Force date input segments to display horizontally */
+.hero-section .bg-white [data-slot="base"] {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+}
+
+.hero-section .bg-white [data-segment] {
+    display: inline-block !important;
+    width: auto !important;
+    min-width: 1.25rem !important;
+    padding: 0 !important;
+}
+
+.hero-section .bg-white [data-segment="year"] {
+    min-width: 2.5rem !important;
+}
+
+/* Fix dropdown/listbox - force white background and dark text for contrast */
+/* Override the highlighted text variable for dropdowns/popovers */
+[data-radix-popper-content-wrapper],
+[role="listbox"],
+[role="menu"] {
+    background-color: white !important;
+    --ui-text-highlighted: #1f2937 !important;
+    --color-highlighted: #1f2937 !important;
+}
+
+[data-radix-popper-content-wrapper] [data-highlighted] span,
+[data-radix-popper-content-wrapper] [data-highlighted],
+[data-radix-popper-content-wrapper] .text-highlighted,
+[role="listbox"] [data-highlighted] span,
+[role="listbox"] [data-highlighted],
+[role="listbox"] .text-highlighted,
+[role="menu"] [data-highlighted] span,
+[role="menu"] [data-highlighted],
+[role="menu"] .text-highlighted {
+    color: #1f2937 !important;
+}
+
+/* Lighter hover background for dropdown options with smooth transition */
+[role="listbox"] [role="option"],
+[role="menu"] [role="menuitem"] {
+    transition: background-color 150ms ease-out !important;
+}
+
+[role="listbox"] [data-highlighted],
+[role="menu"] [data-highlighted] {
+    background-color: #f3f4f6 !important;
+}
+
+/* Global fix for all highlighted text outside header - maximum specificity */
+body [data-highlighted] *,
+body [data-highlighted],
+body [data-state="checked"] *,
+body [data-state="checked"],
+body [aria-selected="true"] *,
+body [aria-selected="true"] {
+    color: #1f2937 !important;
+}
+
+/* Exclude header elements from the dark text rule */
+header [data-highlighted] *,
+header [data-highlighted],
+.hero-section h1 [data-highlighted],
+.hero-section h2 [data-highlighted] {
+    color: white !important;
+}
+
+/* Force all spans in listbox/menu items to be dark when highlighted */
+[role="listbox"] [role="option"] span,
+[role="listbox"] [role="option"][data-highlighted] span,
+[role="menu"] [role="menuitem"] span,
+[role="menu"] [role="menuitem"][data-highlighted] span {
+    color: #1f2937 !important;
+}
+
+/* UCalendar light theme - applied via .calendar-light class */
+.calendar-light {
+    /* Override all Nuxt UI color variables for light theme */
+    --ui-bg: white !important;
+    --ui-bg-elevated: #f9fafb !important;
+    --ui-bg-accented: #f3f4f6 !important;
+    --ui-bg-inverted: #1f2937 !important;
+    --ui-border: #e5e7eb !important;
+    --ui-border-accented: #d1d5db !important;
+    --ui-text: #1f2937 !important;
+    --ui-text-muted: #6b7280 !important;
+    --ui-text-dimmed: #9ca3af !important;
+    --ui-text-highlighted: #111827 !important;
+    --ui-text-inverted: white !important;
+    background-color: white !important;
+}
+
+.calendar-light * {
+    --ui-bg: white !important;
+    --ui-text: #1f2937 !important;
+    --ui-text-muted: #6b7280 !important;
+    --ui-text-dimmed: #374151 !important;
+}
+
+/* Calendar buttons - dark text on light background */
+.calendar-light button {
+    color: #1f2937 !important;
+    background-color: transparent !important;
+}
+
+.calendar-light button:hover {
+    background-color: #f3f4f6 !important;
+}
+
+/* Calendar SVG icons */
+.calendar-light svg {
+    color: #374151 !important;
+}
+
+/* Calendar header text */
+.calendar-light [role="heading"],
+.calendar-light span {
+    color: #1f2937 !important;
+}
+
+/* Calendar day names (L, M, X, J, V, S, D) */
+.calendar-light [role="columnheader"] {
+    color: #16a34a !important;
+}
+
+/* Calendar grid */
+.calendar-light [role="grid"] {
+    background-color: white !important;
+}
+
+/* Calendar day cells - configuration moved to component :ui prop */
+.calendar-light [role="gridcell"] button:hover {
+    background-color: #f3f4f6 !important;
+}
+
+/* Fix navigation buttons positioning - all buttons were stacked with position:absolute */
+/* Force all calendar buttons to relative positioning and visibility */
+.calendar-light button {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+}
+
+/* Ensure header/navigation area uses flexbox layout */
+.calendar-light > div:first-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+/* Fix: UModal centering — Tailwind v4/v3 double-translate conflict */
+/* The dialog gets BOTH `translate: -50% -50%` (v4 individual prop) AND */
+/* `transform: translate(-50%, -50%)` (v3 compat), causing 2x shift off-center. */
+/* Fix: Replace translate centering with inset + margin auto (transform-independent). */
+[role="dialog"][class*="top-1/2"][class*="left-1/2"] {
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    margin: auto !important;
+    translate: none !important;
+    --tw-translate-x: 0 !important;
+    --tw-translate-y: 0 !important;
+    width: fit-content !important;
+    height: fit-content !important;
+}
+
+/* UModal customization - remove header divider and reduce spacing */
+[role="dialog"] [data-slot="header"] {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    min-height: auto !important;
+    position: relative !important;
+}
+
+/* Position close button higher to differentiate from content */
+/* Exclude calendar navigation buttons from absolute positioning */
+[role="dialog"] [data-slot="header"] button:not(.calendar-light button) {
+    position: absolute !important;
+    top: 0.5rem !important;
+    right: 0.75rem !important;
+}
+
+/* UHeader slideover close button - black circle with white X (matches UModal style) */
+header [role="dialog"] [data-slot="close"] {
+    background-color: black !important;
+    color: white !important;
+    border-radius: 9999px !important;
+}
+header [role="dialog"] [data-slot="close"]:hover {
+    background-color: #374151 !important;
+}
+/* Also target the icon inside the close button */
+header [role="dialog"] [data-slot="close"] svg {
+    color: white !important;
+}
+
+[role="dialog"] [data-slot="body"] {
+    padding-top: 0.75rem !important;
+}
+
+/* USlideover footer - remove top border and any visual separator */
+[role="dialog"] [data-slot="footer"] {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    background-color: white !important;
+    margin-top: 0 !important;
+    padding-top: 1rem !important;
+}
+
+[role="dialog"] [data-slot="footer"]::before,
+[role="dialog"] [data-slot="footer"]::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Also check the body for bottom border */
+[role="dialog"] [data-slot="body"] {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: white !important;
+    margin-bottom: 0 !important;
+}
+
+/* Ensure content wrapper has no separator */
+[role="dialog"] [data-slot="content"] {
+    background-color: white !important;
+}
+
+[role="dialog"] [data-slot="content"] > * {
+    border: none !important;
+}
+
+/* UPageSection - Symmetric vertical padding for all sections */
+/* Use > (direct child) to avoid affecting internal containers in UCarousel etc */
+section[id] > [data-slot="container"] {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+}
+
+/* Category selection section - minimal top padding to reduce gap with search button */
+/* Use > (direct child) to avoid affecting internal containers in UCarousel etc */
+#seleccion-categorias > [data-slot="container"] {
+    padding-top: 0 !important;
+    gap: 1rem !important;
+}
+@media (min-width: 640px) {
+    #seleccion-categorias > [data-slot="container"] {
+        padding-top: 0 !important;
+        gap: 1.25rem !important;
+    }
+}
+@media (min-width: 1024px) {
+    #seleccion-categorias > [data-slot="container"] {
+        padding-top: 1.5rem !important;
+        gap: 1.5rem !important;
+    }
+}
+@media (min-width: 640px) {
+    section[id] > [data-slot="container"] {
+        padding-top: 3.5rem !important;
+        padding-bottom: 3.5rem !important;
+    }
+}
+@media (min-width: 1024px) {
+    section[id] > [data-slot="container"] {
+        padding-top: 4rem !important;
+        padding-bottom: 4rem !important;
+    }
+}
+
+/* Fix: UCarousel arrows — Tailwind v4 scanner doesn't detect responsive */
+/* classes (hidden, lg:block, translate) passed dynamically via :ui prop. */
+/* Handle arrow visibility, positioning and styling via explicit CSS. */
+[data-slot="arrows"] {
+    display: none !important;
+}
+
+@media (min-width: 1024px) {
+    [data-slot="arrows"] {
+        display: block !important;
+    }
+
+    [data-slot="arrows"] button {
+        cursor: pointer;
+        border-radius: 9999px;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0, 0, 0, 0.45);
+        color: white;
+        border: none;
+        box-shadow: none;
+        --tw-ring-color: transparent;
+        --tw-ring-shadow: none;
+        z-index: 10;
+    }
+
+    [data-slot="arrows"] button:hover {
+        background-color: rgba(0, 0, 0, 0.65);
+    }
+
+    [data-slot="arrows"] button:first-child {
+        inset-inline-start: 0.5rem;
+        inset-inline-end: auto;
+    }
+
+    [data-slot="arrows"] button:last-child {
+        inset-inline-start: auto;
+        inset-inline-end: 0.5rem;
+    }
+}
+
+/* Fix: Blog ToC — Tailwind v4 scanner doesn't generate lg:block */
+/* when combined with hidden in template. Hide on mobile, show on desktop. */
+[data-blog-toc] {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    [data-blog-toc] {
+        display: block;
+    }
+}

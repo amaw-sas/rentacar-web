@@ -1,0 +1,41 @@
+{
+  "current": {
+    "domainAuthority": 53,
+    "pageAuthority": 39,
+    "brandAuthority": 1,
+    "backlinksTotal": 6994,
+    "linkingDomains": 433,
+    "keywordsTop20": 0,
+    "keywordsTotal": 3,
+    "internalLinks": 33,
+    "spamScore": 1,
+    "lastUpdated": "2026-01-18"
+  },
+  "goals": {
+    "3months": {
+      "da": 55,
+      "backlinks": 8000,
+      "domains": 500,
+      "keywords": 3,
+      "internalLinks": 183
+    },
+    "6months": {
+      "da": 58,
+      "backlinks": 10000,
+      "domains": 600,
+      "keywords": 10,
+      "internalLinks": 333
+    }
+  },
+  "history": [
+    {
+      "month": "2026-01",
+      "da": 53,
+      "pa": 39,
+      "backlinks": 6994,
+      "domains": 433,
+      "keywords": 3,
+      "internalLinks": 33
+    }
+  ]
+}

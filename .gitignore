@@ -1,0 +1,121 @@
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Monorepo
+packages/*/node_modules
+packages/*/.nuxt
+packages/*/.output
+packages/*/dist
+
+# pnpm
+.pnpm-store/
+.pnpm-debug.log
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+Thumbs.db
+.fleet
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# firebase
+.firebase/
+
+# robots
+_robots.txt
+robots.txt
+
+# Local/personal files (not part of the project)
+.claude/
+.specify/
+advancedrentalcar/
+scripts/*/
+*.zip
+nul
+CLAUDE.md
+GITIGNORE-RULES.txt
+INSTALL-WINDOWS.txt
+nngroup-checkpoint.json
+cleanup-dev-browser.ps1
+alquicarros_gsc/
+alquilame_gsc/
+.worktrees/
+
+# AI Framework runtime files (auto-added)
+/.claude/*
+/.specify/
+/CLAUDE.md
+/.playwright-mcp/
+/hooks/*.db
+/hooks/__pycache__/
+tailwind/
+clouds-animation.html
+clouds-animation-*.html
+preview-autos.html
+style-on-wrist-section.html
+
+# Screenshots de debugging
+fouc*.png
+
+# Imágenes sueltas en raíz (pruebas)
+/*.png
+/*.webp
+/*.avif
+/*.svg
+
+# Notas personales
+seoconjuntas-herramientas.md
+xiaomi-typography-study.md
+
+# Duplicado de public (usar public/ en raíz)
+app/public/
+
+# Imágenes temporales de categorías
+public/img/categorias-nuevas/
+
+# Playwright E2E testing
+e2e-results/
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Configuración local de Claude Code
+.mcp.json
+
+# Scripts locales de Windows
+*.ps1
+
+# GSC tokens (sensitive)
+docs/seo/data/.tokens/
+
+# Build artifacts
+*.tsbuildinfo
+
+# AI Framework runtime files (auto-added)
+!/.claude/rules/
+/.ralph/
+
+# AI Framework runtime files (auto-added)
+/.claude/*
+
+# AI Framework runtime files (auto-added)
+/.research/

@@ -1,0 +1,44 @@
+{
+  "2026-01": {
+    "backlinks": {
+      "outreachSent": 0,
+      "outreachGoal": 50,
+      "responsesReceived": 0,
+      "linksAcquired": 0,
+      "linksGoal": 100
+    },
+    "blog": {
+      "articlesPlanned": 0,
+      "articlesWritten": 0,
+      "articlesPublished": 0,
+      "articlesGoal": 4
+    },
+    "internalLinking": {
+      "linksAdded": 0,
+      "linksGoal": 50
+    },
+    "ctrOptimization": {
+      "pagesOptimized": 0,
+      "pagesGoal": 5
+    },
+    "contentRefresh": {
+      "articlesUpdated": 0,
+      "articlesGoal": 2
+    },
+    "landingPages": {
+      "pagesCreated": 0,
+      "pagesGoal": 1
+    },
+    "lastActivityDate": null,
+    "consecutiveDaysActive": 0,
+    "bestStreak": 0,
+    "activityLog": []
+  },
+  "activityLogTemplate": {
+    "date": "2026-01-18",
+    "type": "outreach|blog|internalLink|ctr|refresh|landing",
+    "target": "description",
+    "result": "pending|success|failed",
+    "notes": ""
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "gsc": {
+    "last28d": {
+      "impressions": 12500,
+      "clicks": 890,
+      "ctr": 7.12,
+      "avgPosition": 18.4
+    },
+    "previousPeriod": {
+      "impressions": null,
+      "clicks": null,
+      "ctr": null
+    },
+    "topPages": [],
+    "topQueries": [],
+    "cityPages": [
+      { "city": "bogota", "clicks": 245, "impressions": 4820, "ctr": 5.08, "position": 12.3 },
+      { "city": "medellin", "clicks": 189, "impressions": 3650, "ctr": 5.18, "position": 14.1 },
+      { "city": "cartagena", "clicks": 156, "impressions": 2890, "ctr": 5.40, "position": 11.8 },
+      { "city": "cali", "clicks": 134, "impressions": 2780, "ctr": 4.82, "position": 15.6 },
+      { "city": "barranquilla", "clicks": 98, "impressions": 2100, "ctr": 4.67, "position": 18.2 },
+      { "city": "santa-marta", "clicks": 87, "impressions": 1650, "ctr": 5.27, "position": 13.4 },
+      { "city": "bucaramanga", "clicks": 65, "impressions": 1420, "ctr": 4.58, "position": 19.7 },
+      { "city": "pereira", "clicks": 52, "impressions": 1180, "ctr": 4.41, "position": 21.3 },
+      { "city": "cucuta", "clicks": 43, "impressions": 980, "ctr": 4.39, "position": 22.8 },
+      { "city": "manizales", "clicks": 38, "impressions": 890, "ctr": 4.27, "position": 24.1 },
+      { "city": "ibague", "clicks": 35, "impressions": 820, "ctr": 4.27, "position": 25.6 },
+      { "city": "villavicencio", "clicks": 31, "impressions": 750, "ctr": 4.13, "position": 27.2 },
+      { "city": "neiva", "clicks": 24, "impressions": 620, "ctr": 3.87, "position": 29.4 },
+      { "city": "monteria", "clicks": 19, "impressions": 540, "ctr": 3.52, "position": 31.8 },
+      { "city": "valledupar", "clicks": 16, "impressions": 480, "ctr": 3.33, "position": 33.5 },
+      { "city": "armenia", "clicks": 14, "impressions": 420, "ctr": 3.33, "position": 35.2 },
+      { "city": "floridablanca", "clicks": 11, "impressions": 350, "ctr": 3.14, "position": 38.1 },
+      { "city": "palmira", "clicks": 8, "impressions": 280, "ctr": 2.86, "position": 41.3 },
+      { "city": "soledad", "clicks": 5, "impressions": 190, "ctr": 2.63, "position": 45.7 }
+    ],
+    "lastUpdated": "2026-01-18",
+    "status": "connected"
+  },
+  "cwv": {
+    "desktop": {
+      "score": 99,
+      "lcp": 1.2,
+      "fid": 12,
+      "cls": 0
+    },
+    "mobile": {
+      "score": 85,
+      "lcp": 2.1,
+      "fid": 45,
+      "cls": 0
+    },
+    "history": [
+      {
+        "month": "2025-12",
+        "desktop": 98,
+        "mobile": 82
+      },
+      {
+        "month": "2026-01",
+        "desktop": 99,
+        "mobile": 85
+      }
+    ],
+    "lastUpdated": "2026-01-17"
+  },
+  "indexation": {
+    "indexed": null,
+    "total": null,
+    "excluded": null,
+    "excludedReasons": [],
+    "status": "connected"
+  }
+}

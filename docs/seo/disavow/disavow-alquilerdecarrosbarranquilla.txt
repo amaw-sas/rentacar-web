@@ -1,0 +1,6 @@
+# Disavow para alquilerdecarrosbarranquilla.com
+# Fecha: 2026-01-16
+# Razon: Backlinks toxicos pre-migracion a alquilatucarro.com
+# Sitio .gov.lr hackeado con spam injection
+
+domain:liberiasp.gov.lr

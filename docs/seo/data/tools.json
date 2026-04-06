@@ -1,0 +1,67 @@
+{
+  "moz": {
+    "account": "seoboom50",
+    "plan": "Pro",
+    "cost": "$99/mes",
+    "quotas": {
+      "domainOverview": {
+        "used": 3,
+        "limit": 5,
+        "resetsAt": "2026-02-01",
+        "costPerQuery": "~$20"
+      },
+      "linkExplorer": {
+        "used": 10,
+        "limit": 10,
+        "resetsAt": "2026-01-18",
+        "costPerQuery": "~$10"
+      }
+    },
+    "mcp": {
+      "installed": false,
+      "repo": "https://github.com/metehan777/moz-mcp",
+      "setupGuide": "/docs/seo/setup/moz-mcp-setup.md"
+    },
+    "apiDocs": "https://moz.com/help/links-api",
+    "dashboardUrl": "https://moz.com/products/pro"
+  },
+  "gsc": {
+    "property": "https://alquilatucarro.com",
+    "type": "Domain property",
+    "connected": false,
+    "oauth": {
+      "projectId": "diego-seo-audit",
+      "clientId": "94167550338-ok9uhdmq309tkrhii4cnjl5mbbauqj29.apps.googleusercontent.com",
+      "credentialsFile": "client_secret_94167550338-ok9uhdmq309tkrhii4cnjl5mbbauqj29.apps.googleusercontent.com.json",
+      "configuredAt": "2026-01-18"
+    },
+    "quotas": {
+      "queriesPerDay": {
+        "limit": 25000,
+        "note": "Prácticamente ilimitado"
+      }
+    },
+    "mcp": {
+      "installed": true,
+      "repo": null,
+      "note": "OAuth configurado - credenciales en carpeta Descargas",
+      "setupGuide": "/docs/seo/setup/gsc-oauth-setup.md"
+    },
+    "dashboardUrl": "https://search.google.com/search-console"
+  },
+  "pagespeed": {
+    "enabled": true,
+    "quotas": {
+      "queriesPerDay": {
+        "limit": 25000,
+        "note": "API gratuita de Google"
+      }
+    },
+    "mcp": {
+      "installed": false,
+      "note": "Opcional - bajo prioridad"
+    },
+    "testUrl": "https://pagespeed.web.dev/"
+  },
+  "lastUpdated": "2026-01-18"
+}

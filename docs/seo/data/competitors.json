@@ -1,0 +1,85 @@
+{
+  "lastUpdated": "2026-01-17",
+  "competitors": [
+    {
+      "domain": "alquilatucarro.com",
+      "isUs": true,
+      "da": 53,
+      "pa": 39,
+      "spamScore": null,
+      "totalLinks": 6994,
+      "linkingDomains": 433,
+      "followPercent": 50.5,
+      "internalLinks": 33,
+      "rankingKeywords": 3,
+      "threatLevel": null
+    },
+    {
+      "domain": "rentingcolombia.com",
+      "isUs": false,
+      "da": 34,
+      "pa": null,
+      "spamScore": 1,
+      "totalLinks": 55298,
+      "linkingDomains": 601,
+      "followPercent": 56,
+      "internalLinks": 23886,
+      "rankingKeywords": null,
+      "threatLevel": "high",
+      "notes": "8x más backlinks, 720x más internal links - amenaza principal"
+    },
+    {
+      "domain": "avis.com.co",
+      "isUs": false,
+      "da": 19,
+      "pa": null,
+      "spamScore": null,
+      "totalLinks": 2892,
+      "linkingDomains": 180,
+      "followPercent": null,
+      "internalLinks": 1251,
+      "rankingKeywords": null,
+      "threatLevel": "low",
+      "notes": "Marca global, weak local SEO"
+    },
+    {
+      "domain": "budget.com.co",
+      "isUs": false,
+      "da": 10,
+      "pa": null,
+      "spamScore": 3,
+      "totalLinks": 1213,
+      "linkingDomains": 101,
+      "followPercent": null,
+      "internalLinks": 7879,
+      "rankingKeywords": null,
+      "threatLevel": "low"
+    },
+    {
+      "domain": "hertz.com.co",
+      "isUs": false,
+      "da": 3,
+      "pa": null,
+      "spamScore": 3,
+      "totalLinks": 26,
+      "linkingDomains": 16,
+      "followPercent": null,
+      "internalLinks": 82,
+      "rankingKeywords": null,
+      "threatLevel": "minimal"
+    },
+    {
+      "domain": "sixt.com.co",
+      "isUs": false,
+      "da": 3,
+      "pa": null,
+      "spamScore": 5,
+      "totalLinks": 2,
+      "linkingDomains": 2,
+      "followPercent": null,
+      "internalLinks": 48,
+      "rankingKeywords": null,
+      "threatLevel": "minimal"
+    }
+  ]
+}

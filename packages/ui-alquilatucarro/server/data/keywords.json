@@ -1,0 +1,74 @@
+{
+  "tracked": [
+    {
+      "keyword": "alquiler vehiculo colombia",
+      "position": 27,
+      "previousPosition": null,
+      "volume": 5,
+      "difficulty": 33,
+      "trend": "stable",
+      "url": "/",
+      "history": [
+        { "month": "2026-01", "position": 27 }
+      ]
+    },
+    {
+      "keyword": "alquiler de carros bogota",
+      "position": 47,
+      "previousPosition": null,
+      "volume": 86,
+      "difficulty": 34,
+      "trend": "stable",
+      "url": "/bogota",
+      "history": [
+        { "month": "2026-01", "position": 47 }
+      ]
+    },
+    {
+      "keyword": "alquiler carros bogota",
+      "position": 47,
+      "previousPosition": null,
+      "volume": 31,
+      "difficulty": 34,
+      "trend": "stable",
+      "url": "/bogota",
+      "history": [
+        { "month": "2026-01", "position": 47 }
+      ]
+    }
+  ],
+  "targets": [
+    {
+      "keyword": "alquiler carros medellin",
+      "volume": 50,
+      "difficulty": null,
+      "status": "planned",
+      "suggestedUrl": "/medellin",
+      "notes": "Ciudad principal, necesita más contenido"
+    },
+    {
+      "keyword": "alquiler carros cartagena",
+      "volume": 40,
+      "difficulty": null,
+      "status": "planned",
+      "suggestedUrl": "/cartagena",
+      "notes": "Destino turístico alto potencial"
+    },
+    {
+      "keyword": "renta de carros aeropuerto bogota",
+      "volume": 120,
+      "difficulty": null,
+      "status": "planned",
+      "suggestedUrl": "/alquiler-carros-aeropuerto-bogota",
+      "notes": "Landing page nueva requerida"
+    }
+  ],
+  "distribution": {
+    "top3": 0,
+    "top10": 0,
+    "top20": 0,
+    "top50": 3,
+    "beyond50": 0
+  },
+  "lastUpdated": "2026-01-17"
+}

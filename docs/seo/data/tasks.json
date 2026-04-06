@@ -1,0 +1,47 @@
+{
+  "months": {
+    "2026-01": {
+      "goal": 100,
+      "completed": 0,
+      "percentage": 0,
+      "tasks": [],
+      "categories": {
+        "directories": {
+          "goal": 25,
+          "completed": 0,
+          "tasks": []
+        },
+        "guestPosts": {
+          "goal": 30,
+          "completed": 0,
+          "tasks": []
+        },
+        "partnerships": {
+          "goal": 20,
+          "completed": 0,
+          "tasks": []
+        },
+        "pressPR": {
+          "goal": 15,
+          "completed": 0,
+          "tasks": []
+        },
+        "other": {
+          "goal": 10,
+          "completed": 0,
+          "tasks": []
+        }
+      }
+    }
+  },
+  "taskTemplate": {
+    "id": 0,
+    "type": "directory|guestPost|partnership|pressPR|other",
+    "target": "domain.com",
+    "status": "pending|in-progress|done|rejected",
+    "da": 0,
+    "date": "2026-01-18",
+    "linkUrl": null,
+    "notes": ""
+  }
+}

@@ -1,0 +1,7 @@
+# Disavow para alquilerdecarrosmonteria.com
+# Fecha: 2026-01-16
+# Razon: Backlinks toxicos pre-migracion a alquilatucarro.com
+# Sitios .gov.ph y .ac.th hackeados con spam injection
+
+domain:bangsamoro.gov.ph
+domain:ait.ac.th

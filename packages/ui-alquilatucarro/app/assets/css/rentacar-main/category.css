@@ -1,0 +1,179 @@
+.categoria {
+    @apply bg-white rounded-lg md:col-span-1 relative text-black p-0 sm:p-0 lg:p-0;
+    
+    /* .agotado {
+      opacity: 0.28 !important;
+    }
+    
+    .agotado .text-azul {
+      color: grey !important;
+    }
+    
+    .agotado .anuncio {
+      background-color: ghostwhite;
+    }
+    
+    .agotado h5 {
+      color: grey !important;
+    }
+    
+    .agotado a {
+      background-color: grey !important;
+      border-color: grey !important;
+    } */
+
+    .nombre-modelo {
+      @apply absolute top-5 left-5 bg-black/75 rounded-lg text-white text-xs py-1 px-3;
+    }
+
+    .contenedor-descripcion-carro {
+      @apply bg-white;
+    }
+
+    .boton-contenedor-descripcion-carro {
+      @apply flex justify-between items-center w-full px-4 py-3 text-left transition-all focus:outline-none text-gray-700 bg-white hover:bg-white cursor-pointer;
+    }
+
+    .contenedor-adicionales-carro {
+      @apply bg-white;
+    }
+
+    .boton-contenedor-adicionales-carro {
+      @apply flex justify-between items-center w-full px-4 py-3 text-left transition-all focus:outline-none text-gray-700 bg-white hover:bg-white cursor-pointer;
+    }
+
+    /* Chevron rotation animation on collapsible open/close. */
+    /* :ui.trailingIcon classes don't apply to custom #trailing slots, */
+    /* so we handle the animation via CSS on the parent button state. */
+    .boton-contenedor-descripcion-carro svg,
+    .boton-contenedor-adicionales-carro svg {
+      transition: transform 200ms ease-out;
+    }
+
+    .boton-contenedor-descripcion-carro[data-state="open"] svg,
+    .boton-contenedor-adicionales-carro[data-state="open"] svg {
+      transform: rotate(180deg);
+    }
+
+    .categoria-carro {
+      @apply font-light text-lg leading-tight block;
+    }
+
+    .descripcion-corta {
+      /* @apply roboto-bold text-2xl block; */
+      @apply text-2xl block;
+    }
+
+    .descripcion-larga {
+      @apply text-gray-700;
+    }
+
+    .contenedor-etiquetas {
+        @apply flex flex-wrap justify-center gap-1 mt-3 mb-4;
+    }
+
+    .etiqueta-carro {
+      @apply font-normal text-black px-2 py-1 rounded-full text-xs bg-white border border-gray-300;
+    }
+
+    .contenedor-tarifas{
+      @apply grid grid-cols-2 py-4 relative text-gray-800 rounded-b-lg;
+    }
+
+    /* Fondo degradado sutil: blanco → gris claro → blanco */
+    .contenedor-tarifas.sutil-fondo {
+      background: linear-gradient(to right, white, #ededed 50%, white);
+    }
+
+    .contenedor-precios-tarifa{
+      @apply flex flex-col items-end pr-5 text-right;
+    }
+
+    /* Línea vertical difuminada entre las dos columnas */
+    .contenedor-precios-tarifa.con-borde-difuminado {
+      @apply relative min-h-[100px];
+    }
+
+    .contenedor-precios-tarifa.con-borde-difuminado::after {
+      content: '';
+      @apply absolute top-0 right-0 bottom-0 w-px pointer-events-none;
+      background: linear-gradient(to bottom, transparent, #d1d5db 30%, #d1d5db 70%, transparent);
+    }
+
+    .porcentaje-descuento{
+      @apply bg-[#a3f78b] text-black text-xs px-1;
+    }
+
+    .precio-base-diario {
+      @apply text-xs line-through;
+    }
+
+    .precio-diario {
+      /* @apply roboto-bold text-xl */
+      @apply text-xl;
+    }
+
+    .dias-reservados {
+      @apply text-sm mt-2;
+    }
+
+    .precio-total {
+      @apply text-xl whitespace-nowrap;
+    }
+
+    .texto-no-incluye {
+      @apply text-[10px] text-gray-500;
+    }
+
+    .opcion-seleccionable {
+      @apply flex items-center;
+
+      label,p {
+        @apply text-sm mx-2 text-black;
+      }
+    }
+
+    .seccion-boton-seleccion {
+      @apply rounded-b-lg bg-white p-4;
+
+      .boton-seleccion {
+        @apply w-full justify-center text-white bg-green-700 py-4 hover:bg-green-800 transition-colors;
+      }
+
+    }
+    
+    .form-radio {
+      @apply scheme-light accent-black;
+    }
+
+    /* Fondo degradado sutil reutilizable */
+    .sutil-fondo {
+      background: linear-gradient(to right, white, #ededed 50%, white);
+    }
+}
+
+.categoria-no-disponible {
+    @apply bg-white! text-gray-600! text-center! rounded-lg;
+
+    img {
+       @apply opacity-40;
+    }
+
+    p, .etiqueta, .contenedor-descripcion-carro {
+      @apply opacity-70;
+    }
+
+    .etiqueta-carro {
+      @apply bg-gray-200 text-gray-600;
+    }
+}
+
+.categoria-agotado {
+  background-color: rgb(70 70 70 / 90%);
+  position: absolute;
+  z-index: 60;
+  border-radius: 8px;
+  color: white;
+  padding: 13px 25px;
+  top: 30%;
+}

@@ -1,0 +1,31 @@
+{
+  "functions": {
+    "source": ".output/server"
+  },
+  "hosting": {
+    "site": "rentacar-main-alquilame",
+    "public": ".output/public",
+    "headers": [
+      {
+        "source": "/_nuxt/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ],
+    "ignore": [
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "rentacar_main_alquilame"
+      }
+    ],
+    "cleanUrls": true
+  }
+}

@@ -1,0 +1,7 @@
+# Disavow para alquilerdecarrospereira.com
+# Fecha: 2026-01-16
+# Razon: Backlinks toxicos pre-migracion a alquilatucarro.com
+# Sitio .gov.lr hackeado + dominio extranjero spam
+
+domain:liberiasp.gov.lr
+domain:entclinic.ae

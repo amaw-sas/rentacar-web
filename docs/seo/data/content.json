@@ -1,0 +1,111 @@
+{
+  "internalLinks": {
+    "current": 33,
+    "goal": 500,
+    "orphanPages": [],
+    "opportunities": []
+  },
+  "blog": {
+    "published": [
+      {
+        "slug": "requisitos-alquilar-carro-colombia",
+        "title": "Requisitos para alquilar un carro en Colombia",
+        "publishedAt": "2025-10-15",
+        "lastUpdated": "2025-10-15",
+        "wordCount": 1200,
+        "targetKeyword": "requisitos alquilar carro colombia"
+      },
+      {
+        "slug": "rutas-carro-desde-bogota",
+        "title": "Rutas en carro desde Bogotá",
+        "publishedAt": "2025-11-01",
+        "lastUpdated": "2025-11-01",
+        "wordCount": 1500,
+        "targetKeyword": "rutas carro bogota"
+      },
+      {
+        "slug": "eje-cafetero-en-carro-guia-completa",
+        "title": "Eje Cafetero en carro: Guía completa",
+        "publishedAt": "2025-11-15",
+        "lastUpdated": "2025-11-15",
+        "wordCount": 2000,
+        "targetKeyword": "eje cafetero en carro"
+      },
+      {
+        "slug": "pico-y-placa-colombia-2026",
+        "title": "Pico y Placa Colombia 2026",
+        "publishedAt": "2025-12-01",
+        "lastUpdated": "2025-12-01",
+        "wordCount": 1000,
+        "targetKeyword": "pico y placa colombia"
+      },
+      {
+        "slug": "costa-caribe-cartagena-santa-marta-carro",
+        "title": "Costa Caribe: Cartagena a Santa Marta en carro",
+        "publishedAt": "2025-12-15",
+        "lastUpdated": "2025-12-15",
+        "wordCount": 1800,
+        "targetKeyword": "cartagena santa marta carro"
+      }
+    ],
+    "planned": [
+      {
+        "slug": "rutas-semana-santa-2026",
+        "title": "Mejores rutas para Semana Santa 2026",
+        "targetDate": "2026-03-01",
+        "targetKeyword": "rutas semana santa colombia",
+        "status": "idea"
+      },
+      {
+        "slug": "alquiler-carros-para-empresas",
+        "title": "Alquiler de carros para empresas en Colombia",
+        "targetDate": "2026-02-01",
+        "targetKeyword": "alquiler carros empresas colombia",
+        "status": "idea"
+      }
+    ]
+  },
+  "ctrOptimization": {
+    "lowCtrPages": [],
+    "lastAnalysis": null
+  },
+  "contentFreshness": [
+    {
+      "slug": "requisitos-alquilar-carro-colombia",
+      "lastUpdated": "2025-10-15",
+      "ageMonths": 3,
+      "status": "review-needed"
+    }
+  ],
+  "landingPagesPipeline": [
+    {
+      "keyword": "alquiler carros aeropuerto bogota",
+      "volume": 120,
+      "suggestedUrl": "/alquiler-carros-aeropuerto-bogota",
+      "status": "proposed",
+      "notes": "Alta intención comercial"
+    },
+    {
+      "keyword": "rent a car colombia barato",
+      "volume": 90,
+      "suggestedUrl": "/alquiler-carros-economicos",
+      "status": "proposed",
+      "notes": "Keyword long-tail con volumen"
+    }
+  ],
+  "errors404": [
+    {
+      "url": "/images/carros2.png",
+      "linkingDomains": 19,
+      "pa": 30,
+      "status": "pending-redirect"
+    },
+    {
+      "url": "/imacion/ani2a.png",
+      "linkingDomains": 3,
+      "pa": 25,
+      "status": "pending-redirect"
+    }
+  ],
+  "lastUpdated": "2026-01-17"
+}

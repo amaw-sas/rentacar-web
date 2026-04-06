@@ -1,0 +1,7 @@
+# Disavow para alquilerdecarrosbogota.com
+# Fecha: 2026-01-16
+# Razon: Backlinks toxicos pre-migracion a alquilatucarro.com
+# Dominios identificados como spam/PBN
+
+domain:shutter16.com
+domain:tiwazon.com
