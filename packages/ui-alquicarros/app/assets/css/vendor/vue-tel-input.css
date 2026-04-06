@@ -1,0 +1,71 @@
+@import "vue-tel-input/vue-tel-input.css";
+
+.vue-tel-input {
+  background-color: rgb(243 244 246) !important; /* bg-gray-100 */
+  border: 1.5px solid rgb(156 163 175) !important; /* border-gray-400 - más grueso y oscuro */
+  border-radius: 0.5rem !important;
+  box-shadow: none !important;
+  outline: none !important;
+  --tw-ring-shadow: none !important;
+  --tw-ring-offset-shadow: none !important;
+}
+
+.vue-tel-input:focus,
+.vue-tel-input:focus-within,
+.vue-tel-input:focus-visible,
+.vue-tel-input.is-focused {
+  border: 1px solid rgb(156 163 175) !important; /* border-gray-400 */
+  box-shadow: none !important;
+  outline: none !important;
+  --tw-ring-shadow: none !important;
+  --tw-ring-offset-shadow: none !important;
+}
+
+.vti__input {
+  background-color: transparent !important;
+  color: black !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.vti__input:focus,
+.vti__input:focus-within,
+.vti__input:focus-visible {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: none !important;
+}
+
+.vti__input::placeholder {
+  color: rgb(107 114 128) !important; /* text-gray-500 */
+}
+
+.vti__dropdown {
+  background-color: transparent !important;
+  border: none !important;
+  border-right: 1.5px solid rgb(156 163 175) !important;
+  outline: none !important;
+}
+
+.vti__dropdown:hover {
+  background-color: rgb(229 231 235) !important; /* bg-gray-200 */
+}
+
+.vti__dropdown-list {
+  z-index: 999;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  list-style: none;
+  max-height: 200px;
+  overflow-y: scroll;
+  position: absolute;
+  left: -1px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  width: 390px;
+}

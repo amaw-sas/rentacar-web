@@ -68,6 +68,7 @@ ehthumbs.db
 # Dependencies
 node_modules/
 vendor/
+!**/app/assets/css/vendor/
 jspm_packages/
 .npm
 
