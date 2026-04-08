@@ -3,11 +3,10 @@ import { listFilesInStorage } from '../../utils/firebase-storage'
 /**
  * GET /api/blog/debug
  *
- * Temporary diagnostic endpoint — exposes Firebase config state and storage
- * listing result to diagnose why /api/blog/posts returns count: 0.
+ * Diagnostic endpoint — exposes Vercel Blob config state and storage
+ * listing result to diagnose blog post loading issues.
  *
- * Protected by the blog-api-auth middleware (X-API-Key header + IP whitelist).
- * Remove after debugging is complete.
+ * Protected by the blog-api-auth middleware (X-API-Key header).
  */
 export default defineEventHandler(async (_event) => {
   const config = useRuntimeConfig()
@@ -15,12 +14,7 @@ export default defineEventHandler(async (_event) => {
   const diagnostics: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
     env: {
-      firebaseProjectId: config.firebaseProjectId ? 'SET' : 'MISSING',
-      firebaseClientEmail: config.firebaseClientEmail ? 'SET' : 'MISSING',
-      firebasePrivateKey: config.firebasePrivateKey
-        ? `SET (${(config.firebasePrivateKey as string).length} chars)`
-        : 'MISSING',
-      firebaseStorageBucket: config.firebaseStorageBucket ? 'SET' : 'MISSING',
+      blobReadWriteToken: process.env.BLOB_READ_WRITE_TOKEN ? 'SET' : 'MISSING',
       franchise: config.public.rentacarFranchise,
     },
   }
@@ -33,6 +27,7 @@ export default defineEventHandler(async (_event) => {
       success: true,
       prefix,
       count: files.length,
+      files: files.slice(0, 10),
     }
   } catch (error) {
     diagnostics.storage = {

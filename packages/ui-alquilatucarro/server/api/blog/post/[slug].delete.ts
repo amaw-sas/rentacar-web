@@ -4,21 +4,18 @@ import { logger } from '../../../utils/logger'
 import { BlogApiError, handleBlogApiError } from '../../../utils/error-handler'
 
 /**
- * Extract GCS storage paths from image URLs embedded in markdown content.
- * Matches: https://storage.googleapis.com/{bucket}/blog-images/{type}/{filename}
+ * Extract Vercel Blob image URLs embedded in markdown content.
+ * Matches: https://*.public.blob.vercel-storage.com/blog-images/{type}/{filename}
+ * Also matches legacy GCS URLs for backwards compatibility.
  */
-function extractImagePaths(markdownContent: string, bucketName: string): string[] {
-  const escapedBucket = bucketName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const urlPattern = new RegExp(
-    `https://storage\\.googleapis\\.com/${escapedBucket}/(blog-images/[^\\s)"']+)`,
-    'g'
-  )
-  const paths: string[] = []
+function extractImageUrls(markdownContent: string): string[] {
+  const urlPattern = /https:\/\/[^\s)"']+\/blog-images\/[^\s)"']+/g
+  const urls: string[] = []
   let match: RegExpExecArray | null
   while ((match = urlPattern.exec(markdownContent)) !== null) {
-    paths.push(match[1])
+    urls.push(match[0])
   }
-  return [...new Set(paths)] // deduplicate
+  return [...new Set(urls)]
 }
 
 /**
@@ -45,33 +42,25 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig()
     const franchise = config.public.rentacarFranchise as string
-    const bucket = (config.firebaseStorageBucket as string) ||
-      (process.env.GCLOUD_PROJECT ? `${process.env.GCLOUD_PROJECT}.firebasestorage.app` : '')
-
-    const bucketMissing = !bucket
-    if (bucketMissing) {
-      logger.error('blog-delete-config', new Error('firebaseStorageBucket not configured — image cleanup skipped'), { slug })
-    }
-
     const postPath = `blog-posts/${franchise}/${slug}.md`
 
     logger.info('blog-delete-start', { slug, postPath })
 
-    // Download markdown to find referenced images (throws 404 if not found)
+    // Download markdown to find referenced images (throws if not found)
     const markdownBuffer = await downloadFromStorage(postPath)
     const markdownContent = markdownBuffer.toString('utf-8')
 
-    // Extract image storage paths from GCS URLs in the markdown
-    const imagePaths = extractImagePaths(markdownContent, bucket)
+    // Extract image URLs from the markdown content
+    const imageUrls = extractImageUrls(markdownContent)
 
     // Delete images best-effort (don't fail the whole operation for orphaned images)
     const deletedImages = (await Promise.all(
-      imagePaths.map(async (imagePath) => {
+      imageUrls.map(async (imageUrl) => {
         try {
-          await deleteFromStorage(imagePath)
-          return imagePath
+          await deleteFromStorage(imageUrl)
+          return imageUrl
         } catch (error) {
-          logger.warn('blog-delete-image-warn', error, { imagePath, slug })
+          logger.warn('blog-delete-image-warn', error, { imageUrl, slug })
           return null
         }
       })
@@ -94,8 +83,7 @@ export default defineEventHandler(async (event) => {
       deleted: {
         post: postPath,
         images: deletedImages
-      },
-      ...(bucketMissing ? { warning: 'Image cleanup skipped: storage bucket not configured' } : {})
+      }
     }
   } catch (error) {
     return handleBlogApiError(error, 'blog-delete')

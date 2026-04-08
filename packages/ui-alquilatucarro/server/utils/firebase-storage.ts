@@ -1,26 +1,52 @@
 /**
- * Firebase Storage stub — disabled pending migration to Supabase Storage (Phase 7)
- * Blog upload/download endpoints will return errors until migration is complete.
+ * Blog storage via Vercel Blob (replaces Firebase Storage stubs)
+ * Requires BLOB_READ_WRITE_TOKEN env var (auto-set by Vercel Blob integration)
  */
-
-const DISABLED_MSG = 'Firebase Storage is disabled. Pending migration to Supabase Storage.'
+import { put, del, list, get } from '@vercel/blob'
 
 export function getFirebaseApp() {
-  throw new Error(DISABLED_MSG)
+  throw new Error('Firebase Admin is deprecated. Use Vercel Blob for storage.')
 }
 
-export async function uploadToStorage(_path: string, _data: Buffer, _contentType: string) {
-  throw new Error(DISABLED_MSG)
+export async function uploadToStorage(data: Buffer, path: string, contentType: string): Promise<string> {
+  const blob = await put(path, data, {
+    access: 'public',
+    contentType,
+    allowOverwrite: true,
+  })
+  return blob.url
 }
 
-export async function downloadFromStorage(_path: string): Promise<Buffer> {
-  throw new Error(DISABLED_MSG)
+export async function downloadFromStorage(path: string): Promise<Buffer> {
+  const result = await get(path, { access: 'public' })
+  if (!result) {
+    throw new Error(`Blob not found: ${path}`)
+  }
+  const reader = result.stream.getReader()
+  const chunks: Uint8Array[] = []
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    chunks.push(value)
+  }
+  return Buffer.concat(chunks)
 }
 
-export async function deleteFromStorage(_path: string) {
-  throw new Error(DISABLED_MSG)
+export async function deleteFromStorage(pathOrUrl: string): Promise<void> {
+  await del(pathOrUrl)
 }
 
-export async function listFilesInStorage(_prefix: string): Promise<string[]> {
-  throw new Error(DISABLED_MSG)
+export async function listFilesInStorage(prefix: string): Promise<string[]> {
+  const allPaths: string[] = []
+  let cursor: string | undefined
+
+  do {
+    const result = await list({ prefix, cursor })
+    for (const blob of result.blobs) {
+      allPaths.push(blob.pathname)
+    }
+    cursor = result.hasMore ? result.cursor : undefined
+  } while (cursor)
+
+  return allPaths
 }
