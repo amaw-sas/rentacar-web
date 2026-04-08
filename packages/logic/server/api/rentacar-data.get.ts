@@ -1,5 +1,5 @@
 import { useSupabaseClient } from '../utils/supabase'
-import { transformCategories, transformBranches, transformExtras } from '../utils/transformers'
+import { transformCategories, transformBranches, transformExtras, transformVehicleCategories } from '../utils/transformers'
 
 export default defineCachedEventHandler(async () => {
   const supabase = useSupabaseClient()
@@ -38,6 +38,7 @@ export default defineCachedEventHandler(async () => {
     categories: transformCategories(categoriesResult.data),
     branches: transformBranches(locationsResult.data),
     extras: transformExtras(companyResult.data),
+    vehicleCategories: transformVehicleCategories(categoriesResult.data),
   }
 }, {
   maxAge: 3600,

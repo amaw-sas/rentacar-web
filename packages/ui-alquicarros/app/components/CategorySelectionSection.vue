@@ -223,7 +223,7 @@ const whatsappContacts: Record<string, { phone: string; display: string }> = {
   alquicarros: { phone: "3187703670", display: "318 770 3670" },
 };
 const whatsappContact = whatsappContacts[config.public.rentacarFranchise as string] ?? whatsappContacts.alquilatucarro;
-const { vehicleCategories } = useVehicleCategories();
+const { vehicleCategories } = useFetchRentacarData();
 const slideoverReservationResume = ref<boolean>(false);
 const slideoverReservationForm = ref<boolean>(false);
 const reservationFormComponent = ref(null);

@@ -33,7 +33,7 @@ export type { default as PageConfigData } from './types/data/PageConfigData';
 export type { default as RecordReservationApiData } from './types/data/RecordReservationApiData';
 export type { default as ReservasApiData, ExtrasData } from './types/data/ReservasApiData';
 export type { ReservationApiStatus } from './types/data/ReservationApiStatus';
-export type { default as VehicleCategoryData, VehicleCategory, VehicleCategoryModel, VehicleCategoryImage } from './types/data/VehicleCategoryData';
+export type { default as VehicleCategoryData, VehicleCategory, VehicleCategoryModel } from './types/data/VehicleCategoryData';
 
 // ============================================================================
 // Type Definitions - Form Fields

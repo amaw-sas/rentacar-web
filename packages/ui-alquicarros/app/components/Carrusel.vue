@@ -16,25 +16,15 @@
         <div class="nombre-modelo">
           <span>{{ item.nombre }}</span>
         </div>
-        <picture>
-          <source 
-            :srcset="item.imagenes.avif"
-            type="image/avif"
-          >
-          <source 
-            :srcset="item.imagenes.webp"
-            type="image/webp"
-          >
-          <img 
-            :src="item.imagenes.jpg"
-            :alt="item.nombre" 
-            width="800" 
-            height="480" 
-            loading="lazy" 
-            decoding="async"
-            class="w-full"
-          >
-        </picture>
+        <NuxtImg
+          :src="item.image"
+          :alt="item.nombre"
+          width="800"
+          height="480"
+          loading="lazy"
+          decoding="async"
+          class="w-full"
+        />
       </div>
     </UCarousel>
 </template>
@@ -47,14 +37,5 @@ interface CarruselProps {
   vehicleModels?: VehicleCategoryModel[]
 }
 
-const props = defineProps<CarruselProps>();
-
-props.vehicleModels?.forEach((model: VehicleCategoryModel, i) => {
-  if(model?.imagenes?.jpg){
-    defineImage({
-      url: model.imagenes.jpg,
-    });
-  }
-});
+defineProps<CarruselProps>();
 </script>
-

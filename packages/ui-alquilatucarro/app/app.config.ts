@@ -22,7 +22,7 @@ export default defineAppConfig({
   // Organization: shared base + brand-specific overrides
   organization: {
     ...organizationConfig, // name, address, postalcode
-    logo: "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Flogo.png?alt=media&token=975cfe04-c619-44bc-964a-e6231ca92dfe",
+    logo: "/images/brand/logo.svg",
     brand: "Alquilatucarro",
     otherbrands: ["Alquilame", "Alquicarros"],
   },
@@ -40,11 +40,9 @@ export default defineAppConfig({
     title: "Alquiler de Carros en Colombia desde $32/día",
     description:
       "Alquila carros en Bogotá, Medellín, Cali y 16 ciudades más. Hasta 60% descuento por reserva anticipada. Sin pago previo. Flota renovada cada 2 años.",
-    logo: "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Flogo.png?alt=media&token=975cfe04-c619-44bc-964a-e6231ca92dfe",
-    oglogo:
-      "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Fog-logo.png?alt=media&token=609ec027-6040-466d-9364-d933f67d1e5f",
-    svglogo:
-      "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Flogo.svg?alt=media&token=ab04ed05-fef3-4b92-9c72-a7c459933c35",
+    logo: "/images/brand/logo.svg",
+    oglogo: "/images/brand/og-logo.png",
+    svglogo: "/images/brand/logo.svg",
     ogImage: "/img/og-alquilatucarro.jpg",
     phone: "+57 301 672 9250",
     whatsapp: "https://wa.me/573016729250",
@@ -85,7 +83,7 @@ export default defineAppConfig({
           name: "Stephany M. García",
           description: "Peru",
           avatar: {
-            src: "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Favatares%2Fuifaces-popular-image5.webp?alt=media&token=b6467738-4692-48dd-937c-16c81f715926",
+            src: "/images/avatares/uifaces-popular-image5.webp",
             alt: "Stephany M. García",
           },
         },
@@ -97,7 +95,7 @@ export default defineAppConfig({
           name: "Sandra Milena Barona",
           description: "Colombia",
           avatar: {
-            src: "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Favatares%2Fuifaces-popular-image4.webp?alt=media&token=5d545267-03e6-4e83-a081-4a16259805e2",
+            src: "/images/avatares/uifaces-popular-image4.webp",
             alt: "Sandra Milena Barona",
           },
         },
@@ -109,7 +107,7 @@ export default defineAppConfig({
           name: "Luis Javier Rodríguez M.",
           description: "Honduras",
           avatar: {
-            src: "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Favatares%2Fuifaces-popular-image3.webp?alt=media&token=54d9ed05-162a-4b20-a485-bdc87aaeb27f",
+            src: "/images/avatares/uifaces-popular-image3.webp",
             alt: "Luis Javier Rodríguez M.",
           },
         },
@@ -121,7 +119,7 @@ export default defineAppConfig({
           name: "Carlos Andrés Mejía",
           description: "Colombia",
           avatar: {
-            src: "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Favatares%2Fuifaces-popular-image2.webp?alt=media&token=24560311-369e-4f54-9a1a-36f0da7ec9f7",
+            src: "/images/avatares/uifaces-popular-image2.webp",
             alt: "Carlos Andrés Mejía",
           },
         },
@@ -133,7 +131,7 @@ export default defineAppConfig({
           name: "Ana Lucía Torres",
           description: "Ecuador",
           avatar: {
-            src: "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Favatares%2Fuifaces-human-image6.webp?alt=media&token=bb28b34b-f738-40ee-be58-e5fd35751da2",
+            src: "/images/avatares/uifaces-human-image6.webp",
             alt: "Ana Lucía Torres",
           },
         },
@@ -145,7 +143,7 @@ export default defineAppConfig({
           name: "Esteban Páez",
           description: "Colombia",
           avatar: {
-            src: "https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Favatares%2Fuifaces-popular-image.webp?alt=media&token=556252eb-f9e0-4cc5-832a-0e97d691b4d0",
+            src: "/images/avatares/uifaces-popular-image.webp",
             alt: "Esteban Páez",
           },
         },

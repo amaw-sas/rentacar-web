@@ -2,6 +2,7 @@ import type CategoryData from '../../src/utils/types/data/CategoryData'
 import type CategoryModelData from '../../src/utils/types/data/CategoryModelData'
 import type CategoryMonthPriceData from '../../src/utils/types/data/CategoryMonthPriceData'
 import type BranchData from '../../src/utils/types/data/BranchData'
+import type VehicleCategoryData from '../../src/utils/types/data/VehicleCategoryData'
 
 interface SupabaseCategory {
   id: string
@@ -15,6 +16,10 @@ interface SupabaseCategory {
   transmission: string
   status: string
   visibility_mode: string
+  group_label: string
+  short_description: string
+  long_description: string
+  tags: string[]
   category_models: SupabaseCategoryModel[]
   category_pricing: SupabaseCategoryPricing[]
 }
@@ -115,4 +120,21 @@ export function transformExtras(rentalCompany: {
     babySeatDayPrice: Number(rentalCompany.baby_seat_day_price),
     washPrice: Number(rentalCompany.wash_price),
   }
+}
+
+export function transformVehicleCategories(rows: SupabaseCategory[]): VehicleCategoryData {
+  const result: VehicleCategoryData = {}
+  for (const row of rows) {
+    result[row.code] = {
+      grupo: row.group_label || '',
+      descripcion_corta: row.short_description || '',
+      descripcion_larga: row.long_description || '',
+      tags: Array.isArray(row.tags) ? row.tags : [],
+      modelos: (row.category_models || []).map((m) => ({
+        nombre: m.name,
+        image: m.image_url || '',
+      })),
+    }
+  }
+  return result
 }

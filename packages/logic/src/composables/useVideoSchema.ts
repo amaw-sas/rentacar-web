@@ -68,7 +68,7 @@ export const usePromoVideoSchema = () => {
         name: 'Hasta 60% de Descuento en Alquiler de Carros - Reserva Ahora, Paga Después',
         description: 'Obtén hasta un 60% de descuento al reservar con anticipación. Aplica para todas las categorías: compactos, sedanes y camionetas. Reserva sin pago anticipado y asegura los mejores precios por planificar tu viaje con tiempo.',
         videoId: '_MVNhinVYHE',
-        thumbnailUrl: 'https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquilatucarro%2Fimg%2Fvideo.webp?alt=media&token=424d037e-4aab-47ef-af6f-0fa0caa24e7f',
+        thumbnailUrl: `${useAppConfig().franchise.website}/images/video/video.webp`,
         uploadDate: '2024-01-15T00:00:00-05:00',
         duration: 'PT1M'
     })

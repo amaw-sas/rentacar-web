@@ -410,28 +410,7 @@ export default defineNuxtConfig({
           `,
         },
       ],
-      // Preload imagen LCP - solo AVIF (97%+ soporte en móviles modernos)
-      link: [
-        { rel: 'preconnect', href: 'https://firebasestorage.googleapis.com', crossorigin: '' },
-        // Mobile AVIF
-        {
-          rel: 'preload',
-          as: 'image',
-          type: 'image/avif',
-          href: 'https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquicarros%2Fimg%2Ffamilia-movil.avif?alt=media&token=09ef76e8-4f99-4188-8d9a-57e13e198c4b',
-          media: '(max-width: 767px)',
-          fetchpriority: 'high',
-        },
-        // Desktop AVIF
-        {
-          rel: 'preload',
-          as: 'image',
-          type: 'image/avif',
-          href: 'https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Falquicarros%2Fimg%2Ffamilia.avif?alt=media&token=a14e3f1c-428e-40b2-ad1e-0d724579e487',
-          media: '(min-width: 768px)',
-          fetchpriority: 'high',
-        },
-      ],
+      link: [],
     },
   },
 

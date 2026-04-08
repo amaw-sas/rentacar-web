@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 // Note: composables are auto-imported by Nuxt
-import { defineAsyncComponent} from 'vue'
+import { defineAsyncComponent } from 'vue'
 const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 
 /** types */
@@ -167,6 +167,6 @@ const {
 } = storeToRefs(storeForm);
 
 /** vars */
-const { vehicleCategories } = useVehicleCategories();
+const { vehicleCategories } = useFetchRentacarData();
 
 </script>

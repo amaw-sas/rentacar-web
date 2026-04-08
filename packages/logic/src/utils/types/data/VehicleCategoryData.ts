@@ -1,12 +1,6 @@
-export interface VehicleCategoryImage {
-    avif: string;
-    webp: string;
-    jpg: string;
-  }
-  
 export interface VehicleCategoryModel {
     nombre: string;
-    imagenes: VehicleCategoryImage;
+    image: string;
 }
 
 export interface VehicleCategory {
@@ -20,4 +14,3 @@ export interface VehicleCategory {
 export default interface VehicleCategoryData {
     [key: string]: VehicleCategory;
 }
-  

@@ -35,28 +35,24 @@ const representativeCategories = [
     code: 'C',
     name: 'Económico',
     description: 'Vehículos compactos perfectos para ciudad. Fiat Mobi, Kia Picanto, Renault Kwid.',
-    image: 'https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Fcategorias%2Fgamac%2Fgrupo-c-kia-picanto-alquiler-de-carros.avif?alt=media',
     priceMultiplier: 1.0
   },
   {
     code: 'FX',
     name: 'Sedán Automático',
     description: 'Sedanes cómodos con transmisión automática. Kia Rio, Hyundai Accent, Suzuki Dzire.',
-    image: 'https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Fcategorias%2Fgrupofx%2Fgrupo-fx-kia-rio-alquiler-de-carros.avif?alt=media',
     priceMultiplier: 1.3
   },
   {
     code: 'GC',
     name: 'Camioneta SUV',
     description: 'Camionetas compactas ideales para familias. Suzuki Vitara, Hyundai Creta, Fiat Pulse.',
-    image: 'https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Fcategorias%2Fgrupogc%2Fgrupo-gc-suzuki-vitara-at-alquiler-de-camionetas.avif?alt=media',
     priceMultiplier: 1.8
   },
   {
     code: 'LE',
     name: 'Camioneta Premium',
     description: 'SUVs de lujo con todas las comodidades. Kia Sportage, Hyundai Tucson, Renault Koleos.',
-    image: 'https://firebasestorage.googleapis.com/v0/b/rentacar-403321.firebasestorage.app/o/rentacar-main%2Fcategorias%2Fgrupole%2Fgrupo-le-kia-sportage-alquiler-de-camionetas.avif?alt=media',
     priceMultiplier: 2.5
   }
 ]
@@ -68,12 +64,14 @@ const representativeCategories = [
  */
 export function useCityProductSchema(cityName: string, citySlug: string) {
   const { franchise } = useAppConfig()
+  const { vehicleCategories } = useFetchRentacarData()
 
   const pricing = cityPricing[cityName] || { lowPrice: 100000, highPrice: 400000 }
 
   const productSchemas = representativeCategories.map((category) => {
     const categoryLowPrice = Math.round(pricing.lowPrice * category.priceMultiplier)
     const categoryHighPrice = Math.round(pricing.highPrice * category.priceMultiplier)
+    const categoryImage = vehicleCategories?.[category.code]?.modelos?.[0]?.image || ''
 
     return <Product>{
       '@type': 'Product',
@@ -85,7 +83,7 @@ export function useCityProductSchema(cityName: string, citySlug: string) {
         '@type': 'Brand',
         name: 'Alquilatucarro'
       },
-      image: category.image,
+      image: categoryImage,
       offers: <AggregateOffer>{
         '@type': 'AggregateOffer',
         priceCurrency: 'COP',

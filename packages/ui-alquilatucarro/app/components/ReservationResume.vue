@@ -167,6 +167,6 @@ const {
 } = storeToRefs(storeForm);
 
 /** vars */
-const { vehicleCategories } = useVehicleCategories();
+const { vehicleCategories } = useFetchRentacarData();
 
 </script>
