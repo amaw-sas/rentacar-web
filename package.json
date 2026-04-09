@@ -105,7 +105,9 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/turndown": "^5.0.5",
+    "@vercel/blob": "^2.3.3",
     "cross-env": "^10.1.0",
+    "dotenv": "^17.4.1",
     "googleapis": "^170.1.0",
     "playwright": "^1.49.0",
     "tsx": "^4.19.0",
