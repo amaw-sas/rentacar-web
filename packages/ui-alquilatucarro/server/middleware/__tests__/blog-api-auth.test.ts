@@ -20,39 +20,6 @@ global.createError = mockCreateError as any
 global.defineEventHandler = mockDefineEventHandler as any
 global.getRequestIP = mockGetRequestIP as any
 
-// Mock firebase-storage (avoids #imports Nuxt virtual module not available in tests)
-vi.mock('../../utils/firebase-storage', () => ({
-  getFirebaseApp: vi.fn(() => ({}))
-}))
-
-// Mock Firebase Realtime Database - state storage per IP
-const rateLimitState: Record<string, { count: number; resetAt: number } | null> = {}
-
-const mockRef = vi.fn((path: string) => {
-  // Extract IP from path: blog-api/rate-limits/{ip}
-  const ip = path.split('/').pop() || 'unknown'
-
-  return {
-    transaction: vi.fn(async (updateFn) => {
-      const current = rateLimitState[ip] || null
-      const updated = updateFn(current)
-      rateLimitState[ip] = updated
-      return Promise.resolve({
-        snapshot: {
-          val: () => updated
-        }
-      })
-    })
-  }
-})
-const mockGetDatabase = vi.fn(() => ({
-  ref: mockRef
-}))
-
-vi.mock('firebase-admin/database', () => ({
-  getDatabase: mockGetDatabase
-}))
-
 // Mock logger
 vi.mock('../../utils/logger', () => ({
   logger: {
@@ -72,9 +39,6 @@ describe('blog-api-auth middleware', () => {
   beforeEach(async () => {
     // Reset mocks
     vi.clearAllMocks()
-
-    // Clear rate limit state
-    Object.keys(rateLimitState).forEach(key => delete rateLimitState[key])
 
     // Mock runtime config
     mockUseRuntimeConfig.mockReturnValue({
@@ -277,119 +241,22 @@ describe('blog-api-auth middleware', () => {
     })
   })
 
-  describe('Rate limiting', () => {
-    it('should allow requests under limit (100/hour)', async () => {
-      // Make 50 requests
-      for (let i = 0; i < 50; i++) {
-        const result = await middleware(mockEvent as H3Event)
-        expect(result).toBeUndefined()
-      }
+  // Rate limiting tests removed — the rate limiter is currently stubbed
+  // (always returns allowed: true). When Phase 3 reimplements rate limiting
+  // (Firebase RTDB → Supabase), these tests should be rewritten against
+  // the new storage backend.
 
-      expect(logger.error).not.toHaveBeenCalled()
-    })
-
-    it('should reject request exceeding 100 requests/hour', async () => {
-      // Make 100 requests (should all pass)
-      for (let i = 0; i < 100; i++) {
-        await middleware(mockEvent as H3Event)
-      }
-
-      // 101st request should fail
-      await expect(middleware(mockEvent as H3Event)).rejects.toThrow()
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'blog-api-auth-rate-limit',
-        expect.any(Error),
-        expect.objectContaining({
-          limit: 100
-        })
-      )
-    })
-
-    it('should track rate limits per IP separately', async () => {
-      const ip1Event = { ...mockEvent }
-      const ip2Event = {
-        ...mockEvent,
-        node: {
-          req: {
-            headers: { 'x-api-key': 'test-key-abc' },
-            socket: { remoteAddress: '9.8.7.6' }
-          },
-          res: {
-            setHeader: vi.fn()
-          }
-        }
-      }
-
-      // Make 100 requests from IP1
-      for (let i = 0; i < 100; i++) {
-        await middleware(ip1Event as H3Event)
-      }
-
-      // IP2 should still be able to make requests
-      const result = await middleware(ip2Event as H3Event)
-      expect(result).toBeUndefined()
-    })
-
-    it('should reset rate limit after 1 hour', async () => {
-      vi.useFakeTimers()
-      const now = Date.now()
-      vi.setSystemTime(now)
-
-      // Make 100 requests
-      for (let i = 0; i < 100; i++) {
-        await middleware(mockEvent as H3Event)
-      }
-
-      // 101st should fail
-      await expect(middleware(mockEvent as H3Event)).rejects.toThrow()
-
-      // Advance time by 1 hour + 1ms
-      vi.setSystemTime(now + 60 * 60 * 1000 + 1)
-
-      // Should allow requests again
-      const result = await middleware(mockEvent as H3Event)
-      expect(result).toBeUndefined()
-
-      vi.useRealTimers()
-    })
-
-    it('should set rate limit headers on success', async () => {
+  describe('Rate limit headers (stub always allows)', () => {
+    it('sets rate limit headers on successful request', async () => {
       await middleware(mockEvent as H3Event)
 
       const mockSetHeader = mockEvent.node!.res.setHeader as any
-      expect(mockSetHeader).toHaveBeenCalledWith(
-        'X-RateLimit-Limit',
-        '100'
-      )
-      expect(mockSetHeader).toHaveBeenCalledWith(
-        'X-RateLimit-Remaining',
-        expect.stringMatching(/^\d+$/)
-      )
+      expect(mockSetHeader).toHaveBeenCalledWith('X-RateLimit-Limit', '100')
+      expect(mockSetHeader).toHaveBeenCalledWith('X-RateLimit-Remaining', '100')
       expect(mockSetHeader).toHaveBeenCalledWith(
         'X-RateLimit-Reset',
         expect.stringMatching(/^\d+$/)
       )
-    })
-
-    it('should set rate limit headers on 429 error', async () => {
-      // Make 100 requests
-      for (let i = 0; i < 100; i++) {
-        await middleware(mockEvent as H3Event)
-      }
-
-      // 101st request should fail but should have headers
-      try {
-        await middleware(mockEvent as H3Event)
-        expect.fail('Should have thrown 429 error')
-      } catch (error: any) {
-        expect(error.statusCode).toBe(429)
-      }
-
-      const mockSetHeader = mockEvent.node!.res.setHeader as any
-      expect(mockSetHeader).toHaveBeenCalledWith('X-RateLimit-Limit', '100')
-      expect(mockSetHeader).toHaveBeenCalledWith('X-RateLimit-Remaining', '0')
-      expect(mockSetHeader).toHaveBeenCalledWith('X-RateLimit-Reset', expect.stringMatching(/^\d+$/))
     })
   })
 
@@ -403,22 +270,6 @@ describe('blog-api-auth middleware', () => {
       } catch (error: any) {
         expect(error.statusCode).toBe(401)
         expect(error.message).toContain('Unauthorized')
-      }
-    })
-
-    it('should return 429 for rate limit exceeded', async () => {
-      // Make 100 requests
-      for (let i = 0; i < 100; i++) {
-        await middleware(mockEvent as H3Event)
-      }
-
-      // 101st request
-      try {
-        await middleware(mockEvent as H3Event)
-        expect.fail('Should have thrown error')
-      } catch (error: any) {
-        expect(error.statusCode).toBe(429)
-        expect(error.message).toContain('Too many requests')
       }
     })
   })

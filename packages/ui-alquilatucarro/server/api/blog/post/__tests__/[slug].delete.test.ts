@@ -57,14 +57,16 @@ describe('DELETE /api/blog/post/[slug]', () => {
   })
 
   it('should delete post and referenced images, return summary', async () => {
+    const heroUrl = 'https://xxx.public.blob.vercel-storage.com/blog-images/featured/123-abc.webp'
+    const inlineUrl = 'https://xxx.public.blob.vercel-storage.com/blog-images/content/456-def.webp'
     const markdownWithImages = `---
 title: Test Post
 ---
-![hero](https://storage.googleapis.com/test-bucket.appspot.com/blog-images/featured/123-abc.webp)
+![hero](${heroUrl})
 
 Some text
 
-![inline](https://storage.googleapis.com/test-bucket.appspot.com/blog-images/content/456-def.webp)
+![inline](${inlineUrl})
 `
     mockDownloadFromStorage.mockResolvedValue(Buffer.from(markdownWithImages))
 
@@ -74,8 +76,8 @@ Some text
     expect(result.success).toBe(true)
     expect(result.deleted.post).toBe('blog-posts/alquilatucarro/my-post.md')
     expect(result.deleted.images).toHaveLength(2)
-    expect(result.deleted.images).toContain('blog-images/featured/123-abc.webp')
-    expect(result.deleted.images).toContain('blog-images/content/456-def.webp')
+    expect(result.deleted.images).toContain(heroUrl)
+    expect(result.deleted.images).toContain(inlineUrl)
     expect(mockDeleteFromStorage).toHaveBeenCalledTimes(3) // 2 images + 1 post
     expect(mockInvalidateCache).toHaveBeenCalledOnce()
   })
@@ -119,7 +121,7 @@ Some text
   })
 
   it('should delete post even if some image deletions fail (best-effort)', async () => {
-    const markdown = `![img](https://storage.googleapis.com/test-bucket.appspot.com/blog-images/featured/fail.webp)`
+    const markdown = `![img](https://xxx.public.blob.vercel-storage.com/blog-images/featured/fail.webp)`
     mockDownloadFromStorage.mockResolvedValue(Buffer.from(markdown))
     // First call (image) fails, second call (post) succeeds
     mockDeleteFromStorage

@@ -21,7 +21,6 @@
     "@nuxtjs/mdc": "^0.20.1",
     "@nuxtjs/seo": "3.2.2",
     "@rentacar-main/logic": "workspace:*",
-    "firebase-admin": "^13.6.1",
     "nuxt-llms": "^0.1.3",
     "nuxt-vitalizer": "2.0.0",
     "sharp": "^0.34.5",
