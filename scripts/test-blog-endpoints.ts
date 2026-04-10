@@ -27,7 +27,13 @@ config({ path: resolve(__dirname, '..', '.env.local') })
 
 const BASE_URL = process.env.BLOG_TEST_URL || 'http://localhost:3001'
 const API_KEY = process.env.NUXT_BLOG_API_KEY
-const FRANCHISE = 'alquilatucarro'
+
+// Detect franchise from URL pattern: rentacar-web-{franchise}-* or use localhost default
+function detectFranchise(url: string): string {
+  const match = url.match(/rentacar-web-(alquilatucarro|alquilame|alquicarros)/)
+  return match?.[1] || 'alquilatucarro'
+}
+const FRANCHISE = process.env.BLOG_TEST_FRANCHISE || detectFranchise(BASE_URL)
 const TEST_SLUG = `sanity-test-${Date.now()}`
 const TEST_IMAGE_PATH = resolve(__dirname, '..', 'packages/logic/public/images/flags/colombia-100-77.png')
 
