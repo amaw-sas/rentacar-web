@@ -1,8 +1,4 @@
-import { getFirestoreDb } from './firebase'
-import { readFileSync, existsSync } from 'fs'
-import { resolve } from 'path'
-
-const LOCAL_TOKENS_PATH = resolve(process.cwd(), 'server/data/.tokens/gsc-tokens.json')
+import { useSupabaseAdminClient } from '../../../logic/server/utils/supabase'
 
 interface GscTokens {
   access_token: string
@@ -24,57 +20,59 @@ interface GscSearchAnalyticsResponse {
   responseAggregationType?: string
 }
 
-const TOKENS_COLLECTION = 'seo_config'
-const TOKENS_DOC = 'gsc_tokens'
+const SINGLETON_ID = 'singleton'
 
 export async function getGscTokens(): Promise<GscTokens | null> {
-  // Try Firestore first
   try {
-    const db = getFirestoreDb()
-    const doc = await db.collection(TOKENS_COLLECTION).doc(TOKENS_DOC).get()
+    const supabase = useSupabaseAdminClient()
+    const { data, error } = await supabase
+      .from('gsc_tokens')
+      .select('*')
+      .eq('id', SINGLETON_ID)
+      .maybeSingle()
 
-    if (doc.exists) {
-      return doc.data() as GscTokens
+    if (error) {
+      console.error('Error getting GSC tokens from Supabase:', error)
+      return null
+    }
+
+    if (!data) {
+      return null
+    }
+
+    return {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token ?? undefined,
+      expires_at: typeof data.expires_at === 'string' ? Number(data.expires_at) : data.expires_at,
+      token_type: data.token_type,
+      scope: data.scope,
+      created_at: data.created_at,
     }
   } catch (error) {
-    console.error('Error getting GSC tokens from Firestore:', error)
+    console.error('Error getting GSC tokens:', error)
+    return null
   }
-
-  // Fallback to local file
-  try {
-    if (existsSync(LOCAL_TOKENS_PATH)) {
-      const content = readFileSync(LOCAL_TOKENS_PATH, 'utf-8')
-      const tokens = JSON.parse(content) as GscTokens
-      console.log('Using local GSC tokens from:', LOCAL_TOKENS_PATH)
-      return tokens
-    }
-  } catch (error) {
-    console.error('Error reading local GSC tokens:', error)
-  }
-
-  return null
 }
 
 export async function saveGscTokens(tokens: GscTokens): Promise<void> {
-  // Try Firestore first
-  try {
-    const db = getFirestoreDb()
-    await db.collection(TOKENS_COLLECTION).doc(TOKENS_DOC).set(tokens)
-    return
-  } catch (error) {
-    console.error('Error saving GSC tokens to Firestore:', error)
-  }
+  const supabase = useSupabaseAdminClient()
+  const { error } = await supabase
+    .from('gsc_tokens')
+    .upsert(
+      {
+        id: SINGLETON_ID,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token ?? null,
+        expires_at: tokens.expires_at,
+        token_type: tokens.token_type,
+        scope: tokens.scope,
+      },
+      { onConflict: 'id' }
+    )
 
-  // Fallback to local file
-  try {
-    const { writeFileSync, mkdirSync } = await import('fs')
-    const { dirname } = await import('path')
-    mkdirSync(dirname(LOCAL_TOKENS_PATH), { recursive: true })
-    writeFileSync(LOCAL_TOKENS_PATH, JSON.stringify(tokens, null, 2))
-    console.log('Saved GSC tokens to local file:', LOCAL_TOKENS_PATH)
-  } catch (error) {
-    console.error('Error saving local GSC tokens:', error)
-    throw error
+  if (error) {
+    console.error('Error saving GSC tokens to Supabase:', error)
+    throw new Error(`Failed to save GSC tokens: ${error.message}`)
   }
 }
 

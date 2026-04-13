@@ -3,26 +3,17 @@
  *
  * Protection layers:
  * 1. API key authentication (X-Api-Key header)
- * 2. Rate limiting (100 requests/hour per IP, backed by Firebase RTDB)
+ * 2. Rate limiting (100 requests/hour per IP, backed by Supabase RPC)
  *
  * Only applies to /api/blog/* endpoints (except public read endpoints).
  */
 
 import { createHmac, timingSafeEqual } from 'crypto'
-// TODO: Migrate rate limiting from Firebase RTDB to Supabase (Phase 3)
-// import { getDatabase } from 'firebase-admin/database'
 import { logger } from '../utils/logger'
 
 // Rate limit constants
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 hour in ms
+const RATE_LIMIT_WINDOW_SECONDS = 60 * 60 // 1 hour
 const RATE_LIMIT_MAX_REQUESTS = 100
-
-// Rate limit result interface
-interface RateLimitResult {
-  allowed: boolean
-  remaining: number
-  resetAt: number
-}
 
 /**
  * Extract client IP from request
@@ -75,16 +66,6 @@ function isApiKeyValid(apiKey: string | undefined, expectedKey: string): boolean
 }
 
 /**
- * Check rate limit for IP using Firebase Realtime Database
- * Ensures global state across all serverless instances
- */
-// TODO: Migrate rate limiting to Supabase (Phase 3)
-// Currently disabled — auth still enforced via API key
-async function checkRateLimit(_clientIp: string): Promise<RateLimitResult> {
-  return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS, resetAt: Date.now() + RATE_LIMIT_WINDOW }
-}
-
-/**
  * Main middleware handler
  */
 export default defineEventHandler(async (event) => {
@@ -129,8 +110,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 2. Rate limiting
-  const rateLimitResult = await checkRateLimit(clientIp)
+  // 2. Rate limiting (Supabase RPC, fail-open on errors)
+  const rateLimitResult = await checkBlogRateLimit(
+    clientIp,
+    RATE_LIMIT_MAX_REQUESTS,
+    RATE_LIMIT_WINDOW_SECONDS
+  )
 
   // Set headers BEFORE checking if allowed (ensure headers on ALL responses)
   event.node.res.setHeader('X-RateLimit-Limit', RATE_LIMIT_MAX_REQUESTS.toString())

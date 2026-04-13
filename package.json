@@ -104,6 +104,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
+    "@supabase/supabase-js": "^2.100.1",
     "@types/turndown": "^5.0.5",
     "@vercel/blob": "^2.3.3",
     "cross-env": "^10.1.0",

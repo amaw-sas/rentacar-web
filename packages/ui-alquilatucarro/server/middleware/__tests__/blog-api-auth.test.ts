@@ -14,11 +14,19 @@ const mockDefineEventHandler = vi.fn((handler) => handler)
 // Mock getRequestIP (H3 auto-import not available in test environment)
 const mockGetRequestIP = vi.fn((event: any) => event?.node?.req?.socket?.remoteAddress || null)
 
+// Mock checkBlogRateLimit (Nitro auto-import from logic layer not available in test environment)
+const mockCheckBlogRateLimit = vi.fn(async (_ip: string, limit = 100, windowSeconds = 3600) => ({
+  allowed: true,
+  remaining: limit,
+  resetAt: Date.now() + windowSeconds * 1000
+}))
+
 // Setup global mocks
 global.useRuntimeConfig = mockUseRuntimeConfig as any
 global.createError = mockCreateError as any
 global.defineEventHandler = mockDefineEventHandler as any
 global.getRequestIP = mockGetRequestIP as any
+;(global as any).checkBlogRateLimit = mockCheckBlogRateLimit
 
 // Mock logger
 vi.mock('../../utils/logger', () => ({
