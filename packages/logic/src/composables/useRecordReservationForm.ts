@@ -122,11 +122,10 @@ export default async function useRecordReservationForm() {
   }
 
   try {
+    // Endpoint is a same-origin Nuxt server route (/api/reservations/record)
+    // that proxies to the admin and injects the API key server-side.
     const response = await $fetch<RecordReservationApiData>(endpoint, {
       method: "POST",
-      headers: {
-        'X-API-Key': config.public.rentacarApiKey,
-      },
       body: formData,
     });
 

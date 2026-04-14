@@ -29,11 +29,10 @@ export default async function useFetchCategoriesAvailabilityData() {
   }
 
   try {
+    // Endpoint is a same-origin Nuxt server route (/api/reservations/availability)
+    // that proxies to the admin and injects the API key server-side.
     const response = await $fetch<CategoryAvailabilityData[]>(endpoint, {
       method: "POST",
-      headers: {
-        'X-API-Key': config.public.rentacarApiKey,
-      },
       body: {
         franchise: config.public.rentacarFranchise,
         pickupLocation: lugarRecogida.value,

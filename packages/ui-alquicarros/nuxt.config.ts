@@ -468,13 +468,15 @@ export default defineNuxtConfig({
     // Blog API security
     blogApiKey: '',
     blogApiAllowedIps: '',
+    // Rentacar admin (server-only — proxied via /api/reservations/*)
+    // Override with NUXT_RENTACAR_ADMIN_URL and NUXT_RENTACAR_ADMIN_API_KEY
+    rentacarAdminUrl: '',
+    rentacarAdminApiKey: '',
     // Public config (exposed to client)
     public: {
       rentacarFranchise: "alquicarros",
-      rentacarApiReservasDataEndpoint: "",
-      rentacarApiReservasFormRecordEndpoint: "",
-      rentacarApiReservasCategoriesAvailabilityEndpoint: "",
-      rentacarApiKey: "",
+      rentacarApiReservasFormRecordEndpoint: "/api/reservations/record",
+      rentacarApiReservasCategoriesAvailabilityEndpoint: "/api/reservations/availability",
       isTest: process.env.NODE_ENV === "test",
     },
   },
