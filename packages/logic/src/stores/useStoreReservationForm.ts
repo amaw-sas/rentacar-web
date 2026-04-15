@@ -8,6 +8,7 @@ import useStoreAdminData from './useStoreAdminData';
 
 // Internal dependencies - composables
 import useRecordReservationForm from '../composables/useRecordReservationForm';
+import { routeForReservationStatus } from '../utils/reservationStatusRoute';
 
 // Internal dependencies - utils
 import {
@@ -207,15 +208,14 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
       await useRecordReservationForm();
 
     if (dataRecord.value) {
-      console.log("record ok");
       isSubmittingForm.value = false;
-      
-      if(dataRecord.value.reservationStatus == "Pendiente")
-        navigateTo({path: "/pendiente"});
-      else if(dataRecord.value.reservationStatus == "Confirmado"){
-        navigateTo({path: `/reservado/${dataRecord.value.reserveCode}`});
-      }
-        
+
+      const route = routeForReservationStatus(
+        dataRecord.value.reservationStatus,
+        dataRecord.value.reserveCode,
+      );
+      if (route) navigateTo({ path: route });
+
       return;
     } else if (errorRecord.value)
       navigateTo({path: "/sindisponibilidad"});
