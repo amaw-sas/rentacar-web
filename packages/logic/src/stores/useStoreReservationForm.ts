@@ -201,15 +201,25 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     //   "Hubo un error al enviar la información. Por favor intentelo de nuevo.";
   };
 
-  // Strip `?reservar=` (and any other search/hash) from the current URL via
-  // history.replaceState BEFORE navigating to a result page. Without this,
-  // pressing the browser Back button restores a URL that causes the reservation
-  // slideover to auto-reopen on mount, leaving the underlying Searcher
-  // non-interactive due to Dialog modal focus-trap even with `:overlay="false"`.
+  // Strip the reservation UI state from the current URL via history.replaceState
+  // BEFORE navigating to a result page. Two pieces are cleared:
+  //   - `?reservar=<code>` query → otherwise Back auto-reopens the form slideover
+  //     and reka-ui Dialog modal lock blocks the Searcher even with `:overlay="false"`.
+  //   - `/categoria/<code>` path segment → otherwise Back auto-reopens the resume
+  //     slideover with a stale selectedCategory; a second submit from there hits
+  //     the admin with a consumed reference_token (or duplicate) and is rejected
+  //     as "sin_disponibilidad".
+  // Clearing both means Back lands on the bare search URL, doSearch refreshes
+  // availability, and the user starts a new reservation from a fresh state.
   const stripReservarParam = () => {
     if (!import.meta.client) return;
-    if (!window.location.search && !window.location.hash) return;
-    window.history.replaceState(window.history.state, '', window.location.pathname);
+    const cleanPath = window.location.pathname.replace(/\/categoria\/[^/]+$/, '');
+    const alreadyClean =
+      cleanPath === window.location.pathname &&
+      !window.location.search &&
+      !window.location.hash;
+    if (alreadyClean) return;
+    window.history.replaceState(window.history.state, '', cleanPath);
   };
 
   const submitForm = async (_event: FormSubmitEvent<ReservationFormValidationSchemaType | ReservationWithFlightFormValidationSchemaType>) => {

@@ -2,19 +2,21 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Validates the fix in packages/logic/src/stores/useStoreReservationForm.ts
- * (stripReservarParam) for the bug where pressing browser Back after a
- * reservation submission left the Searcher non-interactive.
+ * (stripReservarParam) for two back-button bugs after a reservation submit:
  *
- * Root cause: CategorySelectionSection writes `?reservar=<code>` into the URL
- * via history.replaceState when the form slideover opens. On Back, that URL
- * is restored, the watch auto-reopens the form slideover, and reka-ui Dialog
- * modal (default true on u-slideover) applies pointer-events: none on body
- * even with `:overlay="false"`, leaving the underlying Searcher blocked.
+ *   1. URL with `?reservar=<code>` auto-reopens the FORM slideover, and
+ *      reka-ui Dialog modal lock blocks the Searcher even with :overlay="false".
+ *   2. URL with `/categoria/<code>` (no query) auto-reopens the RESUME
+ *      slideover; a second submit from there reuses stale selectedCategory
+ *      state and the admin rejects it as sin_disponibilidad.
+ *
+ * Fix: strip BOTH pieces from the URL via history.replaceState before
+ * navigateTo, so Back lands on the bare search URL.
  *
  * These tests exercise the OBSERVABLE MECHANISM both sides:
- *   1. URL with `?reservar=X` reproduces the lockout symptom (baseline).
- *   2. URL without `?reservar=X` (the state the fix guarantees before
- *      navigateTo) leaves the Searcher interactive.
+ *   - Baseline: URL with `?reservar=X` locks body pointer-events.
+ *   - Baseline: URL with only `/categoria/X` auto-opens a dialog.
+ *   - Fix mechanism: bare search URL leaves Searcher interactive, no dialog.
  *
  * They do not submit a real reservation against the admin backend.
  */
@@ -63,7 +65,34 @@ test.describe('Reservation Back URL cleanup — Searcher stays interactive', () 
     expect(bodyPointerEvents).toBe('none');
   });
 
-  test('fix: URL without ?reservar=<code> leaves body interactive and Searcher select clickable', async ({ page }) => {
+  test('baseline: URL with /categoria/<code> (no query) auto-opens resume slideover', async ({ page }) => {
+    await page.goto(searchPath);
+    await page.waitForLoadState('networkidle');
+
+    const code = await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button')).map(
+        (b) => b.textContent ?? '',
+      );
+      for (const text of buttons) {
+        const m = text.match(/Grupo\s+([A-Z0-9]+)\s*\(/);
+        if (m) return m[1];
+      }
+      return null;
+    });
+
+    test.skip(!code, 'No se detectaron categorías renderizadas');
+
+    // Only /categoria/<code> — no ?reservar=. This is exactly the URL the old
+    // fix left behind on Back, and the state that drove the second bug.
+    await page.goto(`${searchPath}/categoria/${code}`);
+    await page.waitForLoadState('networkidle');
+
+    // At least one dialog (resume slideover) must auto-open.
+    const dialog = page.locator('[role="dialog"]').first();
+    await expect(dialog).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('fix: bare search URL (no /categoria/, no ?reservar=) leaves body interactive and Searcher clickable', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(searchPath);
     await page.waitForLoadState('networkidle');

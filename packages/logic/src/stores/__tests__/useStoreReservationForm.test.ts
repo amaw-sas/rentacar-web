@@ -2,19 +2,21 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-// Scenario captured: the reservation form lives inside a u-slideover (reka-ui
-// DialogRoot, modal: true). When submitForm redirects to /reservado,
-// /pendiente or /sindisponibilidad, the URL still carries `?reservar=<code>`
-// because it was written there via history.replaceState when the slideover
-// opened (CategorySelectionSection.vue). On browser Back, that URL restores
-// and the page's watcher auto-reopens the slideover, leaving the underlying
-// Searcher non-interactive due to Dialog modal focus-trap even with
-// `:overlay="false"`. Fix: strip the query string (and hash) via
-// history.replaceState BEFORE calling navigateTo.
+// Scenarios captured: the reservation form lives inside a u-slideover (reka-ui
+// DialogRoot, modal: true). Two back-button bugs stem from URL state leaking
+// past submitForm:
+//   1. `?reservar=<code>` query → Back auto-reopens the form slideover and
+//      Dialog modal lock blocks the Searcher.
+//   2. `/categoria/<code>` path segment → Back auto-reopens the resume
+//      slideover with stale selectedCategory; a second submit hits the admin
+//      with a consumed reference_token and is rejected as sin_disponibilidad.
+// Fix: strip both the query/hash AND the /categoria/<code> segment via
+// history.replaceState BEFORE calling navigateTo, so Back lands on the bare
+// search URL and the user restarts from a fresh state.
 //
 // These tests are source-level to avoid mocking Pinia + Nuxt auto-imports;
-// they guarantee the cleanup call exists before every navigation site and
-// stays client-side guarded.
+// they guarantee the cleanup call exists before every navigation site, stays
+// client-side guarded, and strips both URL pieces.
 
 const source = readFileSync(
   fileURLToPath(new URL('../useStoreReservationForm.ts', import.meta.url)),
@@ -33,14 +35,18 @@ describe('useStoreReservationForm — submitForm URL cleanup before navigate', (
     expect(submitFormBlock).toContain('navigateTo')
   })
 
-  it('declares a stripReservarParam helper that is client-guarded', () => {
+  it('declares a stripReservarParam helper that is client-guarded and strips both query and /categoria/<code>', () => {
     expect(source).toMatch(/const stripReservarParam = \(\) => \{/)
     const helperStart = source.indexOf('const stripReservarParam')
     const helperEnd = source.indexOf('\n  };', helperStart) + '\n  };'.length
     const helperBlock = source.slice(helperStart, helperEnd)
     expect(helperBlock).toContain('import.meta.client')
     expect(helperBlock).toContain('window.history.replaceState')
-    expect(helperBlock).toContain('window.location.pathname')
+    // Must strip the /categoria/<code> path segment (second bug) and also
+    // account for query/hash (first bug).
+    expect(helperBlock).toMatch(/\\\/categoria\\\/\[\^\/\]\+\$/)
+    expect(helperBlock).toContain('window.location.search')
+    expect(helperBlock).toContain('window.location.hash')
   })
 
   it('strips reservar param before navigating on the success path', () => {
