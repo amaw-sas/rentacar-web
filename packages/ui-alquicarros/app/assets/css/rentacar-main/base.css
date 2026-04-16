@@ -437,19 +437,10 @@ header [data-highlighted],
 }
 
 /* Fix navigation buttons positioning - all buttons were stacked with position:absolute */
-/* Force all calendar buttons to relative positioning and visibility */
-.calendar-light button {
+.calendar-light > div:first-child button {
     position: relative !important;
     left: auto !important;
     right: auto !important;
-    transform: none !important;
-}
-
-/* Ensure header/navigation area uses flexbox layout */
-.calendar-light > div:first-child {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
 }
 
 /* Fix: UModal centering — Tailwind v4/v3 double-translate conflict */
@@ -478,8 +469,7 @@ header [data-highlighted],
 }
 
 /* Position close button higher to differentiate from content */
-/* Exclude calendar navigation buttons from absolute positioning */
-[role="dialog"] [data-slot="header"] button:not(.calendar-light button) {
+[role="dialog"] [data-slot="header"] button {
     position: absolute !important;
     top: 0.5rem !important;
     right: 0.75rem !important;

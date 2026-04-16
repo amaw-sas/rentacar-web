@@ -12,8 +12,13 @@
                 <u-progress class="w-full py-3" v-model="progress" />
             </u-form-field>
         </div>
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm">
-            <u-form-field label="Período de alquiler" size="xl">
+        <div class="bg-white rounded-xl p-2 shadow-sm">
+            <u-form-field label="Día de recogida" size="xl">
+                <u-progress class="w-full py-3" v-model="progress" />
+            </u-form-field>
+        </div>
+        <div class="bg-white rounded-xl p-2 shadow-sm">
+            <u-form-field label="Día de devolución" size="xl">
                 <u-progress class="w-full py-3" v-model="progress" />
             </u-form-field>
         </div>
