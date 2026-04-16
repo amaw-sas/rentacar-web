@@ -201,6 +201,17 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     //   "Hubo un error al enviar la información. Por favor intentelo de nuevo.";
   };
 
+  // Strip `?reservar=` (and any other search/hash) from the current URL via
+  // history.replaceState BEFORE navigating to a result page. Without this,
+  // pressing the browser Back button restores a URL that causes the reservation
+  // slideover to auto-reopen on mount, leaving the underlying Searcher
+  // non-interactive due to Dialog modal focus-trap even with `:overlay="false"`.
+  const stripReservarParam = () => {
+    if (!import.meta.client) return;
+    if (!window.location.search && !window.location.hash) return;
+    window.history.replaceState(window.history.state, '', window.location.pathname);
+  };
+
   const submitForm = async (_event: FormSubmitEvent<ReservationFormValidationSchemaType | ReservationWithFlightFormValidationSchemaType>) => {
     isSubmittingForm.value = true;
 
@@ -214,11 +225,16 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
         dataRecord.value.reservationStatus,
         dataRecord.value.reserveCode,
       );
-      if (route) navigateTo({ path: route });
+      if (route) {
+        stripReservarParam();
+        navigateTo({ path: route });
+      }
 
       return;
-    } else if (errorRecord.value)
+    } else if (errorRecord.value) {
+      stripReservarParam();
       navigateTo({path: "/sindisponibilidad"});
+    }
 
     isSubmittingForm.value = false;
   };
