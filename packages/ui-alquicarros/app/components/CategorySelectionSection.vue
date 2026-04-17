@@ -163,13 +163,13 @@
             <u-button
               color="neutral"
               size="xl"
-              class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 text-white"
+              class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
               :loading="isSubmittingForm"
               :disabled="isSubmittingForm"
               @click="reservationFormComponent.submit()"
               >Solicitar reserva
               <template #trailing>
-                <ChevronRightIcon cls="size-5" />
+                <ChevronRightIcon v-if="!isSubmittingForm" cls="size-5" />
               </template>
             </u-button>
           </template>

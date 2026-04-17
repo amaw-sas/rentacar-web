@@ -17,13 +17,13 @@
           <ChevronLeftIcon cls="size-5" />
         </template>
       </u-button>
-      <u-button 
+      <u-button
         type="submit"
         :loading="isSubmittingForm"
         :disabled="isSubmittingForm"
         >Solicitar reserva
         <template #trailing>
-          <ChevronRightIcon cls="size-5" />
+          <ChevronRightIcon v-if="!isSubmittingForm" cls="size-5" />
         </template>
       </u-button>
     </div>
