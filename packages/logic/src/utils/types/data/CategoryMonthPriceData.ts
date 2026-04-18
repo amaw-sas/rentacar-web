@@ -6,4 +6,5 @@ export default interface CategoryMonthPriceData {
   end_date: string;
   total_insurance_price: number;
   one_day_price: number;
+  status: "active" | "inactive";
 }

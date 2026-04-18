@@ -20,6 +20,11 @@ export * from './useValidateFunctions';
 export { slugify } from './slugify';
 
 // ============================================================================
+// Pricing
+// ============================================================================
+export { pickPriceForDate } from './pickPriceForDate';
+
+// ============================================================================
 // Type Definitions - Data
 // ============================================================================
 export type { default as BranchData } from './types/data/BranchData';

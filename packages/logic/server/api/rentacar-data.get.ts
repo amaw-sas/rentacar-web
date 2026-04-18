@@ -41,6 +41,10 @@ export default defineCachedEventHandler(async () => {
     vehicleCategories: transformVehicleCategories(categoriesResult.data),
   }
 }, {
+  // TODO(perf+seo): revisit cache strategy before launch. 1h is fine while in
+  // alpha but pricing edits in admin take up to 1h to surface. Options:
+  // shorter maxAge, swr revalidation, or tag-based invalidation triggered
+  // from the admin write path.
   maxAge: 3600,
   name: 'rentacar-data',
 })

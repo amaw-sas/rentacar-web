@@ -64,6 +64,7 @@ describe('transformCategories', () => {
       end_date: '2025-12-30',
       total_insurance_price: 476000,
       one_day_price: 220000,
+      status: 'active',
     })
   })
 
@@ -101,9 +102,10 @@ describe('transformCategories', () => {
     expect(prices['3k_kms']).toBe(0)
     expect(prices.total_insurance_price).toBe(0)
     expect(prices.one_day_price).toBe(340000)
+    expect(prices.status).toBe('active')
   })
 
-  it('filters out inactive pricing', () => {
+  it('passes through inactive pricing rows so the client can use them as fallback', () => {
     const input = [{
       id: 'uuid-3',
       code: 'G4',
@@ -124,7 +126,9 @@ describe('transformCategories', () => {
     }]
 
     const result = transformCategories(input)
-    expect(result[0].month_prices).toHaveLength(1)
+    expect(result[0].month_prices).toHaveLength(2)
+    expect(result[0].month_prices.find(p => p.status === 'inactive')).toBeDefined()
+    // total_coverage_unit_charge prefers active rows
     expect(result[0].total_coverage_unit_charge).toBe(40000)
   })
 })

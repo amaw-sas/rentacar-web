@@ -62,9 +62,13 @@ export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
       default: m.is_default,
     }))
 
-    const activePricing = (row.category_pricing || []).filter((p) => p.status === 'active')
+    const allPricing = row.category_pricing || []
+    const activePricing = allPricing.filter((p) => p.status === 'active')
 
-    const monthPrices: CategoryMonthPriceData[] = activePricing.map((p) => ({
+    // Pass through both active and inactive rows so the client can use
+    // inactive (legacy) rows as fallback when pickup date is outside any
+    // active validity range. Selection logic lives in pickPriceForDate.
+    const monthPrices: CategoryMonthPriceData[] = allPricing.map((p) => ({
       '1k_kms': p.monthly_1k_price ?? 0,
       '2k_kms': p.monthly_2k_price ?? 0,
       '3k_kms': p.monthly_3k_price ?? 0,
@@ -72,11 +76,11 @@ export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
       end_date: p.valid_until || '',
       total_insurance_price: p.monthly_insurance_price ?? 0,
       one_day_price: p.monthly_one_day_price ?? 0,
+      status: p.status === 'inactive' ? 'inactive' : 'active',
     }))
 
-    const coverageCharge = activePricing.length > 0
-      ? Number(activePricing[0].total_coverage_unit_charge)
-      : 0
+    const coverageSource = activePricing[0] ?? allPricing[0]
+    const coverageCharge = coverageSource ? Number(coverageSource.total_coverage_unit_charge) : 0
 
     return {
       id: row.code as CategoryData['id'],

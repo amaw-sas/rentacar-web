@@ -8,6 +8,9 @@ import useMoneyFormat from './useMoneyFormat';
 // Internal dependencies - stores
 import useStoreReservationForm from '../stores/useStoreReservationForm';
 
+// Internal dependencies - utils
+import { pickPriceForDate } from '@rentacar-main/logic/utils';
+
 // Types
 import type {
   CategoryAvailabilityData,
@@ -22,7 +25,7 @@ const { moneyFormat } = useMoneyFormat();
 export default function useCategory(categoryAvailableData: CategoryAvailabilityData){
 
    const storeForm = useStoreReservationForm();
-   const { haveMonthlyReservation } = storeToRefs(storeForm);
+   const { haveMonthlyReservation, fechaRecogida } = storeToRefs(storeForm);
 
    // extras pricing from Supabase (rental_companies table)
    const { extras } = useFetchRentacarData();
@@ -75,8 +78,17 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       price !== undefined ? moneyFormat(price) : "";
    
    // category functions
-   const getCategoryMonthPrice = (): CategoryMonthPriceData | undefined => 
-      categoryMonthPrices.value ? categoryMonthPrices.value[0] : undefined;
+
+   /**
+    * Returns the monthly pricing row whose validity range contains the
+    * customer's pickup date. Falls back to the closest legacy (inactive)
+    * row when pickup is outside any active range. See pickPriceForDate
+    * for the full selection algorithm.
+    */
+   const getCategoryMonthPrice = (): CategoryMonthPriceData | undefined => {
+      if (!categoryMonthPrices.value) return undefined;
+      return pickPriceForDate(categoryMonthPrices.value, fechaRecogida.value ?? '');
+   };
    
    const hasPicoyPlaca = (): boolean => 
       (categoryCode.value) ? ["FU", "FL", "GL", "LY", "LP"].includes(categoryCode.value) : false;
