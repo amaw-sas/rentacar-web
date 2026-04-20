@@ -99,7 +99,7 @@ describe('record.post', () => {
       rentacarAdminUrl: 'https://admin.example.com',
       rentacarAdminApiKey: 'secret-key',
     })
-    mockReadBody.mockResolvedValue({ fullname: 'Juan Perez', franchise: 'alquilatucarro' })
+    mockReadBody.mockResolvedValue({ fullname: 'Juan Perez', franchise: 'alquilame' })
     mockFetch.mockResolvedValue({ id: 'res-123', reservation_code: 'AV78' })
 
     const handler = await loadRecord()
@@ -123,8 +123,8 @@ describe('record.post', () => {
     })
     mockReadBody.mockResolvedValue({
       fullname: 'Juan Perez',
-      franchise: 'alquilatucarro',
-      monthly_mileage: '1k_kms',
+      franchise: 'alquilame',
+      monthly_mileage: '3k_kms',
       total_price: 1000000,
       total_price_to_pay: 1190000,
     })
@@ -137,7 +137,7 @@ describe('record.post', () => {
       'https://admin.example.com/api/reservations',
       expect.objectContaining({
         body: expect.objectContaining({
-          monthly_mileage: '1k_kms',
+          monthly_mileage: '3k_kms',
           total_price_to_pay: 1190000,
         }),
       })

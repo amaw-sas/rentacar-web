@@ -1,4 +1,5 @@
 import { type CategoryType } from '../type/CategoryType';
+import { type MonthlyMileage } from '../type/MonthlyMileage';
 
 export default interface FormFields {
   fullname: string | null;
@@ -22,6 +23,7 @@ export default interface FormFields {
   tax_fee: number | undefined;
   iva_fee: number | undefined;
   total_price: number | undefined;
+  total_price_to_pay?: number;
   franchise: string | null;
   user?: string | null;
   total_insurance?: number | null;
@@ -33,4 +35,5 @@ export default interface FormFields {
   flight?: number | undefined;
   aeroline?: string | null;
   flight_number?: string | null;
+  monthly_mileage?: MonthlyMileage | null;
 }
