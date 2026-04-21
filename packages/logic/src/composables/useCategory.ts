@@ -226,10 +226,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
          return (
             (totalAmount.value ?? 0) +
             (coverageTotalAmount.value ?? 0) +
-            (returnFee) +
-            ((withExtraDriver.value) ? getExtraDriverPrice.value : 0 ) +
-            ((withBabySeat.value) ? getBabySeatPrice.value : 0 ) +
-            ((withWash.value) ? getWashPrice.value : 0)
+            returnFee
          );
       }
       
