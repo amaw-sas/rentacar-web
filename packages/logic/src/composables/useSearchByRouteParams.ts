@@ -34,6 +34,7 @@ export default function useSearchByRouteParams() {
       fechaDevolucion,
       horaRecogida,
       horaDevolucion,
+      referido,
     } = storeToRefs(storeForm);
 
     // Convert slugs from route params to branch codes
@@ -48,6 +49,7 @@ export default function useSearchByRouteParams() {
     lugarDevolucion.value = branchDevolucion?.code ?? null;
     fechaRecogida.value = route.params.fecha_recogida as string;
     fechaDevolucion.value = route.params.fecha_devolucion as string;
+    referido.value = (route.params.referido as string | undefined) ?? null;
 
     // Parse times (supporting both 12h and 24h formats)
     const pickupTimeString = route.params.hora_recogida as string;
