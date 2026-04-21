@@ -168,14 +168,14 @@
         <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
             <u-form-field label="Día de devolución" size="xl">
                 <input
-                    v-if="minPickupDate"
+                    v-if="minReturnDate"
                     type="date"
                     id="return-date-mobile"
                     name="return-date-mobile"
                     v-model="selectedReturnDate"
                     aria-label="Día de devolución"
                     class="w-full"
-                    :min="minPickupDate.toString()"
+                    :min="minReturnDate.toString()"
                     :max="maxReturnDate?.toString()"
                 >
             </u-form-field>
@@ -185,12 +185,12 @@
         <div class="bg-white rounded-xl p-2 shadow-sm hidden sm:block">
             <u-form-field label="Día de devolución" size="xl">
                 <u-input-date
-                    v-if="minPickupDate"
+                    v-if="minReturnDate"
                     id="return-date"
                     v-model="selectedReturnDate"
                     variant="ghost"
                     class="w-full"
-                    :min-value="minPickupDate"
+                    :min-value="minReturnDate"
                     :max-value="maxReturnDate"
                     @click="returnDateCalendarOpen = true"
                 >
@@ -214,7 +214,7 @@
                                 <u-calendar
                                     v-model="selectedReturnDate"
                                     class="p-2 calendar-light"
-                                    :min-value="minPickupDate"
+                                    :min-value="minReturnDate"
                                     :max-value="maxReturnDate"
                                     color="success"
                                     :ui="calendarUIConfig"
@@ -333,6 +333,7 @@ const minPickupDate = ref<any>(null);
 const maxReturnDate = ref<any>(null);
 const selectedPickupDate = ref<any>(null);
 const selectedReturnDate = ref<any>(null);
+const minReturnDate = computed<any>(() => selectedPickupDate.value ?? minPickupDate.value);
 const pendingSearching = ref<boolean>(false);
 const sortedBranches = ref<any[]>([]);
 const pickupHourOptions = ref<any[]>([]);
