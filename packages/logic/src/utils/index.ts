@@ -23,6 +23,7 @@ export { slugify } from './slugify';
 // Pricing
 // ============================================================================
 export { pickPriceForDate } from './pickPriceForDate';
+export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 
 // ============================================================================
 // Type Definitions - Data

@@ -9,7 +9,7 @@ import useMoneyFormat from './useMoneyFormat';
 import useStoreReservationForm from '../stores/useStoreReservationForm';
 
 // Internal dependencies - utils
-import { pickPriceForDate } from '@rentacar-main/logic/utils';
+import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -96,7 +96,16 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const hasReturnFee = (): boolean => returnFeeAmount.value ? true  : false;
    
    const hasExtraHours = (): boolean => extraHoursQuantity.value ? true : false;
-   
+
+   /**
+    * Floors the total coverage charge at the basic charge. Keeps "Seguro
+    * Total" from ever rendering cheaper than "Seguro Básico" when Supabase
+    * data is inverted. See pickEffectiveTotalCoverageUnitCharge.
+    */
+   const effectiveTotalCoverageUnitCharge = computed<number>(() =>
+      pickEffectiveTotalCoverageUnitCharge(totalCoverageUnitCharge.value, coverageUnitCharge.value)
+   );
+
    //TODO change the following when there's total coverage and/or monthly price
    
    const getDailyPrice = computed<number>(() => {
@@ -116,7 +125,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
          
          // return getSubtotal.value + getTaxFeePrice.value + getIVAFeePrice.value;
          // daily price with total coverage
-         return vehicleDayCharge.value + totalCoverageUnitCharge.value;
+         return vehicleDayCharge.value + effectiveTotalCoverageUnitCharge.value;
       }
       else if(haveMonthlyReservation.value && withMileage.value){
          const mileage = withMileage.value;
@@ -150,7 +159,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       
    });
    
-   const getTotalCoveragePrice = computed<number>(() => totalCoverageUnitCharge.value * coverageQuantity.value);
+   const getTotalCoveragePrice = computed<number>(() => effectiveTotalCoverageUnitCharge.value * coverageQuantity.value);
    
    const getSubtotal = computed<number>(() => {
       return (withTotalCoverage.value)
@@ -215,8 +224,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       else {
          // default price, this price has not iva and tax fee
          return (
-            (totalAmount.value ?? 0) + 
-            (coverageTotalAmount.value ?? 0) + 
+            (totalAmount.value ?? 0) +
+            (coverageTotalAmount.value ?? 0) +
             (returnFee) +
             ((withExtraDriver.value) ? getExtraDriverPrice.value : 0 ) +
             ((withBabySeat.value) ? getBabySeatPrice.value : 0 ) +
@@ -328,7 +337,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    /** currency formatted prices */
    const currencyVehicleDayCharge = computed<string>(() => getFormattedPrice(vehicleDayCharge.value));
    const currencyExtraHoursPrice = computed<string>(() => getFormattedPrice(extraHoursTotalAmount.value));
-   const currencyTotalCoverageDailyPrice = computed<string>(() => getFormattedPrice(totalCoverageUnitCharge.value));
+   const currencyTotalCoverageDailyPrice = computed<string>(() => getFormattedPrice(effectiveTotalCoverageUnitCharge.value));
    const currencyCoverageDailyPrice = computed<string>(() => getFormattedPrice(coverageUnitCharge.value));
    const currencyCoveragePrice = computed<string>(() => getFormattedPrice(coverageTotalAmount.value));
    const currencyReturnFee = computed<string>(() => getFormattedPrice(returnFeeAmount.value));
