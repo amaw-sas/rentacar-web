@@ -95,4 +95,34 @@ describe('pickPriceForDate', () => {
     const result = pickPriceForDate([olderLegacy, newerLegacy], '2026-02-15')
     expect(result?.init_date).toBe('2024-01-15')
   })
+
+  it('falls back to season-low active row when no legacy is available', () => {
+    // Scenario: category has seasonal 2026 rows but no legacy inactive row.
+    // Pickup far in the future (2028) falls outside every active range.
+    // Instead of returning undefined (which renders as $0 in the UI), the
+    // selector should return the cheapest active row — i.e. a low-season
+    // month — so the user sees a plausible reference price.
+    const result = pickPriceForDate(SEASONAL_2026, '2028-03-15')
+    expect(result?.status).toBe('active')
+    expect(result?.['1k_kms']).toBe(3_806_000)
+  })
+
+  it('prefers legacy over season-low fallback when both are available', () => {
+    // Regression guard: the original "fall back to inactive legacy" behaviour
+    // must keep winning over the new season-low fallback.
+    const prices = [...SEASONAL_2026, LEGACY_2024_2025]
+    const result = pickPriceForDate(prices, '2028-03-15')
+    expect(result?.status).toBe('inactive')
+    expect(result?.init_date).toBe('2024-01-15')
+  })
+
+  it('breaks ties in season-low fallback by most recent init_date', () => {
+    // Multiple active rows share the minimum price. Pick the one with the
+    // latest init_date (consistent with how the primary active branch
+    // resolves overlap).
+    const result = pickPriceForDate(SEASONAL_2026, '2028-03-15')
+    // Among the five 3_806_000 rows (may, aug, sep, nov), november is the
+    // most recent.
+    expect(result?.init_date).toBe('2026-11-01')
+  })
 })

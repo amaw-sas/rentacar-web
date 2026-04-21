@@ -19,7 +19,11 @@ const distanceToRange = (pickupMs: number, initIso: string, endIso: string): num
  *      (treated as "more specific / newer").
  *   2. If none match, fall back to the inactive (legacy) row whose validity
  *      range is closest in time to pickup date.
- *   3. Returns undefined when prices is empty or pickup is missing.
+ *   3. If there is no legacy row either, fall back to the cheapest active
+ *      row (season-low). Ties are broken by most recent `init_date`. This
+ *      prevents categories with no `inactive` row from rendering as $0 when
+ *      pickup falls outside every active range.
+ *   4. Returns undefined when prices is empty or pickup is missing.
  */
 export function pickPriceForDate(
   prices: CategoryMonthPriceData[],
@@ -30,8 +34,9 @@ export function pickPriceForDate(
   const pickupMs = toMs(pickupDate)
   if (Number.isNaN(pickupMs)) return undefined
 
-  const activeMatch = prices
-    .filter((p) => p.status === 'active')
+  const actives = prices.filter((p) => p.status === 'active')
+
+  const activeMatch = actives
     .filter((p) => {
       const initMs = toMs(p.init_date)
       const endMs = p.end_date ? toMs(p.end_date) : Number.POSITIVE_INFINITY
@@ -46,5 +51,15 @@ export function pickPriceForDate(
     .map((p) => ({ p, dist: distanceToRange(pickupMs, p.init_date, p.end_date) }))
     .sort((a, b) => a.dist - b.dist)
 
-  return legacy[0]?.p
+  if (legacy.length > 0) return legacy[0].p
+
+  const seasonLow = actives
+    .slice()
+    .sort((a, b) => {
+      const delta = a['1k_kms'] - b['1k_kms']
+      if (delta !== 0) return delta
+      return b.init_date.localeCompare(a.init_date)
+    })
+
+  return seasonLow[0]
 }
