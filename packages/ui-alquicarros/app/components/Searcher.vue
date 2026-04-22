@@ -152,11 +152,9 @@
                                     color="success"
                                     :ui="calendarUIConfig"
                                     :month-controls="true"
-                                    :year-controls="true"
+                                    :year-controls="false"
                                     :prev-month="{ color: 'gray', variant: 'soft' }"
                                     :next-month="{ color: 'gray', variant: 'soft' }"
-                                    :prev-year="{ color: 'gray', variant: 'soft' }"
-                                    :next-year="{ color: 'gray', variant: 'soft' }"
                                 />
                             </template>
                         </u-popover>
@@ -219,11 +217,9 @@
                                     color="success"
                                     :ui="calendarUIConfig"
                                     :month-controls="true"
-                                    :year-controls="true"
+                                    :year-controls="false"
                                     :prev-month="{ color: 'gray', variant: 'soft' }"
                                     :next-month="{ color: 'gray', variant: 'soft' }"
-                                    :prev-year="{ color: 'gray', variant: 'soft' }"
-                                    :next-year="{ color: 'gray', variant: 'soft' }"
                                 />
                             </template>
                         </u-popover>
