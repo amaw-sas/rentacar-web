@@ -134,10 +134,10 @@ describe('transformCategories', () => {
 })
 
 describe('transformBranches', () => {
-  it('maps Supabase location to BranchData interface', () => {
+  it('prefers cities.slug (canonical) over legacy city text', () => {
     const input = [
-      { id: 'uuid-a', code: 'AABOT', name: 'Bogotá Aeropuerto', city: 'bogota', slug: 'bogota-aeropuerto', schedule: { display: 'Lun-Dom 24 horas | Festivos 06:00-21:00' }, status: 'active' },
-      { id: 'uuid-b', code: 'AAMDL', name: 'Medellín Aeropuerto José María Córdoba', city: 'medellin', slug: 'medellin-aeropuerto-jose-maria-cordoba', schedule: { display: 'Todos los días 06:00-23:00' }, status: 'active' },
+      { id: 'uuid-a', code: 'AABOT', name: 'Bogotá Aeropuerto', city: 'Bogotá', slug: 'bogota-aeropuerto', schedule: { display: 'Lun-Dom 24 horas | Festivos 06:00-21:00' }, status: 'active', cities: { slug: 'bogota' } },
+      { id: 'uuid-b', code: 'AAMDL', name: 'Medellín Aeropuerto José María Córdoba', city: 'Medellin', slug: 'medellin-aeropuerto-jose-maria-cordoba', schedule: { display: 'Todos los días 06:00-23:00' }, status: 'active', cities: { slug: 'medellin' } },
     ]
 
     const result = transformBranches(input)
@@ -151,11 +151,21 @@ describe('transformBranches', () => {
       slug: 'bogota-aeropuerto',
       schedule: 'Lun-Dom 24 horas | Festivos 06:00-21:00',
     })
+    expect(result[1].city).toBe('medellin')
+  })
+
+  it('falls back to legacy city text when cities join is null (safety net for unmigrated rows)', () => {
+    const input = [
+      { id: 'uuid-c', code: 'ACBOT', name: 'Bogotá Caracas', city: 'bogota', slug: 'bogota-av-caracas', schedule: null, status: 'active', cities: null },
+    ]
+
+    const result = transformBranches(input)
+    expect(result[0].city).toBe('bogota')
   })
 
   it('handles missing schedule gracefully', () => {
     const input = [
-      { id: 'uuid-c', code: 'ACBOT', name: 'Bogotá Caracas', city: 'bogota', slug: 'bogota-av-caracas', schedule: null, status: 'active' },
+      { id: 'uuid-c', code: 'ACBOT', name: 'Bogotá Caracas', city: 'bogota', slug: 'bogota-av-caracas', schedule: null, status: 'active', cities: { slug: 'bogota' } },
     ]
 
     const result = transformBranches(input)

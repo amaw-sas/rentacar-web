@@ -13,7 +13,7 @@ export default defineCachedEventHandler(async () => {
 
     supabase
       .from('locations')
-      .select('id, code, name, city, slug, schedule, status')
+      .select('id, code, name, city, slug, schedule, status, cities(slug)')
       .eq('status', 'active')
       .order('name'),
 

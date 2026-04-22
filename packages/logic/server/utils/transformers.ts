@@ -51,6 +51,7 @@ interface SupabaseLocation {
   slug: string
   schedule: { display?: string } | null
   status: string
+  cities: { slug: string } | null
 }
 
 export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
@@ -102,7 +103,10 @@ export function transformBranches(rows: SupabaseLocation[]): BranchData[] {
     id: index + 1,
     code: row.code,
     name: row.name,
-    city: row.city || '',
+    // Prefer canonical cities.slug over legacy locations.city text field —
+    // cities.slug is unique and normalized, locations.city is free text and
+    // often drifted (e.g. "Bogotá" vs "bogota"). Fallback kept for safety.
+    city: row.cities?.slug ?? row.city ?? '',
     slug: row.slug || '',
     schedule: row.schedule?.display || '',
   }))
