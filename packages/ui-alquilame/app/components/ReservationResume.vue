@@ -92,21 +92,35 @@
             </div>
             
             
-            <div class="text-right mt-3">
-              <div v-if="withExtraDriver || withBabySeat || withWash" class="font-bold">Adicionales</div>
+            <div v-if="hasAdditionalServices" class="text-right mt-3">
+              <div class="font-bold">Adicionales</div>
               <div v-if="withExtraDriver">Conductor: $ {{ currencyExtraDriverPrice }}</div>
               <div v-if="withBabySeat">Silla bebé: $ {{ currencyBabySeatPrice }}</div>
               <div v-if="withWash">Lavado: $ {{ currencyWashPrice }}</div>
             </div>
-            
+
+            <div v-if="hasAdditionalServices" class="text-right mt-3">
+              <div class="text-sm font-bold">Total adicionales</div>
+              <div class="!text-xl">
+                $ {{ currencyAdditionalsTotal }}
+              </div>
+            </div>
+
             <div class="text-right mt-3">
-              <div class="text-sm font-bold">Total a pagar</div>
+              <div class="text-sm font-bold">Total renta</div>
               <div class="!text-xl">
                 $ {{ currencyTotalPrice }}
               </div>
             </div>
             <div class="text-right text-[10px] text-gray-500">
               No incluye IVA ni tasa admin
+            </div>
+
+            <div v-if="hasAdditionalServices" class="text-right mt-3">
+              <div class="text-sm font-bold">Total renta + adicionales</div>
+              <div class="!text-xl">
+                $ {{ currencyTotalWithAdditionals }}
+              </div>
             </div>
          </div>
       </div>
@@ -142,6 +156,8 @@ const {
   currencyExtraDriverPrice,
   currencyBabySeatPrice,
   currencyWashPrice,
+  currencyAdditionalsTotal,
+  currencyTotalWithAdditionals,
   numberDays,
   hasPicoyPlaca,
   hasDiscount,

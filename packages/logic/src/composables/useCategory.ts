@@ -313,9 +313,19 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    /**
     * check if there's additional services selected
     */
-   const hasAdditionalServices = computed<boolean>(() => 
+   const hasAdditionalServices = computed<boolean>(() =>
       withExtraDriver.value || withBabySeat.value || withWash.value
    )
+
+   const getAdditionalsTotal = computed<number>(() =>
+      (withExtraDriver.value ? getExtraDriverPrice.value : 0) +
+      (withBabySeat.value ? getBabySeatPrice.value : 0) +
+      (withWash.value ? getWashPrice.value : 0)
+   );
+
+   const getTotalWithAdditionals = computed<number>(() =>
+      getTotalPrice.value + getAdditionalsTotal.value
+   );
    
    const getFormattedDays = computed<string>(() => {
       if(haveMonthlyReservation.value) return "30 días";
@@ -348,6 +358,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const currencyExtraDriverPrice = computed<string>(() => getFormattedPrice(getExtraDriverPrice.value));
    const currencyBabySeatPrice = computed<string>(() => getFormattedPrice(getBabySeatPrice.value));
    const currencyWashPrice = computed<string>(() => getFormattedPrice(getWashPrice.value));
+   const currencyAdditionalsTotal = computed<string>(() => getFormattedPrice(getAdditionalsTotal.value));
+   const currencyTotalWithAdditionals = computed<string>(() => getFormattedPrice(getTotalWithAdditionals.value));
    
    
    // tooltip stuff
@@ -419,6 +431,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       getDiscount,
       getFormattedDays,
       hasAdditionalServices,
+      getAdditionalsTotal,
+      getTotalWithAdditionals,
       
       // currency formatted prices
       currencyTotalPrice,
@@ -436,6 +450,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       currencyExtraDriverPrice,
       currencyBabySeatPrice,
       currencyWashPrice,
+      currencyAdditionalsTotal,
+      currencyTotalWithAdditionals,
       
       // other functions
       hasPicoyPlaca,
