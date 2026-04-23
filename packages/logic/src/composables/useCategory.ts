@@ -32,6 +32,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const EXTRA_DRIVER_DAY_PRICE: number = extras?.extraDriverDayPrice ?? 12000;
    const BABY_SEAT_DAY_PRICE: number = extras?.babySeatDayPrice ?? 12000;
    const WASH_PRICE: number = extras?.washPrice ?? 20000;
+   const WASH_ONSITE_PRICE: number = extras?.washOnsitePrice ?? 30000;
+   const WASH_DEEP_PRICE: number = extras?.washDeepPrice ?? 150000;
+   const WASH_DEEP_UPHOLSTERY_PRICE: number = extras?.washDeepUpholsteryPrice ?? 225000;
    
    // category attributes refs
    const vehicleDayCharge = ref<number>(categoryAvailableData.vehicleDayCharge);
@@ -358,6 +361,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const currencyExtraDriverPrice = computed<string>(() => getFormattedPrice(getExtraDriverPrice.value));
    const currencyBabySeatPrice = computed<string>(() => getFormattedPrice(getBabySeatPrice.value));
    const currencyWashPrice = computed<string>(() => getFormattedPrice(getWashPrice.value));
+   const currencyWashOnsitePrice = computed<string>(() => getFormattedPrice(WASH_ONSITE_PRICE));
+   const currencyWashDeepPrice = computed<string>(() => getFormattedPrice(WASH_DEEP_PRICE));
+   const currencyWashDeepUpholsteryPrice = computed<string>(() => getFormattedPrice(WASH_DEEP_UPHOLSTERY_PRICE));
    const currencyAdditionalsTotal = computed<string>(() => getFormattedPrice(getAdditionalsTotal.value));
    const currencyTotalWithAdditionals = computed<string>(() => getFormattedPrice(getTotalWithAdditionals.value));
    
@@ -450,6 +456,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       currencyExtraDriverPrice,
       currencyBabySeatPrice,
       currencyWashPrice,
+      currencyWashOnsitePrice,
+      currencyWashDeepPrice,
+      currencyWashDeepUpholsteryPrice,
       currencyAdditionalsTotal,
       currencyTotalWithAdditionals,
       

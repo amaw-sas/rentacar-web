@@ -19,7 +19,7 @@ export default defineCachedEventHandler(async () => {
 
     supabase
       .from('rental_companies')
-      .select('extra_driver_day_price, baby_seat_day_price, wash_price')
+      .select('extra_driver_day_price, baby_seat_day_price, wash_price, wash_onsite_price, wash_deep_price, wash_deep_upholstery_price')
       .eq('code', 'localiza')
       .single(),
   ])

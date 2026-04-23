@@ -549,9 +549,9 @@
                       de hacer su reserva como al devolver el vehículo.
                     </p>
                     <p class="text-sm mb-4">
-                      <b>Tarifas:</b><br />Al recoger el vehiculo: $20.000 (IVA
+                      <b>Tarifas:</b><br />Al recoger el vehiculo: $ {{ currencyWashPrice }} (IVA
                       incluido).<br />
-                      Al devolver el vehículo: $30.000 (IVA incluido).
+                      Al devolver el vehículo: $ {{ currencyWashOnsitePrice }} (IVA incluido).
                     </p>
                     <p class="text-sm mb-4">
                       <b>Cobros adicionales:</b><br />
@@ -564,9 +564,9 @@
                     </p>
                     <p class="text-sm mb-4">
                       <b>Tarifas especiales:</b><br />
-                      Lavado completo con aspirado: $150.000 (IVA incluido).<br />
+                      Lavado completo con aspirado: $ {{ currencyWashDeepPrice }} (IVA incluido).<br />
                       Lavado completo con aspirado y limpieza de tapicería:
-                      $225.000 (IVA incluido).<br />
+                      $ {{ currencyWashDeepUpholsteryPrice }} (IVA incluido).<br />
                     </p>
                   </template>
                 </UModal>
@@ -656,6 +656,9 @@ const {
   currencyExtraDriverPrice,
   currencyBabySeatPrice,
   currencyWashPrice,
+  currencyWashOnsitePrice,
+  currencyWashDeepPrice,
+  currencyWashDeepUpholsteryPrice,
 
   // tooltip stuff
   dayPriceTooltip,

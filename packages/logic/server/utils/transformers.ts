@@ -116,17 +116,26 @@ export interface ExtrasData {
   extraDriverDayPrice: number
   babySeatDayPrice: number
   washPrice: number
+  washOnsitePrice: number
+  washDeepPrice: number
+  washDeepUpholsteryPrice: number
 }
 
 export function transformExtras(rentalCompany: {
   extra_driver_day_price: number
   baby_seat_day_price: number
   wash_price: number
+  wash_onsite_price: number
+  wash_deep_price: number
+  wash_deep_upholstery_price: number
 }): ExtrasData {
   return {
     extraDriverDayPrice: Number(rentalCompany.extra_driver_day_price),
     babySeatDayPrice: Number(rentalCompany.baby_seat_day_price),
     washPrice: Number(rentalCompany.wash_price),
+    washOnsitePrice: Number(rentalCompany.wash_onsite_price),
+    washDeepPrice: Number(rentalCompany.wash_deep_price),
+    washDeepUpholsteryPrice: Number(rentalCompany.wash_deep_upholstery_price),
   }
 }
 

@@ -6,6 +6,9 @@ export interface ExtrasData {
   extraDriverDayPrice: number;
   babySeatDayPrice: number;
   washPrice: number;
+  washOnsitePrice: number;
+  washDeepPrice: number;
+  washDeepUpholsteryPrice: number;
 }
 
 export default interface ReservasApiData {
