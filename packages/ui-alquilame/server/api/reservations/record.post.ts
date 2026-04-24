@@ -1,4 +1,5 @@
-import { defineEventHandler, readBody, createError } from 'h3'
+import { defineEventHandler, readBody, createError, setResponseStatus } from 'h3'
+import { extractStructuredError } from '@rentacar-main/logic/utils'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -14,12 +15,21 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  return await $fetch(`${adminUrl}/api/reservations`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-    },
-    body,
-  })
+  try {
+    return await $fetch(`${adminUrl}/api/reservations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body,
+    })
+  } catch (e) {
+    const forward = extractStructuredError(e)
+    if (forward) {
+      setResponseStatus(event, forward.status, forward.statusText)
+      return forward.body
+    }
+    throw e
+  }
 })
