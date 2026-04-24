@@ -26,6 +26,12 @@ export { pickPriceForDate } from './pickPriceForDate';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 
 // ============================================================================
+// Server Helpers
+// ============================================================================
+export { extractStructuredError } from './helpers/extractStructuredError';
+export type { StructuredErrorForward } from './helpers/extractStructuredError';
+
+// ============================================================================
 // Type Definitions - Data
 // ============================================================================
 export type { default as BranchData } from './types/data/BranchData';

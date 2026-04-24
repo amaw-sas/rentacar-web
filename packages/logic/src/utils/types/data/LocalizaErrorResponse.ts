@@ -10,8 +10,15 @@ export default interface LocalizaErrorResponse extends Response {
     | "out_of_schedule_return_hour_error"
     | "inferior_pickup_date"
     | "inferior_return_date"
+    | "holiday_pickup_date_error"
+    | "holiday_return_date_error"
+    | "holiday_out_of_schedule_pickup_date_error"
+    | "holiday_out_of_schedule_return_date_error"
+    | "same_hour_error"
+    | "reservation_cancelled_error"
     | "unknown_error"
     | "connection_timeout"
     | "server_error";
   message: string;
+  shortText?: string;
 }
