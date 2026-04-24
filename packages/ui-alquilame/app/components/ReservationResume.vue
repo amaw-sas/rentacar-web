@@ -99,16 +99,16 @@
               <div v-if="withWash">Lavado: $ {{ currencyWashPrice }}</div>
             </div>
 
-            <div v-if="hasAdditionalServices" class="text-right mt-3">
+            <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
               <div class="text-sm font-bold">Total adicionales</div>
-              <div class="!text-xl">
+              <div class="!text-xl !leading-none">
                 $ {{ currencyAdditionalsTotal }}
               </div>
             </div>
 
-            <div class="text-right mt-3">
+            <div class="text-right mt-3 leading-tight">
               <div class="text-sm font-bold">Total renta</div>
-              <div class="!text-xl">
+              <div class="!text-xl !leading-none">
                 $ {{ currencyTotalPrice }}
               </div>
             </div>
@@ -116,9 +116,9 @@
               No incluye IVA ni tasa admin
             </div>
 
-            <div v-if="hasAdditionalServices" class="text-right mt-3">
+            <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
               <div class="text-sm font-bold">Total renta + adicionales</div>
-              <div class="!text-xl">
+              <div class="!text-xl !leading-none">
                 $ {{ currencyTotalWithAdditionals }}
               </div>
             </div>
