@@ -65,7 +65,7 @@ export default async function useRecordReservationForm() {
     coverage_days: selectedCategory.value?.coverageQuantity,
     coverage_price: selectedCategory.value?.coverageTotalAmount,
     franchise: franchise,
-    total_insurance: haveTotalInsurance.value ? 1 : 0,
+    total_insurance: haveTotalInsurance.value,
     reference_token: selectedCategory.value?.referenceToken,
     rate_qualifier: selectedCategory.value?.rateQualifier,
     extra_driver: selectedCategory.value?.withExtraDriver ? 1 : 0,

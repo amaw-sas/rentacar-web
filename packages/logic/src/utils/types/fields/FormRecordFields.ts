@@ -26,7 +26,7 @@ export default interface FormFields {
   total_price_to_pay?: number;
   franchise: string | null;
   user?: string | null;
-  total_insurance?: number | null;
+  total_insurance?: boolean | null;
   reference_token: string | undefined;
   rate_qualifier: string | undefined;
   extra_driver?: number | undefined;
