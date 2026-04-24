@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
 
   devServer: {
-    port: 3000
+    port: 4000
   },
 
   // Component Islands: renderiza componentes estáticos sin hidratación Vue
