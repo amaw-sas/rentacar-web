@@ -21,3 +21,21 @@ describe('Searcher — pickup/return calendars hide year controls', () => {
     }
   })
 })
+
+describe('Searcher — unlocks after bfcache restoration (browser back button)', () => {
+  it('registers a pageshow listener on mount', () => {
+    expect(source).toMatch(/addEventListener\(\s*['"]pageshow['"]/)
+  })
+
+  it('removes the pageshow listener on unmount to avoid leaks', () => {
+    expect(source).toMatch(/removeEventListener\(\s*['"]pageshow['"]/)
+  })
+
+  it('only reloads when the page was restored from bfcache (event.persisted)', () => {
+    expect(source).toMatch(/event\.persisted|\.persisted/)
+  })
+
+  it('performs a full reload to rebuild reactive state (watchers/store sync)', () => {
+    expect(source).toMatch(/(window\.)?location\.reload\s*\(/)
+  })
+})

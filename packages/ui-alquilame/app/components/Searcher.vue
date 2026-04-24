@@ -347,8 +347,21 @@ const calendarUIConfig = {
     cellTrigger: '!text-gray-900 !font-semibold data-[disabled]:!text-gray-300 data-[disabled]:!opacity-40 data-[unavailable]:!text-gray-300 data-[unavailable]:!opacity-40 data-[outside-view]:!text-gray-400 data-[outside-view]:!opacity-50'
 };
 
+// bfcache restoration: the Searcher has 15+ watchers binding local refs to
+// Pinia stores. After browser back (e.g. from reservation/gracias page),
+// bfcache preserves refs but reactivity no longer propagates — selects for
+// pickup/return become unresponsive. Full reload rebuilds reactive state
+// cleanly; URL params carry the search context so the user loses nothing.
+const handleSearcherPageShow = (event: PageTransitionEvent) => {
+  if (event.persisted) window.location.reload()
+}
+
 // Initialize stores only on client side after mount
 onMounted(() => {
+  if (import.meta.client) {
+    window.addEventListener('pageshow', handleSearcherPageShow)
+  }
+
   const storeReservationForm = useStoreReservationForm();
   const storeAdminData = useStoreAdminData();
   const storeSearchData = useStoreSearchData();
@@ -386,6 +399,12 @@ onMounted(() => {
   watch(() => searchComposable.searchLinkParams.value, (val) => searchLinkParams.value = val, { immediate: true });
   watch(() => searchComposable.animateSearchButton.value, (val) => animateSearchButton.value = val, { immediate: true });
 });
+
+onBeforeUnmount(() => {
+  if (import.meta.client) {
+    window.removeEventListener('pageshow', handleSearcherPageShow)
+  }
+})
 
 </script>
 

@@ -92,6 +92,25 @@ const items = computed<SelectMenuItem[]>(() =>
 /** refs */
 const selectedBranch = ref<BranchData['code'] | null>(null)
 
+/** bfcache restoration: after browser back, the persisted v-model value
+ * prevents @change / onSelect from firing again for the same option.
+ * Reset to placeholder on restoration so any re-selection navigates. */
+const handlePageShow = (event: PageTransitionEvent) => {
+  if (event.persisted) selectedBranch.value = null
+}
+
+onMounted(() => {
+  if (import.meta.client) {
+    window.addEventListener('pageshow', handlePageShow)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (import.meta.client) {
+    window.removeEventListener('pageshow', handlePageShow)
+  }
+})
+
 /** functions */
 const handleMobileChange = () => {
   if (selectedBranch.value && selectedBranch.value !== 'null') {
@@ -103,12 +122,7 @@ const handleMobileChange = () => {
 };
 
 const goToReservationPage = async (branch: BranchData) =>
-  await navigateTo(createReservationURL(branch), {
-    external: true,
-    open: {
-      target: "_blank",
-    },
-  });
+  await navigateTo(createReservationURL(branch));
 
 const createReservationURL = (branch: BranchData) =>
   `/${branch.city}/buscar-vehiculos/lugar-recogida/${branch.slug}/lugar-devolucion/${branch.slug}/fecha-recogida/${reservationInitDay}/fecha-devolucion/${reservationEndDay}/hora-recogida/${reservationInitHour}/hora-devolucion/${reservationEndHour}`;
