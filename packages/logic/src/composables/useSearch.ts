@@ -211,6 +211,7 @@ export default function useSearch() {
       : null;
 
     return {
+      city: route.params.city,
       referido: referido.value,
       lugar_recogida: pickupBranch?.slug,
       lugar_devolucion: returnBranch?.slug,
