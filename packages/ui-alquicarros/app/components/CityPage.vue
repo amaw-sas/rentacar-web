@@ -37,9 +37,20 @@
           <div class="mb-1 text-white text-xl">
             Consulta disponibilidad y precios
           </div>
-          <p class="text-white text-sm">
-            Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
-          </p>
+          <div class="flex items-center justify-center gap-2">
+            <p class="text-white text-sm">
+              Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
+            </p>
+            <UButton
+              icon="i-heroicons-clipboard-document"
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              class="text-white shrink-0"
+              aria-label="Copiar datos de búsqueda para WhatsApp"
+              @click="copySearchToWhatsapp"
+            />
+          </div>
         </div>
       </template>
       <template #default>
@@ -49,9 +60,20 @@
             <div class="mb-1 text-white text-xl">
               Consulta disponibilidad y precios
             </div>
-            <p class="text-white text-sm">
-              Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
-            </p>
+            <div class="flex items-center justify-center gap-2">
+              <p class="text-white text-sm">
+                Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
+              </p>
+              <UButton
+                icon="i-heroicons-clipboard-document"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                class="text-white shrink-0"
+                aria-label="Copiar datos de búsqueda para WhatsApp"
+                @click="copySearchToWhatsapp"
+              />
+            </div>
           </div>
           <!-- Wrapper con altura fija para prevenir layout shift durante hidratación -->
           <div class="h-[410px] w-full">
@@ -436,6 +458,8 @@ const faqAccordionUIConfig = {
   body: "!border-none",
   trailingIcon: "mr-2 transition-transform duration-200",
 };
+
+const { copyToWhatsapp: copySearchToWhatsapp } = useShareSearchParams();
 
 const Searcher = defineAsyncComponent(() => import("./Searcher.vue"));
 const PlaceholdersSearcher = defineAsyncComponent(
