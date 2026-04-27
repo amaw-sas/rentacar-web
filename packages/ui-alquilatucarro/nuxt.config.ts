@@ -457,7 +457,7 @@ export default defineNuxtConfig({
   },
 
   colorMode: {
-    preference: 'dark',
+    preference: 'light',
   },
 
   // Auto-imports desde logic layer (manejado automáticamente por extends)
