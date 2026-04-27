@@ -220,7 +220,7 @@ useSeoMeta({
 
 definePageMeta({
   layout: 'gana',
-  colorMode: 'dark',
+  colorMode: 'light',
 })
 
 const pasos = [

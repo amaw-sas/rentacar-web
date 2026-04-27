@@ -278,6 +278,6 @@ useSchemaOrg([
 ])
 
 definePageMeta({
-  colorMode: 'dark'
+  colorMode: 'light'
 })
 </script>

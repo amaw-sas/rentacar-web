@@ -313,7 +313,7 @@ useHead({
 });
 
 definePageMeta({
-  colorMode: "dark",
+  colorMode: "light",
 });
 
 const categoriasPageSectionUIConfig = {

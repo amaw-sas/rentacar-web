@@ -180,6 +180,6 @@ useHead({
 
 definePageMeta({
   layout: 'gana',
-  colorMode: 'dark',
+  colorMode: 'light',
 })
 </script>

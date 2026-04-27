@@ -583,7 +583,7 @@ if (post.value) {
 }
 
 definePageMeta({
-  colorMode: 'dark'
+  colorMode: 'light'
 })
 </script>
 
