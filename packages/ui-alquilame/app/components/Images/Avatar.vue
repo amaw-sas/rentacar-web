@@ -6,7 +6,7 @@
     height="27"
     loading="lazy"
     fetchpriority="low"
-    class="h-full w-full rounded-full object-cover"
+    class="size-7 rounded-full object-cover"
   />
 </template>
 
