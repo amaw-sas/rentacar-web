@@ -35,3 +35,49 @@ describe('CategorySelectionSection — Solicitar reserva button loading state', 
     expect(submitButtonBlock).not.toMatch(/animate-spin/)
   })
 })
+
+// Scenarios captured: the "Compartir" capsule in the reservation summary
+// slideover offers WhatsApp / Facebook / X / Copy Link, all sourcing the URL
+// from getReservationShareUrl(). The user reaches this slideover from a
+// landing-city URL (e.g. /bogota/...) but the pickup branch may belong to a
+// different city (e.g. armenia-aeropuerto → city "armenia"). The shared URL
+// must be anchored to the pickup branch's city, not the landing city.
+//
+//   S1  getReservationShareUrl reads selectedPickupLocation.value?.city to
+//       determine the city slug for the shared URL.
+//   S2  The leading [city] segment of route.path is replaced via
+//       /^\/[^/]+/ → only the first segment, never deeper (would otherwise
+//       collapse /bogota/buscar-vehiculos into /armenia).
+//   S3  When selectedPickupLocation is null, fall back to route.path without
+//       attempting a replace (no crash on intermediate states).
+//   S4  When a category is selected (vehiculo.value), the URL still appends
+//       /categoria/[codigo] using the lowercased code (existing behavior).
+const shareUrlBlock = (() => {
+  const start = source.indexOf('function getReservationShareUrl')
+  const end = source.indexOf('\n}', start) + '\n}'.length
+  return source.slice(start, end)
+})()
+
+describe('CategorySelectionSection — getReservationShareUrl city anchoring', () => {
+  beforeAll(() => {
+    expect(shareUrlBlock).toContain('getReservationShareUrl')
+  })
+
+  it('S1: derives the target city from selectedPickupLocation, not the URL [city] param', () => {
+    expect(shareUrlBlock).toMatch(/selectedPickupLocation\.value\?\.city/)
+  })
+
+  it('S2: replaces only the first path segment so deeper segments stay intact', () => {
+    expect(shareUrlBlock).toMatch(/\/\^\\\/\[\^\/\]\+\//)
+    expect(shareUrlBlock).toMatch(/`\/\$\{pickupCity\}`/)
+  })
+
+  it('S3: falls back to route.path when there is no pickup location yet', () => {
+    expect(shareUrlBlock).toMatch(/pickupCity\s*\?\s*route\.path\.replace[\s\S]*?:\s*route\.path/)
+  })
+
+  it('S4: appends /categoria/[codigo] (lowercased) when a category is selected', () => {
+    expect(shareUrlBlock).toMatch(/vehiculo\.value\.toLowerCase\(\)/)
+    expect(shareUrlBlock).toMatch(/\/categoria\/\$\{vehiculo\.value\.toLowerCase\(\)\}/)
+  })
+})

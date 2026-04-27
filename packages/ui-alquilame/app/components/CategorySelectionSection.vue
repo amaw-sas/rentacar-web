@@ -232,18 +232,23 @@ const linkCopied = ref(false);
 /** Share functions */
 function getReservationShareUrl() {
   if (!import.meta.client) return '';
-  const router = useRouter();
   const route = useRoute();
 
+  // Anclar el enlace compartido a la ciudad del lugar de recogida.
+  // El [city] de la URL puede ser el de la landing (ej. bogota) aunque el
+  // lugar de recogida sea de otra ciudad (ej. armenia-aeropuerto → armenia).
+  const pickupCity = selectedPickupLocation.value?.city;
+  const basePath = pickupCity
+    ? route.path.replace(/^\/[^/]+/, `/${pickupCity}`)
+    : route.path;
+
   if (vehiculo.value) {
-    // Generar URL semántica con /categoria/[codigo]
-    const currentPath = route.path;
-    const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^\/]+$/, '');
+    const basePathWithoutCategoria = basePath.replace(/\/categoria\/[^/]+$/, '');
     const newPath = `${basePathWithoutCategoria}/categoria/${vehiculo.value.toLowerCase()}`;
     return `${window.location.origin}${newPath}`;
   }
 
-  return window.location.href;
+  return `${window.location.origin}${basePath}${window.location.search}${window.location.hash}`;
 }
 
 function shareWhatsApp() {
