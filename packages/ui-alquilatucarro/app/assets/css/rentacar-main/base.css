@@ -14,10 +14,13 @@
     line-height: 1rem !important;
 }
 
-/* UFormField size xl - altura mínima consistente */
-.hero-section .bg-white {
-    min-height: 4.5rem;
+/* UFormField size xl - altura mínima consistente (solo desktop ≥sm) */
+@media (min-width: 640px) {
+    .hero-section .bg-white {
+        min-height: 4.5rem;
+    }
 }
+
 
 /* Header SVGs - prevenir FOUC de banderas/logos enormes */
 header svg {
@@ -90,10 +93,29 @@ header .text-highlighted,
     }
 }
 
+/* UHeader - alinear hamburguesa con la tarjeta del Searcher en móvil
+   (eliminar el px-4 que Nuxt UI inyecta por defecto en el container) */
+@media (max-width: 639px) {
+    header [data-slot="container"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+}
+
+/* UHeader - slot center: visible y centrado en móvil para mostrar el logo
+   (Nuxt UI lo oculta por defecto con `hidden lg:flex`) */
+@media (max-width: 1023px) {
+    header [data-slot="center"] {
+        display: flex !important;
+        flex: 1 1 0%;
+        justify-content: center;
+    }
+}
+
 /* UPageHero - reduce top padding to bring content closer to header */
 /* Only target hero (no ID), not regular sections */
 [data-slot="root"].relative.isolate:not(section[id]) [data-slot="container"] {
-    padding-top: 1rem !important;
+    padding-top: 0 !important;
 }
 @media (min-width: 1024px) {
     [data-slot="root"].relative.isolate:not(section[id]) [data-slot="container"] {

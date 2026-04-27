@@ -1,26 +1,15 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-[#000073] via-blue-800 to-blue-900 font-sans text-gray-800">
     <!-- Header -->
-    <div class="relative">
-      <!-- Toggle móvil: posicionado absolutamente para evitar problemas con slots de UHeader -->
-      <button
-        type="button"
-        class="lg:hidden absolute right-4 top-1/2 -translate-y-1/2 z-50 flex items-center justify-center w-11 h-11 rounded-md hover:bg-white/10 transition-colors"
-        aria-label="Abrir menú de navegación"
-        @click="mobileMenuOpen = true"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
+    <div>
       <UHeader
         v-model:open="mobileMenuOpen"
-        class="bg-[#000073] z-40 py-4 md:py-6 px-6 border-none"
+        class="bg-[#000073] z-40 py-4 md:py-6 px-4 lg:px-6 border-none"
         mode="slideover"
         :toggle="false"
         :ui="{
           root: 'gap-4',
+          container: 'w-full max-w-(--ui-container) mx-auto sm:px-6 lg:px-8 flex items-center justify-between gap-3 h-full',
           content: 'bg-white',
           header: 'bg-white relative',
           body: 'bg-white'
@@ -31,18 +20,32 @@
           <div class="hidden lg:block">
             <UNavigationMenu color="neutral" :items="items" />
           </div>
+          <!-- Toggle móvil dentro del slot para alineación natural por flex -->
+          <button
+            type="button"
+            class="lg:hidden flex items-center justify-center w-9 h-9 rounded-md hover:bg-white/10 transition-colors"
+            aria-label="Abrir menú de navegación"
+            @click="mobileMenuOpen = true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
         </template>
       <template #left>
-        <!-- Móvil: Logo centrado -->
-        <NuxtLink to="/" aria-label="alquilatucarro" class="md:hidden absolute left-1/2 -translate-x-1/2">
-          <Logo cls="h-8 w-auto" />
-        </NuxtLink>
-        <!-- Desktop: Bandera + Logo juntos como unidad -->
+        <!-- Móvil: spacer invisible que iguala el ancho del hamburguesa (#right)
+             para que el slot center quede ópticamente centrado -->
+        <div class="md:hidden w-9 h-9" aria-hidden="true"></div>
+        <!-- Desktop: Bandera + Logo juntos como unidad (oculto en móvil) -->
         <NuxtLink to="/" aria-label="alquilatucarro" class="hidden md:flex items-center gap-3">
           <IconsColombiaFlag cls="h-6 w-auto" />
           <Logo cls="h-10 w-auto" />
         </NuxtLink>
       </template>
+      <!-- Slot default (center wrapper) — móvil únicamente, centrado por flex -->
+      <NuxtLink to="/" aria-label="alquilatucarro" class="md:hidden flex">
+        <Logo cls="h-8 w-auto" />
+      </NuxtLink>
       <template #body>
         <!-- Botón cerrar manual (UHeader slideover no incluye uno nativo) -->
         <UButton

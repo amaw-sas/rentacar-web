@@ -7,7 +7,7 @@
       >
       <template #headline>
         <div
-          class="flex flex-row space-x-0.5 text-white text-center justify-center items-center text-sm"
+          class="flex max-md:hidden! flex-row space-x-0.5 text-white text-center justify-center items-center text-sm"
         >
           <StarIcon v-for="i in [1,2,3,4,5]" :key="i" cls="w-2.5 h-2.5 md:w-4 md:h-4" />
           <span class="ml-2">4.9 reviews</span>
@@ -85,8 +85,8 @@
         </div>
         <!-- Buscador solo en mobile/tablet -->
         <div class="lg:hidden">
-          <!-- Wrapper con altura fija para prevenir layout shift durante hidratación -->
-          <div class="h-[360px]">
+          <!-- Wrapper con min-height ajustado al form compacto (~248px natural) -->
+          <div class="min-h-[250px]">
             <ClientOnly>
               <Searcher />
               <template #fallback>

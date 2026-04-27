@@ -1,33 +1,33 @@
 <template>
-    <u-form 
-        class="w-full mx-auto md:w-3/6 lg:w-4/6 grid grid-cols-2 auto-rows-min gap-2 light"
+    <u-form
+        class="w-full mx-auto md:w-3/6 lg:w-4/6 grid grid-cols-2 auto-rows-min gap-1.5 sm:gap-2 light"
     >
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm">
+        <div class="col-span-2 bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm">
             <u-form-field label="Lugar de recogida" size="xl">
                 <u-progress class="w-full py-3" v-model="progress" />
             </u-form-field>
         </div>
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm">
+        <div class="col-span-2 bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm">
             <u-form-field label="Lugar de devolución" size="xl">
                 <u-progress class="w-full py-3" v-model="progress" />
             </u-form-field>
         </div>
-        <div class="bg-white rounded-xl p-2 shadow-sm">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm">
             <u-form-field label="Día de recogida" size="xl">
                 <u-progress class="w-full py-3" v-model="progress" />
             </u-form-field>
         </div>
-        <div class="bg-white rounded-xl p-2 shadow-sm">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm">
             <u-form-field label="Día de devolución" size="xl">
                 <u-progress class="w-full py-3" v-model="progress" />
             </u-form-field>
         </div>
-        <div class="bg-white rounded-xl p-2 shadow-sm">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm">
             <u-form-field label="Hora de recogida" size="xl">
                 <u-progress class="w-full py-3" v-model="progress" />
             </u-form-field>
         </div>
-        <div class="bg-white rounded-xl p-2 shadow-sm">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm">
             <u-form-field label="Hora de devolución" size="xl">
                 <u-progress class="w-full py-3" v-model="progress" />
             </u-form-field>

@@ -1,9 +1,9 @@
 <template>
     <u-form
-        class="w-full mx-auto md:w-3/6 lg:w-4/6 grid grid-cols-2 auto-rows-min gap-2 light"
+        class="w-full mx-auto md:w-3/6 lg:w-4/6 grid grid-cols-2 auto-rows-min gap-1.5 sm:gap-2 light"
     >
         <!-- MÓVIL: Form field con select nativo -->
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm sm:hidden">
+        <div class="col-span-2 bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm sm:hidden">
             <u-form-field label="Lugar de recogida" size="xl">
                 <select
                     v-if="lugarRecogida"
@@ -26,7 +26,7 @@
         </div>
 
         <!-- DESKTOP: Form field con u-select-menu -->
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm hidden sm:block">
+        <div class="col-span-2 bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm hidden sm:block">
             <u-form-field label="Lugar de recogida" size="xl">
                 <u-select-menu
                     v-model="lugarRecogida"
@@ -52,7 +52,7 @@
             </u-form-field>
         </div>
         <!-- MÓVIL: Form field con select nativo -->
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm sm:hidden">
+        <div class="col-span-2 bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm sm:hidden">
             <u-form-field label="Lugar de devolución" size="xl">
                 <select
                     v-if="lugarDevolucion"
@@ -75,7 +75,7 @@
         </div>
 
         <!-- DESKTOP: Form field con u-select-menu -->
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm hidden sm:block">
+        <div class="col-span-2 bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm hidden sm:block">
             <u-form-field label="Lugar de devolución" size="xl">
                 <u-select-menu
                     v-model="lugarDevolucion"
@@ -101,7 +101,7 @@
             </u-form-field>
         </div>
         <!-- MÓVIL: Form field con input date nativo -->
-        <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm sm:hidden">
             <u-form-field label="Día de recogida" size="xl">
                 <input
                     v-if="minPickupDate"
@@ -117,7 +117,7 @@
         </div>
 
         <!-- DESKTOP: Form field con u-input-date -->
-        <div class="bg-white rounded-xl p-2 shadow-sm hidden sm:block">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm hidden sm:block">
             <u-form-field label="Día de recogida" size="xl">
                 <u-input-date
                     v-if="minPickupDate"
@@ -163,7 +163,7 @@
             </u-form-field>
         </div>
         <!-- MÓVIL: Form field con input date nativo -->
-        <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm sm:hidden">
             <u-form-field label="Día de devolución" size="xl">
                 <input
                     v-if="minReturnDate"
@@ -180,7 +180,7 @@
         </div>
 
         <!-- DESKTOP: Form field con u-input-date -->
-        <div class="bg-white rounded-xl p-2 shadow-sm hidden sm:block">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm hidden sm:block">
             <u-form-field label="Día de devolución" size="xl">
                 <u-input-date
                     v-if="minReturnDate"
@@ -228,7 +228,7 @@
             </u-form-field>
         </div>
         <!-- MÓVIL: Form field con select nativo -->
-        <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm sm:hidden">
             <u-form-field label="Hora de recogida" size="xl">
                 <select
                     id="pickup-hour-mobile"
@@ -247,7 +247,7 @@
         </div>
 
         <!-- DESKTOP: Form field con u-select-menu -->
-        <div class="bg-white rounded-xl p-2 shadow-sm hidden sm:block">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm hidden sm:block">
             <u-form-field label="Hora de recogida" size="xl">
                 <u-select-menu
                     v-model="horaRecogida"
@@ -265,7 +265,7 @@
             </u-form-field>
         </div>
         <!-- MÓVIL: Form field con select nativo -->
-        <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm sm:hidden">
             <u-form-field label="Hora de devolución" size="xl">
                 <select
                     id="return-hour-mobile"
@@ -284,7 +284,7 @@
         </div>
 
         <!-- DESKTOP: Form field con u-select-menu -->
-        <div class="bg-white rounded-xl p-2 shadow-sm hidden sm:block">
+        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm hidden sm:block">
             <u-form-field label="Hora de devolución" size="xl">
                 <u-select-menu
                     id="return-hour"
