@@ -59,11 +59,11 @@ Nuxt 4 (monorepo, 3 marcas)
 - Migrar upload de imágenes: Firebase Storage → Supabase Storage
 
 ### Fase 4: Dinamizar datos de configuración (requiere admin)
-- `branches.config.ts` → query Supabase via `useAsyncData()`
-- `cities.config.ts` → query Supabase
-- `categories.config.ts` → query Supabase
-- `tarifas.config.ts` → query Supabase
-- Mantener hardcodeados: `faqs.config.ts`, `organization.config.ts`, `ui.config.ts`, `admin.config.ts`
+- ~~`branches.config.ts`~~ → ya migrado vía `useFetchRentacarData()` (tabla `locations`); archivo borrado por código muerto.
+- `cities.config.ts` → query Supabase (pendiente)
+- `categories.config.ts` → query Supabase (pendiente — ojo: nombre real del archivo pendiente, los datos ya vienen de `vehicle_categories` vía `useFetchRentacarData`)
+- `tarifas.config.ts` → query Supabase (pendiente; periodo vencido en hardcode actual)
+- Mantener hardcodeados: `faqs.config.ts`, `organization.config.ts`, `ui.config.ts`. ~~`admin.config.ts`~~ borrado: `adminDataConfig` no tenía consumers y duplicaba datos hoy provistos por Supabase.
 - ISR garantiza rendimiento SEO equivalente al hardcode
 
 ### Fase 5: Actualizar CI/CD
