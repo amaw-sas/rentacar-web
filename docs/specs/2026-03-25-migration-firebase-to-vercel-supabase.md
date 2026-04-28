@@ -91,7 +91,7 @@ Nuxt 4 (monorepo, 3 marcas)
 - Layouts, middleware de cliente, plugins
 - SEO: schema.org, meta tags, sitemap
 - Playwright + Vitest
-- `faqs.config.ts`, `organization.config.ts`, `ui.config.ts`, `admin.config.ts`
+- `faqs.config.ts`, `organization.config.ts`, `ui.config.ts`
 
 ## Mejoras futuras (fuera de scope)
 
