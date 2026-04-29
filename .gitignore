@@ -119,3 +119,16 @@ docs/seo/data/.tokens/
 
 # AI Framework runtime files (auto-added)
 /.research/
+
+# AI Framework template rules (one-time sync)
+/.claude/rules/.manifest-checksums
+/.ralph/*
+!/.ralph/specs/
+!/.ralph/specs/**
+/.brainstorm/
+/.visual-companion/
+!/docs/specs/
+!/docs/specs/**
+/.claude/metrics.jsonl
+/.claude/metrics.jsonl.*
+.vercel
