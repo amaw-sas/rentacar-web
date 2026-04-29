@@ -133,7 +133,6 @@ const {
 const identificationTypeOptions = [
   { value: "Cedula Ciudadania", label: "Cédula" },
   { value: "Pasaporte", label: "Pasaporte" },
-  { value: "Cedula Extranjeria", label: "Extranjería" },
 ];
 
 const inputUi = {

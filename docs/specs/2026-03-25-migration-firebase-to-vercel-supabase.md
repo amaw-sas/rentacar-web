@@ -11,25 +11,25 @@ Directiva de centralizar deployments en Vercel/Supabase — reducir proveedores 
 | Framework | Conservar Nuxt 4 | Reescribir en React = meses de trabajo sin retorno. Único dev con expertise Vue/Nuxt |
 | Repo | Nuevo repo (copia del original) | Producción sigue en Firebase como fallback |
 | FAQs | Hardcodeadas | Pendiente directiva sobre dinamización |
-| Reservas | Endpoints del admin migrado (env vars) | Transición suave. Evaluar query directo a Supabase como mejora futura |
+| Reservas | Endpoints de rentacar-dashboard (env vars) | Transición suave. Evaluar query directo a Supabase como mejora futura |
 | Dashboard SEO/GSC | Se conserva | Feature existente, migrar storage de tokens a Supabase |
 | Marcas | Las 3 juntas | Comparten lógica. Solo alquilatucarro en producción |
 
-## Dependencia: rentacar-admin
+## Dependencia: rentacar-dashboard
 
-rentacar-main depende de rentacar-admin (en proceso de remake en Vercel/Supabase):
+rentacar-main depende de rentacar-dashboard (Vercel/Supabase — reemplazo del legacy rentacar-admin):
 - **Schema Supabase** — tablas de sucursales, ciudades, categorías, tarifas
-- **Endpoints de reservas** — rentacar-main apunta a los del admin migrado
+- **Endpoints de reservas** — rentacar-main apunta a los de rentacar-dashboard
 
-**Fases independientes del admin** (pueden ejecutarse ya): 1, 2, 5
-**Fases que requieren admin listo**: 3, 4, 6, 7
+**Fases independientes de rentacar-dashboard** (pueden ejecutarse ya): 1, 2, 5
+**Fases que requieren rentacar-dashboard listo**: 3, 4, 6, 7
 
 ## Arquitectura objetivo
 
 ```
 Nuxt 4 (monorepo, 3 marcas)
   ├─ Deploy: Vercel (SSR serverless + CDN estáticos)
-  ├─ Datos: Supabase PostgreSQL (compartido con rentacar-admin)
+  ├─ Datos: Supabase PostgreSQL (compartido con rentacar-dashboard)
   ├─ Storage: Supabase Storage (imágenes dinámicas) + /public/ (estáticas)
   ├─ Imágenes: Vercel Image Optimization (automático: formato + tamaño)
   ├─ Cache: ISR por route rules (3600s para páginas de ciudad/home)
@@ -50,7 +50,7 @@ Nuxt 4 (monorepo, 3 marcas)
 - Configurar `@nuxt/image` con `provider: 'vercel'`
 - Eliminar lógica de procesamiento de imágenes con Sharp en server-side
 
-### Fase 3: Integrar Supabase (requiere admin)
+### Fase 3: Integrar Supabase (requiere rentacar-dashboard)
 - Instalar `@supabase/supabase-js`
 - Crear `server/utils/supabase.ts` (reemplaza `firebase.ts`)
 - Migrar `gsc.ts`: tokens OAuth de Firestore → tabla Supabase
@@ -58,7 +58,7 @@ Nuxt 4 (monorepo, 3 marcas)
 - Reescribir server routes del SEO dashboard donde usen Firestore
 - Migrar upload de imágenes: Firebase Storage → Supabase Storage
 
-### Fase 4: Dinamizar datos de configuración (requiere admin)
+### Fase 4: Dinamizar datos de configuración (requiere rentacar-dashboard)
 - ~~`branches.config.ts`~~ → ya migrado vía `useFetchRentacarData()` (tabla `locations`); archivo borrado por código muerto.
 - `cities.config.ts` → query Supabase (pendiente)
 - `categories.config.ts` → query Supabase (pendiente — ojo: nombre real del archivo pendiente, los datos ya vienen de `vehicle_categories` vía `useFetchRentacarData`)
@@ -70,13 +70,13 @@ Nuxt 4 (monorepo, 3 marcas)
 - Simplificar `ci.yml`: mantener lint + tests, quitar build jobs
 - Deploy lo maneja la integración nativa Vercel-GitHub
 
-### Fase 6: Migración de datos y variables de entorno (requiere admin)
+### Fase 6: Migración de datos y variables de entorno (requiere rentacar-dashboard)
 - Script one-time: blog posts Firestore → tabla `blog_posts` Supabase
 - Script one-time: tokens GSC Firestore → tabla `seo_config` Supabase
 - Configurar env vars en Vercel dashboard por proyecto
 - Configurar RLS en Supabase: policy SELECT para anon en tablas de lectura
 
-### Fase 7: Migración de imágenes (requiere admin)
+### Fase 7: Migración de imágenes (requiere rentacar-dashboard)
 - Imágenes estáticas (branding) → `/public/images/`
 - Imágenes dinámicas (blog) → Supabase Storage
 - Actualizar URLs hardcodeadas de Firebase Storage
@@ -95,7 +95,7 @@ Nuxt 4 (monorepo, 3 marcas)
 
 ## Mejoras futuras (fuera de scope)
 
-- Query directo a Supabase para disponibilidad/reservas (bypass API admin)
+- Query directo a Supabase para disponibilidad/reservas (bypass API rentacar-dashboard)
 - Dinamización de FAQs si directiva lo aprueba
 
 ## Verificación
@@ -109,4 +109,4 @@ Nuxt 4 (monorepo, 3 marcas)
 7. Lighthouse SEO score ≥ 90 en páginas principales
 8. Tests de Playwright pasan
 9. Vercel genera preview URL por PR
-10. Formulario de reserva envía correctamente al endpoint del admin migrado
+10. Formulario de reserva envía correctamente al endpoint de rentacar-dashboard
