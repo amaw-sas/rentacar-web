@@ -10,10 +10,12 @@ import { defineConfig, devices } from '@playwright/test';
  * Default: alquilatucarro
  */
 const brand = process.env.BRAND || 'alquilatucarro';
+// Ports must match packages/ui-*/nuxt.config.ts devServer.port
+// (moved to 4000-4002 range in commit 9a87100; playwright config drifted).
 const brandPorts: Record<string, number> = {
-  alquilatucarro: 3000,
-  alquicarros: 3001,
-  alquilame: 3002
+  alquilatucarro: 4000,
+  alquicarros: 4001,
+  alquilame: 4002
 };
 
 // Validación
