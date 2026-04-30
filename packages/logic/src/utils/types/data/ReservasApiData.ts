@@ -1,19 +1,13 @@
 import type CategoryData from './CategoryData';
 import type BranchData from './BranchData';
 import type VehicleCategoryData from './VehicleCategoryData';
+import type ExtrasData from './ExtrasData';
 
-export interface ExtrasData {
-  extraDriverDayPrice: number;
-  babySeatDayPrice: number;
-  washPrice: number;
-  washOnsitePrice: number;
-  washDeepPrice: number;
-  washDeepUpholsteryPrice: number;
-}
+export type { ExtrasData };
 
 export default interface ReservasApiData {
   categories: CategoryData[];
   branches: BranchData[];
-  extras: ExtrasData;
+  extras: ExtrasData | undefined;
   vehicleCategories: VehicleCategoryData;
 }

@@ -208,4 +208,26 @@ describe('transformExtras', () => {
     expect(result.washDeepPrice).toBe(150000)
     expect(result.washDeepUpholsteryPrice).toBe(225000)
   })
+
+  // SCEN-007: NULL pass-through prevents silent $0 quoting
+  // (issue #4): Number(null) === 0 used to coerce missing data into a
+  // legitimate-looking $0 price, bypassing the ?? 12000 fallback in
+  // useCategory. Transformer must propagate null so the fallback fires.
+  it('propagates null values without coercing them to 0', () => {
+    const result = transformExtras({
+      extra_driver_day_price: null,
+      baby_seat_day_price: null,
+      wash_price: 20000,
+      wash_onsite_price: null,
+      wash_deep_price: null,
+      wash_deep_upholstery_price: null,
+    })
+
+    expect(result.extraDriverDayPrice).toBeNull()
+    expect(result.babySeatDayPrice).toBeNull()
+    expect(result.washPrice).toBe(20000)
+    expect(result.washOnsitePrice).toBeNull()
+    expect(result.washDeepPrice).toBeNull()
+    expect(result.washDeepUpholsteryPrice).toBeNull()
+  })
 })

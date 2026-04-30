@@ -3,6 +3,9 @@ import type CategoryModelData from '../../src/utils/types/data/CategoryModelData
 import type CategoryMonthPriceData from '../../src/utils/types/data/CategoryMonthPriceData'
 import type BranchData from '../../src/utils/types/data/BranchData'
 import type VehicleCategoryData from '../../src/utils/types/data/VehicleCategoryData'
+import type ExtrasData from '../../src/utils/types/data/ExtrasData'
+
+export type { ExtrasData };
 
 interface SupabaseCategory {
   id: string
@@ -114,30 +117,22 @@ export function transformBranches(rows: SupabaseLocation[]): BranchData[] {
   }))
 }
 
-export interface ExtrasData {
-  extraDriverDayPrice: number
-  babySeatDayPrice: number
-  washPrice: number
-  washOnsitePrice: number
-  washDeepPrice: number
-  washDeepUpholsteryPrice: number
-}
-
 export function transformExtras(rentalCompany: {
-  extra_driver_day_price: number
-  baby_seat_day_price: number
-  wash_price: number
-  wash_onsite_price: number
-  wash_deep_price: number
-  wash_deep_upholstery_price: number
+  extra_driver_day_price: number | null
+  baby_seat_day_price: number | null
+  wash_price: number | null
+  wash_onsite_price: number | null
+  wash_deep_price: number | null
+  wash_deep_upholstery_price: number | null
 }): ExtrasData {
+  const num = (v: number | null) => (v == null ? null : Number(v))
   return {
-    extraDriverDayPrice: Number(rentalCompany.extra_driver_day_price),
-    babySeatDayPrice: Number(rentalCompany.baby_seat_day_price),
-    washPrice: Number(rentalCompany.wash_price),
-    washOnsitePrice: Number(rentalCompany.wash_onsite_price),
-    washDeepPrice: Number(rentalCompany.wash_deep_price),
-    washDeepUpholsteryPrice: Number(rentalCompany.wash_deep_upholstery_price),
+    extraDriverDayPrice: num(rentalCompany.extra_driver_day_price),
+    babySeatDayPrice: num(rentalCompany.baby_seat_day_price),
+    washPrice: num(rentalCompany.wash_price),
+    washOnsitePrice: num(rentalCompany.wash_onsite_price),
+    washDeepPrice: num(rentalCompany.wash_deep_price),
+    washDeepUpholsteryPrice: num(rentalCompany.wash_deep_upholstery_price),
   }
 }
 
