@@ -43,12 +43,24 @@ Como las decisiones de diseño y los scenarios ya están aprobados (5 Q&A en bra
 
 ## Prerequisites
 
-- Branch: `fix/rentacar-data-resilience-bundled` desde `main`.
-- `pnpm install` limpio.
-- `pnpm typecheck` y `pnpm lint` verdes en `main` antes de empezar (verificar baseline).
+- Branch: `fix/rentacar-data-resilience-bundled` desde `main`. ✅ creada.
+- `pnpm install` limpio. ✅ ejecutado, postinstall regeneró `.nuxt/types/`.
+- ~~`pnpm typecheck` y `pnpm lint` verdes en `main`~~ — **baseline ROJO pre-existente**, fuera del scope del bundle. Ver `baseline/README.md` para snapshot. Acceptance ajustado a estrategia delta (no nuevos errores vs baseline). Lint excluido (script muerto: `eslint` no está en deps).
 - Vitest configurado en `packages/logic` (ya existe — `vitest.config.ts`).
 - Playwright configurado para `BRAND` env (ya existe — ver `e2e/`).
 - Agregar `@pinia/testing` como devDep en `packages/logic/package.json` (verificado: NO está instalado actualmente). Necesario para `createTestingPinia` en Step 4. Comando: `pnpm --filter @rentacar-main/logic add -D @pinia/testing`.
+
+### Acceptance helper: verificar "no nuevos errores"
+
+```bash
+# Por cada marca, después de cada step:
+for BRAND in alquilatucarro alquilame alquicarros; do
+  pnpm --filter ui-$BRAND typecheck 2>&1 | grep -E "error TS" | sort -u > /tmp/typecheck-$BRAND.txt
+  echo "=== Nuevos errores en $BRAND ==="
+  comm -13 docs/specs/2026-04-29-bundled-rentacar-data-resilience/baseline/typecheck-$BRAND.txt /tmp/typecheck-$BRAND.txt
+done
+# Vacío en las 3 marcas = step verde.
+```
 
 **Estado verificado en repo (no asumir):**
 - `packages/logic/server/utils/__tests__/transformers.test.ts` **existe** — Step 3 lo extiende, no lo crea.

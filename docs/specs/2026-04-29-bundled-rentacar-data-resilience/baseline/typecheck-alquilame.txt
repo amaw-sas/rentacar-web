@@ -1,0 +1,449 @@
+../logic/src/composables/useAggregateRating.ts(115,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useAggregateRating.ts(116,19): error TS2304: Cannot find name 'useRoute'.
+../logic/src/composables/useAggregateRating.ts(24,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useAggregateRating.ts(85,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useAggregateRating.ts(99,41): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useBaseSEO.ts(14,5): error TS2304: Cannot find name 'useHead'.
+../logic/src/composables/useBaseSEO.ts(28,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useBaseSEO.ts(29,9): error TS2304: Cannot find name 'defineWebSite'.
+../logic/src/composables/useBaseSEO.ts(40,9): error TS2304: Cannot find name 'defineWebPage'.
+../logic/src/composables/useBaseSEO.ts(43,9): error TS2304: Cannot find name 'defineOrganization'.
+../logic/src/composables/useBaseSEO.ts(6,41): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useBaseSEO.ts(7,19): error TS2304: Cannot find name 'useRoute'.
+../logic/src/composables/useBaseSEO.ts(9,5): error TS2304: Cannot find name 'useSeoMeta'.
+../logic/src/composables/useBreadcrumbs.ts(10,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useBreadcrumbs.ts(22,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useCategory.ts(31,23): error TS2304: Cannot find name 'useFetchRentacarData'.
+../logic/src/composables/useCityFAQs.ts(556,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useCityFAQs.ts(560,17): error TS2304: Cannot find name 'defineQuestion'.
+../logic/src/composables/useCityPageSEO.ts(13,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useCityPageSEO.ts(15,19): error TS2304: Cannot find name 'useRoute'.
+../logic/src/composables/useCityPageSEO.ts(37,5): error TS2304: Cannot find name 'useHead'.
+../logic/src/composables/useCityPageSEO.ts(50,5): error TS2304: Cannot find name 'useSeoMeta'.
+../logic/src/composables/useCityProductSchema.ts(112,3): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useCityProductSchema.ts(66,25): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useCityProductSchema.ts(67,33): error TS2304: Cannot find name 'useFetchRentacarData'.
+../logic/src/composables/useData.ts(8,30): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useFetchCategoriesAvailabilityData.ts(14,18): error TS2304: Cannot find name 'useRuntimeConfig'.
+../logic/src/composables/useFetchRentacarData.ts(4,18): error TS2304: Cannot find name 'useState'.
+../logic/src/composables/useLocalBusiness.ts(12,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useLocalBusiness.ts(13,26): error TS2304: Cannot find name 'useFetchRentacarData'.
+../logic/src/composables/useLocalBusiness.ts(74,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useMessages.ts(7,19): error TS2304: Cannot find name 'useToast'.
+../logic/src/composables/useProductSchema.ts(129,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useProductSchema.ts(14,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useProductSchema.ts(15,19): error TS2304: Cannot find name 'useRoute'.
+../logic/src/composables/useProductSchema.ts(85,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useProductSchema.ts(95,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useProductSchema.ts(96,19): error TS2304: Cannot find name 'useRoute'.
+../logic/src/composables/usePromotionSchema.ts(18,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/usePromotionSchema.ts(89,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useRecordReservationForm.ts(15,18): error TS2304: Cannot find name 'useRuntimeConfig'.
+../logic/src/composables/useSearch.ts(60,17): error TS2304: Cannot find name 'useRoute'.
+../logic/src/composables/useSearchByRouteParams.ts(21,17): error TS2304: Cannot find name 'useRoute'.
+../logic/src/composables/useSearchPageSEO.ts(12,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useSearchPageSEO.ts(14,19): error TS2304: Cannot find name 'useRoute'.
+../logic/src/composables/useSearchPageSEO.ts(22,5): error TS2304: Cannot find name 'useHead'.
+../logic/src/composables/useSearchPageSEO.ts(35,5): error TS2304: Cannot find name 'useSeoMeta'.
+../logic/src/composables/useVideoSchema.ts(18,27): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/composables/useVideoSchema.ts(56,5): error TS2304: Cannot find name 'useSchemaOrg'.
+../logic/src/composables/useVideoSchema.ts(71,26): error TS2304: Cannot find name 'useAppConfig'.
+../logic/src/stores/useStoreReservationForm.ts(195,20): error TS2552: Cannot find name 'useRouter'. Did you mean 'router'?
+../logic/src/stores/useStoreReservationForm.ts(240,9): error TS2552: Cannot find name 'navigateTo'. Did you mean 'navigator'?
+../logic/src/stores/useStoreReservationForm.ts(246,7): error TS2552: Cannot find name 'navigateTo'. Did you mean 'navigator'?
+app/app.config.ts(15,16): error TS2304: Cannot find name 'defineAppConfig'.
+app/app.vue(11,1): error TS2304: Cannot find name 'useBaseSEO'.
+app/app.vue(15,1): error TS2304: Cannot find name 'useHead'.
+app/components/Carrusel.vue(35,13): error TS2304: Cannot find name 'CategoryType'.
+app/components/Carrusel.vue(36,12): error TS2304: Cannot find name 'CategoryModelData'.
+app/components/Carrusel.vue(37,19): error TS2304: Cannot find name 'VehicleCategoryModel'.
+app/components/CategoryCard.vue(604,8): error TS2307: Cannot find module '#components' or its corresponding type declarations.
+app/components/CategoryCard.vue(618,50): error TS2304: Cannot find name 'useCategory'.
+app/components/CategoryCard.vue(623,15): error TS2304: Cannot find name 'useStoreReservationForm'.
+app/components/CategoryCard.vue(623,3): error TS2304: Cannot find name 'storeToRefs'.
+app/components/CategoryCard.vue(626,35): error TS2304: Cannot find name 'useCategory'.
+app/components/CategoryCard.vue(626,50): error TS2304: Cannot find name 'useCategory'.
+app/components/CategoryCard.vue(641,3): error TS6133: 'extraHoursTotalAmount' is declared but its value is never read.
+app/components/CategoryCard.vue(643,3): error TS6133: 'categoryDescription' is declared but its value is never read.
+app/components/CategoryCard.vue(652,3): error TS6133: 'hasPicoyPlaca' is declared but its value is never read.
+app/components/CategoryCard.vue(671,18): error TS2339: Property 'grupo' does not exist on type 'VehicleCategoryData | undefined'.
+app/components/CategoryCard.vue(671,9): error TS2339: Property 'modelos' does not exist on type 'VehicleCategoryData | undefined'.
+app/components/CategoryCard.vue(674,1): error TS2304: Cannot find name 'useProductSchema'.
+app/components/CategorySelectionSection.vue(200,8): error TS2307: Cannot find module '#components' or its corresponding type declarations.
+app/components/CategorySelectionSection.vue(205,21): error TS2304: Cannot find name 'useStoreSearchData'.
+app/components/CategorySelectionSection.vue(206,19): error TS2304: Cannot find name 'useStoreReservationForm'.
+app/components/CategorySelectionSection.vue(215,5): error TS2304: Cannot find name 'storeToRefs'.
+app/components/CategorySelectionSection.vue(216,90): error TS2304: Cannot find name 'storeToRefs'.
+app/components/CategorySelectionSection.vue(218,23): error TS2304: Cannot find name 'computed'.
+app/components/CategorySelectionSection.vue(219,16): error TS2304: Cannot find name 'useRuntimeConfig'.
+app/components/CategorySelectionSection.vue(226,31): error TS2304: Cannot find name 'useFetchRentacarData'.
+app/components/CategorySelectionSection.vue(227,36): error TS2304: Cannot find name 'ref'.
+app/components/CategorySelectionSection.vue(228,34): error TS2304: Cannot find name 'ref'.
+app/components/CategorySelectionSection.vue(229,34): error TS2304: Cannot find name 'ref'.
+app/components/CategorySelectionSection.vue(230,20): error TS2304: Cannot find name 'ref'.
+app/components/CategorySelectionSection.vue(235,18): error TS2304: Cannot find name 'useRouter'.
+app/components/CategorySelectionSection.vue(235,9): error TS6133: 'router' is declared but its value is never read.
+app/components/CategorySelectionSection.vue(236,17): error TS2304: Cannot find name 'useRoute'.
+app/components/CategorySelectionSection.vue(281,15): error TS2304: Cannot find name 'useRoute'.
+app/components/CategorySelectionSection.vue(282,24): error TS2304: Cannot find name 'computed'.
+app/components/CategorySelectionSection.vue(286,22): error TS2304: Cannot find name 'computed'.
+app/components/CategorySelectionSection.vue(287,23): error TS2304: Cannot find name 'computed'.
+app/components/CategorySelectionSection.vue(288,25): error TS2304: Cannot find name 'computed'.
+app/components/CategorySelectionSection.vue(289,32): error TS2304: Cannot find name 'computed'.
+app/components/CategorySelectionSection.vue(292,27): error TS2304: Cannot find name 'ref'.
+app/components/CategorySelectionSection.vue(314,1): error TS2304: Cannot find name 'watch'.
+app/components/CategorySelectionSection.vue(314,36): error TS7006: Parameter 'isOpen' implicitly has an 'any' type.
+app/components/CategorySelectionSection.vue(323,1): error TS2304: Cannot find name 'watch'.
+app/components/CategorySelectionSection.vue(323,34): error TS7006: Parameter 'isOpen' implicitly has an 'any' type.
+app/components/CategorySelectionSection.vue(339,1): error TS2304: Cannot find name 'watch'.
+app/components/CategorySelectionSection.vue(341,17): error TS7031: Binding element 'codigo' implicitly has an 'any' type.
+app/components/CategorySelectionSection.vue(341,5): error TS7031: Binding element 'categories' implicitly has an 'any' type.
+app/components/CategorySelectionSection.vue(344,42): error TS7006: Parameter 'c' implicitly has an 'any' type.
+app/components/CategorySelectionSection.vue(351,22): error TS2304: Cannot find name 'useCategory'.
+app/components/CategorySelectionSection.vue(356,5): error TS2304: Cannot find name 'nextTick'.
+app/components/CategorySelectionSection.vue(359,9): error TS2304: Cannot find name 'nextTick'.
+app/components/CategorySelectionSection.vue(362,11): error TS2304: Cannot find name 'nextTick'.
+app/components/CategorySelectionSection.vue(368,9): error TS2304: Cannot find name 'nextTick'.
+app/components/CategorySelectionSection.vue(378,58): error TS2304: Cannot find name 'useCategory'.
+app/components/CategorySelectionSection.vue(389,25): error TS2304: Cannot find name 'useData'.
+app/components/CategorySelectionSection.vue(390,24): error TS2304: Cannot find name 'computed'.
+app/components/CategoryTags.vue(12,33): error TS2304: Cannot find name 'useCategory'.
+app/components/CategoryTags.vue(21,11): error TS2304: Cannot find name 'CategoryType'.
+app/components/ChatWidget.vue(56,8): error TS2307: Cannot find module '#components' or its corresponding type declarations.
+app/components/ChatWidget.vue(58,23): error TS2304: Cannot find name 'useAppConfig'.
+app/components/CityPage.vue(400,8): error TS2307: Cannot find module '#components' or its corresponding type declarations.
+app/components/CityPage.vue(403,23): error TS2304: Cannot find name 'useAppConfig'.
+app/components/CityPage.vue(404,38): error TS2304: Cannot find name 'storeToRefs'.
+app/components/CityPage.vue(404,50): error TS2304: Cannot find name 'useStoreAdminData'.
+app/components/CityPage.vue(407,23): error TS2304: Cannot find name 'ref'.
+app/components/CityPage.vue(408,28): error TS2304: Cannot find name 'ref'.
+app/components/CityPage.vue(411,1): error TS2304: Cannot find name 'onMounted'.
+app/components/CityPage.vue(412,23): error TS2304: Cannot find name 'useStoreSearchData'.
+app/components/CityPage.vue(413,16): error TS2304: Cannot find name 'storeToRefs'.
+app/components/CityPage.vue(416,3): error TS2304: Cannot find name 'watch'.
+app/components/CityPage.vue(416,36): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/CityPage.vue(417,3): error TS2304: Cannot find name 'watch'.
+app/components/CityPage.vue(417,47): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/CityPage.vue(425,22): error TS2304: Cannot find name 'computed'.
+app/components/CityPage.vue(429,20): error TS2304: Cannot find name 'Testimonial'.
+app/components/CityPage.vue(432,44): error TS2304: Cannot find name 'useCityExpandedContent'.
+app/components/CityPage.vue(433,47): error TS2304: Cannot find name 'hasCityExpandedContent'.
+app/components/CityPage.vue(436,40): error TS2304: Cannot find name 'useRelatedCities'.
+app/components/CityPage.vue(440,3): error TS2304: Cannot find name 'useCityAggregateRating'.
+app/components/CityPage.vue(445,3): error TS2304: Cannot find name 'useCityProductSchema'.
+app/components/CityPage.vue(449,37): error TS2304: Cannot find name 'useCityFAQs'.
+app/components/CityPage.vue(462,50): error TS2304: Cannot find name 'useShareSearchParams'.
+app/components/Images/Avatar.vue(18,19): error TS2304: Cannot find name 'computed'.
+app/components/Placeholders/Searcher.vue(49,18): error TS2304: Cannot find name 'ref'.
+app/components/Placeholders/UnableCategoryCard.vue(6,10): error TS2322: Type 'VehicleCategory | undefined' is not assignable to type 'VehicleCategoryModel[] | undefined'.
+app/components/Placeholders/UnableCategoryCard.vue(69,3): error TS6133: 'categoryDescription' is declared but its value is never read.
+app/components/Placeholders/UnableCategoryCard.vue(73,7): error TS6133: 'contentID' is declared but its value is never read.
+app/components/Placeholders/UnableCategoryCard.vue(74,7): error TS6133: 'aditionalID' is declared but its value is never read.
+app/components/Placeholders/UnableCategoryCard.vue(75,7): error TS6133: 'iconID' is declared but its value is never read.
+app/components/ReservationForm.vue(101,21): error TS2304: Cannot find name 'defineAsyncComponent'.
+app/components/ReservationForm.vue(102,10): error TS7016: Could not find a declaration file for module 'vue-tel-input'. '/home/pabloandi/proyectos/amaw/rentacar/rentacar-web/node_modules/.pnpm/vue-tel-input@9.5.1_libphonenumber-js@1.12.31_vue@3.5.25_typescript@5.9.3_/node_modules/vue-tel-input/dist/vue-tel-input.js' implicitly has an 'any' type.
+app/components/ReservationForm.vue(106,21): error TS2304: Cannot find name 'useStoreSearchData'.
+app/components/ReservationForm.vue(107,19): error TS2304: Cannot find name 'useStoreReservationForm'.
+app/components/ReservationForm.vue(110,30): error TS2304: Cannot find name 'storeToRefs'.
+app/components/ReservationForm.vue(110,7): error TS6133: 'selectedCategory' is declared but its value is never read.
+app/components/ReservationForm.vue(123,5): error TS2304: Cannot find name 'storeToRefs'.
+app/components/ReservationForm.vue(130,5): error TS2304: Cannot find name 'usePhoneField'.
+app/components/ReservationForm.vue(159,30): error TS2304: Cannot find name 'reactive'.
+app/components/ReservationForm.vue(160,40): error TS2304: Cannot find name 'reactive'.
+app/components/ReservationForm.vue(166,19): error TS2304: Cannot find name 'ref'.
+app/components/ReservationForm.vue(169,26): error TS2304: Cannot find name 'ref'.
+app/components/ReservationForm.vue(175,25): error TS2304: Cannot find name 'ref'.
+app/components/ReservationForm.vue(187,19): error TS7006: Parameter 'event' implicitly has an 'any' type.
+app/components/ReservationFormSection.vue(38,8): error TS2307: Cannot find module '#components' or its corresponding type declarations.
+app/components/ReservationFormSection.vue(39,21): error TS2304: Cannot find name 'useStoreSearchData'.
+app/components/ReservationFormSection.vue(40,19): error TS2304: Cannot find name 'useStoreReservationForm'.
+app/components/ReservationFormSection.vue(43,30): error TS2304: Cannot find name 'storeToRefs'.
+app/components/ReservationFormSection.vue(57,5): error TS2304: Cannot find name 'storeToRefs'.
+app/components/ReservationFormSection.vue(70,30): error TS2304: Cannot find name 'reactive'.
+app/components/ReservationFormSection.vue(71,40): error TS2304: Cannot find name 'reactive'.
+app/components/ReservationFormSection.vue(77,19): error TS2304: Cannot find name 'ref'.
+app/components/ReservationFormSection.vue(80,26): error TS2304: Cannot find name 'ref'.
+app/components/ReservationFormSection.vue(82,7): error TS2304: Cannot find name 'ReservationWithFlightFormValidationSchema'.
+app/components/ReservationFormSection.vue(83,7): error TS2304: Cannot find name 'ReservationFormValidationSchema'.
+app/components/ReservationResume.vue(142,19): error TS2304: Cannot find name 'useStoreReservationForm'.
+app/components/ReservationResume.vue(143,21): error TS2304: Cannot find name 'useStoreSearchData'.
+app/components/ReservationResume.vue(143,7): error TS6133: 'storeSearch' is declared but its value is never read.
+app/components/ReservationResume.vue(161,3): error TS6133: 'numberDays' is declared but its value is never read.
+app/components/ReservationResume.vue(183,5): error TS2304: Cannot find name 'storeToRefs'.
+app/components/ReservationResume.vue(186,31): error TS2304: Cannot find name 'useFetchRentacarData'.
+app/components/Searcher.vue(323,23): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(324,25): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(325,22): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(326,24): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(327,18): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(328,23): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(329,23): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(330,28): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(331,28): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(332,23): error TS2304: Cannot find name 'computed'.
+app/components/Searcher.vue(333,26): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(334,24): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(335,27): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(336,27): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(337,24): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(338,26): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(339,29): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(341,32): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(342,32): error TS2304: Cannot find name 'ref'.
+app/components/Searcher.vue(360,1): error TS2304: Cannot find name 'onMounted'.
+app/components/Searcher.vue(365,32): error TS2304: Cannot find name 'useStoreReservationForm'.
+app/components/Searcher.vue(366,26): error TS2304: Cannot find name 'useStoreAdminData'.
+app/components/Searcher.vue(367,27): error TS2304: Cannot find name 'useStoreSearchData'.
+app/components/Searcher.vue(369,20): error TS2304: Cannot find name 'storeToRefs'.
+app/components/Searcher.vue(370,22): error TS2304: Cannot find name 'storeToRefs'.
+app/components/Searcher.vue(371,21): error TS2304: Cannot find name 'storeToRefs'.
+app/components/Searcher.vue(374,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(374,46): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(375,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(375,48): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(376,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(376,45): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(377,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(377,47): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(378,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(378,41): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(379,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(379,46): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(380,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(380,46): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(381,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(381,51): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(382,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(382,51): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(383,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(383,42): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(384,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(384,48): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(387,25): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(387,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(388,27): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(388,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(389,24): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(389,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(390,26): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(390,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(391,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(391,30): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(392,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(392,30): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(395,28): error TS2304: Cannot find name 'useSearch'.
+app/components/Searcher.vue(396,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(396,58): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(397,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(397,58): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(398,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(398,55): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(399,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(399,57): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(400,3): error TS2304: Cannot find name 'watch'.
+app/components/Searcher.vue(400,60): error TS7006: Parameter 'val' implicitly has an 'any' type.
+app/components/Searcher.vue(403,1): error TS2304: Cannot find name 'onBeforeUnmount'.
+app/components/SelectBranch.vue(102,1): error TS2304: Cannot find name 'onMounted'.
+app/components/SelectBranch.vue(108,1): error TS2304: Cannot find name 'onBeforeUnmount'.
+app/components/SelectBranch.vue(117,52): error TS2304: Cannot find name 'BranchData'.
+app/components/SelectBranch.vue(124,44): error TS2304: Cannot find name 'BranchData'.
+app/components/SelectBranch.vue(125,9): error TS2304: Cannot find name 'navigateTo'.
+app/components/SelectBranch.vue(127,39): error TS2304: Cannot find name 'BranchData'.
+app/components/SelectBranch.vue(62,8): error TS2307: Cannot find module '#components' or its corresponding type declarations.
+app/components/SelectBranch.vue(72,42): error TS2304: Cannot find name 'useAppConfig'.
+app/components/SelectBranch.vue(72,9): error TS6133: 'reservation' is declared but its value is never read.
+app/components/SelectBranch.vue(73,50): error TS2304: Cannot find name 'useStoreAdminData'.
+app/components/SelectBranch.vue(85,39): error TS2304: Cannot find name 'BranchData'.
+app/components/SelectBranch.vue(93,24): error TS2304: Cannot find name 'ref'.
+app/components/SelectBranch.vue(93,28): error TS2304: Cannot find name 'BranchData'.
+app/error.vue(103,20): error TS2304: Cannot find name 'computed'.
+app/error.vue(113,22): error TS2304: Cannot find name 'computed'.
+app/error.vue(124,3): error TS2304: Cannot find name 'clearError'.
+app/error.vue(127,1): error TS2304: Cannot find name 'useHead'.
+app/error.vue(96,32): error TS2307: Cannot find module '#app' or its corresponding type declarations.
+app/error.vue(97,23): error TS2304: Cannot find name 'useAppConfig'.
+app/layouts/default.vue(128,15): error TS2304: Cannot find name 'useRoute'.
+app/layouts/default.vue(131,24): error TS2304: Cannot find name 'ref'.
+app/layouts/default.vue(134,15): error TS2304: Cannot find name 'computed'.
+app/layouts/default.vue(162,21): error TS2304: Cannot find name 'computed'.
+app/layouts/default.vue(185,20): error TS2304: Cannot find name 'useData'.
+app/layouts/default.vue(186,20): error TS6133: 'reservation' is declared but its value is never read.
+app/layouts/default.vue(186,53): error TS2304: Cannot find name 'useAppConfig'.
+app/layouts/default.vue(187,50): error TS2304: Cannot find name 'useStoreAdminData'.
+app/layouts/gana.vue(102,21): error TS2304: Cannot find name 'computed'.
+app/layouts/gana.vue(74,23): error TS2304: Cannot find name 'useAppConfig'.
+app/layouts/gana.vue(76,15): error TS2304: Cannot find name 'useRoute'.
+app/layouts/gana.vue(79,24): error TS2304: Cannot find name 'ref'.
+app/layouts/gana.vue(82,15): error TS2304: Cannot find name 'computed'.
+app/middleware/validateCityParams.ts(1,16): error TS2304: Cannot find name 'defineNuxtRouteMiddleware'.
+app/middleware/validateCityParams.ts(1,43): error TS7006: Parameter 'to' implicitly has an 'any' type.
+app/middleware/validateCityParams.ts(1,47): error TS6133: 'from' is declared but its value is never read.
+app/middleware/validateCityParams.ts(1,47): error TS7006: Parameter 'from' implicitly has an 'any' type.
+app/middleware/validateCityParams.ts(11,19): error TS2304: Cannot find name 'createError'.
+app/middleware/validateCityParams.ts(5,28): error TS2304: Cannot find name 'useAppConfig'.
+app/middleware/validateCityParams.ts(7,28): error TS7006: Parameter 'c' implicitly has an 'any' type.
+app/middleware/validateSearchParams.ts(10,3): error TS6133: 'formatTime' is declared but its value is never read.
+app/middleware/validateSearchParams.ts(105,11): error TS2304: Cannot find name 'useDefaultRouteParams'.
+app/middleware/validateSearchParams.ts(119,14): error TS2304: Cannot find name 'navigateTo'.
+app/middleware/validateSearchParams.ts(126,12): error TS2304: Cannot find name 'navigateTo'.
+app/middleware/validateSearchParams.ts(151,9): error TS2304: Cannot find name 'useDefaultRouteParams'.
+app/middleware/validateSearchParams.ts(16,16): error TS2304: Cannot find name 'defineNuxtRouteMiddleware'.
+app/middleware/validateSearchParams.ts(16,43): error TS7006: Parameter 'to' implicitly has an 'any' type.
+app/middleware/validateSearchParams.ts(16,47): error TS6133: 'from' is declared but its value is never read.
+app/middleware/validateSearchParams.ts(16,47): error TS7006: Parameter 'from' implicitly has an 'any' type.
+app/middleware/validateSearchParams.ts(165,12): error TS2304: Cannot find name 'navigateTo'.
+app/middleware/validateSearchParams.ts(18,29): error TS2304: Cannot find name 'useMessages'.
+app/middleware/validateSearchParams.ts(187,12): error TS2304: Cannot find name 'navigateTo'.
+app/middleware/validateSearchParams.ts(202,14): error TS2304: Cannot find name 'navigateTo'.
+app/middleware/validateSearchParams.ts(224,12): error TS2304: Cannot find name 'navigateTo'.
+app/middleware/validateSearchParams.ts(38,40): error TS2304: Cannot find name 'useStoreAdminData'.
+app/middleware/validateSearchParams.ts(4,3): error TS6133: 'createTimeFromString' is declared but its value is never read.
+app/middleware/validateSearchParams.ts(50,9): error TS2304: Cannot find name 'useDefaultRouteParams'.
+app/middleware/validateSearchParams.ts(64,12): error TS2304: Cannot find name 'navigateTo'.
+app/middleware/validateSearchParams.ts(80,12): error TS2304: Cannot find name 'navigateTo'.
+app/pages/[city]/buscar-vehiculos/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/categoria/[categoria]/index.vue(11,18): error TS2304: Cannot find name 'useSearchPageSEO'.
+app/pages/[city]/buscar-vehiculos/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/categoria/[categoria]/index.vue(13,1): error TS2304: Cannot find name 'useSearchByRouteParams'.
+app/pages/[city]/buscar-vehiculos/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/categoria/[categoria]/index.vue(7,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/[city]/buscar-vehiculos/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/index.vue(12,18): error TS2304: Cannot find name 'useSearchPageSEO'.
+app/pages/[city]/buscar-vehiculos/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/index.vue(14,1): error TS2304: Cannot find name 'useSearchByRouteParams'.
+app/pages/[city]/buscar-vehiculos/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/index.vue(8,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/[city]/buscar-vehiculos/referido/[referido]/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/categoria/[categoria]/index.vue(11,18): error TS2304: Cannot find name 'useSearchPageSEO'.
+app/pages/[city]/buscar-vehiculos/referido/[referido]/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/categoria/[categoria]/index.vue(13,1): error TS2304: Cannot find name 'useSearchByRouteParams'.
+app/pages/[city]/buscar-vehiculos/referido/[referido]/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/categoria/[categoria]/index.vue(7,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/[city]/buscar-vehiculos/referido/[referido]/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/index.vue(11,18): error TS2304: Cannot find name 'useSearchPageSEO'.
+app/pages/[city]/buscar-vehiculos/referido/[referido]/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/index.vue(13,1): error TS2304: Cannot find name 'useSearchByRouteParams'.
+app/pages/[city]/buscar-vehiculos/referido/[referido]/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/index.vue(7,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/[city]/index.vue(10,9): error TS2304: Cannot find name 'createError'.
+app/pages/[city]/index.vue(6,18): error TS2304: Cannot find name 'useCityPageSEO'.
+app/pages/blog/[...slug].vue(293,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/blog/[...slug].vue(294,15): error TS2304: Cannot find name 'useRoute'.
+app/pages/blog/[...slug].vue(297,14): error TS2304: Cannot find name 'computed'.
+app/pages/blog/[...slug].vue(303,30): error TS2304: Cannot find name 'useAsyncData'.
+app/pages/blog/[...slug].vue(309,38): error TS2304: Cannot find name 'useAsyncData'.
+app/pages/blog/[...slug].vue(311,10): error TS2304: Cannot find name 'queryCollection'.
+app/pages/blog/[...slug].vue(319,20): error TS2304: Cannot find name 'ref'.
+app/pages/blog/[...slug].vue(320,25): error TS2304: Cannot find name 'ref'.
+app/pages/blog/[...slug].vue(343,1): error TS2304: Cannot find name 'onMounted'.
+app/pages/blog/[...slug].vue(348,1): error TS2304: Cannot find name 'onUnmounted'.
+app/pages/blog/[...slug].vue(384,20): error TS2304: Cannot find name 'ref'.
+app/pages/blog/[...slug].vue(426,3): error TS2304: Cannot find name 'useHead'.
+app/pages/blog/[...slug].vue(433,3): error TS2304: Cannot find name 'useSeoMeta'.
+app/pages/blog/[...slug].vue(454,3): error TS2304: Cannot find name 'useSchemaOrg'.
+app/pages/blog/[...slug].vue(506,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/blog/index.vue(168,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/blog/index.vue(169,15): error TS2304: Cannot find name 'useRoute'.
+app/pages/blog/index.vue(170,16): error TS2304: Cannot find name 'useRouter'.
+app/pages/blog/index.vue(182,26): error TS2304: Cannot find name 'computed'.
+app/pages/blog/index.vue(194,34): error TS2304: Cannot find name 'useAsyncData'.
+app/pages/blog/index.vue(200,22): error TS2304: Cannot find name 'computed'.
+app/pages/blog/index.vue(202,30): error TS7006: Parameter 'p' implicitly has an 'any' type.
+app/pages/blog/index.vue(206,15): error TS2304: Cannot find name 'computed'.
+app/pages/blog/index.vue(209,32): error TS7006: Parameter 'p' implicitly has an 'any' type.
+app/pages/blog/index.vue(213,23): error TS2304: Cannot find name 'computed'.
+app/pages/blog/index.vue(215,29): error TS7006: Parameter 'p' implicitly has an 'any' type.
+app/pages/blog/index.vue(250,1): error TS2304: Cannot find name 'useHead'.
+app/pages/blog/index.vue(257,1): error TS2304: Cannot find name 'useSeoMeta'.
+app/pages/blog/index.vue(271,1): error TS2304: Cannot find name 'useSchemaOrg'.
+app/pages/blog/index.vue(272,3): error TS2304: Cannot find name 'defineBreadcrumb'.
+app/pages/blog/index.vue(280,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/gana/index.vue(201,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/gana/index.vue(205,1): error TS2304: Cannot find name 'useHead'.
+app/pages/gana/index.vue(215,1): error TS2304: Cannot find name 'useSeoMeta'.
+app/pages/gana/index.vue(221,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/gana/politicas-privacidad.vue(169,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/gana/politicas-privacidad.vue(171,1): error TS2304: Cannot find name 'useHead'.
+app/pages/gana/politicas-privacidad.vue(181,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/gana/terminos-condiciones.vue(216,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/gana/terminos-condiciones.vue(218,1): error TS2304: Cannot find name 'useHead'.
+app/pages/gana/terminos-condiciones.vue(228,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/index.vue(266,8): error TS2307: Cannot find module '#components' or its corresponding type declarations.
+app/pages/index.vue(268,29): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/index.vue(270,1): error TS2304: Cannot find name 'useBaseSEO'.
+app/pages/index.vue(271,1): error TS2304: Cannot find name 'useHomeBreadcrumb'.
+app/pages/index.vue(273,1): error TS2304: Cannot find name 'useSeoMeta'.
+app/pages/index.vue(293,1): error TS2304: Cannot find name 'useSchemaOrg'.
+app/pages/index.vue(296,27): error TS7006: Parameter 'faq' implicitly has an 'any' type.
+app/pages/index.vue(297,7): error TS2304: Cannot find name 'defineQuestion'.
+app/pages/index.vue(305,1): error TS2304: Cannot find name 'useHead'.
+app/pages/index.vue(312,1): error TS2304: Cannot find name 'definePageMeta'.
+app/pages/index.vue(320,20): error TS2304: Cannot find name 'Testimonial'.
+app/pages/index.vue(323,1): error TS2304: Cannot find name 'useHomeAggregateRating'.
+app/pages/index.vue(326,1): error TS2304: Cannot find name 'usePromoVideoSchema'.
+app/pages/index.vue(329,1): error TS2304: Cannot find name 'useEarlyBookingPromotion'.
+app/pages/pendiente.vue(45,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/pendiente.vue(47,1): error TS2304: Cannot find name 'useHead'.
+app/pages/pendiente.vue(54,1): error TS2304: Cannot find name 'useSeoMeta'.
+app/pages/politica-privacidad.vue(126,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/politica-privacidad.vue(128,1): error TS2304: Cannot find name 'useHead'.
+app/pages/politica-privacidad.vue(135,1): error TS2304: Cannot find name 'useSeoMeta'.
+app/pages/reservado/[reserveCode]/index.vue(50,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/reservado/[reserveCode]/index.vue(52,15): error TS2304: Cannot find name 'useRoute'.
+app/pages/reservado/[reserveCode]/index.vue(55,1): error TS2304: Cannot find name 'useHead'.
+app/pages/reservado/[reserveCode]/index.vue(62,1): error TS2304: Cannot find name 'useSeoMeta'.
+app/pages/reservado/[reserveCode]/index.vue(67,1): error TS2304: Cannot find name 'onMounted'.
+app/pages/sindisponibilidad.vue(45,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/sindisponibilidad.vue(46,15): error TS2304: Cannot find name 'useStoreReservationForm'.
+app/pages/sindisponibilidad.vue(48,19): error TS2304: Cannot find name 'computed'.
+app/pages/sindisponibilidad.vue(60,1): error TS2304: Cannot find name 'useHead'.
+app/pages/sindisponibilidad.vue(67,1): error TS2304: Cannot find name 'useSeoMeta'.
+app/pages/terminos-condiciones.vue(172,23): error TS2304: Cannot find name 'useAppConfig'.
+app/pages/terminos-condiciones.vue(174,1): error TS2304: Cannot find name 'useHead'.
+app/pages/terminos-condiciones.vue(181,1): error TS2304: Cannot find name 'useSeoMeta'.
+app/plugins/youtube-lazy.ts(3,34): error TS2307: Cannot find module '#app' or its corresponding type declarations.
+app/plugins/youtube-lazy.ts(6,34): error TS7006: Parameter 'nuxtApp' implicitly has an 'any' type.
+nuxt.config.ts(4,16): error TS2552: Cannot find name 'defineNuxtConfig'. Did you mean 'defineNitroConfig'?
+server/api/blog/debug.get.ts(11,16): error TS2304: Cannot find name 'defineEventHandler'.
+server/api/blog/debug.get.ts(11,42): error TS7006: Parameter '_event' implicitly has an 'any' type.
+server/api/blog/debug.get.ts(12,18): error TS2304: Cannot find name 'useRuntimeConfig'.
+server/api/blog/post/[slug].delete.ts(30,16): error TS2304: Cannot find name 'defineEventHandler'.
+server/api/blog/post/[slug].delete.ts(30,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/api/blog/post/[slug].delete.ts(32,18): error TS2304: Cannot find name 'getRouterParam'.
+server/api/blog/post/[slug].delete.ts(43,20): error TS2304: Cannot find name 'useRuntimeConfig'.
+server/api/blog/post/[slug].delete.ts(63,56): error TS2554: Expected 1-2 arguments, but got 3.
+server/api/blog/post/[slug].get.ts(12,16): error TS2304: Cannot find name 'defineEventHandler'.
+server/api/blog/post/[slug].get.ts(12,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/api/blog/post/[slug].get.ts(14,18): error TS2304: Cannot find name 'getRouterParam'.
+server/api/blog/posts-dynamic.get.ts(5,16): error TS2304: Cannot find name 'defineEventHandler'.
+server/api/blog/posts-dynamic.get.ts(5,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/api/blog/posts-dynamic.get.ts(7,48): error TS2304: Cannot find name 'getRequestIP'.
+server/api/blog/posts.get.ts(24,16): error TS2304: Cannot find name 'defineEventHandler'.
+server/api/blog/posts.get.ts(24,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/api/blog/posts.get.ts(26,45): error TS2304: Cannot find name 'getRequestIP'.
+server/api/blog/upload-image.post.ts(1,59): error TS2307: Cannot find module 'h3' or its corresponding type declarations.
+server/api/blog/upload-image.post.ts(20,37): error TS7006: Parameter 'item' implicitly has an 'any' type.
+server/api/blog/upload-image.post.ts(21,37): error TS7006: Parameter 'item' implicitly has an 'any' type.
+server/api/blog/upload-image.post.ts(22,36): error TS7006: Parameter 'item' implicitly has an 'any' type.
+server/api/blog/upload-image.post.ts(45,11): error TS6133: 'altText' is declared but its value is never read.
+server/api/blog/upload-image.post.ts(9,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/api/blog/wordpress-sync.post.ts(1,46): error TS2307: Cannot find module 'h3' or its corresponding type declarations.
+server/api/blog/wordpress-sync.post.ts(16,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/api/blog/wordpress-sync.post.ts(44,23): error TS2304: Cannot find name 'useRuntimeConfig'.
+server/api/reservations/availability.post.ts(1,78): error TS2307: Cannot find module 'h3' or its corresponding type declarations.
+server/api/reservations/availability.post.ts(4,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/api/reservations/availability.post.ts(5,18): error TS2304: Cannot find name 'useRuntimeConfig'.
+server/api/reservations/record.post.ts(1,78): error TS2307: Cannot find module 'h3' or its corresponding type declarations.
+server/api/reservations/record.post.ts(4,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/api/reservations/record.post.ts(5,18): error TS2304: Cannot find name 'useRuntimeConfig'.
+server/middleware/blog-api-auth.ts(107,11): error TS2304: Cannot find name 'createError'.
+server/middleware/blog-api-auth.ts(114,33): error TS2304: Cannot find name 'checkBlogRateLimit'.
+server/middleware/blog-api-auth.ts(131,11): error TS2304: Cannot find name 'createError'.
+server/middleware/blog-api-auth.ts(24,12): error TS2304: Cannot find name 'getRequestIP'.
+server/middleware/blog-api-auth.ts(71,16): error TS2304: Cannot find name 'defineEventHandler'.
+server/middleware/blog-api-auth.ts(71,42): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/middleware/blog-api-auth.ts(85,18): error TS2304: Cannot find name 'useRuntimeConfig'.
+server/middleware/blog-api-auth.ts(89,11): error TS2304: Cannot find name 'createError'.
+server/middleware/canonical-redirect.ts(14,17): error TS2304: Cannot find name 'getRequestURL'.
+server/middleware/canonical-redirect.ts(18,12): error TS2304: Cannot find name 'sendRedirect'.
+server/middleware/canonical-redirect.ts(8,16): error TS2304: Cannot find name 'defineEventHandler'.
+server/middleware/canonical-redirect.ts(8,36): error TS7006: Parameter 'event' implicitly has an 'any' type.
+server/middleware/canonical-redirect.ts(9,16): error TS2304: Cannot find name 'getRequestHost'.
+server/plugins/content-dynamic-loader.ts(10,16): error TS2304: Cannot find name 'defineNitroPlugin'.
+server/plugins/content-dynamic-loader.ts(10,35): error TS6133: 'nitroApp' is declared but its value is never read.
+server/plugins/content-dynamic-loader.ts(10,35): error TS7006: Parameter 'nitroApp' implicitly has an 'any' type.
+server/plugins/content-dynamic-loader.ts(30,23): error TS2304: Cannot find name 'useRuntimeConfig'.
+server/plugins/html-lang.ts(1,16): error TS2304: Cannot find name 'defineNitroPlugin'.
+server/plugins/html-lang.ts(1,35): error TS7006: Parameter 'nitroApp' implicitly has an 'any' type.
+server/plugins/html-lang.ts(2,39): error TS7006: Parameter 'html' implicitly has an 'any' type.
+server/utils/error-handler.ts(19,11): error TS2304: Cannot find name 'createError'.
+server/utils/error-handler.ts(27,9): error TS2304: Cannot find name 'createError'.
+server/utils/firebase-storage.ts(25,18): error TS18047: 'result.stream' is possibly 'null'.
