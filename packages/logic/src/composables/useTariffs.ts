@@ -20,15 +20,6 @@ export interface TariffsView {
   gamas: TariffGama[]
 }
 
-// Operationally stable per category, so the rental company holds these values
-// outside the seasonal pricing table. Until they expose a column we mirror the
-// known values here. See repo issue #5 for the dashboard-side follow-up.
-const EXTRA_KM_BY_CODE: Record<string, number> = {
-  C: 700, CX: 700, F: 700, FX: 700, FL: 700, FU: 700,
-  GC: 900, G4: 900, GL: 900,
-  LE: 1100, GY: 1100,
-}
-
 const MONTH_ABBR_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
 function parseIsoUtc(iso: string): number {
@@ -91,7 +82,7 @@ export function buildTariffs(categories: CategoryData[], todayDate?: string): Ta
     gamas.push({
       code,
       name: stripGamaPrefix(cat.category, code),
-      kmExtra: EXTRA_KM_BY_CODE[code] ?? null,
+      kmExtra: cat.extra_km_charge > 0 ? cat.extra_km_charge : null,
       plan1k: { daily: Math.round(monthly1k / 30), monthly: monthly1k },
       plan2k: { daily: Math.round(monthly2k / 30), monthly: monthly2k },
     })

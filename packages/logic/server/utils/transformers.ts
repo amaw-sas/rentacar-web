@@ -20,6 +20,7 @@ interface SupabaseCategory {
   short_description: string
   long_description: string
   tags: string[]
+  extra_km_charge: number | string
   category_models: SupabaseCategoryModel[]
   category_pricing: SupabaseCategoryPricing[]
 }
@@ -94,6 +95,7 @@ export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
       models,
       month_prices: monthPrices,
       total_coverage_unit_charge: coverageCharge,
+      extra_km_charge: Number(row.extra_km_charge ?? 0),
     }
   })
 }

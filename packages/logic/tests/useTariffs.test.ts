@@ -6,6 +6,7 @@ import type { CategoryType } from '../src/utils/types/type/CategoryType'
 
 function makeCategory(code: string, opts: {
   category?: string
+  extraKm?: number
   prices?: Partial<CategoryMonthPriceData>[]
 } = {}): CategoryData {
   return {
@@ -29,6 +30,7 @@ function makeCategory(code: string, opts: {
       ...p,
     })),
     total_coverage_unit_charge: 0,
+    extra_km_charge: opts.extraKm ?? 0,
   }
 }
 
@@ -69,22 +71,27 @@ describe('buildTariffs', () => {
     expect(result.gamas[0].name).toBe('Económico Automático')
   })
 
-  it('resolves kmExtra from local mapping by code (E3)', () => {
-    const cats = ['C', 'CX', 'F', 'FX', 'FL', 'FU', 'GC', 'G4', 'GL', 'LE', 'GY'].map((code) =>
-      makeCategory(code, { prices: [{}] }),
-    )
+  it('reads kmExtra from category.extra_km_charge (E_C1)', () => {
+    const cats = [
+      makeCategory('C', { extraKm: 700, prices: [{}] }),
+      makeCategory('GC', { extraKm: 900, prices: [{}] }),
+      makeCategory('GY', { extraKm: 1100, prices: [{}] }),
+    ]
     const byCode = Object.fromEntries(buildTariffs(cats, TODAY).gamas.map((g) => [g.code, g.kmExtra]))
-    expect(byCode).toEqual({
-      C: 700, CX: 700, F: 700, FX: 700, FL: 700, FU: 700,
-      GC: 900, G4: 900, GL: 900,
-      LE: 1100, GY: 1100,
-    })
+    expect(byCode).toEqual({ C: 700, GC: 900, GY: 1100 })
   })
 
-  it('returns kmExtra=null for unknown category (no crash) (E3)', () => {
-    const cats = [makeCategory('XX', { prices: [{}] })]
+  it('returns kmExtra=null when extra_km_charge is 0 (unconfigured) (E_C3)', () => {
+    const cats = [makeCategory('XX', { extraKm: 0, prices: [{}] })]
     const result = buildTariffs(cats, TODAY)
     expect(result.gamas[0].kmExtra).toBeNull()
+  })
+
+  it('reflects DB changes without code change (E_C1 dynamic)', () => {
+    const before = buildTariffs([makeCategory('C', { extraKm: 700, prices: [{}] })], TODAY)
+    const after = buildTariffs([makeCategory('C', { extraKm: 850, prices: [{}] })], TODAY)
+    expect(before.gamas[0].kmExtra).toBe(700)
+    expect(after.gamas[0].kmExtra).toBe(850)
   })
 
   it('derives daily price as monthly/30 rounded (E4 supports this)', () => {

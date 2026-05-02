@@ -13,4 +13,5 @@ export default interface CategoryData {
   models: CategoryModelData[];
   month_prices: CategoryMonthPriceData[];
   total_coverage_unit_charge: number;
+  extra_km_charge: number;
 }
