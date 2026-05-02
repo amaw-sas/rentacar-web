@@ -5,8 +5,8 @@
       <h1 class="text-2xl md:text-3xl font-extrabold uppercase text-[#0B1A2E]">
         Tarifas <span class="text-red-600">Mensuales</span>
       </h1>
-      <span class="inline-block mt-2 text-gray-500 text-sm">
-        {{ tarifasConfig.period.label }}
+      <span v-if="tariffs.period" class="inline-block mt-2 text-gray-500 text-sm">
+        {{ tariffs.period.label }}
       </span>
     </div>
 
@@ -42,7 +42,7 @@
     </div>
 
     <!-- Table -->
-    <div class="max-w-[900px] mx-auto px-5 pb-10 overflow-x-auto">
+    <div v-if="tariffs.gamas.length > 0" class="max-w-[900px] mx-auto px-5 pb-10 overflow-x-auto">
       <table class="w-full border-separate border-spacing-0 rounded-xl overflow-hidden text-sm bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
         <thead>
           <tr>
@@ -54,7 +54,7 @@
         </thead>
         <tbody>
           <tr
-            v-for="gama in tarifasConfig.gamas"
+            v-for="gama in tariffs.gamas"
             :key="gama.code"
             class="transition-colors hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
           >
@@ -82,7 +82,7 @@
             <!-- Km extra -->
             <td class="px-2.5 sm:px-4 py-3 align-middle text-center">
               <span class="inline-block bg-gray-100 px-2.5 py-0.5 rounded-md text-[0.78rem] font-semibold text-gray-500 whitespace-nowrap">
-                {{ formatCOP(gama.kmExtra) }}
+                {{ gama.kmExtra !== null ? formatCOP(gama.kmExtra) : '—' }}
               </span>
             </td>
           </tr>
@@ -90,14 +90,11 @@
       </table>
     </div>
 
-    <!-- Availability note -->
-    <div class="max-w-[900px] mx-auto px-5 pb-6">
-      <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-900">
-        <p class="font-semibold mb-1">Gama GR — Camioneta 7 Puestos</p>
-        <p class="text-amber-800 leading-relaxed">
-          Sujeta a disponibilidad. Debe solicitarse con anticipación.
-          Disponible solo en <strong>Bogotá</strong>, <strong>Cali</strong>, <strong>Cartagena</strong>, <strong>Rionegro</strong> y <strong>Medellín</strong>.
-        </p>
+    <!-- Empty state when pricing is unavailable -->
+    <div v-else class="max-w-[700px] mx-auto px-5 pb-10">
+      <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-6 text-center text-gray-600">
+        <p class="font-semibold mb-1 text-gray-800">Tarifas temporalmente no disponibles</p>
+        <p class="text-sm">Estamos actualizando las tarifas mensuales. Vuelve a intentarlo en unos minutos o cotiza directamente con un asesor.</p>
       </div>
     </div>
 
@@ -129,14 +126,15 @@
 </template>
 
 <script setup lang="ts">
-import { tarifasConfig } from '@rentacar-main/logic/config';
-import type { TarifaGama } from '@rentacar-main/logic/config';
+import useTariffs, { type TariffGama } from '@rentacar-main/logic/composables/useTariffs';
 
 const { franchise } = useAppConfig();
 
+const tariffs = useTariffs();
+
 const activePlan = ref<'1k' | '2k'>('1k');
 
-function planData(gama: TarifaGama) {
+function planData(gama: TariffGama) {
   return activePlan.value === '1k' ? gama.plan1k : gama.plan2k;
 }
 
@@ -144,11 +142,17 @@ function formatCOP(value: number): string {
   return '$ ' + value.toLocaleString('es-CO');
 }
 
-function tierDotClass(kmExtra: number): string {
+function tierDotClass(kmExtra: number | null): string {
+  if (kmExtra === null) return 'bg-gray-300';
   if (kmExtra <= 700) return 'bg-green-500';
   if (kmExtra <= 900) return 'bg-amber-500';
   return 'bg-blue-500';
 }
+
+const minMonthly = computed(() => {
+  if (tariffs.gamas.length === 0) return null;
+  return Math.min(...tariffs.gamas.map((g) => g.plan1k.monthly));
+});
 
 const faqs = [
   {
@@ -190,9 +194,14 @@ useHead({
   ],
 });
 
+const minMonthlyText = computed(() =>
+  minMonthly.value !== null ? `$${minMonthly.value.toLocaleString('es-CO')}` : 'precios competitivos'
+);
+const categoryCount = computed(() => tariffs.gamas.length);
+
 useSeoMeta({
-  description: `Tarifas mensuales para alquiler de carros en Colombia desde $${tarifasConfig.gamas[0].plan1k.monthly.toLocaleString('es-CO')}/mes. Planes de 1.000 y 2.000 kms con IVA y seguro incluidos.`,
+  description: () => `Tarifas mensuales para alquiler de carros en Colombia desde ${minMonthlyText.value}/mes. Planes de 1.000 y 2.000 kms con IVA y seguro incluidos.`,
   ogTitle: 'Tarifas Mensuales Alquiler de Carros | Alquilatucarro',
-  ogDescription: `Arriendos mensuales desde $${tarifasConfig.gamas[0].plan1k.monthly.toLocaleString('es-CO')}/mes. Compara precios de 12 categorías de vehículos.`,
+  ogDescription: () => `Arriendos mensuales desde ${minMonthlyText.value}/mes. Compara precios de ${categoryCount.value} categorías de vehículos.`,
 });
 </script>

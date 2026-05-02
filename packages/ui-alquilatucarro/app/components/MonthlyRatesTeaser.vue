@@ -1,5 +1,5 @@
 <template>
-  <section class="bg-gradient-to-r from-[#0B1A2E] to-[#162d4a] text-white py-8 md:py-10 px-4 md:px-8">
+  <section v-if="minDaily !== null" class="bg-gradient-to-r from-[#0B1A2E] to-[#162d4a] text-white py-8 md:py-10 px-4 md:px-8">
     <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="text-center sm:text-left">
         <h3 class="text-lg md:text-xl font-bold">
@@ -22,9 +22,14 @@
 </template>
 
 <script setup lang="ts">
-import { tarifasConfig } from '@rentacar-main/logic/config';
+import useTariffs from '@rentacar-main/logic/composables/useTariffs';
 
-const minDaily = tarifasConfig.gamas[0].plan1k.daily;
+const tariffs = useTariffs();
+
+const minDaily = computed(() => {
+  if (tariffs.gamas.length === 0) return null;
+  return Math.min(...tariffs.gamas.map((g) => g.plan1k.daily));
+});
 
 function formatCOP(value: number): string {
   return '$' + value.toLocaleString('es-CO');

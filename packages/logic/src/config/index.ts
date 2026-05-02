@@ -10,4 +10,3 @@ export { uiConfig } from './ui.config';
 export { organizationConfig } from './organization.config';
 export { faqsConfig, type FAQ } from './faqs.config';
 export { citiesConfig, type City, type Testimonial } from './cities.config';
-export { tarifasConfig, type TarifaGama, type TarifaPlan, type TarifasConfig } from './tarifas.config';
