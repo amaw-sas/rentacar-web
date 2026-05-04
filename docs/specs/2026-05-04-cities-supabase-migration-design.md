@@ -130,26 +130,31 @@ export function transformCities(rows: SupabaseCity[]): City[] {
     id: row.slug,                                  // app id == DB slug
     name: row.name,
     description: row.description ?? '',
-    link: `/${row.slug}`,                          // computed, no se almacena en DB
     testimonials: parseTestimonials(row.testimonials),
   }))
 }
 
 function parseTestimonials(raw: unknown): Testimonial[] {
   if (!Array.isArray(raw)) return []
-  return raw.filter(isValidTestimonial)
+  return raw.filter((t): t is Testimonial => v.safeParse(testimonialSchema, t).success)
 }
 
-function isValidTestimonial(t: unknown): t is Testimonial {
-  // Type guard manual o Valibot. Verifica shape: user.{name,description,avatar.{src,alt}} + quote.
-}
+// Valibot schema (Valibot ya es dep del proyecto, ver stack.md)
+const testimonialSchema = v.object({
+  user: v.object({
+    name: v.string(),
+    description: v.string(),
+    avatar: v.object({ src: v.string(), alt: v.string() }),
+  }),
+  quote: v.string(),
+})
 ```
 
-**Tres decisiones del transformer**:
+**Decisiones del transformer**:
 
 - **`id ← slug`**. El código actual usa `city.id = 'armenia'` que coincide con `slug = 'armenia'`. El renombre vive en el transformer para mantener la API del consumer estable. Cero cambios en composables/components.
-- **`link` computed**. `/{slug}` es derivable; almacenarlo en DB es redundancia y riesgo de desincronización si admin renombra el slug.
-- **JSONB shape guard silencioso**. Postgres valida JSON pero no shape. Testimonios mal-formados se filtran del array; el resto se renderiza. Fail-loud (throw) convertiría un dato corrupto en HTML 500 cacheado por ISR. Peor que perder un testimonio.
+- **`link` field eliminado del tipo `City`**. Verificado con grep: ningún consumer lee `city.link`. Los matches en `layouts/default.vue` son `footerLink.link` de `franchise.footerLinks`, otro tipo. Dead code — se borra del type y del transformer en lugar de calcularse computed.
+- **Validación con Valibot**. Postgres valida JSON pero no shape. Testimonios mal-formados se filtran silenciosamente del array; el resto se renderiza. Fail-loud (throw) convertiría un dato corrupto en HTML 500 cacheado por ISR. Peor que perder un testimonio.
 
 **Tipos**:
 
@@ -173,15 +178,15 @@ export default interface Testimonial {
   quote: string
 }
 
-// packages/logic/src/utils/types/type/City.ts (existente, ajustar import)
+// packages/logic/src/utils/types/type/City.ts (existente, ajustar)
 import type Testimonial from './Testimonial'    // ← antes venía de '../../../config'
 
 export default interface City {
   id: string                  // = DB slug
   name: string
   description: string         // '' si DB es null
-  link: string                // computed: /{slug}
   testimonials: Testimonial[]
+  // link: string  ← REMOVIDO: dead code, ningún consumer lo leía
 }
 ```
 
@@ -222,24 +227,31 @@ export const useData = () => {
 - `packages/logic/src/config/cities.config.ts`
 - Re-export de cities en `packages/logic/src/config/index.ts`
 
-### 4. Backfill: TypeScript script idempotente
+### 4. Backfill: snapshot JSON + script idempotente
+
+**Problema a evitar**: si el script lee directamente de `cities.config.ts`, después de borrar ese archivo (paso 5 del PR) el script ya no compila. Queda como artefacto roto en git history.
+
+**Solución**: snapshot one-time del data a `scripts/cities-content/data.json`, el script lee de ahí. Después de la ejecución exitosa, ambos archivos se archivan o quedan como referencia histórica funcional.
 
 ```
 scripts/cities-content/
-├── backfill.ts            # UPDATE cities SET description, testimonials WHERE slug
+├── data.json              # snapshot una sola vez de citiesConfig — sobrevive al delete
+├── backfill.ts            # lee data.json, hace UPDATE a Supabase
 └── README.md              # cómo correr, dry-run, verificación post-run
 ```
 
 ```ts
 // scripts/cities-content/backfill.ts (esqueleto)
-import { citiesConfig } from '../../packages/logic/src/config/cities.config'
+import data from './data.json' with { type: 'json' }
 import { useSupabaseAdminClient } from '../../packages/logic/server/utils/supabase'
+
+interface CitySnapshot { id: string; description: string; testimonials: unknown[] }
 
 async function main() {
   const supabase = useSupabaseAdminClient()
   const dryRun = process.argv.includes('--dry-run')
 
-  for (const city of citiesConfig) {
+  for (const city of data as CitySnapshot[]) {
     if (dryRun) {
       console.log(`UPDATE cities SET description=$1, testimonials=$2 WHERE slug='${city.id}';`)
       continue
@@ -254,11 +266,20 @@ async function main() {
 main().catch((e) => { console.error(e); process.exit(1) })
 ```
 
+**Cómo se genera `data.json`** (paso 0 del PR, antes de cualquier borrado):
+
+```bash
+# Genera el JSON desde cities.config.ts mientras todavía existe
+pnpm tsx scripts/cities-content/snapshot.ts > scripts/cities-content/data.json
+git add scripts/cities-content/data.json && git commit -m "chore(cities): snapshot data.json for one-time backfill"
+```
+
 **Decisiones**:
 - `UPDATE` (no `UPSERT`) — la tabla cities ya tiene 19 filas. Si el script no encuentra una fila para un slug del config, debe fallar duro (mismatch entre rentacar-web y admin).
 - Idempotente — correr 2 veces no duplica.
 - Dry-run obligatorio antes de ejecución contra prod.
-- Vive en repo, queda en git history.
+- Vive en repo, queda en git history. Sobrevive al borrado de `cities.config.ts` porque su único input es `data.json`.
+- One-time use: post-backfill exitoso, el directorio puede borrarse en un PR posterior. Mientras tanto, sirve de referencia y permite re-ejecutar contra staging si hace falta.
 
 ### 5. Coordinación y orden de ejecución
 
@@ -280,14 +301,15 @@ Conflicto real: solo 3 archivos contra #2/#3/#4. Cero solapamiento con #10.
 
 **Secuencia obligatoria pre-merge**:
 
-1. Esperar a que #2/#3/#4 mergee a main.
-2. `git fetch origin && git rebase origin/main` en este worktree.
-3. Resolver conflictos en los 3 archivos contra el sentinel pattern de #2/#3/#4.
-4. Re-correr typecheck + tests + scenario verification.
-5. Aplicar schema en rentacar-dashboard.
-6. Correr backfill (dry-run primero, luego real).
-7. Verificar query directa: `SELECT slug, length(description), jsonb_array_length(testimonials) FROM cities` → 19 filas con datos.
-8. Abrir PR y mergear.
+1. Generar `scripts/cities-content/data.json` desde `cities.config.ts` (con archivo aún presente). Commit aparte.
+2. Esperar a que #2/#3/#4 mergee a main.
+3. `git fetch origin && git rebase origin/main` en este worktree.
+4. Resolver conflictos en los 3 archivos contra el sentinel pattern de #2/#3/#4.
+5. Re-correr typecheck + tests + scenario verification.
+6. Aplicar schema en rentacar-dashboard.
+7. Correr backfill (dry-run primero, luego real).
+8. Verificar query directa: `SELECT slug, length(description), jsonb_array_length(testimonials) FROM cities` → 19 filas con datos.
+9. Abrir PR y mergear.
 
 **Trabajo paralelo viable mientras espero #2/#3/#4**:
 - Escribir scenarios observables.
@@ -349,9 +371,13 @@ Repetir para `/bogota` y `/cali` (las ciudades con más tráfico orgánico).
 
 **Open questions a resolver durante implementación**:
 
-- ¿`link` field en `City` aún consumido? Grep antes de borrarlo del transformer.
-- ¿Existe RLS policy `SELECT anon` en `cities`? Verificación antes del backfill.
+- ¿Existe RLS policy `SELECT anon` en `cities`? Verificación antes del backfill (curl directo con anon key).
 - ¿Las 3 marcas siguen requiriendo el mismo contenido por ciudad? Asunción: sí (verificado en `app.config.ts`). Si en el futuro divergen, requiere tabla `cities × brand` (issue separado).
+
+**Resueltas durante el spec review**:
+
+- `City.link` — grep no encontró consumers. Se elimina del tipo en lugar de mantenerse computed.
+- Validación de testimonios — se usa Valibot (ya es dep del proyecto, evita decisión en implementation).
 
 **Orden de rollback (importante)**:
 
@@ -370,14 +396,16 @@ Si todo sale mal post-merge: **revertir código antes que schema**. Si revertís
 
 Este PR está completo cuando:
 
-1. Schema aplicado en Supabase (`description text`, `testimonials jsonb` en tabla `cities`).
-2. Backfill ejecutado: 19 filas con `description` y `testimonials` populadas.
-3. `/api/rentacar-data` devuelve key `cities: City[]` con 19 items.
-4. `useData()` lee de `useFetchRentacarData()` (no de `useAppConfig()`).
-5. `cities.config.ts` borrado; re-export quitado de `config/index.ts`.
-6. `cities: citiesConfig` quitado de los 3 `app.config.ts`.
-7. `pnpm typecheck` y `pnpm test` pasan.
-8. E2E smoke `/armenia` muestra description + ≥1 testimonio en HTML server-rendered.
-9. HTML diff de `/armenia`, `/bogota`, `/cali` antes vs después: vacío o solo cambios cosméticos.
-10. Rebase sobre #2/#3/#4 limpio (sin que el sentinel pattern se rompa).
-11. Scenarios observables (próximo step SDD) verifican comportamiento usuario-visible.
+1. Snapshot `scripts/cities-content/data.json` generado y commiteado antes de cualquier delete.
+2. Schema aplicado en Supabase (`description text`, `testimonials jsonb` en tabla `cities`).
+3. Backfill ejecutado: 19 filas con `description` y `testimonials` populadas.
+4. `/api/rentacar-data` devuelve key `cities: City[]` con 19 items.
+5. `useData()` lee de `useFetchRentacarData()` (no de `useAppConfig()`).
+6. `City.link` field eliminado del tipo (dead code).
+7. `cities.config.ts` borrado; re-export quitado de `config/index.ts`.
+8. `cities: citiesConfig` quitado de los 3 `app.config.ts`.
+9. `pnpm typecheck` y `pnpm test` pasan.
+10. E2E smoke `/armenia` muestra description + ≥1 testimonio en HTML server-rendered.
+11. HTML diff de `/armenia`, `/bogota`, `/cali` antes vs después: vacío o solo cambios cosméticos.
+12. Rebase sobre #2/#3/#4 limpio (sin que el sentinel pattern se rompa).
+13. Scenarios observables (próximo step SDD) verifican comportamiento usuario-visible.
