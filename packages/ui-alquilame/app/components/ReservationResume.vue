@@ -94,9 +94,9 @@
             
             <div v-if="hasAdditionalServices" class="text-right mt-3">
               <div class="font-bold">Adicionales</div>
-              <div v-if="withExtraDriver">Conductor: $ {{ currencyExtraDriverPrice }}</div>
-              <div v-if="withBabySeat">Silla bebé: $ {{ currencyBabySeatPrice }}</div>
-              <div v-if="withWash">Lavado: $ {{ currencyWashPrice }}</div>
+              <div v-if="withExtraDriver" data-testid="extra-driver-line">Conductor: $ {{ currencyExtraDriverPrice }}</div>
+              <div v-if="withBabySeat" data-testid="baby-seat-line">Silla bebé: $ {{ currencyBabySeatPrice }}</div>
+              <div v-if="withWash" data-testid="wash-line">Lavado: $ {{ currencyWashPrice }}</div>
             </div>
 
             <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">

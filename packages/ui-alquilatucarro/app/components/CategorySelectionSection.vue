@@ -19,7 +19,7 @@
       </p>
     </div>
   </div>
-  <div v-else-if="!hasAvailableCategories && !pendingSearch" class="text-center">
+  <div v-else-if="!hasAvailableCategories && !pendingSearch && isInventoryEmpty" class="text-center">
     <div class="text-white text-center">
       <div class="text-3xl">¡Oops!</div>
       <div class="text-lg">
@@ -216,6 +216,12 @@ const {
 const { vehiculo, humanFormattedPickupDate, isSubmittingForm, selectedPickupLocation } = storeToRefs(storeForm);
 
 const isServerError = computed(() => searchError.value?.error === 'server_error');
+// Inline "¡Oops! Nos quedamos sin carritos" is reserved for genuine empty
+// inventory (LLNRAG009) or no error at all. Other Localiza errors surface
+// via toast — issue #10 SCEN-002.
+const isInventoryEmpty = computed(
+  () => !searchError.value || searchError.value?.error === 'no_available_categories_error',
+);
 const config = useRuntimeConfig();
 const whatsappContacts: Record<string, { phone: string; display: string }> = {
   alquilatucarro: { phone: "3016729250", display: "301 672 9250" },

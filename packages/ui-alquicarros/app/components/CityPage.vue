@@ -104,7 +104,7 @@
     <!-- Result Section -->
     <UPageSection
       id="seleccion-categorias"
-      v-if="pendingSearch || filteredCategories.length > 0"
+      v-if="pendingSearch || filteredCategories.length > 0 || searchError"
       :ui="{ container: 'pt-0' }"
     >
       <CategorySelectionSection />
@@ -406,15 +406,18 @@ const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 /** stores - lazy initialization to avoid SSR Pinia error */
 const pendingSearch = ref(false);
 const filteredCategories = ref<any[]>([]);
+const searchError = ref<unknown>(null);
 
 // Initialize store only on client side after mount
 onMounted(() => {
   const storeSearch = useStoreSearchData();
   const refs = storeToRefs(storeSearch);
 
-  // Sync refs
+  // Sync refs. searchError keeps the result-section mounted when filteredCategories
+  // is empty (e.g. plugin-empty admin data) so error UX still surfaces — issue #10.
   watch(() => refs.pending.value, (val) => pendingSearch.value = val, { immediate: true });
   watch(() => refs.filteredCategories.value, (val) => filteredCategories.value = val, { immediate: true });
+  watch(() => refs.error.value, (val) => searchError.value = val, { immediate: true });
 });
 
 /** props */
