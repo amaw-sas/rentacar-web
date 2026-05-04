@@ -80,7 +80,7 @@ test.describe('Availability error feedback (issue #10)', () => {
     await expect(oopsBlock).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Nos quedamos sin carritos/)).toBeVisible();
 
-    const errorToast = page.locator('[role="status"]').filter({
+    const errorToast = page.getByRole('alert').filter({
       hasText: 'Lo sentimos, No se encontraron',
     });
     await expect(errorToast).toHaveCount(0);
@@ -100,10 +100,11 @@ test.describe('Availability error feedback (issue #10)', () => {
 
     await page.goto(BOGOTA_SEARCH_URL);
 
-    const toast = page.locator('[role="status"]').filter({
+    // NuxtUI 4 renders error-color toasts with role="alert" (not "status").
+    const toast = page.getByRole('alert').filter({
       hasText: 'La fecha de recogida está fuera del horario',
     });
-    await expect(toast).toBeVisible({ timeout: 15_000 });
+    await expect(toast.first()).toBeVisible({ timeout: 15_000 });
 
     await expect(page.getByText('¡Oops!')).toHaveCount(0);
     await expect(

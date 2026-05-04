@@ -65,9 +65,15 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     if(haveMonthlyReservation.value){
 
       if(errorResponse.value){
-        error.value = errorResponse.value;
-        if(errorResponse.value.error != "no_available_categories_error")
+        // Mirror the non-monthly branch: no_available_categories_error gets a
+        // flag (UI surfaces it inline via the unable-categories rendering),
+        // every other Localiza error gets a toast. Pre-fix the flag/toast
+        // branches were inverted and the toast call was missing — issue #10
+        // SCEN-002.
+        if(errorResponse.value.error == "no_available_categories_error")
           noAvailableCategories.value = true;
+        else
+          createErrorMessage(errorResponse.value);
       }
       else {
         const dataArray = Array.isArray(data.value) ? data.value : [];
