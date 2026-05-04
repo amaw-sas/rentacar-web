@@ -1,0 +1,383 @@
+# Migrar `cities.config.ts` a Supabase (Phase 4 — Ola 1)
+
+**Fecha**: 2026-05-04
+**Issue**: [#6](https://github.com/amaw-sas/rentacar-web/issues/6)
+**Origen del plan mayor**: `docs/specs/2026-03-25-migration-firebase-to-vercel-supabase.md` (Phase 4)
+**Issues derivados durante el diseño**: [#11](https://github.com/amaw-sas/rentacar-web/issues/11) (franchise.testimonials), [#12](https://github.com/amaw-sas/rentacar-web/issues/12) (faqs.config.ts)
+
+## Motivación
+
+`packages/logic/src/config/cities.config.ts` (1452 líneas) es contenido (name, description SEO, testimonios) incrustado en código. La directiva del usuario es **evitar islas de información**: cada vez que el equipo de marketing quiere ajustar copy de una ciudad o agregar un testimonio nuevo, hoy implica un PR + redeploy.
+
+Y la fuente de verdad ya está partida: la tabla `cities` vive en Supabase con `name`, `slug` + columnas internas, y se consume vía `locations.cities(slug)` join en `/api/rentacar-data`. Tener parte del contenido en DB y parte en TS es la peor combinación: admin ambiguo, duplicación implícita del concepto "ciudad".
+
+**Objetivo del PR**: que `description` y `testimonials` por ciudad vivan en Supabase y se sirvan vía el endpoint existente. `cities.config.ts` se borra.
+
+## Alcance: Ola 1 de 5
+
+`cities.config.ts` no es la única isla de city-content. El issue #6 originalmente la describía como "1452 líneas + testimonios", pero la auditoría descubrió 5 Records hardcoded keyed por ciudad (~3000 líneas totales):
+
+| Archivo | Contenido | Ola |
+|---|---|---|
+| `config/cities.config.ts` | name/description/testimonials | **Ola 1 (este PR)** |
+| `composables/useCityContent.ts` | intro/destinations/drivingTips/bestSeason | Ola 2 (futuro PR) |
+| `composables/useCityFAQs.ts` | 6 FAQs específicas por ciudad | Ola 3 (futuro PR) |
+| `composables/useCityRelations.ts` | ciudades cercanas para internal-linking | Ola 4 (futuro PR) |
+| `composables/useCityProductSchema.ts` | precios base para schema.org Product | Ola 5 (futuro PR; probablemente derivable de `vehicle_categories`/`category_pricing`) |
+
+**Decisión**: Plan B (un PR por ola) en lugar de Big Bang. Cada ola usa el patrón establecido por la Ola 1, permite review chico, rollback granular, y minimiza conflicto con ramas paralelas activas (#2/#3/#4 y #10).
+
+## Decisiones acordadas
+
+| Decisión | Resultado | Razón |
+|---|---|---|
+| Destino del contenido | Supabase (no nuxt-content híbrido) | Directiva del usuario: "evitar islas de información". Costo SEO = cero porque SSR+ISR+prerender ya populan HTML server-side. |
+| Tamaño de ola | Ola 1 = solo `cities.config.ts`; olas 2-5 separadas | Reviews chicos, schema iterativo, menos conflicto con ramas paralelas. |
+| Shape de testimonios | `cities.testimonials jsonb` (no tabla satélite) | "Rara vez se modifican". Simplicidad de schema gana sobre normalización. |
+| Endpoint | Extender `/api/rentacar-data` (no endpoint nuevo) | Cities ya viajan al mismo HTML que las queries de reservas. Una sola fuente, un solo cache. |
+| Coordinación con #2/#3/#4 | Mi PR rebasea sobre el resilient sentinel pattern de ellos antes de mergear | Evita ventana donde una outage de Supabase produce HTML 500 cacheado por ISR (issue #2 mismo). |
+
+## Arquitectura objetivo
+
+```
+Build / ISR regen
+  rentacar-data.get.ts (extendido)
+    └── 4 queries paralelos a Supabase
+        ├── vehicle_categories  (existente)
+        ├── locations           (existente)
+        ├── rental_companies    (existente)
+        └── cities              (NUEVO — slug, name, description, testimonials)
+    └── transformers
+        └── transformCities()   (NUEVO — DB shape → app City)
+    └── ReservasApiData con field cities: City[]   (NUEVO)
+        ↓
+      plugin rentacar-data.ts → useState('rentacar-data')
+        ↓
+      useFetchRentacarData() → returns ReservasApiData
+        ↓
+      useData() (refactor: cities ahora viene de aquí, no de useAppConfig)
+        ↓
+      useCityPageSEO() → getCityById(slug)
+        ↓
+      CityPage.vue → city.name / city.description / city.testimonials
+```
+
+Lo que se borra del flujo:
+- `packages/logic/src/config/cities.config.ts`
+- `cities: citiesConfig` field en los 3 `app.config.ts`
+- import de `citiesConfig` y re-export en `config/index.ts`
+
+## Diseño detallado
+
+### 1. Schema en Supabase
+
+Aplicar en `rentacar-dashboard` (NO en este repo, coordinación inter-repo):
+
+```sql
+ALTER TABLE cities
+  ADD COLUMN description text NULL,
+  ADD COLUMN testimonials jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+-- RLS: verificar que existe SELECT policy para anon. Si no:
+CREATE POLICY "cities_select_anon" ON cities FOR SELECT TO anon USING (true);
+```
+
+**Decisiones del schema**:
+
+- `description` nullable, sin DEFAULT. El consumer (`useCityPageSEO.ts:19-22`) ya hace fallback a `franchise.description` cuando `city?.description` es falsy. NULL = "ciudad creada en admin sin SEO copy" = comportamiento sano. Forzar `NOT NULL DEFAULT ''` confunde "vacío explícito" con "no editado".
+- `testimonials NOT NULL DEFAULT '[]'`. Simplifica consumer: siempre array iterable, sin null-checks.
+- Sin CHECK constraint de shape para JSONB. La validación vive en el transformer del endpoint, en el boundary de aplicación; más fácil de evolucionar cuando cambie la shape.
+- Sin nuevos índices. `slug` ya es unique. 19 filas no requieren más.
+
+### 2. Server: endpoint + transformer + tipos
+
+**`packages/logic/server/api/rentacar-data.get.ts`** — agregar el cuarto query paralelo:
+
+```ts
+const [categoriesResult, locationsResult, companyResult, citiesResult] = await Promise.all([
+  // ... 3 existing queries unchanged ...
+  supabase
+    .from('cities')
+    .select('slug, name, description, testimonials')
+    .order('name'),
+])
+
+if (citiesResult.error) {
+  throw createError({ statusCode: 500, message: `Cities query failed: ${citiesResult.error.message}` })
+}
+
+return {
+  categories: transformCategories(categoriesResult.data),
+  branches: transformBranches(locationsResult.data),
+  extras: transformExtras(companyResult.data),
+  vehicleCategories: transformVehicleCategories(categoriesResult.data),
+  cities: transformCities(citiesResult.data),    // ← NUEVO
+}
+```
+
+**`packages/logic/server/utils/transformers.ts`** — nuevo `transformCities`:
+
+```ts
+interface SupabaseCity {
+  slug: string
+  name: string
+  description: string | null
+  testimonials: unknown
+}
+
+export function transformCities(rows: SupabaseCity[]): City[] {
+  return rows.map((row) => ({
+    id: row.slug,                                  // app id == DB slug
+    name: row.name,
+    description: row.description ?? '',
+    link: `/${row.slug}`,                          // computed, no se almacena en DB
+    testimonials: parseTestimonials(row.testimonials),
+  }))
+}
+
+function parseTestimonials(raw: unknown): Testimonial[] {
+  if (!Array.isArray(raw)) return []
+  return raw.filter(isValidTestimonial)
+}
+
+function isValidTestimonial(t: unknown): t is Testimonial {
+  // Type guard manual o Valibot. Verifica shape: user.{name,description,avatar.{src,alt}} + quote.
+}
+```
+
+**Tres decisiones del transformer**:
+
+- **`id ← slug`**. El código actual usa `city.id = 'armenia'` que coincide con `slug = 'armenia'`. El renombre vive en el transformer para mantener la API del consumer estable. Cero cambios en composables/components.
+- **`link` computed**. `/{slug}` es derivable; almacenarlo en DB es redundancia y riesgo de desincronización si admin renombra el slug.
+- **JSONB shape guard silencioso**. Postgres valida JSON pero no shape. Testimonios mal-formados se filtran del array; el resto se renderiza. Fail-loud (throw) convertiría un dato corrupto en HTML 500 cacheado por ISR. Peor que perder un testimonio.
+
+**Tipos**:
+
+```ts
+// packages/logic/src/utils/types/data/ReservasApiData.ts
+export default interface ReservasApiData {
+  categories: CategoryData[]
+  branches: BranchData[]
+  extras: ExtrasData
+  vehicleCategories: VehicleCategoryData
+  cities: City[]                                   // ← NUEVO
+}
+
+// packages/logic/src/utils/types/type/Testimonial.ts (NUEVO archivo)
+export default interface Testimonial {
+  user: {
+    name: string
+    description: string
+    avatar: { src: string; alt: string }
+  }
+  quote: string
+}
+
+// packages/logic/src/utils/types/type/City.ts (existente, ajustar import)
+import type Testimonial from './Testimonial'    // ← antes venía de '../../../config'
+
+export default interface City {
+  id: string                  // = DB slug
+  name: string
+  description: string         // '' si DB es null
+  link: string                // computed: /{slug}
+  testimonials: Testimonial[]
+}
+```
+
+### 3. Consumer refactor + cleanup
+
+**`packages/logic/src/composables/useData.ts`** — cambiar fuente:
+
+```ts
+import type { City } from '@rentacar-main/logic/utils';
+
+export const useData = () => {
+    const { cities } = useFetchRentacarData();   // ← antes: useAppConfig().cities
+    const { faqs } = useAppConfig();             // faqs sigue hardcoded (ola 1 no toca #12)
+    const getCityById = (id: string): City | undefined =>
+        cities.find((city) => city.id === id);   // ← `==` arreglado a `===`
+    return { cities, faqs, getCityById };
+};
+```
+
+**Comportamiento bajo outage de Supabase** (heredado del sentinel pattern de #2/#3/#4):
+
+- **Build prerender + Supabase down** → `useFetchRentacarData` re-throws → build falla. **No se publican `/armenia` con HTML vacío.** Fail-loud en build antes que silent corruption en producción.
+- **Runtime ISR regen + Supabase down** → re-throw → no se cachea 500 → CDN sigue sirviendo HTML cacheado anterior.
+- **CSR client-side** → sentinel devuelve `cities: []` → `getCityById('armenia')` returns undefined → `/[city]/index.vue` throw 404. Tolerable: solo afecta navegación cliente bajo outage tras hidratación con sentinel, y se recupera solo en el siguiente regen.
+
+**Cleanup en cada `packages/ui-{brand}/app/app.config.ts`** (3 marcas, cambio idéntico):
+
+```ts
+// Quitar de imports:
+//   citiesConfig
+// Quitar del defineAppConfig:
+//   cities: citiesConfig,
+```
+
+`franchise.testimonials` (testimonios de homepage por marca) **se mantiene**. Son distintos de los de ciudad; su migración es issue #11.
+
+**Archivos a borrar**:
+- `packages/logic/src/config/cities.config.ts`
+- Re-export de cities en `packages/logic/src/config/index.ts`
+
+### 4. Backfill: TypeScript script idempotente
+
+```
+scripts/cities-content/
+├── backfill.ts            # UPDATE cities SET description, testimonials WHERE slug
+└── README.md              # cómo correr, dry-run, verificación post-run
+```
+
+```ts
+// scripts/cities-content/backfill.ts (esqueleto)
+import { citiesConfig } from '../../packages/logic/src/config/cities.config'
+import { useSupabaseAdminClient } from '../../packages/logic/server/utils/supabase'
+
+async function main() {
+  const supabase = useSupabaseAdminClient()
+  const dryRun = process.argv.includes('--dry-run')
+
+  for (const city of citiesConfig) {
+    if (dryRun) {
+      console.log(`UPDATE cities SET description=$1, testimonials=$2 WHERE slug='${city.id}';`)
+      continue
+    }
+    const { error } = await supabase
+      .from('cities')
+      .update({ description: city.description, testimonials: city.testimonials })
+      .eq('slug', city.id)
+    if (error) throw new Error(`Failed for ${city.id}: ${error.message}`)
+  }
+}
+main().catch((e) => { console.error(e); process.exit(1) })
+```
+
+**Decisiones**:
+- `UPDATE` (no `UPSERT`) — la tabla cities ya tiene 19 filas. Si el script no encuentra una fila para un slug del config, debe fallar duro (mismatch entre rentacar-web y admin).
+- Idempotente — correr 2 veces no duplica.
+- Dry-run obligatorio antes de ejecución contra prod.
+- Vive en repo, queda en git history.
+
+### 5. Coordinación y orden de ejecución
+
+**Matriz de overlap con ramas paralelas**:
+
+| Archivo | #6 (este PR) | #2/#3/#4 | #10 |
+|---|---|---|---|
+| `useFetchRentacarData.ts` | extiende tipo retornado | **reescribe firma** | — |
+| `rentacar-data.get.ts` | agrega query | reescribe error handling | — |
+| `transformers.ts` | agrega transformCities | tweak transformExtras | — |
+| `ReservasApiData.ts` | agrega field cities | — | — |
+| `useData.ts` | cambia source | — | — |
+| `useStoreSearchData.ts` | — | — | **arregla destructuring** |
+| `CityPage.vue` (×3) | — | — | **arregla mount condicional** |
+| `app.config.ts` (×3) | quita cities field | — | — |
+| `cities.config.ts` | **borra** | — | — |
+
+Conflicto real: solo 3 archivos contra #2/#3/#4. Cero solapamiento con #10.
+
+**Secuencia obligatoria pre-merge**:
+
+1. Esperar a que #2/#3/#4 mergee a main.
+2. `git fetch origin && git rebase origin/main` en este worktree.
+3. Resolver conflictos en los 3 archivos contra el sentinel pattern de #2/#3/#4.
+4. Re-correr typecheck + tests + scenario verification.
+5. Aplicar schema en rentacar-dashboard.
+6. Correr backfill (dry-run primero, luego real).
+7. Verificar query directa: `SELECT slug, length(description), jsonb_array_length(testimonials) FROM cities` → 19 filas con datos.
+8. Abrir PR y mergear.
+
+**Trabajo paralelo viable mientras espero #2/#3/#4**:
+- Escribir scenarios observables.
+- Implementar transformer + tipos (archivos sin solapamiento real).
+- Escribir backfill script.
+- Tests unitarios del transformer.
+
+**Bloqueado hasta el rebase**:
+- Tocar `useFetchRentacarData.ts`.
+- Borrar `cities.config.ts` (último step).
+
+### 6. Tests y verificación
+
+**Capas**:
+
+| Capa | Archivo | Verifica |
+|---|---|---|
+| Unit (Vitest, node) | `packages/logic/server/utils/__tests__/transformers.test.ts` (extender) | `transformCities` mapea shape correctamente |
+| Unit (Vitest, node) | `packages/logic/src/composables/__tests__/useData.test.ts` (nuevo) | `useData` usa nuevo source, `getCityById` resuelve |
+| Integración endpoint | `packages/logic/server/api/__tests__/rentacar-data.test.ts` | endpoint devuelve key `cities` con shape correcto |
+| E2E (Playwright) | `e2e/cities-content.spec.ts` (nuevo, smoke 1 marca) | `/armenia` renderiza description + ≥1 testimonio |
+
+**Casos críticos a cubrir** (serán scenarios observables del próximo step SDD):
+
+- Transformer happy path / null description / testimonios malformados / testimonios no-array.
+- `getCityById` resuelve match exacto, devuelve undefined ante mismatch.
+- `GET /armenia` HTML 200 con description en server-rendered HTML (no en bundle JS).
+- `GET /no-existe` HTML 404.
+
+**HTML diff anti-regresión** (verificación pre-merge no automatizada):
+
+```bash
+# Antes (main): curl https://alquilatucarro-pre.vercel.app/armenia > before.html
+# Después (preview): curl https://preview-deploy.vercel.app/armenia > after.html
+diff <(prettier --parser html before.html) <(prettier --parser html after.html)
+# Esperar diff vacío o solo cambios cosméticos. Cualquier cambio de copy/estructura bloquea merge.
+```
+
+Repetir para `/bogota` y `/cali` (las ciudades con más tráfico orgánico).
+
+**Lo que NO se testea en este PR**:
+- Behavior bajo outage de Supabase — cubierto por #2/#3/#4.
+- Performance de la query — 19 filas trivial.
+- Admin editando contenido — out-of-scope (rentacar-dashboard).
+
+### 7. Riesgos y open questions
+
+**Riesgos**:
+
+| Riesgo | Mitigación |
+|---|---|
+| Schema en rentacar-dashboard no aplicado antes del merge | Pre-merge checklist lo bloquea. Responsabilidad humana, no automatizable. |
+| RLS no permite SELECT anon en cities | Verificación manual con `curl supabase-url/rest/v1/cities?select=slug --header "apikey: ANON_KEY"` antes del backfill. |
+| Backfill con typos / slugs mal mapeados | Dry-run obligatorio + diff visual de `/armenia` post-deploy vs baseline. |
+| ISR cache sirve HTML viejo post-deploy | Aceptable durante 1h. Purge manual en Vercel si urge. |
+| `cities` table tiene columnas internas que rompen query | Query es explícita: `slug, name, description, testimonials`. Postgres ignora otras. Sin riesgo. |
+| Admin edita description con HTML/markdown | `v-text` (escape automático). Sin XSS, sin breakage. |
+| Consumer huérfano post-borrado de `cities.config.ts` | `pnpm typecheck` falla en build. Imposible mergear roto. |
+
+**Open questions a resolver durante implementación**:
+
+- ¿`link` field en `City` aún consumido? Grep antes de borrarlo del transformer.
+- ¿Existe RLS policy `SELECT anon` en `cities`? Verificación antes del backfill.
+- ¿Las 3 marcas siguen requiriendo el mismo contenido por ciudad? Asunción: sí (verificado en `app.config.ts`). Si en el futuro divergen, requiere tabla `cities × brand` (issue separado).
+
+**Orden de rollback (importante)**:
+
+Si todo sale mal post-merge: **revertir código antes que schema**. Si revertís el schema primero, el código en producción tira 500 hasta que el revert del código se propague.
+
+## Fuera de alcance
+
+- Migración de `useCityContent` (ola 2), `useCityFAQs` (ola 3), `useCityRelations` (ola 4), `useCityProductSchema` (ola 5).
+- Migración de `franchise.testimonials` (issue #11).
+- Migración de `faqs.config.ts` (issue #12 — revoca decisión Phase 4 de mantener hardcoded).
+- Admin UI para editar `description`/`testimonials` — vive en rentacar-dashboard.
+- Internacionalización del contenido (i18n).
+- Versioning / drafts / preview de contenido.
+
+## Criterios de aceptación
+
+Este PR está completo cuando:
+
+1. Schema aplicado en Supabase (`description text`, `testimonials jsonb` en tabla `cities`).
+2. Backfill ejecutado: 19 filas con `description` y `testimonials` populadas.
+3. `/api/rentacar-data` devuelve key `cities: City[]` con 19 items.
+4. `useData()` lee de `useFetchRentacarData()` (no de `useAppConfig()`).
+5. `cities.config.ts` borrado; re-export quitado de `config/index.ts`.
+6. `cities: citiesConfig` quitado de los 3 `app.config.ts`.
+7. `pnpm typecheck` y `pnpm test` pasan.
+8. E2E smoke `/armenia` muestra description + ≥1 testimonio en HTML server-rendered.
+9. HTML diff de `/armenia`, `/bogota`, `/cali` antes vs después: vacío o solo cambios cosméticos.
+10. Rebase sobre #2/#3/#4 limpio (sin que el sentinel pattern se rompa).
+11. Scenarios observables (próximo step SDD) verifican comportamiento usuario-visible.
