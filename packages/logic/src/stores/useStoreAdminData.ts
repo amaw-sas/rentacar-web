@@ -9,11 +9,16 @@ import useFetchRentacarData from '../composables/useFetchRentacarData';
 import type { BranchData } from '@rentacar-main/logic/utils';
 
 const useStoreAdminData = defineStore("storeAdminData", () => {
-  const { categories, branches } = useFetchRentacarData();
+  // Reactive reads via computed. Direct destructure was capturing whatever
+  // useFetchRentacarData returned at store init — typically the empty
+  // sentinel when the rentacar-data plugin had not finished — and never
+  // recovered once the plugin populated useState. Issue #10 SCEN-004.
+  const categories = computed(() => useFetchRentacarData().categories);
+  const branches = computed(() => useFetchRentacarData().branches);
 
   const sortedBranches = computed<BranchData[] | []>(() =>
-    branches
-      ? [...branches]
+    branches.value
+      ? [...branches.value]
           .sort((a: BranchData, b: BranchData) =>
             a.name.localeCompare(b.name)
           )

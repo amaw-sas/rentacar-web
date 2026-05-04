@@ -22,7 +22,11 @@ import type {
 
 const useStoreSearchData = defineStore("storeSearchData", () => {
   const storeAdminData = useStoreAdminData();
-  const { categories: categoriesAdminData } = storeAdminData;
+  // storeToRefs preserves reactivity across the store boundary. Plain
+  // destructure was snapshotting categories at init, so the inline
+  // "¡Oops!" block never rendered when admin data arrived late. Issue
+  // #10 SCEN-004.
+  const { categories: categoriesAdminData } = storeToRefs(storeAdminData);
   const { haveMonthlyReservation, selectedPickupLocation } = storeToRefs(useStoreReservationForm());
   const { createErrorMessage } = useMessages();
   const categoriesAvailabilityData = ref<CategoryAvailabilityData[] | null>(
@@ -67,7 +71,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
       }
       else {
         const dataArray = Array.isArray(data.value) ? data.value : [];
-        categoriesAvailabilityData.value = categoriesAdminData?.filter((categoryAdmin: CategoryData) =>
+        categoriesAvailabilityData.value = categoriesAdminData.value?.filter((categoryAdmin: CategoryData) =>
           !(categoryAdmin.identification in noMonthlyCategories)
         ) // filter out categories FU, FL and GL when have monthly reservation
         .map((categoryAdmin: CategoryData) =>
@@ -119,15 +123,15 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
       return [];
     
     
-    if (categoriesAvailabilityData.value && categoriesAdminData) {
-      
+    if (categoriesAvailabilityData.value && categoriesAdminData.value) {
+
       /** when there's no available categories, show unable categories */
       if(error.value && error.value.error == "no_available_categories_error")
-        return categoriesAdminData.map((categoryAdmin: CategoryData) => 
+        return categoriesAdminData.value.map((categoryAdmin: CategoryData) =>
           createCategoryAvailability(categoryAdmin, true)
         );
 
-      return categoriesAdminData.map((categoryAdmin: CategoryData) => {
+      return categoriesAdminData.value.map((categoryAdmin: CategoryData) => {
         const categoryAvailability = categoriesAvailabilityData.value?.find((categoryAvailability: CategoryAvailabilityData) => 
           categoryAvailability.categoryCode == categoryAdmin.id
         );
