@@ -63,8 +63,10 @@ export type { default as ReservationResumeProps } from './types/props/Reservatio
 // ============================================================================
 // Type Definitions - General Types
 // ============================================================================
-// Note: City, Testimonial, and FAQ types are re-exported from config module
-export type { City, Testimonial } from '../config';
+// FAQ type aún viene del config barrel; City y Testimonial se mudaron
+// a types/type/ como parte del Step 8 (issue #6).
+export type { default as City } from './types/type/City';
+export type { default as Testimonial } from './types/type/Testimonial';
 export type * from './types/type/BlogPost';
 export type { CategoryType } from './types/type/CategoryType';
 export type { default as ErrorMessage } from './types/type/ErrorMessage';
