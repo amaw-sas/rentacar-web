@@ -1,9 +1,12 @@
+import * as v from 'valibot'
 import type CategoryData from '../../src/utils/types/data/CategoryData'
 import type CategoryModelData from '../../src/utils/types/data/CategoryModelData'
 import type CategoryMonthPriceData from '../../src/utils/types/data/CategoryMonthPriceData'
 import type BranchData from '../../src/utils/types/data/BranchData'
 import type VehicleCategoryData from '../../src/utils/types/data/VehicleCategoryData'
 import type ExtrasData from '../../src/utils/types/data/ExtrasData'
+import type City from '../../src/utils/types/type/City'
+import type Testimonial from '../../src/utils/types/type/Testimonial'
 
 export type { ExtrasData };
 
@@ -134,6 +137,42 @@ export function transformExtras(rentalCompany: {
     washDeepPrice: num(rentalCompany.wash_deep_price),
     washDeepUpholsteryPrice: num(rentalCompany.wash_deep_upholstery_price),
   }
+}
+
+interface SupabaseCity {
+  slug: string
+  name: string
+  description: string | null
+  testimonials: unknown
+}
+
+// Valibot schema para validar shape de testimonios JSONB. Postgres garantiza
+// JSON válido, no shape — esto filtra entries malformados al boundary de
+// aplicación (issue #6 design decision).
+const testimonialSchema = v.object({
+  user: v.object({
+    name: v.string(),
+    description: v.string(),
+    avatar: v.object({
+      src: v.string(),
+      alt: v.string(),
+    }),
+  }),
+  quote: v.string(),
+})
+
+function parseTestimonials(raw: unknown): Testimonial[] {
+  if (!Array.isArray(raw)) return []
+  return raw.filter((t): t is Testimonial => v.safeParse(testimonialSchema, t).success)
+}
+
+export function transformCities(rows: SupabaseCity[]): City[] {
+  return rows.map((row) => ({
+    id: row.slug,                               // app id == DB slug
+    name: row.name,
+    description: row.description ?? '',
+    testimonials: parseTestimonials(row.testimonials),
+  }))
 }
 
 export function transformVehicleCategories(rows: SupabaseCategory[]): VehicleCategoryData {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transformCategories, transformBranches, transformExtras } from '../transformers'
+import { transformCategories, transformBranches, transformExtras, transformCities } from '../transformers'
 
 describe('transformCategories', () => {
   it('maps Supabase category to CategoryData interface', () => {
@@ -229,5 +229,89 @@ describe('transformExtras', () => {
     expect(result.washOnsitePrice).toBeNull()
     expect(result.washDeepPrice).toBeNull()
     expect(result.washDeepUpholsteryPrice).toBeNull()
+  })
+})
+
+describe('transformCities', () => {
+  // SCEN-005: happy path — Supabase rows con shape válida → City[] correcto
+  it('maps valid Supabase city row to City interface (SCEN-005)', () => {
+    const input = [{
+      slug: 'bogota',
+      name: 'Bogotá',
+      description: 'capital de Colombia',
+      testimonials: [
+        {
+          user: { name: 'Ana', description: 'Colombia', avatar: { src: 'a.webp', alt: 'Ana' } },
+          quote: 'Excelente servicio',
+        },
+      ],
+    }]
+
+    const result = transformCities(input)
+
+    expect(result).toHaveLength(1)
+    const city = result[0]
+    expect(city.id).toBe('bogota')
+    expect(city.name).toBe('Bogotá')
+    expect(city.description).toBe('capital de Colombia')
+    expect(city.testimonials).toHaveLength(1)
+    expect(city.testimonials[0].quote).toBe('Excelente servicio')
+    expect(city.testimonials[0].user.name).toBe('Ana')
+    // Regression guard contra dead code re-introducido
+    expect('link' in city).toBe(false)
+  })
+
+  // SCEN-006: testimonios mal-formados se filtran silenciosamente
+  it('filters malformed testimonials silently without throwing (SCEN-006)', () => {
+    const input = [{
+      slug: 'cali',
+      name: 'Cali',
+      description: 'capital salsera',
+      testimonials: [
+        { user: { name: 'X' } }, // falta avatar+description+quote
+        {
+          user: { name: 'OK', description: 'C', avatar: { src: 'a', alt: 'b' } },
+          quote: 'valid',
+        },
+        null,
+        'string-no-objeto',
+        { quote: 'sin user' },
+      ],
+    }]
+
+    expect(() => transformCities(input)).not.toThrow()
+    const result = transformCities(input)
+    expect(result[0].testimonials).toHaveLength(1)
+    expect(result[0].testimonials[0].quote).toBe('valid')
+  })
+
+  // SCEN-007: description null → ''
+  it('normalizes null description to empty string (SCEN-007)', () => {
+    const input = [{
+      slug: 'armenia',
+      name: 'Armenia',
+      description: null,
+      testimonials: [],
+    }]
+
+    const result = transformCities(input)
+
+    expect(result[0].description).toBe('')
+    expect(result[0].description).not.toBeNull()
+    expect(result[0].description).not.toBeUndefined()
+  })
+
+  // SCEN-008: testimonials no-array → [] sin throw
+  it('handles non-array testimonials by returning empty array (SCEN-008)', () => {
+    const input = [{
+      slug: 'medellin',
+      name: 'Medellín',
+      description: 'eterna primavera',
+      testimonials: { not: 'an array' } as unknown,
+    }]
+
+    expect(() => transformCities(input)).not.toThrow()
+    const result = transformCities(input)
+    expect(result[0].testimonials).toEqual([])
   })
 })
