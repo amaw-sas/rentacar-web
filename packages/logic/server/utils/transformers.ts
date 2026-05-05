@@ -36,6 +36,7 @@ interface SupabaseCategoryModel {
   description: string
   image_url: string
   is_default: boolean
+  status: string
 }
 
 interface SupabaseCategoryPricing {
@@ -63,12 +64,14 @@ interface SupabaseLocation {
 
 export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
   return rows.map((row) => {
-    const models: CategoryModelData[] = (row.category_models || []).map((m) => ({
-      name: m.name,
-      image: m.image_url || '',
-      description: m.description || 'o similar',
-      default: m.is_default,
-    }))
+    const models: CategoryModelData[] = (row.category_models || [])
+      .filter((m) => m.status === 'active')
+      .map((m) => ({
+        name: m.name,
+        image: m.image_url || '',
+        description: m.description || 'o similar',
+        default: m.is_default,
+      }))
 
     const allPricing = row.category_pricing || []
     const activePricing = allPricing.filter((p) => p.status === 'active')
@@ -189,10 +192,12 @@ export function transformVehicleCategories(rows: SupabaseCategory[]): VehicleCat
       descripcion_corta: row.short_description || '',
       descripcion_larga: row.long_description || '',
       tags: Array.isArray(row.tags) ? row.tags : [],
-      modelos: (row.category_models || []).map((m) => ({
-        nombre: m.name,
-        image: m.image_url || '',
-      })),
+      modelos: (row.category_models || [])
+        .filter((m) => m.status === 'active')
+        .map((m) => ({
+          nombre: m.name,
+          image: m.image_url || '',
+        })),
     }
   }
   return result

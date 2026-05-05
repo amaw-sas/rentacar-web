@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transformCategories, transformBranches, transformExtras, transformCities } from '../transformers'
+import { transformCategories, transformBranches, transformExtras, transformCities, transformVehicleCategories } from '../transformers'
 
 describe('transformCategories', () => {
   it('maps Supabase category to CategoryData interface', () => {
@@ -16,8 +16,8 @@ describe('transformCategories', () => {
       status: 'active',
       visibility_mode: 'all',
       category_models: [
-        { name: 'Fiat Mobi 1.0', description: 'o similar', image_url: 'https://example.com/mobi.webp', is_default: true },
-        { name: 'Renault Kwid 1.0', description: 'o similar', image_url: 'https://example.com/kwid.webp', is_default: false },
+        { name: 'Fiat Mobi 1.0', description: 'o similar', image_url: 'https://example.com/mobi.webp', is_default: true, status: 'active' },
+        { name: 'Renault Kwid 1.0', description: 'o similar', image_url: 'https://example.com/kwid.webp', is_default: false, status: 'active' },
       ],
       category_pricing: [
         {
@@ -130,6 +130,69 @@ describe('transformCategories', () => {
     expect(result[0].month_prices.find(p => p.status === 'inactive')).toBeDefined()
     // total_coverage_unit_charge prefers active rows
     expect(result[0].total_coverage_unit_charge).toBe(40000)
+  })
+
+  // Inactive models must NOT reach the public site. Reservation history still
+  // points at them in DB (see localiza fleet update policy: rule 2 — no delete,
+  // only deactivate), but `rentacar-web` consumers should see only the current
+  // catalog. Filter happens here because Supabase RLS exposes all rows to anon.
+  it('excludes inactive category_models from public payload', () => {
+    const input = [{
+      id: 'uuid-f', code: 'F', name: 'Gama F Sedán Mecánico', description: '',
+      image_url: '', passenger_count: 5, luggage_count: 2, has_ac: true,
+      transmission: 'manual', status: 'active', visibility_mode: 'all',
+      category_models: [
+        { name: 'Renault Logan 1.6', description: '', image_url: '', is_default: true, status: 'active' },
+        { name: 'Gol Trendline 1.6', description: '', image_url: '', is_default: false, status: 'inactive' },
+        { name: 'Hyundai Accent 1.6', description: '', image_url: '', is_default: false, status: 'inactive' },
+      ],
+      category_pricing: [],
+    }]
+
+    const result = transformCategories(input)
+    const names = result[0].models.map((m) => m.name)
+    expect(names).toEqual(['Renault Logan 1.6'])
+    expect(names).not.toContain('Gol Trendline 1.6')
+    expect(names).not.toContain('Hyundai Accent 1.6')
+  })
+
+  // Resilience: a category with zero active models still renders (placeholder),
+  // it MUST NOT disappear from the listing. This is why the filter lives in
+  // the transformer instead of an `!inner` join in the SELECT.
+  it('keeps the category visible even if every model is inactive', () => {
+    const input = [{
+      id: 'uuid-x', code: 'X', name: 'Gama X', description: '',
+      image_url: '', passenger_count: 5, luggage_count: 2, has_ac: true,
+      transmission: 'manual', status: 'active', visibility_mode: 'all',
+      category_models: [
+        { name: 'Old Model A', description: '', image_url: '', is_default: false, status: 'inactive' },
+      ],
+      category_pricing: [],
+    }]
+
+    const result = transformCategories(input)
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('X')
+    expect(result[0].models).toEqual([])
+  })
+})
+
+describe('transformVehicleCategories', () => {
+  it('excludes inactive models from modelos array (mirror of transformCategories filter)', () => {
+    const input = [{
+      id: 'uuid-f', code: 'F', name: 'Gama F Sedán Mecánico', description: '',
+      image_url: '', passenger_count: 5, luggage_count: 2, has_ac: true,
+      transmission: 'manual', status: 'active', visibility_mode: 'all',
+      group_label: 'Sedán', short_description: 'corta', long_description: 'larga', tags: ['economy'],
+      category_models: [
+        { name: 'Renault Logan 1.6', description: '', image_url: 'logan.webp', is_default: true, status: 'active' },
+        { name: 'Gol Trendline 1.6', description: '', image_url: 'gol.webp', is_default: false, status: 'inactive' },
+      ],
+      category_pricing: [],
+    }]
+
+    const result = transformVehicleCategories(input)
+    expect(result.F.modelos.map((m) => m.nombre)).toEqual(['Renault Logan 1.6'])
   })
 })
 
