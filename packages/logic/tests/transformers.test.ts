@@ -19,8 +19,8 @@ function makeSupabaseCategory(overrides: Record<string, any> = {}) {
     long_description: 'Vehículos pequeños y ágiles...',
     tags: ['Transmisión manual', 'Capacidad: 4-5 personas'],
     category_models: [
-      { name: 'Fiat Mobi', description: 'o similar', image_url: 'https://blob.vercel-storage.com/mobi.webp', is_default: true },
-      { name: 'Kia Picanto', description: '', image_url: 'https://blob.vercel-storage.com/picanto.webp', is_default: false },
+      { name: 'Fiat Mobi', description: 'o similar', image_url: 'https://blob.vercel-storage.com/mobi.webp', is_default: true, status: 'active' },
+      { name: 'Kia Picanto', description: '', image_url: 'https://blob.vercel-storage.com/picanto.webp', is_default: false, status: 'active' },
     ],
     category_pricing: [
       {
