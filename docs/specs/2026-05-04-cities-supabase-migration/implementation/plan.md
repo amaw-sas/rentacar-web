@@ -63,10 +63,10 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 | Archivo | Responsabilidad |
 |---|---|
-| `scripts/cities-content/snapshot.ts` | **NUEVO**: lee `citiesConfig`, escribe `data.json` (one-shot, antes de borrar el config) |
-| `scripts/cities-content/data.json` | **NUEVO**: snapshot del contenido (19 ciudades con description + testimonials) |
-| `scripts/cities-content/backfill.ts` | **NUEVO**: lee `data.json`, hace UPDATE a Supabase via service role |
-| `scripts/cities-content/README.md` | **NUEVO**: instrucciones de ejecución (dry-run, real, verificación) |
+| `scripts/cities-snapshot.ts` | **NUEVO**: lee `citiesConfig`, escribe `data.json` (one-shot, antes de borrar el config) |
+| `scripts/cities-data.json` | **NUEVO**: snapshot del contenido (19 ciudades con description + testimonials) |
+| `scripts/cities-backfill.ts` | **NUEVO**: lee `data.json`, hace UPDATE a Supabase via service role |
+| `scripts/cities-README.md` | **NUEVO**: instrucciones de ejecución (dry-run, real, verificación) |
 
 ### Tests E2E
 
@@ -78,7 +78,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 | Archivo | Responsabilidad |
 |---|---|
-| `scripts/cities-content/html-diff.sh` | **NUEVO** (REQUERIDO para satisfacer SCEN-011): captura HTML de baseline vs preview, diff post-prettier filtrando atributos volátiles (data-v-*, hashes de assets, nuxt-data timestamps). |
+| `scripts/cities-html-diff.sh` | **NUEVO** (REQUERIDO para satisfacer SCEN-011): captura HTML de baseline vs preview, diff post-prettier filtrando atributos volátiles (data-v-*, hashes de assets, nuxt-data timestamps). |
 
 **Total**: 18 archivos tocados (8 nuevos, 9 modificados, 1 borrado).
 
@@ -121,18 +121,18 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 **Objetivo**: capturar `citiesConfig` (description + testimonials × 19 ciudades) en JSON estático antes de cualquier borrado, para que el backfill sobreviva al delete eventual.
 
 **Archivos**:
-- `scripts/cities-content/snapshot.ts` (NUEVO — script TypeScript que se ejecuta una sola vez)
-- `scripts/cities-content/data.json` (NUEVO — generado por el snapshot, tamaño esperado ~150 KB con 19 entradas, descripciones de ~600 chars c/u, 3-4 testimonios c/u)
+- `scripts/cities-snapshot.ts` (NUEVO — script TypeScript que se ejecuta una sola vez)
+- `scripts/cities-data.json` (NUEVO — generado por el snapshot, tamaño esperado ~150 KB con 19 entradas, descripciones de ~600 chars c/u, 3-4 testimonios c/u)
 
 **Tareas**:
-- [ ] Crear `scripts/cities-content/snapshot.ts` que importe `citiesConfig` de `packages/logic/src/config/cities.config` y escriba `JSON.stringify(citiesConfig.map(c => ({ id: c.id, description: c.description, testimonials: c.testimonials })), null, 2)` a `scripts/cities-content/data.json`.
-- [ ] Ejecutar: `pnpm tsx scripts/cities-content/snapshot.ts`.
+- [ ] Crear `scripts/cities-snapshot.ts` que importe `citiesConfig` de `packages/logic/src/config/cities.config` y escriba `JSON.stringify(citiesConfig.map(c => ({ id: c.id, description: c.description, testimonials: c.testimonials })), null, 2)` a `scripts/cities-data.json`.
+- [ ] Ejecutar: `npx tsx scripts/cities-snapshot.ts`.
 - [ ] Verificar manualmente que `data.json` tiene 19 entradas, cada una con `id`, `description` (string) y `testimonials` (array).
 
 **Acceptance criteria**:
-- `cat scripts/cities-content/data.json | jq 'length'` → 19.
-- `cat scripts/cities-content/data.json | jq '[.[] | select(.description == null or .description == "")] | length'` → 0 (todas tienen description).
-- `cat scripts/cities-content/data.json | jq '[.[] | select(.testimonials | length == 0)] | length'` → 0 (todas tienen al menos 1 testimonio).
+- `cat scripts/cities-data.json | jq 'length'` → 19.
+- `cat scripts/cities-data.json | jq '[.[] | select(.description == null or .description == "")] | length'` → 0 (todas tienen description).
+- `cat scripts/cities-data.json | jq '[.[] | select(.testimonials | length == 0)] | length'` → 0 (todas tienen al menos 1 testimonio).
 
 **Commit**: `chore(cities): snapshot citiesConfig to data.json for one-time backfill`.
 
@@ -238,15 +238,15 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 **Objetivo**: completar el toolkit de backfill — `data.json` ya existe (Step 1), faltan `backfill.ts` y `README.md`.
 
 **Archivos**:
-- `scripts/cities-content/backfill.ts` (nuevo)
-- `scripts/cities-content/README.md` (nuevo)
+- `scripts/cities-backfill.ts` (nuevo)
+- `scripts/cities-README.md` (nuevo)
 
 **Tareas**:
 - [ ] Crear `backfill.ts` con esqueleto del spec sección 4: lee `data.json`, instancia `useSupabaseAdminClient`, itera y hace UPDATE por slug. Soporta `--dry-run` flag (imprime SQL en lugar de ejecutar). Falla duro si una fila no existe en DB.
 - [ ] Crear `README.md` con: prerequisitos (`NUXT_SUPABASE_SERVICE_ROLE_KEY` env var), comando dry-run, comando real, query de verificación post-run.
 
 **Acceptance criteria**:
-- `pnpm tsx scripts/cities-content/backfill.ts --dry-run` ejecuta sin error y imprime 19 statements UPDATE.
+- `npx tsx scripts/cities-backfill.ts --dry-run` ejecuta sin error y imprime 19 statements UPDATE.
 - README incluye los 3 comandos clave (dry-run, real, verificación SQL).
 
 **Commit**: `chore(cities): backfill script + README (#6)`.
@@ -267,8 +267,8 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
     ADD COLUMN testimonials jsonb NOT NULL DEFAULT '[]'::jsonb;
   ```
 - [ ] Verificar RLS: `curl 'https://<supabase-url>/rest/v1/cities?select=slug,name' --header "apikey: <ANON_KEY>"` debe devolver 19 filas. Si responde [], crear policy `CREATE POLICY "cities_select_anon" ON cities FOR SELECT TO anon USING (true);`.
-- [ ] En este repo: `pnpm tsx scripts/cities-content/backfill.ts --dry-run` → revisar output.
-- [ ] Si dry-run OK: `pnpm tsx scripts/cities-content/backfill.ts` (real).
+- [ ] En este repo: `npx tsx scripts/cities-backfill.ts --dry-run` → revisar output.
+- [ ] Si dry-run OK: `npx tsx scripts/cities-backfill.ts` (real).
 - [ ] Verificar query directa: `SELECT slug, length(description) AS desc_len, jsonb_array_length(testimonials) AS testim_count FROM cities ORDER BY slug;` → 19 filas, todas con `desc_len > 0` y `testim_count >= 1`.
 
 **Acceptance criteria**:
@@ -276,7 +276,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 - **Reiniciar dev server** después del backfill (cache de `defineCachedEventHandler` puede tener payload pre-backfill); luego: `curl http://localhost:3000/api/rentacar-data | jq '.cities | length'` → 19.
 - `curl http://localhost:3000/api/rentacar-data | jq '.cities[0]'` muestra shape correcto (id, name, description, testimonials, sin link).
 
-**Si backfill falla parcialmente** (algunas filas updated, otras no): corregir env vars / RLS / esquema según el error reportado y re-correr `pnpm tsx scripts/cities-content/backfill.ts`. El script es idempotente; correrlo de nuevo no duplica datos. Si después de 2-3 intentos sigue fallando, abrir issue con el output completo del error.
+**Si backfill falla parcialmente** (algunas filas updated, otras no): corregir env vars / RLS / esquema según el error reportado y re-correr `npx tsx scripts/cities-backfill.ts`. El script es idempotente; correrlo de nuevo no duplica datos. Si después de 2-3 intentos sigue fallando, abrir issue con el output completo del error.
 
 **Sin commit** — este step es una checkpoint operacional.
 
@@ -356,17 +356,17 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 **Objetivo**: cerrar holdout. Verificar que build falla ante outage (SCEN-003) y que HTML structure es idéntica vs main pre-migración (SCEN-011).
 
 **Archivos**:
-- `scripts/cities-content/html-diff.sh` (NUEVO, requerido para SCEN-011)
+- `scripts/cities-html-diff.sh` (NUEVO, requerido para SCEN-011)
 
 **Tareas**:
 - [ ] **SCEN-003 (build outage)**: temporalmente cambiar `NUXT_SUPABASE_URL` a host inválido (ej. `https://invalid.example.invalid`); correr `pnpm build:alquilatucarro`; verificar exit code != 0 Y que el output contiene `Cities query failed:` o equivalente. **Restaurar env var inmediatamente después**.
-- [ ] **SCEN-011 (HTML diff)**: crear script `scripts/cities-content/html-diff.sh` que toma 2 URLs (baseline pre-migración, preview post-migración) y diffea HTML normalizado con prettier, filtrando atributos volátiles vía sed: `data-v-[a-f0-9]+`, hashes de assets en src/href, `__NUXT__` payload con timestamps. Correr para `armenia`, `bogota`, `cali`.
+- [ ] **SCEN-011 (HTML diff)**: crear script `scripts/cities-html-diff.sh` que toma 2 URLs (baseline pre-migración, preview post-migración) y diffea HTML normalizado con prettier, filtrando atributos volátiles vía sed: `data-v-[a-f0-9]+`, hashes de assets en src/href, `__NUXT__` payload con timestamps. Correr para `armenia`, `bogota`, `cali`.
 
 **Acceptance criteria**:
 - SCEN-003 satisfecho — verificación dual:
   - Build exit code != 0 con error que mencione cities query.
   - `find .output/public -name "index.html" -path "*armenia*"` → vacío. Garantiza que ningún HTML se publicó del build fallido (anti-reward-hacking guard del holdout).
-- SCEN-011 satisfecho: `bash scripts/cities-content/html-diff.sh https://main-deploy/armenia https://preview-deploy/armenia` produce diff vacío después del filtro de atributos volátiles. Lo mismo para `/bogota` y `/cali`. Cualquier diff que mencione texto user-visible, jerarquía DOM, meta description, canonical, o JSON-LD bloquea el merge.
+- SCEN-011 satisfecho: `bash scripts/cities-html-diff.sh https://main-deploy/armenia https://preview-deploy/armenia` produce diff vacío después del filtro de atributos volátiles. Lo mismo para `/bogota` y `/cali`. Cualquier diff que mencione texto user-visible, jerarquía DOM, meta description, canonical, o JSON-LD bloquea el merge.
 - Holdout completo: 11/11 scenarios verificados (SCEN-005..008 cubiertos en Step 3, SCEN-009/010 en Step 5, SCEN-004 en Step 9, SCEN-001/002 en Step 10, SCEN-003/011 en Step 11).
 
 **Commit**: `test(cities): outage build + HTML diff verification (SCEN-003/011, #6)`.

@@ -232,19 +232,21 @@ export const useData = () => {
 
 **Problema a evitar**: si el script lee directamente de `cities.config.ts`, después de borrar ese archivo (paso 5 del PR) el script ya no compila. Queda como artefacto roto en git history.
 
-**Solución**: snapshot one-time del data a `scripts/cities-content/data.json`, el script lee de ahí. Después de la ejecución exitosa, ambos archivos se archivan o quedan como referencia histórica funcional.
+**Solución**: snapshot one-time del data a `scripts/cities-data.json`, el script lee de ahí. Después de la ejecución exitosa, ambos archivos se archivan o quedan como referencia histórica funcional.
+
+Convención de naming descubierta durante implementación: `.gitignore` ignora `scripts/*/` (subdirectorios), por eso los archivos viven flat en `scripts/` con prefijo `cities-`:
 
 ```
-scripts/cities-content/
-├── data.json              # snapshot una sola vez de citiesConfig — sobrevive al delete
-├── backfill.ts            # lee data.json, hace UPDATE a Supabase
-└── README.md              # cómo correr, dry-run, verificación post-run
+scripts/cities-snapshot.ts    # one-shot, captura citiesConfig a JSON antes del delete
+scripts/cities-data.json      # snapshot — sobrevive al delete del config
+scripts/cities-backfill.ts    # lee data.json, hace UPDATE a Supabase
+scripts/cities-README.md      # cómo correr, dry-run, verificación post-run
 ```
 
 ```ts
-// scripts/cities-content/backfill.ts (esqueleto)
-import data from './data.json' with { type: 'json' }
-import { useSupabaseAdminClient } from '../../packages/logic/server/utils/supabase'
+// scripts/cities-backfill.ts (esqueleto)
+import data from './cities-data.json' with { type: 'json' }
+import { useSupabaseAdminClient } from '../packages/logic/server/utils/supabase'
 
 interface CitySnapshot { id: string; description: string; testimonials: unknown[] }
 
@@ -271,8 +273,8 @@ main().catch((e) => { console.error(e); process.exit(1) })
 
 ```bash
 # Genera el JSON desde cities.config.ts mientras todavía existe
-pnpm tsx scripts/cities-content/snapshot.ts > scripts/cities-content/data.json
-git add scripts/cities-content/data.json && git commit -m "chore(cities): snapshot data.json for one-time backfill"
+npx tsx scripts/cities-snapshot.ts > scripts/cities-data.json
+git add scripts/cities-data.json && git commit -m "chore(cities): snapshot data.json for one-time backfill"
 ```
 
 **Decisiones**:
@@ -309,16 +311,16 @@ Verificado contra el código post-rebase:
 | `packages/logic/src/config/index.ts` | quitar re-export de cities |
 | `packages/ui-{alquilatucarro,alquilame,alquicarros}/app/app.config.ts` | quitar import + field cities |
 | `packages/logic/src/config/cities.config.ts` | **borrar** (último step) |
-| `scripts/cities-content/data.json` | crear (snapshot pre-borrado) |
-| `scripts/cities-content/backfill.ts` | crear |
-| `scripts/cities-content/snapshot.ts` | crear |
+| `scripts/cities-data.json` | crear (snapshot pre-borrado) |
+| `scripts/cities-backfill.ts` | crear |
+| `scripts/cities-snapshot.ts` | crear |
 | `packages/logic/server/utils/__tests__/transformers.test.ts` | extender con SCEN-005..008 |
 | `packages/logic/src/composables/__tests__/useData.test.ts` | crear con SCEN-009..010 |
 | `e2e/cities-content.spec.ts` | crear con SCEN-001/002 |
 
 **Secuencia pre-merge** (simplificada — el rebase ya está hecho):
 
-1. Generar `scripts/cities-content/data.json` desde `cities.config.ts` (con archivo aún presente). Commit aparte.
+1. Generar `scripts/cities-data.json` desde `cities.config.ts` (con archivo aún presente). Commit aparte.
 2. Implementar transformer + tipos + extensión de endpoint + sentinel update + tests unitarios. Commit.
 3. Implementar refactor de `useData` + cleanup de los 3 `app.config.ts`. Commit.
 4. Borrar `cities.config.ts` y re-export. `pnpm typecheck` debe pasar (SCEN-004).
@@ -405,7 +407,7 @@ Si todo sale mal post-merge: **revertir código antes que schema**. Si revertís
 
 Este PR está completo cuando:
 
-1. Snapshot `scripts/cities-content/data.json` generado y commiteado antes de cualquier delete.
+1. Snapshot `scripts/cities-data.json` generado y commiteado antes de cualquier delete.
 2. Schema aplicado en Supabase (`description text`, `testimonials jsonb` en tabla `cities`).
 3. Backfill ejecutado: 19 filas con `description` y `testimonials` populadas.
 4. `/api/rentacar-data` devuelve key `cities: City[]` con 19 items.
