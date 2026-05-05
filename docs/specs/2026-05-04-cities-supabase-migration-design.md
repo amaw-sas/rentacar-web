@@ -4,6 +4,7 @@
 **Issue**: [#6](https://github.com/amaw-sas/rentacar-web/issues/6)
 **Origen del plan mayor**: `docs/specs/2026-03-25-migration-firebase-to-vercel-supabase.md` (Phase 4)
 **Issues derivados durante el diseño**: [#11](https://github.com/amaw-sas/rentacar-web/issues/11) (franchise.testimonials), [#12](https://github.com/amaw-sas/rentacar-web/issues/12) (faqs.config.ts)
+**Dependencias resueltas**: [#2](https://github.com/amaw-sas/rentacar-web/issues/2), [#3](https://github.com/amaw-sas/rentacar-web/issues/3), [#4](https://github.com/amaw-sas/rentacar-web/issues/4), [#10](https://github.com/amaw-sas/rentacar-web/issues/10) — todas CLOSED y mergeadas en main vía PR #13 (2026-05-04)
 
 ## Motivación
 
@@ -35,7 +36,7 @@ Y la fuente de verdad ya está partida: la tabla `cities` vive en Supabase con `
 | Tamaño de ola | Ola 1 = solo `cities.config.ts`; olas 2-5 separadas | Reviews chicos, schema iterativo, menos conflicto con ramas paralelas. |
 | Shape de testimonios | `cities.testimonials jsonb` (no tabla satélite) | "Rara vez se modifican". Simplicidad de schema gana sobre normalización. |
 | Endpoint | Extender `/api/rentacar-data` (no endpoint nuevo) | Cities ya viajan al mismo HTML que las queries de reservas. Una sola fuente, un solo cache. |
-| Coordinación con #2/#3/#4 | Mi PR rebasea sobre el resilient sentinel pattern de ellos antes de mergear | Evita ventana donde una outage de Supabase produce HTML 500 cacheado por ISR (issue #2 mismo). |
+| Coordinación con #2/#3/#4 | ~~Rebase obligatorio antes de merge~~ → **Ya mergeado** (PR #13, 2026-05-04). Mi worktree rebaseada limpia sobre origin/main. Bloqueo eliminado. | Evita ventana donde una outage de Supabase produce HTML 500 cacheado por ISR (issue #2 mismo). |
 
 ## Arquitectura objetivo
 
@@ -283,43 +284,51 @@ git add scripts/cities-content/data.json && git commit -m "chore(cities): snapsh
 
 ### 5. Coordinación y orden de ejecución
 
-**Matriz de overlap con ramas paralelas**:
+**Estado de las ramas paralelas (actualizado 2026-05-04)**:
 
-| Archivo | #6 (este PR) | #2/#3/#4 | #10 |
-|---|---|---|---|
-| `useFetchRentacarData.ts` | extiende tipo retornado | **reescribe firma** | — |
-| `rentacar-data.get.ts` | agrega query | reescribe error handling | — |
-| `transformers.ts` | agrega transformCities | tweak transformExtras | — |
-| `ReservasApiData.ts` | agrega field cities | — | — |
-| `useData.ts` | cambia source | — | — |
-| `useStoreSearchData.ts` | — | — | **arregla destructuring** |
-| `CityPage.vue` (×3) | — | — | **arregla mount condicional** |
-| `app.config.ts` (×3) | quita cities field | — | — |
-| `cities.config.ts` | **borra** | — | — |
+Issues #2, #3, #4, #10 — todas **CLOSED** y mergeadas en `main` (PR #13, commit `e358ce1`). Mi worktree rebaseada limpia sobre `origin/main`; los 3 commits doc-only sobreviven el rebase sin conflicto.
 
-Conflicto real: solo 3 archivos contra #2/#3/#4. Cero solapamiento con #10.
+Verificado contra el código post-rebase:
 
-**Secuencia obligatoria pre-merge**:
+- `useFetchRentacarData.ts` ahora exporta `EMPTY_SENTINEL = Object.freeze({ categories: [], branches: [], extras: undefined, vehicleCategories: {} })` y devuelve eso cuando el state es null. **Mi PR debe agregar `cities: Object.freeze([])` al sentinel** para mantener la garantía de array iterable post-#3.
+- `rentacar-data.get.ts` mantiene 3 queries paralelas con `throw createError({...})` por error. Mi adición de cities sigue ese mismo patrón.
+- `useStoreSearchData.ts` y `CityPage.vue` ya tienen las fixes de #10 mergeadas; mi PR no las toca.
+
+**Matriz de archivos a tocar en este PR** (ya sin overlap con paralelas):
+
+| Archivo | Cambio |
+|---|---|
+| `packages/logic/server/api/rentacar-data.get.ts` | agregar query cities + propagación al payload |
+| `packages/logic/server/utils/transformers.ts` | agregar `transformCities` + `SupabaseCity` interface |
+| `packages/logic/composables/useFetchRentacarData.ts` | extender `EMPTY_SENTINEL` con `cities: Object.freeze([])` |
+| `packages/logic/src/utils/types/data/ReservasApiData.ts` | agregar field `cities: City[]` |
+| `packages/logic/src/utils/types/type/City.ts` | quitar `link` field, ajustar import de `Testimonial` |
+| `packages/logic/src/utils/types/type/Testimonial.ts` | crear (extraer de `cities.config.ts`) |
+| `packages/logic/src/composables/useData.ts` | cambiar source a `useFetchRentacarData` |
+| `packages/logic/src/index.ts` | actualizar re-exports |
+| `packages/logic/src/config/index.ts` | quitar re-export de cities |
+| `packages/ui-{alquilatucarro,alquilame,alquicarros}/app/app.config.ts` | quitar import + field cities |
+| `packages/logic/src/config/cities.config.ts` | **borrar** (último step) |
+| `scripts/cities-content/data.json` | crear (snapshot pre-borrado) |
+| `scripts/cities-content/backfill.ts` | crear |
+| `scripts/cities-content/snapshot.ts` | crear |
+| `packages/logic/server/utils/__tests__/transformers.test.ts` | extender con SCEN-005..008 |
+| `packages/logic/src/composables/__tests__/useData.test.ts` | crear con SCEN-009..010 |
+| `e2e/cities-content.spec.ts` | crear con SCEN-001/002 |
+
+**Secuencia pre-merge** (simplificada — el rebase ya está hecho):
 
 1. Generar `scripts/cities-content/data.json` desde `cities.config.ts` (con archivo aún presente). Commit aparte.
-2. Esperar a que #2/#3/#4 mergee a main.
-3. `git fetch origin && git rebase origin/main` en este worktree.
-4. Resolver conflictos en los 3 archivos contra el sentinel pattern de #2/#3/#4.
-5. Re-correr typecheck + tests + scenario verification.
-6. Aplicar schema en rentacar-dashboard.
-7. Correr backfill (dry-run primero, luego real).
-8. Verificar query directa: `SELECT slug, length(description), jsonb_array_length(testimonials) FROM cities` → 19 filas con datos.
+2. Implementar transformer + tipos + extensión de endpoint + sentinel update + tests unitarios. Commit.
+3. Implementar refactor de `useData` + cleanup de los 3 `app.config.ts`. Commit.
+4. Borrar `cities.config.ts` y re-export. `pnpm typecheck` debe pasar (SCEN-004).
+5. Aplicar schema en rentacar-dashboard (`ALTER TABLE cities ...`).
+6. Correr backfill (dry-run primero, luego real).
+7. Verificar query directa: `SELECT slug, length(description), jsonb_array_length(testimonials) FROM cities` → 19 filas con datos.
+8. Verificar HTML diff bytewise en preview deploy vs main pre-migración (SCEN-011).
 9. Abrir PR y mergear.
 
-**Trabajo paralelo viable mientras espero #2/#3/#4**:
-- Escribir scenarios observables.
-- Implementar transformer + tipos (archivos sin solapamiento real).
-- Escribir backfill script.
-- Tests unitarios del transformer.
-
-**Bloqueado hasta el rebase**:
-- Tocar `useFetchRentacarData.ts`.
-- Borrar `cities.config.ts` (último step).
+**Sin bloqueos externos**: no hay parallel work pendiente que requiera espera. Implementation puede arrancar inmediatamente.
 
 ### 6. Tests y verificación
 
@@ -407,5 +416,5 @@ Este PR está completo cuando:
 9. `pnpm typecheck` y `pnpm test` pasan.
 10. E2E smoke `/armenia` muestra description + ≥1 testimonio en HTML server-rendered.
 11. HTML diff de `/armenia`, `/bogota`, `/cali` antes vs después: vacío o solo cambios cosméticos.
-12. Rebase sobre #2/#3/#4 limpio (sin que el sentinel pattern se rompa).
+12. ~~Rebase sobre #2/#3/#4 limpio~~ → **hecho**: rama rebaseada sobre `origin/main` post-merge de PR #13 (2026-05-04). Mantenido como evidencia.
 13. Scenarios observables (próximo step SDD) verifican comportamiento usuario-visible.
