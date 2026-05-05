@@ -149,21 +149,27 @@ interface SupabaseCity {
 // Valibot schema para validar shape de testimonios JSONB. Postgres garantiza
 // JSON válido, no shape — esto filtra entries malformados al boundary de
 // aplicación (issue #6 design decision).
+// Length caps protect against oversized JSONB stuffing that would balloon
+// the cached SSR payload. Caps chosen with ~5x headroom over current data
+// (longest quote in snapshot ~250 chars, longest name ~25). Array slice
+// hard-caps testimonios per city; UI shows up to 6 in current layout.
 const testimonialSchema = v.object({
   user: v.object({
-    name: v.string(),
-    description: v.string(),
+    name: v.pipe(v.string(), v.maxLength(120)),
+    description: v.pipe(v.string(), v.maxLength(60)),
     avatar: v.object({
-      src: v.string(),
-      alt: v.string(),
+      src: v.pipe(v.string(), v.maxLength(300)),
+      alt: v.pipe(v.string(), v.maxLength(200)),
     }),
   }),
-  quote: v.string(),
+  quote: v.pipe(v.string(), v.maxLength(1000)),
 })
 
 function parseTestimonials(raw: unknown): Testimonial[] {
   if (!Array.isArray(raw)) return []
-  return raw.filter((t): t is Testimonial => v.safeParse(testimonialSchema, t).success)
+  return raw
+    .slice(0, 12)
+    .filter((t): t is Testimonial => v.safeParse(testimonialSchema, t).success)
 }
 
 export function transformCities(rows: SupabaseCity[]): City[] {

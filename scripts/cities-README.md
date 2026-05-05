@@ -66,7 +66,7 @@ psql <connection-string> -c "
 
 - **Slug no existe en DB**: el script aborta con mensaje específico. NO hace UPSERT — preserva el principio de "rentacar-dashboard gestiona filas, rentacar-web gestiona contenido".
 - **RLS bloquea UPDATE**: si la service role key es incorrecta, el UPDATE falla con error de permisos. Verificar que `NUXT_SUPABASE_SERVICE_ROLE_KEY` sea el service role (no el anon).
-- **Backfill parcial**: si falla a mitad de las 19 ciudades, las anteriores ya están aplicadas. El script es idempotente — re-ejecutarlo aplica las restantes sin duplicar.
+- **Backfill parcial**: si falla a mitad de las 19 ciudades, las anteriores ya están aplicadas. El script es idempotente snapshot-vs-snapshot — re-ejecutarlo aplica las restantes sin duplicar. **Cuidado**: el script siempre escribe `description` y `testimonials` con el contenido del snapshot; si admin editó manualmente esos campos en Supabase tras el backfill inicial, re-ejecutar el script *sobreescribirá* esas ediciones. Ver sección "Lifecycle" — este toolkit es one-shot por diseño.
 
 ## Lifecycle
 
