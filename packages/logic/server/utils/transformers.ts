@@ -1,9 +1,12 @@
+import * as v from 'valibot'
 import type CategoryData from '../../src/utils/types/data/CategoryData'
 import type CategoryModelData from '../../src/utils/types/data/CategoryModelData'
 import type CategoryMonthPriceData from '../../src/utils/types/data/CategoryMonthPriceData'
 import type BranchData from '../../src/utils/types/data/BranchData'
 import type VehicleCategoryData from '../../src/utils/types/data/VehicleCategoryData'
 import type ExtrasData from '../../src/utils/types/data/ExtrasData'
+import type City from '../../src/utils/types/type/City'
+import type Testimonial from '../../src/utils/types/type/Testimonial'
 
 export type { ExtrasData };
 
@@ -134,6 +137,48 @@ export function transformExtras(rentalCompany: {
     washDeepPrice: num(rentalCompany.wash_deep_price),
     washDeepUpholsteryPrice: num(rentalCompany.wash_deep_upholstery_price),
   }
+}
+
+interface SupabaseCity {
+  slug: string
+  name: string
+  description: string | null
+  testimonials: unknown
+}
+
+// Valibot schema para validar shape de testimonios JSONB. Postgres garantiza
+// JSON válido, no shape — esto filtra entries malformados al boundary de
+// aplicación (issue #6 design decision).
+// Length caps protect against oversized JSONB stuffing that would balloon
+// the cached SSR payload. Caps chosen with ~5x headroom over current data
+// (longest quote in snapshot ~250 chars, longest name ~25). Array slice
+// hard-caps testimonios per city; UI shows up to 6 in current layout.
+const testimonialSchema = v.object({
+  user: v.object({
+    name: v.pipe(v.string(), v.maxLength(120)),
+    description: v.pipe(v.string(), v.maxLength(60)),
+    avatar: v.object({
+      src: v.pipe(v.string(), v.maxLength(300)),
+      alt: v.pipe(v.string(), v.maxLength(200)),
+    }),
+  }),
+  quote: v.pipe(v.string(), v.maxLength(1000)),
+})
+
+function parseTestimonials(raw: unknown): Testimonial[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .slice(0, 12)
+    .filter((t): t is Testimonial => v.safeParse(testimonialSchema, t).success)
+}
+
+export function transformCities(rows: SupabaseCity[]): City[] {
+  return rows.map((row) => ({
+    id: row.slug,                               // app id == DB slug
+    name: row.name,
+    description: row.description ?? '',
+    testimonials: parseTestimonials(row.testimonials),
+  }))
 }
 
 export function transformVehicleCategories(rows: SupabaseCategory[]): VehicleCategoryData {

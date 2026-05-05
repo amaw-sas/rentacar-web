@@ -2,6 +2,7 @@ import type CategoryData from './CategoryData';
 import type BranchData from './BranchData';
 import type VehicleCategoryData from './VehicleCategoryData';
 import type ExtrasData from './ExtrasData';
+import type City from '../type/City';
 
 export type { ExtrasData };
 
@@ -10,4 +11,5 @@ export default interface ReservasApiData {
   branches: BranchData[];
   extras: ExtrasData | undefined;
   vehicleCategories: VehicleCategoryData;
+  cities: City[];
 }

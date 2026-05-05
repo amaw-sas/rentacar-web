@@ -1,10 +1,10 @@
 import { useSupabaseClient } from '../utils/supabase'
-import { transformCategories, transformBranches, transformExtras, transformVehicleCategories } from '../utils/transformers'
+import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities } from '../utils/transformers'
 
 export default defineCachedEventHandler(async () => {
   const supabase = useSupabaseClient()
 
-  const [categoriesResult, locationsResult, companyResult] = await Promise.all([
+  const [categoriesResult, locationsResult, companyResult, citiesResult] = await Promise.all([
     supabase
       .from('vehicle_categories')
       .select('*, category_models(*), category_pricing(*)')
@@ -22,6 +22,12 @@ export default defineCachedEventHandler(async () => {
       .select('extra_driver_day_price, baby_seat_day_price, wash_price, wash_onsite_price, wash_deep_price, wash_deep_upholstery_price')
       .eq('code', 'localiza')
       .single(),
+
+    supabase
+      .from('cities')
+      .select('slug, name, description, testimonials')
+      .eq('status', 'active')
+      .order('name'),
   ])
 
   if (categoriesResult.error) {
@@ -33,12 +39,16 @@ export default defineCachedEventHandler(async () => {
   if (companyResult.error) {
     throw createError({ statusCode: 500, message: `Rental company query failed: ${companyResult.error.message}` })
   }
+  if (citiesResult.error) {
+    throw createError({ statusCode: 500, message: `Cities query failed: ${citiesResult.error.message}` })
+  }
 
   return {
     categories: transformCategories(categoriesResult.data),
     branches: transformBranches(locationsResult.data),
     extras: transformExtras(companyResult.data),
     vehicleCategories: transformVehicleCategories(categoriesResult.data),
+    cities: transformCities(citiesResult.data),
   }
 }, {
   // TODO(perf+seo): revisit cache strategy before launch. 1h is fine while in

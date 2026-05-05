@@ -9,7 +9,6 @@ import {
   uiConfig,
   organizationConfig,
   faqsConfig,
-  citiesConfig,
 } from '@rentacar-main/logic/src'
 
 export default defineAppConfig({
@@ -155,7 +154,4 @@ export default defineAppConfig({
 
   // Shared FAQs (generic car rental information)
   faqs: faqsConfig,
-
-  // Shared cities configuration (Colombian cities with rental services)
-  cities: citiesConfig,
 })

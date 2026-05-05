@@ -1,9 +1,8 @@
-import type { Testimonial } from '../../../config';
+import type Testimonial from './Testimonial';
 
 export default interface City {
     id: string;
     name: string;
     description: string;
-    link: string;
     testimonials: Testimonial[];
 }

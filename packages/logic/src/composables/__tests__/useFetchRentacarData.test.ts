@@ -29,6 +29,7 @@ describe('useFetchRentacarData', () => {
         branches: [],
         extras: undefined,
         vehicleCategories: {},
+        cities: [],
       })
     })
 
