@@ -121,21 +121,26 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   };
 
   const categories = computed<CategoryAvailabilityData[] | []>(() => {
-    
-    // const allowedUnabledCatories: CategoryType[] = ["C","F", "FX", "LE", "GC", "G4", "GR", "FU", "FL", "GL"];
-    
+
     /** if there's a error besides no_available_categories_error, don't show unable categories */
     if(error.value && error.value.error != "no_available_categories_error")
       return [];
-    
-    
-    if (categoriesAvailabilityData.value && categoriesAdminData.value) {
 
-      /** when there's no available categories, show unable categories */
-      if(error.value && error.value.error == "no_available_categories_error")
-        return categoriesAdminData.value.map((categoryAdmin: CategoryData) =>
-          createCategoryAvailability(categoryAdmin, true)
-        );
+    if (!categoriesAdminData.value) return [];
+
+    /** LLNRAG009 — surface every admin category as unable regardless of whether
+     * the search-store branch (monthly or non-monthly) populated
+     * categoriesAvailabilityData. Monthly used to leave it null, which the
+     * legacy guard `categoriesAvailabilityData && categoriesAdminData` would
+     * short-circuit, and the inline "¡Oops!" rendered without the gray-card
+     * grid below. SCEN-U2.
+     */
+    if (error.value?.error === "no_available_categories_error")
+      return categoriesAdminData.value.map((categoryAdmin: CategoryData) =>
+        createCategoryAvailability(categoryAdmin, true)
+      );
+
+    if (categoriesAvailabilityData.value) {
 
       return categoriesAdminData.value.map((categoryAdmin: CategoryData) => {
         const categoryAvailability = categoriesAvailabilityData.value?.find((categoryAvailability: CategoryAvailabilityData) => 
