@@ -26,6 +26,7 @@ export default defineCachedEventHandler(async () => {
     supabase
       .from('cities')
       .select('slug, name, description, testimonials')
+      .eq('status', 'active')
       .order('name'),
   ])
 
