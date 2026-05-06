@@ -380,6 +380,22 @@ watch(
   { immediate: true }
 );
 
+// Issue #25: cerrar slideovers (reka-ui Dialog modal:true) ANTES del unmount
+// por route change. Sin esto, el cleanup interno de Reka UI no corre y
+// `pointer-events: none` queda inline en <body> — DOM compartido en SPA —
+// bloqueando el Searcher cuando el usuario regresa via Back. El guard
+// `isUpdatingFromUrl` evita que los watchers de URL disparen replaceState
+// redundante mientras navegamos a otra ruta.
+onBeforeRouteLeave(async () => {
+  if (slideoverReservationForm.value || slideoverReservationResume.value) {
+    isUpdatingFromUrl.value = true;
+    slideoverReservationForm.value = false;
+    slideoverReservationResume.value = false;
+    await nextTick();
+    isUpdatingFromUrl.value = false;
+  }
+});
+
 /** functions */
 function setSelectedCategory(category: ReturnType<typeof useCategory>) {
   vehiculo.value = category.categoryCode.value;

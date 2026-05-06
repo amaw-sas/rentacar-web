@@ -39,3 +39,17 @@ describe('Searcher — unlocks after bfcache restoration (browser back button)',
     expect(source).toMatch(/(window\.)?location\.reload\s*\(/)
   })
 })
+
+describe('Searcher — defensive body sanitization on mount (issue #25, SCEN-003)', () => {
+  it('clears stale pointer-events on body when locked', () => {
+    expect(source).toMatch(/body\.style\.pointerEvents\s*=\s*['"]\s*['"]/)
+  })
+
+  it('removes stale data-scroll-locked attribute', () => {
+    expect(source).toMatch(/removeAttribute\(\s*['"]data-scroll-locked['"]/)
+  })
+
+  it('logs a warning for traceability when cleanup runs', () => {
+    expect(source).toMatch(/console\.warn\(.*Searcher.*body|console\.warn\(.*body.*Searcher/i)
+  })
+})
