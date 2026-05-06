@@ -23,6 +23,7 @@ const mockFetchData = {
   extras: undefined,
   vehicleCategories: {},
   cities: mockCities,
+  faqs: [],
 }
 
 describe('useData', () => {
@@ -79,16 +80,69 @@ describe('useData', () => {
   describe('cities source — refactor lock', () => {
     it('reads cities from useFetchRentacarData (not useAppConfig)', () => {
       const fetchSpy = vi.fn(() => mockFetchData)
-      const appConfigSpy = vi.fn(() => ({ faqs: ['faq-1'] }))
+      const appConfigSpy = vi.fn(() => ({ faqs: ['ignored-from-appconfig'] }))
       vi.stubGlobal('useFetchRentacarData', fetchSpy)
       vi.stubGlobal('useAppConfig', appConfigSpy)
 
       const { cities, faqs } = useData()
 
       expect(fetchSpy).toHaveBeenCalled()
-      expect(appConfigSpy).toHaveBeenCalled()
       expect(cities).toBe(mockCities) // identity, not just shape
-      expect(faqs).toEqual(['faq-1'])
+      expect(cities[0]?.id).toBe('armenia')
+      // useAppConfig is no longer called by useData (faqs migrated to
+      // useFetchRentacarData in #12 step 5). Cities never came from it.
+      expect(appConfigSpy).not.toHaveBeenCalled()
+      // Strengthens the contract: faqs comes from useFetchRentacarData,
+      // never from the appConfig stub.
+      expect(faqs).toBe(mockFetchData.faqs)
+      expect(faqs).not.toContain('ignored-from-appconfig')
+    })
+  })
+
+  // FAQs holdout SCEN-009: useFetchRentacarData sentinel returns faqs: []
+  // and consumers must not TypeError when calling .map on it. This pins
+  // both that faqs source is useFetchRentacarData (not useAppConfig) AND
+  // that the sentinel shape is consumable safely.
+  describe('FAQs SCEN-009: sentinel safety — faqs:[] does not TypeError', () => {
+    it('returns frozen empty array from sentinel without throwing on .map', () => {
+      const sentinel = {
+        categories: Object.freeze([]),
+        branches: Object.freeze([]),
+        extras: undefined,
+        vehicleCategories: Object.freeze({}),
+        cities: Object.freeze([]),
+        faqs: Object.freeze([]),
+      }
+      vi.stubGlobal('useFetchRentacarData', () => sentinel)
+      // Do NOT mock useAppConfig — post-refactor, useData should not depend on it.
+
+      const { faqs } = useData()
+
+      expect(() => faqs.map((f: { label: string }) => f.label)).not.toThrow()
+      expect(faqs.map((f: { label: string }) => f.label)).toEqual([])
+      expect(faqs.length).toBe(0)
+    })
+
+    it('reads faqs from useFetchRentacarData (not useAppConfig) — refactor lock', () => {
+      const fetchData = {
+        categories: [],
+        branches: [],
+        extras: undefined,
+        vehicleCategories: {},
+        cities: [],
+        faqs: [{ label: 'from-fetch', content: 'expected source' }],
+      }
+      const appConfigFaqs = [{ label: 'from-appconfig', content: 'wrong source' }]
+      const fetchSpy = vi.fn(() => fetchData)
+      const appConfigSpy = vi.fn(() => ({ faqs: appConfigFaqs }))
+      vi.stubGlobal('useFetchRentacarData', fetchSpy)
+      vi.stubGlobal('useAppConfig', appConfigSpy)
+
+      const { faqs } = useData()
+
+      expect(faqs).toBe(fetchData.faqs) // identity, not just shape
+      expect(faqs[0].label).toBe('from-fetch')
+      expect(appConfigSpy).not.toHaveBeenCalled()
     })
   })
 })
