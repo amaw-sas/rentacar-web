@@ -155,6 +155,7 @@
                                     :year-controls="false"
                                     :prev-month="{ color: 'gray', variant: 'soft' }"
                                     :next-month="{ color: 'gray', variant: 'soft' }"
+                                    @update:model-value="pickupDateCalendarOpen = false"
                                 />
                             </template>
                         </u-popover>
@@ -220,6 +221,7 @@
                                     :year-controls="false"
                                     :prev-month="{ color: 'gray', variant: 'soft' }"
                                     :next-month="{ color: 'gray', variant: 'soft' }"
+                                    @update:model-value="returnDateCalendarOpen = false"
                                 />
                             </template>
                         </u-popover>
