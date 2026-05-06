@@ -294,7 +294,13 @@ NUXT_SUPABASE_SERVICE_ROLE_KEY=<service_role — NO commitear>
 3. `pnpm typecheck` pasa.
 4. `pnpm --filter @rentacar-main/logic test` — `transformFAQs` cubierto (happy path, malformed row dropped, empty input). `useData.test.ts` actualizado (mock de `useFetchRentacarData` ahora retorna `faqs`).
 5. `pnpm test:e2e` — un smoke por marca: `/`, sección `#faqs`, ≥1 item visible.
-6. **Outage build verification**: re-ejecutar `pnpm build` con `NUXT_SUPABASE_URL` apuntando a host inválido (e.g. `https://invalid.supabase.co`). El build no debe fallar; el HTML resultante debe contener `<section id="faqs">` con `<UAccordion :items="[]">` y schema.org `FAQPage` con `mainEntity: []`, sin error en `useSchemaOrg`. Verificación manual one-shot pre-merge — no se commitea script automatizado en este PR. (Nota: `scripts/cities-html-diff.sh` cubre regresión estructural HTML de cities, no outage; los dos chequeos están separados por convención.)
+6. **Outage build verification**: re-ejecutar `pnpm build` con `NUXT_SUPABASE_URL` apuntando a host inválido (e.g. `https://invalid.supabase.co`). Criterio de pass concreto:
+   - `pnpm build` exit code = 0
+   - `grep -l 'id="faqs"' .output/public/**/index.html` produce match en cada marca
+   - `.nuxt/dist/server/_nuxt/*.mjs` no contiene throw uncaught de `useSchemaOrg` (verificable inspeccionando el log del build — sin "[useSchemaOrg]" warnings ni errors)
+   - HTML resultante: `<section id="faqs">` presente, accordion vacío, sin texto de error visible
+
+   Verificación manual one-shot pre-merge — no se commitea script automatizado en este PR. (Nota: `scripts/cities-html-diff.sh` cubre regresión estructural HTML de cities, no outage; los dos chequeos están separados por convención.)
 7. **HTML structural regression** (opcional): `scripts/faqs-html-diff.sh` mirror del cities equivalent — diff de bytes normalizados de `/` baseline (pre-migración) vs post-migración para las 3 marcas. Diff vacío esperado dado que la shape `{ label, content }` viaja idéntica al `<UAccordion>` y `useSchemaOrg`. Si decidimos saltarlo, riesgo residual = pequeño (mismo output esperado, validable visualmente en preview Vercel).
 8. **Smoke manual post-backfill**: abrir `dashboard.supabase.com → faqs`, verificar 10 filas con `status='active'`, todas con `display_order` único en `[0, 9]`.
 
@@ -306,7 +312,7 @@ NUXT_SUPABASE_SERVICE_ROLE_KEY=<service_role — NO commitear>
 | **R2 — UAccordion con `:items=[]` rompe runtime o emite warning ruidoso** | Media | Verificable en dev: setear `faqs.config.ts` a `[]` antes de la migración y abrir `/`. Si UAccordion rompe, wrap en `v-if="faqs.length"`. Si solo emite warning, aceptable. Tarea de verificación pre-merge. |
 | **R3 — Edición manual en editor Supabase desincroniza con `faqs-data.json`** | Baja | Toolkit one-shot por diseño (`faqs-snapshot.ts` deja de compilar tras Step 8). El JSON queda como snapshot histórico, no como source-of-truth. Documentado en `faqs-README.md`. |
 | **R4 — Schema migration aplicado fuera de orden con el merge del PR** | Media | Aplicar `CREATE TABLE` + RLS + seed antes de mergear el PR. Preview deploy en Vercel valida end-to-end con la tabla ya poblada. Sin schema, el endpoint extendido falla con error de tabla inexistente. |
-| **R5 — `index.vue` × 3 contiene `useSchemaOrg` que asume `faqs.length > 0`** | Baja | Verificado en spec: `useSchemaOrg([{FAQPage, mainEntity: faqs.map(...)}])`. `[].map()` retorna `[]`. Schema.org `FAQPage` con `mainEntity: []` es JSON válido (Google ignora el rich result, no rompe). |
+| **R5 — `index.vue` × 3 contiene `useSchemaOrg` que asume `faqs.length > 0`** | Baja | Verificable en código: `useSchemaOrg([{FAQPage, mainEntity: faqs.map(...)}])`. `[].map()` retorna `[]` — sin runtime exception. JSON-LD resultante (`{"@type":"FAQPage","mainEntity":[]}`) es estructuralmente válido; el comportamiento de Google ante un rich result vacío queda fuera del alcance de esta mitigación, lo importante es no romper el render. SCEN-003 (outage build) cubre el invariante observable: build no falla. |
 
 ## Out of scope
 
