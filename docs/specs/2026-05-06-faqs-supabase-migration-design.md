@@ -8,7 +8,7 @@
 
 ## Motivación
 
-`packages/logic/src/config/faqs.config.ts` (70 líneas, 10 entries) contiene FAQs genéricas de alquiler de carros, idénticas para las 3 marcas. Hoy se exponen vía `useAppConfig().faqs` y se renderizan en `index.vue` (`<UAccordion>` + `useSchemaOrg([{FAQPage}])`).
+`packages/logic/src/config/faqs.config.ts` (70 líneas, 11 entries) contiene FAQs genéricas de alquiler de carros, idénticas para las 3 marcas. Hoy se exponen vía `useAppConfig().faqs` y se renderizan en `index.vue` (`<UAccordion>` + `useSchemaOrg([{FAQPage}])`).
 
 El spec de migración Phase 4 originalmente listó `faqs.config.ts` entre los configs **a mantener hardcoded**. Esa decisión queda revocada: la directiva del usuario es **evitar islas de información**, y mantener las FAQs en código mientras todo el resto del contenido viajó a Supabase fragmenta el dominio.
 
@@ -18,7 +18,7 @@ El spec de migración Phase 4 originalmente listó `faqs.config.ts` entre los co
 
 | En scope | Fuera de scope |
 |---|---|
-| `packages/logic/src/config/faqs.config.ts` (10 FAQs genéricas) | `packages/logic/src/composables/useCityFAQs.ts` (FAQs por ciudad — Ola 3 separada del Phase 4) |
+| `packages/logic/src/config/faqs.config.ts` (11 FAQs genéricas) | `packages/logic/src/composables/useCityFAQs.ts` (FAQs por ciudad — Ola 3 separada del Phase 4) |
 | Refactor de los 2 sitios que leen `useAppConfig().faqs` (3 `index.vue` + 1 `useData.ts`) | Admin UI en `rentacar-dashboard` (decisión del operador: ediciones manuales por SQL/editor Supabase) |
 | Schema + RLS + seed inicial aplicados desde este repo vía Supabase MCP | Refactor del consumer de FAQs en pages distintas a `index.vue` (e.g. `tarifas.vue` define FAQs locales propias) |
 
@@ -96,10 +96,10 @@ CREATE POLICY "faqs_select_anon" ON faqs
 **Decisiones del schema**:
 
 - `label` con `UNIQUE` constraint. Habilita `ON CONFLICT (label) DO NOTHING` en el backfill, garantía de idempotencia. Semánticamente: una FAQ por pregunta exacta.
-- `display_order integer NOT NULL`. El orden actual del array es semántico (las 10 FAQs siguen un flujo lógico: cómo reservar → métodos de pago → requisitos → uso del vehículo → coberturas). Sin esto se barajan en cada query.
+- `display_order integer NOT NULL`. El orden actual del array es semántico (las 11 FAQs siguen un flujo lógico: cómo reservar → métodos de pago → requisitos → uso del vehículo → coberturas). Sin esto se barajan en cada query.
 - `status text` en lugar de `is_visible boolean`. Convención del repo (`cities`, `locations`, `vehicle_categories` usan el mismo patrón). Endpoint queda simétrico.
 - Sin `tags jsonb`. El issue lo marcó "opcional para categorización futura" — especulación sin consumer hoy. Cuando aparezca el caso, se añade.
-- Index parcial sobre `display_order WHERE status = 'active'`. La query siempre filtra por `status='active'` y ordena por `display_order`; el índice cubre exactamente ese plan. Tabla pequeña (10 filas) — el índice es nice-to-have, no crítico.
+- Index parcial sobre `display_order WHERE status = 'active'`. La query siempre filtra por `status='active'` y ordena por `display_order`; el índice cubre exactamente ese plan. Tabla pequeña (11 filas) — el índice es nice-to-have, no crítico.
 - Sin policies de `INSERT/UPDATE/DELETE` para `anon`. El backfill se ejecuta vía Supabase MCP `execute_sql` (que opera con permisos del service_role token configurado en el MCP server, transparente al operador); ediciones futuras vía editor Supabase o nueva sesión MCP.
 
 ### 2. Server: endpoint + transformer + tipos
@@ -261,18 +261,18 @@ Toolkit one-shot en `scripts/`, prefijo `faqs-`. Diverge del patrón cities: cit
 | Archivo | Rol |
 |---|---|
 | `scripts/faqs-snapshot.ts` | Lee `packages/logic/src/config/faqs.config.ts` → escribe `scripts/faqs-data.json` con `[{label, content, display_order}]`. Step 1 del plan. Deja de compilar tras Step 9 (delete del config) — diseño one-shot. |
-| `scripts/faqs-data.json` | Snapshot — 10 entries con `label`, `content`, `display_order` (índice del array). Sobrevive al delete. Commiteado al repo como referencia histórica. |
-| `scripts/faqs-README.md` | Documenta el SQL completo (DDL + RLS + 10 INSERTs generados desde el snapshot) + secuencia de comandos MCP del Step 7. Sirve de escape hatch para futuro re-seed sin Claude (operador copia-pega los INSERTs al editor Supabase). |
+| `scripts/faqs-data.json` | Snapshot — 11 entries con `label`, `content`, `display_order` (índice del array). Sobrevive al delete. Commiteado al repo como referencia histórica. |
+| `scripts/faqs-README.md` | Documenta el SQL completo (DDL + RLS + 11 INSERTs generados desde el snapshot) + secuencia de comandos MCP del Step 7. Sirve de escape hatch para futuro re-seed sin Claude (operador copia-pega los INSERTs al editor Supabase). |
 
 **Operación del backfill via MCP** (Step 7 del plan):
 
 - Apply migration: `mcp__plugin_supabase_supabase__apply_migration({ name: "create_faqs_table", query: <DDL> })`.
-- Seed: `mcp__plugin_supabase_supabase__execute_sql({ query: <10 INSERTs con ON CONFLICT (label) DO NOTHING> })`.
-- Verificar: `mcp__plugin_supabase_supabase__execute_sql({ query: "SELECT count(*), count(DISTINCT label) FROM faqs" })` → ambos = 10.
+- Seed: `mcp__plugin_supabase_supabase__execute_sql({ query: <11 INSERTs con ON CONFLICT (label) DO NOTHING> })`.
+- Verificar: `mcp__plugin_supabase_supabase__execute_sql({ query: "SELECT count(*), count(DISTINCT label) FROM faqs" })` → ambos = 11.
 
 **Comportamiento del backfill**:
 
-- **Tabla vacía (primer run)**: inserta las 10 filas.
+- **Tabla vacía (primer run)**: inserta las 11 filas.
 - **Re-ejecución del seed**: `ON CONFLICT (label) DO NOTHING` — cero duplicados, cero error.
 - **Edición manual posterior** (operador edita `content` de una FAQ vía editor Supabase, luego alguien re-ejecuta el seed por error): la edición manual se preserva — `ON CONFLICT DO NOTHING` no sobreescribe. Diferencia importante con cities (que usaba UPDATE forzado).
 
@@ -301,7 +301,7 @@ Toolkit one-shot en `scripts/`, prefijo `faqs-`. Diverge del patrón cities: cit
 
    Verificación manual one-shot pre-merge — no se commitea script automatizado en este PR. (Nota: `scripts/cities-html-diff.sh` cubre regresión estructural HTML de cities, no outage; los dos chequeos están separados por convención.)
 7. **HTML structural regression** (opcional): `scripts/faqs-html-diff.sh` mirror del cities equivalent — diff de bytes normalizados de `/` baseline (pre-migración) vs post-migración para las 3 marcas. Diff vacío esperado dado que la shape `{ label, content }` viaja idéntica al `<UAccordion>` y `useSchemaOrg`. Si decidimos saltarlo, riesgo residual = pequeño (mismo output esperado, validable visualmente en preview Vercel).
-8. **Smoke manual post-backfill**: abrir `dashboard.supabase.com → faqs`, verificar 10 filas con `status='active'`, todas con `display_order` único en `[0, 9]`.
+8. **Smoke manual post-backfill**: abrir `dashboard.supabase.com → faqs`, verificar 11 filas con `status='active'`, todas con `display_order` único en `[0, 10]`.
 
 ## Riesgos y mitigaciones
 
@@ -326,16 +326,16 @@ Explícitamente fuera de este PR:
 
 Las decisiones del diseño se traducen a scenarios observables (Given/When/Then) que viajan al holdout de `/scenario-driven-development`. Bosquejo inicial — el SDD los formalizará al entrar:
 
-- **SCEN-001**: Given Supabase OK con 10 FAQs activas, when usuario carga `/` en cualquier marca, then la sección `#faqs` renderiza 10 `<UAccordionItem>` en el orden de `display_order`.
+- **SCEN-001**: Given Supabase OK con 11 FAQs activas, when usuario carga `/` en cualquier marca, then la sección `#faqs` renderiza 11 `<UAccordionItem>` en el orden de `display_order`.
 - **SCEN-002**: Given una FAQ con `status='inactive'` en Supabase, when usuario carga `/`, then esa FAQ no aparece en el accordion (filtrada por la query `.eq('status', 'active')`).
 - **SCEN-003**: Given Supabase outage durante `pnpm build`, when build completa, then HTML resultante contiene `<section id="faqs">` con accordion vacío y schema.org `FAQPage` con `mainEntity: []`, sin error en build.
 - **SCEN-004**: Given una fila en `faqs` con `label=''` o `content=''`, when endpoint responde, then `transformFAQs` filtra esa fila y el cliente nunca la ve.
-- **SCEN-005**: Given backfill ejecutado dos veces consecutivas con la misma `faqs-data.json`, when query a Supabase, then siguen existiendo exactamente 10 filas (no duplicados — `ON CONFLICT (label) DO NOTHING`).
+- **SCEN-005**: Given backfill ejecutado dos veces consecutivas con la misma `faqs-data.json`, when query a Supabase, then siguen existiendo exactamente 11 filas (no duplicados — `ON CONFLICT (label) DO NOTHING`).
 - **SCEN-006**: Given operador edita `content` de una FAQ via editor Supabase, when backfill se re-ejecuta, then la edición manual se preserva (no se sobreescribe).
 - **SCEN-007**: Given el PR mergeado y `faqs.config.ts` borrado, when `pnpm typecheck` corre, then sin errores — todos los consumers leen `useData().faqs`.
 - **SCEN-008**: Given el PR mergeado, when `git grep "useAppConfig().*faqs"` corre, then cero matches en `packages/`.
 - **SCEN-009**: Given `useFetchRentacarData()` retorna el sentinel (estado inicial pre-fetch o outage), when un componente lee `useData().faqs`, then obtiene `[]` sin TypeError.
-- **SCEN-010**: Given las 3 marcas comparten el endpoint, when cada marca carga `/`, then las 10 FAQs son idénticas (sin filtro por brand — confirma decisión de no añadir columna `brand`).
+- **SCEN-010**: Given las 3 marcas comparten el endpoint, when cada marca carga `/`, then las 11 FAQs son idénticas (sin filtro por brand — confirma decisión de no añadir columna `brand`).
 
 Estos scenarios se mueven a `docs/specs/2026-05-06-faqs-supabase-migration/scenarios/faqs-supabase-migration.scenarios.md` al entrar a SDD, donde se les añade satisfaction criteria y mapa a tests.
 

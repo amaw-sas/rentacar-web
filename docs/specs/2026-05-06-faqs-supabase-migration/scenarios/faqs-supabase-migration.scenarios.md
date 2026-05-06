@@ -6,24 +6,24 @@ issues: ["#12"]
 related: ["#6"]
 ---
 
-Holdout scenarios para la migración de `packages/logic/src/config/faqs.config.ts` (10 FAQs genéricas, 70 líneas) a tabla `faqs` en Supabase. Phase 4 — revoca la decisión "Mantener faqs hardcoded" del plan firebase→vercel-supabase. Diseño aprobado en `docs/specs/2026-05-06-faqs-supabase-migration-design.md`.
+Holdout scenarios para la migración de `packages/logic/src/config/faqs.config.ts` (11 FAQs genéricas, 70 líneas) a tabla `faqs` en Supabase. Phase 4 — revoca la decisión "Mantener faqs hardcoded" del plan firebase→vercel-supabase. Diseño aprobado en `docs/specs/2026-05-06-faqs-supabase-migration-design.md`.
 
 Cada scenario describe lo que sucede observablemente (HTML servido, exit codes, query a DB) — no estados internos de stores ni flags. Esto previene reward hacking durante implementación: hacer pasar el test sin lograr el comportamiento usuario-visible no es válido.
 
 **Patrón heredado**: `docs/specs/2026-05-04-cities-supabase-migration/scenarios/cities-supabase-migration.scenarios.md` (PR #19, mergeada). Scenarios paralelos con la diferencia de que cities usaba UPDATE sobre filas existentes mientras FAQs usa INSERT a tabla nueva — esto añade scenarios específicos de idempotencia (SCEN-005, SCEN-006).
 
-## SCEN-001: usuario en `/` ve las 10 FAQs renderizadas en orden desde Supabase
+## SCEN-001: usuario en `/` ve las 11 FAQs renderizadas en orden desde Supabase
 
-**Given**: tabla `faqs` en Supabase tiene 10 filas activas (`status='active'`); las 3 primeras filas en `display_order` ascendente tienen `label` exacto `¿Cómo puedo hacer una reserva?`, `¿Se puede realizar un alquiler de carros sin tarjeta de crédito?`, `¿No tengo todo el cupo en la tarjeta, puedo hacer la reserva?`; el plugin `rentacar-data` puede alcanzar Supabase; `faqs.config.ts` está borrado del repo.
+**Given**: tabla `faqs` en Supabase tiene 11 filas activas (`status='active'`); las 3 primeras filas en `display_order` ascendente tienen `label` exacto `¿Cómo puedo hacer una reserva?`, `¿Se puede realizar un alquiler de carros sin tarjeta de crédito?`, `¿No tengo todo el cupo en la tarjeta, puedo hacer la reserva?`; el plugin `rentacar-data` puede alcanzar Supabase; `faqs.config.ts` está borrado del repo.
 **When**: cliente HTTP (curl, sin JS) hace `GET /` contra el deploy de cualquier marca (alquilatucarro, alquilame, alquicarros).
 **Then**: response HTTP 200; el body HTML contiene los 3 textos de label exactos en ese orden de aparición; el body HTML contiene la cadena `Para realizar un alquiler de carros debe generar una reserva` (fragmento del `content` de la FAQ #1, asegura que el body viaja, no solo el label); los 3 textos aparecen en HTML server-rendered, no en bundle JS.
 **Evidence**: `curl -s https://<deploy>/ | grep -c "¿Cómo puedo hacer una reserva?"` → ≥ 1; `curl -s https://<deploy>/ | grep -c "Para realizar un alquiler de carros debe generar una reserva"` → ≥ 1; el offset de la primera ocurrencia de `¿Cómo puedo hacer` es menor que el de `¿Se puede realizar un alquiler de carros sin tarjeta de crédito?` (orden preservado).
 
 ## SCEN-002: una FAQ con `status='inactive'` no aparece en HTML
 
-**Given**: tabla `faqs` tiene 11 filas: 10 activas + 1 fila con `status='inactive'` y `label='¿FAQ marcada como inactive — no debe aparecer?'`.
+**Given**: tabla `faqs` tiene 12 filas: 11 activas + 1 fila con `status='inactive'` y `label='¿FAQ marcada como inactive — no debe aparecer?'`.
 **When**: cliente HTTP hace `GET /` contra el deploy.
-**Then**: response HTTP 200; HTML contiene los 10 labels activos; HTML NO contiene el string `¿FAQ marcada como inactive — no debe aparecer?`. Cero ocurrencias del label inactivo.
+**Then**: response HTTP 200; HTML contiene los 11 labels activos; HTML NO contiene el string `¿FAQ marcada como inactive — no debe aparecer?`. Cero ocurrencias del label inactivo.
 **Evidence**: `curl -s https://<deploy>/ | grep -c "¿FAQ marcada como inactive"` → exactamente `0`. La query `.eq('status', 'active')` filtra server-side antes del transformer.
 
 ## SCEN-003: build no falla cuando Supabase está inalcanzable durante prerender
@@ -42,10 +42,10 @@ Cada scenario describe lo que sucede observablemente (HTML servido, exit codes, 
 
 ## SCEN-005: backfill ejecutado dos veces no duplica filas
 
-**Given**: tabla `faqs` con `UNIQUE(label)` constraint aplicado; primera ejecución de `scripts/faqs-backfill.ts` insertó las 10 filas desde `faqs-data.json`; ninguna mutación manual en Supabase entre ejecuciones.
-**When**: `npx tsx scripts/faqs-backfill.ts` corre por segunda vez.
-**Then**: exit code = 0; el script reporta 10 INSERTs intentados, 10 conflictos (`ON CONFLICT (label) DO NOTHING` activado); query `SELECT count(*) FROM faqs` retorna exactamente 10; ninguna fila duplicada por `label`.
-**Evidence**: `psql ... -c "SELECT count(*), count(DISTINCT label) FROM faqs;"` → ambos valores = 10. Re-corrida es idempotente sin esfuerzo manual del operador.
+**Given**: tabla `faqs` con `UNIQUE(label)` constraint aplicado; primera ejecución del seed via MCP `execute_sql` insertó las 11 filas desde `faqs-data.json`; ninguna mutación manual en Supabase entre ejecuciones.
+**When**: el bloque INSERT (11 sentencias con `ON CONFLICT (label) DO NOTHING`) se re-ejecuta vía MCP `execute_sql`.
+**Then**: exit code = 0; el bloque reporta 11 INSERTs intentados, 11 conflictos (`ON CONFLICT (label) DO NOTHING` activado); query `SELECT count(*) FROM faqs` retorna exactamente 11; ninguna fila duplicada por `label`.
+**Evidence**: `mcp__plugin_supabase_supabase__execute_sql({ query: "SELECT count(*), count(DISTINCT label) FROM faqs" })` → ambos valores = 11. Re-corrida es idempotente sin esfuerzo manual del operador.
 
 ## SCEN-006: edición manual de `content` se preserva ante re-corrida del backfill
 
@@ -77,7 +77,7 @@ Cada scenario describe lo que sucede observablemente (HTML servido, exit codes, 
 
 ## SCEN-010: las 3 marcas sirven FAQs idénticas (sin brand-scoping)
 
-**Given**: tabla `faqs` en Supabase con 10 filas activas; deploys de las 3 marcas (alquilatucarro, alquilame, alquicarros) consumen el mismo endpoint `/api/rentacar-data` que apunta a la misma instancia de Supabase.
+**Given**: tabla `faqs` en Supabase con 11 filas activas; deploys de las 3 marcas (alquilatucarro, alquilame, alquicarros) consumen el mismo endpoint `/api/rentacar-data` que apunta a la misma instancia de Supabase.
 **When**: capturar el HTML de `/` para las 3 marcas en orden — `curl -s https://<deploy-A>/`, `curl -s https://<deploy-B>/`, `curl -s https://<deploy-C>/`.
 **Then**: la lista de labels extraídos del HTML es idéntica entre las 3 marcas (mismo set, mismo orden). Los `content` también son idénticos. Confirma decisión de NO añadir columna `brand` en el schema.
 **Evidence**: extraer labels con `xmllint --html --xpath '//*[@id="faqs"]//text()'` (o equivalente) para cada marca; comparar arrays — `expect(labelsA).toEqual(labelsB)`, `expect(labelsB).toEqual(labelsC)`. Si el spec evoluciona a brand-scoping en el futuro, este scenario falla y se debe regenerar.
@@ -117,7 +117,7 @@ Estos scenarios resisten gaming porque:
 - **FAQs por ciudad (`useCityFAQs.ts`)** — Ola 3 separada del Phase 4. Tiene su propio holdout futuro.
 - **`tarifas.vue` y `gana/index.vue`** — definen FAQs locales propias en archivos UI; no consumen `faqs.config.ts`. Out of scope.
 - **Admin UI para editar FAQs** — operador confirmó que las ediciones se hacen vía SQL/editor Supabase. No hay scenario que verifique flujo de admin.
-- **Performance del query a Supabase** — 10 filas trivial; no vale el costo de un budget test.
+- **Performance del query a Supabase** — 11 filas trivial; no vale el costo de un budget test.
 - **i18n del contenido FAQ** — fuera de alcance, idéntico al spec de cities.
 - **Validación de RLS policy** — operacional (checklist humano pre-merge), no observable como behavior runtime; cubierto al ejecutar el `CREATE POLICY` SQL.
 - **Comportamiento de Google Search ante FAQPage con `mainEntity: []`** — fuera de alcance del repo. SCEN-003 cubre el invariante observable (build no rompe, HTML válido).

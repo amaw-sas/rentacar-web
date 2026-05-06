@@ -67,14 +67,14 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 | Archivo | Responsabilidad |
 |---|---|
 | `scripts/faqs-snapshot.ts` | **NUEVO**: lee `faqsConfig`, escribe `faqs-data.json` (one-shot, antes de borrar el config) |
-| `scripts/faqs-data.json` | **NUEVO**: snapshot del contenido (10 entries con label, content, display_order) |
-| `scripts/faqs-README.md` | **NUEVO**: SQL completo (DDL + RLS + 10 INSERTs generados) + secuencia de comandos MCP del Step 7. Escape hatch para re-seed sin Claude. |
+| `scripts/faqs-data.json` | **NUEVO**: snapshot del contenido (11 entries con label, content, display_order) |
+| `scripts/faqs-README.md` | **NUEVO**: SQL completo (DDL + RLS + 11 INSERTs generados) + secuencia de comandos MCP del Step 7. Escape hatch para re-seed sin Claude. |
 
 ### Tests E2E
 
 | Archivo | Responsabilidad |
 |---|---|
-| `e2e/faqs-content.spec.ts` | **NUEVO**: smoke E2E para SCEN-001 (10 FAQs en orden), SCEN-002 (status='inactive' filtrada), SCEN-010 (brand-uniformity). Multi-marca via env BRAND. |
+| `e2e/faqs-content.spec.ts` | **NUEVO**: smoke E2E para SCEN-001 (11 FAQs en orden), SCEN-002 (status='inactive' filtrada), SCEN-010 (brand-uniformity). Multi-marca via env BRAND. |
 
 ### Pre-merge guards
 
@@ -121,22 +121,22 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 ### Step 1: Snapshot del contenido a `faqs-data.json`
 
-**Objetivo**: capturar `faqsConfig` (10 FAQs con label + content) en JSON estático antes del delete eventual del config, para que el backfill sobreviva.
+**Objetivo**: capturar `faqsConfig` (11 FAQs con label + content) en JSON estático antes del delete eventual del config, para que el backfill sobreviva.
 
 **Archivos**:
 - `scripts/faqs-snapshot.ts` (NUEVO — script TypeScript que se ejecuta una sola vez)
-- `scripts/faqs-data.json` (NUEVO — generado por el snapshot, ~5 KB esperado con 10 entradas)
+- `scripts/faqs-data.json` (NUEVO — generado por el snapshot, ~6 KB esperado con 11 entradas)
 
 **Tareas**:
 - [ ] Crear `scripts/faqs-snapshot.ts` que importe `faqsConfig` desde `packages/logic/src/config/faqs.config` y escriba `JSON.stringify(faqsConfig.map((f, i) => ({ label: f.label, content: f.content, display_order: i })), null, 2)` a `scripts/faqs-data.json`.
 - [ ] Ejecutar: `npx tsx scripts/faqs-snapshot.ts`.
-- [ ] Verificar manualmente: `data.json` tiene 10 entradas, cada una con `label`, `content`, `display_order` (0..9 secuencial).
+- [ ] Verificar manualmente: `data.json` tiene 11 entradas, cada una con `label`, `content`, `display_order` (0..10 secuencial).
 
 **Acceptance criteria**:
-- `cat scripts/faqs-data.json | jq 'length'` → `10`.
-- `cat scripts/faqs-data.json | jq '[.[] | select(.label == "" or .label == null)] | length'` → `0`.
-- `cat scripts/faqs-data.json | jq '[.[].display_order] | unique | length'` → `10` (todos únicos).
-- `cat scripts/faqs-data.json | jq '[.[].display_order] | min, max'` → `0`, `9`.
+- `node -e "console.log(require('./scripts/faqs-data.json').length)"` → `11`.
+- `node -e "const d=require('./scripts/faqs-data.json'); console.log(d.filter(f=>!f.label||!f.content).length)"` → `0`.
+- `node -e "const d=require('./scripts/faqs-data.json'); console.log(new Set(d.map(f=>f.display_order)).size)"` → `11` (todos únicos).
+- `node -e "const d=require('./scripts/faqs-data.json'); const o=d.map(f=>f.display_order); console.log(Math.min(...o), Math.max(...o))"` → `0 10`.
 
 **Commit**: `chore(faqs): snapshot faqsConfig to faqs-data.json for one-time backfill`
 
@@ -275,23 +275,23 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 ### Step 6: Backfill README (sin script CLI — MCP cubre las DB ops)
 
-**Objetivo**: documentar el SQL completo (DDL + RLS + 10 INSERTs) y la secuencia de comandos MCP del Step 7. Diverge de cities (que tenía un `backfill.ts` con `service_role` key) — para FAQs, MCP `execute_sql` cubre las INSERTs sin requerir CLI.
+**Objetivo**: documentar el SQL completo (DDL + RLS + 11 INSERTs) y la secuencia de comandos MCP del Step 7. Diverge de cities (que tenía un `backfill.ts` con `service_role` key) — para FAQs, MCP `execute_sql` cubre las INSERTs sin requerir CLI.
 
 **Archivos**:
 - `scripts/faqs-README.md` (NUEVO)
 
 **Tareas**:
-- [ ] Generar las 10 sentencias INSERT desde `scripts/faqs-data.json` (puede ser un one-liner: `node -e "const d=require('./faqs-data.json'); console.log(d.map(f => \`INSERT INTO faqs (label, content, display_order) VALUES (\${JSON.stringify(f.label)}, \${JSON.stringify(f.content)}, \${f.display_order}) ON CONFLICT (label) DO NOTHING;\`).join('\\n'))"`). Pegar el output en el README.
+- [ ] Generar las 11 sentencias INSERT desde `scripts/faqs-data.json` (puede ser un one-liner: `node -e "const d=require('./faqs-data.json'); console.log(d.map(f => \`INSERT INTO faqs (label, content, display_order) VALUES (\${JSON.stringify(f.label)}, \${JSON.stringify(f.content)}, \${f.display_order}) ON CONFLICT (label) DO NOTHING;\`).join('\\n'))"`). Pegar el output en el README.
 - [ ] Crear `README.md` con secciones:
   - **Schema SQL** completo del spec sección 1 (CREATE TABLE + INDEX + RLS POLICY) — copiable a editor Supabase.
-  - **Seed SQL**: las 10 sentencias INSERT generadas — copiable a editor Supabase para re-seed manual.
+  - **Seed SQL**: las 11 sentencias INSERT generadas — copiable a editor Supabase para re-seed manual.
   - **MCP commands del Step 7** (apply_migration, execute_sql para seed, execute_sql para verificación, secuencia de preview branch para SCEN-005/006).
   - **Lifecycle**: toolkit one-shot — `snapshot.ts` deja de compilar tras Step 9; `data.json` queda como snapshot histórico; este README es el escape hatch para re-seed sin Claude.
   - **Comportamiento ante re-corrida**: documenta SCEN-005 (idempotente vía `ON CONFLICT`) y SCEN-006 (ediciones manuales preservadas).
 
 **Acceptance criteria**:
 - README contiene los 3 bloques SQL ejecutables sin edición (DDL, INSERTs, queries de verificación).
-- Las 10 INSERTs en el README, parseadas con `psql --dry-run` o equivalente, son sintácticamente válidas.
+- Las 11 INSERTs en el README, parseadas con `psql --dry-run` o equivalente, son sintácticamente válidas.
 - Operador puede leer README + Supabase editor + ejecutar reseed sin asistencia de Claude.
 
 **Commit**: `chore(faqs): README documenting schema SQL + seed (#12)`
@@ -300,7 +300,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 ### Step 7: Schema apply via MCP + ejecución backfill (SCEN-005, 006)
 
-**Objetivo**: aplicar `CREATE TABLE faqs` + RLS via Supabase MCP, correr backfill, verificar las 10 filas.
+**Objetivo**: aplicar `CREATE TABLE faqs` + RLS via Supabase MCP, correr backfill, verificar las 11 filas.
 
 **Archivos**: ninguno tocado en este repo. Step operacional.
 
@@ -314,15 +314,15 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
   ```
 - [ ] Verificar tabla via MCP: `mcp__plugin_supabase_supabase__list_tables` → `faqs` debe aparecer con las columnas correctas.
 - [ ] Verificar RLS pre-seed: `mcp__plugin_supabase_supabase__execute_sql({ query: "SELECT count(*) FROM faqs" })` → debe devolver `0` (tabla vacía).
-- [ ] Generar las 10 INSERTs desde `scripts/faqs-data.json` (mismo one-liner del Step 6) y ejecutar:
+- [ ] Generar las 11 INSERTs desde `scripts/faqs-data.json` (mismo one-liner del Step 6) y ejecutar:
   ```
   mcp__plugin_supabase_supabase__execute_sql({
     query: "INSERT INTO faqs (label, content, display_order) VALUES ... ON CONFLICT (label) DO NOTHING;"
   })
   ```
-  Una sola llamada con las 10 sentencias concatenadas (o 10 llamadas si el límite del MCP lo requiere).
-- [ ] Verificar post-seed: `execute_sql({ query: "SELECT count(*), count(DISTINCT label) FROM faqs" })` → ambos = 10.
-- [ ] **SCEN-005 verification (idempotencia)**: re-ejecutar el bloque INSERT exacto via MCP. Verificar que `count(*)` sigue siendo 10 (cero duplicados gracias a `ON CONFLICT (label) DO NOTHING`).
+  Una sola llamada con las 11 sentencias concatenadas (o 11 llamadas si el límite del MCP lo requiere).
+- [ ] Verificar post-seed: `execute_sql({ query: "SELECT count(*), count(DISTINCT label) FROM faqs" })` → ambos = 11.
+- [ ] **SCEN-005 verification (idempotencia)**: re-ejecutar el bloque INSERT exacto via MCP. Verificar que `count(*)` sigue siendo 11 (cero duplicados gracias a `ON CONFLICT (label) DO NOTHING`).
 - [ ] **SCEN-006 verification** (en preview branch para no tocar producción):
   - Crear branch via MCP: `mcp__plugin_supabase_supabase__create_branch({ name: "faqs-scen-006-test" })`. El branch hereda el schema y data del main.
   - Editar via MCP en el branch: `execute_sql({ query: "UPDATE faqs SET content = 'EDITADO_MANUALMENTE_2026_05_06' WHERE label = '¿Cómo puedo hacer una reserva?'" })` (con el contexto del branch).
@@ -332,10 +332,10 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 **Acceptance criteria**:
 - Tabla `faqs` existe en Supabase con shape correcto (verificable via `list_tables`).
-- 10 filas insertadas, todas con `status='active'`, `display_order` único en [0,9], `label` único.
+- 11 filas insertadas, todas con `status='active'`, `display_order` único en [0,10], `label` único.
 - SCEN-005 verificado: re-corrida del INSERT produce 0 duplicados.
 - SCEN-006 verificado en preview branch: edición manual sobrevive a re-corrida; branch borrado al terminar.
-- **Reiniciar dev server** después del seed (cache de `defineCachedEventHandler` puede tener payload pre-seed); luego: `curl http://localhost:3000/api/rentacar-data | jq '.faqs | length'` → `10`.
+- **Reiniciar dev server** después del seed (cache de `defineCachedEventHandler` puede tener payload pre-seed); luego: `curl http://localhost:3000/api/rentacar-data | jq '.faqs | length'` → `11`.
 
 **Sin commit** — este step es operacional; el SQL queda registrado en Supabase via MCP. La sesión de Claude que ejecuta este step deja la migración aplicada de forma persistente.
 
@@ -375,7 +375,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 **Acceptance criteria**:
 - `pnpm --filter @rentacar-main/logic typecheck && pnpm --filter 'ui-*' typecheck` exit 0.
 - `git grep "faqsConfig" packages/` no devuelve matches (excepto dentro de `faqs.config.ts` mismo, pendiente de borrar en Step 9).
-- Levantar dev server: `pnpm dev:alquilatucarro` arranca sin error; `/` carga; sección `#faqs` renderiza las 10 FAQs (con datos de Supabase, gracias a Step 7).
+- Levantar dev server: `pnpm dev:alquilatucarro` arranca sin error; `/` carga; sección `#faqs` renderiza las 11 FAQs (con datos de Supabase, gracias a Step 7).
 
 **Commit**: `refactor(brands): route faqs through useData, remove from app.config.ts × 3 (#12)`
 
@@ -393,7 +393,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 - [ ] Verificar que ningún archivo importa de ese path: `git grep "config/faqs" packages/` debe devolver vacío.
 - [ ] Verificar que `git grep "faqsConfig" packages/` también está vacío (post-Step 8, todos los consumers migrados).
 - [ ] Correr typecheck completo (SCEN-007): `pnpm --filter @rentacar-main/logic typecheck && pnpm --filter 'ui-*' typecheck` exit 0.
-- [ ] Smoke check: `pnpm dev:alquilatucarro`, navegar `/` en browser — sección `#faqs` debe renderizar con 10 items desde Supabase.
+- [ ] Smoke check: `pnpm dev:alquilatucarro`, navegar `/` en browser — sección `#faqs` debe renderizar con 11 items desde Supabase.
 
 **Acceptance criteria**:
 - `git ls-files packages/logic/src/config/faqs.config.ts` vacío.
@@ -413,7 +413,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 **Tareas**:
 - [ ] Crear `e2e/faqs-content.spec.ts` con tests:
-  - **SCEN-001**: `test('GET / renderiza 10 FAQs en orden desde Supabase')`. Naviga a `/`, verifica `page.getByText('¿Cómo puedo hacer una reserva?').toBeVisible()` (label exacto de FAQ #1 del snapshot). Cuenta `<UAccordionItem>` o equivalente — debe ser ≥10. Verificar offset: index of "¿Cómo puedo hacer" < index of "¿Se puede realizar un alquiler de carros sin tarjeta de crédito?" en HTML.
+  - **SCEN-001**: `test('GET / renderiza 11 FAQs en orden desde Supabase')`. Naviga a `/`, verifica `page.getByText('¿Cómo puedo hacer una reserva?').toBeVisible()` (label exacto de FAQ #1 del snapshot). Cuenta `<UAccordionItem>` o equivalente — debe ser ≥11. Verificar offset: index of "¿Cómo puedo hacer" < index of "¿Se puede realizar un alquiler de carros sin tarjeta de crédito?" en HTML.
   - **SCEN-002**: `test('FAQ con status=inactive no aparece en HTML')`. Pre-condición: insertar temporalmente vía MCP una fila con `status='inactive'` y label `'¿FAQ marcada como inactive — no debe aparecer?'`. Test: navega a `/`, verifica que ese label NO está visible. Post-condición: borrar la fila inactiva.
   - Test corre para `BRAND=alquilatucarro|alquilame|alquicarros`.
 - [ ] **SCEN-008 grep guard**: ejecutar `git grep -nE "useAppConfig\(\)\.faqs|appConfig\.faqs" packages/`. Verificar exit code != 0 (grep "no matches"). Documentar el comando en el `faqs-README.md` o como script `scripts/faqs-grep-guard.sh` opcional.
@@ -444,7 +444,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 **Acceptance criteria**:
 - SCEN-003 satisfecho — build con outage no falla; HTML resultante tiene sección `#faqs` vacía válida; sin errors en log.
-- SCEN-010 satisfecho — los 3 deploys sirven exactamente las mismas 10 FAQs en el mismo orden. Si algún brand difiere, alguien añadió filtrado de brand-scoping no documentado en spec — bloquea merge.
+- SCEN-010 satisfecho — los 3 deploys sirven exactamente las mismas 11 FAQs en el mismo orden. Si algún brand difiere, alguien añadió filtrado de brand-scoping no documentado en spec — bloquea merge.
 - Holdout completo: 10/10 scenarios verificados (SCEN-004 cubierto en Step 3, SCEN-009 en Step 5, SCEN-005/006 en Step 7, SCEN-007 en Step 9, SCEN-001/002/008 en Step 10, SCEN-003/010 en Step 11).
 
 **Commit**: `test(faqs): outage build + brand-uniformity verification (SCEN-003/010, #12)`
@@ -498,7 +498,7 @@ Antes de abrir PR para merge:
 - `pnpm --filter @rentacar-main/logic typecheck && pnpm --filter 'ui-*' typecheck` → exit 0.
 - `pnpm test:e2e faqs-content` → pass al menos 1 marca.
 - `git grep -nE "useAppConfig\(\)\.faqs|appConfig\.faqs" packages/` → vacío.
-- Smoke en preview deploy: `/` carga, las 10 FAQs visibles, accordion funcional.
+- Smoke en preview deploy: `/` carga, las 11 FAQs visibles, accordion funcional.
 
 ---
 
@@ -511,7 +511,7 @@ PR mergeado → Vercel auto-build → ISR genera HTML estático para `/` con FAQ
 ### Monitoring
 
 - **Días 1-3 post-merge**: revisar Vercel deployment logs por errores en `/api/rentacar-data` (query de `faqs` falla); verificar Supabase logs por queries fallidas.
-- **Smoke browser inspection**: `/` en las 3 marcas, accordion expande, schema.org JSON-LD presente con 10 entries.
+- **Smoke browser inspection**: `/` en las 3 marcas, accordion expande, schema.org JSON-LD presente con 11 entries.
 - **Google Search Console**: verificar que el rich result FAQPage sigue siendo elegible para las URLs de home (`/`).
 
 ### Rollback (si todo sale mal)
