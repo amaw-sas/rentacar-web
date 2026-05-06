@@ -16,7 +16,7 @@ export class RentacarDataTimeoutError extends Error {
 }
 
 /**
- * Runs the 5 rentacar-data Supabase queries in parallel with a hard deadline.
+ * Runs the 6 rentacar-data Supabase queries in parallel with a hard deadline.
  * A shared AbortController cancels the underlying fetches on timeout so they
  * stop consuming the connection pool — Promise.race alone would leave them
  * running. Returns the raw PostgREST results in fixed order; per-result
@@ -62,6 +62,13 @@ export async function fetchRentacarData(supabase: SupabaseClient, timeoutMs: num
         .select('code, testimonials')
         .eq('status', 'active')
         .order('code')
+        .abortSignal(signal),
+
+      supabase
+        .from('faqs')
+        .select('label, content')
+        .eq('status', 'active')
+        .order('display_order')
         .abortSignal(signal),
     ])
 

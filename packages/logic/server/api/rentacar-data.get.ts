@@ -1,6 +1,6 @@
 import { useSupabaseClient } from '../utils/supabase'
 import { fetchRentacarData, RentacarDataTimeoutError } from '../utils/rentacarDataFetch'
-import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials } from '../utils/transformers'
+import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials, transformFAQs } from '../utils/transformers'
 
 export default defineCachedEventHandler(async () => {
   const supabase = useSupabaseClient()
@@ -9,7 +9,7 @@ export default defineCachedEventHandler(async () => {
   // testimonials (~14KB cross-brand bloat per render) via the franchises
   // query inside fetchRentacarData. Acceptable while testimonials are static
   // and small; revisit before the Google Maps Reviews integration.
-  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult] =
+  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult, faqsResult] =
     await fetchRentacarData(supabase).catch((err) => {
       if (err instanceof RentacarDataTimeoutError) {
         throw createError({ statusCode: 504, statusMessage: 'rentacar-data upstream timeout' })
@@ -32,6 +32,9 @@ export default defineCachedEventHandler(async () => {
   if (franchisesResult.error) {
     throw createError({ statusCode: 500, message: `Franchises query failed: ${franchisesResult.error.message}` })
   }
+  if (faqsResult.error) {
+    throw createError({ statusCode: 500, message: `FAQs query failed: ${faqsResult.error.message}` })
+  }
 
   return {
     categories: transformCategories(categoriesResult.data),
@@ -40,6 +43,7 @@ export default defineCachedEventHandler(async () => {
     vehicleCategories: transformVehicleCategories(categoriesResult.data),
     cities: transformCities(citiesResult.data),
     franchiseTestimonials: transformFranchiseTestimonials(franchisesResult.data),
+    faqs: transformFAQs(faqsResult.data),
   }
 }, {
   // TODO(perf+seo): revisit cache strategy before launch. 1h is fine while in

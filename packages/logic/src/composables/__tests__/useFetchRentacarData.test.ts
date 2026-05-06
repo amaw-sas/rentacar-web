@@ -31,6 +31,7 @@ describe('useFetchRentacarData', () => {
         vehicleCategories: {},
         cities: [],
         franchiseTestimonials: {},
+        faqs: [],
       })
     })
 
