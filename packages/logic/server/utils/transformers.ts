@@ -6,6 +6,7 @@ import type BranchData from '../../src/utils/types/data/BranchData'
 import type VehicleCategoryData from '../../src/utils/types/data/VehicleCategoryData'
 import type ExtrasData from '../../src/utils/types/data/ExtrasData'
 import type City from '../../src/utils/types/type/City'
+import type FAQ from '../../src/utils/types/type/FAQ'
 import type Testimonial from '../../src/utils/types/type/Testimonial'
 
 export type { ExtrasData };
@@ -197,6 +198,25 @@ export function transformFranchiseTestimonials(
   for (const row of rows) {
     if (!row?.code) continue
     result[row.code] = parseTestimonials(row.testimonials)
+  }
+  return result
+}
+
+interface SupabaseFAQ {
+  label: unknown
+  content: unknown
+}
+
+const faqSchema = v.object({
+  label: v.pipe(v.string(), v.minLength(1)),
+  content: v.pipe(v.string(), v.minLength(1)),
+})
+
+export function transformFAQs(rows: SupabaseFAQ[]): FAQ[] {
+  const result: FAQ[] = []
+  for (const row of rows) {
+    const parsed = v.safeParse(faqSchema, row)
+    if (parsed.success) result.push(parsed.output)
   }
   return result
 }
