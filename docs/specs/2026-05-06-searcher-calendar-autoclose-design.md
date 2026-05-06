@@ -1,7 +1,7 @@
 # Searcher: Cierre automático del calendario al seleccionar fecha
 
 **Date:** 2026-05-06
-**Status:** Approved (brainstorming)
+**Status:** Approved
 **Scope:** UI fix — desktop only (móvil usa input nativo)
 
 ## Problem
@@ -10,7 +10,10 @@ En el formulario de búsqueda de disponibilidad (`Searcher.vue`), los popovers d
 
 ## Root cause
 
-`packages/ui-{brand}/app/components/Searcher.vue` (idéntico en las 3 marcas), líneas 132-160 y 196-225:
+`packages/ui-{brand}/app/components/Searcher.vue` (idéntico en las 3 marcas):
+
+- Desktop pickup popover: líneas 132-160 (popover) dentro del bloque desktop 119-164.
+- Desktop return popover: líneas 196-225 (popover) dentro del bloque desktop 182-229.
 
 ```vue
 <u-popover v-model:open="pickupDateCalendarOpen">
@@ -23,7 +26,7 @@ En el formulario de búsqueda de disponibilidad (`Searcher.vue`), los popovers d
 
 `<u-popover>` se abre con `@click="pickupDateCalendarOpen = true"` en el `<u-input-date>`, pero ningún handler escucha el evento de selección de `<u-calendar>` para revertir `pickupDateCalendarOpen` a `false`. Misma estructura con `returnDateCalendarOpen`.
 
-Móvil (`<input type="date">` en líneas 168-177 y 230-…) cierra automáticamente vía SO — fuera de alcance.
+Móvil (`<input type="date">` nativo en líneas 103-117 para recogida y 165-180 para devolución) cierra automáticamente vía SO — fuera de alcance.
 
 ## Decision
 
@@ -83,8 +86,8 @@ Consumidores del componente: páginas `[city]/...` que embeben `<Searcher />`. N
 
 **SCEN-004 — Móvil intacto**
 - **Given** viewport <640px (input `<input type="date">` nativo visible).
-- **When** el usuario selecciona una fecha en el picker nativo del SO.
-- **Then** el comportamiento existente se preserva; sin regresión en `fechaRecogida`/`fechaDevolucion` ni en el watcher de +7 días.
+- **When** el usuario abre la página de búsqueda.
+- **Then** los inputs móviles (`#pickup-date-mobile`, `#return-date-mobile`) son visibles, tienen `type="date"`, y los inputs desktop (`#pickup-date`, `#return-date`) están ocultos vía clase `hidden sm:block`. Cambio del modelo en estos inputs preserva `fechaRecogida`/`fechaDevolucion` y dispara el watcher de +7 días igual que hoy.
 
 **SCEN-005 — Watcher de fecha por defecto preservado**
 - **Given** viewport ≥640px, sin fecha de recogida seleccionada (estado inicial).
@@ -93,42 +96,49 @@ Consumidores del componente: páginas `[city]/...` que embeben `<Searcher />`. N
 
 ## Satisfaction strategy
 
-- **E2E (Playwright, multi-marca via `BRAND` env):** nuevo `e2e/searcher-calendar-autoclose.spec.ts` cubriendo SCEN-001..003 y SCEN-005. Selectores estables: `#pickup-date`, `#return-date` (id existentes); agregar `data-testid` al popover si los selectores actuales no permiten asertar visibilidad.
-- **SCEN-004** verificado por inspección de no-cambio (diff vacío en bloque móvil del `Searcher.vue`); no requiere test nuevo.
+- **E2E (Playwright, multi-marca via `BRAND` env):** nuevo `e2e/searcher-calendar-autoclose.spec.ts` cubriendo SCEN-001..005. Selectores y aserciones de visibilidad del popover:
+  - **Apertura:** click en `#pickup-date` (resp. `#return-date`) y esperar `[role="dialog"]` visible. `<u-popover>` de Nuxt UI usa Reka UI internamente, que renderiza el `content` con `role="dialog"` cuando está abierto.
+  - **Cierre:** asertar que el `[role="dialog"]` previamente visible desaparece del DOM tras click en celda de día. Equivalente con `await expect(dialog).toBeHidden()`.
+  - **Selección de día:** `<u-calendar>` renderiza celdas con `[data-day]`; click sobre la primera celda no deshabilitada (`:not([data-disabled])`).
+  - Si tras `/agent-browser` runtime los selectores anteriores no son estables, fallback: agregar `data-testid="pickup-date-popover"` / `return-date-popover` al `<u-popover>` y `data-testid="pickup-date-trigger"` / `return-date-trigger` al `<u-input-date>`.
+- **SCEN-004 móvil:** test Playwright con `viewport: { width: 375, height: 812 }` que asegura `#pickup-date-mobile` y `#return-date-mobile` visibles y `[type="date"]`, y que `#pickup-date` / `#return-date` están ocultos. NO se ejercita el picker nativo del SO (Playwright no controla el picker del sistema), sólo se verifica el contrato de DOM.
 - **Validación runtime con `/agent-browser`** en al menos una marca (`pnpm dev:alquilatucarro`) antes de commit, con consola y network limpios.
 
 ## Risks
 
 | # | Riesgo | Mitigación |
 |---|---|---|
-| R1 | `@update:model-value` también dispara cuando `<u-calendar>` recibe el valor inicial al montarse → cierre prematuro al abrir el popover por primera vez. | Verificar en runtime con `/agent-browser`. Si reproduce, gate con flag `userInteracted` o usar evento de click sobre celda. Esperado: NO reproducir. Nuxt UI v4 emite `update:model-value` sólo en cambio. |
-| R2 | Navegación de mes/año dentro del calendario podría disparar `update:model-value`. | No esperado: `month-controls`/`year-controls` mutan estado interno del calendario, no `modelValue`. Validar en runtime. |
-| R3 | bfcache restoration: tras retroceder desde `/reservado/{reserveCode}`, los widgets de fecha quedan bloqueados. Existe handler `pageshow` (`Searcher.vue:355-357`) que recarga, pero el bug persiste según reporte del usuario. | **Fuera de alcance de este spec.** Issue separado en GitHub. |
-| R4 | Inconsistencia entre las 3 marcas si se edita una sola. | Cambio idéntico aplicado a los 3 archivos. Test e2e multi-marca detecta deriva futura. |
+| R1 | `@update:model-value` también dispara cuando `<u-calendar>` recibe el valor inicial al montarse → cierre prematuro al abrir el popover por primera vez. | **Plan A (esperado):** Nuxt UI v4 emite `update:model-value` sólo en cambio del valor; `selectedPickupDate` se computa del store al montar y no muta en mount. Verificar en runtime con `/agent-browser`: abrir popover sin tocar nada, esperar 1s, asertar popover sigue abierto. **Plan B (si reproduce):** envolver el handler en un guard contra el primer mount: `let userInteracted = false; onMounted(() => { nextTick(() => { userInteracted = true }) })` y cambiar el handler a `@update:model-value="userInteracted && (pickupDateCalendarOpen = false)"`. Plan B local al template; no afecta store ni composable. |
+| R2 | Navegación de mes/año dentro del calendario podría disparar `update:model-value`. | No esperado: `month-controls`/`year-controls` mutan estado interno (`focusedValue`) del calendario Reka UI, no `modelValue`. Validar en runtime: abrir popover, click `next-month` 2 veces, asertar popover sigue abierto. Si reproduce, ver R1 Plan B. |
+| R3 | bfcache restoration: tras retroceder desde `/reservado/{reserveCode}`, los widgets de fecha quedan bloqueados. Existe handler `pageshow` (`Searcher.vue:355-357`) que recarga, pero el bug persiste según reporte del usuario. | **Fuera de alcance de este spec.** Tracked en [issue #25](https://github.com/amaw-sas/rentacar-web/issues/25). |
+| R4 | Inconsistencia entre las 3 marcas si se edita una sola. | Cambio idéntico aplicado a los 3 archivos. Test e2e multi-marca (`BRAND=alquilatucarro|alquilame|alquicarros`) detecta deriva futura. |
 | R5 | Regresión en SCEN-005 (watcher +7 días) si se toca lógica del store. | Cambio puramente template (event handler). Store y composable intactos. SCEN-005 lo cubre. |
 
 ## Verification plan
 
-1. Implementar los 3 cambios en `Searcher.vue` (1 línea por calendario × 2 calendarios × 3 marcas — wait: 2 líneas por archivo × 3 archivos = 6 ediciones).
+1. Implementar 6 ediciones (2 calendarios × 3 marcas) en `Searcher.vue`: agregar `@update:model-value="<state> = false"` en cada `<u-calendar>` (líneas ~149 y ~213 por archivo).
 2. `pnpm typecheck` — debe pasar.
 3. `pnpm lint` — debe pasar.
 4. `/agent-browser` runtime sobre `pnpm dev:alquilatucarro`:
-   - Abrir popover recogida → seleccionar fecha → confirmar cierre.
-   - Confirmar `fechaDevolucion` se llenó automáticamente sin abrir su popover.
+   - Abrir popover recogida → seleccionar fecha → confirmar cierre (R1 Plan A check).
+   - Abrir popover sin seleccionar nada, esperar 1s → confirmar popover sigue abierto (R1 sanity).
+   - Abrir popover, click `next-month` 2 veces → confirmar popover sigue abierto (R2 sanity).
+   - Confirmar `fechaDevolucion` se llenó automáticamente (+7 días) sin abrir su popover.
    - Abrir popover devolución → seleccionar fecha → confirmar cierre.
    - Consola: cero errores. Network: cero requests fallidos.
-5. E2E nuevo `e2e/searcher-calendar-autoclose.spec.ts` ejecutado vía `pnpm test:e2e` (mínimo `BRAND=alquilatucarro`; idealmente las 3).
+5. E2E nuevo `e2e/searcher-calendar-autoclose.spec.ts` ejecutado vía `pnpm test:e2e` cubriendo SCEN-001..005, mínimo `BRAND=alquilatucarro`; idealmente las 3 marcas.
 6. `/dogfood` exploratorio sobre el formulario de búsqueda.
 7. `/verification-before-completion` antes de commit/PR.
 
 ## Out of scope (YAGNI)
 
-- Refactor para extraer un componente `DatePickerField` compartido entre marcas. La duplicación existente está fuera del bug reportado.
-- Encadenar apertura del popover de devolución tras selección de recogida (descartado por el usuario).
-- Cambios en móvil (ya funciona).
-- Fix de R3 (bfcache desde `/reservado/{reserveCode}`) — issue separado.
+- Refactor para extraer un componente `DatePickerField` compartido entre marcas. La duplicación existente está fuera del bug reportado; introducir abstracción ahora viola YAGNI cuando sólo agregamos 2 líneas por archivo.
+- Encadenar apertura del popover de devolución tras selección de recogida (descartado por el usuario; ver decisión de scope arriba).
+- Cambios en móvil (`<input type="date">` ya cierra solo vía SO).
+- Fix de R3 (bfcache desde `/reservado/{reserveCode}`) — tracked en [issue #25](https://github.com/amaw-sas/rentacar-web/issues/25).
+- Typo pre-existente en `aria-label="Seleccione una día de recogida"` (líneas 140, 204) — no introducido por este spec, fuera de alcance.
 
 ## Handoff
 
 - **Next skill:** `/sop-planning` para producir un plan de implementación ordenado con acceptance criteria por paso.
-- **Holdout:** los 5 escenarios observables anteriores son la entrada para `/scenario-driven-development`.
+- **Holdout:** los 5 escenarios observables anteriores son la entrada para `/scenario-driven-development`. Al iniciar SDD se creará el directorio `docs/specs/2026-05-06-searcher-calendar-autoclose/scenarios/` con `searcher-calendar-autoclose.scenarios.md` extraído de este documento, conforme la convención de specs vecinas (`2026-04-29-bundled-rentacar-data-resilience/scenarios/`, etc.).
