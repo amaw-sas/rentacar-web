@@ -39,3 +39,23 @@ describe('Searcher — unlocks after bfcache restoration (browser back button)',
     expect(source).toMatch(/(window\.)?location\.reload\s*\(/)
   })
 })
+
+describe('Searcher — defensive body sanitization on mount (issue #25, SCEN-003)', () => {
+  // The reka-ui Dialog modal lock can leak `pointer-events: none` onto the
+  // shared <body> when a slideover unmounts via route change without
+  // transitioning v-model:open to false. Layer 2 of the fix sanitizes any
+  // stale lock when Searcher mounts (Layer 1 prevents the leak at source).
+  // These assertions guard the cleanup code from accidental removal.
+
+  it('clears stale pointer-events on body when locked', () => {
+    expect(source).toMatch(/body\.style\.pointerEvents\s*=\s*['"]\s*['"]/)
+  })
+
+  it('removes stale data-scroll-locked attribute', () => {
+    expect(source).toMatch(/removeAttribute\(\s*['"]data-scroll-locked['"]/)
+  })
+
+  it('logs a warning for traceability when cleanup runs', () => {
+    expect(source).toMatch(/console\.warn\(.*Searcher.*body|console\.warn\(.*body.*Searcher/i)
+  })
+})

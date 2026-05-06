@@ -361,6 +361,19 @@ const handleSearcherPageShow = (event: PageTransitionEvent) => {
 // Initialize stores only on client side after mount
 onMounted(() => {
   if (import.meta.client) {
+    // Issue #25 defense-in-depth: a previous reka-ui Dialog (e.g. reservation
+    // slideover) may have left <body> inline-locked if its v-model:open did
+    // not transition to false before the parent unmounted via route change.
+    // Body is the shared SPA DOM node, so the lock leaks to this page until
+    // an explicit reset. Loggea para trazabilidad cuando la sanitización actúa.
+    if (document.body.style.pointerEvents === 'none') {
+      console.warn('[Searcher] stale body pointer-events lock cleaned on mount (issue #25)')
+      document.body.style.pointerEvents = ''
+    }
+    if (document.body.hasAttribute('data-scroll-locked')) {
+      document.body.removeAttribute('data-scroll-locked')
+    }
+
     window.addEventListener('pageshow', handleSearcherPageShow)
   }
 
