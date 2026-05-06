@@ -33,7 +33,7 @@ El spec de migración Phase 4 originalmente listó `faqs.config.ts` entre los co
 | Client-facing FAQ shape | `{ label: string; content: string }` | Consumers actuales (`<UAccordion :items>` + `useSchemaOrg`) no usan más que esos dos campos. Añadir `id` para keying = YAGNI; UAccordion keya por índice. |
 | Consumer routing | `useData()` expone `faqs`; `index.vue` × 3 cambian de `useAppConfig().faqs` a `useData().faqs` | Simétrico con cities (`useData().cities`). El campo `faqs` en `app.config.ts` se borra; mantenerlo apuntando a un import borrado no compila. |
 | Outage / degraded state | `EMPTY_SENTINEL` extiende con `faqs: []`; sección renderiza vacía si Supabase outage | Coherencia con cities. Outage es escenario raro. Schema.org `FAQPage` con `mainEntity: []` sigue siendo válido. La sección vacía dura lo que tarde un revalidate exitoso. |
-| Apply path del schema | Vía Supabase MCP `apply_migration` (no SQL local commiteado) | El repo no tiene `supabase/migrations/`. Cities tampoco dejó SQL en repo — convención establecida. |
+| Apply path del schema | Vía Supabase MCP `apply_migration` desde **este repo** (cambio de convención respecto a cities) | Cities aplicó schema en `rentacar-dashboard` porque ese repo gestiona la admin UI de cities. FAQs **no tendrá admin UI** (operador confirmó: ediciones manuales por SQL/editor Supabase). Mantener coordinación inter-repo para schema sin contraparte de admin añade fricción sin beneficio. Aplicar desde este repo da atomicidad PR + schema + seed. El SQL queda registrado en Supabase (vía MCP) y documentado en `scripts/faqs-README.md`; ningún archivo `.sql` se commitea al repo. |
 | Idempotencia del backfill | `ON CONFLICT (label) DO NOTHING` | `UNIQUE(label)` permite re-ejecutar el script sin duplicar. Re-correr es seguro. |
 
 ## Arquitectura objetivo
@@ -71,7 +71,7 @@ Lo que se borra del flujo:
 
 ### 1. Schema en Supabase
 
-Aplicar vía Supabase MCP `apply_migration` desde este repo. Documentar el SQL en `scripts/faqs-README.md` (paridad con `cities-README.md`).
+**Apply path**: vía Supabase MCP `apply_migration` desde este repo. Diverge de cities (que aplicó en `rentacar-dashboard`) — justificación en la tabla de decisiones. Documentar el SQL en `scripts/faqs-README.md` (paridad estructural con `cities-README.md`, no operativa).
 
 ```sql
 CREATE TABLE faqs (
@@ -144,14 +144,19 @@ const faqSchema = v.object({
 })
 
 export function transformFAQs(rows: SupabaseFAQ[]): FAQ[] {
-  return rows
-    .filter((row): row is FAQ => v.safeParse(faqSchema, row).success)
+  const result: FAQ[] = []
+  for (const row of rows) {
+    const parsed = v.safeParse(faqSchema, row)
+    if (parsed.success) result.push(parsed.output)
+  }
+  return result
 }
 ```
 
 **Decisiones del transformer**:
 
 - **Validación con Valibot**. Postgres garantiza `NOT NULL` pero no descarta filas con `label=''` o `content=''` si alguien las inserta manualmente. El transformer las filtra silenciosamente — fail-loud (throw) convertiría un dato corrupto en HTML 500 cacheado por ISR. Peor que perder una FAQ.
+- **Loop explícito con `parsed.output`** (no `.filter().map()` ni type predicate sobre `unknown`). `v.safeParse(...).output` da el valor validado y narrowed sin casts. Más explícito que el `.filter((r): r is FAQ => ...)` de cities (que usa narrowing por predicate sobre tipo conocido); aquí el input tiene `unknown` fields, así que narrowing-via-output es más seguro estáticamente.
 - **Orden preservado por la query**. El SQL ya hace `ORDER BY display_order`; el transformer no reordena. La fila `display_order` no viaja al cliente — es server-only metadata.
 - **Cero cambios en consumers**. La shape `{ label, content }` es idéntica a la del `FAQ` que `faqs.config.ts` exporta hoy. `<UAccordion :items>` y `useSchemaOrg` consumen sin edición de templates.
 
@@ -220,7 +225,7 @@ export const useData = () => {
 
 `franchise` sigue viviendo en `app.config.ts` (no es parte de esta migración). Solo `faqs` cambia de fuente.
 
-**`packages/ui-{brand}/app/app.config.ts`** × 3 — eliminar:
+**`packages/ui-{brand}/app/app.config.ts`** × 3 — eliminar import + field + comentario zombie:
 
 ```diff
   import {
@@ -231,10 +236,13 @@ export const useData = () => {
 
   export default defineAppConfig({
     franchise: franchiseConfig,
+-   // Shared FAQs (generic car rental information)
 -   faqs: faqsConfig,
     // ... otros campos no afectados
   });
 ```
+
+El comentario `// Shared FAQs (generic car rental information)` (línea 155 en cada `app.config.ts`) se borra junto con el field — verificado vía grep en los 3 archivos.
 
 **`packages/logic/src/config/index.ts`** — eliminar el re-export:
 
@@ -242,7 +250,7 @@ export const useData = () => {
 - export { faqsConfig, type FAQ } from './faqs.config';
 ```
 
-El tipo `FAQ` ahora se exporta desde `utils/types`; los consumers que lo importaban via `@rentacar-main/logic/config` cambian a `@rentacar-main/logic/utils` (verificar grep — probablemente cero porque hoy solo se importa el valor `faqsConfig`, no el tipo).
+**Verificado vía `git grep`**: cero consumers externos importan `type FAQ` del barrel de configs. Único match en el repo es esta misma línea de re-export, que se borra. El símbolo `FAQ` se relocaliza al directorio canónico de tipos (`utils/types/type/FAQ.ts`) y se re-exporta desde `utils/index.ts`. Los consumers que el día de mañana necesiten el tipo lo importan vía `@rentacar-main/logic/utils`.
 
 **`packages/logic/src/config/faqs.config.ts`** — borrar archivo entero.
 
@@ -286,8 +294,9 @@ NUXT_SUPABASE_SERVICE_ROLE_KEY=<service_role — NO commitear>
 3. `pnpm typecheck` pasa.
 4. `pnpm --filter @rentacar-main/logic test` — `transformFAQs` cubierto (happy path, malformed row dropped, empty input). `useData.test.ts` actualizado (mock de `useFetchRentacarData` ahora retorna `faqs`).
 5. `pnpm test:e2e` — un smoke por marca: `/`, sección `#faqs`, ≥1 item visible.
-6. **Outage build verification**: re-ejecutar `pnpm build` con `NUXT_SUPABASE_URL` apuntando a host inválido (e.g. `https://invalid.supabase.co`). El build no debe fallar; el HTML resultante debe contener `<section id="faqs">` vacío sin error en `useSchemaOrg`. Mirror del `cities-html-diff.sh`.
-7. **Smoke manual post-backfill**: abrir `dashboard.supabase.com → faqs`, verificar 10 filas con `status='active'`, todas con `display_order` único en `[0, 9]`.
+6. **Outage build verification**: re-ejecutar `pnpm build` con `NUXT_SUPABASE_URL` apuntando a host inválido (e.g. `https://invalid.supabase.co`). El build no debe fallar; el HTML resultante debe contener `<section id="faqs">` con `<UAccordion :items="[]">` y schema.org `FAQPage` con `mainEntity: []`, sin error en `useSchemaOrg`. Verificación manual one-shot pre-merge — no se commitea script automatizado en este PR. (Nota: `scripts/cities-html-diff.sh` cubre regresión estructural HTML de cities, no outage; los dos chequeos están separados por convención.)
+7. **HTML structural regression** (opcional): `scripts/faqs-html-diff.sh` mirror del cities equivalent — diff de bytes normalizados de `/` baseline (pre-migración) vs post-migración para las 3 marcas. Diff vacío esperado dado que la shape `{ label, content }` viaja idéntica al `<UAccordion>` y `useSchemaOrg`. Si decidimos saltarlo, riesgo residual = pequeño (mismo output esperado, validable visualmente en preview Vercel).
+8. **Smoke manual post-backfill**: abrir `dashboard.supabase.com → faqs`, verificar 10 filas con `status='active'`, todas con `display_order` único en `[0, 9]`.
 
 ## Riesgos y mitigaciones
 
