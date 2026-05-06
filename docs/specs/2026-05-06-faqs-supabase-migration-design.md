@@ -100,7 +100,7 @@ CREATE POLICY "faqs_select_anon" ON faqs
 - `status text` en lugar de `is_visible boolean`. Convención del repo (`cities`, `locations`, `vehicle_categories` usan el mismo patrón). Endpoint queda simétrico.
 - Sin `tags jsonb`. El issue lo marcó "opcional para categorización futura" — especulación sin consumer hoy. Cuando aparezca el caso, se añade.
 - Index parcial sobre `display_order WHERE status = 'active'`. La query siempre filtra por `status='active'` y ordena por `display_order`; el índice cubre exactamente ese plan. Tabla pequeña (10 filas) — el índice es nice-to-have, no crítico.
-- Sin policies de `INSERT/UPDATE/DELETE` para `anon`. El backfill usa `service_role` key (bypass RLS); ediciones futuras también.
+- Sin policies de `INSERT/UPDATE/DELETE` para `anon`. El backfill se ejecuta vía Supabase MCP `execute_sql` (que opera con permisos del service_role token configurado en el MCP server, transparente al operador); ediciones futuras vía editor Supabase o nueva sesión MCP.
 
 ### 2. Server: endpoint + transformer + tipos
 
@@ -256,28 +256,27 @@ El comentario `// Shared FAQs (generic car rental information)` (línea 155 en c
 
 ### 5. Backfill toolkit
 
-Toolkit one-shot en `scripts/`, prefijo `faqs-` (paridad con `cities-`):
+Toolkit one-shot en `scripts/`, prefijo `faqs-`. Diverge del patrón cities: cities tenía un script CLI con `service_role` key porque hacía UPDATE sobre 19 filas existentes; FAQs hace INSERT one-shot a tabla nueva — el Supabase MCP cubre todas las operaciones DB sin requerir CLI ni env var de service_role.
 
 | Archivo | Rol |
 |---|---|
-| `scripts/faqs-snapshot.ts` | Lee `packages/logic/src/config/faqs.config.ts` → escribe `scripts/faqs-data.json` con `[{label, content, display_order}]`. Step 1 del plan. Deja de compilar tras Step 8 (delete del config) — diseño one-shot. |
-| `scripts/faqs-data.json` | Snapshot — 10 entries con `label`, `content`, `display_order` (índice del array). Sobrevive al delete. Commiteado al repo. |
-| `scripts/faqs-backfill.ts` | Lee `faqs-data.json` y aplica INSERTs a `faqs` en Supabase con `service_role` key. `--dry-run` flag imprime los INSERTs sin tocar DB. `ON CONFLICT (label) DO NOTHING` para idempotencia. |
-| `scripts/faqs-README.md` | Documenta el SQL del schema + uso del toolkit. |
+| `scripts/faqs-snapshot.ts` | Lee `packages/logic/src/config/faqs.config.ts` → escribe `scripts/faqs-data.json` con `[{label, content, display_order}]`. Step 1 del plan. Deja de compilar tras Step 9 (delete del config) — diseño one-shot. |
+| `scripts/faqs-data.json` | Snapshot — 10 entries con `label`, `content`, `display_order` (índice del array). Sobrevive al delete. Commiteado al repo como referencia histórica. |
+| `scripts/faqs-README.md` | Documenta el SQL completo (DDL + RLS + 10 INSERTs generados desde el snapshot) + secuencia de comandos MCP del Step 7. Sirve de escape hatch para futuro re-seed sin Claude (operador copia-pega los INSERTs al editor Supabase). |
+
+**Operación del backfill via MCP** (Step 7 del plan):
+
+- Apply migration: `mcp__plugin_supabase_supabase__apply_migration({ name: "create_faqs_table", query: <DDL> })`.
+- Seed: `mcp__plugin_supabase_supabase__execute_sql({ query: <10 INSERTs con ON CONFLICT (label) DO NOTHING> })`.
+- Verificar: `mcp__plugin_supabase_supabase__execute_sql({ query: "SELECT count(*), count(DISTINCT label) FROM faqs" })` → ambos = 10.
 
 **Comportamiento del backfill**:
 
 - **Tabla vacía (primer run)**: inserta las 10 filas.
-- **Re-ejecución**: `ON CONFLICT (label) DO NOTHING` — cero duplicados, cero error.
-- **Edición manual posterior** (operador edita `content` de una FAQ vía editor Supabase, luego alguien re-ejecuta el backfill por error): la edición manual se preserva — `ON CONFLICT DO NOTHING` no sobreescribe. Diferencia importante con cities (que usaba UPDATE forzado).
+- **Re-ejecución del seed**: `ON CONFLICT (label) DO NOTHING` — cero duplicados, cero error.
+- **Edición manual posterior** (operador edita `content` de una FAQ vía editor Supabase, luego alguien re-ejecuta el seed por error): la edición manual se preserva — `ON CONFLICT DO NOTHING` no sobreescribe. Diferencia importante con cities (que usaba UPDATE forzado).
 
-**Service role key**:
-
-```bash
-# .env.local en raíz del repo
-NUXT_SUPABASE_URL=https://<project-ref>.supabase.co
-NUXT_SUPABASE_SERVICE_ROLE_KEY=<service_role — NO commitear>
-```
+**Sin secret-handling en el repo**: cero env vars adicionales requeridos para esta migración. El service_role token vive solo en la configuración del MCP server, no en `.env.local`.
 
 ### 6. Migration spec update
 

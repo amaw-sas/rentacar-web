@@ -68,8 +68,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 |---|---|
 | `scripts/faqs-snapshot.ts` | **NUEVO**: lee `faqsConfig`, escribe `faqs-data.json` (one-shot, antes de borrar el config) |
 | `scripts/faqs-data.json` | **NUEVO**: snapshot del contenido (10 entries con label, content, display_order) |
-| `scripts/faqs-backfill.ts` | **NUEVO**: lee `data.json`, hace INSERT con `ON CONFLICT (label) DO NOTHING` via service role |
-| `scripts/faqs-README.md` | **NUEVO**: SQL del schema + RLS + instrucciones de ejecución (dry-run, real, verificación) |
+| `scripts/faqs-README.md` | **NUEVO**: SQL completo (DDL + RLS + 10 INSERTs generados) + secuencia de comandos MCP del Step 7. Escape hatch para re-seed sin Claude. |
 
 ### Tests E2E
 
@@ -83,7 +82,7 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 |---|---|
 | (sin script — verificación manual documentada en `scripts/faqs-README.md`) | SCEN-003 (outage build), SCEN-005/006 (idempotencia + edición preservada) — checklists humanos pre-merge. |
 
-**Total**: 17 archivos tocados (8 nuevos, 8 modificados, 1 borrado).
+**Total**: 16 archivos tocados (7 nuevos, 8 modificados, 1 borrado).
 
 ---
 
@@ -91,10 +90,9 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 - Node ≥20, pnpm ≥9 (workspaces) — ya en repo.
 - `valibot` 1.1.0 — ya dep del proyecto.
-- Supabase MCP server configurado en el plugin (verificable via `mcp__plugin_supabase_supabase__*` tools disponibles en sesión).
-- Variables de entorno en `.env.local`: `NUXT_SUPABASE_URL`, `NUXT_SUPABASE_ANON_KEY`. Para el backfill: `NUXT_SUPABASE_SERVICE_ROLE_KEY` (no commiteado, mismo key usado para cities).
+- Supabase MCP server configurado en el plugin (verificable via `mcp__plugin_supabase_supabase__*` tools disponibles en sesión). El service_role token vive en la config del MCP server, no en el repo.
+- Variables de entorno en `.env.local`: `NUXT_SUPABASE_URL`, `NUXT_SUPABASE_ANON_KEY` (ya configuradas, usadas por el endpoint en runtime). Sin requirement de `SERVICE_ROLE_KEY` en `.env.local` — el MCP cubre las operaciones de write.
 - Rama `feat/faqs-supabase-migration` ya creada en worktree `.claude/worktrees/faqs-supabase-migration`.
-- Acceso write a Supabase via service role para Step 7 (apply migration + INSERT).
 
 ---
 
@@ -275,28 +273,28 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
 
 ---
 
-### Step 6: Backfill scripts (backfill, README)
+### Step 6: Backfill README (sin script CLI — MCP cubre las DB ops)
 
-**Objetivo**: completar el toolkit — `data.json` ya existe (Step 1), faltan `backfill.ts` y `README.md`.
+**Objetivo**: documentar el SQL completo (DDL + RLS + 10 INSERTs) y la secuencia de comandos MCP del Step 7. Diverge de cities (que tenía un `backfill.ts` con `service_role` key) — para FAQs, MCP `execute_sql` cubre las INSERTs sin requerir CLI.
 
 **Archivos**:
-- `scripts/faqs-backfill.ts` (NUEVO)
 - `scripts/faqs-README.md` (NUEVO)
 
 **Tareas**:
-- [ ] Crear `backfill.ts` con esqueleto del spec sección 5: lee `faqs-data.json`, instancia client Supabase con `service_role` key (mirror de `cities-backfill.ts`), itera y hace INSERT por fila con `ON CONFLICT (label) DO NOTHING`. Soporta `--dry-run` flag (imprime SQL en lugar de ejecutar).
-- [ ] Crear `README.md` con:
-  - Prerequisitos: `NUXT_SUPABASE_SERVICE_ROLE_KEY` env var.
-  - SQL completo del schema + RLS (literal del spec sección 1).
-  - Comandos: dry-run, real, verificación SQL post-run.
-  - Sección "Lifecycle" — toolkit one-shot, snapshot.ts deja de compilar tras Step 9.
-  - Comportamiento ante re-corrida: documenta SCEN-005 (idempotente) y SCEN-006 (ediciones manuales preservadas).
+- [ ] Generar las 10 sentencias INSERT desde `scripts/faqs-data.json` (puede ser un one-liner: `node -e "const d=require('./faqs-data.json'); console.log(d.map(f => \`INSERT INTO faqs (label, content, display_order) VALUES (\${JSON.stringify(f.label)}, \${JSON.stringify(f.content)}, \${f.display_order}) ON CONFLICT (label) DO NOTHING;\`).join('\\n'))"`). Pegar el output en el README.
+- [ ] Crear `README.md` con secciones:
+  - **Schema SQL** completo del spec sección 1 (CREATE TABLE + INDEX + RLS POLICY) — copiable a editor Supabase.
+  - **Seed SQL**: las 10 sentencias INSERT generadas — copiable a editor Supabase para re-seed manual.
+  - **MCP commands del Step 7** (apply_migration, execute_sql para seed, execute_sql para verificación, secuencia de preview branch para SCEN-005/006).
+  - **Lifecycle**: toolkit one-shot — `snapshot.ts` deja de compilar tras Step 9; `data.json` queda como snapshot histórico; este README es el escape hatch para re-seed sin Claude.
+  - **Comportamiento ante re-corrida**: documenta SCEN-005 (idempotente vía `ON CONFLICT`) y SCEN-006 (ediciones manuales preservadas).
 
 **Acceptance criteria**:
-- `npx tsx scripts/faqs-backfill.ts --dry-run` ejecuta sin error y imprime 10 statements INSERT.
-- README incluye SQL completo + 3 comandos clave (dry-run, real, verificación).
+- README contiene los 3 bloques SQL ejecutables sin edición (DDL, INSERTs, queries de verificación).
+- Las 10 INSERTs en el README, parseadas con `psql --dry-run` o equivalente, son sintácticamente válidas.
+- Operador puede leer README + Supabase editor + ejecutar reseed sin asistencia de Claude.
 
-**Commit**: `chore(faqs): backfill script + README (#12)`
+**Commit**: `chore(faqs): README documenting schema SQL + seed (#12)`
 
 ---
 
@@ -311,30 +309,35 @@ Mapeo concreto de archivos a tocar, agrupado por responsabilidad. Cada bloque co
   ```
   mcp__plugin_supabase_supabase__apply_migration({
     name: "create_faqs_table",
-    query: <SQL del spec sección 1, completo: CREATE TABLE + index + ALTER + CREATE POLICY>
+    query: <SQL del spec sección 1, completo: CREATE TABLE + INDEX + ALTER + CREATE POLICY>
   })
   ```
 - [ ] Verificar tabla via MCP: `mcp__plugin_supabase_supabase__list_tables` → `faqs` debe aparecer con las columnas correctas.
-- [ ] Verificar RLS via MCP: `mcp__plugin_supabase_supabase__execute_sql({ query: "SELECT count(*) FROM faqs" })` con `apikey: anon` → debe devolver `0` (tabla vacía pre-backfill, RLS permite SELECT).
-- [ ] Ejecutar backfill: `npx tsx scripts/faqs-backfill.ts --dry-run` → revisar output.
-- [ ] Si dry-run OK: `npx tsx scripts/faqs-backfill.ts` (real).
-- [ ] **SCEN-005 verification**: ejecutar el backfill **una segunda vez consecutiva**. Confirmar exit 0 + reporta 10 conflictos. Query: `SELECT count(*), count(DISTINCT label) FROM faqs` → ambos 10.
+- [ ] Verificar RLS pre-seed: `mcp__plugin_supabase_supabase__execute_sql({ query: "SELECT count(*) FROM faqs" })` → debe devolver `0` (tabla vacía).
+- [ ] Generar las 10 INSERTs desde `scripts/faqs-data.json` (mismo one-liner del Step 6) y ejecutar:
+  ```
+  mcp__plugin_supabase_supabase__execute_sql({
+    query: "INSERT INTO faqs (label, content, display_order) VALUES ... ON CONFLICT (label) DO NOTHING;"
+  })
+  ```
+  Una sola llamada con las 10 sentencias concatenadas (o 10 llamadas si el límite del MCP lo requiere).
+- [ ] Verificar post-seed: `execute_sql({ query: "SELECT count(*), count(DISTINCT label) FROM faqs" })` → ambos = 10.
+- [ ] **SCEN-005 verification (idempotencia)**: re-ejecutar el bloque INSERT exacto via MCP. Verificar que `count(*)` sigue siendo 10 (cero duplicados gracias a `ON CONFLICT (label) DO NOTHING`).
 - [ ] **SCEN-006 verification** (en preview branch para no tocar producción):
-  - Crear branch via MCP: `mcp__plugin_supabase_supabase__create_branch({ name: "faqs-scen-006-test" })`. Aplicar la misma migration `create_faqs_table` en el branch (re-correr `apply_migration` apuntando al branch).
-  - Re-correr el backfill contra el branch (settear `NUXT_SUPABASE_URL` al branch URL temporalmente).
-  - Editar manualmente vía editor Supabase del **branch** el `content` de la fila con `label='¿Cómo puedo hacer una reserva?'` a `EDITADO_MANUALMENTE_2026_05_06`.
-  - Re-correr `npx tsx scripts/faqs-backfill.ts` apuntando al branch.
-  - Query: `SELECT content FROM faqs WHERE label='¿Cómo puedo hacer una reserva?'` → debe seguir siendo `EDITADO_MANUALMENTE_2026_05_06`.
-  - Borrar branch: `mcp__plugin_supabase_supabase__delete_branch`. Producción intacta. **Restaurar `NUXT_SUPABASE_URL` al main**.
+  - Crear branch via MCP: `mcp__plugin_supabase_supabase__create_branch({ name: "faqs-scen-006-test" })`. El branch hereda el schema y data del main.
+  - Editar via MCP en el branch: `execute_sql({ query: "UPDATE faqs SET content = 'EDITADO_MANUALMENTE_2026_05_06' WHERE label = '¿Cómo puedo hacer una reserva?'" })` (con el contexto del branch).
+  - Re-ejecutar el bloque INSERT via MCP en el branch.
+  - Query: `execute_sql({ query: "SELECT content FROM faqs WHERE label='¿Cómo puedo hacer una reserva?'" })` → debe seguir siendo `EDITADO_MANUALMENTE_2026_05_06`.
+  - Borrar branch: `mcp__plugin_supabase_supabase__delete_branch`. Producción intacta — no hubo edición sobre main, no hace falta restore manual.
 
 **Acceptance criteria**:
 - Tabla `faqs` existe en Supabase con shape correcto (verificable via `list_tables`).
 - 10 filas insertadas, todas con `status='active'`, `display_order` único en [0,9], `label` único.
-- SCEN-005 verificado: re-corrida produce 0 duplicados.
-- SCEN-006 verificado: edición manual sobrevive a re-corrida.
-- **Reiniciar dev server** después del backfill (cache de `defineCachedEventHandler` puede tener payload pre-backfill); luego: `curl http://localhost:3000/api/rentacar-data | jq '.faqs | length'` → `10`.
+- SCEN-005 verificado: re-corrida del INSERT produce 0 duplicados.
+- SCEN-006 verificado en preview branch: edición manual sobrevive a re-corrida; branch borrado al terminar.
+- **Reiniciar dev server** después del seed (cache de `defineCachedEventHandler` puede tener payload pre-seed); luego: `curl http://localhost:3000/api/rentacar-data | jq '.faqs | length'` → `10`.
 
-**Sin commit** — este step es operacional; el SQL queda registrado en Supabase via MCP.
+**Sin commit** — este step es operacional; el SQL queda registrado en Supabase via MCP. La sesión de Claude que ejecuta este step deja la migración aplicada de forma persistente.
 
 ---
 
@@ -539,4 +542,4 @@ Nunca al revés. Si dropeás la tabla primero, el endpoint en producción devuel
 **Total**: 12 steps (11 commits + 1 step operacional sin commit).
 **Complejidad agregada**: Baja-Media. Comparable a cities (11 steps cities, 12 acá: el extra es Step 12 doc-debt — cierre del spec parent).
 **Tiempo estimado**: 4-7 horas de trabajo neto, una sesión.
-**Riesgo principal**: Step 7 (apply migration via MCP + backfill) requiere `NUXT_SUPABASE_SERVICE_ROLE_KEY` accesible. Sin eso, Steps 8-12 fallan.
+**Riesgo principal**: Step 7 (apply migration via MCP + seed) requiere que el Supabase MCP server esté configurado correctamente y conectado al proyecto. Sin acceso MCP, Steps 8-12 fallan. El service_role token vive en la config del MCP, no en el repo — beneficio: cero secret-handling en el code path de la migración.
