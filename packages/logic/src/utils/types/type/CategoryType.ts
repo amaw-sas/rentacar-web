@@ -17,5 +17,6 @@ export type CategoryType =
   | "V"
   | "LE"
   | "LP"
+  | "LU"
   | "VP"
   | "GX";

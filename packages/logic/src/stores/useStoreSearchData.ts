@@ -39,10 +39,11 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   const selectedCategory = ref<ReturnType<typeof useCategory> | null >(null);
   const noAvailableCategories = ref<boolean>(false);
 
-  const noMonthlyCategories: string[] = [
+  const noMonthlyCategories: CategoryType[] = [
     'FU',
     'FL',
-    'GL'
+    'GL',
+    'LU'
   ];
 
   const search = async () => {
@@ -78,8 +79,8 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
       else {
         const dataArray = Array.isArray(data.value) ? data.value : [];
         categoriesAvailabilityData.value = categoriesAdminData.value?.filter((categoryAdmin: CategoryData) =>
-          !(categoryAdmin.identification in noMonthlyCategories)
-        ) // filter out categories FU, FL and GL when have monthly reservation
+          !noMonthlyCategories.includes(categoryAdmin.identification)
+        ) // filter out monthly-excluded categories (FU, FL, GL, LU)
         .map((categoryAdmin: CategoryData) =>
           // create a category availability object for each category
           createCategoryAvailability(categoryAdmin)
