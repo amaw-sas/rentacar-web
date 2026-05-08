@@ -153,18 +153,15 @@
 }
 
 .categoria-no-disponible {
-    @apply bg-white! text-gray-600! text-center! rounded-lg;
+    @apply bg-white! rounded-lg overflow-hidden;
 
+    .carrusel img,
     img {
-       @apply opacity-40;
+       @apply opacity-50 grayscale;
     }
 
-    p, .etiqueta, .contenedor-descripcion-carro {
-      @apply opacity-70;
-    }
-
-    .etiqueta-carro {
-      @apply bg-gray-200 text-gray-600;
+    .contenedor-descripcion-carro {
+      @apply opacity-90;
     }
 }
 
