@@ -32,7 +32,7 @@ const CITY_DISPLAY_MAP: Record<string, string> = {
   villavicencio: 'Villavicencio',
   cucuta: 'Cúcuta',
   monteria: 'Montería',
-  santamarta: 'Santa Marta',
+  'santa-marta': 'Santa Marta',
   popayan: 'Popayán',
   pasto: 'Pasto',
   valledupar: 'Valledupar',

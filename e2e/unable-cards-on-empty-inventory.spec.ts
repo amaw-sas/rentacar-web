@@ -69,14 +69,16 @@ test.describe('Unable cards on empty inventory', () => {
 
     await expect(page.getByText('¡Oops!')).toBeVisible({ timeout: 30_000 });
 
-    // The unable card has class `categoria-no-disponible` and contains the
-    // red badge "no disponible". One badge per card.
+    // The unable card has class `categoria-no-disponible` and contains a
+    // top red banner with the title "No disponible" (post-2026-05-08 redesign).
+    // One banner per card.
     const unableCards = page.locator('.categoria-no-disponible');
     await expect(unableCards.first()).toBeVisible({ timeout: 30_000 });
     expect(await unableCards.count()).toBeGreaterThan(0);
 
-    const noDisponibleBadge = page.getByText('no disponible', { exact: true });
-    expect(await noDisponibleBadge.count()).toBe(await unableCards.count());
+    const banners = page.locator('.categoria-no-disponible .bg-red-50.border-l-4.border-red-500');
+    expect(await banners.count()).toBe(await unableCards.count());
+    await expect(banners.first()).toContainText('No disponible');
 
     // Available cards (CategoryCard, not Placeholder) MUST NOT render.
     await expect(page.locator('button:has-text("Solicitar reserva")')).toHaveCount(0);
