@@ -70,6 +70,11 @@ interface UnavailabilityContext {
   bannerText: ComputedRef<string>;
   dateRangeLabel: ComputedRef<string>;
   locationLabel: ComputedRef<string>;
+  // True when both date range and location are populated, i.e. the banner
+  // shows the specific reason rather than the generic fallback. Templates
+  // gate the second banner line on this flag so the literal "No disponible
+  // para tu búsqueda" never has to be duplicated outside this composable.
+  isSpecific: ComputedRef<boolean>;
 }
 
 export default function useUnavailabilityContext(): UnavailabilityContext {
@@ -98,16 +103,21 @@ export default function useUnavailabilityContext(): UnavailabilityContext {
   const locationLabel = computed<string>(() => {
     const branch = selectedPickupLocation.value;
     if (!branch) return '';
-    const city = formatCity(branch.city ?? '');
+    // BranchData.city is `string` (required, non-null per type). Trust the
+    // type — if admin payload ever drops it, the type contract should be
+    // fixed at the source, not patched defensively here.
+    const city = formatCity(branch.city);
     if (!city) return branch.name;
     return `${city} · ${branch.name}`;
   });
 
+  const isSpecific = computed<boolean>(() =>
+    Boolean(dateRangeLabel.value && locationLabel.value),
+  );
+
   const bannerText = computed<string>(() => {
-    const range = dateRangeLabel.value;
-    const location = locationLabel.value;
-    if (range && location) {
-      return `No disponible para el ${range} en ${location}`;
+    if (isSpecific.value) {
+      return `No disponible para el ${dateRangeLabel.value} en ${locationLabel.value}`;
     }
     return 'No disponible para tu búsqueda';
   });
@@ -116,5 +126,6 @@ export default function useUnavailabilityContext(): UnavailabilityContext {
     bannerText,
     dateRangeLabel,
     locationLabel,
+    isSpecific,
   };
 }

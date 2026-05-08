@@ -31,6 +31,9 @@
     "@nuxt/devtools": "^1.0.0",
     "@tailwindcss/vite": "^4.1.15",
     "@vercel/blob": "^2.3.3",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "@vue/test-utils": "^2.4.10",
+    "jsdom": "^29.1.1",
     "nuxt": "^4.1.3",
     "postcss-nested": "^7.0.2",
     "typescript": "^5.9.3"

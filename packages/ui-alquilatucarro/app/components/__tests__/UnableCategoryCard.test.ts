@@ -22,6 +22,15 @@ describe('UnableCategoryCard — redesigned unavailable state', () => {
     expect(source).toMatch(/bannerText/)
   })
 
+  it('SCEN-U1[a]: second banner line is gated by isSpecific (no duplicated literal)', () => {
+    // The literal 'No disponible para tu búsqueda' lives inside the composable;
+    // the template MUST gate the second line on the exposed `isSpecific` flag,
+    // never compare against the fallback string directly. This guards against
+    // copy-drift if the composable's fallback ever changes.
+    expect(source).toMatch(/v-if=['"]isSpecific['"]/)
+    expect(source).not.toMatch(/'No disponible para tu búsqueda'/)
+  })
+
   it('SCEN-U1[c]: legacy bg-red-100 pill is gone', () => {
     expect(source).not.toMatch(/bg-red-100/)
   })

@@ -6,7 +6,7 @@
       <div>
         <div class="text-sm font-semibold text-red-800">No disponible</div>
         <div
-          v-if="bannerText !== 'No disponible para tu búsqueda'"
+          v-if="isSpecific"
           class="text-xs text-red-700 mt-0.5"
         >
           {{ bannerText }}
@@ -80,7 +80,7 @@ const props = withDefaults(defineProps<CategoryProps>(), {});
 const { categoryCode, categoryModels } = props.category;
 
 /** composables (auto-imported via Nuxt layer @rentacar-main/logic) */
-const { bannerText } = useUnavailabilityContext();
+const { bannerText, isSpecific } = useUnavailabilityContext();
 
 /** functions */
 function scrollToSearcher() {

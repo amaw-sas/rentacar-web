@@ -152,6 +152,9 @@
     }
 }
 
+/* Tags removed from unable card design (commit 40bbf4f, 2026-05-08 redesign);
+   the legacy `.etiqueta-carro` override that dimmed pills inside this block
+   is no longer needed because the card no longer renders pills/tags. */
 .categoria-no-disponible {
     @apply bg-white! rounded-lg overflow-hidden;
 
