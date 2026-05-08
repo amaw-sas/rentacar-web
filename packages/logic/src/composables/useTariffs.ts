@@ -73,10 +73,15 @@ export function buildTariffs(categories: CategoryData[], todayDate?: string): Ta
     const pricing = findActivePricingForDay(cat.month_prices, today)
     if (!pricing) continue
 
-    if (!firstActivePricing) firstActivePricing = pricing
-
     const monthly1k = pricing['1k_kms']
     const monthly2k = pricing['2k_kms']
+
+    // Skip categories whose monthly pricing was cleared (no longer eligible
+    // for monthly rentals). Both plans must be zero — partial-zero is kept
+    // since the UI toggle still surfaces the available plan.
+    if (monthly1k <= 0 && monthly2k <= 0) continue
+
+    if (!firstActivePricing) firstActivePricing = pricing
     const code = String(cat.id)
 
     gamas.push({

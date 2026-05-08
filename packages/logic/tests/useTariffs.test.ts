@@ -73,23 +73,23 @@ describe('buildTariffs', () => {
 
   it('reads kmExtra from category.extra_km_charge (E_C1)', () => {
     const cats = [
-      makeCategory('C', { extraKm: 700, prices: [{}] }),
-      makeCategory('GC', { extraKm: 900, prices: [{}] }),
-      makeCategory('GY', { extraKm: 1100, prices: [{}] }),
+      makeCategory('C', { extraKm: 700, prices: [{ '1k_kms': 1 }] }),
+      makeCategory('GC', { extraKm: 900, prices: [{ '1k_kms': 1 }] }),
+      makeCategory('GY', { extraKm: 1100, prices: [{ '1k_kms': 1 }] }),
     ]
     const byCode = Object.fromEntries(buildTariffs(cats, TODAY).gamas.map((g) => [g.code, g.kmExtra]))
     expect(byCode).toEqual({ C: 700, GC: 900, GY: 1100 })
   })
 
   it('returns kmExtra=null when extra_km_charge is 0 (unconfigured) (E_C3)', () => {
-    const cats = [makeCategory('XX', { extraKm: 0, prices: [{}] })]
+    const cats = [makeCategory('XX', { extraKm: 0, prices: [{ '1k_kms': 1 }] })]
     const result = buildTariffs(cats, TODAY)
     expect(result.gamas[0].kmExtra).toBeNull()
   })
 
   it('reflects DB changes without code change (E_C1 dynamic)', () => {
-    const before = buildTariffs([makeCategory('C', { extraKm: 700, prices: [{}] })], TODAY)
-    const after = buildTariffs([makeCategory('C', { extraKm: 850, prices: [{}] })], TODAY)
+    const before = buildTariffs([makeCategory('C', { extraKm: 700, prices: [{ '1k_kms': 1 }] })], TODAY)
+    const after = buildTariffs([makeCategory('C', { extraKm: 850, prices: [{ '1k_kms': 1 }] })], TODAY)
     expect(before.gamas[0].kmExtra).toBe(700)
     expect(after.gamas[0].kmExtra).toBe(850)
   })
@@ -138,6 +138,32 @@ describe('buildTariffs', () => {
       }),
     ]
     const result = buildTariffs(cats, TODAY)
+    expect(result.gamas.map((g) => g.code)).toEqual(['C'])
+  })
+
+  it('skips categories whose active pricing has both plans at zero (FL/FU/GL/LU case)', () => {
+    const cats = [
+      makeCategory('C',  { prices: [{ '1k_kms': 3806000, '2k_kms': 4252000 }] }),
+      makeCategory('FL', { prices: [{ '1k_kms': 0,       '2k_kms': 0       }] }),
+      makeCategory('FU', { prices: [{ '1k_kms': 0,       '2k_kms': 0       }] }),
+    ]
+    const result = buildTariffs(cats, TODAY)
+    expect(result.gamas.map((g) => g.code)).toEqual(['C'])
+  })
+
+  it('keeps categories with only one plan priced (partial-zero)', () => {
+    const cats = [makeCategory('X', { prices: [{ '1k_kms': 3000000, '2k_kms': 0 }] })]
+    const result = buildTariffs(cats, TODAY)
+    expect(result.gamas.map((g) => g.code)).toEqual(['X'])
+  })
+
+  it('derives period from the first non-skipped gama, not from a zero-priced one', () => {
+    const cats = [
+      makeCategory('FL', { prices: [{ init_date: '2026-04-01', end_date: '2026-12-31', '1k_kms': 0, '2k_kms': 0 }] }),
+      makeCategory('C',  { prices: [{ init_date: '2026-05-01', end_date: '2026-05-31', '1k_kms': 3806000, '2k_kms': 4252000 }] }),
+    ]
+    const result = buildTariffs(cats, TODAY)
+    expect(result.period?.label).toBe('1 May – 31 May 2026')
     expect(result.gamas.map((g) => g.code)).toEqual(['C'])
   })
 
