@@ -1,5 +1,20 @@
 <template>
   <div class="categoria categoria-no-disponible">
+    <!-- Banner top: razon concreta de no disponibilidad -->
+    <div class="bg-red-50 border-l-4 border-red-500 px-4 py-3 flex items-start gap-2">
+      <UIcon name="i-lucide-alert-triangle" class="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+      <div>
+        <div class="text-sm font-semibold text-red-800">No disponible</div>
+        <div
+          v-if="isSpecific"
+          class="text-xs text-red-700 mt-0.5"
+        >
+          {{ bannerText }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Carrusel del modelo (dimmed via CSS .categoria-no-disponible img) -->
     <div class="carrusel">
       <Carrusel
         :models="categoryModels"
@@ -8,76 +23,68 @@
       />
     </div>
 
-    <UCollapsible class="contenedor-descripcion-carro" default-open>
-      <UButton 
-        class="boton-contenedor-descripcion-carro group"
-        size="xl"
-        :ui="{
-          trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-        }"
-      >
-        <template #trailing>
-          <ChevronDownIcon cls="size-5" />
-        </template>
-        <template #leading>
-          <span class="text-left text-gray-700">
-            <span class="categoria-carro">
-                Grupo {{ categoryCode }}
-                <span class="inline-block px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded-full">no disponible</span>
-            </span>
-            <span class="descripcion-corta">
-                {{ vehicleCategory?.descripcion_corta }}
-            </span>
-          </span>
-        </template>
+    <!-- Bloque inferior: titulo + CTAs -->
+    <div class="contenedor-descripcion-carro px-5 py-4">
+      <div class="text-gray-600 text-sm">Grupo {{ categoryCode }}</div>
+      <h3 class="text-2xl font-semibold mt-1 text-gray-800">
+        {{ vehicleCategory?.descripcion_corta }}
+      </h3>
 
-          <!-- <Icon :id="iconID" name="rentacar-reservas-icons:fle" alt="flecha" class="flecha" /> -->
-      </UButton>
-      <template #content>
-        <div class=" text-gray-700">
-          <div class="px-4 py-0 text-sm">
-              <p class="descripcion-larga" v-text="vehicleCategory?.descripcion_larga"></p>
-              <div id="etiquetas" class="contenedor-etiquetas">
-                  <span
-                    v-for="tag in vehicleCategory?.tags"
-                    :key="`tag-${tag}`"
-                    v-text="tag"
-                    class="etiqueta-carro"
-                  ></span>
+      <div class="space-y-2 mt-4">
+        <UButton
+          color="neutral"
+          size="lg"
+          block
+          class="bg-gray-900 hover:bg-black text-white"
+          @click="scrollToSearcher"
+        >
+          <template #trailing>
+            <ChevronRightIcon cls="size-5" />
+          </template>
+          Probar otras fechas
+        </UButton>
 
-              </div>
-          </div>
-        </div>   
-      </template>
-    </UCollapsible>
-
+        <UButton
+          color="neutral"
+          variant="outline"
+          size="lg"
+          block
+          class="text-gray-800 ring-1 ring-gray-300 hover:bg-gray-50"
+          @click="scrollToSearcher"
+        >
+          <template #trailing>
+            <ChevronRightIcon cls="size-5" />
+          </template>
+          Cambiar sucursal
+        </UButton>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CategoryProps } from '@rentacar-main/logic/utils';
+/** External */
+import { defineAsyncComponent } from 'vue';
 
-/** types */
+/** Internal components */
+import ChevronRightIcon from '~/components/Icons/ChevronRightIcon.vue';
+const Carrusel = defineAsyncComponent(() => import('../Carrusel.vue'));
+
+/** Types */
+import type { CategoryProps } from '@rentacar-main/logic/utils';
 
 /** props */
 const props = withDefaults(defineProps<CategoryProps>(), {});
 
 /** refs */
-const {
-  categoryCode,
-  categoryModels,
-  categoryDescription
-} = props.category;
+const { categoryCode, categoryModels } = props.category;
 
-const categoryID: string = `category-${categoryCode}`;
-const contentID: string = `content-${categoryID}`;
-const aditionalID: string = `aditional-${categoryID}`;
-const iconID: string = `icon-${categoryID}`;
+/** composables (auto-imported via Nuxt layer @rentacar-main/logic) */
+const { bannerText, isSpecific } = useUnavailabilityContext();
 
-import { defineAsyncComponent } from 'vue'
-const Carrusel = defineAsyncComponent(() => import('../Carrusel.vue'))
-import ChevronDownIcon from '~/components/Icons/ChevronDownIcon.vue'
-
-
-
+/** functions */
+function scrollToSearcher() {
+  if (typeof document === 'undefined') return;
+  document.getElementById('searcher')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 </script>

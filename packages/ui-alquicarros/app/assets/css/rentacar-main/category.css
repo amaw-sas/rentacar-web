@@ -152,19 +152,19 @@
     }
 }
 
+/* Tags removed from unable card design (commit 40bbf4f, 2026-05-08 redesign);
+   the legacy `.etiqueta-carro` override that dimmed pills inside this block
+   is no longer needed because the card no longer renders pills/tags. */
 .categoria-no-disponible {
-    @apply bg-white! text-gray-600! text-center! rounded-lg;
+    @apply bg-white! rounded-lg overflow-hidden;
 
+    .carrusel img,
     img {
-       @apply opacity-40;
+       @apply opacity-50 grayscale;
     }
 
-    p, .etiqueta, .contenedor-descripcion-carro {
-      @apply opacity-70;
-    }
-
-    .etiqueta-carro {
-      @apply bg-gray-200 text-gray-600;
+    .contenedor-descripcion-carro {
+      @apply opacity-90;
     }
 }
 

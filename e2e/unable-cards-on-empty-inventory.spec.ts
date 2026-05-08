@@ -7,7 +7,7 @@ import { test, expect, type Route } from '@playwright/test';
  * Coverage:
  *   SCEN-U1: non-monthly LLNRAG009 → "¡Oops!" + unable cards grid
  *   SCEN-U2: monthly LLNRAG009 (issue #10 URL) → same
- *   SCEN-U3: card interactivity — carousel + accordion only; no price; no CTA
+ *   SCEN-U3: card visual + actionable CTAs (post-2026-05-08 redesign)
  *   SCEN-U4: non-monthly with partial Localiza coverage → mix
  *
  * Admin data (/api/rentacar-data) is real Supabase — we don't stub the admin
@@ -69,14 +69,16 @@ test.describe('Unable cards on empty inventory', () => {
 
     await expect(page.getByText('¡Oops!')).toBeVisible({ timeout: 30_000 });
 
-    // The unable card has class `categoria-no-disponible` and contains the
-    // red badge "no disponible". One badge per card.
+    // The unable card has class `categoria-no-disponible` and contains a
+    // top red banner with the title "No disponible" (post-2026-05-08 redesign).
+    // One banner per card.
     const unableCards = page.locator('.categoria-no-disponible');
     await expect(unableCards.first()).toBeVisible({ timeout: 30_000 });
     expect(await unableCards.count()).toBeGreaterThan(0);
 
-    const noDisponibleBadge = page.getByText('no disponible', { exact: true });
-    expect(await noDisponibleBadge.count()).toBe(await unableCards.count());
+    const banners = page.locator('.categoria-no-disponible .bg-red-50.border-l-4.border-red-500');
+    expect(await banners.count()).toBe(await unableCards.count());
+    await expect(banners.first()).toContainText('No disponible');
 
     // Available cards (CategoryCard, not Placeholder) MUST NOT render.
     await expect(page.locator('button:has-text("Solicitar reserva")')).toHaveCount(0);
@@ -101,7 +103,7 @@ test.describe('Unable cards on empty inventory', () => {
     await expect(page.locator('button:has-text("Solicitar reserva")')).toHaveCount(0);
   });
 
-  test('SCEN-U3: unable card interactivity — only carousel + accordion respond', async ({
+  test('SCEN-U3: unable card visual + actionable CTAs scroll back to searcher', async ({
     page,
   }) => {
     await page.route(
@@ -114,22 +116,45 @@ test.describe('Unable cards on empty inventory', () => {
     const firstCard = page.locator('.categoria-no-disponible').first();
     await expect(firstCard).toBeVisible({ timeout: 30_000 });
 
-    // No "Solicitar / Reservar / Cotizar" CTA inside any unable card.
+    // Banner: red-50 background + left red-500 border, with "No disponible" copy.
+    const banner = firstCard.locator('.bg-red-50.border-l-4.border-red-500');
+    await expect(banner).toBeVisible();
+    await expect(banner).toContainText('No disponible');
+
+    // Both CTAs render — the user has two routes back to the searcher.
+    const probarFechas = firstCard.getByRole('button', { name: 'Probar otras fechas' });
+    const cambiarSucursal = firstCard.getByRole('button', { name: 'Cambiar sucursal' });
+    await expect(probarFechas).toBeVisible();
+    await expect(cambiarSucursal).toBeVisible();
+
+    // No "Solicitar / Reservar / Cotizar" CTA inside the card — unavailable means
+    // unbookable, surfacing those would be a contract regression.
     await expect(firstCard.locator('button:has-text("Solicitar")')).toHaveCount(0);
     await expect(firstCard.locator('button:has-text("Reservar")')).toHaveCount(0);
     await expect(firstCard.locator('button:has-text("Cotizar")')).toHaveCount(0);
 
-    // No price text. We assert no "$" character inside the card body.
+    // No price text — assert no "$" character followed by digits in the card body.
     const cardText = (await firstCard.textContent()) ?? '';
     expect(cardText).not.toMatch(/\$\s*\d/);
 
-    // Accordion: title button toggles the description panel.
-    const accordionToggle = firstCard.locator('button[aria-expanded]').first();
-    await expect(accordionToggle).toBeVisible();
-    const initialState = await accordionToggle.getAttribute('aria-expanded');
-    await accordionToggle.click();
-    const flippedState = await accordionToggle.getAttribute('aria-expanded');
-    expect(flippedState).not.toBe(initialState);
+    // Legacy accordion is gone (the redesign removed it on 2026-05-08).
+    expect(await firstCard.locator('button[aria-expanded]').count()).toBe(0);
+
+    // CTA click scrolls back to the searcher anchor (#searcher).
+    // Capture scrollY before/after; smooth scroll converges within ~1s, so we
+    // poll until it lands or fail.
+    await page.evaluate(() => window.scrollTo(0, 1200));
+    const before = await page.evaluate(() => window.scrollY);
+    expect(before).toBeGreaterThan(0);
+
+    await probarFechas.click();
+    await page.waitForFunction(
+      (initial) => window.scrollY < initial,
+      before,
+      { timeout: 5_000 },
+    );
+    const after = await page.evaluate(() => window.scrollY);
+    expect(after).toBeLessThan(before);
   });
 
   // SCEN-U4 requires stubbing both /api/rentacar-data (admin categories +

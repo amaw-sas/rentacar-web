@@ -2,6 +2,8 @@
   <UPage>
     <!-- Hero Section -->
     <div class="hero-section">
+      <!-- Scroll target for "Probar otras fechas" / "Cambiar sucursal" CTAs en UnableCategoryCard -->
+      <div id="searcher" aria-hidden="true" class="scroll-mt-20" />
       <UPageHero
         orientation="horizontal"
       >

@@ -1,0 +1,71 @@
+# Scenario Amend Marker
+
+**Spec**: unable-cards-on-empty-inventory
+**Baseline HEAD**: 43aef473d17a8e95241744bfe1eb000e0a41d0c3
+**Amender**: pablo+claude
+**Amend date**: 2026-05-08
+
+## Reason
+
+Customer-feedback-driven redesign of `UnableCategoryCard.vue`. The 2026-05-05 spec
+explicitly captured the legacy visual style (subtle "no disponible" red pill, image
+opacity 40%, accordion with long description, `bg-red-100 text-red-600` badge) and
+declared visual restyling out of scope. Customers reported that this visual was not
+clear enough — they did not realize the card represented an unavailable category and
+attempted to interact with it as if it were available.
+
+The user (project owner) approved a redesign on 2026-05-08 in plan mode. The new card:
+- Replaces the small red pill with a top banner (`bg-red-50 border-l-4 border-red-500`)
+  that includes an icon and the unavailability reason composed from the search context
+  (date range + pickup branch).
+- Increases visual disengagement of the model image (grayscale + opacity 50%).
+- Removes the accordion with `descripcion_larga` (it generated desire toward something
+  the user could not buy).
+- Adds two actionable CTAs ("Probar otras fechas", "Cambiar sucursal") that scroll the
+  page to the `<div id="searcher" />` anchor.
+
+## Scenarios affected
+
+- **SCEN-U1**: behavioral assertions (count of unable cards, no toast, store invariants)
+  unchanged. Only the DOM evidence selectors are updated to reflect the new card
+  structure (the legacy `getByRole('heading', level: 3).filter(hasText: 'no disponible')`
+  selector no longer matches because "No disponible" now lives in a banner div, not in
+  an h3 heading; the h3 now contains `descripcion_corta`).
+- **SCEN-U2**: same as SCEN-U1. Behavior unchanged, evidence selectors updated.
+- **SCEN-U3**: full rewrite. Replaces:
+  - "accordion + carousel respond" → "carousel responds; CTAs scroll to searcher"
+  - `bg-red-100 text-red-600` pill → `bg-red-50 border-l-4 border-red-500` banner
+  - `img { opacity: 0.4 }` → `img { opacity: 0.5; filter: grayscale }`
+  - `.contenedor-descripcion-carro { opacity: 0.7 }` → `{ opacity: 0.9 }`
+  - "no descendants matching :text('Solicitar') / '$'" → preserved
+  - Adds: top banner with `i-lucide-alert-triangle` icon, banner text from
+    `useUnavailabilityContext().bannerText` (composable in logic layer), two
+    `<UButton>` CTAs that on click invoke `document.getElementById('searcher')
+    ?.scrollIntoView({behavior:'smooth'})`.
+- **SCEN-U4**: unchanged. Mix-mode is about counts, not card visual.
+
+## Non-goals update
+
+The original "Visual restyling of UnableCategoryCard ... is not in scope" line is
+replaced. It reflected the 2026-05-05 minimum-intervention scope; the 2026-05-08
+amendment intentionally expands scope on customer-feedback grounds.
+
+## Verification (post-amend)
+
+- Logic suite: 197/197 (includes 9 new tests for `useUnavailabilityContext`).
+- alquilatucarro suite: 159/159 (includes 7 new source-string tests for `UnableCategoryCard.vue`).
+- alquilame suite: 33/33. alquicarros suite: 33/33.
+- `UnableCategoryCard.vue` byte-identical across the 3 brands (verified with `diff`).
+- Typecheck delta: −3 errors per brand (no new errors introduced; dead vars removed).
+- Visual QA: captured with /agent-browser + LLNRAG009 mock (later reverted) on
+  alquilatucarro local dev. Banner, dimming, both CTAs, and scroll-to-searcher all
+  observed working. Screenshots stored at `/tmp/qa-unable-mocked.png`,
+  `/tmp/qa-unable-full-card.png`, `/tmp/qa-after-cta-scroll.png`.
+
+## Anti-reward-hacking note
+
+The post-amend SCEN-U3 was written from the new design's spec (banner + 2 CTAs +
+grayscale), then 7 source-string tests were written FROM that scenario. The component
+was implemented to satisfy those tests. The scenario evolved because the user's intent
+evolved (customer feedback), NOT because the code drifted from the original scenario.
+The original 2026-05-05 spec is preserved in git history.
