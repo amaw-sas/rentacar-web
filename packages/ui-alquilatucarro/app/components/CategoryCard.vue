@@ -80,7 +80,7 @@
             Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
           </p>
 
-          <UTooltip :delay-duration="3000" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}">
+          <UTooltip :open="totalPriceTooltipOpen" :delay-duration="3000" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
             <template #content>
               Día: $ {{ dayPriceTooltip }} <br />
               Seguro día: $ {{ coverageDayPriceTooltip }} <br />
@@ -669,6 +669,11 @@ const {
 } = category;
 
 const { modelos, grupo } = props.vehicleCategory;
+
+const {
+  open: totalPriceTooltipOpen,
+  onOpenChange: onTotalPriceTooltipOpenChange,
+} = useDelayedClose(3000);
 
 /** Product Schema for SEO */
 useProductSchema({
