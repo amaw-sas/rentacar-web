@@ -25,7 +25,15 @@
           <span class="flex flex-row justify-center items-baseline gap-2 text-4xl md:text-5xl lg:text-7xl lg:whitespace-nowrap" style="letter-spacing: -0.025em;">
             <span class="size-8 md:size-10 lg:size-14" aria-hidden="true"></span>
             {{ city?.name }}
-            <LocationIcon cls="text-red-600 size-8 md:size-10 lg:size-14 translate-y-1" />
+            <button
+              type="button"
+              class="cursor-pointer rounded transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              aria-label="Copiar datos de búsqueda para WhatsApp"
+              title="Copiar datos de búsqueda para WhatsApp"
+              @click="copySearchToWhatsapp"
+            >
+              <LocationIcon cls="text-red-600 size-8 md:size-10 lg:size-14 translate-y-1" />
+            </button>
           </span>
           {{ ' ' }}
           <span class="block text-2xl md:text-3xl lg:text-4xl text-white colombia-sweep" style="letter-spacing: 0.025em;">Colombia</span>
@@ -37,20 +45,9 @@
           <div class="mb-1 text-white text-xl">
             Consulta disponibilidad y precios
           </div>
-          <div class="flex items-center justify-center gap-2">
-            <p class="text-white text-sm">
-              Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
-            </p>
-            <UButton
-              icon="i-heroicons-clipboard-document"
-              size="xs"
-              color="neutral"
-              variant="ghost"
-              class="text-white shrink-0"
-              aria-label="Copiar datos de búsqueda para WhatsApp"
-              @click="copySearchToWhatsapp"
-            />
-          </div>
+          <p class="text-white text-sm">
+            Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
+          </p>
         </div>
       </template>
       <template #default>
@@ -60,20 +57,9 @@
             <div class="mb-1 text-white text-xl">
               Consulta disponibilidad y precios
             </div>
-            <div class="flex items-center justify-center gap-2">
-              <p class="text-white text-sm">
-                Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
-              </p>
-              <UButton
-                icon="i-heroicons-clipboard-document"
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                class="text-white shrink-0"
-                aria-label="Copiar datos de búsqueda para WhatsApp"
-                @click="copySearchToWhatsapp"
-              />
-            </div>
+            <p class="text-white text-sm">
+              Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
+            </p>
           </div>
           <!-- Wrapper con altura fija para prevenir layout shift durante hidratación -->
           <div class="h-[410px] w-full">
