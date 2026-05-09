@@ -184,6 +184,23 @@ export function transformCities(rows: SupabaseCity[]): City[] {
   }))
 }
 
+interface SupabaseFranchise {
+  code: string
+  testimonials: unknown
+}
+
+export function transformFranchiseTestimonials(
+  rows: SupabaseFranchise[] | null | undefined,
+): Record<string, Testimonial[]> {
+  const result: Record<string, Testimonial[]> = {}
+  if (!Array.isArray(rows)) return result
+  for (const row of rows) {
+    if (!row?.code) continue
+    result[row.code] = parseTestimonials(row.testimonials)
+  }
+  return result
+}
+
 export function transformVehicleCategories(rows: SupabaseCategory[]): VehicleCategoryData {
   const result: VehicleCategoryData = {}
   for (const row of rows) {

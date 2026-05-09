@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transformCategories, transformBranches, transformExtras, transformCities, transformVehicleCategories } from '../transformers'
+import { transformCategories, transformBranches, transformExtras, transformCities, transformFranchiseTestimonials, transformVehicleCategories } from '../transformers'
 
 describe('transformCategories', () => {
   it('maps Supabase category to CategoryData interface', () => {
@@ -376,5 +376,116 @@ describe('transformCities', () => {
     expect(() => transformCities(input)).not.toThrow()
     const result = transformCities(input)
     expect(result[0].testimonials).toEqual([])
+  })
+})
+
+describe('transformFranchiseTestimonials', () => {
+  // S1: endpoint shape — 3 brands → 3 keys, each Testimonial[]
+  it('maps each franchise row to a key in Record<code, Testimonial[]> (S1)', () => {
+    const input = [
+      {
+        code: 'alquicarros',
+        testimonials: [
+          { user: { name: 'A', description: 'CO', avatar: { src: 'a.webp', alt: 'A' } }, quote: 'q1' },
+        ],
+      },
+      {
+        code: 'alquilame',
+        testimonials: [
+          { user: { name: 'B', description: 'CO', avatar: { src: 'b.webp', alt: 'B' } }, quote: 'q2' },
+          { user: { name: 'C', description: 'CO', avatar: { src: 'c.webp', alt: 'C' } }, quote: 'q3' },
+        ],
+      },
+      {
+        code: 'alquilatucarro',
+        testimonials: [],
+      },
+    ]
+
+    const result = transformFranchiseTestimonials(input)
+
+    expect(Object.keys(result).sort()).toEqual(['alquicarros', 'alquilame', 'alquilatucarro'])
+    expect(result.alquicarros).toHaveLength(1)
+    expect(result.alquicarros[0].quote).toBe('q1')
+    expect(result.alquilame).toHaveLength(2)
+    expect(result.alquilatucarro).toEqual([])
+  })
+
+  // S5: malformed entries dropped silently
+  it('filters malformed testimonials silently per brand (S5)', () => {
+    const input = [{
+      code: 'alquicarros',
+      testimonials: [
+        { user: { name: 'X' } },                                   // missing fields
+        { user: { name: 'OK', description: 'C', avatar: { src: 'a', alt: 'b' } }, quote: 'valid' },
+        null,
+        'string-not-object',
+        { quote: 'no user' },
+      ],
+    }]
+
+    expect(() => transformFranchiseTestimonials(input)).not.toThrow()
+    const result = transformFranchiseTestimonials(input)
+    expect(result.alquicarros).toHaveLength(1)
+    expect(result.alquicarros[0].quote).toBe('valid')
+  })
+
+  // S6: stuffing cap — slice(0, 12) inherited from parseTestimonials
+  it('caps each brand at 12 testimonials (S6)', () => {
+    const validItem = {
+      user: { name: 'N', description: 'D', avatar: { src: 's', alt: 'a' } },
+      quote: 'q',
+    }
+    const input = [{
+      code: 'alquicarros',
+      testimonials: Array.from({ length: 50 }, () => validItem),
+    }]
+
+    const result = transformFranchiseTestimonials(input)
+
+    expect(result.alquicarros.length).toBeLessThanOrEqual(12)
+  })
+
+  // S5/safety: non-array testimonials → [] sin throw
+  it('handles non-array testimonials by returning empty array', () => {
+    const input = [{
+      code: 'alquicarros',
+      testimonials: { not: 'an array' } as unknown,
+    }]
+
+    expect(() => transformFranchiseTestimonials(input)).not.toThrow()
+    const result = transformFranchiseTestimonials(input)
+    expect(result.alquicarros).toEqual([])
+  })
+
+  // Empty rows → empty record
+  it('returns empty record for empty rows', () => {
+    expect(transformFranchiseTestimonials([])).toEqual({})
+  })
+
+  // Defensive: Supabase data can be null. transform must not crash.
+  it('returns empty record when input is null', () => {
+    expect(() => transformFranchiseTestimonials(null)).not.toThrow()
+    expect(transformFranchiseTestimonials(null)).toEqual({})
+  })
+
+  it('returns empty record when input is undefined', () => {
+    expect(() => transformFranchiseTestimonials(undefined)).not.toThrow()
+    expect(transformFranchiseTestimonials(undefined)).toEqual({})
+  })
+
+  // Defensive: skip rows with falsy code (DB invariant says NOT NULL UNIQUE,
+  // but defends against staging fixtures or schema drift writing nulls).
+  it('skips rows with empty or missing code', () => {
+    const input = [
+      { code: 'alquicarros', testimonials: [{ user: { name: 'A', description: 'C', avatar: { src: 'a', alt: 'a' } }, quote: 'q' }] },
+      { code: '', testimonials: [{ user: { name: 'X', description: 'C', avatar: { src: 'x', alt: 'x' } }, quote: 'qx' }] },
+      { code: null as unknown as string, testimonials: [] },
+    ]
+
+    const result = transformFranchiseTestimonials(input)
+
+    expect(Object.keys(result)).toEqual(['alquicarros'])
+    expect(result['']).toBeUndefined()
   })
 })
