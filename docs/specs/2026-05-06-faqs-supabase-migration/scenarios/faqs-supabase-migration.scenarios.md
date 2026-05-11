@@ -26,12 +26,14 @@ Cada scenario describe lo que sucede observablemente (HTML servido, exit codes, 
 **Then**: response HTTP 200; HTML contiene los 11 labels activos; HTML NO contiene el string `¿FAQ marcada como inactive — no debe aparecer?`. Cero ocurrencias del label inactivo.
 **Evidence**: `curl -s https://<deploy>/ | grep -c "¿FAQ marcada como inactive"` → exactamente `0`. La query `.eq('status', 'active')` filtra server-side antes del transformer.
 
-## SCEN-003: build no falla cuando Supabase está inalcanzable durante prerender
+## SCEN-003: build falla fuerte cuando Supabase está inalcanzable durante prerender
 
-**Given**: variable de entorno `NUXT_SUPABASE_URL=https://invalid.example.invalid` (host no resuelve); el sentinel pattern de `useFetchRentacarData.ts` extiende `EMPTY_SENTINEL` con `faqs: []`; `index.vue` × 3 no se rompe ante `faqs.length === 0`.
+**Nota sobre amend (2026-05-11)**: la redacción original asumía degradación graceful via sentinel — "exit 0 + accordion vacío en HTML". Esto contradice el contrato establecido por **issue #2** (`packages/logic/plugins/rentacar-data.ts`), donde el plugin lanza explícitamente ante errores de fetch para "replace the pre-fix try/catch that swallowed the error and let build/SSR continue with broken state". El sentinel pattern de `useFetchRentacarData.ts` cubre el caso `useState='null'` (anomalía de HMR o hydration mismatch), NO el caso de fetch que falla genuinamente. SCEN-003 se reescribe para reflejar el contrato real: outage de Supabase produce build fail-fast con error identificable, no HTML vacío silencioso.
+
+**Given**: variable de entorno `NUXT_SUPABASE_URL=https://invalid.example.invalid` (host no resuelve); el plugin `packages/logic/plugins/rentacar-data.ts` invoca `console.error('[rentacar-data] fetch failed:', error.value)` antes de lanzar.
 **When**: `pnpm --filter ui-alquilatucarro build` (o cualquier marca) corre.
-**Then**: exit code = 0 (build pasa); el HTML resultante en `.output/public/index.html` contiene `id="faqs"` (sección presente, accordion vacío); el log del build no contiene errors de `useSchemaOrg` ni unhandled exceptions; el HTML NO contiene texto user-visible de error (e.g. "Error", "undefined", "[object Object]") dentro del bloque `<section id="faqs">`.
-**Evidence**: build exit code 0; `grep -l 'id="faqs"' .output/public/**/index.html` retorna match; `grep -E '(useSchemaOrg|Cannot read|undefined.*FAQ)' build.log` retorna 0 matches; sección `#faqs` queda con accordion vacío sin error visible.
+**Then**: exit code != 0 (build falla — operator se entera del outage); el log del build contiene la cadena literal `[rentacar-data] fetch failed:` al menos una vez (typical: una por ruta prerender concurrente); el prerender reporta `[500] Server Error` para al menos una ruta antes del aborto; el build termina con `Exiting due to prerender errors`. Nota: el `Error.message` lanzado por el plugin (`'[rentacar-data] Failed to load reservation data'`) se agrega bajo "Exiting due to prerender errors" por el reporter de Nuxt y no se imprime literal en el log — el prefijo de `console.error` es el contrato observable confiable.
+**Evidence**: `pnpm build:alquilatucarro` exit code = 1; `grep -c '\[rentacar-data\] fetch failed:' build.log` ≥ 1; `grep -c '\[500\] Server Error' build.log` ≥ 1; `grep -c 'Exiting due to prerender errors' build.log` ≥ 1.
 
 ## SCEN-004: `transformFAQs` filtra filas con `label` o `content` vacíos sin throw
 
