@@ -1,10 +1,10 @@
 import { useSupabaseClient } from '../utils/supabase'
-import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities } from '../utils/transformers'
+import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials } from '../utils/transformers'
 
 export default defineCachedEventHandler(async () => {
   const supabase = useSupabaseClient()
 
-  const [categoriesResult, locationsResult, companyResult, citiesResult] = await Promise.all([
+  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult] = await Promise.all([
     supabase
       .from('vehicle_categories')
       .select('*, category_models(*), category_pricing(*)')
@@ -28,6 +28,18 @@ export default defineCachedEventHandler(async () => {
       .select('slug, name, description, testimonials')
       .eq('status', 'active')
       .order('name'),
+
+    // TODO(perf): each brand's SSR payload includes all 3 brands' testimonials
+    // (~14KB cross-brand bloat per render). Acceptable while testimonials are
+    // static and small; revisit when this stops being true (e.g., before the
+    // Google Maps Reviews integration). Per-brand filter would require either
+    // a dynamic cache key based on rentacarFranchise or a brand-aware wrapper
+    // route — both are larger changes than this issue's scope (#11).
+    supabase
+      .from('franchises')
+      .select('code, testimonials')
+      .eq('status', 'active')
+      .order('code'),
   ])
 
   if (categoriesResult.error) {
@@ -42,6 +54,9 @@ export default defineCachedEventHandler(async () => {
   if (citiesResult.error) {
     throw createError({ statusCode: 500, message: `Cities query failed: ${citiesResult.error.message}` })
   }
+  if (franchisesResult.error) {
+    throw createError({ statusCode: 500, message: `Franchises query failed: ${franchisesResult.error.message}` })
+  }
 
   return {
     categories: transformCategories(categoriesResult.data),
@@ -49,6 +64,7 @@ export default defineCachedEventHandler(async () => {
     extras: transformExtras(companyResult.data),
     vehicleCategories: transformVehicleCategories(categoriesResult.data),
     cities: transformCities(citiesResult.data),
+    franchiseTestimonials: transformFranchiseTestimonials(franchisesResult.data),
   }
 }, {
   // TODO(perf+seo): revisit cache strategy before launch. 1h is fine while in

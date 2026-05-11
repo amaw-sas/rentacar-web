@@ -261,6 +261,7 @@
 <script lang="ts" setup>
 /** types */
 import type { FAQPage } from "schema-dts";
+import type Testimonial from "@rentacar-main/logic/utils/types/type/Testimonial";
 
 /** components */
 import {
@@ -320,7 +321,9 @@ const categoriasPageSectionUIConfig = {
   body: "mt-4 sm:mt-6",
 };
 
-const testimonios: Testimonial[] = franchise.testimonials;
+const brandCode = useRuntimeConfig().public.rentacarFranchise as string;
+const { franchiseTestimonials } = useFetchRentacarData();
+const testimonios = computed<Testimonial[]>(() => franchiseTestimonials[brandCode] ?? []);
 
 // Add AggregateRating schema for testimonials (shows stars in Google SERPs)
 useHomeAggregateRating()

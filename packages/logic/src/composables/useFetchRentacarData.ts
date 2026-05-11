@@ -6,6 +6,7 @@ const EMPTY_SENTINEL: ReservasApiData = Object.freeze({
   extras: undefined,
   vehicleCategories: Object.freeze({}),
   cities: Object.freeze([]),
+  franchiseTestimonials: Object.freeze({}),
 }) as unknown as ReservasApiData;
 
 export default function useFetchRentacarData(): ReservasApiData {
