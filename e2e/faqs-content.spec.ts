@@ -17,12 +17,13 @@ import { test, expect } from '@playwright/test';
 //     packages/` returns no matches (exit 1). CI gate.
 
 test.describe('FAQs content from Supabase (#12, holdout SCEN-001)', () => {
-  test('SCEN-001: home HTML contains the first three FAQs in display_order with content', async ({ page }) => {
+  test('SCEN-001: first three FAQ labels are visible accordion triggers', async ({ page }) => {
     const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     expect(response?.status()).toBe(200);
 
-    // display_order = 0 — first FAQ label
+    // display_order = 0 — first FAQ label. Visible as the accordion
+    // trigger button text (closed by default; the label is the button).
     await expect(
       page.getByText('¿Cómo puedo hacer una reserva?', { exact: false }),
     ).toBeVisible();
@@ -36,16 +37,9 @@ test.describe('FAQs content from Supabase (#12, holdout SCEN-001)', () => {
     await expect(
       page.getByText('¿No tengo todo el cupo en la tarjeta, puedo hacer la reserva?', { exact: false }),
     ).toBeVisible();
-
-    // Fragment of the FAQ #0 content body — confirms `content` field
-    // traveled through Supabase → transformer → endpoint → composable → page,
-    // not just the label.
-    await expect(
-      page.getByText('Para realizar un alquiler de carros debe generar una reserva', { exact: false }),
-    ).toBeVisible();
   });
 
-  test('SCEN-001: order preservation — label[0] appears before label[1] in HTML', async ({ page }) => {
+  test('SCEN-001: raw HTML contains label order + content fragment (server-rendered, not CSR)', async ({ page }) => {
     const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
     const html = await response!.text();
 
@@ -56,6 +50,15 @@ test.describe('FAQs content from Supabase (#12, holdout SCEN-001)', () => {
     expect(idx0).toBeGreaterThanOrEqual(0);
     expect(idx1).toBeGreaterThan(idx0);
     expect(idx2).toBeGreaterThan(idx1);
+
+    // Content fragment of FAQ #0 lives inside the (closed) accordion
+    // panel plus the schema.org JSON-LD payload. Not user-visible until
+    // a panel is expanded, but it must travel in the SSR HTML so search
+    // engines and curl-without-JS can read it. Checking the raw response
+    // body is the right tool — visible() would fail because UAccordion
+    // collapses panels by default.
+    const contentFragment = 'Para realizar un alquiler de carros debe generar una reserva';
+    expect(html.includes(contentFragment)).toBe(true);
   });
 
   test('SCEN-001: #faqs section is populated with at least 11 accordion items', async ({ page }) => {
