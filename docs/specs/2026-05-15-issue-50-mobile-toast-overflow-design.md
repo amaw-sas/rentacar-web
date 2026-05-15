@@ -86,7 +86,12 @@ Discriminating observations → cause:
 
 The investigation MUST conclude with exactly one identified cause (C1–C4)
 recorded in the SDD evidence before implementation. If evidence is ambiguous
-between two causes, apply both remedies (they are non-conflicting).
+between two causes, apply both remedies **only when they are non-conflicting**
+(R1+R2, R2+R4, R3 with any of R1/R2/R4 are non-conflicting). **R1 and R4 are
+mutually exclusive** — they prescribe opposite centering mechanisms on the same
+`viewport` slot (transform vs. inset/mx-auto) and MUST NOT be applied together;
+if evidence is ambiguous between C1 and C4, prefer R4 (transform-free is the
+strictly safer superset for both).
 
 ## Remedy table (fix is derived from the identified cause)
 
@@ -110,10 +115,13 @@ All remedies keep the single-shared-point principle where the cause allows.
   `packages/logic/src/composables/useMessages.ts`** — this spec is revised and
   re-reviewed before that broader change.
 - **R4 — isolate the transform.** In shared `uiConfig`, set the `toaster`
-  `slots.viewport` centering without relying on `transform` (e.g.
-  `inset-x-0 mx-auto` + `max-w` instead of `left-1/2 -translate-x-1/2`), so the
-  viewport transform cannot interact with the toast `base` `--transform`. Blast
-  radius: `ui.config.ts` only.
+  `slots.viewport` centering without relying on `transform`: override the
+  default **`w-*` group** directly (`w-[calc(100%-2rem)] sm:w-96`, same group as
+  the default so it actually takes effect per the tailwind-merge note below) and
+  center with `inset-x-0 mx-auto` instead of `left-1/2 -translate-x-1/2`, so the
+  viewport transform cannot interact with the toast `base` `--transform`.
+  `mx-auto` centers only because the box is now `w-*`-bounded. Blast radius:
+  `ui.config.ts` only.
 
 `tailwind-merge` note: `max-w-*` and `w-*`/`sm:w-*` are **different property
 groups** — a `max-w` addition does NOT override the default `w-96`. Therefore
@@ -153,9 +161,12 @@ not screenshot eyeballing.
    window.innerWidth` (no horizontal scrollbar), AND the toast left/right insets
    are each ≥ 16px.
 2. **Given** that toast is shown, **when** it renders, **then** the toast root
-   has `scrollWidth <= clientWidth` (no clipped/overflowing content) AND the
-   description element's bounding rect is fully contained within the toast root's
-   bounding rect (title + full description not clipped on any edge).
+   has `scrollWidth <= clientWidth` AND `scrollHeight <= clientHeight` (no
+   horizontally **or vertically** clipped content under `overflow-hidden`) AND
+   the description element's bounding rect is fully contained within the toast
+   root's bounding rect (title + full description not clipped on any edge). Note:
+   this is the anti-clipping oracle for both axes; the `scrollHeight` clause is
+   what catches vertical truncation that a rect-containment check alone misses.
 3. **Boundary — Given** alquilatucarro home at **479px** and again at **481px**,
    **when** the toast fires, **then** scenario 1's assertions hold at both
    widths (discriminates a breakpoint bug from a content-overflow bug; both are
