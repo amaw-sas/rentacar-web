@@ -48,10 +48,15 @@ errors); console/network compared to the pre-fix capture, not absolute zero.
 **Given**: alquilatucarro home at viewport width 1024px (≥ `sm` 640px)
 **When**: a toast fires
 **Then**: the toast root width equals `384px` (`w-96`, tolerance ±1px) AND it
-  is horizontally centered (`abs(rootCenterX - window.innerWidth / 2) <= 1px`),
-  matching the pre-fix desktop baseline captured before any code change
+  is horizontally centered within the layout viewport
+  (`abs(rootCenterX - document.documentElement.clientWidth / 2) <= 1px`) — the
+  layout viewport excludes the scrollbar gutter and is the same reference frame
+  the page content and @nuxt/ui's own centering use; `window.innerWidth` is not
+  a valid reference because a scrollbar gutter offsets every correctly centered
+  fixed element (including the original design) by gutter/2
 **Evidence**: pre-fix baseline JSON + post-fix `/agent-browser`
-  `browser_evaluate` JSON of `{ rootRect, innerWidth }` at 1024px
+  `browser_evaluate` JSON of `{ rootRect, clientWidth, innerWidth }` at 1024px
+  (amended 2026-05-15, user-approved — see scenarios/.amends/ marker)
 
 ## SCEN-005: fix holds for the other two brands (alquilame, alquicarros @ 414px)
 **Given**: alquilame home at 414px, and alquicarros home at 414px

@@ -196,3 +196,51 @@ not screenshot eyeballing.
 - **/dogfood** exploratory pass on the searcher after the fix.
 - **Gate:** `/verification-before-completion` with fresh evidence before any
   completion claim, commit of the fix, or PR.
+
+## Implementation outcome — addendum (2026-05-15)
+
+**Identified cause:** **C4** — confirmed at runtime. @nuxt/ui 4.2.1's default
+`top-center` position variant emits `left-1/2 transform -translate-x-1/2`.
+Under this project's Tailwind v4, `-translate-x-1/2` emits the standalone
+`translate` property *and* the legacy `transform` class also applies
+`translateX(-50%)`; the −50% shift is applied twice. Measured at 414px:
+viewport `left:199.5px`, `translate:-50%`, `transform:matrix(…-183.5…)` →
+`rect.left = −167px` (≈ `199.5 − 2×183.5`), toast clipped top-left. Selected
+remedy: **R4** (R1⊕R4 → R4).
+
+**Mechanism divergence from R4-as-specified (and why):** R4 as written
+("override the position variant in shared `uiConfig`") was proven
+**unimplementable** by three runtime attempts: base-slot override, then
+`variants.position` override, then both. @nuxt/ui 4.2.1 flattens the
+app.config `ui.toaster` override into the base-slot class region *before*
+tailwind-variants emits the library's default position variant, so
+tailwind-merge always keeps the broken `left-1/2 transform
+-translate-x-1/2` (DOM-verified: override classes present but defeated;
+Tailwind important modifiers would not survive the twMerge dedupe either).
+
+**Shipped remedy — R4-CSS (same principle, different mechanism):** a scoped
+CSS rule shipped once by the shared `@rentacar-main/logic` layer
+(`packages/logic/src/assets/issue-50-toaster.css`, wired via the layer's
+`nuxt.config.ts` `css[]`), inherited by all 3 brands through `extends`. It
+neutralises `transform`/`translate` and re-centers via `inset-inline` +
+`margin-inline`, scoped by the `left-1/2` **and** `-translate-x-1/2` class
+tokens (`~=`) so only the broken centered variants match. This **preserves
+the design's invariants**: single shared point (the logic layer, not 3
+per-brand files), additive-only, no change to `useMessages.ts`, server
+routes, or per-brand `app.vue`; the observable scenario contract is
+unchanged. Blast-radius class is equivalent to R1/R2/R4 (one shared
+config/asset point), not the R3 contingency.
+
+**Re-review gate:** the spec's "revise + re-review before a broader change"
+gate was satisfied by the integrated 4-agent quality review
+(code-reviewer, code-simplifier, edge-case-detector, performance-engineer)
+on the shipped diff; consensus findings (selector token-hardening,
+upstream-drift test guard) were applied.
+
+**SCEN-004 amend:** the holdout's SCEN-004 centering oracle was corrected
+(reference frame `window.innerWidth` → `document.documentElement.clientWidth`)
+under the user-approved amend protocol — see
+`scenarios/.amends/` marker and `.amend-evidence/`. Observable Given/When and
+the 384px width invariant are unchanged; only a provably-wrong reference
+frame (scrollbar-gutter artifact that the original correct design fails
+identically) was fixed.
