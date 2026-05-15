@@ -1,0 +1,42 @@
+/*
+ * Issue #50 — availability-searcher toast overflows the mobile viewport.
+ *
+ * Root cause: @nuxt/ui 4.2.1's default `*-center` toaster position variant
+ * centers the viewport with `left-1/2 transform -translate-x-1/2`. Under
+ * Tailwind v4, `-translate-x-1/2` emits the standalone `translate` property
+ * while the legacy `transform` class ALSO applies `translateX(-50%)` — the
+ * -50% centering shift lands twice, pushing the toast ~half its width off
+ * the left edge at every breakpoint (clipped, unreadable on mobile).
+ *
+ * app.config `ui.toaster` overrides cannot fix this: tailwind-variants emits
+ * the library's default position variant AFTER the app.config override, so
+ * tailwind-merge always keeps the broken `left-1/2 transform
+ * -translate-x-1/2`. The deterministic single point is this CSS rule, shipped
+ * by the shared `@rentacar-main/logic` layer (extended by all 3 brands).
+ *
+ * Scoped by BOTH `left-1/2` and `-translate-x-1/2` as whitespace-delimited
+ * class tokens (`~=`, not substring `*=`) so ONLY the broken centered
+ * position variants (top-center / bottom-center) match. Tailwind v4 emits
+ * these as literal unescaped tokens in the DOM `class` attribute, so `~=`
+ * is exact; this also prevents false positives from brand `ui.toaster`
+ * overrides or arbitrary values that merely contain the substring
+ * `left-1/2` (e.g. `gap-x-1/2`, `data-[x]:left-1/2`). Left/right-anchored
+ * toasters (`left-4`/`right-4`, no transform) are untouched.
+ *
+ * The default responsive width (w-[calc(100%-2rem)] sm:w-96) and the
+ * top-4/bottom-4 offset are preserved; only horizontal centering is
+ * re-expressed transform-free via inset + auto margins. `inset-inline` /
+ * `margin-inline` are direction-aware (correct under LTR and RTL).
+ *
+ * NOTE: `transform`/`translate: none !important` forbid ANY viewport-level
+ * transform/translate. A future brand needing a viewport transform must
+ * apply it on the toast child (`ui.toaster.base`), not the viewport.
+ * If a @nuxt/ui upgrade stops emitting these classes, the contract test
+ * (src/config/__tests__/ui.config.test.ts) fails — re-evaluate this rule.
+ */
+ol[data-slot="viewport"][class~="left-1/2"][class~="-translate-x-1/2"] {
+  transform: none !important;
+  translate: none !important;
+  inset-inline: 0 !important;
+  margin-inline: auto !important;
+}

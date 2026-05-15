@@ -1,0 +1,11 @@
+{
+  "scenario": "SCEN-004",
+  "defect": "Oracle reference-frame error: asserts toast center == window.innerWidth/2 ±1px, ignoring the scrollbar gutter that offsets every correctly-centered position:fixed element (including the original @nuxt/ui design) by gutter/2.",
+  "post_fix_measurements_1024px": {
+    "classic_scrollbar": { "gutter": 15, "toast_w": 384, "centerX": 504.5, "offBy_vs_window": -7.5, "offBy_vs_layoutViewport": 0.0 },
+    "no_gutter_overlay_or_mobile_equivalent": { "gutter": 0, "toast_w": 384, "centerX": 512, "offBy_vs_window": 0.0, "offBy_vs_layoutViewport": 0.0 }
+  },
+  "independent_reverification": "Per user request, re-verified in the gutter-free condition (window.innerWidth === documentElement.clientWidth, equivalent to overlay scrollbars / real mobile). Result: toast width exactly 384px (no regression) and center exactly window.innerWidth/2 (offBy 0.0px). Proves the code is correct and the -7.5px deviation under classic scrollbars is purely the gutter/2 reference-frame artifact.",
+  "correct_invariant": "Center within documentElement.clientWidth (layout viewport) — the frame the page content and @nuxt/ui's own centering use; equals window.innerWidth/2 whenever the gutter is 0.",
+  "captured_via": "agent-browser eval --stdin, alquilatucarro searcher toast, http://localhost:3002, viewport 1024x768, with/without document.documentElement.style.overflowY='hidden'"
+}
