@@ -4,6 +4,10 @@
 **Tamaño**: M (~250 LOC)
 **Enfoque**: Slug Generado Dinámicamente (ROI: +2)
 
+> **Estado (actualizado 2026-05-16)**: Feature **implementado**. La arquitectura de slugs descrita abajo sigue vigente (`packages/logic/src/utils/slugify.ts`, `searchBranchBySlug` en store/middleware/composables).
+>
+> **Nota de drift**: Las referencias a `branches.config.ts` como "única fuente de verdad" (secciones 2 y "Ventajas") están **superseded**. Ese archivo fue borrado; los datos de sucursales ahora se sirven desde Supabase (tabla `locations`) vía `useFetchRentacarData()` + transformer en `packages/logic/server/utils/transformers.ts`. Ver `docs/specs/2026-03-25-migration-firebase-to-vercel-supabase.md` Fase 4. El principio de diseño (slug calculado en runtime, sin duplicar datos) se mantiene — solo cambió el origen de los datos.
+
 ## Problema
 
 Las URLs de búsqueda de vehículos usan códigos internos no intuitivos:
@@ -69,7 +73,7 @@ function isBranchSlug(slug: string): boolean {
 }
 ```
 
-**Principio clave**: El slug se calcula en runtime, no se almacena en config. `branches.config.ts` permanece como única fuente de verdad.
+**Principio clave**: El slug se calcula en runtime, no se almacena. La fuente de verdad de sucursales es Supabase (tabla `locations`) vía `useFetchRentacarData()` — ver nota de drift al inicio. ~~`branches.config.ts` permanece como única fuente de verdad.~~
 
 ### 3. Generación de URLs
 
@@ -224,7 +228,7 @@ it('isBranchSlug validates correctly', () => {
 - ✅ URLs legibles y amigables con SEO
 - ✅ Mejor experiencia para LLMs
 - ✅ Cero duplicación de datos (slug calculado dinámicamente)
-- ✅ Single source of truth (branches.config.ts)
+- ✅ Single source of truth (Supabase tabla `locations` vía `useFetchRentacarData()` — ~~branches.config.ts~~, ver nota de drift)
 - ✅ Todos los slugs son únicos (verificado manualmente)
 
 ### Desventajas
