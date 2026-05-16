@@ -1,46 +1,21 @@
 import { useSupabaseClient } from '../utils/supabase'
+import { fetchRentacarData, RentacarDataTimeoutError } from '../utils/rentacarDataFetch'
 import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials } from '../utils/transformers'
 
 export default defineCachedEventHandler(async () => {
   const supabase = useSupabaseClient()
 
-  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult] = await Promise.all([
-    supabase
-      .from('vehicle_categories')
-      .select('*, category_models(*), category_pricing(*)')
-      .eq('status', 'active')
-      .order('code'),
-
-    supabase
-      .from('locations')
-      .select('id, code, name, city, slug, schedule, status, cities(slug)')
-      .eq('status', 'active')
-      .order('name'),
-
-    supabase
-      .from('rental_companies')
-      .select('extra_driver_day_price, baby_seat_day_price, wash_price, wash_onsite_price, wash_deep_price, wash_deep_upholstery_price')
-      .eq('code', 'localiza')
-      .single(),
-
-    supabase
-      .from('cities')
-      .select('slug, name, description, testimonials')
-      .eq('status', 'active')
-      .order('name'),
-
-    // TODO(perf): each brand's SSR payload includes all 3 brands' testimonials
-    // (~14KB cross-brand bloat per render). Acceptable while testimonials are
-    // static and small; revisit when this stops being true (e.g., before the
-    // Google Maps Reviews integration). Per-brand filter would require either
-    // a dynamic cache key based on rentacarFranchise or a brand-aware wrapper
-    // route — both are larger changes than this issue's scope (#11).
-    supabase
-      .from('franchises')
-      .select('code, testimonials')
-      .eq('status', 'active')
-      .order('code'),
-  ])
+  // NOTE(perf #11): each brand's SSR payload still includes all 3 brands'
+  // testimonials (~14KB cross-brand bloat per render) via the franchises
+  // query inside fetchRentacarData. Acceptable while testimonials are static
+  // and small; revisit before the Google Maps Reviews integration.
+  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult] =
+    await fetchRentacarData(supabase).catch((err) => {
+      if (err instanceof RentacarDataTimeoutError) {
+        throw createError({ statusCode: 504, statusMessage: 'rentacar-data upstream timeout' })
+      }
+      throw err
+    })
 
   if (categoriesResult.error) {
     throw createError({ statusCode: 500, message: `Categories query failed: ${categoriesResult.error.message}` })

@@ -1,5 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
+// Module-level singletons. Safe under Nitro single-process workers: one
+// worker = one isolate, so concurrent requests share an already-initialized
+// client and no two inits race. RE-VERIFY before moving to serverless
+// (Vercel Functions, Cloudflare Workers): concurrent cold starts can each
+// run the lazy init, racing the assignment and creating duplicate clients —
+// switch to a per-request client or an init mutex there. (issue #7, concern #3)
 let client: SupabaseClient | null = null
 let adminClient: SupabaseClient | null = null
 
