@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
     const filename = `${timestamp}-${hash}.webp`
     const storagePath = `blog-images/${type}/${filename}`
 
-    // Upload to Firebase Storage
+    // Upload to Vercel Blob
     const publicUrl = await uploadToStorage(
       optimizedResult.buffer,
       storagePath,

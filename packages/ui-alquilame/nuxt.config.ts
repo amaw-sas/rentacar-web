@@ -576,7 +576,7 @@ export default defineNuxtConfig({
         '/gana',
         '/gana/terminos-condiciones',
         '/gana/politicas-privacidad',
-        // Blog — SSR (not prerendered: content comes from Firebase Storage at runtime)
+        // Blog — SSR (not prerendered: content comes from Vercel Blob at runtime)
       ]
     }
   },
