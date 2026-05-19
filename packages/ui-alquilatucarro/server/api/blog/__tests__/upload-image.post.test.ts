@@ -21,7 +21,7 @@ vi.mock('~/server/utils/image-optimizer', () => ({
 }))
 
 // Mock firebase storage
-vi.mock('~/server/utils/firebase-storage', () => ({
+vi.mock('~/server/utils/blob-storage', () => ({
   uploadToStorage: (...args: any[]) => mockUploadToStorage(...args)
 }))
 

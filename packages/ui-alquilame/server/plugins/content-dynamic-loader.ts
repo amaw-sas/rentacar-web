@@ -1,4 +1,4 @@
-import { downloadFromStorage, listFilesInStorage } from '../utils/firebase-storage'
+import { downloadFromStorage, listFilesInStorage } from '../utils/blob-storage'
 import { logger } from '../utils/logger'
 
 const cache = {

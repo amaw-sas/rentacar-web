@@ -1,4 +1,4 @@
-import { listFilesInStorage } from '../../utils/firebase-storage'
+import { listFilesInStorage } from '../../utils/blob-storage'
 
 /**
  * GET /api/blog/debug

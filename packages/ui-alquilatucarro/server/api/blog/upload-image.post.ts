@@ -2,7 +2,7 @@ import { defineEventHandler, readMultipartFormData } from 'h3'
 import sharp from 'sharp'
 import { createHash } from 'crypto'
 import { optimizeImage } from '../../utils/image-optimizer'
-import { uploadToStorage } from '../../utils/firebase-storage'
+import { uploadToStorage } from '../../utils/blob-storage'
 import { logger } from '../../utils/logger'
 import { BlogApiError, handleBlogApiError } from '../../utils/error-handler'
 

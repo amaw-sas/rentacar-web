@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody } from 'h3'
 import { transformWordPressToNuxt, type WordPressPost } from '../../utils/wordpress-to-nuxt'
-import { uploadToStorage } from '../../utils/firebase-storage'
+import { uploadToStorage } from '../../utils/blob-storage'
 import { logger } from '../../utils/logger'
 import { handleBlogApiError, BlogApiError } from '../../utils/error-handler'
 
