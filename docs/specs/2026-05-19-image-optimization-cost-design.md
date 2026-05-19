@@ -91,13 +91,27 @@ collapsing repeated STALE re-billing of the same variant.
 
 ## Open verification point (mostly closable at build; one true deploy gate)
 
+Deployment note: no `ui-*/nuxt.config.ts` sets an explicit Nitro
+`preset`. In production Vercel auto-selects the Nitro **vercel** preset via
+`VERCEL=1` in its CI. Locally a bare `nuxt build` defaults to the
+`node-server` preset and emits `.output/`, NOT `.vercel/output/config.json`.
+
 Two distinct risks, deliberately separated:
 
-1. **Build-time (SCEN-008a, locally closable):** does the Nitro Vercel
-   preset emit our `images` config into `.vercel/output/config.json`?
-   Run `nuxt build` and inspect the artifact — no deploy needed. Catches
-   the Nitro-override risk early. Plan B if absent: move config to
-   `nitro.vercel.config.images` in `nuxt.config.ts`, rebuild, re-check.
+1. **Build-time (SCEN-008a, locally closable WITH the preset forced):**
+   does the Nitro Vercel preset emit our `images` config into
+   `.vercel/output/config.json`? Closable locally only by forcing the
+   preset, not via bare `nuxt build`:
+   ```
+   NITRO_PRESET=vercel pnpm --filter ui-alquilatucarro build
+   # then inspect packages/ui-alquilatucarro/.vercel/output/config.json
+   ```
+   Preconditions: `pnpm install` done in the worktree, and a `.env.prod`
+   present (the brand build script is `nuxt build --dotenv ../../.env.prod`)
+   or the `--dotenv` path overridden. No live deploy needed. Catches the
+   Nitro-override risk early. Plan B if the `images` block is absent: move
+   config to `nitro.vercel.config.images` in `nuxt.config.ts`, rebuild,
+   re-check.
 2. **Runtime (SCEN-008b, genuine deploy gate):** does the live optimizer
    actually serve webp-only with the long TTL? Only a preview deploy proves
    it:
@@ -108,16 +122,21 @@ Two distinct risks, deliberately separated:
    Expect `content-type: image/webp` and `cache-control: …max-age=2678400…`.
 
 The `image.vercel.formats` lever (Change §5) is independently observable in
-the resolved Nuxt config (SCEN-006) with no build or deploy — it constrains
-what `@nuxt/image` requests regardless of the optimizer-side config.
+the resolved Nuxt config (SCEN-006) without a production build or deploy
+(assert via `loadNuxtConfig` / the merged resolved config — needs deps
+installed, but no `nuxt build`). It constrains what `@nuxt/image` requests
+regardless of the optimizer-side config.
 
 ## Blast radius
 
-~13 files: 3× `blob-storage.ts`, 3× `upload-image.post.ts`, 3× `vercel.json`
-(new), 3× `nuxt.config.ts`. Consumers: blog image render
-(`NuxtImg :src="featuredPost.image"`), storage unit suite (put-args
-assertion), upload-image suite. `wordpress-sync` is a regression guard
-(must stay default).
+~13 files: 3× `server/utils/blob-storage.ts`, 3×
+`server/api/blog/upload-image.post.ts`, 3× `vercel.json` (new), 3×
+`nuxt.config.ts`. Consumers: blog image render
+(`NuxtImg :src="featuredPost.image"`), storage suite
+`server/utils/__tests__/vercel-blob-storage.test.ts` (put-args assertion),
+`server/api/blog/__tests__/upload-image.post.test.ts`.
+`server/api/blog/wordpress-sync.post.ts` + its test are a regression guard
+(must stay on the Blob default — no `cacheControlMaxAge`).
 
 ## Error handling
 
@@ -128,12 +147,14 @@ the source (404), caught by scenario 7.
 
 ## Testing strategy
 
-Unit (Vitest, mock `@vercel/blob`): SCEN-001–004. JSON parse + compiled-regex
-match/no-match: SCEN-005. Resolved Nuxt config assertion: SCEN-006. Existing
-suites delta-vs-baseline: SCEN-007. `nuxt build` + `.vercel/output/config.json`
-inspection: SCEN-008a (locally closable, catches Nitro override). Deploy-gate
-curl: SCEN-008b (INSUFFICIENT until preview deploy — the only scenario
-explicitly out of local/CI closure).
+Unit (Vitest, mock `@vercel/blob`): SCEN-001–004. JSON parse + JS-regex
+match/no-match: SCEN-005. `loadNuxtConfig` resolved-config assertion:
+SCEN-006. Existing suites delta-vs-baseline (`vercel-blob-storage.test.ts`,
+`upload-image.post.test.ts`, `wordpress-sync.post.test.ts`): SCEN-007.
+Forced-preset build (`NITRO_PRESET=vercel`) + `.vercel/output/config.json`
+inspection: SCEN-008a (locally closable with preconditions, catches Nitro
+override). Deploy-gate curl: SCEN-008b (INSUFFICIENT until preview deploy —
+the only scenario explicitly out of local/CI closure).
 
 ## Observable scenarios (SDD holdout)
 
@@ -149,22 +170,32 @@ explicitly out of local/CI closure).
   `images` = `{minimumCacheTTL:2678400, qualities:[80],
   formats:['image/webp'], remotePatterns:[{protocol:'https',
   hostname:'^[a-z0-9-]+\\.public\\.blob\\.vercel-storage\\.com$'}]}`. The
-  hostname regex, compiled, matches a real Blob host
+  hostname regex, compiled with `new RegExp()`, matches a real Blob host
   (`abc123.public.blob.vercel-storage.com`) and rejects a foreign host
-  (`evil.com`). Evidence: JSON.parse + deep assertion + `new RegExp()`
-  match/no-match test.
+  (`evil.com`). Evidence: JSON.parse + deep assertion + JS-regex
+  match/no-match test. Note: this validates the pattern's *intent* in the
+  JS engine; Vercel compiles `hostname` server-side (Go RE2), so true
+  matcher behavior is covered by SCEN-008b (runtime 200/404), not here.
 - **SCEN-006** `image.vercel.formats` resolves to `['image/webp']` in each
-  brand's Nuxt config (locally observable — the only-webp lever that does
-  NOT need a deploy). Evidence: assert the value in the loaded
-  `nuxt.config.ts` `image.vercel.formats`.
+  brand's merged Nuxt config — the only-webp lever observable without a
+  production build or deploy. Evidence: `loadNuxtConfig` (or equivalent
+  resolved-config read) asserting `image.vercel.formats` per brand.
+  Precondition: deps installed.
 - **SCEN-007** storage + blog endpoint suites pass ≥ baseline (no test
-  weakened). Evidence: vitest output baseline vs post.
-- **SCEN-008a** (locally closable) after `nuxt build` (Vercel preset), the
-  generated `.vercel/output/config.json` contains an `images` block with
-  `minimumCacheTTL:2678400` and `formats:['image/webp']` (proves whether
-  Nitro emitted/honored our config without a live deploy). Evidence: build,
-  then read `.vercel/output/config.json`. If Nitro does NOT include it →
-  trigger Plan B (move to `nitro.vercel.config.images`) and re-run.
+  weakened). Suites: `server/utils/__tests__/vercel-blob-storage.test.ts`,
+  `server/api/blog/__tests__/upload-image.post.test.ts`,
+  `server/api/blog/__tests__/wordpress-sync.post.test.ts` (alquilatucarro).
+  Evidence: vitest output baseline vs post.
+- **SCEN-008a** (locally closable only with the preset forced) running
+  `NITRO_PRESET=vercel pnpm --filter ui-{brand} build` (preconditions:
+  `pnpm install` done, `.env.prod` present or `--dotenv` overridden)
+  produces `packages/ui-{brand}/.vercel/output/config.json` containing an
+  `images` block with `minimumCacheTTL:2678400` and
+  `formats:['image/webp']`. Bare `nuxt build` (node-server preset) does NOT
+  emit this file — not a valid path for this scenario. Evidence: forced-
+  preset build, then read `.vercel/output/config.json`. If the `images`
+  block is absent → Plan B (move to `nitro.vercel.config.images`), rebuild,
+  re-check.
 - **SCEN-008b** (deploy gate — genuinely not local) preview
   `/_vercel/image?url=<blob>&w=640&q=80` with `Accept: image/avif` →
   `content-type: image/webp` and `cache-control` `max-age≥2678400`.
