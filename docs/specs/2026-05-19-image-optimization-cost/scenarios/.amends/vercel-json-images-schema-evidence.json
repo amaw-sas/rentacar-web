@@ -1,0 +1,15 @@
+{
+  "source": "https://openapi.vercel.sh/vercel.json",
+  "required": [
+    "sizes"
+  ],
+  "sizes": {
+    "type": "array",
+    "minItems": 1,
+    "maxItems": 50,
+    "items": {
+      "type": "number"
+    }
+  },
+  "deploy_error": "vercel.json schema validation failed: `images` missing required property `sizes`"
+}
