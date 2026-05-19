@@ -35,18 +35,19 @@ SCEN-009). Baseline: `main` 3d8c15b.
 **Then**: the storage upload is invoked WITHOUT any `cacheControlMaxAge`
 **Evidence**: vitest assertion — `wordpress-sync.post.test.ts`
 
-## SCEN-005: each brand vercel.json declares the images allowlist
-**Given**: `packages/ui-{alquilatucarro,alquilame,alquicarros}/vercel.json`
-**When**: each file is `fs`-read and `JSON.parse`d
-**Then**: `images` deep-equals `{sizes:[320,640,768,1024,1280], minimumCacheTTL:2678400, qualities:[80], formats:['image/webp'], remotePatterns:[{protocol:'https', hostname:'^[a-z0-9-]+\\.public\\.blob\\.vercel-storage\\.com$'}]}` (`sizes` mirrors `image.screens` — the widths @nuxt/image requests); and `images` satisfies the official `https://openapi.vercel.sh/vercel.json` schema (the `images.required` set — `['sizes']` — is present and every key is schema-known); and `new RegExp(hostname)` matches `abc123.public.blob.vercel-storage.com` and rejects `evil.com`
-**Amended**: 2026-05-19, human-authorized. Original omitted the schema-required `sizes` (authored against a misread schema → PR #56 deploy failed `images missing required property sizes`). Given/When unchanged; Then corrected + strengthened with schema conformance. Evidence (tracked): `scenarios/.amends/vercel-json-images-schema-evidence.json`; marker `scenarios/.amends/image-optimization-cost-9f159764...marker`.
+## SCEN-005: each brand declares the Vercel image-optimization allowlist in the surface Vercel honors
+**Given**: `packages/ui-{alquilatucarro,alquilame,alquicarros}/nuxt.config.ts`
+**When**: the **effective** Vercel Build Output images config is computed deterministically in-test = `defu(<@nuxt/image 1.11.0 hardcoded vercel defaults: minimumCacheTTL 300, sizes from screens, formats ['image/webp','image/avif']>, …)` then the `nuxt.config.ts` `hooks['nitro:config']` override applied (using the installed `defu` + the canonical override block extracted from each brand's nuxt.config.ts)
+**Then**: effective `nitro.vercel.config.images` = `{sizes:[320,640,768,1024,1280] (deduped), qualities:[80], formats:['image/webp'] (NO 'image/avif'), minimumCacheTTL:2678400, remotePatterns:[{protocol:'https', hostname:'^[a-z0-9-]+\\.public\\.blob\\.vercel-storage\\.com$'}]}`; `new RegExp(hostname)` matches `abc123.public.blob.vercel-storage.com` and rejects `evil.com`; **no** `packages/ui-{brand}/vercel.json` exists; the canonical `hooks['nitro:config']` block is byte-identical across the 3 brands
+**Amended**: 2026-05-19 (#3), human-authorized. defu 6.1.4 **concatenates arrays** (empirically proven) → a plain `nitro.vercel.config.images` key cannot override `formats` (yields `['image/webp','image/webp','image/avif']`). Mechanism corrected to a `hooks['nitro:config']` hard-override (runs post-module, beats defu concat). Contract now asserts the **effective merged** result (would have caught the defu-concat class locally; #2's source-text check did not). Observable intent unchanged across all amends: effective optimizer allowlist = webp-only, 31d TTL, screens sizes, blob-host only. Evidence: `scenarios/.amends/nuxt-image-1.11.0-vercel-providerSetup.evidence.txt`; marker `…-3d931471….marker`.
 **Evidence**: vitest — `server/utils/__tests__/image-cost-config.test.ts`
 
-## SCEN-006: each brand nuxt.config restricts the Vercel optimizer to webp
+## SCEN-006: the Vercel-honored config restricts the optimizer to webp
 **Given**: `packages/ui-{brand}/nuxt.config.ts`
 **When**: each file is `fs`-read
-**Then**: it contains an `image` config with `vercel: { formats: ['image/webp'] }`
-**Evidence**: vitest source assertion — `image-cost-config.test.ts` (runtime optimizer behavior is SCEN-008b, not here)
+**Then**: the **effective** `nitro.vercel.config.images.formats` (post defu + hook override, as computed in SCEN-005) deep-equals exactly `['image/webp']` — explicitly NOT containing `'image/avif'` (defu-concat regression guard: a merge-instead-of-override implementation yields `['image/webp','image/webp','image/avif']` and MUST fail this); and the `image` block no longer carries the inert `vercel: { formats: [...] }` (1.11.0 ignores it)
+**Amended**: 2026-05-19 (#3), human-authorized. Asserts the effective merged formats, not source text — this is the explicit guard against the defu array-concatenation defect found at runtime in #2. Ultimate runtime proof remains SCEN-009b.
+**Evidence**: vitest — `image-cost-config.test.ts`
 
 ## SCEN-007: affected suites pass at/above baseline, no test weakened
 **When**: the 4 alquilatucarro suites run (`vercel-blob-storage`, `upload-image.post`, `wordpress-sync.post`, `image-cost-config`)

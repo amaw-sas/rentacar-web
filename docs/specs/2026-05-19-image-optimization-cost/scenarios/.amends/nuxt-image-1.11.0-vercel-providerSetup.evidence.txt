@@ -1,0 +1,15 @@
+  // https://vercel.com/docs/build-output-api/v3/configuration#images
+  vercel(_providerOptions, moduleOptions, nuxt) {
+    nuxt.options.nitro = defu(nuxt.options.nitro, {
+      vercel: {
+        config: {
+          images: {
+            domains: moduleOptions.domains,
+            minimumCacheTTL: 60 * 5,
+            sizes: Array.from(new Set(Object.values(moduleOptions.screens || {}))),
+            formats: ["image/webp", "image/avif"]
+          }
+        }
+      }
+    });
+  },
