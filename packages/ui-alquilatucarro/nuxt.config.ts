@@ -436,6 +436,7 @@ export default defineNuxtConfig({
       lg: 1024,
       xl: 1280,
     },
+    vercel: { formats: ['image/webp'] },
   },
 
   // Optimización Core Web Vitals

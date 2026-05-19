@@ -71,7 +71,8 @@ export default defineEventHandler(async (event) => {
     const publicUrl = await uploadToStorage(
       optimizedResult.buffer,
       storagePath,
-      'image/webp'
+      'image/webp',
+      31536000
     )
 
     // Log metrics

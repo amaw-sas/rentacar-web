@@ -4,12 +4,19 @@
  */
 import { put, del, list, get } from '@vercel/blob'
 
-export async function uploadToStorage(data: Buffer, path: string, contentType: string): Promise<string> {
-  const blob = await put(path, data, {
-    access: 'public',
+export async function uploadToStorage(
+  data: Buffer,
+  path: string,
+  contentType: string,
+  cacheControlMaxAge?: number,
+): Promise<string> {
+  const options = {
+    access: 'public' as const,
     contentType,
     allowOverwrite: true,
-  })
+    ...(cacheControlMaxAge !== undefined ? { cacheControlMaxAge } : {}),
+  }
+  const blob = await put(path, data, options)
   return blob.url
 }
 
