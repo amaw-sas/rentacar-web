@@ -593,7 +593,7 @@ export default defineNuxtConfig({
         '/gana',
         '/gana/terminos-condiciones',
         '/gana/politicas-privacidad',
-        // Blog — SSR (not prerendered: content comes from Firebase Storage at runtime)
+        // Blog — SSR (not prerendered: content comes from Vercel Blob at runtime)
       ]
     }
   },
@@ -625,7 +625,7 @@ export default defineNuxtConfig({
       { loc: '/floridablanca', changefreq: 'monthly', priority: 0.8 },
       { loc: '/palmira', changefreq: 'monthly', priority: 0.8 },
       { loc: '/soledad', changefreq: 'monthly', priority: 0.8 },
-      // Blog — estáticas porque queryCollectionWithEvent falla en Firebase runtime
+      // Blog — estáticas porque queryCollectionWithEvent falla en runtime
       { loc: '/blog', changefreq: 'weekly', priority: 0.8 },
       { loc: '/blog/requisitos-alquilar-carro-colombia', changefreq: 'monthly', priority: 0.7 },
       { loc: '/blog/pico-y-placa-colombia-2026', changefreq: 'monthly', priority: 0.7 },

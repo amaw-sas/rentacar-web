@@ -300,7 +300,7 @@ function clearTag() {
   router.push({ query })
 }
 
-// Query all blog posts from Firebase Storage via API
+// Query all blog posts from Vercel Blob via API
 const { data: allPosts } = await useAsyncData('blog-posts', async () => {
   const result = await $fetch<{ success: boolean; posts: BlogPost[] }>('/api/blog/posts')
   return result?.posts ?? []

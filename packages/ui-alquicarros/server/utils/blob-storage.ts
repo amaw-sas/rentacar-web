@@ -1,12 +1,8 @@
 /**
- * Blog storage via Vercel Blob (replaces Firebase Storage stubs)
+ * Blog storage via Vercel Blob
  * Requires BLOB_READ_WRITE_TOKEN env var (auto-set by Vercel Blob integration)
  */
 import { put, del, list, get } from '@vercel/blob'
-
-export function getFirebaseApp() {
-  throw new Error('Firebase Admin is deprecated. Use Vercel Blob for storage.')
-}
 
 export async function uploadToStorage(data: Buffer, path: string, contentType: string): Promise<string> {
   const blob = await put(path, data, {

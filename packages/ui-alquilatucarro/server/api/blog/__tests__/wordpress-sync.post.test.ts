@@ -18,7 +18,7 @@ vi.mock('~/server/utils/wordpress-to-nuxt', () => ({
   transformWordPressToNuxt: vi.fn()
 }))
 
-vi.mock('~/server/utils/firebase-storage', () => ({
+vi.mock('~/server/utils/blob-storage', () => ({
   uploadToStorage: vi.fn()
 }))
 
@@ -73,7 +73,7 @@ vi.stubGlobal('useRuntimeConfig', vi.fn(() => ({
 // Import handler after mocks
 import handler from '../wordpress-sync.post'
 import { transformWordPressToNuxt } from '~/server/utils/wordpress-to-nuxt'
-import { uploadToStorage } from '~/server/utils/firebase-storage'
+import { uploadToStorage } from '~/server/utils/blob-storage'
 import { logger } from '~/server/utils/logger'
 import { handleBlogApiError } from '~/server/utils/error-handler'
 import { readBody } from 'h3'

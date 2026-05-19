@@ -5,18 +5,16 @@ import type { H3Event } from 'h3'
 const mockGetRouterParam = vi.fn()
 const mockDefineEventHandler = vi.fn((handler) => handler)
 const mockUseRuntimeConfig = vi.fn(() => ({
-  public: { rentacarFranchise: 'alquilatucarro' },
-  firebaseStorageBucket: 'test-bucket.appspot.com'
+  public: { rentacarFranchise: 'alquilatucarro' }
 }))
 global.getRouterParam = mockGetRouterParam as any
 global.defineEventHandler = mockDefineEventHandler as any
 global.useRuntimeConfig = mockUseRuntimeConfig as any
 
-// Mock firebase-storage
+// Mock blob-storage
 const mockDownloadFromStorage = vi.fn()
 const mockDeleteFromStorage = vi.fn()
-vi.mock('../../../../utils/firebase-storage', () => ({
-  getFirebaseApp: vi.fn(() => ({})),
+vi.mock('../../../../utils/blob-storage', () => ({
   downloadFromStorage: (...args: any[]) => mockDownloadFromStorage(...args),
   deleteFromStorage: (...args: any[]) => mockDeleteFromStorage(...args),
 }))

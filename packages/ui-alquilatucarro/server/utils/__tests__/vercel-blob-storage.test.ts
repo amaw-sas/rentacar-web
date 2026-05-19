@@ -13,7 +13,7 @@ vi.mock('@vercel/blob', () => ({
   list: (...args: any[]) => mockList(...args),
 }))
 
-describe('Vercel Blob storage (firebase-storage.ts)', () => {
+describe('Vercel Blob storage (blob-storage.ts)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
@@ -26,7 +26,7 @@ describe('Vercel Blob storage (firebase-storage.ts)', () => {
         pathname: 'blog-images/featured/test.webp',
       })
 
-      const { uploadToStorage } = await import('../firebase-storage')
+      const { uploadToStorage } = await import('../blob-storage')
       const buffer = Buffer.from('test image data')
       const result = await uploadToStorage(buffer, 'blog-images/featured/test.webp', 'image/webp')
 
@@ -50,7 +50,7 @@ describe('Vercel Blob storage (firebase-storage.ts)', () => {
       })
       mockGet.mockResolvedValue({ stream, blob: { pathname: 'test.md' } })
 
-      const { downloadFromStorage } = await import('../firebase-storage')
+      const { downloadFromStorage } = await import('../blob-storage')
       const result = await downloadFromStorage('blog-posts/brand/test.md')
 
       expect(result.toString('utf-8')).toBe('# Test markdown')
@@ -60,7 +60,7 @@ describe('Vercel Blob storage (firebase-storage.ts)', () => {
     it('throws when blob not found', async () => {
       mockGet.mockResolvedValue(null)
 
-      const { downloadFromStorage } = await import('../firebase-storage')
+      const { downloadFromStorage } = await import('../blob-storage')
       await expect(downloadFromStorage('nonexistent.md')).rejects.toThrow('Blob not found')
     })
   })
@@ -69,7 +69,7 @@ describe('Vercel Blob storage (firebase-storage.ts)', () => {
     it('deletes by path or URL', async () => {
       mockDel.mockResolvedValue(undefined)
 
-      const { deleteFromStorage } = await import('../firebase-storage')
+      const { deleteFromStorage } = await import('../blob-storage')
       await deleteFromStorage('blog-posts/brand/test.md')
 
       expect(mockDel).toHaveBeenCalledWith('blog-posts/brand/test.md')
@@ -86,7 +86,7 @@ describe('Vercel Blob storage (firebase-storage.ts)', () => {
         hasMore: false,
       })
 
-      const { listFilesInStorage } = await import('../firebase-storage')
+      const { listFilesInStorage } = await import('../blob-storage')
       const result = await listFilesInStorage('blog-posts/brand/')
 
       expect(result).toEqual(['blog-posts/brand/post-1.md', 'blog-posts/brand/post-2.md'])
@@ -105,7 +105,7 @@ describe('Vercel Blob storage (firebase-storage.ts)', () => {
           hasMore: false,
         })
 
-      const { listFilesInStorage } = await import('../firebase-storage')
+      const { listFilesInStorage } = await import('../blob-storage')
       const result = await listFilesInStorage('blog-posts/brand/')
 
       expect(result).toEqual(['blog-posts/brand/post-1.md', 'blog-posts/brand/post-2.md'])
@@ -115,7 +115,7 @@ describe('Vercel Blob storage (firebase-storage.ts)', () => {
     it('returns empty array when no blobs', async () => {
       mockList.mockResolvedValue({ blobs: [], hasMore: false })
 
-      const { listFilesInStorage } = await import('../firebase-storage')
+      const { listFilesInStorage } = await import('../blob-storage')
       const result = await listFilesInStorage('blog-posts/brand/')
 
       expect(result).toEqual([])

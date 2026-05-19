@@ -2,7 +2,7 @@ import { defineEventHandler, readMultipartFormData } from 'h3'
 import sharp from 'sharp'
 import { createHash } from 'crypto'
 import { optimizeImage } from '../../utils/image-optimizer'
-import { uploadToStorage } from '../../utils/firebase-storage'
+import { uploadToStorage } from '../../utils/blob-storage'
 import { logger } from '../../utils/logger'
 import { BlogApiError, handleBlogApiError } from '../../utils/error-handler'
 
@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
     const filename = `${timestamp}-${hash}.webp`
     const storagePath = `blog-images/${type}/${filename}`
 
-    // Upload to Firebase Storage
+    // Upload to Vercel Blob
     const publicUrl = await uploadToStorage(
       optimizedResult.buffer,
       storagePath,

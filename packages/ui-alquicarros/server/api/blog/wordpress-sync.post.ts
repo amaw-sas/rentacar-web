@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody } from 'h3'
 import { transformWordPressToNuxt, type WordPressPost } from '../../utils/wordpress-to-nuxt'
-import { uploadToStorage } from '../../utils/firebase-storage'
+import { uploadToStorage } from '../../utils/blob-storage'
 import { logger } from '../../utils/logger'
 import { handleBlogApiError, BlogApiError } from '../../utils/error-handler'
 
@@ -8,7 +8,7 @@ import { handleBlogApiError, BlogApiError } from '../../utils/error-handler'
  * POST /api/blog/wordpress-sync
  *
  * Receives WordPress REST API payload and transforms it to Nuxt Content format.
- * Stores the result as markdown file in Firebase Storage.
+ * Stores the result as markdown file in Vercel Blob.
  *
  * Request body: WordPress REST API post object
  * Response: { success, filename, path, size }
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
     const markdownContent = `${nuxtPost.frontmatter}\n\n${nuxtPost.body}`
     const markdownBuffer = Buffer.from(markdownContent, 'utf-8')
 
-    // Upload to Firebase Storage (brand-scoped path)
+    // Upload to Vercel Blob (brand-scoped path)
     const franchise = useRuntimeConfig().public.rentacarFranchise
     const storagePath = `blog-posts/${franchise}/${nuxtPost.slug}.md`
     await uploadToStorage(

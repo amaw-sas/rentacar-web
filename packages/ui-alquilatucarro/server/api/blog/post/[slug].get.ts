@@ -6,7 +6,7 @@ import { handleBlogApiError, BlogApiError } from '../../../utils/error-handler'
 /**
  * GET /api/blog/post/:slug
  *
- * Public endpoint. Serves a single blog post from Firebase Storage cache,
+ * Public endpoint. Serves a single blog post from Vercel Blob cache,
  * parsed as a Nuxt Content-compatible document for ContentRenderer.
  */
 export default defineEventHandler(async (event) => {

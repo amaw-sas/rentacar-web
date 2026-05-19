@@ -1,4 +1,4 @@
-import { downloadFromStorage, deleteFromStorage } from '../../../utils/firebase-storage'
+import { downloadFromStorage, deleteFromStorage } from '../../../utils/blob-storage'
 import { invalidateCache } from '../../../plugins/content-dynamic-loader'
 import { logger } from '../../../utils/logger'
 import { BlogApiError, handleBlogApiError } from '../../../utils/error-handler'
