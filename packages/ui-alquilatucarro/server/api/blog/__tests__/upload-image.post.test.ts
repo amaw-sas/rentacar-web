@@ -97,7 +97,8 @@ describe('POST /api/blog/upload-image', () => {
       expect(mockUploadToStorage).toHaveBeenCalledWith(
         expect.any(Buffer),
         expect.stringMatching(/^blog-images\/featured\/\d+-[a-z0-9]+\.webp$/),
-        'image/webp'
+        'image/webp',
+        31536000
       )
       expect(result).toEqual({
         success: true,
@@ -126,7 +127,8 @@ describe('POST /api/blog/upload-image', () => {
       expect(mockUploadToStorage).toHaveBeenCalledWith(
         expect.any(Buffer),
         expect.stringMatching(/^blog-images\/content\/\d+-[a-z0-9]+\.webp$/),
-        'image/webp'
+        'image/webp',
+        31536000
       )
       expect(result).toMatchObject({
         success: true,
@@ -150,7 +152,8 @@ describe('POST /api/blog/upload-image', () => {
       expect(mockUploadToStorage).toHaveBeenCalledWith(
         expect.any(Buffer),
         expect.stringMatching(/^blog-images\/content\//),
-        'image/webp'
+        'image/webp',
+        31536000
       )
     })
 
@@ -171,6 +174,21 @@ describe('POST /api/blog/upload-image', () => {
 
       // Should match pattern: blog-images/{type}/{timestamp}-{hash}.webp
       expect(storagePath).toMatch(/^blog-images\/(featured|content)\/\d+-[a-f0-9]{8}\.webp$/)
+    })
+
+    it('should upload image with 1-year cacheControlMaxAge (SCEN-003)', async () => {
+      const imageBuffer = Buffer.from('test-image-data')
+      const formData = [
+        { name: 'file', data: imageBuffer }
+      ]
+
+      mockReadMultipartFormData.mockResolvedValue(formData)
+
+      const event = { mockEvent: true }
+      await handler(event)
+
+      const uploadCall = mockUploadToStorage.mock.calls[0]
+      expect(uploadCall[3]).toBe(31536000)
     })
   })
 

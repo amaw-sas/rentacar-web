@@ -519,6 +519,27 @@ export default defineNuxtConfig({
     }
   },
 
+  hooks: {
+    // @nuxt/image 1.11.0 hardcodes Vercel Build Output images.formats to
+    // ['image/webp','image/avif'] and merges via defu (which CONCATENATES
+    // arrays). A plain nitro.vercel.config.images cannot override it. This
+    // post-module hook hard-assigns the authoritative block so the Vercel
+    // optimizer serves webp-only with our cache/size/host allowlist.
+    'nitro:config'(nitroConfig: { vercel?: { config?: { images?: unknown } } }) {
+      nitroConfig.vercel = nitroConfig.vercel || {}
+      nitroConfig.vercel.config = nitroConfig.vercel.config || {}
+      nitroConfig.vercel.config.images = {
+        sizes: [320, 640, 768, 1024, 1280],
+        qualities: [80],
+        formats: ['image/webp'],
+        minimumCacheTTL: 2678400,
+        remotePatterns: [
+          { protocol: 'https', hostname: '^[a-z0-9-]+\\.public\\.blob\\.vercel-storage\\.com$' },
+        ],
+      }
+    },
+  },
+
   nitro: {
     esbuild: {
       options: {

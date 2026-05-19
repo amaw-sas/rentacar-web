@@ -37,6 +37,34 @@ describe('Vercel Blob storage (blob-storage.ts)', () => {
         allowOverwrite: true,
       })
     })
+
+    it('forwards cacheControlMaxAge to put when provided (SCEN-001)', async () => {
+      mockPut.mockResolvedValue({
+        url: 'https://xxx.public.blob.vercel-storage.com/blog-images/featured/test.webp',
+        pathname: 'blog-images/featured/test.webp',
+      })
+
+      const { uploadToStorage } = await import('../blob-storage')
+      const buffer = Buffer.from('test image data')
+      await uploadToStorage(buffer, 'blog-images/featured/test.webp', 'image/webp', 31536000)
+
+      const options = mockPut.mock.calls[0][2]
+      expect(options).toMatchObject({ cacheControlMaxAge: 31536000 })
+    })
+
+    it('omits cacheControlMaxAge key when not provided (SCEN-002)', async () => {
+      mockPut.mockResolvedValue({
+        url: 'https://xxx.public.blob.vercel-storage.com/blog-posts/brand/test.md',
+        pathname: 'blog-posts/brand/test.md',
+      })
+
+      const { uploadToStorage } = await import('../blob-storage')
+      const buffer = Buffer.from('# markdown')
+      await uploadToStorage(buffer, 'blog-posts/brand/test.md', 'text/markdown')
+
+      const options = mockPut.mock.calls[0][2]
+      expect(Object.prototype.hasOwnProperty.call(options, 'cacheControlMaxAge')).toBe(false)
+    })
   })
 
   describe('downloadFromStorage', () => {

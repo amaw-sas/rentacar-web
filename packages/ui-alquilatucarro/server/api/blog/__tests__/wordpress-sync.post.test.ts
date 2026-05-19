@@ -250,6 +250,24 @@ describe('POST /api/blog/wordpress-sync', () => {
     expect(uploadCall[2]).toBe('text/markdown')
   })
 
+  it('should upload .md WITHOUT any cacheControlMaxAge (SCEN-004 regression)', async () => {
+    // Arrange
+    vi.mocked(transformWordPressToNuxt).mockReturnValue(mockNuxtPost)
+    vi.mocked(uploadToStorage).mockResolvedValue('https://storage.googleapis.com/bucket/blog-posts/test-post-title.md')
+    vi.mocked(readBody).mockResolvedValue(mockWordPressPost)
+
+    const event = {
+      node: { req: {}, res: {} }
+    } as any
+
+    // Act
+    await handler(event)
+
+    // Assert: storage call must carry no TTL arg (Blob default preserved for .md)
+    const uploadCall = vi.mocked(uploadToStorage).mock.calls[0]
+    expect(uploadCall[3]).toBeUndefined()
+  })
+
   it('should generate markdown with frontmatter and body', async () => {
     // Arrange
     vi.mocked(transformWordPressToNuxt).mockReturnValue(mockNuxtPost)
