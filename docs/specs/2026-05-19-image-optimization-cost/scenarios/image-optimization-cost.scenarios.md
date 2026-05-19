@@ -38,7 +38,8 @@ SCEN-009). Baseline: `main` 3d8c15b.
 ## SCEN-005: each brand vercel.json declares the images allowlist
 **Given**: `packages/ui-{alquilatucarro,alquilame,alquicarros}/vercel.json`
 **When**: each file is `fs`-read and `JSON.parse`d
-**Then**: `images` deep-equals `{minimumCacheTTL:2678400, qualities:[80], formats:['image/webp'], remotePatterns:[{protocol:'https', hostname:'^[a-z0-9-]+\\.public\\.blob\\.vercel-storage\\.com$'}]}`; and `new RegExp(hostname)` matches `abc123.public.blob.vercel-storage.com` and rejects `evil.com`
+**Then**: `images` deep-equals `{sizes:[320,640,768,1024,1280], minimumCacheTTL:2678400, qualities:[80], formats:['image/webp'], remotePatterns:[{protocol:'https', hostname:'^[a-z0-9-]+\\.public\\.blob\\.vercel-storage\\.com$'}]}` (`sizes` mirrors `image.screens` — the widths @nuxt/image requests); and `images` satisfies the official `https://openapi.vercel.sh/vercel.json` schema (the `images.required` set — `['sizes']` — is present and every key is schema-known); and `new RegExp(hostname)` matches `abc123.public.blob.vercel-storage.com` and rejects `evil.com`
+**Amended**: 2026-05-19, human-authorized. Original omitted the schema-required `sizes` (authored against a misread schema → PR #56 deploy failed `images missing required property sizes`). Given/When unchanged; Then corrected + strengthened with schema conformance. Evidence: `.research/vercel-json-images-schema-evidence.json`; marker `scenarios/.amends/image-optimization-cost-9f159764...marker`.
 **Evidence**: vitest — `server/utils/__tests__/image-cost-config.test.ts`
 
 ## SCEN-006: each brand nuxt.config restricts the Vercel optimizer to webp

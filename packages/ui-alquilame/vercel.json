@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "images": {
+    "sizes": [320, 640, 768, 1024, 1280],
     "minimumCacheTTL": 2678400,
     "qualities": [80],
     "formats": ["image/webp"],

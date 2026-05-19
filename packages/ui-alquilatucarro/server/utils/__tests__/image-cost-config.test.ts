@@ -10,6 +10,7 @@ const packagesDir = resolve(here, '../../../..')
 const BRANDS = ['ui-alquilatucarro', 'ui-alquilame', 'ui-alquicarros'] as const
 
 const EXPECTED_IMAGES = {
+  sizes: [320, 640, 768, 1024, 1280],
   minimumCacheTTL: 2678400,
   qualities: [80],
   formats: ['image/webp'],
@@ -19,6 +20,22 @@ const EXPECTED_IMAGES = {
       hostname: '^[a-z0-9-]+\\.public\\.blob\\.vercel-storage\\.com$',
     },
   ],
+}
+
+// vercel.json schema (https://openapi.vercel.sh/vercel.json) images object:
+// required = ['sizes']; additionalProperties:false over this known key set.
+const IMAGES_REQUIRED = ['sizes'] as const
+const IMAGES_KNOWN_KEYS = new Set([
+  'sizes', 'domains', 'remotePatterns', 'localPatterns', 'qualities',
+  'minimumCacheTTL', 'formats', 'dangerouslyAllowSVG',
+  'contentSecurityPolicy', 'contentDispositionType',
+])
+
+// The widths @nuxt/image requests come solely from image.screens; sizes must
+// mirror them or the optimizer 404s those widths.
+function screenWidths(nuxtConfigSrc: string): number[] {
+  const block = nuxtConfigSrc.match(/screens:\s*\{([^}]*)\}/)?.[1] ?? ''
+  return [...block.matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1])).sort((a, b) => a - b)
 }
 
 describe('SCEN-005: each brand vercel.json declares the images allowlist', () => {
@@ -35,6 +52,26 @@ describe('SCEN-005: each brand vercel.json declares the images allowlist', () =>
       const re = new RegExp(json.images.remotePatterns[0].hostname)
       expect(re.test('abc123.public.blob.vercel-storage.com')).toBe(true)
       expect(re.test('evil.com')).toBe(false)
+    })
+
+    it(`${brand}/vercel.json images conforms to the official vercel.json schema`, () => {
+      const json = JSON.parse(readFileSync(resolve(packagesDir, brand, 'vercel.json'), 'utf-8'))
+      const images = json.images
+      // schema required: every key in IMAGES_REQUIRED must be present
+      for (const key of IMAGES_REQUIRED) {
+        expect(images, `images missing required property '${key}'`).toHaveProperty(key)
+      }
+      // schema additionalProperties:false — no unknown keys
+      for (const key of Object.keys(images)) {
+        expect(IMAGES_KNOWN_KEYS.has(key), `unknown images key '${key}'`).toBe(true)
+      }
+      // sizes: non-empty number array (schema: minItems 1, items number)
+      expect(Array.isArray(images.sizes)).toBe(true)
+      expect(images.sizes.length).toBeGreaterThanOrEqual(1)
+      expect(images.sizes.every((n: unknown) => typeof n === 'number')).toBe(true)
+      // sizes must mirror the widths @nuxt/image requests (image.screens)
+      const screens = screenWidths(readFileSync(resolve(packagesDir, brand, 'nuxt.config.ts'), 'utf-8'))
+      expect([...images.sizes].sort((a: number, b: number) => a - b)).toEqual(screens)
     })
   }
 })

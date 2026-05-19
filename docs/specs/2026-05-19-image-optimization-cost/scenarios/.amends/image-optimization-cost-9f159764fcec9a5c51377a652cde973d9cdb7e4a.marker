@@ -1,0 +1,1 @@
+human-authorized amend (interactive). SCEN-005 corrected vs authoritative https://openapi.vercel.sh/vercel.json images.required=['sizes']. Evidence: .research/vercel-json-images-schema-evidence.json. base_head=9f159764 base_file_sha256=fd08ed0a8fda89ecf402da665e01711d31d2b4baa0fe0e50fea4477aada058df
