@@ -63,7 +63,8 @@ Nuxt 4 (monorepo, 3 marcas)
 - `cities.config.ts` → query Supabase (pendiente)
 - `categories.config.ts` → query Supabase (pendiente — ojo: nombre real del archivo pendiente, los datos ya vienen de `vehicle_categories` vía `useFetchRentacarData`)
 - `tarifas.config.ts` → query Supabase (pendiente; periodo vencido en hardcode actual)
-- Mantener hardcodeados: `faqs.config.ts`, `organization.config.ts`, `ui.config.ts`. ~~`admin.config.ts`~~ borrado: `adminDataConfig` no tenía consumers y duplicaba datos hoy provistos por Supabase.
+- ~~`faqs.config.ts`~~ → migrado a tabla `faqs` en Supabase vía `useFetchRentacarData` (#12, ver `docs/specs/2026-05-06-faqs-supabase-migration-design.md`). Revoca decisión original de "mantener hardcoded" — la directiva del usuario es evitar islas de información.
+- Mantener hardcodeados: `organization.config.ts`, `ui.config.ts`. ~~`admin.config.ts`~~ borrado: `adminDataConfig` no tenía consumers y duplicaba datos hoy provistos por Supabase.
 - ISR garantiza rendimiento SEO equivalente al hardcode
 
 ### Fase 5: Actualizar CI/CD
@@ -91,12 +92,11 @@ Nuxt 4 (monorepo, 3 marcas)
 - Layouts, middleware de cliente, plugins
 - SEO: schema.org, meta tags, sitemap
 - Playwright + Vitest
-- `faqs.config.ts`, `organization.config.ts`, `ui.config.ts`
+- `organization.config.ts`, `ui.config.ts` (`faqs.config.ts` migrado a Supabase vía #12)
 
 ## Mejoras futuras (fuera de scope)
 
 - Query directo a Supabase para disponibilidad/reservas (bypass API rentacar-dashboard)
-- Dinamización de FAQs si directiva lo aprueba
 
 ## Verificación
 

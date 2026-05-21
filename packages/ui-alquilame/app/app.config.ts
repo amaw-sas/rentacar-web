@@ -8,7 +8,6 @@ import {
   defaultConfig,
   uiConfig,
   organizationConfig,
-  faqsConfig,
 } from '@rentacar-main/logic/src'
 
 export default defineAppConfig({
@@ -78,6 +77,4 @@ export default defineAppConfig({
     ],
   },
 
-  // Shared FAQs (generic car rental information)
-  faqs: faqsConfig,
 })

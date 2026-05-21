@@ -266,7 +266,8 @@ import {
   IconsLocationIcon as LocationIcon,
 } from "#components";
 
-const { faqs, franchise } = useAppConfig();
+const { franchise } = useAppConfig();
+const { faqs } = useData();
 
 useBaseSEO();
 useHomeBreadcrumb();

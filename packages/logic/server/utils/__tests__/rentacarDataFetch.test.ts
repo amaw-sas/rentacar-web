@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { fetchRentacarData, RentacarDataTimeoutError } from '../rentacarDataFetch'
 
-const TABLES = ['vehicle_categories', 'locations', 'rental_companies', 'cities', 'franchises'] as const
+const TABLES = ['vehicle_categories', 'locations', 'rental_companies', 'cities', 'franchises', 'faqs'] as const
 
 function abortError() {
   return Object.assign(new Error('The operation was aborted'), { name: 'AbortError' })
@@ -51,7 +51,7 @@ afterEach(() => {
 })
 
 describe('fetchRentacarData', () => {
-  it('SCEN-1: resolves the 5-result tuple and clears the timeout timer (happy path)', async () => {
+  it('SCEN-1: resolves the 6-result tuple and clears the timeout timer (happy path)', async () => {
     vi.useFakeTimers()
     const { supabase } = makeSupabase({
       vehicle_categories: OK,
@@ -59,15 +59,16 @@ describe('fetchRentacarData', () => {
       rental_companies: OK,
       cities: OK,
       franchises: OK,
+      faqs: OK,
     })
 
     const results = await fetchRentacarData(supabase, 8000)
 
-    expect(results).toHaveLength(5)
+    expect(results).toHaveLength(6)
     expect(vi.getTimerCount()).toBe(0) // timer cleared, no dangling handle
   })
 
-  it('SCEN-2: aborts all 5 queries and throws RentacarDataTimeoutError when the deadline passes', async () => {
+  it('SCEN-2: aborts all 6 queries and throws RentacarDataTimeoutError when the deadline passes', async () => {
     vi.useFakeTimers()
     const { supabase, builders } = makeSupabase({}) // all stall until abort
 
@@ -79,7 +80,7 @@ describe('fetchRentacarData', () => {
 
     const signals = TABLES.map((t) => builders[t].__state.signal)
     expect(signals.every((s) => s !== undefined)).toBe(true)
-    expect(new Set(signals).size).toBe(1) // one shared controller signal across all 5
+    expect(new Set(signals).size).toBe(1) // one shared controller signal across all 6
     expect(signals[0]!.aborted).toBe(true)
   })
 
@@ -92,6 +93,7 @@ describe('fetchRentacarData', () => {
       rental_companies: OK,
       cities: OK,
       franchises: OK,
+      faqs: OK,
     })
 
     const results = await fetchRentacarData(supabase, 8000)

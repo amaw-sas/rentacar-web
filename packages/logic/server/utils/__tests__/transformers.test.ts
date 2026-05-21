@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transformCategories, transformBranches, transformExtras, transformCities, transformFranchiseTestimonials, transformVehicleCategories } from '../transformers'
+import { transformCategories, transformBranches, transformExtras, transformCities, transformFAQs, transformFranchiseTestimonials, transformVehicleCategories } from '../transformers'
 
 describe('transformCategories', () => {
   it('maps Supabase category to CategoryData interface', () => {
@@ -487,5 +487,70 @@ describe('transformFranchiseTestimonials', () => {
 
     expect(Object.keys(result)).toEqual(['alquicarros'])
     expect(result['']).toBeUndefined()
+  })
+})
+
+describe('transformFAQs', () => {
+  // SCEN-004 case 1: happy path — fila Supabase válida → FAQ correcta
+  it('maps valid Supabase faq row to FAQ interface (SCEN-004 happy)', () => {
+    const input = [{
+      label: '¿Cómo puedo hacer una reserva?',
+      content: 'Para realizar un alquiler de carros debe generar una reserva en nuestra página web.',
+    }]
+
+    const result = transformFAQs(input)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toEqual({
+      label: '¿Cómo puedo hacer una reserva?',
+      content: 'Para realizar un alquiler de carros debe generar una reserva en nuestra página web.',
+    })
+  })
+
+  // SCEN-004 case 2: malformed × 4 formas → solo el válido sobrevive
+  it('filters malformed rows silently — 4 forms of malformation (SCEN-004 malformed)', () => {
+    const input = [
+      { label: '', content: 'has content but empty label' },
+      { label: 'has label but empty content', content: '' },
+      { label: 'valid', content: 'valid' },
+      { label: null, content: 'null label' },
+      { label: 'undefined content', content: undefined },
+    ]
+
+    const result = transformFAQs(input)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toEqual({ label: 'valid', content: 'valid' })
+  })
+
+  // SCEN-004 case 3: empty input → []
+  it('returns empty array for empty input (SCEN-004 empty)', () => {
+    expect(transformFAQs([])).toEqual([])
+  })
+
+  // SCEN-004 case 4: no throw ante input completamente malformado
+  it('does not throw on completely malformed rows (SCEN-004 no-throw)', () => {
+    const input = [
+      { label: null, content: null },
+      { label: undefined, content: undefined },
+      { label: 123, content: ['array'] },
+    ]
+
+    expect(() => transformFAQs(input)).not.toThrow()
+    expect(transformFAQs(input)).toEqual([])
+  })
+
+  // SCEN-004 ordering guard: el orden de las filas válidas se preserva (sin reorder implícito)
+  it('preserves the order of valid rows', () => {
+    const input = [
+      { label: 'first', content: 'a' },
+      { label: '', content: 'dropped' },
+      { label: 'second', content: 'b' },
+      { label: 'third', content: 'c' },
+    ]
+
+    const result = transformFAQs(input)
+
+    expect(result.map((f) => f.label)).toEqual(['first', 'second', 'third'])
   })
 })
