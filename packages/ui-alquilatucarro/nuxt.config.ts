@@ -590,6 +590,12 @@ export default defineNuxtConfig({
       '/-coche-en-espana/': { redirect: '/', statusCode: 301 },
     },
     prerender: {
+      // Deploy resilience: widen the retry window so a transient build-time
+      // blip (network build↔Supabase) is retried instead of hard-aborting the
+      // deploy. Serial prerender + fail-loud plugin (#2) otherwise turns any
+      // hiccup into a deployment ERROR. Default 3×500ms (~1.5s) → 5×3s (~15s).
+      retry: 5,
+      retryDelay: 3000,
       routes: [
         '/',
         '/armenia',
