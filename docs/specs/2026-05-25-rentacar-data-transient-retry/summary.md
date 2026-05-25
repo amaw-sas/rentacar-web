@@ -5,7 +5,7 @@
 
 ## Artifacts Created
 - `2026-05-25-rentacar-data-transient-retry-design.md` — diseño detallado (vía `/brainstorming`; aprobado + revisado por subagente, 2 iteraciones; incluye blast-radius verificado).
-- `scenarios/rentacar-data-transient-retry.scenarios.md` — holdout SDD (SCEN-R1..R6 + matriz de no-regresión).
+- `scenarios/rentacar-data-transient-retry.scenarios.md` — holdout SDD (SCEN-R1..R7 + matriz de no-regresión).
 - `implementation/plan.md` — file structure + plan de 2 steps (revisado por subagente, aprobado).
 - `summary.md` — este documento.
 
@@ -24,7 +24,7 @@
 - **Risk Level**: Bajo (cambio aislado en `logic`, revert de un commit; sin migraciones ni infra).
 
 ## Recommended Next Steps
-1. Implementar con SDD: Step 1 (clasificador + SCEN-R5) → Step 2 (retry + firma + migración de tests + SCEN-R1..R6).
+1. Implementar con SDD: Step 1 (clasificador + SCEN-R5) → Step 2 (retry + firma + migración de tests + SCEN-R1..R7).
 2. `/verification-before-completion` con evidencia fresca antes de cualquier claim de done.
 3. `/pull-request` (review + security + edge-case + performance) → PR nuevo (#7/#16-F2).
 4. Validación end-to-end: observar deploy de preview verde (idealmente 2+ corridas, dado que el fallo era intermitente).

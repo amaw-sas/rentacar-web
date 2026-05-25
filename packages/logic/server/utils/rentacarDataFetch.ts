@@ -152,18 +152,18 @@ export async function fetchRentacarData(
     retryDelayMs = DEFAULT_RETRY_DELAY_MS,
   }: FetchOptions = {},
 ) {
-  let lastResults: Awaited<ReturnType<typeof runBatch>> | undefined
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  const lastAttempt = Math.max(0, retries) // clamp: retries < 0 still runs once
+  for (let attempt = 0; attempt <= lastAttempt; attempt++) {
     // runBatch throws RentacarDataTimeoutError on timeout — it propagates here
     // unretried (see docstring), surfacing as a 504 in the handler.
     const results = await runBatch(supabase, timeoutMs)
     const errored = results.filter((r) => r.error)
     // Retry only when something errored AND every errored query is transient.
     const shouldRetry = errored.length > 0 && errored.every(isRetryableResult)
-    if (!shouldRetry || attempt === retries) return results
-    lastResults = results
-    logRetry(attempt, retries, errored[0].error)
+    if (!shouldRetry || attempt === lastAttempt) return results
+    logRetry(attempt, lastAttempt, errored[0].error)
     await sleep(retryDelayMs * 2 ** attempt)
   }
-  return lastResults as Awaited<ReturnType<typeof runBatch>>
+  // Unreachable: the final iteration (attempt === lastAttempt) always returns.
+  throw new Error('fetchRentacarData: retry loop exited without returning')
 }
