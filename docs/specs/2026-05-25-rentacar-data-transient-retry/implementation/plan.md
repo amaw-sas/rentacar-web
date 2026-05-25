@@ -14,7 +14,7 @@ Un solo archivo de producción + su test. El fix vive en `packages/logic` y se p
 | Archivo | Acción | Responsabilidad única |
 |---|---|---|
 | `packages/logic/server/utils/rentacarDataFetch.ts` | MODIFY | Fetch resiliente de rentacar-data: el batch de 6 queries (`runBatch`, extraído del cuerpo actual), la clasificación de errores recuperables (`isRetryableResult`), y el loop de retry acotado en `fetchRentacarData`. Helpers `sleep`/`logRetry` inline. |
-| `packages/logic/server/utils/__tests__/rentacarDataFetch.test.ts` | MODIFY | Unit tests: migra los 3 call-sites de test existentes (la única llamada de producción, en el handler, no cambia) a `{ retries: 0 }`; agrega SCEN-R1..R6. |
+| `packages/logic/server/utils/__tests__/rentacarDataFetch.test.ts` | MODIFY | Unit tests: migra los 3 call-sites de test existentes (la única llamada de producción, en el handler, no cambia) a `{ retries: 0 }`; agrega SCEN-R1..R7 (incluye R7: error permanente mezclado no se reintenta). |
 
 **Decisión de decomposición**: el clasificador, el batch y el retry son una sola responsabilidad cohesiva ("traer rentacar-data de forma resiliente") y son chicos; co-locarlos en el archivo existente sigue el patrón del repo (utils chicos y enfocados) y evita fragmentar una unidad que cambia junta. `isRetryableResult` se **exporta** solo para testeo unitario directo (SCEN-R5). No se crean archivos nuevos.
 
@@ -40,25 +40,26 @@ Un solo archivo de producción + su test. El fix vive en `packages/logic` y se p
     - Sin lectura de `error.status` (status solo del wrapper); cero referencias a campos inexistentes de `PostgrestError`.
 
 - [ ] **Step 2 — Retry acotado + nueva firma + migración de tests** | Size: M | Dependencies: Step 1
-  - SDD: escribir primero SCEN-R1/R2/R3/R4 (nuevos) + migrar SCEN-1/2/3 a `{ timeoutMs: 8000, retries: 0 }` (SCEN-R6) → fallan/rompen → implementar → verde.
+  - SDD: escribir primero SCEN-R1/R2/R3/R4/R7 (nuevos) + migrar SCEN-1/2/3 a `{ timeoutMs: 8000, retries: 0 }` (SCEN-R6) → fallan/rompen → implementar → verde.
   - Refactor: extraer el cuerpo actual (`Promise.all` de 6 queries + `AbortController` + chequeo `signal.aborted` → `RentacarDataTimeoutError`) a `runBatch(supabase, timeoutMs)` interno, sin cambio de comportamiento ni de la tupla/orden de 6 resultados (preserva #12 faqs).
   - Firma nueva: `fetchRentacarData(supabase, { timeoutMs = 8000, retries = 2, retryDelayMs = 300 }: FetchOptions = {})` — backward-compatible con el handler (`fetchRentacarData(supabase)` sigue válido).
-  - Loop de retry (pseudocódigo en spec §Diseño): por intento `0..retries`, corre `runBatch`; si retorna y hay un `result.error` recuperable (`isRetryableResult`) → guarda `lastResults` y reintenta tras `sleep(retryDelayMs * 2**attempt)`; si lanza (timeout) → reintenta, y en el último intento re-lanza; si no hay error recuperable → retorna de inmediato. Al agotar con `.error` → retorna `lastResults` (handler hace 500).
+  - Loop de retry (pseudocódigo en spec §Diseño, refinado tras Quality Integration): por intento `0..retries`, corre `runBatch`; reintenta SOLO si hay error y TODO error es recuperable (`errored.every(isRetryableResult)`). Un **timeout LANZA y NO se reintenta** (propaga inmediato → 504). Un **error permanente mezclado** con uno transitorio → no reintenta. Al agotar con `.error` transitorio → retorna `lastResults` (handler hace 500).
   - Helpers inline: `sleep(ms)` y `logRetry(attempt, retries, err)` → `console.warn('[rentacar-data] transient fetch failure (attempt N/M), retrying…', err)`.
   - **Scenarios embebidos**:
     - blip que recupera en intento 2 → retorna ok, 2 corridas (SCEN-R1).
     - blip en todos los intentos → sin throw, retorna `.error`, 3 corridas → handler 500 (SCEN-R2, preserva SCEN-001).
     - PGRST116 → 1 corrida, sin reintento (SCEN-R3, preserva #59).
-    - timeout en todos → `RentacarDataTimeoutError` → 504 (SCEN-R4, preserva #7/#53). Nota de test: con `retries: 2` el loop arma un `setTimeout(timeoutMs)` por intento → avanzar fake timers **por intento** (3×); `retryDelayMs: 0` evita tener que avanzar el backoff.
+    - un timeout lanza `RentacarDataTimeoutError` inmediato, SIN reintentar → 504, 1 corrida (SCEN-R4, preserva #7/#53). Nota de test: real timers + `timeoutMs` pequeño (5ms).
+    - permanente (`PGRST205`/4xx) mezclado con transitorio → 1 corrida, sin reintento → handler 500 (SCEN-R7).
     - tests existentes migrados verdes, sin cuelgue (SCEN-R6).
   - **Acceptance**:
-    - Los 3 call-sites existentes usan `{ timeoutMs: 8000, retries: 0 }`; toda la suite `rentacarDataFetch` verde (SCEN-1/2/3 migrados + R1..R6), 0 skipped, 2 corridas estables.
+    - Los 3 call-sites existentes usan `{ timeoutMs: 8000, retries: 0 }`; toda la suite `rentacarDataFetch` verde (SCEN-1/2/3 migrados + R1..R7), 0 skipped, 2 corridas estables.
     - El handler `rentacar-data.get.ts` NO se modifica; `pnpm --filter ui-* typecheck` sin nuevos errores que referencien `rentacarDataFetch` (delta-vs-baseline; baseline rojo conocido).
     - Diff de producción acotado a `rentacarDataFetch.ts`.
 
 ## Testing Strategy
 
-- **Unit** (autoritativo): `rentacarDataFetch.test.ts` cubre SCEN-R1..R6 con un mock de supabase que cuenta corridas del batch y simula `.error` de red (`code:''`, `status:0`), PGRST116, y abort/timeout (fake timers). Comando: `pnpm --filter @rentacar-main/logic exec vitest run rentacarDataFetch`.
+- **Unit** (autoritativo): `rentacarDataFetch.test.ts` cubre SCEN-R1..R7 con un mock de supabase que cuenta corridas del batch y simula `.error` de red (`code:''`, `status:0`), PGRST116, y abort/timeout (fake timers). Comando: `pnpm --filter @rentacar-main/logic exec vitest run rentacarDataFetch`.
 - **Regresión de suite logic**: `pnpm --filter @rentacar-main/logic exec vitest run` — confirmar que nada más se rompe (el plugin test y transformers no dependen de la firma).
 - **SCEN-001 (manual, no automatizable aquí)**: `pnpm build:alquilatucarro` con `NUXT_SUPABASE_URL` inválido → exit≠0 con `[rentacar-data] Failed to load` (comportamiento sin cambio respecto a hoy; solo se retrasa ~unos segundos por los reintentos).
 - **Cobertura honesta**: ningún unit ejercita el prerender real de Vercel; el gate end-to-end es observar un deploy de preview verde tras el merge.

@@ -30,12 +30,12 @@ Holdout para el retry acotado de `fetchRentacarData` ante fallo transitorio en b
 **Then**: NO reintenta — el batch corre exactamente 1 vez; retorna inmediato con el `.error` intacto.
 **Evidence**: contador de corridas = 1; `isRetryableResult({ error: { code: 'PGRST116' }, status: 406 })` === `false`.
 
-## SCEN-R4: timeout en todos los intentos sigue lanzando → 504
+## SCEN-R4: un timeout lanza inmediato (no reintentado) → 504
 
-**Given**: un `supabase` cuyo batch excede `timeoutMs` (abort vía AbortController) en todos los intentos.
-**When**: se invoca `fetchRentacarData(supabase, { timeoutMs: 10, retries: 2, retryDelayMs: 0 })` con timers avanzados.
-**Then**: lanza `RentacarDataTimeoutError` tras agotar intentos; el handler lo mapea a 504 (preserva #7/#53).
-**Evidence**: `await expect(...).rejects.toBeInstanceOf(RentacarDataTimeoutError)`.
+**Given**: un `supabase` cuyo batch excede `timeoutMs` (abort vía AbortController).
+**When**: se invoca `fetchRentacarData(supabase, { timeoutMs: 5, retries: 2, retryDelayMs: 0 })`.
+**Then**: lanza `RentacarDataTimeoutError` en el primer intento, SIN reintentar — un upstream lento no se recupera dentro del deadline y reintentar multiplicaría la cola de latencia (erosionando el bound de 8s de #7); el handler lo mapea a 504 (preserva #7/#53). El batch corre exactamente 1 vez.
+**Evidence**: `await expect(...).rejects.toBeInstanceOf(RentacarDataTimeoutError)`; contador de corridas = 1.
 
 ## SCEN-R5: `isRetryableResult` clasifica correctamente (tabla)
 
@@ -50,6 +50,13 @@ Holdout para el retry acotado de `fetchRentacarData` ante fallo transitorio en b
 **When**: corre la suite.
 **Then**: verde, con la misma semántica de 1-corrida que antes (happy path, timeout→throw, `.error` passthrough); ningún cuelgue bajo fake timers.
 **Evidence**: `pnpm --filter @rentacar-main/logic exec vitest run rentacarDataFetch` → todos pasan.
+
+## SCEN-R7: error permanente mezclado con uno transitorio NO se reintenta → 1 corrida
+
+**Given**: un `supabase` cuyo batch devuelve, en la misma corrida, un `result.error` permanente (`code: 'PGRST205'`, `status: 404`) en una tabla y uno transitorio (`code: ''`, `status: 0`) en otra.
+**When**: se invoca `fetchRentacarData(supabase, { retries: 2, retryDelayMs: 0 })`.
+**Then**: NO reintenta (reintentar no puede arreglar el error permanente) — el batch corre exactamente 1 vez; retorna los resultados con `.error` poblado → el handler hace 500 (fail-loud, sin demora). Solo se reintenta cuando TODO error en el batch es transitorio.
+**Evidence**: contador de corridas = 1; `results.some(r => r.error)` === true.
 
 ---
 

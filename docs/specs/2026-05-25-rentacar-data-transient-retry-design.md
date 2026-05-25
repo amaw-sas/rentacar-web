@@ -94,31 +94,28 @@ Descartado: retry en `$fetch` del plugin (`retryStatusCodes` de ofetch). Más si
    )
    ```
 
-   Lógica (pseudocódigo):
+   Lógica (pseudocódigo) — refinada tras Quality Integration (ver §Refinamiento):
 
    ```
    lastResults = undefined
    for attempt in 0..retries:                       # retries=2 → attempts 0,1,2
-     try:
-       results = await runBatch(supabase, timeoutMs)
-       transient = results.find(isRetryableResult)
-       if not transient: return results             # éxito, o .error NO-recuperable → decide el handler
-       lastResults = results                         # .error transitorio → reintentar
-       logRetry(attempt, retries, transient.error)
-     catch err:                                      # solo path de throw real = RentacarDataTimeoutError (timeout)
-       logRetry(attempt, retries, err)
-       if attempt == retries: throw err              # agotado → propaga (handler → 504)
-       await sleep(retryDelayMs * 2**attempt); continue
-     if attempt < retries: await sleep(retryDelayMs * 2**attempt)   # backoff 300ms, 600ms
-   return lastResults                                # agotado con .error transitorio → handler lanza 500
+     results = await runBatch(supabase, timeoutMs)  # un timeout LANZA aquí, sin reintentar → 504
+     errored = results.filter(r => r.error)
+     shouldRetry = errored.length > 0 AND errored.every(isRetryableResult)
+     if not shouldRetry OR attempt == retries: return results
+     lastResults = results
+     logRetry(attempt, retries, errored[0].error)
+     await sleep(retryDelayMs * 2**attempt)         # backoff 300ms, 600ms
+   return lastResults                                # inalcanzable salvo retries<0; el `as` satisface TS
    ```
 
-   Trazas de las 5 rutas (verificadas):
+   Trazas (verificadas por SCEN-R1..R7):
    - **éxito en intento 0** → `return results`.
-   - **transitorio que recupera** (intento 0 `.error`, intento 1 ok) → reintenta, luego `return results`.
-   - **transitorio que agota** (3× `.error`) → cae a `return lastResults` (con `.error`) → handler 500. Nunca `undefined`: `lastResults` quedó asignado en cada iteración con transitorio.
-   - **timeout que agota** (3× throw) → en el último intento `throw err` → handler 504.
-   - **`.error` NO-recuperable** (PGRST116) → `transient` undefined → `return results` en 1 corrida.
+   - **transitorio que recupera** (intento 0 `.error`, intento 1 ok) → reintenta, luego `return results`. (R1)
+   - **transitorio que agota** (3× `.error`) → en el último intento `attempt == retries` → `return results` (con `.error`) → handler 500. (R2)
+   - **`.error` NO-recuperable solo** (PGRST116) → `shouldRetry` false → `return results` en 1 corrida. (R3)
+   - **timeout** → `runBatch` lanza `RentacarDataTimeoutError` → propaga inmediato, 1 corrida → handler 504. (R4)
+   - **permanente + transitorio mezclados** → `every(isRetryableResult)` false → `return results` en 1 corrida → handler 500. (R7)
 
 3. **Clasificador** `isRetryableResult(result)` (exportado para test unitario). Recibe el resultado COMPLETO (no solo `.error`), porque el `status` vive en el wrapper:
 
@@ -148,7 +145,9 @@ Descartado: retry en `$fetch` del plugin (`retryStatusCodes` de ofetch). Más si
 
 - `retries = 2` (3 intentos), backoff exponencial `300ms, 600ms`.
 - Blip que recupera en el intento 2: +~300ms al build. Despreciable.
-- Outage real: ~3 intentos (hasta 8s c/u si es por timeout) → falla fuerte. Aceptable porque de todos modos aborta.
+- Outage real:
+  - si falla rápido (`.error` de red, el caso del bug): 3 intentos + ~0.9s de backoff → falla fuerte.
+  - si es por **timeout**: NO se reintenta → falla en ~8s (1 intento), preservando el bound de #7 (ver §Refinamiento).
 - Parámetros configurables vía `FetchOptions` para tests deterministas (`retryDelayMs: 0`, `retries: 0`).
 
 ### Migración de los tests existentes (REQUERIDA, no opcional)
@@ -218,11 +217,17 @@ Todos a nivel **unit sobre la util** (`fetchRentacarData` / `isRetryableResult`)
   **Then** NO reintenta: el batch corre exactamente 1 vez; retorna inmediato con el `.error` intacto.
   **Evidence**: contador = 1; `isRetryableResult({ error: { code: 'PGRST116' }, status: 406 })` === `false`.
 
-- **SCEN-R4** (unit) — *timeout sigue → throw → 504*
-  **Given** un `supabase` cuyo batch excede `timeoutMs` (abort) en todos los intentos.
-  **When** `fetchRentacarData(supabase, { timeoutMs: 10, retries: 2, retryDelayMs: 0 })` con timers avanzados.
-  **Then** lanza `RentacarDataTimeoutError` tras agotar intentos (el handler lo mapea a 504).
-  **Evidence**: `await expect(...).rejects.toBeInstanceOf(RentacarDataTimeoutError)`.
+- **SCEN-R4** (unit) — *timeout lanza inmediato, NO reintentado → 504* (refinado tras Quality Integration)
+  **Given** un `supabase` cuyo batch excede `timeoutMs` (abort).
+  **When** `fetchRentacarData(supabase, { timeoutMs: 5, retries: 2, retryDelayMs: 0 })`.
+  **Then** lanza `RentacarDataTimeoutError` en el primer intento, sin reintentar; 1 corrida; el handler lo mapea a 504.
+  **Evidence**: `await expect(...).rejects.toBeInstanceOf(RentacarDataTimeoutError)`; contador = 1.
+
+- **SCEN-R7** (unit) — *permanente mezclado con transitorio NO se reintenta* (añadido tras Quality Integration)
+  **Given** un batch con un `.error` permanente (`code: 'PGRST205'`, `status: 404`) en una tabla y uno transitorio (`code: ''`, `status: 0`) en otra.
+  **When** `fetchRentacarData(supabase, { retries: 2, retryDelayMs: 0 })`.
+  **Then** NO reintenta (reintentar no arregla el permanente); 1 corrida; retorna con `.error` → handler 500.
+  **Evidence**: contador = 1; `results.some(r => r.error)` === true.
 
 - **SCEN-R5** (clasificador, tabla) — *fixtures con el shape real del resultado* `{ error, status }`, NO con `code`/`status` top-level (si no hay `.error`, el early-return lo daría `false` por el motivo equivocado y no ejercitaría la rama PGRST/4xx).
   **Given/When/Then** `isRetryableResult` retorna:
@@ -242,12 +247,20 @@ Todos a nivel **unit sobre la util** (`fetchRentacarData` / `isRetryableResult`)
 
 | Escenario | Layer | Archivo | Comando de evidencia |
 |---|---|---|---|
-| SCEN-R1..R6 | Vitest unit | `packages/logic/server/utils/__tests__/rentacarDataFetch.test.ts` (extender) | `pnpm --filter @rentacar-main/logic exec vitest run rentacarDataFetch` (resuelve `packages/logic/vitest.config.ts`; mismo patrón que el PR #59) |
+| SCEN-R1..R7 | Vitest unit | `packages/logic/server/utils/__tests__/rentacarDataFetch.test.ts` (extender) | `pnpm --filter @rentacar-main/logic exec vitest run rentacarDataFetch` (resuelve `packages/logic/vitest.config.ts`; mismo patrón que el PR #59) |
 | SCEN-001 (manual) | build | — | `pnpm build:alquilatucarro` con `NUXT_SUPABASE_URL` inválido → exit≠0 (sin cambio respecto a hoy) |
+
+## Refinamiento post Quality Integration
+
+Tras los agentes de calidad (code-reviewer aprobó sin Critical/Important), se adoptaron 2 mejoras MEDIUM, ambas alineadas con "retry solo transitorio":
+
+1. **Timeouts NO se reintentan.** El bug real falla rápido (`/` cayó a 1745ms, muy por debajo de los 8s), así que se manifiesta como `.error` de red, no como timeout. Reintentar un timeout no aporta y multiplicaría la cola a ~27s en runtime, erosionando el bound de 8s que añadió #7. Ahora `RentacarDataTimeoutError` propaga inmediato → 504. (amend de SCEN-R4)
+2. **Bail ante error permanente mezclado.** Solo se reintenta si TODO error en el batch es transitorio (`errored.every(isRetryableResult)`); si hay un permanente (PGRST*/4xx) junto a un transitorio, retornar de inmediato — reintentar no lo arregla y solo demora el fallo fuerte. (nuevo SCEN-R7)
+
+Además se colapsó la duplicación de `sleep`/`logRetry` en un único sitio (sugerencia del code-simplifier).
 
 ## Riesgos
 
-- **Falso positivo del clasificador** (reintentar un error persistente desconocido): cuesta ~1s de backoff y luego falla igual. No enmascara — SCEN-001 intacto.
-- **Errores PG SQLSTATE persistentes no-PGRST** (p. ej. `42501` permiso, con código pero sin status 4xx en el wrapper): se reintentan-y-fallan. Path de solo-lectura con anon key; deterministas y visibles en el primer deploy. Aceptable; documentado.
+- **Falso positivo del clasificador** (reintentar un error persistente desconocido `code:''`+`status:0`-like): cuesta ~0.9s de backoff y luego falla igual. No enmascara — SCEN-001 intacto. Acotado por el bail de error-permanente-mezclado.
 - **El `console.warn` puede ser tragado por el prerender** igual que hoy. Best-effort, no regresión.
-- **Tiempo de build en outage real**: +~hasta 24s antes de fallar. Solo en el caso ya-roto.
+- **Tiempo de build en outage real**: +~0.9s (caso `.error` de red, 3 intentos) o sin cambio (~8s, caso timeout no-reintentado). Solo en el caso ya-roto.
