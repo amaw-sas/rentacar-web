@@ -173,6 +173,29 @@ El cambio vive solo en `packages/logic/server/utils/`. Las 3 marcas lo heredan v
 | **#59 / PGRST116** (fila localiza ausente) | `code: 'PGRST116'` → NO-recuperable → 1 corrida, sin reintento ni enmascaramiento; handler/#59 lo manejan como hoy. |
 | **#7 / #53** (timeout → 504) | `RentacarDataTimeoutError` sigue propagándose tras agotar intentos → handler 504. |
 
+## Blast radius y regresiones (verificado)
+
+Superficie total de `rentacarDataFetch.ts` en todo el repo (sin `node_modules`/`.nuxt`):
+
+| Consumidor | Uso | Impacto del cambio |
+|---|---|---|
+| `server/api/rentacar-data.get.ts` (único de producción) | `fetchRentacarData(supabase)` sin 2º arg + `instanceof RentacarDataTimeoutError` | **Seguro.** La firma nueva es backward-compatible (opciones con default). El `.catch` sigue funcionando: el retry solo lanza `RentacarDataTimeoutError` (timeout agotado) o retorna la tupla (con `.error` → el handler hace 500). No introduce tipos de throw nuevos. |
+| `__tests__/rentacarDataFetch.test.ts` | 3× `fetchRentacarData(supabase, 8000)` posicional | **Rompe — esperado.** Es la migración requerida (a `{ timeoutMs: 8000, retries: 0 }`); SCEN-R6 lo blinda. |
+| e2e, otras marcas, otros paquetes | ninguna referencia | Sin impacto. |
+
+Issues que implementaron este archivo y cómo se preservan:
+
+| Issue | Qué aportó | Preservación |
+|---|---|---|
+| **#7 / #53** (`dde5f51`) | creó `fetchRentacarData` + `RentacarDataTimeoutError` + timeout 8s/AbortController | `runBatch` conserva el timeout; `RentacarDataTimeoutError` sigue propagándose → 504 (SCEN-R4). |
+| **#12** (`6dd6808`) | agregó la query `faqs` (6ª query) | Las 6 queries quedan intactas dentro de `runBatch`, mismo orden y tupla. |
+| **#2 / #3 / #4** (bundled resilience) | plugin fail-loud, sentinel, `transformExtras` | Plugin/handler/transformers no se tocan; SCEN-001/002/007 intactos. |
+
+Interacción con PRs abiertos/cerrados:
+
+- **PR #59** (#16-F1, OPEN): NO toca este archivo — modifica el handler y su test **mockea el módulo entero** (`vi.mock('../../utils/rentacarDataFetch')`). Cero overlap de archivos → cero conflicto de merge; su test no ejercita mi retry, mi cambio no rompe su test. **Sinergia:** PGRST116 (fila ausente) → mi clasificador lo marca no-recuperable → 1 corrida → el handler de #59 degrada a `extras: undefined` sin que el retry agregue latencia.
+- **PR #60** (`fix/prerender-retry-resilience`, CLOSED, no mergeado): solo tocó los 3 `nuxt.config.ts` + un test de config. No toca este archivo ni se mergeó. Sin interacción.
+
 ## Escenarios observables (puente a SDD)
 
 Todos a nivel **unit sobre la util** (`fetchRentacarData` / `isRetryableResult`); la traducción a 5xx ocurre en el handler y se asume por contrato (sin cambio). El mock de supabase cuenta cuántas veces corre el batch.
