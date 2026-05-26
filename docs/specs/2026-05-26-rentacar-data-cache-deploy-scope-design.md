@@ -20,7 +20,7 @@ Cannot read properties of undefined (reading 'map')
 
 `/api/rentacar-data` is a `defineCachedEventHandler({ name: 'rentacar-data', maxAge: 3600 })` (SWR on by default). Its cache persists to `packages/ui-*/.nuxt/cache/nitro/handlers/`, which lives under `node_modules/.cache/nuxt/`.
 
-Vercel **restores the build cache from the previous deployment** — the build log states it verbatim: `Restored build cache from previous deployment (CWPEgb2…)`, which is deploy #57, *before* faqs existed. So the restored cached response is frozen at the pre-faqs shape — it has **no `faqs` key**.
+Vercel **restores the build cache from the previous deployment**. The build log says so verbatim: `Restored build cache from previous deployment (CWPEgb2…)`, which is deploy #57, *before* faqs existed. So the restored cached response is frozen at the pre-faqs shape, with **no `faqs` key**.
 
 The chain:
 1. Prerender renders `/` first. Its plugin calls `$fetch('/api/rentacar-data')`.
@@ -53,7 +53,7 @@ Scope the handler's cache key to a single deployment so a restored cross-build e
 - **Within a deploy:** one stable key → prerender writes the entry, runtime reuses it. The caching benefit is preserved.
 - **Across deploys:** the restored entry sits under the previous build's `buildId`; the new build reads under its own `buildId` → cache miss → fresh Supabase fetch → the response always carries the current schema → `/` renders → deploy green.
 
-A stale-shaped response can never be served to a build that did not produce it. The fix is auto-busting — no manual version to bump on future schema changes — and the only cost is one fresh ~1.5s fetch per deploy during prerender, which is the correct behavior on a new deploy anyway.
+A stale-shaped response can never be served to a build that did not produce it. The fix is auto-busting (no manual version to bump when the schema changes again), and its only cost is one fresh ~1.5s fetch per deploy during prerender — which is the right behavior on a new deploy anyway.
 
 ### Alternatives considered
 
@@ -81,7 +81,7 @@ Fail-loud is preserved unchanged. No throw path is touched: a genuine Supabase f
 
 ## Observable scenarios (holdout for SDD)
 
-- **SCEN-C1** (unit): Given `useRuntimeConfig().app.buildId = X`, when `getKey(event)` runs, then it returns `X`; the same buildId yields the same key, and two distinct buildIds-as-used-here (UUIDs) yield distinct stored keys after Nitro's `escapeKey` (which is lossy in general — `replace(/\W/g, "")` — but injective for UUIDs given their entropy).
+- **SCEN-C1** (unit): Given `useRuntimeConfig().app.buildId = X`, when `getKey(event)` runs, then it returns `X`; the same buildId yields the same key, and two distinct buildIds as used here (UUIDs) yield distinct stored keys after Nitro's `escapeKey` (lossy in general via `replace(/\W/g, "")`, but injective for UUIDs given their entropy).
 - **SCEN-C2** (integration): Given a cache entry stored under `escapeKey(buildIdA)` whose body lacks `faqs`, when the handler is invoked under `buildIdB` (B≠A), then that entry is not served — a fresh fetch runs and the response carries the current schema. (The end-to-end reproduce→fix is SCEN-C6.)
 - **SCEN-C3** (build): Given a clean build, when prerendering all routes, then `/` is `200` and the build exits 0.
 - **SCEN-C4** (build, fail-loud lock): Given a genuine Supabase fetch failure, when building, then the build aborts loud with `[rentacar-data] fetch failed:` and non-zero exit — unchanged from SCEN-003.
