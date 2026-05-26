@@ -72,22 +72,25 @@ Fail-loud is preserved unchanged. No throw path is touched: a genuine Supabase f
 
 ## Testing & verification
 
-1. **Unit (vitest, logic):** the key incorporates `buildId`; distinct builds yield distinct keys, identical within a build.
+1. **Unit (vitest, logic):** `getKey` returns the build's `app.buildId`, so Nitro stores the entry under a per-build key. Two notes for the implementer: Nitro escapes the stored key via `escapeKey` (`String(key).replace(/\W/g, "")`, so a UUID's hyphens are dropped) — a literal-key assertion must apply the same escaping; and because `buildId` is constant under Vitest (`"test"`), the test drives the key logic with explicit `buildId` inputs (mocked `useRuntimeConfig`), not the ambient runtime value.
 2. **Local prod build:** `pnpm build:alquilatucarro` → `/` prerenders `200`, exit 0, no "Exiting due to prerender errors".
-3. **Stale-cache regression:** seed an old-`buildId` entry with the pre-faqs (no-`faqs`) body, build, confirm `/` is still `200` — the incident reproduced, then proven fixed.
-4. **Vercel preview deploy GREEN** — the real end-to-end gate, red since #58. This is the definition of done; the unit test is a regression lock, not the proof.
+3. **Stale-cross-build invariant (integration):** an entry stored under `escapeKey(buildIdA)` with a no-`faqs` body is *not* served to a request running under `buildIdB` (B≠A) — the handler runs a fresh fetch instead. This is the invariant that prevents the incident, and it is observable with the fix in place (no pre-fix code needed).
+4. **Vercel preview deploy GREEN — the real reproduce→fix.** The branch base (main, pre-fix) deploys RED today because it restores #57's stale cache; the fix branch deploys GREEN against that *same* restored cache. This is the definition of done; the unit/integration tests are regression locks, not the proof.
+
+**Toolchain note:** verification runs against the installed `nuxt@4.2.2` / `nitropack@2.12.9` / `@nuxt/schema@4.2.2` (stack.md still cites 4.1.3). The `getKey` option and `app.buildId` semantics are identical across these versions — confirmed against the installed source.
 
 ## Observable scenarios (holdout for SDD)
 
-- **SCEN-C1** (unit): Given two builds with different `buildId`, when `getKey` runs, then the keys differ; given the same `buildId`, the key is identical.
-- **SCEN-C2** (build): Given a restored cache entry under a different `buildId` whose body lacks `faqs`, when `/` is prerendered, then it returns `200` with faqs rendered — not `500`.
+- **SCEN-C1** (unit): Given `useRuntimeConfig().app.buildId = X`, when `getKey(event)` runs, then it returns `X`; two distinct buildIds yield distinct stored keys (after Nitro's `escapeKey`), the same buildId yields the same key.
+- **SCEN-C2** (integration): Given a cache entry stored under `escapeKey(buildIdA)` whose body lacks `faqs`, when the handler is invoked under `buildIdB` (B≠A), then that entry is not served — a fresh fetch runs and the response carries the current schema. (The end-to-end reproduce→fix is SCEN-C6.)
 - **SCEN-C3** (build): Given a clean build, when prerendering all routes, then `/` is `200` and the build exits 0.
 - **SCEN-C4** (build, fail-loud lock): Given a genuine Supabase fetch failure, when building, then the build aborts loud with `[rentacar-data] fetch failed:` and non-zero exit — unchanged from SCEN-003.
-- **SCEN-C5** (cross-brand): the three brands' `rentacar-data.get.ts` stays byte-identical (the change is in the shared logic layer).
+- **SCEN-C5** (single source): no per-brand `rentacar-data.get.ts` override exists; the handler lives only in the shared logic layer, so all 3 brands inherit the change via `extends`.
+- **SCEN-C6** (deploy, end-to-end): Given the branch base deploys RED against #57's restored stale cache, when the fix branch is deployed, then its Vercel preview goes GREEN against that same restored cache.
 
 ## Known limitations
 
-- In **dev**, `buildId` is the constant `"dev"`, so the local `.nuxt` cache still persists across dev restarts. This is a dev-only convenience issue, out of scope here; clearing `.nuxt/cache` or waiting out the 1h `maxAge` resolves it.
+- `app.buildId` is constant in non-prod modes (`"dev"` in dev, `"test"` under Vitest) and a fresh `randomUUID()` per production build. So in **dev** the local `.nuxt` cache still persists across restarts (a dev-only convenience issue — clear `.nuxt/cache` or wait out the 1h `maxAge`), and **unit tests** must exercise the key logic with explicit `buildId` inputs rather than the ambient constant. The busting guarantee applies to production builds, which is exactly where the incident occurs.
 
 ## Follow-ups (not in this change)
 
