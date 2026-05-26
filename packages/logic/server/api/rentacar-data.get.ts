@@ -1,5 +1,6 @@
 import { useSupabaseClient } from '../utils/supabase'
 import { fetchRentacarData, RentacarDataTimeoutError } from '../utils/rentacarDataFetch'
+import { rentacarDataCacheKey } from '../utils/rentacarDataCacheKey'
 import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials, transformFAQs } from '../utils/transformers'
 
 export default defineCachedEventHandler(async () => {
@@ -46,10 +47,17 @@ export default defineCachedEventHandler(async () => {
     faqs: transformFAQs(faqsResult.data),
   }
 }, {
-  // TODO(perf+seo): revisit cache strategy before launch. 1h is fine while in
-  // alpha but pricing edits in admin take up to 1h to surface. Options:
-  // shorter maxAge, swr revalidation, or tag-based invalidation triggered
-  // from the admin write path.
   maxAge: 3600,
   name: 'rentacar-data',
+  // Scope the cache to a single deployment. Vercel restores Nitro's persisted
+  // handler cache across builds, so without a per-build key a new deploy can be
+  // served the previous deploy's response — whose schema may predate the current
+  // code (e.g. a body without `faqs`), which crashes the `/` prerender. Keying on
+  // app.buildId (unique per prod build, stable within a build) makes a restored
+  // entry sit under the old key and be ignored, while the cache is still reused
+  // within a deploy. See docs/specs/2026-05-26-rentacar-data-cache-deploy-scope-design.md.
+  getKey: (event) => rentacarDataCacheKey(useRuntimeConfig(event).app.buildId),
+  // TODO(perf+seo): broader cache strategy still open (#7 / #16-F2) — pricing
+  // edits in admin take up to 1h (maxAge) to surface; options are a shorter
+  // maxAge, swr, or tag-based invalidation from the admin write path.
 })
