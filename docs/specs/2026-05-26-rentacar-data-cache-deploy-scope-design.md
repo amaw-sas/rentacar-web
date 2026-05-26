@@ -81,12 +81,12 @@ Fail-loud is preserved unchanged. No throw path is touched: a genuine Supabase f
 
 ## Observable scenarios (holdout for SDD)
 
-- **SCEN-C1** (unit): Given `useRuntimeConfig().app.buildId = X`, when `getKey(event)` runs, then it returns `X`; two distinct buildIds yield distinct stored keys (after Nitro's `escapeKey`), the same buildId yields the same key.
+- **SCEN-C1** (unit): Given `useRuntimeConfig().app.buildId = X`, when `getKey(event)` runs, then it returns `X`; the same buildId yields the same key, and two distinct buildIds-as-used-here (UUIDs) yield distinct stored keys after Nitro's `escapeKey` (which is lossy in general — `replace(/\W/g, "")` — but injective for UUIDs given their entropy).
 - **SCEN-C2** (integration): Given a cache entry stored under `escapeKey(buildIdA)` whose body lacks `faqs`, when the handler is invoked under `buildIdB` (B≠A), then that entry is not served — a fresh fetch runs and the response carries the current schema. (The end-to-end reproduce→fix is SCEN-C6.)
 - **SCEN-C3** (build): Given a clean build, when prerendering all routes, then `/` is `200` and the build exits 0.
 - **SCEN-C4** (build, fail-loud lock): Given a genuine Supabase fetch failure, when building, then the build aborts loud with `[rentacar-data] fetch failed:` and non-zero exit — unchanged from SCEN-003.
 - **SCEN-C5** (single source): no per-brand `rentacar-data.get.ts` override exists; the handler lives only in the shared logic layer, so all 3 brands inherit the change via `extends`.
-- **SCEN-C6** (deploy, end-to-end): Given the branch base deploys RED against #57's restored stale cache, when the fix branch is deployed, then its Vercel preview goes GREEN against that same restored cache.
+- **SCEN-C6** (deploy, end-to-end): Given the branch base deploys RED against #57's restored stale cache, when the fix branch is deployed, then its Vercel preview goes GREEN against that same restored cache. Verification captures *both* artifacts in the same window — the main/branch-base preview observed RED and the fix-branch preview observed GREEN — so the reproduce→fix is evidenced against an identical restored-cache baseline, not just the GREEN half.
 
 ## Known limitations
 
