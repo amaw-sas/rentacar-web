@@ -70,6 +70,13 @@ const EXTRAS_NULL_FIXTURE = {
   },
 };
 
+// SCEN-16-4 (#16, Finding 1): the rental_companies `localiza` row is ABSENT.
+// The API tolerates the PGRST116 error and returns extras: undefined (the key
+// is simply omitted on the wire — JSON has no `undefined`). This is a DIFFERENT
+// shape from EXTRAS_NULL_FIXTURE (which has `extras` present with null fields).
+// The client must render both identically via useCategory's `extras?.X ?? default`.
+const { extras: _omittedExtras, ...MISSING_EXTRAS_FIXTURE } = EXTRAS_NULL_FIXTURE;
+
 test.describe('Extras NULL smoke (SCEN-010 partial coverage)', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/rentacar-data', (route) =>
@@ -122,6 +129,57 @@ test.describe('Extras NULL smoke (SCEN-010 partial coverage)', () => {
     // shows literal $0 catches accidental leakage if a future regression
     // wires a non-guarded path.
     await page.goto('/bogota');
+
+    const body = await page.locator('body').innerText();
+    expect(body, 'no leaked $0 prices on page load').not.toMatch(/\$\s?0(?!\d)/);
+  });
+});
+
+test.describe('Extras OMITTED — missing localiza row (SCEN-16-4, #16)', () => {
+  // Server-side fix (extras: undefined instead of 500) is gated by the unit
+  // test packages/logic/server/api/__tests__/rentacar-data.get.test.ts. This
+  // route-mock REPLACES the server response, so it does NOT exercise that fix;
+  // it documents that the CLIENT tolerates an absent `extras` key end-to-end.
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/rentacar-data', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MISSING_EXTRAS_FIXTURE),
+      }),
+    );
+  });
+
+  test('home page loads without console errors when extras are omitted', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') consoleErrors.push(msg.text());
+    });
+
+    const response = await page.goto('/');
+
+    expect(response?.status(), 'home returns 200').toBe(200);
+
+    const blocking = consoleErrors.filter(
+      (e) => /\[useFetchRentacarData\]|Failed to load|Data not loaded/.test(e),
+    );
+    expect(blocking, 'no blocking console errors from rentacar-data').toEqual([]);
+  });
+
+  test('city page (/bogota) loads and leaks no "$0" when extras are omitted', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') consoleErrors.push(msg.text());
+    });
+
+    const response = await page.goto('/bogota');
+
+    expect(response?.status(), 'city page returns 200').toBe(200);
+
+    const blocking = consoleErrors.filter(
+      (e) => /\[useFetchRentacarData\]|Failed to load|Data not loaded/.test(e),
+    );
+    expect(blocking, 'no blocking console errors from rentacar-data').toEqual([]);
 
     const body = await page.locator('body').innerText();
     expect(body, 'no leaked $0 prices on page load').not.toMatch(/\$\s?0(?!\d)/);

@@ -23,9 +23,13 @@ export default defineCachedEventHandler(async () => {
   if (locationsResult.error) {
     throw createError({ statusCode: 500, message: `Locations query failed: ${locationsResult.error.message}` })
   }
-  if (companyResult.error) {
-    throw createError({ statusCode: 500, message: `Rental company query failed: ${companyResult.error.message}` })
-  }
+  // A missing `localiza` row (PGRST116 from .single()) must NOT crash the
+  // page: extras fall back client-side (useCategory `?? 12000`). PGRST116 here
+  // means zero rows or a transient failure only — never a duplicate, since
+  // rental_companies.code is UNIQUE — so tolerating companyResult.error cannot
+  // silently mask an integrity violation. Categories/branches/cities/
+  // franchises/faqs errors keep throwing — those break the booking flow.
+  // See issue #16, Finding 1.
   if (citiesResult.error) {
     throw createError({ statusCode: 500, message: `Cities query failed: ${citiesResult.error.message}` })
   }
@@ -39,7 +43,9 @@ export default defineCachedEventHandler(async () => {
   return {
     categories: transformCategories(categoriesResult.data),
     branches: transformBranches(locationsResult.data),
-    extras: transformExtras(companyResult.data),
+    extras: companyResult.error || !companyResult.data
+      ? undefined
+      : transformExtras(companyResult.data),
     vehicleCategories: transformVehicleCategories(categoriesResult.data),
     cities: transformCities(citiesResult.data),
     franchiseTestimonials: transformFranchiseTestimonials(franchisesResult.data),
