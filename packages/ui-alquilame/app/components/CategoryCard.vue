@@ -6,6 +6,7 @@
           :models="categoryModels"
           :vehicleModels="modelos"
           :category="categoryCode"
+          :priority="priority"
         />
       </div>
 
@@ -609,8 +610,11 @@ const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 import type { CategoryProps } from '@rentacar-main/logic/utils';
 
 /** props */
-const props = withDefaults(defineProps<CategoryProps>(), {
+// `priority` es local a la card (LCP): NO se agrega al tipo compartido CategoryProps,
+// se extiende por intersección. Solo la primera card lo recibe en true.
+const props = withDefaults(defineProps<CategoryProps & { priority?: boolean }>(), {
   showButton: true,
+  priority: false,
 });
 
 /** emits */

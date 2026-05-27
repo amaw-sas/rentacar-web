@@ -40,7 +40,7 @@
       </div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <template v-for="category in filteredCategories" :key="`cat-${category.categoryCode}`">
+      <template v-for="(category, index) in filteredCategories" :key="`cat-${category.categoryCode}`">
         <placeholders-unable-category-card
           v-if="
             category.estimatedTotalAmount == 999999999 &&
@@ -53,6 +53,7 @@
           v-else-if="vehicleCategories[category.categoryCode]"
           :category
           :vehicle-category="vehicleCategories[category.categoryCode]"
+          :priority="index === 0"
           @selected-category="setSelectedCategory"
         />
       </template>
