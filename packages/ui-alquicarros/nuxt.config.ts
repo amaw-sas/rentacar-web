@@ -420,6 +420,10 @@ export default defineNuxtConfig({
   image: {
     provider: 'vercel',
     quality: 80,
+    // Whitelist del host Blob compartido (modelos de vehículos en Supabase, las 3 marcas).
+    // Sin esto, @nuxt/image NO optimiza URLs externas y las imágenes salen como JPEG ~412KB crudo
+    // en vez de enrutarse por el optimizador Vercel (/_vercel/image → webp ~45KB).
+    domains: ['9grznib0czdjtk77.public.blob.vercel-storage.com'],
     screens: {
       xs: 320,
       sm: 640,

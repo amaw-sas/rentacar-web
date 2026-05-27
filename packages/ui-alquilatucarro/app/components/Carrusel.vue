@@ -1,6 +1,6 @@
 <template>
     <UCarousel
-      v-slot="{ item }"
+      v-slot="{ item, index }"
       :items="vehicleModels"
       dots
       prev-icon="lucide:chevron-left"
@@ -21,7 +21,9 @@
           :alt="item.nombre"
           width="800"
           height="480"
-          loading="lazy"
+          sizes="100vw md:50vw lg:33vw"
+          :loading="(priority && index === 0) ? 'eager' : 'lazy'"
+          :fetchpriority="(priority && index === 0) ? 'high' : 'auto'"
           decoding="async"
           class="w-full"
         />
@@ -35,7 +37,11 @@ interface CarruselProps {
   category: CategoryType;
   models?: CategoryModelData[];
   vehicleModels?: VehicleCategoryModel[]
+  // LCP: solo la primera card pasa priority=true → su primer slide carga eager.
+  priority?: boolean;
 }
 
-defineProps<CarruselProps>();
+withDefaults(defineProps<CarruselProps>(), {
+  priority: false,
+});
 </script>
