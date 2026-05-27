@@ -444,7 +444,7 @@ export default defineNuxtConfig({
 
   // Configuración SEO
   site: {
-    url: 'https://alquilame.com',
+    url: 'https://alquilame.co',
     name: 'Alquilame',
     description: 'Alquila carros en Bogotá, Medellín, Cali y 14 ciudades más.',
     defaultLocale: 'es',
@@ -677,7 +677,7 @@ export default defineNuxtConfig({
   },
 
   llms: {
-    domain: 'https://alquilame.com',
+    domain: 'https://alquilame.co',
     title: 'Alquilame',
     description: 'Los mejores precios en alquiler de carros y alquiler de camionetas en varias zonas del país. Reserva Ahora! Tenemos variedad de carros nuevos renovando nuestra flota cada 2 años. Alquiler de carros en Bogotá, Medellín, Barranquilla, Cali, Cartagena, Bucaramanga, Ibagué, Manizales, Cúcuta, Santa Marta, Pereira, Montería y Villavicencio.',
     sections: [

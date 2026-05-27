@@ -27,14 +27,14 @@ export default defineAppConfig({
 
   // Brand-specific reservation configuration
   reservation: {
-    website: "https://alquilame.com",
+    website: "https://alquilame.co",
   },
 
   // Brand-specific franchise information
   franchise: {
     name: "alquilame.com",
     shortname: "alquilame",
-    website: "https://alquilame.com",
+    website: "https://alquilame.co",
     title: "Alquiler de Carros en Colombia desde $32/día",
     description:
       "Alquila carros en Bogotá, Medellín, Cali y 16 ciudades más. Hasta 60% descuento por reserva anticipada. Sin pago previo. Flota renovada cada 2 años.",
