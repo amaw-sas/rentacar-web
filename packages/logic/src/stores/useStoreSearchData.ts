@@ -141,10 +141,20 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
      * short-circuit, and the inline "¡Oops!" rendered without the gray-card
      * grid below. SCEN-U2.
      */
-    if (error.value?.error === "no_available_categories_error")
-      return categoriesAdminData.value.map((categoryAdmin: CategoryData) =>
+    if (error.value?.error === "no_available_categories_error") {
+      // Mirror the monthly *success* path: monthly reservations never offer
+      // the monthly-excluded categories (FU/FL/GL/LU), so they must not appear
+      // as unable cards either. Non-monthly keeps surfacing every category.
+      // Issue #54.
+      const adminCategories = haveMonthlyReservation.value
+        ? categoriesAdminData.value.filter((categoryAdmin: CategoryData) =>
+            !noMonthlyCategories.includes(categoryAdmin.identification)
+          )
+        : categoriesAdminData.value;
+      return adminCategories.map((categoryAdmin: CategoryData) =>
         createCategoryAvailability(categoryAdmin, true)
       );
+    }
 
     if (categoriesAvailabilityData.value) {
 
