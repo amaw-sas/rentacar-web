@@ -17,6 +17,9 @@ import useDelayedClose from '../useDelayedClose'
 //       pending close timer is cancelled and `open` stays true.
 //   S4  When the owning effect scope is disposed with a pending close timer,
 //       the timer is cleared (no leak, no late mutation).
+//   S5  When the opener requests open=false while already closed, no close
+//       timer is scheduled (idempotent) — `open` stays false with no pending
+//       work.
 
 describe('useDelayedClose', () => {
   beforeEach(() => {
@@ -86,5 +89,22 @@ describe('useDelayedClose', () => {
     scope.stop()
     vi.advanceTimersByTime(10000)
     expect(openRef!.value).toBe(true)
+  })
+
+  it('S5 — requesting close while already closed schedules no timer', () => {
+    const scope = effectScope()
+    scope.run(() => {
+      const { open, onOpenChange } = useDelayedClose(3000)
+      expect(open.value).toBe(false)
+
+      // Redundant close on an already-closed tooltip is a no-op: no timer
+      // is armed, so advancing past the delay changes nothing.
+      onOpenChange(false)
+      expect(vi.getTimerCount()).toBe(0)
+
+      vi.advanceTimersByTime(5000)
+      expect(open.value).toBe(false)
+    })
+    scope.stop()
   })
 })
