@@ -40,7 +40,11 @@
       </div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <template v-for="(category, index) in filteredCategories" :key="`cat-${category.categoryCode}`">
+      <!-- Only categories with a vehicleCategories entry can render — both card
+           components read vehicleCategory props. Filtering the v-for source keeps
+           iteration === render; an admin category missing from vehicleCategories
+           used to match neither branch and was silently dropped. Issue #22. -->
+      <template v-for="(category, index) in filteredCategories.filter((c: { categoryCode: string }) => vehicleCategories[c.categoryCode])" :key="`cat-${category.categoryCode}`">
         <placeholders-unable-category-card
           v-if="
             category.estimatedTotalAmount == 999999999 &&
