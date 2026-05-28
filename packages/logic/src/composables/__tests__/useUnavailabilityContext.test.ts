@@ -36,6 +36,22 @@ const ADMIN_PAYLOAD = {
       slug: 'el-poblado',
       schedule: '',
     },
+    {
+      id: 3,
+      code: 'BLANK',
+      name: 'Sucursal Centro',
+      city: '   ',
+      slug: 'centro',
+      schedule: '',
+    },
+    {
+      id: 4,
+      code: 'UNTRIM',
+      name: 'Sucursal Norte',
+      city: '  bogota ',
+      slug: 'norte',
+      schedule: '',
+    },
   ],
   extras: undefined,
   vehicleCategories: {},
@@ -111,6 +127,24 @@ describe('useUnavailabilityContext', () => {
       const { locationLabel } = useUnavailabilityContext()
 
       expect(locationLabel.value).toBe('El Poblado · El Poblado')
+    })
+
+    it('city solo-whitespace cae al nombre de la sucursal, sin separador malformado (#32)', () => {
+      const formStore = useStoreReservationForm()
+      formStore.lugarRecogida = 'BLANK'
+
+      const { locationLabel } = useUnavailabilityContext()
+
+      expect(locationLabel.value).toBe('Sucursal Centro')
+    })
+
+    it('city con espacios alrededor se normaliza vía el mapa (#32)', () => {
+      const formStore = useStoreReservationForm()
+      formStore.lugarRecogida = 'UNTRIM'
+
+      const { locationLabel } = useUnavailabilityContext()
+
+      expect(locationLabel.value).toBe('Bogotá · Sucursal Norte')
     })
 
     it('retorna string vacío cuando lugarRecogida es null', () => {
