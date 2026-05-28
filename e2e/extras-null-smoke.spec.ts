@@ -1,18 +1,28 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * SCEN-010 (smoke coverage): when /api/rentacar-data returns extras with
- * all fields null, SSR/CSR must not propagate $0 to user-visible pages
- * and must not emit console errors.
+ * SCEN-010 — when /api/rentacar-data returns extras with all fields null,
+ * the user-facing cotización must show the `?? 12000` default (12.000), never $0.
  *
- * Full coverage (walk through cotización + assert testids on resume) is
- * deferred to a follow-up issue. The unit chain
- *   SCEN-007 (transformer null) +
- *   SCEN-008/009 (useCategory ?? 12000 fallback) +
- *   SCEN-003 (useFetchRentacarData sentinel) +
- *   SCEN-005 (consumers don't throw)
- * implies SCEN-010 holds end-to-end; this smoke exercises the SSR data
- * path that the units validate piecewise.
+ * Coverage here is SMOKE-level by necessity: `/` and `/bogota` load with no
+ * rentacar-data console errors and no literal `$0` leaking into the markup.
+ *
+ * Why no full browser walk-through (pickup → category → resume slideover):
+ *   `rentacar-data` (including `extras`) is fetched SERVER-SIDE during SSR via
+ *   useAsyncData in plugins/rentacar-data.ts, serialized into the Nuxt payload,
+ *   and restored on the client from useState — the browser never re-fetches it.
+ *   So `page.route('**\/api/rentacar-data', …)` is INERT: it cannot force the
+ *   extras-null precondition, and the admin category/branch universe stays the
+ *   real Supabase set (a single-`B` availability stub yields all-"No disponible"
+ *   cards, with no card to walk through). Forcing null extras end-to-end would
+ *   require a server-side fixture seam, out of scope for issue #17 (Option B).
+ *   Empirically confirmed 2026-05-28; see issue #17 and the holdout amend note.
+ *
+ * The null-extras → 12.000 behavior is instead proven by the unit chain:
+ *   SCEN-007 (transformer keeps null) + SCEN-008/009 (useCategory `?? 12000`
+ *   fallback) + SCEN-003 (useFetchRentacarData sentinel) + SCEN-005 (consumers
+ *   don't throw). These validate end-to-end piecewise what SSR prevents the
+ *   browser from exercising.
  */
 
 const EXTRAS_NULL_FIXTURE = {
@@ -77,7 +87,7 @@ const EXTRAS_NULL_FIXTURE = {
 // The client must render both identically via useCategory's `extras?.X ?? default`.
 const { extras: _omittedExtras, ...MISSING_EXTRAS_FIXTURE } = EXTRAS_NULL_FIXTURE;
 
-test.describe('Extras NULL smoke (SCEN-010 partial coverage)', () => {
+test.describe('Extras NULL smoke (SCEN-010 SSR data path)', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/rentacar-data', (route) =>
       route.fulfill({
