@@ -46,7 +46,12 @@ function formatCity(raw: string): string {
   if (!raw) return '';
   const key = raw.trim().toLowerCase();
   if (CITY_DISPLAY_MAP[key]) return CITY_DISPLAY_MAP[key];
-  return raw.charAt(0).toUpperCase() + raw.slice(1);
+  // Hyphenated slugs not in the map ('el-poblado') are multi-word cities:
+  // title-case each segment so they read 'El Poblado', not 'El-poblado'.
+  return raw
+    .split('-')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
 }
 
 // Compact month abbreviations. Built manually because DateFormatter('es-CO',
