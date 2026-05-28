@@ -72,12 +72,14 @@ Holdout scenarios para el bundled fix de #2 (ISR cachea outage Supabase como HTM
 **Then**: los precios reflejan los valores Supabase. Para `numberDays=2`, conductor adicional total = `30000` (= 15000 × 2), silla bebé total = `20000` (= 10000 × 2). El fallback `?? 12000` no dispara cuando hay valor real.
 **Evidence**: outputs de la composable `useCategory()` aserteados contra valores derivados del extras Supabase, NO de los defaults del código.
 
-## SCEN-010: Cotización user-facing no muestra $0 silencioso
+## SCEN-010: Cotización user-facing no muestra $0 silencioso (smoke + cadena unit)
 
-**Given**: una cualquiera de las 3 marcas (alquilatucarro, alquilame, alquicarros) corriendo en Playwright; Supabase mockeado para `/api/rentacar-data` retorna payload con todos los campos de `extras` en `null` (per `EXTRAS_NULL_FIXTURE`); usuario navega a `/bogota`, selecciona sucursal Bogotá, fechas válidas, opta por agregar conductor adicional + silla bebé, llega a la pantalla de resumen.
-**When**: el componente `ReservationResume.vue` renderiza las líneas user-facing.
-**Then**: el elemento `[data-testid="extra-driver-line"]` está visible y contiene el texto `12.000` (no `$0`); el elemento `[data-testid="baby-seat-line"]` contiene `12.000`; ningún elemento de líneas de extras contiene la string `$0` o `$ 0`.
-**Evidence**: DOM snapshot capturado por Playwright en cada marca; `expect(page.getByTestId('extra-driver-line')).toContainText('12.000')`; `expect(...).not.toContainText('$0')`.
+**Given**: cualquiera de las 3 marcas corriendo en Playwright; el usuario navega a `/` y `/bogota`.
+**When**: la página carga (SSR + hidratación) y renderiza el markup user-facing.
+**Then**: respuesta 200; ningún error de consola `[useFetchRentacarData]` / `Failed to load`; ningún elemento del markup contiene `$0` ni `$ 0`. El default `?? 12000` (que produce `12.000`, no `$0`, cuando los extras de Supabase son `null`) queda probado end-to-end de forma COMPUESTA por la cadena unit SCEN-007 + SCEN-008/009 + SCEN-003 + SCEN-005.
+**Evidence**: `e2e/extras-null-smoke.spec.ts` (status 200 + sin console errors + `body.not.toMatch(/\$\s?0/)`); más los unit de SCEN-007/008/009/003/005 que asertan el valor `12000` y la no-coerción a `0`.
+
+> **Nota de cobertura (issue #17, amend 2026-05-28)**: el walk-through completo de Playwright (pickup → categoría → toggles → slideover asertando `[data-testid="extra-driver-line"]` = `12.000`) NO es automatizable. `rentacar-data` (incl. `extras`) se obtiene server-side en SSR (`useAsyncData` en `plugins/rentacar-data.ts`), se serializa al payload Nuxt y el cliente lo restaura desde `useState` sin re-fetch — por lo que `page.route('/api/rentacar-data')` es inerte y no puede forzar la precondición extras-null; además el universo admin de categorías/branches queda en los datos reales de Supabase (un stub de availability solo-`B` produce tarjetas "No disponible"). Forzar extras-null end-to-end exigiría un seam de fixture server-side, fuera de alcance de #17. Verificado empíricamente 2026-05-28. La cadena unit es la evidencia satisfactoria de la implicación; los testids `extra-driver-line`/`baby-seat-line` siguen presentes en `ReservationResume.vue` para verificación manual.
 
 ---
 
@@ -102,4 +104,4 @@ V6.1 evalúa el comportamiento de Vercel ISR ante revalidación 5xx. NO es un sc
 | SCEN-007 | Step 3 | Vitest unit `transformers.test.ts` (extender existente) |
 | SCEN-008 | Step 3 | Vitest unit `useCategory.test.ts` |
 | SCEN-009 | Step 3 | Vitest unit `useCategory.test.ts` |
-| SCEN-010 | Step 6 | Playwright e2e `extras-fallback.spec.ts` × 3 marcas |
+| SCEN-010 | Step 6 | Smoke e2e `extras-null-smoke.spec.ts` (walk-through infeasible — SSR payload, ver nota) + cadena unit SCEN-007/008/009/003/005 |
