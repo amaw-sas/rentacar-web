@@ -20,6 +20,9 @@ import useDelayedClose from '../useDelayedClose'
 //   S5  When the opener requests open=false while already closed, no close
 //       timer is scheduled (idempotent) — `open` stays false with no pending
 //       work.
+//   S6  forceClose() closes immediately (no delay) and cancels any pending
+//       close timer — this is the dismiss path (Escape / outside-click /
+//       sibling tooltip), distinct from a hover-leave which keeps the delay.
 
 describe('useDelayedClose', () => {
   beforeEach(() => {
@@ -102,6 +105,27 @@ describe('useDelayedClose', () => {
       onOpenChange(false)
       expect(vi.getTimerCount()).toBe(0)
 
+      vi.advanceTimersByTime(5000)
+      expect(open.value).toBe(false)
+    })
+    scope.stop()
+  })
+
+  it('S6 — forceClose() closes immediately and cancels a pending timer', () => {
+    const scope = effectScope()
+    scope.run(() => {
+      const { open, onOpenChange, forceClose } = useDelayedClose(3000)
+      onOpenChange(true)
+      onOpenChange(false) // hover-leave: arms the delayed-close timer
+      expect(open.value).toBe(true)
+      expect(vi.getTimerCount()).toBe(1)
+
+      // Dismiss (Escape / outside-click): close now, drop the pending timer.
+      forceClose()
+      expect(open.value).toBe(false)
+      expect(vi.getTimerCount()).toBe(0)
+
+      // The delayed timer must not fire late and mutate state again.
       vi.advanceTimersByTime(5000)
       expect(open.value).toBe(false)
     })
