@@ -25,7 +25,7 @@
           :loading="(priority && index === 0) ? 'eager' : 'lazy'"
           :fetchpriority="(priority && index === 0) ? 'high' : 'auto'"
           decoding="async"
-          class="w-full"
+          class="w-full aspect-[5/3] object-cover"
         />
       </div>
     </UCarousel>
