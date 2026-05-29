@@ -17,6 +17,10 @@ export default function useDelayedClose(closeDelayMs: number) {
       open.value = true
       return
     }
+    // Idempotency: already closed (so no timer can be pending — `open` stays
+    // true until the timer fires). Scheduling here would be a redundant
+    // close timer with nothing to close.
+    if (!open.value) return
     closeTimer = setTimeout(() => {
       open.value = false
       closeTimer = null
