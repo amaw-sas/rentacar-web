@@ -79,6 +79,16 @@ describe('useUnavailabilityContext', () => {
       expect(dateRangeLabel.value).toBe('12-15 mayo')
     })
 
+    it('mismo día recogida=devolución muestra una sola fecha, no "12-12" (#31)', () => {
+      const formStore = useStoreReservationForm()
+      formStore.fechaRecogida = '2026-05-12'
+      formStore.fechaDevolucion = '2026-05-12'
+
+      const { dateRangeLabel } = useUnavailabilityContext()
+
+      expect(dateRangeLabel.value).toBe('12 mayo')
+    })
+
     it('cross-month mismo año usa formato corto separado por " - "', () => {
       const formStore = useStoreReservationForm()
       formStore.fechaRecogida = '2026-04-30'

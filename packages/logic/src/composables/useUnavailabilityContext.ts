@@ -101,6 +101,10 @@ export default function useUnavailabilityContext(): UnavailabilityContext {
     }
 
     if (pickup.month === ret.month) {
+      if (pickup.day === ret.day) {
+        // Same day (pickup === return): "12 mayo", not the ambiguous "12-12".
+        return `${pickup.day} ${longMonth(pickup)}`;
+      }
       // Same month: "12-15 mayo"
       return `${pickup.day}-${ret.day} ${longMonth(pickup)}`;
     }
