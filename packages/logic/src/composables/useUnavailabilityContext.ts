@@ -43,12 +43,16 @@ const CITY_DISPLAY_MAP: Record<string, string> = {
 };
 
 function formatCity(raw: string): string {
-  if (!raw) return '';
-  const key = raw.trim().toLowerCase();
+  // Trim first: a whitespace-only city ('   ') must read as empty, otherwise
+  // locationLabel renders a malformed '   · Sucursal' with an orphan
+  // separator. The trimmed, lowercased key also drives the map lookup and the
+  // fallback, so surrounding whitespace never leaks into the output.
+  const key = raw?.trim().toLowerCase() ?? '';
+  if (!key) return '';
   if (CITY_DISPLAY_MAP[key]) return CITY_DISPLAY_MAP[key];
   // Hyphenated slugs not in the map ('el-poblado') are multi-word cities:
   // title-case each segment so they read 'El Poblado', not 'El-poblado'.
-  return raw
+  return key
     .split('-')
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
