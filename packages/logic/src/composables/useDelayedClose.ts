@@ -1,6 +1,26 @@
 import { ref, onScopeDispose } from 'vue'
 
-export default function useDelayedClose(closeDelayMs: number) {
+/**
+ * Default close delay (ms): how long an operator-facing tooltip stays open
+ * after a hover-leave so the operator can move into it to read/select.
+ */
+export const DEFAULT_CLOSE_DELAY_MS = 3000
+
+/**
+ * Controlled `open` state for a tooltip with a delayed close.
+ *
+ * Reka UI / Nuxt UI Tooltip has no native close-delay: on hover-leave it
+ * closes at once. This wraps `open` so a hover-leave (`onOpenChange(false)`)
+ * waits `closeDelayMs` before closing, while a dismiss (`forceClose`) closes
+ * immediately.
+ *
+ * @param closeDelayMs - Delay before a hover-leave close applies. Negative
+ *   values are clamped to 0. Defaults to {@link DEFAULT_CLOSE_DELAY_MS}.
+ * @returns `open` (reactive state), `onOpenChange` (hover-leave path,
+ *   delayed) and `forceClose` (dismiss path, immediate).
+ */
+export default function useDelayedClose(closeDelayMs: number = DEFAULT_CLOSE_DELAY_MS) {
+  const delayMs = Math.max(0, closeDelayMs)
   const open = ref(false)
   let closeTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -24,7 +44,7 @@ export default function useDelayedClose(closeDelayMs: number) {
     closeTimer = setTimeout(() => {
       open.value = false
       closeTimer = null
-    }, closeDelayMs)
+    }, delayMs)
   }
 
   // Dismiss path: Escape, outside-click or a sibling tooltip opening must

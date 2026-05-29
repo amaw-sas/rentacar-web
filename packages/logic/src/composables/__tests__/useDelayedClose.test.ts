@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { effectScope, nextTick } from 'vue'
 
-import useDelayedClose from '../useDelayedClose'
+import useDelayedClose, { DEFAULT_CLOSE_DELAY_MS } from '../useDelayedClose'
 
 // Scenarios captured: an operator-facing tooltip on category-card total price
 // must remain visible for closeDelayMs after the trigger loses hover/focus,
@@ -23,6 +23,8 @@ import useDelayedClose from '../useDelayedClose'
 //   S6  forceClose() closes immediately (no delay) and cancels any pending
 //       close timer — this is the dismiss path (Escape / outside-click /
 //       sibling tooltip), distinct from a hover-leave which keeps the delay.
+//   S7  Called with no argument, the close delay defaults to
+//       DEFAULT_CLOSE_DELAY_MS (3000ms).
 
 describe('useDelayedClose', () => {
   beforeEach(() => {
@@ -127,6 +129,22 @@ describe('useDelayedClose', () => {
 
       // The delayed timer must not fire late and mutate state again.
       vi.advanceTimersByTime(5000)
+      expect(open.value).toBe(false)
+    })
+    scope.stop()
+  })
+
+  it('S7 — close delay defaults to DEFAULT_CLOSE_DELAY_MS when omitted', () => {
+    const scope = effectScope()
+    scope.run(() => {
+      const { open, onOpenChange } = useDelayedClose()
+      onOpenChange(true)
+      onOpenChange(false)
+
+      vi.advanceTimersByTime(DEFAULT_CLOSE_DELAY_MS - 1)
+      expect(open.value).toBe(true)
+
+      vi.advanceTimersByTime(1)
       expect(open.value).toBe(false)
     })
     scope.stop()
