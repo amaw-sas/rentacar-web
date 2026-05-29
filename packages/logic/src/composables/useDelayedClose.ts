@@ -27,7 +27,16 @@ export default function useDelayedClose(closeDelayMs: number) {
     }, closeDelayMs)
   }
 
+  // Dismiss path: Escape, outside-click or a sibling tooltip opening must
+  // close now, not after closeDelayMs (the delay only serves hover-leave, so
+  // the operator can move into the tooltip to read/select it). Cancels any
+  // pending hover-leave timer so it can't fire late.
+  function forceClose() {
+    clearCloseTimer()
+    open.value = false
+  }
+
   onScopeDispose(clearCloseTimer)
 
-  return { open, onOpenChange }
+  return { open, onOpenChange, forceClose }
 }
