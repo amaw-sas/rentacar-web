@@ -7,31 +7,26 @@ import { test, expect, type Route, type Page } from '@playwright/test';
  * this spec is the integration-level proof against the real Reka/Nuxt UI
  * tooltip wired in CategoryCard.vue.
  *
- *   R1: hovering the price opens the tooltip (after Reka's open delay).
+ *   R1: hovering the price opens the tooltip.
  *   R2: leaving the trigger keeps the tooltip open through the close delay,
  *       then it disappears (so the operator can move into it to read details).
  *
- * The tooltip only renders on an *available* card, which needs an availability
- * categoryCode that matches an admin category that also has a vehicleCategories
- * entry. /api/rentacar-data (admin catalog + vehicleCategories) is SSR-loaded
- * and NOT interceptable via page.route — but it IS fetchable over HTTP, and it
- * loads from Supabase directly (not the :3000 booking backend). So instead of
- * hardcoding a code (SCEN-U4's pitfall — a guessed 'B' may be absent), we
- * discover a renderable code from the live catalog at runtime and stub only the
- * availability POST (which IS client-side) for that exact code. This SOLVES the
- * render — the available card with `.precio-total` appears reliably.
- *
- * SKIPPED, though, on the *open* path. The tooltip opens on Reka's hover-intent
- * (delay-duration 3000ms of sustained hover); in headless Chromium under load
- * that open is timing-fragile — `--repeat-each=3` gave R1 3/3 failures and R2
- * 3/3 flaky (passes only on retry), even at a 12s wait. The close-delay
- * contract itself (the point of this issue) holds once open, but a hover-intent
- * tooltip with 3s open + 3s close is not a reliable e2e target. The durable
- * fix is a test-only knob to shrink delay-duration / closeDelayMs (default
- * unchanged in prod); enable this spec once that exists. Meanwhile the contract
- * is fully covered, deterministically, at the unit layer (useDelayedClose
- * S1–S7, fake timers).
+ * Two affordances make this runnable:
+ *  - RENDER: the tooltip only lives on an *available* card, which needs an
+ *    availability categoryCode matching an admin category that also has a
+ *    vehicleCategories entry. /api/rentacar-data (admin catalog) is SSR-loaded
+ *    and not page.route-interceptable, but it IS HTTP-fetchable and Supabase-
+ *    backed — so we discover a renderable code from the live catalog at runtime
+ *    and stub only the (client-side) availability POST for it.
+ *  - TIMING: Reka's hover-intent open (delay-duration 3000ms) is too flaky to
+ *    drive headless, so CategoryCard honours a `?e2eTooltipDelays=1` test knob
+ *    that shrinks the open delay to 50ms and the close delay to
+ *    TEST_CLOSE_DELAY_MS (production stays 3000ms without the flag).
  */
+
+// Close delay applied by the ?e2eTooltipDelays=1 knob — keep in sync with
+// CategoryCard.vue's tooltipCloseDelayMs.
+const TEST_CLOSE_DELAY_MS = 600;
 
 // City-restricted categories — skip them so the chosen code is renderable on
 // the Bogotá results URL regardless of city filters (see useStoreSearchData).
@@ -44,7 +39,8 @@ const BOGOTA_3DAY_URL =
   '/fecha-recogida/2026-10-04' +
   '/fecha-devolucion/2026-10-07' +
   '/hora-recogida/08:00am' +
-  '/hora-devolucion/08:00am';
+  '/hora-devolucion/08:00am' +
+  '?e2eTooltipDelays=1';
 
 const PRICE_TRIGGER = '.precio-total';
 // Line that only appears inside the tooltip content.
@@ -89,7 +85,7 @@ async function discoverRenderableCode(page: Page): Promise<string | null> {
   return match?.id ?? null;
 }
 
-test.describe.skip('Total-price tooltip close-delay (#37)', () => {
+test.describe('Total-price tooltip close-delay (#37)', () => {
   test.beforeEach(async ({ page }) => {
     const code = await discoverRenderableCode(page);
     test.skip(!code, 'No category with a vehicleCategories entry in the live catalog (Supabase unreachable?)');
@@ -104,9 +100,8 @@ test.describe.skip('Total-price tooltip close-delay (#37)', () => {
     await trigger.scrollIntoViewIfNeeded();
 
     await trigger.hover();
-    // Reka opens only after sustained hover for its delay-duration (3s); the
-    // 12s budget absorbs that plus a cold-start render.
-    await expect(page.getByText(TOOLTIP_LINE)).toBeVisible({ timeout: 12_000 });
+    // Open delay is 50ms under the test knob; the budget covers render settle.
+    await expect(page.getByText(TOOLTIP_LINE)).toBeVisible({ timeout: 5_000 });
   });
 
   test('R2: leaving the trigger keeps the tooltip open through the close delay', async ({ page }) => {
@@ -116,16 +111,17 @@ test.describe.skip('Total-price tooltip close-delay (#37)', () => {
 
     await trigger.hover();
     const tooltip = page.getByText(TOOLTIP_LINE);
-    await expect(tooltip).toBeVisible({ timeout: 12_000 });
+    await expect(tooltip).toBeVisible({ timeout: 5_000 });
 
     // Hover-leave: move the pointer off the trigger.
     await page.mouse.move(0, 0);
 
-    // Still visible shortly after leaving (close delay is 3s).
-    await page.waitForTimeout(1_000);
+    // Still visible well within the close-delay window (the contract: it does
+    // NOT close immediately on leave).
+    await page.waitForTimeout(Math.round(TEST_CLOSE_DELAY_MS / 3));
     await expect(tooltip).toBeVisible();
 
     // Gone once the close delay elapses.
-    await expect(tooltip).toBeHidden({ timeout: 6_000 });
+    await expect(tooltip).toBeHidden({ timeout: TEST_CLOSE_DELAY_MS + 3_000 });
   });
 });
