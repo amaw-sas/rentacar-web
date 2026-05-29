@@ -1,5 +1,7 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { effectScope, nextTick } from 'vue'
+import { effectScope, defineComponent, h } from 'vue'
+import { mount } from '@vue/test-utils'
 
 import useDelayedClose, { DEFAULT_CLOSE_DELAY_MS } from '../useDelayedClose'
 
@@ -15,8 +17,9 @@ import useDelayedClose, { DEFAULT_CLOSE_DELAY_MS } from '../useDelayedClose'
 //       then flips to false.
 //   S3  If opener re-requests open=true within the close delay window, the
 //       pending close timer is cancelled and `open` stays true.
-//   S4  When the owning effect scope is disposed with a pending close timer,
-//       the timer is cleared (no leak, no late mutation).
+//   S4  When the host component is unmounted with a pending close timer,
+//       onScopeDispose clears it (no leaked timer, no late mutation) — proven
+//       through the real component lifecycle with @vue/test-utils mount.
 //   S5  When the opener requests open=false while already closed, no close
 //       timer is scheduled (idempotent) — `open` stays false with no pending
 //       work.
@@ -81,19 +84,30 @@ describe('useDelayedClose', () => {
     scope.stop()
   })
 
-  it('S4 — disposing the scope clears a pending close timer', () => {
-    const scope = effectScope()
-    let openRef: { value: boolean } | undefined
-    scope.run(() => {
-      const { open, onOpenChange } = useDelayedClose(3000)
-      openRef = open
-      onOpenChange(true)
-      onOpenChange(false)
-    })
+  it('S4 — unmounting the host component clears a pending close timer', () => {
+    // Exercise the real Vue lifecycle: the composable runs inside a mounted
+    // component, and unmount() must trigger onScopeDispose(clearCloseTimer).
+    let api!: ReturnType<typeof useDelayedClose>
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          api = useDelayedClose(3000)
+          return () => h('div')
+        },
+      }),
+    )
 
-    scope.stop()
+    api.onOpenChange(true)
+    api.onOpenChange(false) // arm the delayed-close timer
+    expect(api.open.value).toBe(true)
+    expect(vi.getTimerCount()).toBe(1)
+
+    wrapper.unmount()
+    expect(vi.getTimerCount()).toBe(0) // onScopeDispose cleared it
+
+    // No late mutation: the cleared timer never fires.
     vi.advanceTimersByTime(10000)
-    expect(openRef!.value).toBe(true)
+    expect(api.open.value).toBe(true)
   })
 
   it('S5 — requesting close while already closed schedules no timer', () => {
