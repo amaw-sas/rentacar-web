@@ -674,11 +674,12 @@ const {
 
 const { modelos, grupo } = props.vehicleCategory;
 
-// Test-only knob: with ?e2eTooltipDelays=1 the open/close delays shrink so the
-// tooltip open/close contract can be exercised deterministically in e2e (Reka's
-// 3s hover-intent open is too flaky to drive headless). Production behaviour is
-// unchanged — without the flag both stay at 3000ms.
-const tooltipFastDelays = useRoute().query.e2eTooltipDelays === '1';
+// Test-only knob: in dev, ?e2eTooltipDelays=1 shrinks the open/close delays so
+// the tooltip contract can be driven deterministically in e2e (Reka's 3s
+// hover-intent open is too flaky headless). Gated on import.meta.dev so it is
+// tree-shaken out of production builds — in prod the query param has no effect
+// and both delays stay at 3000ms.
+const tooltipFastDelays = import.meta.dev && useRoute().query.e2eTooltipDelays === '1';
 const tooltipOpenDelayMs = tooltipFastDelays ? 50 : 3000;
 const tooltipCloseDelayMs = tooltipFastDelays ? 600 : 3000;
 const {

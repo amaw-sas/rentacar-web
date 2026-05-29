@@ -86,7 +86,11 @@ async function discoverRenderableCode(page: Page): Promise<string | null> {
 }
 
 test.describe('Total-price tooltip close-delay (#37)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, isMobile }) => {
+    // Hover-intent tooltip: touch devices have no hover, so Reka never opens it.
+    // The Mobile Chrome / Mobile Safari projects can't exercise this contract.
+    test.skip(isMobile, 'hover-intent tooltip is desktop-pointer only (no hover on touch)');
+
     const code = await discoverRenderableCode(page);
     test.skip(!code, 'No category with a vehicleCategories entry in the live catalog (Supabase unreachable?)');
 
