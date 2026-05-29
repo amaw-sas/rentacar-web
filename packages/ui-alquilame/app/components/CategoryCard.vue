@@ -81,7 +81,7 @@
             Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
           </p>
 
-          <UTooltip :open="totalPriceTooltipOpen" :delay-duration="3000" :content="{ onEscapeKeyDown: forceTotalPriceTooltipClose, onPointerDownOutside: forceTotalPriceTooltipClose }" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
+          <UTooltip :open="totalPriceTooltipOpen" :delay-duration="tooltipOpenDelayMs" :content="{ onEscapeKeyDown: forceTotalPriceTooltipClose, onPointerDownOutside: forceTotalPriceTooltipClose }" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
             <template #content>
               Día: $ {{ dayPriceTooltip }} <br />
               Seguro día: $ {{ coverageDayPriceTooltip }} <br />
@@ -674,11 +674,19 @@ const {
 
 const { modelos, grupo } = props.vehicleCategory;
 
+// Test-only knob: in dev, ?e2eTooltipDelays=1 shrinks the open/close delays so
+// the tooltip contract can be driven deterministically in e2e (Reka's 3s
+// hover-intent open is too flaky headless). Gated on import.meta.dev so it is
+// tree-shaken out of production builds — in prod the query param has no effect
+// and both delays stay at 3000ms.
+const tooltipFastDelays = import.meta.dev && useRoute().query.e2eTooltipDelays === '1';
+const tooltipOpenDelayMs = tooltipFastDelays ? 50 : 3000;
+const tooltipCloseDelayMs = tooltipFastDelays ? 600 : 3000;
 const {
   open: totalPriceTooltipOpen,
   onOpenChange: onTotalPriceTooltipOpenChange,
   forceClose: forceTotalPriceTooltipClose,
-} = useDelayedClose(3000);
+} = useDelayedClose(tooltipCloseDelayMs);
 
 /** Product Schema for SEO */
 useProductSchema({
