@@ -28,6 +28,14 @@ const ADMIN_PAYLOAD = {
       slug: 'bogota-aeropuerto',
       schedule: '',
     },
+    {
+      id: 2,
+      code: 'POBLADO',
+      name: 'El Poblado',
+      city: 'el-poblado',
+      slug: 'el-poblado',
+      schedule: '',
+    },
   ],
   extras: undefined,
   vehicleCategories: {},
@@ -94,6 +102,15 @@ describe('useUnavailabilityContext', () => {
       const { locationLabel } = useUnavailabilityContext()
 
       expect(locationLabel.value).toBe('Bogotá · Bogotá Aeropuerto')
+    })
+
+    it('capitaliza cada segmento de un slug de ciudad con guión (#30)', () => {
+      const formStore = useStoreReservationForm()
+      formStore.lugarRecogida = 'POBLADO'
+
+      const { locationLabel } = useUnavailabilityContext()
+
+      expect(locationLabel.value).toBe('El Poblado · El Poblado')
     })
 
     it('retorna string vacío cuando lugarRecogida es null', () => {
