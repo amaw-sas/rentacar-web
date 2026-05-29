@@ -19,7 +19,7 @@
       </p>
     </div>
   </div>
-  <div v-else-if="!hasAvailableCategories && !pendingSearch && isInventoryEmpty" class="text-center">
+  <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center">
     <div class="text-white text-center">
       <div class="text-3xl">¡Oops!</div>
       <div class="text-lg">
@@ -32,7 +32,7 @@
     </div>
   </div>
   <template v-if="!pendingSearch">
-    <div v-if="hasAvailableCategories" class="text-white text-center">
+    <div v-if="hasRenderableAvailable" class="text-white text-center">
       <div class="text-lg md:text-xl font-bold">¡Vehículos Disponibles!</div>
       <div class="text-sm md:text-base">
         <span>En <span class="text-yellow-400 font-semibold">{{pickupCityName}}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDate }}</span>.</span>
@@ -40,17 +40,18 @@
       </div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <template v-for="(category, index) in filteredCategories" :key="`cat-${category.categoryCode}`">
+      <!-- Iterate renderableCategories so iteration === render and the
+           availability banner (hasRenderableAvailable) can't disagree with the
+           grid. A category missing from vehicleCategories has no card to show
+           and is excluded at the source rather than dropped mid-loop. #22. -->
+      <template v-for="(category, index) in renderableCategories" :key="`cat-${category.categoryCode}`">
         <placeholders-unable-category-card
-          v-if="
-            category.estimatedTotalAmount == 999999999 &&
-            vehicleCategories[category.categoryCode]
-          "
+          v-if="category.estimatedTotalAmount == 999999999"
           :category
           :vehicleCategory="vehicleCategories[category.categoryCode]"
         />
         <category-card
-          v-else-if="vehicleCategories[category.categoryCode]"
+          v-else
           :category
           :vehicle-category="vehicleCategories[category.categoryCode]"
           :priority="index === 0"
@@ -211,7 +212,6 @@ const {
   pending: pendingSearch,
   selectedCategory,
   filteredCategories,
-  hasAvailableCategories,
   error: searchError,
 } = storeToRefs(storeSearch);
 const { vehiculo, humanFormattedPickupDate, isSubmittingForm, selectedPickupLocation } = storeToRefs(storeForm);
@@ -231,6 +231,17 @@ const whatsappContacts: Record<string, { phone: string; display: string }> = {
 };
 const whatsappContact = whatsappContacts[config.public.rentacarFranchise as string] ?? whatsappContacts.alquilatucarro;
 const { vehicleCategories } = useFetchRentacarData();
+// Categories the grid can actually render (those with presentation metadata in
+// vehicleCategories). The grid AND the availability banner both derive from
+// this single source so they can never disagree — a category with real
+// availability but no metadata must not flip the banner to "available" while
+// the grid renders nothing. Issue #22.
+const renderableCategories = computed(() =>
+  filteredCategories.value.filter((c: { categoryCode: string }) => vehicleCategories[c.categoryCode]),
+);
+const hasRenderableAvailable = computed(() =>
+  renderableCategories.value.some((c: { estimatedTotalAmount: number }) => c.estimatedTotalAmount !== 999999999),
+);
 const slideoverReservationResume = ref<boolean>(false);
 const slideoverReservationForm = ref<boolean>(false);
 const reservationFormComponent = ref(null);
