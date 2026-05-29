@@ -50,6 +50,11 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     error.value = null;
     pending.value = true;
     categoriesAvailabilityData.value = null;
+    // Reset alongside the other per-search state: only the LLNRAG009 and
+    // empty-result paths re-assign this, so without resetting here a stale
+    // `true` from a prior LLNRAG009 search leaks into a later search that
+    // ends in a different terminal error. Issue #20.
+    noAvailableCategories.value = false;
 
     const { data, error: errorResponse } = await useFetchCategoriesAvailabilityData();
 
