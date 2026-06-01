@@ -35,11 +35,17 @@ reactive, nextTick, onMounted}` pasa de **170** (línea base plain-mode) a **0**
 
 **Given**: el mismo paquete migrado.
 **When**: se corre el typecheck.
-**Then**: (a) el conteo TS2304 para `X ∈ {defineEventHandler, sendRedirect, createError,
-definePageMeta, navigateTo}` pasa de **72** a **0**; y (b) el error exacto citado en el issue
-`../logic/server/utils/supabase.ts(...): error TS2304: Cannot find name 'useRuntimeConfig'`
-ya **no aparece** (Nitro provee `useRuntimeConfig` en el proyecto server).
+**Then**: (a) el conteo TS2304 para los handlers genuinos de servidor
+`X ∈ {defineEventHandler, sendRedirect, createError}` pasa a **0**; y (b) el error exacto citado
+en el issue `../logic/server/utils/supabase.ts(...): error TS2304: Cannot find name
+'useRuntimeConfig'` ya **no aparece** (Nitro provee `useRuntimeConfig` en el proyecto server).
 **Evidence**: stdout de typecheck — ambos greps == 0.
+
+> Nota de amend (autor, evidencia): la versión inicial incluía `navigateTo` y `definePageMeta`
+> en este set "→ 0". Son auto-imports **app-router** (no handlers de servidor): resuelven en
+> archivos `app/`, pero fallan en `logic/src/stores/useStoreReservationForm.ts` por el mismo
+> mecanismo del residual de build-mode multi-proyecto (Non-goal #2). Se reclasifican allí; este
+> SCEN cubre solo los handlers de servidor genuinos + `useRuntimeConfig`.
 
 ## SCEN-003: Las 3 marcas se comportan idénticamente
 
@@ -63,10 +69,17 @@ plain-mode.
 
 - **Errores de tipo reales pre-existentes** (~449 en alquilatucarro: TS18046, TS2339, TS2345
   `SupabaseLocation`, `'cat' possibly undefined`, etc.) — baseline drift, issue separado.
-- **Residual de build-mode multi-proyecto** (~134 TS2304 en `logic/src/composables/*` como
-  `useAppConfig`/`useSchemaOrg`/`useRoute`): los proyectos server/shared/node arrastran composables
-  app como dependencias transitivas y los typechequean sin los globals app. Es artefacto del
-  build-mode con globs amplios del layer; fuera del alcance acordado. Se documenta en el PR.
+- **Residual de build-mode multi-proyecto** (~134 TS2304 en `logic/src/composables/*` y
+  `logic/src/stores/*`: `useAppConfig`/`useSchemaOrg`/`useRoute`/`navigateTo`/`definePageMeta`):
+  los proyectos server/shared/node arrastran composables y stores app como dependencias
+  transitivas y los typechequean sin los globals app. Es artefacto del build-mode con globs
+  amplios del layer; fuera del alcance acordado. Se documenta en el PR.
+- **Rigor flags no reinyectados**: los tsconfig de marca heredaban `noUnusedLocals`/
+  `noUnusedParameters`/`noImplicitReturns` de `tsconfig.base.json`. Los configs generados por
+  Nuxt 4 conservan `strict: true` pero no esos tres. NO se reinyectan en este PR: hacerlo
+  destapa ~23 instancias de código muerto pre-existente, fuera del scope de auto-imports.
+  Reversible como pase de higiene posterior (vía `typescript.{tsConfig,sharedTsConfig,
+  nodeTsConfig}` + `nitro.typescript.tsConfig` en el layer).
 - `pnpm typecheck` exit 0 — no alcanzable con solo config dado el baseline real.
 
 ## Anti-reward-hacking
