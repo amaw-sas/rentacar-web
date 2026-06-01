@@ -8,7 +8,7 @@ import {
   defaultConfig,
   uiConfig,
   organizationConfig,
-} from '@rentacar-main/logic/src'
+} from '@rentacar-main/logic/config'
 
 export default defineAppConfig({
   // Shared default timezone

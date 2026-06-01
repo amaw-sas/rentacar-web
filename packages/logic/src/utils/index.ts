@@ -58,7 +58,11 @@ export type { default as FormSubmitFields } from './types/fields/FormSubmitField
 // Type Definitions - Props
 // ============================================================================
 export type { default as CategoryProps } from './types/props/CategoryProps';
-export type { default as ReservationResumeProps } from './types/props/ReservationResumeProps';
+// ReservationResumeProps NO se re-exporta desde el barrel a propósito: deriva su
+// tipo de `ReturnType<typeof useCategory>`, así que re-exportarlo aquí arrastra el
+// composable useCategory (y su subgrafo) a cualquier proyecto que importe el barrel
+// de utils — incluido el proyecto server/node en `vue-tsc -b`, donde los globals de
+// auto-import app no existen (TS2304). Se importa por ruta estrecha desde su .vue.
 
 // ============================================================================
 // Type Definitions - General Types

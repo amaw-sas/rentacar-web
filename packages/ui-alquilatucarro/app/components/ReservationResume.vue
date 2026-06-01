@@ -133,7 +133,7 @@ import { defineAsyncComponent } from 'vue'
 const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 
 /** types */
-import type { ReservationResumeProps } from '@rentacar-main/logic/utils';
+import type ReservationResumeProps from '@rentacar-main/logic/utils/types/props/ReservationResumeProps';
 
 /** props */
 const props = defineProps<ReservationResumeProps>();
