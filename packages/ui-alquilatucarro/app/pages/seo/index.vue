@@ -41,7 +41,7 @@ async function handleUpdate() {
         metrics.value.current.backlinksTotal = response.data.moz.backlinksTotal ?? metrics.value.current.backlinksTotal
         metrics.value.current.linkingDomains = response.data.moz.linkingDomains ?? metrics.value.current.linkingDomains
       }
-      metrics.value.current.lastUpdated = new Date().toISOString().split('T')[0]
+      metrics.value.current.lastUpdated = new Date().toISOString().split('T')[0] ?? ''
     }
 
     // Auto-hide success message after 5 seconds

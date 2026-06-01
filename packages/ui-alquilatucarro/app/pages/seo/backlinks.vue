@@ -42,7 +42,8 @@ const summary = computed(() => backlinksData.value?.summary || {
   netBalance60d: 0
 })
 
-const spamDistribution = computed(() => backlinksData.value?.spamScoreDistribution || {})
+// Cast conserva el tipo inferido de la respuesta en vez de unir con `{}` (TS2339).
+const spamDistribution = computed(() => (backlinksData.value?.spamScoreDistribution ?? {}) as NonNullable<typeof backlinksData.value>['spamScoreDistribution'])
 const errors404 = computed(() => backlinksData.value?.errors404WithBacklinks || [])
 </script>
 
