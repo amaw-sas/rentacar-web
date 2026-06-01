@@ -93,8 +93,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       return pickPriceForDate(categoryMonthPrices.value, fechaRecogida.value ?? '');
    };
    
-   const hasPicoyPlaca = (): boolean => 
-      (categoryCode.value) ? ["FU", "FL", "GL", "LY", "LP"].includes(categoryCode.value) : false;
+   const hasPicoyPlaca = (): boolean =>
+      (categoryCode.value) ? ["FU", "FL", "GL", "LY", "LP", "LU"].includes(categoryCode.value) : false;
    
    const hasReturnFee = (): boolean => returnFeeAmount.value ? true  : false;
    
