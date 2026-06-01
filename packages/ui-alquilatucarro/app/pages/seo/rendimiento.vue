@@ -9,26 +9,21 @@ const { data: performanceData, pending, error } = await useFetch('/api/seo/perfo
   default: () => null
 })
 
+// El fallback cubre el estado de carga/fallo de fetch; el cast conserva el tipo
+// inferido por useFetch (respuesta de /api/seo/performance) en vez de unir con
+// `{}`, que rompía el acceso a propiedades (TS2339). Los fallbacks de gsc e
+// indexation conservan su `status` para que las ramas del template que dependen
+// de él rendericen igual que antes si el fetch falla.
+type PerfResponse = NonNullable<typeof performanceData.value>
+
 // GSC data
-const gsc = computed(() => performanceData.value?.gsc || {
-  last28d: {},
-  previousPeriod: {},
-  topPages: [],
-  topQueries: [],
-  status: 'pending-oauth-setup'
-})
+const gsc = computed(() => (performanceData.value?.gsc ?? { status: 'pending-oauth-setup' }) as PerfResponse['gsc'])
 
 // Core Web Vitals
-const cwv = computed(() => performanceData.value?.cwv || {
-  desktop: {},
-  mobile: {},
-  history: []
-})
+const cwv = computed(() => (performanceData.value?.cwv ?? {}) as PerfResponse['cwv'])
 
 // Indexation
-const indexation = computed(() => performanceData.value?.indexation || {
-  status: 'pending-gsc-setup'
-})
+const indexation = computed(() => (performanceData.value?.indexation ?? { status: 'pending-gsc-setup' }) as PerfResponse['indexation'])
 
 // CWV Score color
 const getCwvScoreColor = (score: number | null) => {
@@ -233,7 +228,7 @@ const clsThresholds = { good: 0.1, poor: 0.25 }
           <p class="text-gray-400 text-sm">Impresiones (28d)</p>
           <p class="text-2xl font-bold text-white">{{ gsc.last28d?.impressions?.toLocaleString() || '-' }}</p>
           <p v-if="gsc.previousPeriod?.impressions" class="text-xs text-gray-500">
-            vs {{ gsc.previousPeriod.impressions.toLocaleString() }} anterior
+            vs {{ Number(gsc.previousPeriod.impressions).toLocaleString() }} anterior
           </p>
         </div>
         <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">

@@ -205,7 +205,7 @@ const formatNumber = (num: number | null) => {
             />
             <span class="text-white font-medium">{{ comp.domain }}</span>
           </div>
-          <p class="text-sm text-gray-400">{{ comp.notes }}</p>
+          <p class="text-sm text-gray-400">{{ (comp as { notes?: string }).notes }}</p>
         </div>
       </div>
 

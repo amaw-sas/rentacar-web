@@ -40,13 +40,18 @@ const { data: toolsData, pending } = await useFetch('/api/seo/tools', {
 // GSC connection status (real OAuth status)
 const { data: gscStatus, refresh: refreshGscStatus } = await useFetch('/api/auth/gsc/status', {
   key: 'gsc-status',
-  default: () => ({ connected: false })
+  // El default debe igualar el shape de la respuesta; si no, useFetch infiere
+  // una unión y el acceso a expiresAt/scope falla (TS2339).
+  default: () => ({ connected: false, expiresAt: null, createdAt: null, scope: null })
 })
 
-// Tools
-const moz = computed(() => toolsData.value?.moz || {})
-const gsc = computed(() => toolsData.value?.gsc || {})
-const pagespeed = computed(() => toolsData.value?.pagespeed || {})
+// Tools — el fallback `{}` cubre el estado de carga; el cast conserva el tipo
+// inferido por useFetch (de la respuesta de /api/seo/tools) en vez de unir con
+// `{}`, que rompía el acceso a propiedades (TS2339).
+type ToolsResponse = NonNullable<typeof toolsData.value>
+const moz = computed(() => (toolsData.value?.moz ?? {}) as ToolsResponse['moz'])
+const gsc = computed(() => (toolsData.value?.gsc ?? {}) as ToolsResponse['gsc'])
+const pagespeed = computed(() => (toolsData.value?.pagespeed ?? {}) as ToolsResponse['pagespeed'])
 
 // Real GSC connection status
 const isGscConnected = computed(() => gscStatus.value?.connected || false)
