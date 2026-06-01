@@ -1,11 +1,15 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./app/*"],
-      "~/*": ["./app/*"],
-      "@logic/*": ["../logic/src/*"]
-    }
-  }
+  // Issue #18: forma de solución canónica de Nuxt 4. nuxi detecta `references`
+  // y corre `vue-tsc -b` (build-mode), que carga los globals de auto-import
+  // generados en .nuxt/. Sin references, nuxi cae a `vue-tsc --noEmit` plano y
+  // todo auto-import reporta TS2304. Nota: los configs generados conservan
+  // `strict` pero NO noUnusedLocals/noUnusedParameters/noImplicitReturns (que
+  // aportaba tsconfig.base.json); ver scenarios Non-goal de issue #18.
+  "files": [],
+  "references": [
+    { "path": "./.nuxt/tsconfig.app.json" },
+    { "path": "./.nuxt/tsconfig.server.json" },
+    { "path": "./.nuxt/tsconfig.shared.json" },
+    { "path": "./.nuxt/tsconfig.node.json" }
+  ]
 }
