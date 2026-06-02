@@ -5,10 +5,10 @@ import { fileURLToPath } from 'node:url'
 // Scenario captured (issue #93): the LU category is exempt from pico y placa
 // — like the rest of its "L" family (LP, LY) — but its result card never
 // rendered the "sin pico y placa" badge. CategoryTags.vue (all three brands)
-// gates that badge on hasPicoyPlaca(), whose whitelist is the single source
-// of truth. LU was missing from the array, so hasPicoyPlaca() returned false.
+// gates that badge on isPicoyPlacaExempt(), whose whitelist is the single source
+// of truth. LU was missing from the array, so isPicoyPlacaExempt() returned false.
 //
-// Fix: add "LU" to the whitelist. Since hasPicoyPlaca is `categoryCode
+// Fix: add "LU" to the whitelist. Since isPicoyPlacaExempt is `categoryCode
 // ? WHITELIST.includes(categoryCode) : false`, the array membership set IS
 // the observable behavior — asserting the literal pins the scenario exactly.
 // Source-level test mirrors the sibling suites, which deliberately avoid
@@ -19,15 +19,15 @@ const source = readFileSync(
   'utf8',
 )
 
-function extractHasPicoyPlaca(): string {
-  const start = source.indexOf('const hasPicoyPlaca =')
-  expect(start, 'missing hasPicoyPlaca').toBeGreaterThan(-1)
+function extractIsPicoyPlacaExempt(): string {
+  const start = source.indexOf('const isPicoyPlacaExempt =')
+  expect(start, 'missing isPicoyPlacaExempt').toBeGreaterThan(-1)
   const end = source.indexOf(';', source.indexOf('.includes', start)) + 1
   return source.slice(start, end)
 }
 
 function whitelist(): string[] {
-  const block = extractHasPicoyPlaca()
+  const block = extractIsPicoyPlacaExempt()
   const captured = block.match(/\[([^\]]*)\]/)?.[1]
   if (captured === undefined) throw new Error('missing whitelist array literal')
   return captured
@@ -36,7 +36,7 @@ function whitelist(): string[] {
     .filter(Boolean)
 }
 
-describe('useCategory.hasPicoyPlaca — pico y placa exemption whitelist (issue #93)', () => {
+describe('useCategory.isPicoyPlacaExempt — pico y placa exemption whitelist (issue #93)', () => {
   const codes = whitelist()
 
   it('SCEN-LU-1: LU is exempt → badge renders', () => {
@@ -54,7 +54,7 @@ describe('useCategory.hasPicoyPlaca — pico y placa exemption whitelist (issue 
   })
 
   it('returns false when categoryCode is falsy, true only via the whitelist', () => {
-    const block = extractHasPicoyPlaca()
+    const block = extractIsPicoyPlacaExempt()
     expect(block).toMatch(/categoryCode\.value\)\s*\?/)
     expect(block).toMatch(/\.includes\(categoryCode\.value\)\s*:\s*false/)
   })

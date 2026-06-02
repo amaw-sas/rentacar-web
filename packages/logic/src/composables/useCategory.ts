@@ -93,7 +93,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       return pickPriceForDate(categoryMonthPrices.value, fechaRecogida.value ?? '');
    };
    
-   const hasPicoyPlaca = (): boolean =>
+   const isPicoyPlacaExempt = (): boolean =>
       (categoryCode.value) ? ["FU", "FL", "GL", "LY", "LP", "LU"].includes(categoryCode.value) : false;
    
    const hasReturnFee = (): boolean => returnFeeAmount.value ? true  : false;
@@ -463,7 +463,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       currencyTotalWithAdditionals,
       
       // other functions
-      hasPicoyPlaca,
+      isPicoyPlacaExempt,
       hasDiscount,
       hasExtraHours,
       hasReturnFee,

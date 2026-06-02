@@ -653,7 +653,7 @@ const {
   currencyReturnFee,
   getDiscount,
   getFormattedDays,
-  hasPicoyPlaca,
+  isPicoyPlacaExempt,
   hasDiscount,
   hasExtraHours,
   hasReturnFee,
