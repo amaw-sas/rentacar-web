@@ -28,6 +28,7 @@ interface SupabaseCategory {
   long_description: string
   tags: string[]
   extra_km_charge: number | string
+  picoyplaca_exempt?: boolean | null
   category_models: SupabaseCategoryModel[]
   category_pricing: SupabaseCategoryPricing[]
 }
@@ -106,6 +107,9 @@ export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
       month_prices: monthPrices,
       total_coverage_unit_charge: coverageCharge,
       extra_km_charge: Number(row.extra_km_charge ?? 0),
+      // null (not false) when the column is absent, so the client can tell
+      // "unset → fall back to the hardcoded list" from an explicit false.
+      picoyplaca_exempt: row.picoyplaca_exempt ?? null,
     }
   })
 }

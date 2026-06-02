@@ -9,7 +9,7 @@ import useMoneyFormat from './useMoneyFormat';
 import useStoreReservationForm from '../stores/useStoreReservationForm';
 
 // Internal dependencies - utils
-import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge } from '@rentacar-main/logic/utils';
+import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge, resolvePicoyPlacaExempt } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -54,6 +54,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const returnFeeAmount = ref<number | undefined>(categoryAvailableData.returnFeeAmount);
    const numberDays = ref<number>(categoryAvailableData.numberDays);
    const categoryCode = ref<CategoryType>(categoryAvailableData.categoryCode);
+   const picoyplacaExempt = ref<boolean | null>(categoryAvailableData.picoyplacaExempt ?? null);
    const categoryDescription = ref<string>(categoryAvailableData.categoryDescription);
    const categoryModels = ref<CategoryModelData[] | undefined>(categoryAvailableData.categoryModels);
    const categoryMonthPrices = ref<CategoryMonthPriceData[] | undefined>(categoryAvailableData.categoryMonthPrices);
@@ -93,8 +94,10 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       return pickPriceForDate(categoryMonthPrices.value, fechaRecogida.value ?? '');
    };
    
+   // Issue #28 Ola B2: read the exemption from the dashboard column, with a
+   // transitional fallback to the hardcoded list (resolvePicoyPlacaExempt).
    const isPicoyPlacaExempt = (): boolean =>
-      (categoryCode.value) ? ["FU", "FL", "GL", "LY", "LP", "LU"].includes(categoryCode.value) : false;
+      resolvePicoyPlacaExempt(picoyplacaExempt.value, categoryCode.value);
    
    const hasReturnFee = (): boolean => returnFeeAmount.value ? true  : false;
    
