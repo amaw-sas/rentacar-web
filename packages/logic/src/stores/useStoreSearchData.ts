@@ -169,7 +169,8 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
           categoryAvailability["categoryMonthPrices"] = categoryAdmin.month_prices;
           categoryAvailability["categoryDescription"] = categoryAdmin.category.replace(categoryAdmin.name, "");
           categoryAvailability["totalCoverageUnitCharge"] = categoryAdmin.total_coverage_unit_charge;
-          
+          categoryAvailability["picoyplacaExempt"] = categoryAdmin.picoyplaca_exempt;
+
           return categoryAvailability
         }
         else return createCategoryAvailability(categoryAdmin, true);
@@ -276,6 +277,7 @@ const createCategoryAvailability = (category: CategoryData, unable: boolean = fa
     categoryDescription: category.description,
     categoryModels: category.models,
     categoryMonthPrices: category.month_prices,
+    picoyplacaExempt: category.picoyplaca_exempt,
     totalAmount: 0,
     estimatedTotalAmount: (unable) ? 999999999 : 1,
     totalCoverageUnitCharge: category.total_coverage_unit_charge,

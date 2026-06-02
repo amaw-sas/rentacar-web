@@ -24,6 +24,7 @@ export { slugify } from './slugify';
 // ============================================================================
 export { pickPriceForDate } from './pickPriceForDate';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
+export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 
 // ============================================================================
 // Server Helpers
