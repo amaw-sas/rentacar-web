@@ -282,7 +282,12 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       let initial: number = 0, final: number = 0;
       initial = ((hasDiscount()) ? vehicleDayCharge.value + (discountAmount.value ?? 0) : vehicleDayCharge.value) + coverageUnitCharge.value;
       final = vehicleDayCharge.value + coverageUnitCharge.value;
-      
+
+      // Base nula (p.ej. reserva mensual: vehicleDayCharge y coverageUnitCharge
+      // son 0, el precio vive en month_prices) → no hay descuento diario que
+      // mostrar. Sin esta guarda el cálculo hace 100 * (0 / |0|) = NaN.
+      if (initial <= 0) return "0";
+
       const formatter = new Intl.NumberFormat("es-CO", {
          style: "decimal",
       });
