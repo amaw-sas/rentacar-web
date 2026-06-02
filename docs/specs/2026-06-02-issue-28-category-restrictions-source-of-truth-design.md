@@ -17,7 +17,7 @@ El issue pedía decidir A/B/C y, si B/C, **crear** una tabla `category_availabil
 
 - Las restricciones **geográficas** (#3 solo-Bogotá, #4 CX, #5 GY) tienen schema, query layer, actions y **UI admin** ya construidos: `vehicle_categories.visibility_mode` + tabla pivote `category_city_visibility`, usados hoy por las gamas LY/LP/VP. Falta backfill de los sets de #28 y consumo en la web. **No hay que crear schema nuevo.**
 - La restricción de **modo mensual** (#1) ya está modelada en el dashboard como `category_pricing.monthly_*_price = NULL` (migración 042). La web la **duplica** en un array hardcoded `noMonthlyCategories`. Es derivable del payload sin schema nuevo.
-- **kmExtra** (#6) ya migró (`vehicle_categories.extra_km_charge`, migración 035) y el transformer ya lo lee. Lo único pendiente es borrar el fallback hardcoded de la web.
+- **kmExtra** (#6) ya migró por completo. El fallback hardcoded de la web (`EXTRA_KM_BY_CODE` en `useTariffs.ts`) **ya se borró** en `9a41993` (2026-05-02), que pasó a leer `extra_km_charge` del payload. No queda nada que limpiar: Ola 0 está hecha desde antes de este ADR.
 - **Pico y placa** (#2) solo existe en el dashboard como **texto libre** (`description` y array `tags`: "Libre Pico y Placa", "exenta de pico y placa") — no consultable. Es la única regla que necesita una columna estructurada nueva. **Ojo con la semántica invertida**: el flag web `hasPicoyPlaca()` renderiza el badge "sin pico y placa", es decir devuelve `true` cuando la gama está **exenta**. El nombre miente. La migración debe corregir el nombre, no propagarlo.
 
 Consecuencia: la Opción C/B es **más barata y menos arriesgada** de lo que el issue estimó. La recomendación del issue se confirma, con un plan mucho más corto.
@@ -45,7 +45,7 @@ Consecuencia: la Opción C/B es **más barata y menos arriesgada** de lo que el 
 | 3 | Solo Bogotá (FU/FL/GL) | array de **branch codes** `['AABOT','ACBOT','ACBEX','ACBNN','ACBOJ']` en `useStoreSearchData.ts:189` | schema existe (`category_city_visibility`), **datos ausentes** para FU/FL/GL | Backfill `visibility_mode='restricted'` + filas city. Web lee. **Granularidad branch→city: ver open question O1.** |
 | 4 | CX en 7 ciudades | array de **city slugs** en `useStoreSearchData.ts:202` | schema existe, datos ausentes para CX | Backfill + lectura web. Mapea limpio (city→city). |
 | 5 | GY en 8 ciudades | array de **city slugs** en `useStoreSearchData.ts:218` | schema existe, datos ausentes para GY | Backfill + lectura web. Mapea limpio. |
-| 6 | kmExtra fallback por gama | fallback hardcoded en web | `extra_km_charge` (mig. 035), transformer ya lo lee | **Cleanup-only**: borrar fallback cuando todas las categorías tengan valor. |
+| 6 | kmExtra fallback por gama | ~~fallback hardcoded~~ **ya borrado** (`9a41993`); lee `extra_km_charge` del payload | `extra_km_charge` (mig. 035), transformer ya lo lee | **Ninguna** — Ola 0 ya completada en `9a41993`. Lo que queda (`?? 0`, `> 0 ? : null`) es null-handling, no drift. |
 
 ### Evidencia de que el schema geográfico ya existe y funciona
 
@@ -106,7 +106,7 @@ Lo que se borra de la web al cerrar todas las olas:
 - `noMonthlyCategories` array (`useStoreSearchData.ts:42-46`)
 - `bogotaBranches` / `onlyBogotaCategories` / arrays CX / GY (`useStoreSearchData.ts:172-233`)
 - array pico y placa (`useCategory.ts:97`)
-- fallback kmExtra hardcoded
+- ~~fallback kmExtra hardcoded~~ (ya borrado en `9a41993`)
 
 ---
 
@@ -114,13 +114,15 @@ Lo que se borra de la web al cerrar todas las olas:
 
 Cada ola es una unidad entregable e independiente, ordenada por **menor esfuerzo / mayor certeza primero**. Cada ola autoriza su propio holdout de escenarios vía `/scenario-driven-development` antes de tocar código — este documento no fabrica escenarios por adelantado.
 
-### Ola 0 — Cleanup kmExtra (#6) · esfuerzo XS · solo web
+### Ola 0 — Cleanup kmExtra (#6) · ✅ ya completada en `9a41993`
 
-Borrar el fallback hardcoded de kmExtra. **Precondición verificable**: confirmar que las categorías activas tienen `extra_km_charge` poblado en Supabase (si alguna está en 0/NULL, primero se seedea en el dashboard).
+**Estado: hecha antes de este ADR.** El fallback `EXTRA_KM_BY_CODE` se borró el 2026-05-02 (`9a41993`, "refactor(tarifas): read kmExtra from vehicle_categories instead of local mapping"), que threadeó `extra_km_charge` por `transformer → CategoryData → useTariffs`. Esta ola se listó por una premisa que no chequeó el historial git; no hay código que cambiar.
 
-- Backfill dashboard: solo si faltan valores.
-- Web: eliminar el fallback, leer siempre del payload (el transformer ya lo trae).
-- Aceptación: cada categoría activa muestra su kmExtra real; ninguna cae al valor mágico.
+Lo que permanece **no** es un fallback hardcoded y se queda:
+- `transformers.ts:108` `Number(row.extra_km_charge ?? 0)` — coerción null-safe (default de columna = 0).
+- `useTariffs.ts:90` `extra_km_charge > 0 ? … : null` — "0 = sin configurar → renderiza —", semántica de display intencional documentada en `9a41993`.
+
+Borrar cualquiera de las dos sería una regresión sin beneficio. El siguiente trabajo real es Ola A.
 
 ### Ola A — Modo mensual (#1) · esfuerzo S · solo web
 
@@ -213,4 +215,4 @@ El backfill se versiona como migración idempotente en `rentacar-dashboard/supab
 
 ---
 
-*Próximo paso al autorizar implementación: empezar por Ola 0/A (solo web, sin schema, riesgo mínimo), autorizando su holdout de escenarios con `/scenario-driven-development`. Ola B/C requieren coordinación con `rentacar-dashboard` y resolver O1 antes de la C.*
+*Estado de implementación (act. 2026-06-02): Ola 0 ya estaba completada (`9a41993`). El próximo trabajo real es **Ola A** (modo mensual, solo web, sin schema), autorizando su holdout de escenarios con `/scenario-driven-development`. Ola B/C requieren coordinación con `rentacar-dashboard` y resolver O1 antes de la C.*
