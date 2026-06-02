@@ -99,6 +99,26 @@ para mostrar el precio, así nunca se ofrece un mensual a $0.
 **Evidence**: dos corridas; `categoriesAvailabilityData.map(c=>c.categoryCode)`
 incluye `'SX'` para 2026-03-15 y lo excluye para 2026-08-15.
 
+## SCEN-A08: fecha fuera de todos los rangos no excluye por una fila $0 de fallback
+
+(Añadido tras revisión adversarial — code-reviewer + edge-case-detector hallaron
+independientemente este hueco de dinero. Fortalece el holdout, no debilita ningún
+SCEN previo.)
+
+**Given**: una categoría `SX` con dos rows de pricing **activos**: rango A
+(`valid_from` 2026-01-01 … `valid_until` 2026-06-30) con `1k_kms = 900000`; rango B
+(`valid_from` 2026-07-01 … `valid_until` 2026-12-31) con `1k_kms = 0` y `2k_kms = 0`.
+La fecha de recogida (p.ej. 2030-01-01) cae **fuera de todos los rangos activos**.
+Reserva mensual.
+**When**: se ejecuta `search()`.
+**Then**: `SX` **sí** se ofrece. Como ningún row activo contiene la fecha, la
+decisión no puede confiar en la fila que un fallback elegiría por "más barata"
+(la de $0): cae a "¿algún row activo tiene mensual positivo?" → el rango A lo
+tiene → se ofrece. Excluirla sería perder un mensual real por un artefacto de
+selección de fecha fuera de rango.
+**Evidence**: `categoryOffersMonthly([rangoA_900k, rangoB_0], '2030-01-01')` → `true`;
+y la categoría aparece en `categoriesAvailabilityData` para una fecha fuera de rango.
+
 ## SCEN-A07: sin fecha resoluble, no se excluye una categoría con mensual real
 
 **Given**: una categoría `C` con pricing mensual activo positivo, pero la fecha de

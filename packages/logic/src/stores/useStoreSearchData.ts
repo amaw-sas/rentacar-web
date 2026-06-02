@@ -12,6 +12,9 @@ import useFetchCategoriesAvailabilityData from '../composables/useFetchCategorie
 import useCategory from '../composables/useCategory';
 import useMessages from '../composables/useMessages';
 
+// utils
+import { categoryOffersMonthly } from '@rentacar-main/logic/utils';
+
 // Types
 import type {
   CategoryAvailabilityData,
@@ -27,7 +30,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   // "¡Oops!" block never rendered when admin data arrived late. Issue
   // #10 SCEN-004.
   const { categories: categoriesAdminData } = storeToRefs(storeAdminData);
-  const { haveMonthlyReservation, selectedPickupLocation } = storeToRefs(useStoreReservationForm());
+  const { haveMonthlyReservation, selectedPickupLocation, fechaRecogida } = storeToRefs(useStoreReservationForm());
   const { createErrorMessage } = useMessages();
   const categoriesAvailabilityData = ref<CategoryAvailabilityData[] | null>(
     null
@@ -39,12 +42,13 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   const selectedCategory = ref<ReturnType<typeof useCategory> | null >(null);
   const noAvailableCategories = ref<boolean>(false);
 
-  const noMonthlyCategories: CategoryType[] = [
-    'FU',
-    'FL',
-    'GL',
-    'LU'
-  ];
+  // Whether a category is offered for monthly rental is derived from its
+  // pricing (issue #28, Ola A), not a hardcoded code list: a category offers
+  // monthly when the pricing row applicable to the pickup date carries a
+  // positive 1k/2k monthly price. The dashboard clears those to NULL (→ 0 in
+  // the payload) for the non-monthly gamas. See categoryOffersMonthly.
+  const offersMonthly = (category: CategoryData): boolean =>
+    categoryOffersMonthly(category.month_prices, fechaRecogida.value ?? '');
 
   const search = async () => {
     error.value = null;
@@ -84,8 +88,8 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
       else {
         const dataArray = Array.isArray(data.value) ? data.value : [];
         categoriesAvailabilityData.value = categoriesAdminData.value?.filter((categoryAdmin: CategoryData) =>
-          !noMonthlyCategories.includes(categoryAdmin.identification)
-        ) // filter out monthly-excluded categories (FU, FL, GL, LU)
+          offersMonthly(categoryAdmin)
+        ) // keep only categories that actually offer monthly pricing
         .map((categoryAdmin: CategoryData) =>
           // create a category availability object for each category
           createCategoryAvailability(categoryAdmin)
@@ -143,12 +147,11 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
      */
     if (error.value?.error === "no_available_categories_error") {
       // Mirror the monthly *success* path: monthly reservations never offer
-      // the monthly-excluded categories (FU/FL/GL/LU), so they must not appear
-      // as unable cards either. Non-monthly keeps surfacing every category.
-      // Issue #54.
+      // categories without monthly pricing, so they must not appear as unable
+      // cards either. Non-monthly keeps surfacing every category. Issue #54.
       const adminCategories = haveMonthlyReservation.value
         ? categoriesAdminData.value.filter((categoryAdmin: CategoryData) =>
-            !noMonthlyCategories.includes(categoryAdmin.identification)
+            offersMonthly(categoryAdmin)
           )
         : categoriesAdminData.value;
       return adminCategories.map((categoryAdmin: CategoryData) =>
