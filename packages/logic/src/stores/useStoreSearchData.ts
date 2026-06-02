@@ -13,13 +13,12 @@ import useCategory from '../composables/useCategory';
 import useMessages from '../composables/useMessages';
 
 // utils
-import { categoryOffersMonthly } from '@rentacar-main/logic/utils';
+import { categoryOffersMonthly, isCategoryVisibleInCity } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
   CategoryAvailabilityData,
   CategoryData,
-  CategoryType,
   ErrorMessage,
 } from '@rentacar-main/logic/utils';
 
@@ -173,6 +172,8 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
           categoryAvailability["categoryDescription"] = categoryAdmin.category.replace(categoryAdmin.name, "");
           categoryAvailability["totalCoverageUnitCharge"] = categoryAdmin.total_coverage_unit_charge;
           categoryAvailability["picoyplacaExempt"] = categoryAdmin.picoyplaca_exempt;
+          categoryAvailability["visibilityMode"] = categoryAdmin.visibility_mode;
+          categoryAvailability["allowedCities"] = categoryAdmin.allowed_cities;
 
           return categoryAvailability
         }
@@ -190,67 +191,27 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
 
   
   const filteredCategories = computed<CategoryAvailabilityData[] | []>(() => {
-    
-    const bogotaBranches = ["AABOT", "ACBOT", "ACBEX", "ACBNN", "ACBOJ"];
-    const onlyBogotaCategories: CategoryType[] = ["FU", "FL", "GL"];
+
     const pickupLocationCode = selectedPickupLocation.value?.code;
     const pickupLocationCity = selectedPickupLocation.value?.city;
-    
+
     //TODO fix this
     if(categories.value.length == 0){
       return [];
     }
+    // Issue #28 Ola C: geographic visibility is derived from the dashboard
+    // (visibility_mode + allowed cities) combined with the legacy hardcoded
+    // rules as a transitional AND-constraint. See isCategoryVisibleInCity.
     else return categories.value
-      // .map((category: CategoryAvailabilityData) => new Category(category))
-      // .filter((category: CategoryAvailabilityData) => {
-      //   if (haveMonthlyReservation.value)
-      //     return category.getCategoryMonthlyPriceTotalInsurancePrice();
-      //   else return true;
-      // })
-      .filter((category: CategoryAvailabilityData) => {
-        // filter categories that are not available when selected bogota
-        if(pickupLocationCode){
-          if (
-            !bogotaBranches.includes(pickupLocationCode) &&
-            onlyBogotaCategories.includes(category.categoryCode)
-          ) {
-            return false;
-          } else return true;
-        }
-        return true;
-      })
-      .filter((category: CategoryAvailabilityData) => {
-        // filter category CX: only allowed in 7 cities
-        if(pickupLocationCity){
-          const onlyCategoryCXCityAllowed = [
-            "barranquilla", "bogota", "bucaramanga", "cali",
-            "cartagena", "medellin", "santa-marta"
-          ];
-          if (
-            !onlyCategoryCXCityAllowed.includes(pickupLocationCity) &&
-            category.categoryCode == "CX"
-          ) {
-            return false;
-          } else return true;
-        }
-        return true;
-      })
-      .filter((category: CategoryAvailabilityData) => {
-        // filter category GY: only allowed in 8 cities (same as GR)
-        if(pickupLocationCity){
-          const onlyCategoryGYCityAllowed = [
-            "bogota", "bucaramanga", "cali", "medellin",
-            "barranquilla", "soledad", "cartagena", "santa-marta"
-          ];
-          if (
-            !onlyCategoryGYCityAllowed.includes(pickupLocationCity) &&
-            category.categoryCode == "GY"
-          ) {
-            return false;
-          } else return true;
-        }
-        return true;
-      });
+      .filter((category: CategoryAvailabilityData) =>
+        isCategoryVisibleInCity(
+          category.visibilityMode,
+          category.allowedCities,
+          category.categoryCode,
+          pickupLocationCity,
+          pickupLocationCode,
+        )
+      );
 
   });
 
@@ -281,6 +242,8 @@ const createCategoryAvailability = (category: CategoryData, unable: boolean = fa
     categoryModels: category.models,
     categoryMonthPrices: category.month_prices,
     picoyplacaExempt: category.picoyplaca_exempt,
+    visibilityMode: category.visibility_mode,
+    allowedCities: category.allowed_cities,
     totalAmount: 0,
     estimatedTotalAmount: (unable) ? 999999999 : 1,
     totalCoverageUnitCharge: category.total_coverage_unit_charge,

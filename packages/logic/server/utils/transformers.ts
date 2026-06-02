@@ -31,6 +31,7 @@ interface SupabaseCategory {
   picoyplaca_exempt?: boolean | null
   category_models: SupabaseCategoryModel[]
   category_pricing: SupabaseCategoryPricing[]
+  category_city_visibility?: { cities: { slug: string } | null }[]
 }
 
 interface SupabaseCategoryModel {
@@ -110,6 +111,13 @@ export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
       // null (not false) when the column is absent, so the client can tell
       // "unset → fall back to the hardcoded list" from an explicit false.
       picoyplaca_exempt: row.picoyplaca_exempt ?? null,
+      // Issue #28 Ola C: geographic visibility from the dashboard. visibility_mode
+      // is NOT NULL DEFAULT 'all' (mig 014); allowed_cities are the whitelisted
+      // city slugs from category_city_visibility.
+      visibility_mode: row.visibility_mode ?? 'all',
+      allowed_cities: (row.category_city_visibility ?? [])
+        .map((v) => v.cities?.slug)
+        .filter((slug): slug is string => Boolean(slug)),
     }
   })
 }

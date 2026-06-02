@@ -29,4 +29,8 @@ export default interface CategoryAvailabilityData {
   // Issue #28 Ola B2: pico y placa exemption from the dashboard column (null
   // when absent → resolvePicoyPlacaExempt falls back to the hardcoded list).
   picoyplacaExempt?: boolean | null;
+  // Issue #28 Ola C: geographic visibility from the dashboard (visibility_mode +
+  // whitelisted city slugs). See isCategoryVisibleInCity.
+  visibilityMode?: string;
+  allowedCities?: string[];
 }
