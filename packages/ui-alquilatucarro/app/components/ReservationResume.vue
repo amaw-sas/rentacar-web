@@ -75,7 +75,7 @@
             <div class="text-right text-sm line-through text-black" v-if="hasDiscount()">
               $ {{ currencyDailyBasePrice }}
             </div>
-            <div class="text-right">
+            <div class="text-right" v-if="hasDiscount()">
               <span class="bg-[#a3f78b] text-black text-xs px-1 inline-block">Dto Hoy {{ getDiscount }} %</span>
             </div>
             <div class="text-right text-sm">
