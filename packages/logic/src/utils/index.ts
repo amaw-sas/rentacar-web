@@ -23,6 +23,7 @@ export { slugify } from './slugify';
 // Pricing
 // ============================================================================
 export { pickPriceForDate } from './pickPriceForDate';
+export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 
 // ============================================================================

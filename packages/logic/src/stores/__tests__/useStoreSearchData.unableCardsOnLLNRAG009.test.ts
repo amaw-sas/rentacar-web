@@ -15,6 +15,21 @@ vi.mock('../../composables/useFetchCategoriesAvailabilityData', () => ({
   default: () => FETCH_AVAILABILITY(),
 }))
 
+// Issue #28 Ola A: monthly exclusion is derived from pricing. B, C, D all offer
+// monthly (positive active row), so monthly + LLNRAG009 surfaces all three as
+// unable cards (SCEN-U2). An active row cleared to 0 would be the non-monthly
+// shape (mig. 042).
+const monthlyRow = (kms: number) => ({
+  '1k_kms': kms,
+  '2k_kms': kms,
+  '3k_kms': kms,
+  init_date: '2026-01-01',
+  end_date: '2026-12-31',
+  total_insurance_price: 0,
+  one_day_price: 0,
+  status: 'active' as const,
+})
+
 const baseCategory = (id: string, name: string, category: string) => ({
   id,
   code: id,
@@ -23,7 +38,7 @@ const baseCategory = (id: string, name: string, category: string) => ({
   name,
   category,
   models: [],
-  month_prices: {},
+  month_prices: [monthlyRow(900000)],
   total_coverage_unit_charge: 0,
   image: '',
   ad: '',

@@ -14,7 +14,21 @@ vi.mock('../../composables/useFetchCategoriesAvailabilityData', () => ({
   default: () => FETCH_AVAILABILITY(),
 }))
 
-const baseCategory = (id: string, name: string, category: string) => ({
+// Issue #28 Ola A: monthly exclusion is derived from pricing, so fixtures carry
+// realistic month_prices. An active row with positive 1k/2k offers monthly; a
+// row cleared to 0 (the mig. 042 shape) does not.
+const monthlyRow = (kms: number) => ({
+  '1k_kms': kms,
+  '2k_kms': kms,
+  '3k_kms': kms,
+  init_date: '2026-01-01',
+  end_date: '2026-12-31',
+  total_insurance_price: 0,
+  one_day_price: 0,
+  status: 'active' as const,
+})
+
+const baseCategory = (id: string, name: string, category: string, offersMonthly: boolean) => ({
   id,
   code: id,
   identification: id,
@@ -22,19 +36,20 @@ const baseCategory = (id: string, name: string, category: string) => ({
   name,
   category,
   models: [],
-  month_prices: {},
+  month_prices: [monthlyRow(offersMonthly ? 900000 : 0)],
   total_coverage_unit_charge: 0,
   image: '',
   ad: '',
   extra_km_charge: 0,
 })
 
-// Includes FU, a monthly-excluded code, alongside two regular ones.
+// B and C offer monthly; FU does not (cleared pricing) — the data-driven
+// equivalent of the old hardcoded exclusion.
 const ADMIN_PAYLOAD = {
   categories: [
-    baseCategory('B', 'Económico', 'BÁSICO B'),
-    baseCategory('C', 'Compacto', 'COMPACTO C'),
-    baseCategory('FU', 'Furgón', 'FURGÓN FU'),
+    baseCategory('B', 'Económico', 'BÁSICO B', true),
+    baseCategory('C', 'Compacto', 'COMPACTO C', true),
+    baseCategory('FU', 'Furgón', 'FURGÓN FU', false),
   ],
   branches: [],
   extras: undefined,

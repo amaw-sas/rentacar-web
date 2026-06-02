@@ -2,14 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 
-// SCEN-A: monthly reservation (haveMonthlyReservation === true) must filter
-// out the categories listed in noMonthlyCategories before populating
-// categoriesAvailabilityData. Pre-fix the filter used `value in array` which
-// only matches numeric indices/`length`, never the category code, so all
-// categories leaked through.
+// Issue #28 Ola A: monthly availability is derived from each category's pricing
+// (month_prices), not a hardcoded code list. A category is offered monthly when
+// the pricing row applicable to the pickup date carries a positive 1k/2k monthly
+// price. The dashboard clears those to NULL (→ 0 in the payload) for the gamas
+// that don't offer monthly (FU/FL/GL/LU today, mig. 042).
 //
-// SCEN-B: non-monthly path is not affected — admin payload passes through
-// untouched so the search store reflects the availability response as-is.
+// SCEN-A01: monthly reservation hides categories whose applicable pricing has no
+//   positive monthly price; keeps the ones that do.
+// SCEN-A02: non-monthly path passes the availability payload through untouched.
+// SCEN-A03: the decision comes from the data, not list membership — a brand-new
+//   code with zero monthly pricing is excluded without any code change.
+// SCEN-A06: the decision respects the pickup date.
 
 const FETCH_AVAILABILITY = vi.fn()
 
@@ -17,7 +21,36 @@ vi.mock('../../composables/useFetchCategoriesAvailabilityData', () => ({
   default: () => FETCH_AVAILABILITY(),
 }))
 
-const makeAdminCategory = (code: string) => ({
+type Row = {
+  '1k_kms': number
+  '2k_kms': number
+  '3k_kms': number
+  init_date: string
+  end_date: string
+  total_insurance_price: number
+  one_day_price: number
+  status: 'active' | 'inactive'
+}
+
+// An active pricing row that offers monthly (positive 1k/2k).
+const monthlyPriced = (overrides: Partial<Row> = {}): Row => ({
+  '1k_kms': 900000,
+  '2k_kms': 1200000,
+  '3k_kms': 1500000,
+  init_date: '2026-01-01',
+  end_date: '2026-12-31',
+  total_insurance_price: 0,
+  one_day_price: 0,
+  status: 'active',
+  ...overrides,
+})
+
+// An active pricing row with monthly cleared (the mig. 042 shape for the gamas
+// that don't offer monthly).
+const noMonthly = (overrides: Partial<Row> = {}): Row =>
+  monthlyPriced({ '1k_kms': 0, '2k_kms': 0, '3k_kms': 0, ...overrides })
+
+const makeAdminCategory = (code: string, month_prices: Row[]) => ({
   id: code,
   code,
   identification: code,
@@ -25,13 +58,21 @@ const makeAdminCategory = (code: string) => ({
   name: code,
   category: `${code} Demo`,
   models: [],
-  month_prices: [],
+  month_prices,
   total_coverage_unit_charge: 0,
   extra_km_charge: 0,
 })
 
+// C, LE offer monthly; FU does not (cleared pricing). ZZ is a brand-new code,
+// never present in the legacy ['FU','FL','GL','LU'] list, also with cleared
+// monthly pricing — it must be excluded purely because of its data.
 const ADMIN_PAYLOAD = {
-  categories: ['C', 'FU', 'FL', 'GL', 'LU', 'LE'].map(makeAdminCategory),
+  categories: [
+    makeAdminCategory('C', [monthlyPriced()]),
+    makeAdminCategory('FU', [noMonthly()]),
+    makeAdminCategory('LE', [monthlyPriced()]),
+    makeAdminCategory('ZZ', [noMonthly()]),
+  ],
   branches: [
     { id: 1, code: 'AABOT', name: 'Bogotá Aeropuerto', city: 'bogota', slug: 'bogota-aeropuerto', schedule: '' },
   ],
@@ -41,7 +82,7 @@ const ADMIN_PAYLOAD = {
 
 const TOAST_ADD = vi.fn()
 
-describe('useStoreSearchData monthly category exclusion (SCEN-A)', () => {
+describe('useStoreSearchData monthly availability derived from pricing (Ola A)', () => {
   beforeEach(() => {
     TOAST_ADD.mockClear()
     FETCH_AVAILABILITY.mockReset()
@@ -54,7 +95,7 @@ describe('useStoreSearchData monthly category exclusion (SCEN-A)', () => {
     vi.unstubAllGlobals()
   })
 
-  it('SCEN-A: monthly reservation excludes FU, FL, GL, LU from categoriesAvailabilityData', async () => {
+  it('SCEN-A01: monthly reservation excludes categories without monthly pricing (FU), keeps priced ones (C, LE)', async () => {
     FETCH_AVAILABILITY.mockResolvedValue({
       data: ref([]),
       error: ref(null),
@@ -70,15 +111,61 @@ describe('useStoreSearchData monthly category exclusion (SCEN-A)', () => {
     await searchStore.search()
 
     const codes = (searchStore.categoriesAvailabilityData ?? []).map((c) => c.categoryCode)
-    expect(codes).not.toContain('FU')
-    expect(codes).not.toContain('FL')
-    expect(codes).not.toContain('GL')
-    expect(codes).not.toContain('LU')
     expect(codes).toContain('C')
     expect(codes).toContain('LE')
+    expect(codes).not.toContain('FU')
   })
 
-  it('SCEN-B: non-monthly path is unaffected — payload passes through', async () => {
+  it('SCEN-A03: a brand-new code with zero monthly pricing (ZZ) is excluded — derived from data, not a list', async () => {
+    FETCH_AVAILABILITY.mockResolvedValue({
+      data: ref([]),
+      error: ref(null),
+    })
+
+    const { default: useStoreReservationForm } = await import('../useStoreReservationForm')
+    useStoreReservationForm().haveMonthlyReservation = true
+
+    const { default: useStoreSearchData } = await import('../useStoreSearchData')
+    const searchStore = useStoreSearchData()
+
+    await searchStore.search()
+
+    const codes = (searchStore.categoriesAvailabilityData ?? []).map((c) => c.categoryCode)
+    expect(codes).not.toContain('ZZ')
+    expect(codes).toContain('C')
+  })
+
+  it('SCEN-A06: monthly availability respects the pickup date (priced in H1, cleared in H2)', async () => {
+    const SX_PAYLOAD = {
+      ...ADMIN_PAYLOAD,
+      categories: [
+        makeAdminCategory('SX', [
+          monthlyPriced({ init_date: '2026-01-01', end_date: '2026-06-30' }),
+          noMonthly({ init_date: '2026-07-01', end_date: '2026-12-31' }),
+        ]),
+      ],
+    }
+    vi.stubGlobal('useState', () => ref(SX_PAYLOAD))
+
+    FETCH_AVAILABILITY.mockResolvedValue({ data: ref([]), error: ref(null) })
+
+    const { default: useStoreReservationForm } = await import('../useStoreReservationForm')
+    const formStore = useStoreReservationForm()
+    formStore.haveMonthlyReservation = true
+
+    const { default: useStoreSearchData } = await import('../useStoreSearchData')
+    const searchStore = useStoreSearchData()
+
+    formStore.fechaRecogida = '2026-03-15'
+    await searchStore.search()
+    expect((searchStore.categoriesAvailabilityData ?? []).map((c) => c.categoryCode)).toContain('SX')
+
+    formStore.fechaRecogida = '2026-08-15'
+    await searchStore.search()
+    expect((searchStore.categoriesAvailabilityData ?? []).map((c) => c.categoryCode)).not.toContain('SX')
+  })
+
+  it('SCEN-A02: non-monthly path is unaffected — payload passes through', async () => {
     const passthroughPayload = ['C', 'FU', 'LU'].map((code) => ({
       categoryCode: code,
       categoryDescription: '',
