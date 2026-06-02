@@ -15,8 +15,7 @@ import {
   createCurrentDateObject,
   createDateFromString,
   createTimeFromString,
-  dayDifference,
-  hourDifference,
+  rentalDayCount,
   formatHumanDate,
   formatHumanTime,
   toDatetime,
@@ -159,25 +158,19 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   );
 
   const selectedDays = computed<number>(() => {
-    let days = 0;
-    let hours = selectedHours.value;
+    const pickupDate = selectedPickupDate.value;
+    const returnDate = selectedReturnDate.value;
+    if (!pickupDate || !returnDate) return 0;
 
-    if (selectedPickupDate.value && selectedReturnDate.value) {
-      days = dayDifference(selectedPickupDate.value, selectedReturnDate.value);
-      if (days == 0) {
-        if (hours > 0) days = 1;
-      } else if (days > 0 && hours > 4) {
-        days++;
-      }
-    }
+    // Anchor each calendar date to its selected time-of-day (midnight when an
+    // hour isn't picked yet) so the count reflects the real rental window, not
+    // just the calendar-day gap. Mirrors the pickup/return datetimes the admin
+    // backend prices against.
+    const midnight = createTimeFromString('00:00');
+    const pickupAt = toDatetime(pickupDate, selectedPickupHour.value ?? midnight);
+    const returnAt = toDatetime(returnDate, selectedReturnHour.value ?? midnight);
 
-    return days;
-  });
-
-  const selectedHours = computed<number>(() => {
-    return selectedPickupHour.value && selectedReturnHour.value
-      ? hourDifference(selectedPickupHour.value, selectedReturnHour.value)
-      : 0;
+    return rentalDayCount(pickupAt, returnAt);
   });
 
   const minPickupDate = computed<DateObject>(() => {

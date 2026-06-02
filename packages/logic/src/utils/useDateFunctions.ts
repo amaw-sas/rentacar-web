@@ -136,6 +136,38 @@ export function hourDifference(
     else return 0;
 }
 
+/**
+ * Counts billable rental days between two datetimes.
+ *
+ * Bills each full 24h block, plus one extra day when the leftover beyond the
+ * last full block exceeds a 4h grace window. Any positive duration bills at
+ * least one day. Returns 0 when the return is not strictly after the pickup.
+ *
+ * Replaces the prior calendar-day + abs(hour-of-day) heuristic, which
+ * over-counted by one day when the return time-of-day was earlier than pickup
+ * (e.g. 12 p. m. → 5 a. m. next day = 17 h was counted as 2 days). See issue #99.
+ *
+ * @param pickup pickup datetime
+ * @param return_ return datetime
+ * @returns number of billable days
+ */
+export function rentalDayCount(
+    pickup: DateTimeObject,
+    return_: DateTimeObject,
+): number {
+    const GRACE_HOURS = 4;
+    const totalHours =
+        (return_.toDate('UTC').getTime() - pickup.toDate('UTC').getTime()) / (1000 * 60 * 60);
+
+    if (totalHours <= 0) return 0;
+
+    const fullDays = Math.floor(totalHours / 24);
+    const leftoverHours = totalHours - fullDays * 24;
+    const days = fullDays + (leftoverHours > GRACE_HOURS ? 1 : 0);
+
+    return days === 0 ? 1 : days;
+}
+
 export function isTimeObject(obj: TimeObject | DateTimeObject | null): obj is TimeObject {
     return obj !== null && !('toDate' in obj)
 }
