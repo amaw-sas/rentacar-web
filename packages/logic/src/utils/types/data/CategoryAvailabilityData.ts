@@ -26,8 +26,8 @@ export default interface CategoryAvailabilityData {
   extraHoursTotalAmount?: number;
   referenceToken: string;
   rateQualifier: string;
-  // Issue #28 Ola B2: pico y placa exemption from the dashboard column (null
-  // when absent → resolvePicoyPlacaExempt falls back to the hardcoded list).
+  // Issue #28: pico y placa exemption from the dashboard column (sole source of
+  // truth; null/absent → not exempt). See resolvePicoyPlacaExempt.
   picoyplacaExempt?: boolean | null;
   // Issue #28 Ola C: geographic visibility from the dashboard (visibility_mode +
   // whitelisted city slugs). See isCategoryVisibleInCity.

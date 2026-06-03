@@ -14,9 +14,8 @@ export default interface CategoryData {
   month_prices: CategoryMonthPriceData[];
   total_coverage_unit_charge: number;
   extra_km_charge: number;
-  // Issue #28 Ola B2: pico y placa exemption from the dashboard column. null/
-  // absent when the column is missing (pre-backfill) → consumers fall back to
-  // the transitional hardcoded list. See resolvePicoyPlacaExempt.
+  // Issue #28: pico y placa exemption from the dashboard column (sole source of
+  // truth). null/absent → not exempt. See resolvePicoyPlacaExempt.
   picoyplaca_exempt?: boolean | null;
   // Issue #28 Ola C: geographic visibility from the dashboard. visibility_mode
   // is 'all' | 'restricted' (NOT NULL DEFAULT 'all'); allowed_cities are the

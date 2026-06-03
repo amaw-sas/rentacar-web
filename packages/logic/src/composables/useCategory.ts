@@ -94,10 +94,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       return pickPriceForDate(categoryMonthPrices.value, fechaRecogida.value ?? '');
    };
    
-   // Issue #28 Ola B2: read the exemption from the dashboard column, with a
-   // transitional fallback to the hardcoded list (resolvePicoyPlacaExempt).
+   // Issue #28: pico y placa exemption comes solely from the dashboard column.
    const isPicoyPlacaExempt = (): boolean =>
-      resolvePicoyPlacaExempt(picoyplacaExempt.value, categoryCode.value);
+      resolvePicoyPlacaExempt(picoyplacaExempt.value);
    
    const hasReturnFee = (): boolean => returnFeeAmount.value ? true  : false;
    
