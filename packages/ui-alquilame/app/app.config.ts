@@ -32,7 +32,7 @@ export default defineAppConfig({
 
   // Brand-specific franchise information
   franchise: {
-    name: "alquilame.com",
+    name: "alquilame.co",
     shortname: "alquilame",
     website: "https://alquilame.co",
     title: "Alquiler de Carros en Colombia desde $32/día",
