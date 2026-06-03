@@ -31,7 +31,7 @@ export async function fetchRentacarData(supabase: SupabaseClient, timeoutMs: num
     const results = await Promise.all([
       supabase
         .from('vehicle_categories')
-        .select('*, category_models(*), category_pricing(*)')
+        .select('*, category_models(*), category_pricing(*), category_city_visibility(cities(slug))')
         .eq('status', 'active')
         .order('code')
         .abortSignal(signal),

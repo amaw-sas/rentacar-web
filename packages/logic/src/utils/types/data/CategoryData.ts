@@ -18,4 +18,9 @@ export default interface CategoryData {
   // absent when the column is missing (pre-backfill) → consumers fall back to
   // the transitional hardcoded list. See resolvePicoyPlacaExempt.
   picoyplaca_exempt?: boolean | null;
+  // Issue #28 Ola C: geographic visibility from the dashboard. visibility_mode
+  // is 'all' | 'restricted' (NOT NULL DEFAULT 'all'); allowed_cities are the
+  // whitelisted city slugs. See isCategoryVisibleInCity.
+  visibility_mode?: string;
+  allowed_cities?: string[];
 }
