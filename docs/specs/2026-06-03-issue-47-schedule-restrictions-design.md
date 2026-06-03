@@ -163,5 +163,5 @@ Derivados de los escenarios del issue + las decisiones de este ADR. Cada uno es 
 ## Preguntas abiertas (no bloquean el ADR; se resuelven al planear las olas)
 
 - **O1 — Zona horaria.** Toda Colombia es `America/Bogota` (UTC−5, sin DST), así que los cómputos de festivo/slot se hacen en hora local sin conversión. Confirmar que no hay sucursal fuera de esa zona antes de W3.
-- **O2 — Derivación de `display`.** ¿El `display` se genera en el transformer de la web (una sola implementación, formato controlado por la web) o en el dashboard (editable/override manual)? Recomendación: derivarlo en la web para una sola fuente de formato; decidir en W1.
+- **O2 — Derivación de `display`. RESUELTO**: el dashboard deriva `display` desde el estructurado al guardar (ola D3, AC-D3.6). Así la web sigue leyendo `schedule.display` sin cambios y no hace falta una ola W para el texto; el estructurado es canónico. Se descartó derivar en web porque dejaría `display` desincronizado durante D1–D3.
 - **O3 — Revisión de la migración D2.** Dado lo heterogéneo del texto, el script de migración necesita revisión humana fila por fila. ¿Quién valida el resultado contra el horario operativo real de cada sucursal?
