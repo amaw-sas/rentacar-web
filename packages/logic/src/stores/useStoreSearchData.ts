@@ -192,24 +192,20 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   
   const filteredCategories = computed<CategoryAvailabilityData[] | []>(() => {
 
-    const pickupLocationCode = selectedPickupLocation.value?.code;
     const pickupLocationCity = selectedPickupLocation.value?.city;
 
     //TODO fix this
     if(categories.value.length == 0){
       return [];
     }
-    // Issue #28 Ola C: geographic visibility is derived from the dashboard
-    // (visibility_mode + allowed cities) combined with the legacy hardcoded
-    // rules as a transitional AND-constraint. See isCategoryVisibleInCity.
+    // Issue #28: geographic visibility is derived solely from the dashboard
+    // (visibility_mode + allowed cities). See isCategoryVisibleInCity.
     else return categories.value
       .filter((category: CategoryAvailabilityData) =>
         isCategoryVisibleInCity(
           category.visibilityMode,
           category.allowedCities,
-          category.categoryCode,
           pickupLocationCity,
-          pickupLocationCode,
         )
       );
 
