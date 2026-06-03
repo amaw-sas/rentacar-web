@@ -18,7 +18,9 @@ El issue pide que el formulario restrinja fechas y horas válidas según el `sch
 
 3. **El `schedule` NO es estructurado.** En producción es un único string de texto libre en español bajo una clave `display`, con formatos heterogéneos y **~5 sucursales con `{}` vacío**. El dashboard **no tiene UI para editarlo** (el campo solo aparece en `lib/schemas/location.ts` como `z.record(z.string(), z.string()).default({})`, un genérico que nadie escribe estructuradamente).
 
-**Consecuencia:** el núcleo del issue — restringir el calendario y el selector de hora **proactivamente en el cliente** — está **bloqueado upstream**. La web no puede derivar reglas por sucursal de un string libre. El trabajo real, en orden, es: definir un contrato estructurado, migrar los datos en el dashboard, exponerlo en el payload, y solo entonces consumirlo en la web. Este ADR fija ese contrato y la secuencia.
+**Consecuencia:** el núcleo del issue — restringir el calendario y el selector de hora **proactivamente en el cliente** — está **bloqueado upstream**. La web no puede derivar reglas por sucursal de un string libre. El trabajo real, en orden, es: definir un contrato estructurado y migrar los datos en el dashboard (lado de escritura), y solo entonces consumirlos en la web. Este ADR fija ese contrato y la secuencia.
+
+**Nota de arquitectura (verificado).** La web **lee la tabla `locations` de Supabase directamente** — su endpoint `/api/rentacar-data` consulta Supabase vía `rentacarDataFetch.ts:40` (`.from('locations')`), no una API del dashboard. El dashboard y la web comparten el mismo proyecto Supabase: el dashboard **escribe** `locations.schedule`, la web lo **lee**. No existe un paso intermedio de "el dashboard expone el dato en un payload"; en cuanto la columna está estructurada, quien la consume es el transformer de la web (ola W1). Por eso las olas del dashboard son solo de escritura (**D1–D3**), y la lectura estructurada vive en web (**W1**).
 
 ### Muestra de los datos reales (producción, tabla `locations`)
 
@@ -38,7 +40,7 @@ Patrones observados: agrupación por bloques de días (`Lun-Vie`, `Sáb`, `Dom`)
 
 ## Decisión (el ADR)
 
-> El horario de una sucursal es un **dato operacional del catálogo**, no una invariante de UI. Su dueño es operaciones y su sistema de registro ya es el dashboard sobre Supabase. Por tanto el `schedule` estructurado se define y administra en `rentacar-dashboard`, y la web pasa a **leerlo del payload `/api/rentacar-data`** para construir las restricciones de fecha/hora. La web no hardcodea horarios ni los infiere parseando el texto libre.
+> El horario de una sucursal es un **dato operacional del catálogo**, no una invariante de UI. Su dueño es operaciones y su sistema de registro ya es el dashboard sobre Supabase. Por tanto el `schedule` estructurado se define y administra en `rentacar-dashboard` (schema + UI), y la web lo **lee de la tabla `locations`** (vía su endpoint `/api/rentacar-data`, que consulta Supabase directamente) para construir las restricciones de fecha/hora. La web no hardcodea horarios ni los infiere parseando el texto libre.
 
 **Estado**: propuesta. Implementación pendiente de autorización por ola.
 
@@ -62,7 +64,7 @@ Patrones observados: agrupación por bloques de días (`Lun-Vie`, `Sáb`, `Dom`)
 
 ## Contrato `schedule` v2 (la decisión de datos)
 
-Forma estructurada que el dashboard persiste y expone en `/api/rentacar-data`:
+Forma estructurada que el dashboard persiste en la columna `locations.schedule` (Supabase); la web la lee directamente:
 
 ```jsonc
 {
@@ -102,14 +104,15 @@ Forma estructurada que el dashboard persiste y expone en `/api/rentacar-data`:
 
 Las olas **D** son del dashboard y **bloquean** a las **W**. Cada ola es un PR independiente con su propio holdout de escenarios.
 
-### Dashboard (`rentacar-dashboard`) — upstream, bloqueante
+### Dashboard (`rentacar-dashboard`) — upstream, bloqueante (solo lado de escritura)
 
-- **D1 — Contrato + schema.** Reemplazar `schedule: z.record(z.string(), z.string())` por el schema v2 (claves día/`hol`, arrays de rangos validados a 30 min). Tipo derivado `LocationSchedule`.
-- **D2 — Migración de datos.** Parsear los ~30 strings `display` existentes a la forma estructurada (script puntual, revisión manual del resultado dado lo heterogéneo del texto). Las ~5 sucursales con `{}` quedan `{}` (permisivo). Conservar/derivar `display` para retrocompatibilidad de lectura.
+- **D1 — Contrato + schema.** Reemplazar `schedule: z.record(z.string(), z.string())` por el schema v2 (claves día/`hol`, arrays de rangos validados a 30 min). Conservar `display` como campo derivado/legacy para no romper la lectura actual de la web antes de W1. Tipo derivado `LocationSchedule`.
+- **D2 — Migración de datos.** Parsear los ~30 strings `display` existentes a la forma estructurada (script/migración puntual, revisión manual del resultado dado lo heterogéneo del texto). Las ~5 sucursales con `{}` quedan `{}` (permisivo). Conservar `display` junto a las claves nuevas para retrocompatibilidad de lectura.
 - **D3 — UI de edición.** Formulario de sucursal con inputs por día + festivo, restringidos a múltiplos de 30 min (preserva la invariante del contrato). Estados cerrado/24 h explícitos.
-- **D4 — Exponer en payload.** Incluir `schedule` estructurado en `/api/rentacar-data`. Recordar la cache Nitro de 1 h: los cambios tardan hasta `maxAge` en propagarse (ver `rentacar-data.get.ts:55`).
 
-### Web (`rentacar-web`) — tras D4
+No hay ola "D4 — exponer en payload": la web lee `locations.schedule` directamente de Supabase (ver Nota de arquitectura), así que la lectura del dato estructurado es la ola **W1**, no una tarea del dashboard.
+
+### Web (`rentacar-web`) — tras D3
 
 - **W1 — Lectura.** `transformBranches` lee el `schedule` estructurado a `BranchData`; `display` derivado para `CityPage`. Actualizar el tipo `BranchData.schedule`.
 - **W2 — Reglas en logic.** Util puro en `packages/logic` (testeable en aislamiento), sin dependencia de Vue:
@@ -120,7 +123,7 @@ Las olas **D** son del dashboard y **bloquean** a las **W**. Cada ola es un PR i
 - **W4 — Integración Searcher.** El calendario deshabilita días cerrados (`isDateDisabled`/`disabledDates`) y el selector de hora ofrece solo los slots válidos, **por sucursal e independientes** entre recogida (`location_recogida`) y devolución (`location_devolucion`).
 - **W5 — Invalidación al cambiar sucursal.** Si la fecha/hora ya elegida cae fuera del nuevo `schedule`, limpiar el valor y pedir reselección con feedback visible; nunca enviar el form con un valor inválido.
 
-**Nota de acoplamiento (memoria de equipo):** una ola que cambie el shape de la respuesta de `/api/rentacar-data` interactúa con el deploy-scope de la cache (`docs/specs/2026-05-26-rentacar-data-cache-deploy-scope-design.md`): una entrada de cache vieja con el shape anterior no debe servirse a código nuevo. D4/W1 deben verificar que el `getKey` por `buildId` cubre el cambio de schema.
+**Nota de acoplamiento (memoria de equipo):** la ola **W1** cambia el shape de la respuesta de `/api/rentacar-data` (el transformer pasa a emitir el `schedule` estructurado), y eso interactúa con el deploy-scope de la cache (`docs/specs/2026-05-26-rentacar-data-cache-deploy-scope-design.md`): una entrada de cache vieja con el shape anterior no debe servirse a código nuevo. W1 debe verificar que el `getKey` por `buildId` cubre el cambio de schema. Las olas D no tocan el payload (solo escriben la columna), así que no interactúan con la cache.
 
 ---
 
@@ -151,8 +154,8 @@ Derivados de los escenarios del issue + las decisiones de este ADR. Cada uno es 
 
 ## Consecuencias
 
-- **Hasta D4**, la web queda como está: sin restricción proactiva, con validación de servidor como única barrera. El fallback permisivo (decisión 4) garantiza que esto no es una regresión.
-- **El issue #47 en `rentacar-web` está bloqueado** por D1–D4 en `rentacar-dashboard`. Conviene abrir los issues D1–D4 en ese repo y enlazarlos como dependencia de #47.
+- **Hasta que llegue W1**, la web queda como está: sin restricción proactiva, con validación de servidor como única barrera. El fallback permisivo (decisión 4) garantiza que esto no es una regresión.
+- **El issue #47 en `rentacar-web` está bloqueado** por D1–D3 en `rentacar-dashboard` (lado de escritura). Conviene abrir los issues D1–D3 en ese repo y enlazarlos como dependencia de #47; las olas W (incluida W1, la lectura) se planifican una vez D1–D3 estén en producción.
 - **No se escribe código en esta entrega.** El alcance acordado es ADR + contrato + secuencia, espejo de #28.
 
 ---
