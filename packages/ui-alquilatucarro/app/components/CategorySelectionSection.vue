@@ -64,6 +64,7 @@
       title="Resumen de la reserva"
       description="Antes de continuar revisa la información"
       :overlay="false"
+      :content="modalContentProps"
       :close="{ color: 'neutral', variant: 'outline', class: 'text-gray-700 border-gray-300 hover:bg-gray-100' }"
       :ui="{
         content: 'bg-white',
@@ -122,62 +123,76 @@
               variant="solid"
               size="xl"
               class="flex-1 py-4 justify-center bg-gray-200 !text-black hover:bg-gray-300"
+              data-testid="reservation-resume-back-test"
               @click="slideoverReservationResume = false"
             />
-            <u-slideover
-          v-model:open="slideoverReservationForm"
-          title="Datos para reservas"
-          description="Completa tus datos y solicita la reserva"
-          :overlay="false"
-          :close="{ color: 'neutral', variant: 'outline', class: 'text-gray-700 border-gray-300 hover:bg-gray-100' }"
-          :ui="{
-            content: 'bg-white',
-            header: 'bg-white',
-            title: 'text-gray-900 text-2xl font-bold',
-            description: 'text-gray-600',
-            body: 'bg-white text-gray-900',
-            footer: 'bg-white gap-2 border-t-0',
-            close: 'absolute top-4 end-4 z-10',
-          }"
-        >
-          <u-button label="Siguiente" color="neutral" size="xl" class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 text-white">
-            <template #trailing>
-              <ChevronRightIcon cls="size-5" />
-            </template>
-          </u-button>
-
-          <template #body>
-            <reservation-form
-              ref="reservationFormComponent"
-              @submit="submitForm"
-            />
-          </template>
-
-          <template #footer>
+            <!-- "Siguiente" ya NO es trigger anidado: handler explícito que
+                 abre Datos y cierra Resumen (issue #65, un solo modal). -->
             <u-button
-              label="Volver"
-              color="neutral"
-              variant="solid"
-              size="xl"
-              class="flex-1 py-4 justify-center bg-gray-200 !text-black hover:bg-gray-300"
-              @click="slideoverReservationForm = false"
-            />
-            <u-button
+              label="Siguiente"
               color="neutral"
               size="xl"
-              class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
-              :loading="isSubmittingForm"
-              :disabled="isSubmittingForm"
-              @click="reservationFormComponent.submit()"
-              >Solicitar reserva
+              class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 text-white"
+              data-testid="reservation-next-test"
+              @click="goToForm"
+            >
               <template #trailing>
-                <ChevronRightIcon v-if="!isSubmittingForm" cls="size-5" />
+                <ChevronRightIcon cls="size-5" />
               </template>
             </u-button>
-          </template>
-        </u-slideover>
           </div>
         </div>
+      </template>
+    </u-slideover>
+    <!-- "Datos" es HERMANO de "Resumen" (issue #65): mutuamente excluyentes,
+         a lo sumo un [role=dialog][aria-modal] activo. Antes estaba anidado en
+         el #footer de "Resumen", dejando dos diálogos modales simultáneos. -->
+    <u-slideover
+      v-model:open="slideoverReservationForm"
+      title="Datos para reservas"
+      description="Completa tus datos y solicita la reserva"
+      :overlay="false"
+      :content="modalContentProps"
+      :close="{ color: 'neutral', variant: 'outline', class: 'text-gray-700 border-gray-300 hover:bg-gray-100' }"
+      :ui="{
+        content: 'bg-white',
+        header: 'bg-white',
+        title: 'text-gray-900 text-2xl font-bold',
+        description: 'text-gray-600',
+        body: 'bg-white text-gray-900',
+        footer: 'bg-white gap-2 border-t-0',
+        close: 'absolute top-4 end-4 z-10',
+      }"
+    >
+      <template #body>
+        <reservation-form
+          ref="reservationFormComponent"
+          @submit="submitForm"
+        />
+      </template>
+
+      <template #footer>
+        <u-button
+          label="Volver"
+          color="neutral"
+          variant="solid"
+          size="xl"
+          class="flex-1 py-4 justify-center bg-gray-200 !text-black hover:bg-gray-300"
+          data-testid="reservation-form-back-test"
+          @click="backToResume"
+        />
+        <u-button
+          color="neutral"
+          size="xl"
+          class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
+          :loading="isSubmittingForm"
+          :disabled="isSubmittingForm"
+          @click="reservationFormComponent.submit()"
+          >Solicitar reserva
+          <template #trailing>
+            <ChevronRightIcon v-if="!isSubmittingForm" cls="size-5" />
+          </template>
+        </u-button>
       </template>
     </u-slideover>
   </template>
@@ -246,6 +261,12 @@ const slideoverReservationResume = ref<boolean>(false);
 const slideoverReservationForm = ref<boolean>(false);
 const reservationFormComponent = ref(null);
 const linkCopied = ref(false);
+
+// Issue #65: reka-ui Dialog (vía @nuxt/ui Slideover) no setea aria-modal y su
+// tipo `content` (DialogContentProps) no expone el atributo, aunque el elemento
+// sí lo acepta. Lo inyectamos por la prop `content`; el cast cubre el hueco de
+// tipos de la dependencia para un atributo ARIA estándar.
+const modalContentProps = { 'aria-modal': 'true' } as Record<string, string>;
 
 /** Share functions */
 function getReservationShareUrl() {
@@ -328,11 +349,15 @@ function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean) {
   }
 }
 
-// Limpiar URL cuando se cierra el slideover de resumen
+// Limpiar URL cuando se cierra el slideover de resumen.
+// Guard (issue #65): en la transición Resumen→Datos, `resume` pasa a false
+// mientras `form` ya es true (mismo tick). Sin `!slideoverReservationForm`,
+// esto borraría el ?reservar=X que el watcher de form acaba de poner. La URL
+// solo se limpia cuando se cierran AMBOS.
 watch(slideoverReservationResume, (isOpen) => {
   if (isUpdatingFromUrl.value) return;
 
-  if (!isOpen) {
+  if (!isOpen && !slideoverReservationForm.value) {
     updateCategoriaUrl(undefined);
   }
 });
@@ -370,23 +395,20 @@ watch(
     vehiculo.value = category.categoryCode.value;
     selectedCategory.value = category;
 
-    // Abrir slideover correspondiente
+    // Abrir UN solo slideover (issue #65): ?reservar=X → Datos directo;
+    // /categoria/X o ?resumen=X → Resumen. Antes abría ambos en cascada,
+    // dejando dos diálogos modales al des-anidar. `abrirFormularioDirecto`
+    // deriva solo de reservarParam, así que ?resumen=X cae en la rama Resumen.
     nextTick(() => {
-      slideoverReservationResume.value = true;
       if (abrirFormularioDirecto.value) {
-        nextTick(() => {
-          slideoverReservationForm.value = true;
-          // Resetear flag después de que todo esté abierto
-          nextTick(() => {
-            isUpdatingFromUrl.value = false;
-          });
-        });
+        slideoverReservationForm.value = true;
       } else {
-        // Resetear flag
-        nextTick(() => {
-          isUpdatingFromUrl.value = false;
-        });
+        slideoverReservationResume.value = true;
       }
+      // Resetear flag después de abrir
+      nextTick(() => {
+        isUpdatingFromUrl.value = false;
+      });
     });
   },
   { immediate: true }
@@ -415,6 +437,19 @@ function setSelectedCategory(category: ReturnType<typeof useCategory>) {
   slideoverReservationResume.value = true;
   // Actualizar URL con el código de la categoría
   updateCategoriaUrl(category.categoryCode.value, false);
+}
+
+// Transiciones Resumen↔Datos (issue #65): mutan AMBOS refs de forma síncrona
+// en el mismo tick (sin nextTick entre asignaciones). Con flush:'pre', los
+// watchers de URL leen el estado ya consolidado, así el guard de Resumen
+// preserva el ?reservar=X. Invariante: a lo sumo un slideover abierto.
+function goToForm() {
+  slideoverReservationForm.value = true;
+  slideoverReservationResume.value = false;
+}
+function backToResume() {
+  slideoverReservationResume.value = true;
+  slideoverReservationForm.value = false;
 }
 
 const { submitForm } = storeForm;

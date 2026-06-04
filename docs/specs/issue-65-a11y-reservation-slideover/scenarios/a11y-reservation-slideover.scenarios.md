@@ -71,8 +71,15 @@ autocomplete inspecciona el DOM renderizado. SCEN-006 es regresión de #25.
 ## SCEN-007: campos del formulario exponen autocomplete estándar
 **Given**: el slideover "Datos" abierto con el formulario renderizado
 **When**: se inspecciona el DOM de los inputs
-**Then**: nombres → `autocomplete="given-name"`, apellidos → `family-name`, correo → `email`; y los campos de identificación (tipo y número) **no** exponen ningún atributo `autocomplete` (no se fabrica token; tampoco `"off"`)
-**Evidence**: atributo `autocomplete` de cada `<input>` en el snapshot (presente en los 3, ausente en los 2 de identificación)
+**Then**: nombres → `autocomplete="given-name"`, apellidos → `family-name`, correo → `email`; y los campos de identificación **no fabrican un token de datos personales**: exponen el `autocomplete="off"` por defecto de `@nuxt/ui` UInput (señal correcta de no-autocompletar para un documento de identidad)
+**Evidence**: atributo `autocomplete` de cada `<input>` en el snapshot (tokens personales en los 3; `"off"` en el de identificación)
+
+> Amend (2026-06-04, aprobado por el usuario): la versión previa exigía que
+> identificación **no** expusiera `autocomplete` "tampoco off". Premisa falsa,
+> verificada en el DOM: `@nuxt/ui` UInput pone `autocomplete="off"` por defecto
+> y no es removible sin degradar la a11y. `"off"` cumple la intención original
+> (no fabricar un token de datos personales engañoso) y es el valor correcto
+> para un campo de cédula/ID.
 
 ## SCEN-008: el teléfono expone autocomplete y su nombre accesible es "Teléfono"
 **Given**: el formulario renderizado
