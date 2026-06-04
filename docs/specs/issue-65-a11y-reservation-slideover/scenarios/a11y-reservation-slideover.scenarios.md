@@ -84,7 +84,7 @@ autocomplete inspecciona el DOM renderizado. SCEN-006 es regresión de #25.
 ## SCEN-008: el teléfono expone autocomplete y su nombre accesible es "Teléfono"
 **Given**: el formulario renderizado
 **When**: se inspecciona el input de teléfono (`VueTelInput`)
-**Then**: expone `autocomplete="tel"`; su nombre accesible computado es exactamente "Teléfono" (provisto por el `UFormField` vía `aria-labelledby`/`for`-`id`); y **no** conserva `aria-label="Número de teléfono"` (se eliminó para no violar Label in Name)
+**Then**: expone `autocomplete="tel"`; su nombre accesible computado es exactamente "Teléfono" (provisto por un `<label for="telefono">` propio dentro del `UFormField` — `VueTelInput` no usa `useFormField`, así que el `for` autogenerado del field no asocia su `<input>`; se controla el `id`/`for` a mano); y **no** conserva `aria-label="Número de teléfono"` (se eliminó para no violar Label in Name)
 **Evidence**: atributos `autocomplete`, `aria-labelledby`/`id` y `aria-label` del input; nombre accesible computado (Accessibility tree / `accessibleName`)
 
 ## SCEN-009: paridad entre marcas
@@ -92,3 +92,13 @@ autocomplete inspecciona el DOM renderizado. SCEN-006 es regresión de #25.
 **When**: se comparan tras el cambio
 **Then**: `CategorySelectionSection.vue` y `ReservationForm.vue` siguen byte-idénticos entre alquilatucarro, alquilame y alquicarros
 **Evidence**: md5 de los 6 archivos (3 + 3) coincide por componente
+
+## SCEN-010: Escape/cerrar "Datos" sin reabrir Resumen limpia la URL
+**Given**: el slideover "Datos" abierto vía deep-link `?reservar=X`
+**When**: el usuario lo cierra con Escape (o el botón X / click fuera), sin pasar por "Volver"
+**Then**: no queda ningún `[role=dialog]` visible y la URL pierde `?reservar` (vuelve a la base, sin `/categoria/...`); un reload no re-abre el slideover descartado
+**Evidence**: conteo de `[role=dialog]:visible` (= 0) + `window.location` tras Escape
+
+> Origen: edge-case review del PR #65 (Escape es ruta primaria de cierre a11y).
+> El watcher de form, en su rama `else` cuando Resumen tampoco está abierto,
+> llama `updateCategoriaUrl(undefined)`.

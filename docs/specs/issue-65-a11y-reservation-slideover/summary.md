@@ -20,10 +20,13 @@ modal activo + `autocomplete`/nombre accesible en el formulario) en las 3 marcas
 ## Decisiones clave
 1. **Des-anidar + mutuamente excluyentes** (no `inert`): un solo `[role=dialog]`
    por construcción, no por parche de atributo.
-2. **El diagnóstico de la auditoría era erróneo**: no falta `aria-modal` (reka-ui
-   ya lo pone con `modal=true`), el defecto es dos modales simultáneos.
+2. **El diagnóstico de la auditoría era erróneo**: el defecto NO es falta de
+   `aria-modal` sino **dos modales simultáneos**. reka-ui NO emite `aria-modal`
+   en ningún caso (verificado: 0 ocurrencias en su dist), así que se inyecta
+   explícitamente vía la prop `content`.
 3. **Quitar `aria-label="Número de teléfono"`**: violaba WCAG 2.5.3 Label in Name;
-   el nombre accesible pasa a "Teléfono" vía `UFormField`.
+   el nombre accesible pasa a "Teléfono" vía un `<label for="telefono">` propio
+   dentro del `UFormField` (no por `useFormField`, que `VueTelInput` no usa).
 4. **Reestructura atómica** (Paso 3): un-nest + watcher + guard en un commit
    indivisible — evita el estado intermedio de dos diálogos en deep-link.
 

@@ -255,6 +255,27 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await expect(visibleDialogs(page)).toHaveCount(0);
   });
 
+  test('SCEN-010: Escape en "Datos" (sin Volver) cierra y limpia ?reservar de la URL', async ({
+    page,
+  }) => {
+    const code = await gotoSearchAndGetCode(page);
+    test.skip(!code, 'Sin categorías renderizadas');
+
+    await page.goto(`${searchPath}/categoria/${code}?reservar=${code}`);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(
+      page.getByRole('dialog').filter({ hasText: 'Datos para reservas' }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page).toHaveURL(new RegExp(`reservar=${code}`));
+
+    // Cierre por Escape (ruta a11y primaria), NO por "Volver".
+    await page.keyboard.press('Escape');
+
+    await expect(visibleDialogs(page)).toHaveCount(0, { timeout: 10_000 });
+    await expect(page).not.toHaveURL(/reservar=/);
+    await expect(page).not.toHaveURL(/\/categoria\//);
+  });
+
   test('SCEN-008: teléfono — nombre accesible "Teléfono" + autocomplete tel, sin aria-label viejo', async ({
     page,
   }) => {

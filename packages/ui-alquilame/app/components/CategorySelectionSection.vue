@@ -327,8 +327,14 @@ const reservarParam = computed(() => route.query.reservar as string | undefined)
 const codigoCategoria = computed(() => categoriaParam.value || resumenParam.value || reservarParam.value);
 const abrirFormularioDirecto = computed(() => !!reservarParam.value);
 
-// Flag para evitar loops cuando actualizamos la URL programáticamente
-const isUpdatingFromUrl = ref(false);
+// Profundidad de sincronización URL→estado (contador, no booleano): enmascara
+// los watchers de URL mientras abrimos slideovers desde la URL. Es un CONTADOR
+// para ser reentrante — si el watcher de auto-apertura se dispara otra vez
+// antes de que el reset diferido corra (p.ej. filteredCategories emite dos
+// veces, o navegación rápida entre /categoria), un booleano lo desenmascararía
+// a mitad de transición (edge-case #65 HIGH). Con el contador, el reset de la
+// primera invocación no abre la ventana mientras la segunda sigue en vuelo.
+const urlSyncDepth = ref(0);
 
 // Actualizar URL con categoría sin disparar navegación Vue Router.
 // Usa history.replaceState para evitar que Nuxt desmonte/remonte la página
@@ -355,7 +361,7 @@ function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean) {
 // esto borraría el ?reservar=X que el watcher de form acaba de poner. La URL
 // solo se limpia cuando se cierran AMBOS.
 watch(slideoverReservationResume, (isOpen) => {
-  if (isUpdatingFromUrl.value) return;
+  if (urlSyncDepth.value > 0) return;
 
   if (!isOpen && !slideoverReservationForm.value) {
     updateCategoriaUrl(undefined);
@@ -364,17 +370,20 @@ watch(slideoverReservationResume, (isOpen) => {
 
 // Sincronizar URL con estado del slideover de formulario
 watch(slideoverReservationForm, (isOpen) => {
-  if (isUpdatingFromUrl.value) return;
+  if (urlSyncDepth.value > 0) return;
   if (!vehiculo.value) return;
 
   const codigo = vehiculo.value;
   if (isOpen) {
     updateCategoriaUrl(codigo, true);
+  } else if (slideoverReservationResume.value) {
+    // Datos→Resumen (backToResume): mantener /categoria sin ?reservar.
+    updateCategoriaUrl(codigo, false);
   } else {
-    // Volver a mostrar solo categoría sin query param reservar
-    if (slideoverReservationResume.value) {
-      updateCategoriaUrl(codigo, false);
-    }
+    // Datos cerrado SIN reabrir Resumen (Escape, botón X, dismiss-outside):
+    // limpiar ?reservar para que un reload no re-abra el slideover descartado
+    // (issue #65 edge-case). Escape es ruta de cierre primaria de a11y.
+    updateCategoriaUrl(undefined);
   }
 });
 
@@ -387,8 +396,8 @@ watch(
     const categoryData = categories.find(c => c.categoryCode === codigo);
     if (!categoryData || !vehicleCategories[codigo]) return;
 
-    // Marcar que estamos actualizando desde la URL
-    isUpdatingFromUrl.value = true;
+    // Marcar que estamos actualizando desde la URL (contador reentrante)
+    urlSyncDepth.value++;
 
     // Seleccionar categoría
     const category = useCategory(categoryData, vehicleCategories[codigo]);
@@ -405,9 +414,11 @@ watch(
       } else {
         slideoverReservationResume.value = true;
       }
-      // Resetear flag después de abrir
+      // Reset diferido (nextTick anidado): los watchers de URL (flush:'pre')
+      // disparan tras abrir el slideover y ANTES de este reset, así quedan
+      // enmascarados. Decremento (no =0) por reentrancia.
       nextTick(() => {
-        isUpdatingFromUrl.value = false;
+        urlSyncDepth.value--;
       });
     });
   },
@@ -417,16 +428,16 @@ watch(
 // Issue #25: cerrar slideovers (reka-ui Dialog modal:true) ANTES del unmount
 // por route change. Sin esto, el cleanup interno de Reka UI no corre y
 // `pointer-events: none` queda inline en <body> — DOM compartido en SPA —
-// bloqueando el Searcher cuando el usuario regresa via Back. El guard
-// `isUpdatingFromUrl` evita que los watchers de URL disparen replaceState
+// bloqueando el Searcher cuando el usuario regresa via Back. El contador
+// `urlSyncDepth` evita que los watchers de URL disparen replaceState
 // redundante mientras navegamos a otra ruta.
 onBeforeRouteLeave(async () => {
   if (slideoverReservationForm.value || slideoverReservationResume.value) {
-    isUpdatingFromUrl.value = true;
+    urlSyncDepth.value++;
     slideoverReservationForm.value = false;
     slideoverReservationResume.value = false;
     await nextTick();
-    isUpdatingFromUrl.value = false;
+    urlSyncDepth.value--;
   }
 });
 
