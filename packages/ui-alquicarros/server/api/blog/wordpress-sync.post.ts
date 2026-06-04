@@ -1,67 +1,71 @@
 import { defineEventHandler, readBody } from 'h3'
 import { transformWordPressToNuxt, type WordPressPost } from '../../utils/wordpress-to-nuxt'
-import { uploadToStorage } from '../../utils/blob-storage'
+import { useSupabaseAdminClient } from '../../../../logic/server/utils/supabase'
 import { logger } from '../../utils/logger'
 import { handleBlogApiError, BlogApiError } from '../../utils/error-handler'
 
 /**
  * POST /api/blog/wordpress-sync
  *
- * Receives WordPress REST API payload and transforms it to Nuxt Content format.
- * Stores the result as markdown file in Vercel Blob.
- *
- * Request body: WordPress REST API post object
- * Response: { success, filename, path, size }
+ * Protected (X-Api-Key, blog-api-auth middleware). Transforms a WordPress REST
+ * payload and upserts it into Supabase `blog_posts` for this brand — single
+ * source of truth (issue #52). Replaces the Vercel Blob markdown write.
  */
+
+// Author name per brand (mirrors franchises.display_name used by the seed).
+const AUTHOR_NAMES: Record<string, string> = {
+  alquilatucarro: 'Alquila tu Carro',
+  alquilame: 'Alquilame',
+  alquicarros: 'Alquicarros',
+}
+const AUTHOR_AVATAR = '/img/blog/author-avatar.png'
+
 export default defineEventHandler(async (event) => {
   try {
     const startTime = Date.now()
-
-    // Parse request body
     const wpPost: WordPressPost = await readBody(event)
 
-    // Validate required fields
     if (!wpPost || !wpPost.title || !wpPost.content || !wpPost.slug) {
       throw new BlogApiError('Missing required fields: title, content, slug', 400)
     }
-
-    // Validate slug format to prevent path traversal
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(wpPost.slug)) {
       throw new BlogApiError('Invalid slug format: must be lowercase alphanumeric with hyphens', 400)
     }
 
-    // Log sync request
     logger.info('wordpress-sync-start', { slug: wpPost.slug, id: wpPost.id })
 
-    // Transform WordPress post to Nuxt Content format
-    const nuxtPost = transformWordPressToNuxt(wpPost)
+    const t = transformWordPressToNuxt(wpPost)
+    const franchise = useRuntimeConfig(event).public.rentacarFranchise as string
 
-    // Generate markdown content (frontmatter + body)
-    const markdownContent = `${nuxtPost.frontmatter}\n\n${nuxtPost.body}`
-    const markdownBuffer = Buffer.from(markdownContent, 'utf-8')
-
-    // Upload to Vercel Blob (brand-scoped path)
-    const franchise = useRuntimeConfig().public.rentacarFranchise
-    const storagePath = `blog-posts/${franchise}/${nuxtPost.slug}.md`
-    await uploadToStorage(
-      markdownBuffer,
-      storagePath,
-      'text/markdown'
-    )
-
-    // Log metrics
-    logger.metric('wordpress-sync', Date.now() - startTime, {
-      slug: nuxtPost.slug,
-      size: markdownBuffer.length
-    })
-
-    // Return confirmation
-    return {
-      success: true,
-      filename: `${nuxtPost.slug}.md`,
-      path: storagePath,
-      size: markdownBuffer.length
+    const row = {
+      brand: franchise,
+      slug: t.slug,
+      title: t.title,
+      description: t.description,
+      body: t.body,
+      image: t.image ?? '',
+      alt: t.alt ?? '',
+      author_name: AUTHOR_NAMES[franchise] ?? franchise,
+      author_avatar: AUTHOR_AVATAR,
+      date: t.date.slice(0, 10),
+      updated: t.updated ? t.updated.slice(0, 10) : null,
+      category: t.category,
+      tags: t.tags,
+      reading_time: t.readingTime,
+      faq_items: t.faqItems ?? null,
+      meta_title: t.metaTitle ?? null,
+      updated_at: new Date().toISOString(),
     }
+
+    const supabase = useSupabaseAdminClient()
+    const { error } = await supabase.from('blog_posts').upsert(row, { onConflict: 'brand,slug' })
+    if (error) {
+      throw createError({ statusCode: 500, statusMessage: `blog_posts upsert failed: ${error.message}` })
+    }
+
+    logger.metric('wordpress-sync', Date.now() - startTime, { slug: t.slug, brand: franchise })
+
+    return { success: true, slug: t.slug, brand: franchise }
   } catch (error) {
     return handleBlogApiError(error, 'wordpress-sync')
   }

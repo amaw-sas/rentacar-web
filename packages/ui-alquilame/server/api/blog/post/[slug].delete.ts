@@ -1,90 +1,83 @@
-import { downloadFromStorage, deleteFromStorage } from '../../../utils/blob-storage'
-import { invalidateCache } from '../../../plugins/content-dynamic-loader'
+import { useSupabaseAdminClient } from '../../../../../logic/server/utils/supabase'
 import { logger } from '../../../utils/logger'
 import { BlogApiError, handleBlogApiError } from '../../../utils/error-handler'
 
+const BUCKET = 'blog-images'
+
 /**
- * Extract Vercel Blob image URLs embedded in markdown content.
- * Matches: https://*.public.blob.vercel-storage.com/blog-images/{type}/{filename}
- * Also matches legacy GCS URLs for backwards compatibility.
+ * Extract Supabase Storage object paths for images referenced in the post body.
+ * Matches public URLs that contain `/blog-images/` and returns the path *within*
+ * the bucket (e.g. `alquilatucarro/content/123-abc.webp`).
  */
-function extractImageUrls(markdownContent: string): string[] {
-  const urlPattern = /https:\/\/[^\s)"']+\/blog-images\/[^\s)"']+/g
-  const urls: string[] = []
+function extractStoragePaths(body: string): string[] {
+  const urlPattern = /https?:\/\/[^\s)"']+\/blog-images\/([^\s)"']+)/g
+  const paths: string[] = []
   let match: RegExpExecArray | null
-  while ((match = urlPattern.exec(markdownContent)) !== null) {
-    urls.push(match[0])
+  while ((match = urlPattern.exec(body)) !== null) {
+    paths.push(decodeURIComponent(match[1]))
   }
-  return [...new Set(urls)]
+  return [...new Set(paths)]
 }
 
 /**
  * DELETE /api/blog/post/:slug
  *
- * Protected: requires X-Api-Key header (enforced by blog-api-auth middleware).
- * Deletes the markdown file and all images referenced in its content.
- * Invalidates the in-memory post cache so the listing reflects the change immediately.
- *
- * Response: { success, deleted: { post: string, images: string[] } }
+ * Protected (X-Api-Key, blog-api-auth middleware). Deletes this brand's post
+ * row from Supabase `blog_posts` and best-effort removes any images it
+ * references from Supabase Storage (issue #52). Unknown slug → 404.
  */
 export default defineEventHandler(async (event) => {
   try {
     const slug = getRouterParam(event, 'slug')
-
     if (!slug) {
       throw new BlogApiError('Missing slug parameter', 400)
     }
-
-    // Validate slug to prevent path traversal
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       throw new BlogApiError('Invalid slug format: must be lowercase alphanumeric with hyphens', 400)
     }
 
-    const config = useRuntimeConfig()
-    const franchise = config.public.rentacarFranchise as string
-    const postPath = `blog-posts/${franchise}/${slug}.md`
+    const franchise = useRuntimeConfig(event).public.rentacarFranchise as string
+    logger.info('blog-delete-start', { slug, franchise })
 
-    logger.info('blog-delete-start', { slug, postPath })
+    const supabase = useSupabaseAdminClient()
 
-    // Download markdown to find referenced images (throws if not found)
-    const markdownBuffer = await downloadFromStorage(postPath)
-    const markdownContent = markdownBuffer.toString('utf-8')
+    const { data: post, error: selErr } = await supabase
+      .from('blog_posts')
+      .select('body')
+      .eq('brand', franchise)
+      .eq('slug', slug)
+      .maybeSingle()
+    if (selErr) {
+      throw createError({ statusCode: 500, statusMessage: `blog post lookup failed: ${selErr.message}` })
+    }
+    if (!post) {
+      throw new BlogApiError(`Post not found: ${slug}`, 404)
+    }
 
-    // Extract image URLs from the markdown content
-    const imageUrls = extractImageUrls(markdownContent)
-
-    // Delete images best-effort (don't fail the whole operation for orphaned images)
-    const deletedImages = (await Promise.all(
-      imageUrls.map(async (imageUrl) => {
-        try {
-          await deleteFromStorage(imageUrl)
-          return imageUrl
-        } catch (error) {
-          logger.warn('blog-delete-image-warn', error, { imageUrl, slug })
-          return null
-        }
-      })
-    )).filter((p): p is string => p !== null)
-
-    // Delete the markdown post (must succeed — this is the primary operation)
-    await deleteFromStorage(postPath)
-
-    // Invalidate cache so next listing request fetches from storage
-    invalidateCache()
-
-    logger.info('blog-delete-complete', {
-      slug,
-      postPath,
-      imagesDeleted: deletedImages.length
-    })
-
-    return {
-      success: true,
-      deleted: {
-        post: postPath,
-        images: deletedImages
+    // Best-effort image cleanup — orphaned images must not block the delete.
+    const imagePaths = extractStoragePaths((post.body as string) ?? '')
+    let deletedImages: string[] = []
+    if (imagePaths.length > 0) {
+      const { data: removed, error: rmErr } = await supabase.storage.from(BUCKET).remove(imagePaths)
+      if (rmErr) {
+        logger.warn('blog-delete-image-warn', rmErr, { slug, count: imagePaths.length })
+      } else {
+        deletedImages = (removed ?? []).map((o) => o.name)
       }
     }
+
+    const { error: delErr } = await supabase
+      .from('blog_posts')
+      .delete()
+      .eq('brand', franchise)
+      .eq('slug', slug)
+    if (delErr) {
+      throw createError({ statusCode: 500, statusMessage: `blog post delete failed: ${delErr.message}` })
+    }
+
+    logger.info('blog-delete-complete', { slug, imagesDeleted: deletedImages.length })
+
+    return { success: true, deleted: { post: slug, images: deletedImages } }
   } catch (error) {
     return handleBlogApiError(error, 'blog-delete')
   }
