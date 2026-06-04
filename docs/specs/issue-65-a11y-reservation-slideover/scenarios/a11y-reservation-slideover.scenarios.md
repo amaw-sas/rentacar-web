@@ -26,6 +26,18 @@ autocomplete inspecciona el DOM renderizado. SCEN-006 es regresión de #25.
 **Then**: existe exactamente un `[role=dialog][aria-modal="true"]` en el DOM y es el de "Datos para reservas" (no el de "Resumen")
 **Evidence**: conteo de `[role=dialog]` visibles y su `aria-modal`/título en el snapshot de Playwright
 
+## SCEN-001b: cold-load /categoria/X (sin reservar) abre solo el Resumen
+**Given**: navegación en frío a `/.../categoria/ecar` sin `?reservar` (o `?resumen=ECAR`)
+**When**: las categorías cargan y el slideover se auto-abre
+**Then**: existe exactamente un `[role=dialog]` visible y es el de "Resumen" (no el de "Datos")
+**Evidence**: conteo de `[role=dialog]` visibles + título en el snapshot (otra rama del watcher de auto-apertura)
+
+## SCEN-002a: click en tarjeta abre solo el Resumen
+**Given**: la página de resultados sin slideover abierto
+**When**: el usuario hace click en una tarjeta de categoría (`setSelectedCategory`)
+**Then**: aparece exactamente un `[role=dialog]` visible y es el de "Resumen de la reserva" (no el de "Datos")
+**Evidence**: conteo de `[role=dialog]` visibles + título en el snapshot
+
 ## SCEN-002: Resumen → Datos cierra el Resumen
 **Given**: el slideover "Resumen de la reserva" abierto (tras click en una tarjeta)
 **When**: el usuario hace click en "Siguiente"
@@ -59,14 +71,14 @@ autocomplete inspecciona el DOM renderizado. SCEN-006 es regresión de #25.
 ## SCEN-007: campos del formulario exponen autocomplete estándar
 **Given**: el slideover "Datos" abierto con el formulario renderizado
 **When**: se inspecciona el DOM de los inputs
-**Then**: nombres → `autocomplete="given-name"`, apellidos → `family-name`, correo → `email`
-**Evidence**: atributo `autocomplete` de cada `<input>` en el snapshot
+**Then**: nombres → `autocomplete="given-name"`, apellidos → `family-name`, correo → `email`; y los campos de identificación (tipo y número) **no** exponen ningún atributo `autocomplete` (no se fabrica token; tampoco `"off"`)
+**Evidence**: atributo `autocomplete` de cada `<input>` en el snapshot (presente en los 3, ausente en los 2 de identificación)
 
-## SCEN-008: el teléfono expone autocomplete y nombre accesible asociado
+## SCEN-008: el teléfono expone autocomplete y su nombre accesible es "Teléfono"
 **Given**: el formulario renderizado
 **When**: se inspecciona el input de teléfono (`VueTelInput`)
-**Then**: expone `autocomplete="tel"` y tiene nombre accesible asociado a su `UFormField` (label "Teléfono" vía `for`/`id` o `aria-labelledby`, sin romper el `aria-label` existente)
-**Evidence**: atributos `autocomplete` y `aria-labelledby`/`id` del input de teléfono; nombre accesible computado
+**Then**: expone `autocomplete="tel"`; su nombre accesible computado es exactamente "Teléfono" (provisto por el `UFormField` vía `aria-labelledby`/`for`-`id`); y **no** conserva `aria-label="Número de teléfono"` (se eliminó para no violar Label in Name)
+**Evidence**: atributos `autocomplete`, `aria-labelledby`/`id` y `aria-label` del input; nombre accesible computado (Accessibility tree / `accessibleName`)
 
 ## SCEN-009: paridad entre marcas
 **Given**: los componentes de las tres marcas
