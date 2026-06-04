@@ -22,7 +22,7 @@
         <div v-if="featuredPost" class="mb-12">
           <h2 class="text-xl font-bold text-gray-800 mb-6">Artículo Destacado</h2>
           <NuxtLink
-            :to="featuredPost.path"
+            :to="`/blog/${featuredPost.slug}`"
             class="block group"
           >
             <article class="bg-white rounded-xl shadow-md overflow-hidden md:flex hover:shadow-xl transition-shadow duration-300">
@@ -85,8 +85,8 @@
         <div v-if="filteredPosts && filteredPosts.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <NuxtLink
             v-for="post in filteredPosts"
-            :key="post.path"
-            :to="post.path"
+            :key="post.slug"
+            :to="`/blog/${post.slug}`"
             class="group"
           >
             <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-200 h-full flex flex-col">
@@ -206,7 +206,7 @@ const featuredPost = computed(() => {
 const posts = computed(() => {
   if (!allPosts.value) return []
   const featured = featuredPost.value
-  return allPosts.value.filter(p => p.path !== featured?.path)
+  return allPosts.value.filter(p => p.slug !== featured?.slug)
 })
 
 // Filter posts by category

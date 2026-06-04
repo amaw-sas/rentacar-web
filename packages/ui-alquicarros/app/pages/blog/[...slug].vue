@@ -199,8 +199,8 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <NuxtLink
             v-for="related in relatedPosts"
-            :key="related.path"
-            :to="related.path"
+            :key="related.slug"
+            :to="`/blog/${related.slug}`"
             class="group"
           >
             <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
@@ -305,15 +305,19 @@ const { data: post } = await useAsyncData(`blog-${slug.value}`, () =>
     .catch(() => null)
 )
 
-// Fetch related posts (same category, excluding current)
-const { data: relatedPosts } = await useAsyncData(`related-${slug.value}`, async () => {
-  if (!post.value) return []
-  return queryCollection<BlogPost>('blog')
-    .where('category', '=', post.value.category)
-    .where('path', '!=', post.value.path)
-    .limit(3)
-    .all()
-})
+// All posts for this brand (Supabase) — drives related.
+const { data: allPosts } = await useAsyncData(`blog-all-${slug.value}`, () =>
+  $fetch<{ posts: BlogPost[] }>('/api/blog/posts')
+    .then(r => r.posts ?? [])
+    .catch(() => [])
+)
+
+// Related posts: same category, excluding the current one, max 3.
+const relatedPosts = computed(() =>
+  post.value
+    ? (allPosts.value ?? []).filter(p => p.category === post.value!.category && p.slug !== post.value!.slug).slice(0, 3)
+    : []
+)
 
 // Reading progress
 const articleRef = ref<HTMLElement | null>(null)

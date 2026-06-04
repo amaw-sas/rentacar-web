@@ -223,8 +223,8 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <NuxtLink
             v-for="related in relatedPosts"
-            :key="related.path"
-            :to="related.path"
+            :key="related.slug"
+            :to="`/blog/${related.slug}`"
             class="group"
           >
             <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
@@ -254,7 +254,7 @@
         <div v-if="surroundings" class="grid grid-cols-2 gap-4">
           <NuxtLink
             v-if="surroundings[0]"
-            :to="surroundings[0].path"
+            :to="`/blog/${surroundings[0].slug}`"
             class="group flex items-start gap-3 p-4 rounded-xl bg-white hover:bg-red-50/50 shadow-sm transition-all"
           >
             <UIcon name="i-lucide-arrow-left" class="size-5 text-gray-400 group-hover:text-red-700 mt-0.5 shrink-0 transition-colors" />
@@ -268,7 +268,7 @@
           <div v-else />
           <NuxtLink
             v-if="surroundings[1]"
-            :to="surroundings[1].path"
+            :to="`/blog/${surroundings[1].slug}`"
             class="group flex items-start gap-3 p-4 rounded-xl bg-white hover:bg-red-50/50 shadow-sm transition-all text-right flex-row-reverse"
           >
             <UIcon name="i-lucide-arrow-right" class="size-5 text-gray-400 group-hover:text-red-700 mt-0.5 shrink-0 transition-colors" />
@@ -378,28 +378,28 @@ const { data: post } = await useAsyncData(`blog-${slug.value}`, () =>
     .catch(() => null)
 )
 
-// Fetch related posts (same category, excluding current)
-const { data: relatedPosts } = await useAsyncData(`related-${slug.value}`, async () => {
-  if (!post.value) return []
-  return queryCollection<BlogPost>('blog')
-    .where('category', '=', post.value.category)
-    .where('path', '!=', post.value.path)
-    .limit(3)
-    .all()
-})
+// All posts for this brand (Supabase) — drives related + prev/next.
+const { data: allPosts } = await useAsyncData(`blog-all-${slug.value}`, () =>
+  $fetch<{ posts: BlogPost[] }>('/api/blog/posts')
+    .then(r => r.posts ?? [])
+    .catch(() => [])
+)
 
-// Prev/Next navigation (by date, not alphabetical path)
-const { data: surroundings } = await useAsyncData(`surroundings-${slug.value}`, async () => {
+// Related posts: same category, excluding the current one, max 3.
+const relatedPosts = computed(() =>
+  post.value
+    ? (allPosts.value ?? []).filter(p => p.category === post.value!.category && p.slug !== post.value!.slug).slice(0, 3)
+    : []
+)
+
+// Prev/Next by date — the API already returns posts sorted date DESC.
+const surroundings = computed<[BlogPost | null, BlogPost | null]>(() => {
   if (!post.value) return [null, null]
-  const allPosts = await queryCollection<BlogPost>('blog')
-    .order('date', 'DESC')
-    .all()
-  const currentIndex = allPosts.findIndex(p => p.path === post.value!.path)
-  if (currentIndex === -1) return [null, null]
-  // In DESC order: index+1 = older (prev), index-1 = newer (next)
-  const prev = currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null
-  const next = currentIndex > 0 ? allPosts[currentIndex - 1] : null
-  return [prev, next]
+  const posts = allPosts.value ?? []
+  const i = posts.findIndex(p => p.slug === post.value!.slug)
+  if (i === -1) return [null, null]
+  // DESC order: i+1 = older (prev), i-1 = newer (next).
+  return [i < posts.length - 1 ? posts[i + 1]! : null, i > 0 ? posts[i - 1]! : null]
 })
 
 // Reading progress
