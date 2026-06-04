@@ -14,15 +14,17 @@ El blog es la única isla de la migración que sigue abierta. Este spec la cierr
 
 ## Estado verificado (con evidencia)
 
-El contenido del blog se sirve hoy desde **tres** fuentes distintas a la vez:
+El contenido del blog se sirve hoy desde **tres** fuentes distintas a la vez. El stack está **duplicado en las 3 marcas** (`packages/ui-{brand}/`) — los números de línea son de `alquilatucarro` y pueden haber drifteado, pero la sustancia se repite en `ui-alquilame` y `ui-alquicarros`:
 
-| Pieza | Fuente actual | Evidencia |
+| Pieza | Fuente actual | Evidencia (× 3 marcas) |
 |---|---|---|
 | Listado (`/blog`) | Vercel Blob | `app/pages/blog/index.vue` → `/api/blog/posts` → `loadDynamicPosts()` lee `blob-posts/{franchise}/` |
-| Cuerpo del detalle | Vercel Blob | `app/pages/blog/[...slug].vue:376` → `/api/blog/post/[slug]` → `loadDynamicPosts()` |
-| Relacionados + prev/next | `@nuxt/content` | `app/pages/blog/[...slug].vue:384,394` → `queryCollection<BlogPost>('blog')` lee `content/blog/*.md` del repo |
+| Cuerpo del detalle | Vercel Blob | `app/pages/blog/[...slug].vue` → `/api/blog/post/[slug]` → `loadDynamicPosts()` |
+| Relacionados + prev/next | `@nuxt/content` | `app/pages/blog/[...slug].vue` → `queryCollection<BlogPost>('blog')` filtrando por `.path` |
 | Escritura de posts | Vercel Blob | `server/api/blog/wordpress-sync.post.ts` → `uploadToStorage()` (`@vercel/blob` `put`) |
 | Imágenes subidas | Vercel Blob | `server/api/blog/upload-image.post.ts` → `blob-images/{type}/` |
+
+`@nuxt/content` está en los `modules` de las 3 marcas (`nuxt.config.ts:426` en alquilatucarro, `:417` en las otras dos). Pero **solo `alquilatucarro` tiene `content.config.ts` y `content/blog/*.md`**: en `alquilame`/`alquicarros` el `queryCollection('blog')` de la página de detalle corre contra una colección vacía/inexistente. Es decir, el split-brain en las 2 marcas vacías ya está roto hoy, no solo a futuro.
 
 Problemas que esto produce:
 
@@ -41,16 +43,17 @@ Las imágenes de cuerpo y cover ya son locales (`/img/blog/*`, 26 archivos en `a
 | Backend de posts | Supabase, tabla `blog_posts` | Alinea con la intención documentada de la Fase 3 y consolida con `faqs`/`cities`/`franchise_testimonials`/`gsc_tokens` ya en Supabase. Edición sin deploy vía dashboard, que es la directiva de "evitar islas de información". |
 | Aislamiento multi-marca | `brand NOT NULL`, queries filtran por franchise | Preserva el modelo per-franchise del loader de Blob actual (`blog-posts/{franchise}/`). Cada marca controla su contenido. |
 | Seed inicial de las 2 marcas vacías | Insertar los 16 posts × 3 marcas = 48 filas, brand-tagged | El objetivo es "las 3 marcas con contenido". Sembrar copias garantiza que ninguna caiga al empty state; luego divergen editando. |
-| Avatares | Reemplazar URL Firebase por logo local por marca | El avatar es el logo de marca, ya existe como asset local. Mata la última dependencia Firebase a costo cero, sin storage externo para algo estático. |
+| Avatares | **Crear** un asset de avatar local por marca y apuntar `author_avatar` ahí | El avatar es el logo de marca, pero **no existe como archivo en `public/`**: el header lo renderiza como SVG inline (`Logo.vue`), y aunque `app.config.ts` referencia `/images/brand/logo.svg` y `/images/brand/og-logo.png`, ese directorio no existe en disco en ninguna marca. La migración debe **añadir** un asset concreto (p.ej. `public/img/blog/author-avatar.webp` por marca, exportado del SVG o del og-logo) y usar esa ruta. No asumir que ya existe. Mata la última dependencia Firebase, sin storage externo para algo estático. |
 | Imágenes subidas dinámicamente | Supabase Storage `blog-images/{brand}/` | Coherente con backend Supabase: una sola fuente de datos del blog. Deprecar el bucket `blog-images` de Vercel Blob. |
 | Cover + imágenes de cuerpo | Quedan locales en `public/img/blog/` | Ya están migradas a assets locales. Máximo SEO/perf/costo cero. Copiar los 26 assets a las 2 marcas faltantes para el seed. |
-| Eliminar `@nuxt/content` | Borrar `content.config.ts`, el módulo, y `content/blog/*.md` | Solo el blog usaba la colección (`queryCollection` aparece únicamente en `[...slug].vue`). Sin blog en `@nuxt/content`, el módulo es peso muerto. |
-| Render del markdown | `@nuxtjs/mdc` `parseMarkdown` desde el body en Supabase | Ya es lo que usa `post/[slug].get.ts:30` para el cuerpo. Se conserva el renderer, cambia la fuente del texto. |
+| Eliminar `@nuxt/content` | Quitar el módulo de los 3 `nuxt.config.ts`, borrar `content.config.ts` + `content/blog/*.md` (alquilatucarro) y la dependencia de package.json × 3 | Solo el blog usaba la colección (`queryCollection` aparece únicamente en `[...slug].vue`, en las 3 marcas). Sin blog en `@nuxt/content`, el módulo es peso muerto. |
+| Render del markdown | `@nuxtjs/mdc` `parseMarkdown` desde el body en Supabase | Ya es lo que usa `post/[slug].get.ts` para el cuerpo. **`@nuxtjs/mdc` es dependencia explícita** (`package.json: "@nuxtjs/mdc": "^0.20.1"`), no transitiva de `@nuxt/content` → sobrevive a la remoción del módulo. Se conserva el renderer, cambia la fuente del texto. |
+| Navegación del detalle (`.path` → `slug`) | Reescribir relacionados + prev/next para usar `slug` y rutas `/blog/${slug}` | `[...slug].vue` hoy usa `post.path`/`related.path`/`surroundings[].path` (campos internos de `@nuxt/content`) para el `:to` y el filtro `.where('path','!=',...)`. El `BlogPost` de Supabase no trae `.path`. Sin esta reescritura, la navegación del detalle rompe en las 3 marcas. |
 | SEO/perf en el mismo cierre | Sitemap + RSS dinámicos desde `blog_posts`, ISR para `/blog/**` | Con la fuente única en Supabase, derivar sitemap/RSS de la tabla es natural; dejarlos hardcodeados sería re-abrir #52 después. |
 
 ## Arquitectura objetivo — fuente única
 
-Las tres fuentes colapsan a una. Acceso vía el patrón ya establecido en `logic/server/`:
+Las tres fuentes colapsan a una. Todos los endpoints y páginas de abajo viven duplicados en `packages/ui-{brand}/` y se tocan en las 3 marcas. Acceso vía el patrón ya establecido en `logic/server/`:
 
 - Lectura: `useSupabaseClient()` (anon) + `defineCachedEventHandler` con cache key scoped a `app.buildId` (el fix de #62, ya en repo, evita servir respuestas de un deploy previo).
 - Escritura: `useSupabaseAdminClient()` (service_role) detrás del middleware `blog-api-auth` (API key) ya existente.
@@ -65,7 +68,11 @@ Las tres fuentes colapsan a una. Acceso vía el patrón ya establecido en `logic
 | `/api/blog/post/[slug].delete` | Borra la fila + sus imágenes en Supabase Storage. |
 | `/api/blog/debug` | Reporta conteo de filas por marca en vez de listado de Blob. |
 
-**Se elimina entero**: `content.config.ts`, módulo `@nuxt/content` de `nuxt.config.ts:426`, `server/plugins/content-dynamic-loader.ts`, `server/utils/blob-storage.ts` (lo consume solo el blog), `content/blog/*.md`. Los buckets Blob `blog-posts/` y `blog-images/` quedan deprecados (no se borran en este PR; se vacían por desuso).
+**Se elimina entero (× 3 marcas salvo donde se indique)**: módulo `@nuxt/content` de los 3 `nuxt.config.ts` + su entrada en los 3 `package.json`; `server/plugins/content-dynamic-loader.ts`; `server/utils/blob-storage.ts` (lo consume solo el blog); `server/api/blog/posts-dynamic.get.ts`. Solo en alquilatucarro: `content.config.ts` y `content/blog/*.md` (las otras 2 marcas no los tienen). Los buckets Blob `blog-posts/` y `blog-images/` quedan deprecados (no se borran en este PR; se vacían por desuso).
+
+**Tests a migrar/eliminar (× 3 marcas)**: `useBlogUtils.test.ts`, `wordpress-to-nuxt.test.ts`, `vercel-blob-storage.test.ts`, `upload-image.post.test.ts`, `[slug].delete.test.ts`, `wordpress-sync.post.test.ts`. Algunos referencian `firebasestorage`/`@vercel/blob`; o se actualizan al nuevo backend o se borran junto con el código que prueban.
+
+**Contrato `BlogPost`** (`packages/logic/src/utils/types/type/BlogPost.ts`): se le quitan los campos internos de `@nuxt/content` (`_path`, `_dir`, `_file`, `_extension`, …) y se añade `slug`. Consumidores del cambio: las 3 páginas `[...slug].vue` y `index.vue` (listado).
 
 ## Esquema
 
@@ -106,9 +113,9 @@ El esquema replica el frontmatter de la colección `@nuxt/content` (`content.con
 
 ## Imágenes
 
-- **Avatares (16/16 en Firebase)**: reemplazar `https://firebasestorage.googleapis.com/.../logo.png` por el asset local del logo que cada marca ya tiene en `public/`. Queda en `author_avatar` como ruta local.
-- **Cover + cuerpo**: ya locales. Para el seed por-marca, copiar los 26 archivos de `alquilatucarro/public/img/blog/` a `alquilame/public/img/blog/` y `alquicarros/public/img/blog/`.
-- **Subidas dinámicas**: bucket Supabase Storage `blog-images/{brand}/`; reescribir `upload-image` y la limpieza en `[slug].delete.ts`.
+- **Avatares (16/16 en Firebase)**: hoy `author.avatar` apunta a `https://firebasestorage.googleapis.com/.../{brand}/img/logo.png`. No hay un equivalente local listo (el logo del header es SVG inline en `Logo.vue`; `/images/brand/*` no está en disco). Paso de migración: **crear** un asset por marca — `public/img/blog/author-avatar.webp` — exportado del logo, y guardar esa ruta en `author_avatar`.
+- **Cover + cuerpo**: ya locales en `alquilatucarro/public/img/blog/` (26 archivos). `alquilame` y `alquicarros` tienen 7 cada una hoy → para el seed de las 48 filas, copiar el set completo de 26 a esas dos marcas (añadir las que falten; verificar que las 7 existentes no diverjan de las de alquilatucarro).
+- **Subidas dinámicas**: bucket Supabase Storage `blog-images/{brand}/`; reescribir `upload-image` y la limpieza en `[slug].delete.ts` (× 3 marcas).
 
 ## SEO / performance
 
@@ -120,10 +127,11 @@ El esquema replica el frontmatter de la colección `@nuxt/content` (`content.con
 
 Mismo enfoque que faqs (#12): MCP `apply_migration` para el DDL, `execute_sql` para el seed (no script `*-backfill.ts`).
 
-1. Parsear los 16 `.md` de `content/blog/` (frontmatter + body).
-2. Reescribir `author.avatar` Firebase → ruta logo local.
-3. Insertar 16 × 3 = 48 filas, brand-tagged; ajustar `author_name`/branding por marca.
-4. Copiar los 26 assets de imagen a las 2 marcas faltantes.
+1. Crear el asset `public/img/blog/author-avatar.webp` por marca (ver Imágenes).
+2. Parsear los 16 `.md` de `alquilatucarro/content/blog/` (frontmatter + body).
+3. Reescribir `author.avatar` Firebase → `/img/blog/author-avatar.webp`.
+4. Insertar 16 × 3 = 48 filas, brand-tagged; ajustar `author_name`/branding por marca.
+5. Copiar el set de 26 imágenes a las 2 marcas faltantes (alquilame/alquicarros).
 
 ## Manejo de errores
 
@@ -138,7 +146,7 @@ Mismo enfoque que faqs (#12): MCP `apply_migration` para el DDL, `execute_sql` p
 
 1. **GIVEN** `/blog` en cada marca **WHEN** carga **THEN** el grid muestra ≥1 post real con imagen, no el empty state.
 2. **GIVEN** un slug del sitemap **WHEN** se navega a `/blog/<slug>` **THEN** 200 con cuerpo renderizado (no 404).
-3. **GIVEN** `grep -rn firebasestorage` sobre `content/`, `app/`, `server/` **THEN** 0 resultados.
+3. **GIVEN** `grep -rn firebasestorage` sobre `content/`, `app/`, `server/` excluyendo `__tests__` (o incluyéndolos si los tests ya se migraron) **THEN** 0 resultados en código de producción de las 3 marcas.
 4. **GIVEN** un detalle de post **WHEN** se ven los relacionados y prev/next **THEN** provienen de Supabase (sin `queryCollection` en el bundle).
 5. **GIVEN** `/rss.xml` por marca **WHEN** se solicita **THEN** 200 con XML válido y los posts reales de esa marca.
 6. **GIVEN** `sitemap.xml` **WHEN** se inspecciona **THEN** las URLs de blog = filas `blog_posts` de esa marca (sin hardcode, sin URLs muertas).
