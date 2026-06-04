@@ -423,7 +423,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ['@pinia/nuxt', '@nuxtjs/seo', '@nuxt/ui', '@nuxt/image', 'nuxt-llms', 'nuxt-vitalizer', '@nuxt/content'],
+  modules: ['@pinia/nuxt', '@nuxtjs/seo', '@nuxt/ui', '@nuxt/image', 'nuxt-llms', 'nuxt-vitalizer', '@nuxtjs/mdc'],
 
   // Optimización de imágenes — Vercel Image Optimization
   image: {

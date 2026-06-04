@@ -15,7 +15,6 @@
     "clean": "rm -rf .nuxt .output node_modules"
   },
   "dependencies": {
-    "@nuxt/content": "^3.10.0",
     "@nuxt/ui": "^4.2.1",
     "@nuxtjs/mdc": "^0.20.1",
     "@nuxtjs/seo": "3.2.2",

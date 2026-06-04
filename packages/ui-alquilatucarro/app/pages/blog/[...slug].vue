@@ -83,7 +83,7 @@
         <div class="flex flex-col lg:flex-row gap-8">
           <!-- Main Content -->
           <article ref="articleRef" class="lg:w-2/3 prose prose-lg prose-gray max-w-none">
-            <ContentRenderer :value="post" />
+            <MDCRenderer v-if="post.body" :body="post.body" :data="post" />
           </article>
 
           <!-- Sidebar -->

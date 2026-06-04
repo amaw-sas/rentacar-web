@@ -41,9 +41,12 @@ export default defineEventHandler(async (event) => {
     }
 
     const post = transformBlogPost(data)
-    const parsed = await parseMarkdown(data.body as string)
+    // @nuxtjs/mdc returns `toc` at the top level of the result; the detail page
+    // reads `post.body.toc.links`, so merge it into body to keep the
+    // table-of-contents nav working after dropping @nuxt/content's ContentRenderer.
+    const parsed = await parseMarkdown(data.body as string, { toc: { depth: 3, searchDepth: 3 } })
 
-    return { ...post, body: parsed.body }
+    return { ...post, body: { ...parsed.body, toc: parsed.toc } }
   } catch (error) {
     return handleBlogApiError(error, 'blog-post')
   }

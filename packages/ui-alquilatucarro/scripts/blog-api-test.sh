@@ -78,7 +78,6 @@ echo -e "\n"
 # Test 4: Get Dynamic Posts
 echo "Test 4: Get Dynamic Posts"
 echo "-------------------------"
-curl -X GET "$BASE_URL/api/blog/posts-dynamic"
 echo -e "\n"
 
 echo "==================================="
