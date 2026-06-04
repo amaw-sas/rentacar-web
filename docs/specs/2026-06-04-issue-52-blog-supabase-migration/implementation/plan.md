@@ -105,9 +105,10 @@ Mapeo concreto agrupado por responsabilidad. `× 3` = mismo cambio en `ui-alquil
 **Step 2 — `BlogPost` type + transformer + Valibot guard (logic)** | Size: M | Dependencies: none
 - `BlogPost.ts`: quitar campos internos `@nuxt/content`, añadir `slug`.
 - `logic/server/utils/blogTransformers.ts`: `blogPostSchema` (Valibot), `transformBlogPost`, `transformBlogList`, interface `SupabaseBlogPost`.
-- Tests `blogTransformers.test.ts`: happy, malformed (cada campo), lista vacía.
-- Escenario: **GIVEN** una fila Supabase válida/ malformada **WHEN** se transforma **THEN** valida o falla-loud según guard.
-- Acceptance: `pnpm --filter @rentacar-main/logic test` verde; `pnpm typecheck` sin nuevos errores en logic.
+- **Mapeo flat→nested (crítico, silent-break)**: la fila es flat snake_case (`author_name`, `author_avatar`, `reading_time`, `faq_items`); el template del detalle lee `related.readingTime`, `author.{name,avatar}` (camelCase + anidado). El transformer DEBE reconstruir `author: { name, avatar }` y `readingTime`/`faqItems` (camelCase). Si no, los bindings existentes renderizan `undefined` sin error.
+- Tests `blogTransformers.test.ts`: happy, malformed (cada campo), lista vacía, **y un caso que afirma `author.name`/`author.avatar`/`readingTime` presentes tras transformar**.
+- Escenario: **GIVEN** una fila Supabase válida/malformada **WHEN** se transforma **THEN** valida o falla-loud según guard, y la forma camelCase/anidada coincide con `BlogPost`.
+- Acceptance: `pnpm --filter @rentacar-main/logic test` verde; `pnpm typecheck` sin nuevos errores en logic; test de forma camelCase/`author` PASSED.
 
 **Step 3 — Asset de avatar local (× 3)** | Size: S | Dependencies: none
 - Exportar el SVG de `Logo.vue` → `public/img/blog/author-avatar.webp` en cada marca.
@@ -116,12 +117,17 @@ Mapeo concreto agrupado por responsabilidad. `× 3` = mismo cambio en `ui-alquil
 
 ### Phase 2 — Data migration
 
-**Step 4 — Seed de 48 filas + copia de imágenes** | Size: M | Dependencies: 1, 3
+**Step 4 — Seed de 48 filas** | Size: M | Dependencies: 1, 3
 - Parsear los 16 `.md` (frontmatter + body); reescribir `author.avatar`→`/img/blog/author-avatar.webp`.
-- `execute_sql` insert 16 × 3 marcas (branding `author_name`/marca ajustado).
-- Copiar el set de 26 imágenes a `alquilame` y `alquicarros` (`public/img/blog/`).
+- **Mapeo frontmatter→columnas**: frontmatter usa `author:{name,avatar}` anidado + camelCase (`readingTime`, `faqItems`); la tabla es flat snake_case (`author_name`, `author_avatar`, `reading_time`, `faq_items` jsonb, `tags` text[]). El parser aplana antes del insert.
+- `execute_sql` insert 16 × 3 marcas (branding `author_name`/marca ajustado por franchise).
 - Escenario: **GIVEN** el seed corrido **WHEN** se consulta por marca **THEN** 16 filas por marca, sin URL Firebase.
-- Acceptance (SCEN-007 parcial): `SELECT brand,count(*) ... GROUP BY brand` → 16/16/16; `SELECT count(*) WHERE author_avatar LIKE '%firebasestorage%'` → 0; imágenes presentes ×3.
+- Acceptance (SCEN-007 parcial): `SELECT brand,count(*) ... GROUP BY brand` → 16/16/16; `SELECT count(*) WHERE author_avatar LIKE '%firebasestorage%'` → 0.
+
+**Step 4b — Copia de imágenes a las 2 marcas vacías** | Size: S | Dependencies: 3
+- Copiar el set de 26 imágenes de `alquilatucarro/public/img/blog/` a `alquilame` y `alquicarros` (añadir las 19 que faltan; verificar que las 7 existentes no diverjan).
+- Escenario: **GIVEN** un cover `/img/blog/*` referenciado por un post seedeado **WHEN** se sirve en alquilame/alquicarros **THEN** 200 (no 404).
+- Acceptance: `ls public/img/blog | wc -l` → 26 en las 3 marcas; spot-check de 3 covers por marca en dev.
 
 ### Phase 3 — Read path
 
@@ -131,11 +137,11 @@ Mapeo concreto agrupado por responsabilidad. `× 3` = mismo cambio en `ui-alquil
 - Escenario (SCEN-002): **GIVEN** un slug real **WHEN** GET `/api/blog/post/<slug>` **THEN** 200 con body; slug inexistente → 404.
 - Acceptance: `curl` por marca devuelve lista no vacía y 200/404 correctos.
 
-**Step 6 — Páginas de blog → Supabase (× 3)** | Size: M | Dependencies: 5
+**Step 6 — Páginas de blog → Supabase (× 3)** | Size: M | Dependencies: 5, 4b
 - `index.vue`: consumir `/api/blog/posts`; quitar comentario "Firebase Storage" obsoleto.
-- `[...slug].vue`: body vía API; relacionados + prev/next vía `/api/blog/posts`; eliminar `queryCollection`; `.path`→`slug`, `:to="/blog/${slug}"`.
+- `[...slug].vue`: body vía API; relacionados + prev/next vía `/api/blog/posts`; eliminar `queryCollection`; `.path`→`slug`, `:to="/blog/${slug}"`. Confirmar que `related.readingTime` y `author.{name,avatar}` siguen poblados (dependen del mapeo del Step 2).
 - Escenario (SCEN-001, SCEN-004): **GIVEN** `/blog` y un detalle **WHEN** cargan **THEN** grid con posts reales y relacionados/nav desde Supabase.
-- Acceptance: `grep -rn queryCollection packages/ui-*/app` → vacío; runtime: grid ≥1 y enlaces relacionados válidos en las 3 marcas.
+- Acceptance: `grep -rn queryCollection packages/ui-*/app` → vacío; runtime: grid ≥1, enlaces relacionados válidos y **el tiempo de lectura/autor del detalle renderizan (no `undefined`)** en las 3 marcas.
 
 ### Phase 4 — Write path
 
@@ -144,8 +150,9 @@ Mapeo concreto agrupado por responsabilidad. `× 3` = mismo cambio en `ui-alquil
 - `upload-image.post.ts`: `put` en Storage `blog-images/{brand}/`.
 - `post/[slug].delete.ts`: borra fila + imágenes en Storage.
 - `debug.get.ts`: conteo de filas por marca.
+- Adaptar `scripts/test-blog-endpoints.ts` al backend Supabase (deliverable explícito de este step).
 - Escenario: **GIVEN** un payload WordPress válido **WHEN** POST `/api/blog/wordpress-sync` **THEN** la fila aparece en `blog_posts` y `GET /api/blog/posts` la lista; DELETE la quita.
-- Acceptance: `scripts/test-blog-endpoints.ts` (adaptado al nuevo backend) pasa el ciclo upload→sync→list→delete.
+- Acceptance: `scripts/test-blog-endpoints.ts` (adaptado) pasa el ciclo upload→sync→list→delete contra Supabase.
 
 ### Phase 5 — Cleanup
 
@@ -163,9 +170,9 @@ Mapeo concreto agrupado por responsabilidad. `× 3` = mismo cambio en `ui-alquil
 ### Phase 6 — SEO / perf
 
 **Step 10 — Sitemap dinámico (× 3)** | Size: M | Dependencies: 5
-- Reemplazar la lista hardcodeada por source async desde `blog_posts` (marca activa).
+- Reemplazar la lista hardcodeada por source async desde `blog_posts` (marca activa). Nota: el hardcode actual existe porque `queryCollectionWithEvent falla en runtime`; la nueva source lee Supabase (no `queryCollection`), así que ese modo de fallo no aplica — pero hay que confirmar que resuelve en build/prerender, no solo en dev.
 - Escenario (SCEN-006): **GIVEN** `sitemap.xml` **THEN** URLs de blog = filas `blog_posts` de la marca.
-- Acceptance: set `/blog/*` del sitemap == `SELECT slug` por marca; sin slugs muertos.
+- Acceptance: set `/blog/*` del sitemap == `SELECT slug` por marca; sin slugs muertos; **verificado en el alias `-git-main-` de preview**, no solo local.
 
 **Step 11 — RSS dinámico (× 3)** | Size: M | Dependencies: 5
 - `server/routes/rss.xml.get.ts` genera el feed desde `blog_posts`; borrar `public/rss.xml`.
