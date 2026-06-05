@@ -14,7 +14,7 @@ function extractStoragePaths(body: string): string[] {
   const paths: string[] = []
   let match: RegExpExecArray | null
   while ((match = urlPattern.exec(body)) !== null) {
-    paths.push(decodeURIComponent(match[1]))
+    if (match[1]) paths.push(decodeURIComponent(match[1]))
   }
   return [...new Set(paths)]
 }
@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
     if (imagePaths.length > 0) {
       const { data: removed, error: rmErr } = await supabase.storage.from(BUCKET).remove(imagePaths)
       if (rmErr) {
-        logger.warn('blog-delete-image-warn', rmErr, { slug, count: imagePaths.length })
+        logger.warn('blog-delete-image-warn', { error: rmErr.message, slug, count: imagePaths.length })
       } else {
         deletedImages = (removed ?? []).map((o) => o.name)
       }

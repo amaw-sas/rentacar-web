@@ -1,6 +1,8 @@
 import type { SitemapUrlInput } from '#sitemap/types'
-import { defineSitemapEventHandler } from '#imports'
 import { useSupabaseClient } from '../../../../logic/server/utils/supabase'
+
+// `defineSitemapEventHandler` is a global nitro auto-import (from @nuxtjs/sitemap),
+// like `defineEventHandler` — importing it from '#imports' fails typecheck.
 
 /**
  * Dynamic sitemap source for blog posts (issue #52, Step 10).
