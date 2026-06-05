@@ -276,6 +276,48 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await expect(page).not.toHaveURL(/\/categoria\//);
   });
 
+  test('SCEN-011: tras Resumen→Datos→cerrar, la grilla sigue interactiva (regresión #65)', async ({
+    page,
+  }) => {
+    const code = await gotoSearchAndGetCode(page);
+    test.skip(!code, 'Sin categorías renderizadas');
+
+    // Flujo completo en la MISMA página (sin cambio de ruta): Resumen → Datos.
+    await page.getByRole('button', { name: 'Solicitar este vehículo' }).first().click();
+    await expect(
+      page.getByRole('dialog').filter({ hasText: 'Resumen de la reserva' }),
+    ).toBeVisible({ timeout: 10_000 });
+    await page.getByTestId('reservation-next-test').click();
+    await expect(
+      page.getByRole('dialog').filter({ hasText: 'Datos para reservas' }),
+    ).toBeVisible({ timeout: 10_000 });
+
+    // Cerrar "Datos" con el botón X (ruta de cierre primaria, sin navegar).
+    await page
+      .getByRole('dialog')
+      .filter({ hasText: 'Datos para reservas' })
+      .getByRole('button', { name: /close|cerrar/i })
+      .first()
+      .click();
+    await expect(visibleDialogs(page)).toHaveCount(0, { timeout: 10_000 });
+
+    // Con 0 diálogos abiertos, el <body> NO debe quedar con pointer-events:none
+    // pegado (el hand-off de dos modales hermanos lo dejaba bloqueado → la
+    // grilla quedaba muerta porque el <html> interceptaba el puntero).
+    await expect
+      .poll(() => page.evaluate(() => document.body.style.pointerEvents || ''), {
+        timeout: 5_000,
+      })
+      .not.toBe('none');
+
+    // Satisfacción del usuario: reseleccionar cualquier vehículo vuelve a abrir
+    // "Resumen". Antes del fix el click no llegaba (puntero interceptado).
+    await page.getByRole('button', { name: 'Solicitar este vehículo' }).first().click();
+    await expect(
+      page.getByRole('dialog').filter({ hasText: 'Resumen de la reserva' }),
+    ).toBeVisible({ timeout: 10_000 });
+  });
+
   test('SCEN-008: teléfono — nombre accesible "Teléfono" + autocomplete tel, sin aria-label viejo', async ({
     page,
   }) => {

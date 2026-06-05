@@ -8,10 +8,17 @@ epic: 63
 
 # A11y del flujo de reserva: un solo slideover modal + autocomplete
 
-Flujo de reserva de las tres marcas (componentes byte-idénticos). Dos slideovers
+Flujo de reserva de las tres marcas (componentes byte-idénticos). Dos pasos
 secuenciales — "Resumen de la reserva" → "Datos para reservas" — deben respetar
 la invariante **a lo sumo un diálogo modal abierto**. El formulario debe exponer
 `autocomplete` estándar y nombre accesible.
+
+> Nota de implementación (post SCEN-011): los dos "pasos" son `slideoverStep`
+> dentro de **un único `<u-slideover>`**, no dos slideovers. SCEN-001…010 son
+> contratos **observables** (título/conteo de `[role=dialog]`/URL) y se cumplen
+> igual: el contenido se intercambia dentro del mismo diálogo. Redacciones como
+> "Resumen se cierra" (SCEN-002) describen el efecto observable (el `[role=dialog]`
+> pasa a titularse "Datos"), no dos elementos.
 
 Invariante central: en todo momento hay **0 o 1** `[role=dialog]` visible; si hay
 uno, tiene `aria-modal="true"`.
@@ -102,3 +109,21 @@ autocomplete inspecciona el DOM renderizado. SCEN-006 es regresión de #25.
 > Origen: edge-case review del PR #65 (Escape es ruta primaria de cierre a11y).
 > El watcher de form, en su rama `else` cuando Resumen tampoco está abierto,
 > llama `updateCategoriaUrl(undefined)`.
+
+## SCEN-011: tras Resumen→Datos→cerrar, la grilla sigue interactiva (regresión #65)
+**Given**: la grilla de resultados; el usuario abre "Resumen" desde una tarjeta, pasa a "Datos" con "Siguiente", y luego cierra todo **en la misma página** (por el botón X, por Escape, o por "Volver"→"Volver"), sin cambiar de ruta
+**When**: el usuario hace click en "Solicitar este vehículo" de cualquier tarjeta para reseleccionar
+**Then**: la tarjeta responde y reaparece "Resumen" como único `[role=dialog]`; con 0 diálogos abiertos, el `<body>` **no** conserva `pointer-events:none` inline (la grilla es clickeable; el `<html>` no intercepta el puntero)
+**Evidence**: `document.body.style.pointerEvents` (≠ `none`, vacío) con conteo de `[role=dialog]` = 0 tras cerrar; y `[role=dialog]` "Resumen" visible tras el click de reselección
+
+> Origen: bug reportado por el usuario (2026-06-05) y reproducido. Causa raíz
+> (systematic-debugging): el diseño de **dos slideovers hermanos** hacía que
+> `goToForm`/`backToResume` mutaran ambos refs en el mismo tick (cerrar uno +
+> abrir otro), corrompiendo el conteo de capas de reka-ui y dejando
+> `pointer-events:none` pegado en `<body>` con 0 diálogos. **Verificado como
+> regresión**: `main` (anidado) limpia bien incluso con dos modales abiertos.
+> Fix (Option C): colapsar a **un solo `<u-slideover>` con un `step` interno**
+> (`resumen`|`datos`) — el diálogo se abre y cierra **una vez** por flujo, sin
+> swap ni stacking. El invariante "0 o 1 `[role=dialog]`" pasa a ser estructural
+> (un único `DialogContent`); SCEN-001…010 mantienen su contrato observable (el
+> contenido se intercambia dentro del mismo diálogo).

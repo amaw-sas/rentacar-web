@@ -59,10 +59,18 @@
         />
       </template>
     </div>
+    <!-- UN SOLO slideover con `slideoverStep` interno (issue #65). El diálogo se
+         abre y cierra UNA vez por flujo; "Resumen" y "Datos" son pasos que
+         intercambian su contenido dentro del mismo [role=dialog]. Antes eran dos
+         slideovers (anidados en main, hermanos en el primer fix de #65); en
+         ambos, el hand-off entre dos capas modales corrompía el conteo de reka-ui
+         y dejaba `pointer-events:none` pegado en <body> con 0 diálogos, matando
+         la grilla (regresión SCEN-011). Con un único DialogContent el invariante
+         "0 o 1 [role=dialog]" es estructural y no hay swap de capas. -->
     <u-slideover
-      v-model:open="slideoverReservationResume"
-      title="Resumen de la reserva"
-      description="Antes de continuar revisa la información"
+      v-model:open="slideoverOpen"
+      :title="slideoverStep === 'datos' ? 'Datos para reservas' : 'Resumen de la reserva'"
+      :description="slideoverStep === 'datos' ? 'Completa tus datos y solicita la reserva' : 'Antes de continuar revisa la información'"
       :overlay="false"
       :content="modalContentProps"
       :close="{ color: 'neutral', variant: 'outline', class: 'text-gray-700 border-gray-300 hover:bg-gray-100' }"
@@ -77,10 +85,16 @@
       }"
     >
       <template #body>
-        <reservation-resume :category="selectedCategory"></reservation-resume>
+        <reservation-resume v-if="slideoverStep === 'resumen'" :category="selectedCategory"></reservation-resume>
+        <reservation-form
+          v-else
+          ref="reservationFormComponent"
+          @submit="submitForm"
+        />
       </template>
       <template #footer>
-        <div class="w-full flex flex-col gap-3">
+        <!-- Paso "Resumen": cápsula de compartir + Volver/Siguiente. -->
+        <div v-if="slideoverStep === 'resumen'" class="w-full flex flex-col gap-3">
           <!-- Share Capsule -->
           <div class="flex justify-center">
             <div class="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2">
@@ -124,10 +138,10 @@
               size="xl"
               class="flex-1 py-4 justify-center bg-gray-200 !text-black hover:bg-gray-300"
               data-testid="reservation-resume-back-test"
-              @click="slideoverReservationResume = false"
+              @click="slideoverOpen = false"
             />
-            <!-- "Siguiente" ya NO es trigger anidado: handler explícito que
-                 abre Datos y cierra Resumen (issue #65, un solo modal). -->
+            <!-- "Siguiente" cambia el paso a "datos" SIN cerrar/reabrir el
+                 diálogo (issue #65): no hay swap de capas modales. -->
             <u-button
               label="Siguiente"
               color="neutral"
@@ -142,57 +156,30 @@
             </u-button>
           </div>
         </div>
-      </template>
-    </u-slideover>
-    <!-- "Datos" es HERMANO de "Resumen" (issue #65): mutuamente excluyentes,
-         a lo sumo un [role=dialog][aria-modal] activo. Antes estaba anidado en
-         el #footer de "Resumen", dejando dos diálogos modales simultáneos. -->
-    <u-slideover
-      v-model:open="slideoverReservationForm"
-      title="Datos para reservas"
-      description="Completa tus datos y solicita la reserva"
-      :overlay="false"
-      :content="modalContentProps"
-      :close="{ color: 'neutral', variant: 'outline', class: 'text-gray-700 border-gray-300 hover:bg-gray-100' }"
-      :ui="{
-        content: 'bg-white',
-        header: 'bg-white',
-        title: 'text-gray-900 text-2xl font-bold',
-        description: 'text-gray-600',
-        body: 'bg-white text-gray-900',
-        footer: 'bg-white gap-2 border-t-0',
-        close: 'absolute top-4 end-4 z-10',
-      }"
-    >
-      <template #body>
-        <reservation-form
-          ref="reservationFormComponent"
-          @submit="submitForm"
-        />
-      </template>
-
-      <template #footer>
-        <u-button
-          label="Volver"
-          color="neutral"
-          variant="solid"
-          size="xl"
-          class="flex-1 py-4 justify-center bg-gray-200 !text-black hover:bg-gray-300"
-          data-testid="reservation-form-back-test"
-          @click="backToResume"
-        />
-        <u-button
-          color="neutral"
-          size="xl"
-          class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
-          :loading="isSubmittingForm"
-          :disabled="isSubmittingForm"
-          @click="reservationFormComponent.submit()"
-          >Solicitar reserva
-          <template #trailing>
-            <ChevronRightIcon v-if="!isSubmittingForm" cls="size-5" />
-          </template>
-        </u-button>
+        <!-- Paso "Datos": Volver (al resumen) + Solicitar reserva. -->
+        <template v-else>
+          <u-button
+            label="Volver"
+            color="neutral"
+            variant="solid"
+            size="xl"
+            class="flex-1 py-4 justify-center bg-gray-200 !text-black hover:bg-gray-300"
+            data-testid="reservation-form-back-test"
+            @click="backToResume"
+          />
+          <u-button
+            color="neutral"
+            size="xl"
+            class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
+            :loading="isSubmittingForm"
+            :disabled="isSubmittingForm"
+            @click="reservationFormComponent?.submit()"
+            >Solicitar reserva
+            <template #trailing>
+              <ChevronRightIcon v-if="!isSubmittingForm" cls="size-5" />
+            </template>
+          </u-button>
+        </template>
       </template>
     </u-slideover>
   </template>
@@ -257,8 +244,13 @@ const renderableCategories = computed(() =>
 const hasRenderableAvailable = computed(() =>
   renderableCategories.value.some((c: { estimatedTotalAmount: number }) => c.estimatedTotalAmount !== 999999999),
 );
-const slideoverReservationResume = ref<boolean>(false);
-const slideoverReservationForm = ref<boolean>(false);
+// Un solo slideover modal con dos pasos (issue #65). `slideoverStep` decide
+// título/descripción/body/footer; `slideoverOpen` gobierna la única capa modal.
+// El flujo Resumen↔Datos solo cambia `slideoverStep` (el diálogo permanece
+// abierto), evitando el swap de dos capas que dejaba `pointer-events:none`
+// pegado en <body> (regresión SCEN-011).
+const slideoverOpen = ref<boolean>(false);
+const slideoverStep = ref<'resumen' | 'datos'>('resumen');
 const reservationFormComponent = ref(null);
 const linkCopied = ref(false);
 
@@ -328,7 +320,7 @@ const codigoCategoria = computed(() => categoriaParam.value || resumenParam.valu
 const abrirFormularioDirecto = computed(() => !!reservarParam.value);
 
 // Profundidad de sincronización URL→estado (contador, no booleano): enmascara
-// los watchers de URL mientras abrimos slideovers desde la URL. Es un CONTADOR
+// el watcher de URL mientras abrimos el slideover desde la URL. Es un CONTADOR
 // para ser reentrante — si el watcher de auto-apertura se dispara otra vez
 // antes de que el reset diferido corra (p.ej. filteredCategories emite dos
 // veces, o navegación rápida entre /categoria), un booleano lo desenmascararía
@@ -355,39 +347,30 @@ function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean) {
   }
 }
 
-// Limpiar URL cuando se cierra el slideover de resumen.
-// Guard (issue #65): en la transición Resumen→Datos, `resume` pasa a false
-// mientras `form` ya es true (mismo tick). Sin `!slideoverReservationForm`,
-// esto borraría el ?reservar=X que el watcher de form acaba de poner. La URL
-// solo se limpia cuando se cierran AMBOS.
-watch(slideoverReservationResume, (isOpen) => {
+// Sincronizar URL con (apertura, paso) del único slideover.
+// - cerrado            → URL base (sin /categoria ni ?reservar)
+// - abierto + resumen  → /categoria/X
+// - abierto + datos    → /categoria/X?reservar=X
+// Con un solo slideover NO hay transición Resumen→Datos que cierre una capa y
+// abra otra, así que no hace falta el guard que antes preservaba ?reservar
+// durante el swap: el cambio de paso solo reescribe la query (issue #65).
+watch([slideoverOpen, slideoverStep], ([open, step]) => {
   if (urlSyncDepth.value > 0) return;
 
-  if (!isOpen && !slideoverReservationForm.value) {
+  // Cerrado → limpiar la URL SIEMPRE, sin gatear por `vehiculo`: si el form se
+  // reseteó (submit fallido, rehidratación) `vehiculo` puede quedar vacío con el
+  // slideover aún abierto, y el `/categoria/X(?reservar)` NO debe sobrevivir al
+  // cierre (si no, un reload reabriría un slideover ya descartado).
+  if (!open) {
     updateCategoriaUrl(undefined);
+    return;
   }
-});
-
-// Sincronizar URL con estado del slideover de formulario
-watch(slideoverReservationForm, (isOpen) => {
-  if (urlSyncDepth.value > 0) return;
+  // Abierto → se necesita la categoría para construir /categoria/X.
   if (!vehiculo.value) return;
-
-  const codigo = vehiculo.value;
-  if (isOpen) {
-    updateCategoriaUrl(codigo, true);
-  } else if (slideoverReservationResume.value) {
-    // Datos→Resumen (backToResume): mantener /categoria sin ?reservar.
-    updateCategoriaUrl(codigo, false);
-  } else {
-    // Datos cerrado SIN reabrir Resumen (Escape, botón X, dismiss-outside):
-    // limpiar ?reservar para que un reload no re-abra el slideover descartado
-    // (issue #65 edge-case). Escape es ruta de cierre primaria de a11y.
-    updateCategoriaUrl(undefined);
-  }
+  updateCategoriaUrl(vehiculo.value, step === 'datos');
 });
 
-// Auto-abrir slideover cuando se carguen las categorías y exista el param
+// Auto-abrir el slideover cuando carguen las categorías y exista el param.
 watch(
   [filteredCategories, codigoCategoria],
   ([categories, codigo]) => {
@@ -404,19 +387,15 @@ watch(
     vehiculo.value = category.categoryCode.value;
     selectedCategory.value = category;
 
-    // Abrir UN solo slideover (issue #65): ?reservar=X → Datos directo;
-    // /categoria/X o ?resumen=X → Resumen. Antes abría ambos en cascada,
-    // dejando dos diálogos modales al des-anidar. `abrirFormularioDirecto`
-    // deriva solo de reservarParam, así que ?resumen=X cae en la rama Resumen.
+    // Abrir el slideover en el paso correcto (issue #65): ?reservar=X → "datos";
+    // /categoria/X o ?resumen=X → "resumen". `abrirFormularioDirecto` deriva
+    // solo de reservarParam, así que ?resumen=X cae en la rama "resumen".
     nextTick(() => {
-      if (abrirFormularioDirecto.value) {
-        slideoverReservationForm.value = true;
-      } else {
-        slideoverReservationResume.value = true;
-      }
-      // Reset diferido (nextTick anidado): los watchers de URL (flush:'pre')
-      // disparan tras abrir el slideover y ANTES de este reset, así quedan
-      // enmascarados. Decremento (no =0) por reentrancia.
+      slideoverStep.value = abrirFormularioDirecto.value ? 'datos' : 'resumen';
+      slideoverOpen.value = true;
+      // Reset diferido (nextTick anidado): el watcher de URL (flush:'pre')
+      // dispara tras abrir el slideover y ANTES de este reset, así queda
+      // enmascarado. Decremento (no =0) por reentrancia.
       nextTick(() => {
         urlSyncDepth.value--;
       });
@@ -425,17 +404,16 @@ watch(
   { immediate: true }
 );
 
-// Issue #25: cerrar slideovers (reka-ui Dialog modal:true) ANTES del unmount
+// Issue #25: cerrar el slideover (reka-ui Dialog modal:true) ANTES del unmount
 // por route change. Sin esto, el cleanup interno de Reka UI no corre y
 // `pointer-events: none` queda inline en <body> — DOM compartido en SPA —
 // bloqueando el Searcher cuando el usuario regresa via Back. El contador
-// `urlSyncDepth` evita que los watchers de URL disparen replaceState
-// redundante mientras navegamos a otra ruta.
+// `urlSyncDepth` evita que el watcher de URL dispare replaceState redundante
+// mientras navegamos a otra ruta.
 onBeforeRouteLeave(async () => {
-  if (slideoverReservationForm.value || slideoverReservationResume.value) {
+  if (slideoverOpen.value) {
     urlSyncDepth.value++;
-    slideoverReservationForm.value = false;
-    slideoverReservationResume.value = false;
+    slideoverOpen.value = false;
     await nextTick();
     urlSyncDepth.value--;
   }
@@ -445,22 +423,22 @@ onBeforeRouteLeave(async () => {
 function setSelectedCategory(category: ReturnType<typeof useCategory>) {
   vehiculo.value = category.categoryCode.value;
   selectedCategory.value = category;
-  slideoverReservationResume.value = true;
-  // Actualizar URL con el código de la categoría
-  updateCategoriaUrl(category.categoryCode.value, false);
+  // Abrir en el paso "resumen"; el watcher [slideoverOpen, slideoverStep]
+  // sincroniza la URL a /categoria/X.
+  slideoverStep.value = 'resumen';
+  slideoverOpen.value = true;
 }
 
-// Transiciones Resumen↔Datos (issue #65): mutan AMBOS refs de forma síncrona
-// en el mismo tick (sin nextTick entre asignaciones). Con flush:'pre', los
-// watchers de URL leen el estado ya consolidado, así el guard de Resumen
-// preserva el ?reservar=X. Invariante: a lo sumo un slideover abierto.
+// Transiciones Resumen↔Datos (issue #65): solo cambian `slideoverStep`. El
+// diálogo permanece abierto (una sola capa modal de reka-ui), el contenido del
+// body y el footer se intercambian. Sin cerrar/reabrir → sin corromper el
+// manejo de pointer-events de reka (regresión SCEN-011). Invariante: a lo sumo
+// un [role=dialog], garantizado estructuralmente por el único DialogContent.
 function goToForm() {
-  slideoverReservationForm.value = true;
-  slideoverReservationResume.value = false;
+  slideoverStep.value = 'datos';
 }
 function backToResume() {
-  slideoverReservationResume.value = true;
-  slideoverReservationForm.value = false;
+  slideoverStep.value = 'resumen';
 }
 
 const { submitForm } = storeForm;
