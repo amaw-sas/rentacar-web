@@ -575,6 +575,9 @@ export default defineNuxtConfig({
       '/floridablanca': { isr: 3600 },
       '/palmira': { isr: 3600 },
       '/soledad': { isr: 3600 },
+      // Blog — ISR como las city pages (issue #52)
+      '/blog': { isr: 3600 },
+      '/blog/**': { isr: 3600 },
     },
     prerender: {
       routes: [
@@ -633,16 +636,10 @@ export default defineNuxtConfig({
       { loc: '/floridablanca', changefreq: 'monthly', priority: 0.8 },
       { loc: '/palmira', changefreq: 'monthly', priority: 0.8 },
       { loc: '/soledad', changefreq: 'monthly', priority: 0.8 },
-      // Blog - prioridad media-alta
+      // Blog index — individual /blog/* posts come from sitemap.sources (dynamic, Supabase)
       { loc: '/blog', changefreq: 'weekly', priority: 0.8 },
-      { loc: '/blog/requisitos-alquilar-carro-colombia', changefreq: 'monthly', priority: 0.7 },
-      { loc: '/blog/pico-y-placa-colombia-2026', changefreq: 'monthly', priority: 0.7 },
-      { loc: '/blog/tipos-carros-alquilar-cual-elegir', changefreq: 'monthly', priority: 0.7 },
-      { loc: '/blog/rutas-carro-desde-bogota', changefreq: 'monthly', priority: 0.7 },
-      { loc: '/blog/eje-cafetero-en-carro-guia-completa', changefreq: 'monthly', priority: 0.7 },
-      { loc: '/blog/costa-caribe-cartagena-santa-marta-carro', changefreq: 'monthly', priority: 0.7 },
-      { loc: '/blog/viajar-carro-con-ninos-colombia', changefreq: 'monthly', priority: 0.7 },
     ],
+    sources: ['/api/__sitemap__/blog'],
     exclude: ['/pendiente', '/sindisponibilidad', '/reservado/**', '/*/buscar-vehiculos/**', '/seo/**'],
   },
 
