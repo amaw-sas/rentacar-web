@@ -55,7 +55,7 @@
         <div class="flex flex-col lg:flex-row gap-8">
           <!-- Main Content -->
           <article ref="articleRef" class="lg:w-2/3 prose prose-lg prose-gray max-w-none">
-            <ContentRenderer :value="post" />
+            <MDCRenderer v-if="post.body" :body="post.body" :data="post" />
           </article>
 
           <!-- Sidebar -->
@@ -199,8 +199,8 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <NuxtLink
             v-for="related in relatedPosts"
-            :key="related.path"
-            :to="related.path"
+            :key="related.slug"
+            :to="`/blog/${related.slug}`"
             class="group"
           >
             <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
@@ -288,7 +288,12 @@
 
 <script setup lang="ts">
 import type { BlogPosting, BreadcrumbList } from 'schema-dts'
+import type { MDCRoot, Toc } from '@nuxtjs/mdc'
 import type { BlogPost } from '@rentacar-main/logic/src'
+
+// The post-detail endpoint augments BlogPost with the parsed MDC `body`
+// (toc merged in) — list endpoints return the bare BlogPost without it.
+type BlogPostDetail = BlogPost & { body?: MDCRoot & { toc?: Toc } }
 
 const { franchise } = useAppConfig()
 const route = useRoute()
@@ -299,21 +304,31 @@ const slug = computed(() => {
   return Array.isArray(params) ? params.join('/') : params
 })
 
-// Fetch the blog post
+// Fetch the blog post from Supabase via API (single source of truth).
 const { data: post } = await useAsyncData(`blog-${slug.value}`, () =>
-  $fetch<BlogPost>(`/api/blog/post/${slug.value}`)
+  $fetch<BlogPostDetail>(`/api/blog/post/${slug.value}`)
     .catch(() => null)
 )
 
-// Fetch related posts (same category, excluding current)
-const { data: relatedPosts } = await useAsyncData(`related-${slug.value}`, async () => {
-  if (!post.value) return []
-  return queryCollection<BlogPost>('blog')
-    .where('category', '=', post.value.category)
-    .where('path', '!=', post.value.path)
-    .limit(3)
-    .all()
-})
+// Unknown slug → real HTTP 404 (not a soft 200) so crawlers de-index it.
+// The in-page 404 block (v-else in the template) still renders as the body.
+if (import.meta.server && !post.value) {
+  setResponseStatus(useRequestEvent()!, 404)
+}
+
+// All posts for this brand (Supabase) — drives related.
+const { data: allPosts } = await useAsyncData(`blog-all-${slug.value}`, () =>
+  $fetch<{ posts: BlogPost[] }>('/api/blog/posts')
+    .then(r => r.posts ?? [])
+    .catch(() => [])
+)
+
+// Related posts: same category, excluding the current one, max 3.
+const relatedPosts = computed(() =>
+  post.value
+    ? (allPosts.value ?? []).filter(p => p.category === post.value!.category && p.slug !== post.value!.slug).slice(0, 3)
+    : []
+)
 
 // Reading progress
 const articleRef = ref<HTMLElement | null>(null)
@@ -441,9 +456,9 @@ if (post.value) {
     ogImageAlt: post.value.alt,
     articlePublishedTime: post.value.date,
     articleModifiedTime: post.value.updated || post.value.date,
-    articleAuthor: post.value.author.name,
+    articleAuthor: [post.value.author.name],
     articleSection: post.value.category,
-    articleTag: post.value.tags?.join(', '),
+    articleTag: post.value.tags,
     twitterCard: 'summary_large_image',
     twitterTitle: post.value.title,
     twitterDescription: post.value.description,

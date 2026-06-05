@@ -12,10 +12,10 @@ describe('resolveImageUrl', () => {
     return `${baseUrl}${imageUrl}`
   }
 
-  it('returns absolute URL as-is (Firebase Storage)', () => {
-    const firebaseUrl = 'https://storage.googleapis.com/rentacar-403321.firebasestorage.app/blog-images/featured/img.webp'
-    const result = resolveImageUrl(firebaseUrl, 'https://alquilatucarro.com')
-    expect(result).toBe(firebaseUrl)
+  it('returns absolute URL as-is (Supabase Storage)', () => {
+    const absoluteUrl = 'https://ilhdholjrnbycyvejsub.supabase.co/storage/v1/object/public/blog-images/alquilatucarro/featured/img.webp'
+    const result = resolveImageUrl(absoluteUrl, 'https://alquilatucarro.com')
+    expect(result).toBe(absoluteUrl)
     expect(result).not.toContain('alquilatucarro.com')
   })
 

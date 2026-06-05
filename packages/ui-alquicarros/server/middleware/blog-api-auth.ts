@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Skip public endpoints
-  const publicPaths = ['/api/blog/posts-dynamic', '/api/blog/posts']
+  const publicPaths = ['/api/blog/posts']
   const isDynamicPostRead = event.path.startsWith('/api/blog/post/') && event.method === 'GET'
   if (publicPaths.includes(event.path) || isDynamicPostRead) {
     return

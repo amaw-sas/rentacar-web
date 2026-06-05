@@ -1,52 +1,41 @@
-import yaml from 'yaml'
-import { loadDynamicPosts } from '../../plugins/content-dynamic-loader'
+import { useSupabaseClient } from '../../../../logic/server/utils/supabase'
+import { transformBlogList } from '../../../../logic/server/utils/blogTransformers'
 import { logger } from '../../utils/logger'
 import { handleBlogApiError } from '../../utils/error-handler'
 
 /**
  * GET /api/blog/posts
  *
- * Public endpoint. Returns all dynamic blog posts with frontmatter metadata
- * for use in the blog listing page. Sorted by date DESC.
- * Does not include the body AST — frontmatter only.
+ * Public endpoint. Returns this brand's blog posts (frontmatter only, no body)
+ * from Supabase `blog_posts`, sorted by date DESC. Single source of truth —
+ * replaces the Vercel Blob loader (issue #52).
+ *
+ * Not API-cached on purpose: the page (`/blog`) is ISR-cached (routeRules), and
+ * the write path (wordpress-sync/delete) needs new posts visible on the next
+ * request. A single indexed query of ~16 rows is cheap; layering a cached
+ * handler here would re-introduce the stale-after-write problem the old Blob
+ * loader had to fix with manual invalidation.
  */
-
-function parseFrontmatter(content: string): Record<string, any> {
-  const match = content.match(/^---\n([\s\S]*?)\n---/)
-  if (!match) return {}
-  try {
-    return yaml.parse(match[1]) ?? {}
-  } catch {
-    return {}
-  }
-}
+const LIST_COLUMNS =
+  'slug,title,description,image,alt,author_name,author_avatar,date,updated,category,tags,reading_time,featured,faq_items,meta_title'
 
 export default defineEventHandler(async (event) => {
   try {
-    logger.info('blog-posts-request', { ip: getRequestIP(event) })
+    const franchise = useRuntimeConfig(event).public.rentacarFranchise as string
+    logger.info('blog-posts-request', { ip: getRequestIP(event), franchise })
 
-    const raw = await loadDynamicPosts()
+    const supabase = useSupabaseClient()
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select(LIST_COLUMNS)
+      .eq('brand', franchise)
+      .order('date', { ascending: false })
 
-    const posts = raw
-      .map(({ slug, content }) => {
-        const fm = parseFrontmatter(content)
-        return {
-          title: fm.title ?? '',
-          description: fm.description ?? '',
-          image: fm.image ?? null,
-          alt: fm.alt ?? null,
-          author: fm.author ?? { name: 'Alquilame', avatar: '' },
-          date: fm.date ?? '',
-          updated: fm.updated ?? null,
-          category: fm.category ?? 'guias',
-          tags: fm.tags ?? [],
-          readingTime: fm.readingTime ?? 1,
-          featured: fm.featured ?? false,
-          path: `/blog/${slug}`,
-        }
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    if (error) {
+      throw createError({ statusCode: 500, statusMessage: `blog posts query failed: ${error.message}` })
+    }
 
+    const posts = transformBlogList(data ?? [])
     return { success: true, count: posts.length, posts }
   } catch (error) {
     return handleBlogApiError(error, 'blog-posts')

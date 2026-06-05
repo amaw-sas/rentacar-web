@@ -35,14 +35,6 @@ test.describe('Rendimiento y Core Web Vitals', () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  test('debe tener preconnect a Firebase Storage', async ({ page }) => {
-    await page.goto('/');
-
-    // Verificar preconnect
-    const preconnect = page.locator('link[rel="preconnect"][href*="firebasestorage"]');
-    await expect(preconnect).toHaveCount(1);
-  });
-
   test('las imágenes deben tener atributos de carga optimizados', async ({ page }) => {
     await page.goto('/');
 

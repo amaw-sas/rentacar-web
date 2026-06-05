@@ -90,15 +90,6 @@ describe('blog-api-auth middleware', () => {
       expect(logger.info).not.toHaveBeenCalled()
     })
 
-    it('should skip posts-dynamic endpoint (public)', async () => {
-      mockEvent.path = '/api/blog/posts-dynamic'
-
-      const result = await middleware(mockEvent as H3Event)
-
-      expect(result).toBeUndefined()
-      expect(logger.info).not.toHaveBeenCalled()
-    })
-
     it('should skip posts endpoint (public)', async () => {
       mockEvent.path = '/api/blog/posts'
 

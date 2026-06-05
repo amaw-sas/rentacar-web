@@ -16,7 +16,10 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
   try {
-    return await $fetch(`${adminUrl}/api/reservations/availability`, {
+    // Explicit generic: this is an EXTERNAL URL (admin backend), not an internal
+    // route — typing it stops Nuxt from matching the string against the internal
+    // route union (which overflows TS recursion: TS2321 "excessive stack depth").
+    return await $fetch<unknown>(`${adminUrl}/api/reservations/availability`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

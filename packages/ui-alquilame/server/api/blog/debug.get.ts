@@ -1,38 +1,31 @@
-import { listFilesInStorage } from '../../utils/blob-storage'
+import { useSupabaseClient } from '../../../../logic/server/utils/supabase'
 
 /**
  * GET /api/blog/debug
  *
- * Diagnostic endpoint — exposes Vercel Blob config state and storage
- * listing result to diagnose blog post loading issues.
- *
- * Protected by the blog-api-auth middleware (X-API-Key header).
+ * Diagnostic endpoint (X-Api-Key, blog-api-auth middleware). Reports this
+ * brand's blog_posts row count from Supabase — single source of truth (#52).
  */
-export default defineEventHandler(async (_event) => {
-  const config = useRuntimeConfig()
+export default defineEventHandler(async (event) => {
+  const franchise = useRuntimeConfig(event).public.rentacarFranchise as string
 
   const diagnostics: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
-    env: {
-      blobReadWriteToken: process.env.BLOB_READ_WRITE_TOKEN ? 'SET' : 'MISSING',
-      franchise: config.public.rentacarFranchise,
-    },
+    source: 'supabase:blog_posts',
+    franchise,
   }
 
-  const prefix = `blog-posts/${config.public.rentacarFranchise}/`
-
   try {
-    const files = await listFilesInStorage(prefix)
-    diagnostics.storage = {
-      success: true,
-      prefix,
-      count: files.length,
-      files: files.slice(0, 10),
-    }
+    const supabase = useSupabaseClient()
+    const { count, error } = await supabase
+      .from('blog_posts')
+      .select('slug', { count: 'exact', head: true })
+      .eq('brand', franchise)
+    if (error) throw error
+    diagnostics.storage = { success: true, count: count ?? 0 }
   } catch (error) {
     diagnostics.storage = {
       success: false,
-      prefix,
       error: error instanceof Error ? error.message : String(error),
     }
   }

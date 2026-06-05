@@ -1,5 +1,5 @@
-// Note: MarkdownParsedContent is a Nuxt Content type that will be available
-// when this package is used within a Nuxt application
+// Blog post served from Supabase (table `blog_posts`). Routing keys off `slug`
+// — there is no `@nuxt/content` `.path` anymore.
 
 export interface BlogAuthor {
   name: string
@@ -9,19 +9,7 @@ export interface BlogAuthor {
 export type BlogCategory = 'guias' | 'destinos' | 'tips' | 'rutas'
 
 export interface BlogPost {
-  // Base MarkdownParsedContent fields (from @nuxt/content)
-  _path?: string
-  _dir?: string
-  _draft?: boolean
-  _partial?: boolean
-  _locale?: string
-  _type?: string
-  _id?: string
-  _source?: string
-  _file?: string
-  _extension?: string
-
-  // BlogPost specific fields
+  slug: string
   title: string
   description: string
   image: string
