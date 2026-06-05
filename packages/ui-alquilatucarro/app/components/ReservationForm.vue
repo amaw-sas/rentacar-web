@@ -13,6 +13,7 @@
             class="w-full"
             placeholder="Nombres*"
             aria-label="Nombres"
+            autocomplete="given-name"
             :ui="inputUi"
           ></u-input>
         </u-form-field>
@@ -22,6 +23,7 @@
             class="w-full"
             placeholder="Apellidos*"
             aria-label="Apellidos"
+            autocomplete="family-name"
             :ui="inputUi"
           ></u-input>
         </u-form-field>
@@ -50,10 +52,16 @@
             class="w-full"
             placeholder="Email*"
             aria-label="Correo electrónico"
+            autocomplete="email"
             :ui="inputUi"
           ></u-input>
         </u-form-field>
-        <u-form-field class="col-span-2" name="telefono" label="Teléfono">
+        <u-form-field class="col-span-2" name="telefono">
+          <!-- VueTelInput no usa useFormField, así que el label autogenerado de
+               UFormField (for=useId()) no asocia su <input>. Label propio con
+               for="telefono" ↔ inputOptions.id="telefono" → nombre accesible
+               "Teléfono" determinista (issue #65 SCEN-008). -->
+          <label for="telefono" class="block font-medium text-sm text-gray-900 mb-1.5">Teléfono</label>
           <VueTelInput
             v-model="formState.telefono"
             mode="international"

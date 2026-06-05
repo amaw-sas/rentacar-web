@@ -3,4 +3,5 @@ export default interface PhoneInputOptionsType {
   id: string;
   name: string;
   placeholder: string;
+  autocomplete: string;
 }
