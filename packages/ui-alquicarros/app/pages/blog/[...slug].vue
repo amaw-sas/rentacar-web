@@ -288,7 +288,12 @@
 
 <script setup lang="ts">
 import type { BlogPosting, BreadcrumbList } from 'schema-dts'
+import type { MDCRoot, Toc } from '@nuxtjs/mdc'
 import type { BlogPost } from '@rentacar-main/logic/src'
+
+// The post-detail endpoint augments BlogPost with the parsed MDC `body`
+// (toc merged in) — list endpoints return the bare BlogPost without it.
+type BlogPostDetail = BlogPost & { body?: MDCRoot & { toc?: Toc } }
 
 const { franchise } = useAppConfig()
 const route = useRoute()
@@ -299,11 +304,17 @@ const slug = computed(() => {
   return Array.isArray(params) ? params.join('/') : params
 })
 
-// Fetch the blog post
+// Fetch the blog post from Supabase via API (single source of truth).
 const { data: post } = await useAsyncData(`blog-${slug.value}`, () =>
-  $fetch<BlogPost>(`/api/blog/post/${slug.value}`)
+  $fetch<BlogPostDetail>(`/api/blog/post/${slug.value}`)
     .catch(() => null)
 )
+
+// Unknown slug → real HTTP 404 (not a soft 200) so crawlers de-index it.
+// The in-page 404 block (v-else in the template) still renders as the body.
+if (import.meta.server && !post.value) {
+  setResponseStatus(useRequestEvent()!, 404)
+}
 
 // All posts for this brand (Supabase) — drives related.
 const { data: allPosts } = await useAsyncData(`blog-all-${slug.value}`, () =>
@@ -445,9 +456,9 @@ if (post.value) {
     ogImageAlt: post.value.alt,
     articlePublishedTime: post.value.date,
     articleModifiedTime: post.value.updated || post.value.date,
-    articleAuthor: post.value.author.name,
+    articleAuthor: [post.value.author.name],
     articleSection: post.value.category,
-    articleTag: post.value.tags?.join(', '),
+    articleTag: post.value.tags,
     twitterCard: 'summary_large_image',
     twitterTitle: post.value.title,
     twitterDescription: post.value.description,
