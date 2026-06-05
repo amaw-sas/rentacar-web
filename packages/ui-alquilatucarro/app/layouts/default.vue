@@ -131,7 +131,8 @@
 
 <script lang="ts" setup>
 import type { NavigationMenuItem } from '@nuxt/ui'
-import type { BranchData, City as CityData } from '@rentacar-main/logic/utils'
+import { buildCityReservationURL } from '@rentacar-main/logic/utils'
+import type { City as CityData } from '@rentacar-main/logic/utils'
 import { today } from '@internationalized/date'
 import { storeToRefs } from 'pinia'
 
@@ -196,29 +197,25 @@ const { cities } = useData();
 const { franchise, reservation, defaultTimezone } = useAppConfig();
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 
-// Genera URL de reserva dinámica para cada ciudad (como el selector del hero)
-const reservationInitDay = today(defaultTimezone).add({ days: 1 }).toString();
-const reservationEndDay = today(defaultTimezone).add({ days: 8 }).toString();
-const reservationInitHour = "12:00";
-const reservationEndHour = "12:00";
+// Fechas del deep-link: se calculan SOLO en cliente tras montar para evitar
+// hydration attribute mismatch (Issue #109). En servidor y primera hidratación
+// son null → buildCityReservationURL devuelve el href estable /${city.id},
+// idéntico en ambos pases. Tras onMounted se aplica el deep-link con fecha
+// fresca (today+1), nunca una fecha pasada de una página ISR cacheada.
+const reservationInitDay = ref<string | null>(null);
+const reservationEndDay = ref<string | null>(null);
 
-const getCityReservationURL = (city: CityData): string => {
-  // Buscar la sucursal de aeropuerto para esta ciudad (código empieza con "AA")
-  const airportBranch = (branches.value || []).find(
-    (branch: BranchData) => branch.city === city.id && branch.code.startsWith('AA')
-  );
+onMounted(() => {
+  reservationInitDay.value = today(defaultTimezone).add({ days: 1 }).toString();
+  reservationEndDay.value = today(defaultTimezone).add({ days: 8 }).toString();
+});
 
-  // Si no hay aeropuerto, buscar cualquier sucursal de esa ciudad
-  const branch = airportBranch || (branches.value || []).find(
-    (branch: BranchData) => branch.city === city.id
-  );
-
-  if (!branch) {
-    // Fallback a la ruta simple si no hay sucursal
-    return `/${city.id}`;
-  }
-
-  return `/${city.id}/buscar-vehiculos/lugar-recogida/${branch.code.toLowerCase()}/lugar-devolucion/${branch.code.toLowerCase()}/fecha-recogida/${reservationInitDay}/fecha-devolucion/${reservationEndDay}/hora-recogida/${reservationInitHour}/hora-devolucion/${reservationEndHour}`;
-};
+const getCityReservationURL = (city: CityData): string =>
+  buildCityReservationURL(city, branches.value || [], {
+    initDay: reservationInitDay.value,
+    endDay: reservationEndDay.value,
+    initHour: "12:00",
+    endHour: "12:00",
+  });
 
 </script>

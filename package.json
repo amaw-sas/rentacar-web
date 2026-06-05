@@ -54,6 +54,7 @@
     "build:alquilatucarro": "pnpm --filter ui-alquilatucarro build",
     "build:all": "pnpm --filter ui-alquilatucarro build && pnpm --filter ui-alquilame build && pnpm --filter ui-alquicarros build",
     "typecheck": "pnpm --filter 'ui-*' typecheck",
+    "typecheck:safe": "for b in alquilatucarro alquilame alquicarros; do echo \"▸ ui-$b\"; if command -v ionice >/dev/null 2>&1; then ionice -c3 nice -n19 pnpm --filter \"ui-$b\" typecheck || exit 1; else nice -n19 pnpm --filter \"ui-$b\" typecheck || exit 1; fi; done",
     "lint": "pnpm -r lint"
   },
   "dependencies": {
