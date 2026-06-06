@@ -7,18 +7,26 @@ const source = readFileSync(
   'utf8',
 )
 
-describe('CityPage — copy-to-WhatsApp trigger lives on the LocationIcon (pin)', () => {
+// Issue #41 — the copy-to-WhatsApp action on the pin is a SECRET operator
+// feature. It must stay out of the hero <h1>'s accessible name (WCAG 2.5.3) and
+// must not leak to customers via an aria-label or title tooltip. The pin is an
+// inert, non-focusable, aria-hidden <span> (not a <button>).
+describe('CityPage — copy-to-WhatsApp pin is an inert, customer-invisible operator control (issue #41)', () => {
   it('does not render the legacy clipboard UButton', () => {
     expect(source).not.toMatch(/i-heroicons-clipboard-document/)
   })
 
-  it('wraps the LocationIcon in a <button> bound to copySearchToWhatsapp', () => {
-    const pattern = /<button\b[^>]*@click="copySearchToWhatsapp"[^>]*>[\s\S]*?<LocationIcon\b[\s\S]*?\/>[\s\S]*?<\/button>/
-    expect(source).toMatch(pattern)
+  it('does not wrap the pin in a <button> carrying the copy aria-label (it leaked into the <h1> accessible name)', () => {
+    expect(source).not.toMatch(/<button\b[^>]*aria-label="Copiar datos de búsqueda para WhatsApp"/)
   })
 
-  it('exposes the pin button to assistive tech with a Spanish aria-label', () => {
-    expect(source).toMatch(/<button\b[^>]*aria-label="Copiar datos de búsqueda para WhatsApp"/)
+  it('does not expose the secret operator action via a title tooltip', () => {
+    expect(source).not.toMatch(/title="Copiar datos de búsqueda para WhatsApp"/)
+  })
+
+  it('wraps the LocationIcon in an aria-hidden <span> bound to copySearchToWhatsapp (inert decorative pin)', () => {
+    const ariaHiddenSpan = /<span\b[^>]*aria-hidden="true"[^>]*@click="copySearchToWhatsapp"[^>]*>[\s\S]*?<LocationIcon\b[\s\S]*?\/>[\s\S]*?<\/span>/
+    expect(source).toMatch(ariaHiddenSpan)
   })
 
   it('keeps the useShareSearchParams binding so the handler is still wired', () => {
