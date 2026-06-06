@@ -27,15 +27,15 @@
           <span class="flex flex-row justify-center items-baseline gap-2 text-4xl md:text-5xl lg:text-7xl lg:whitespace-nowrap" style="letter-spacing: -0.025em;">
             <span class="size-8 md:size-10 lg:size-14" aria-hidden="true"></span>
             {{ city?.name }}
-            <button
-              type="button"
-              class="cursor-pointer rounded transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              aria-label="Copiar datos de búsqueda para WhatsApp"
-              title="Copiar datos de búsqueda para WhatsApp"
+            <!-- Pin inerte: acción copy-to-WhatsApp es secreta (operadores, no clientes).
+                 <span> aria-hidden no-focusable → fuera del accessible name del <h1>
+                 (WCAG 2.5.3) y sin filtrar el secreto vía aria-label/title. Issue #41. -->
+            <span
+              aria-hidden="true"
               @click="copySearchToWhatsapp"
             >
               <LocationIcon cls="text-red-600 size-8 md:size-10 lg:size-14 translate-y-1" />
-            </button>
+            </span>
           </span>
           {{ ' ' }}
           <span class="block text-2xl md:text-3xl lg:text-4xl text-white colombia-sweep" style="letter-spacing: 0.025em;">Colombia</span>
