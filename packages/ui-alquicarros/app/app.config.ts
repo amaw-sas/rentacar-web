@@ -41,7 +41,7 @@ export default defineAppConfig({
     logo: "/images/brand/logo.svg",
     oglogo: "/images/brand/og-logo.png",
     svglogo: "/images/brand/logo.svg",
-    ogImage: "/img/og-alquilatucarro.jpg",
+    ogImage: "/img/og-alquicarros.jpg",
     phone: "+57 301 672 9250",
     whatsapp: "https://wa.me/573146826821",
     email: "alquicarros@gmail.com",

@@ -53,6 +53,7 @@
     "build:alquicarros": "pnpm --filter ui-alquicarros build",
     "build:alquilatucarro": "pnpm --filter ui-alquilatucarro build",
     "build:all": "pnpm --filter ui-alquilatucarro build && pnpm --filter ui-alquilame build && pnpm --filter ui-alquicarros build",
+    "og:generate": "npx tsx scripts/generate-og-images.ts",
     "typecheck": "pnpm --filter 'ui-*' typecheck",
     "typecheck:safe": "for b in alquilatucarro alquilame alquicarros; do echo \"▸ ui-$b\"; if command -v ionice >/dev/null 2>&1; then ionice -c3 nice -n19 pnpm --filter \"ui-$b\" typecheck || exit 1; else nice -n19 pnpm --filter \"ui-$b\" typecheck || exit 1; fi; done",
     "lint": "pnpm -r lint"
@@ -111,6 +112,7 @@
     "dotenv": "^17.4.1",
     "googleapis": "^170.1.0",
     "playwright": "^1.49.0",
+    "sharp": "^0.34.5",
     "tsx": "^4.19.0",
     "turndown": "^7.2.0",
     "vue-tsc": "^3.2.2",
