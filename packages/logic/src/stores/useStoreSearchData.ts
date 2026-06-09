@@ -19,6 +19,7 @@ import { categoryOffersMonthly, isCategoryVisibleInCity } from '@rentacar-main/l
 import type {
   CategoryAvailabilityData,
   CategoryData,
+  CategoryType,
   ErrorMessage,
 } from '@rentacar-main/logic/utils';
 
@@ -86,6 +87,8 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
       }
       else {
         const dataArray = Array.isArray(data.value) ? data.value : [];
+        // Index once instead of a linear find per category — issue #15.
+        const returnFeeByCode = indexByCode(dataArray);
         categoriesAvailabilityData.value = categoriesAdminData.value?.filter((categoryAdmin: CategoryData) =>
           offersMonthly(categoryAdmin)
         ) // keep only categories that actually offer monthly pricing
@@ -95,9 +98,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
         )
         .map((category: CategoryAvailabilityData) => {
           // add return fee amount to each category
-          const categoryAvailability = dataArray.find((categoryAvailability: CategoryAvailabilityData) =>
-            categoryAvailability.categoryCode == category.categoryCode
-          );
+          const categoryAvailability = returnFeeByCode.get(category.categoryCode);
 
           if(categoryAvailability)
             category['returnFeeAmount'] = categoryAvailability.returnFeeAmount;
@@ -160,10 +161,11 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
 
     if (categoriesAvailabilityData.value) {
 
+      // Index once so the merge is O(n+m) instead of O(n·m) — issue #15.
+      const availabilityByCode = indexByCode(categoriesAvailabilityData.value);
+
       return categoriesAdminData.value.map((categoryAdmin: CategoryData) => {
-        const categoryAvailability = categoriesAvailabilityData.value?.find((categoryAvailability: CategoryAvailabilityData) => 
-          categoryAvailability.categoryCode == categoryAdmin.id
-        );
+        const categoryAvailability = availabilityByCode.get(categoryAdmin.id);
 
         if(categoryAvailability){
           
@@ -179,11 +181,9 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
         }
         else return createCategoryAvailability(categoryAdmin, true);
       })
-      .sort((a: CategoryAvailabilityData, b: CategoryAvailabilityData) => {
-        if (a.estimatedTotalAmount < b.estimatedTotalAmount) return -1;
-        else if (a.estimatedTotalAmount > b.estimatedTotalAmount) return 1;
-        return 0;
-      });
+      .sort((a: CategoryAvailabilityData, b: CategoryAvailabilityData) =>
+        a.estimatedTotalAmount - b.estimatedTotalAmount
+      );
       
     } else return [];
     
@@ -231,6 +231,19 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     noAvailableCategories,
   };
 });
+
+// Index availability rows by category code, keeping the FIRST occurrence for
+// duplicate codes — preserves the semantics of the Array.find it replaced
+// (issue #15). new Map(entries) would keep the LAST and silently regress.
+const indexByCode = (
+  rows: CategoryAvailabilityData[],
+): Map<CategoryType, CategoryAvailabilityData> => {
+  const byCode = new Map<CategoryType, CategoryAvailabilityData>();
+  for (const row of rows) {
+    if (!byCode.has(row.categoryCode)) byCode.set(row.categoryCode, row);
+  }
+  return byCode;
+};
 
 const createCategoryAvailability = (category: CategoryData, unable: boolean = false) : CategoryAvailabilityData => ({
     categoryCode: category.id,
