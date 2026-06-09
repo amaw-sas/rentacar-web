@@ -1,5 +1,5 @@
 // External dependencies
-import type { AutoRental, Brand, OpeningHoursSpecification, SearchAction, EntryPoint } from 'schema-dts';
+import type { AutoRental, Brand, OpeningHoursSpecification, EntryPoint, ReserveAction, RentalCarReservation } from 'schema-dts';
 
 export const useBaseSEO = () => {
 
@@ -28,14 +28,6 @@ export const useBaseSEO = () => {
     useSchemaOrg([
         defineWebSite({
             inLanguage: "es",
-            potentialAction: <SearchAction>{
-                '@type': 'SearchAction',
-                target: <EntryPoint>{
-                    '@type': 'EntryPoint',
-                    urlTemplate: `${franchise.website}/{search_term_string}`
-                },
-                'query-input': 'required name=search_term_string'
-            }
         }),
         defineWebPage({
             title: organization.name,
@@ -93,6 +85,24 @@ export const useBaseSEO = () => {
                 "alquiler de autos"
             ],
             sameAs: franchise.socialmedia,
+            // Acción de reserva descubrible por agentes (épico #63, W1).
+            // EntryPoint web resoluble hoy; el actionApplication (WebAPI) se
+            // añade cuando cierre D2 (amaw-sas/rentacar-dashboard#73).
+            potentialAction: <ReserveAction>{
+                '@type': 'ReserveAction',
+                name: `Reservar vehículo en ${franchise.name}`,
+                target: <EntryPoint>{
+                    '@type': 'EntryPoint',
+                    urlTemplate: franchise.website,
+                    actionPlatform: [
+                        'https://schema.org/DesktopWebPlatform',
+                        'https://schema.org/MobileWebPlatform',
+                    ],
+                },
+                result: <RentalCarReservation>{
+                    '@type': 'RentalCarReservation',
+                },
+            },
         }
     ])
 }
