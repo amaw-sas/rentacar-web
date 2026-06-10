@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-blue-900 to-blue-950 flex flex-col">
+  <div class="min-h-screen bg-gradient-to-b from-hero-from to-brand-950 flex flex-col">
     <!-- Header simplificado -->
     <header class="py-4 px-6">
       <NuxtLink to="/" class="flex items-center justify-center gap-2">

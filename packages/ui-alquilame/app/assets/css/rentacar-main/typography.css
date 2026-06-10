@@ -182,14 +182,14 @@
 
 /* Links on light backgrounds */
 .link-light {
-    @apply text-blue-600 hover:text-blue-800 underline-offset-2;
-    @apply hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    @apply text-brand-600 hover:text-brand-800 underline-offset-2;
+    @apply hover:underline focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
 }
 
 /* Links on dark backgrounds */
 .link-dark {
-    @apply text-blue-300 hover:text-blue-100 underline-offset-2;
-    @apply hover:underline focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-gray-900;
+    @apply text-brand-200 hover:text-brand-100 underline-offset-2;
+    @apply hover:underline focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-2 focus:ring-offset-gray-900;
 }
 
 /* --------------------------------------------------------------------------

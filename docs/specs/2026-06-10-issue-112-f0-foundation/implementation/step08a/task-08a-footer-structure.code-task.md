@@ -1,6 +1,15 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step07/task-07-header-red.code-task.md
-## Completed:
+## Completed: 2026-06-10
+
+> Evidence: the 3 bottom blocks (`#sedes` `bg-blue-700`, legal bar `bg-[#000073]`,
+> `UFooter` `bg-black`) fused into ONE `<footer class="bg-gradient-to-b
+> from-footer-from to-footer-to text-white font-heading">` with 3 inner sections
+> (cities `#sedes`, legal, copyright). De-azulado: `bg-blue-700`/`bg-blue-600`/
+> `bg-[#000073]`/`<UFooter` all gone. `franchise.footerLinks` legal links + copyright
+> moved inside. The city `v-for`/`getCityReservationURL`/`:external`/`target` were
+> NOT touched (only re-indented). f0-chrome step08a PASS. Single `<footer>` confirmed
+> by test (exactly 1 match, has gradient + font-heading).
 
 # Task: Footer rojo unificado — estructura (default.vue)
 

@@ -1,6 +1,16 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step01/task-01-theme-tokens.code-task.md
-## Completed:
+## Completed: 2026-06-10
+
+> Evidence: `error.vue:2` `from-blue-900 to-blue-950` → `from-hero-from to-brand-950`
+> (brand red; `<Logo variant="white">` stays legible). `typography.css` `.link-light`
+> `text-blue-600/800`+`ring-blue-500` → `text-brand-600/800`+`ring-brand-500`;
+> `.link-dark` `text-blue-300/100`+`ring-blue-300` → `text-brand-200/100`+`ring-brand-300`.
+> SCEN-F0-06 (full): grep `#000073|#0891b2|blue-[0-9]` over default.vue + error.vue +
+> typography.css → 0 matches. f0-chrome step09 PASS. Isolation: `git diff --stat
+> origin/main` only under packages/ui-alquilame/ (+ docs/specs task files). The pre-existing
+> `color="amber"`/`color="white"` TS2322 on the untouched error.vue UButtons are baseline.
+> F1–F3 page bodies + /gana = declared debt, untouched.
 
 # Task: Des-azular error.vue + typography .link-*
 

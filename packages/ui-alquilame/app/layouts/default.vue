@@ -1,9 +1,14 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-[#000073] via-blue-800 to-blue-900 font-sans text-gray-800">
+  <!-- Root keeps a DARK backdrop (de-blued to brand red) so pages that render
+       text-white over it (hero, /pendiente, /sindisponibilidad) stay legible.
+       The design's light body lands in F1, when each page gets its own section
+       background (e.g. the red hero). Flipping to a light surface here would make
+       that white text invisible. -->
+  <div class="min-h-screen bg-gradient-to-b from-brand-900 to-brand-950 font-sans text-gray-800">
     <!-- Header -->
     <UHeader
       v-model:open="mobileMenuOpen"
-      class="bg-[#000073] z-50 py-4 md:py-6 px-6 border-none relative"
+      class="bg-gradient-to-r from-hero-from to-hero-to z-50 py-4 md:py-6 px-6 border-none sticky top-0"
       mode="slideover"
       :toggle="{
         color: 'white',
@@ -63,56 +68,59 @@
       <slot></slot>
     </main>
 
-    <!-- Enlaces ciudades -->
-    <section id="sedes" class="bg-blue-700 text-white text-center py-12 lg:py-20">
-      <div class="max-w-7xl mx-auto px-4 space-y-6">
-        <div>
-          <NuxtLink to="/" :aria-label="franchise.name">
-            <Logo cls="h-10 w-auto mx-auto" variant="white" />
-          </NuxtLink>
-        </div>
-        <div class="text-2xl font-bold">Ciudades donde ofrecemos alquiler de carros</div>
-        <div >
-          Estamos presentes en más de 19 ciudades de Colombia como Bogotá, Medellín, Cali y Cartagena. Explora cada destino y reserva en la sede que más te convenga.
-        </div>
-        <div class="flex flex-col md:flex-row md:flex-wrap justify-center gap-1 md:gap-3">
-          <UButton
-            v-for="city in cities"
-            :key="city.id"
-            :to="getCityReservationURL(city)"
-            :external="true"
-            target="_blank"
-            class="text-white justify-center bg-blue-600 hover:bg-blue-800 rounded-lg py-3 w-full md:w-fit font-normal transition-colors"
-          >
-            Alquiler de carros en <span class="font-bold">{{ city.name }}</span>
-          </UButton>
-        </div>
-      </div>
-    </section>
-
-    <!-- Enlaces -->
-    <section class="bg-[#000073] text-white py-8 lg:py-6">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4">
-          <template v-for="(footerLink, index) in franchise.footerLinks" :key="`footer-${index}`">
-            <NuxtLink
-              :to="footerLink.link"
-              class="underline hover:no-underline"
-            >
-              {{ footerLink.label }}
+    <!-- Footer unificado (gradiente rojo de marca) -->
+    <footer class="bg-gradient-to-b from-footer-from to-footer-to text-white font-heading">
+      <!-- Enlaces de ciudades (#sedes) -->
+      <section id="sedes" class="text-center py-12 lg:py-20">
+        <div class="max-w-7xl mx-auto px-4 space-y-6">
+          <div>
+            <NuxtLink to="/" :aria-label="franchise.name">
+              <Logo cls="h-10 w-auto mx-auto" variant="white" />
             </NuxtLink>
-            <span class="hidden md:block" v-if="index != franchise.footerLinks.length - 1">|</span>
-          </template>
+          </div>
+          <div class="text-2xl font-bold">Ciudades donde ofrecemos alquiler de carros</div>
+          <div class="font-sans">
+            Estamos presentes en más de 19 ciudades de Colombia como Bogotá, Medellín, Cali y Cartagena. Explora cada destino y reserva en la sede que más te convenga.
+          </div>
+          <div class="flex flex-col md:flex-row md:flex-wrap justify-center gap-1 md:gap-3">
+            <UButton
+              v-for="city in cities"
+              :key="city.id"
+              :to="getCityReservationURL(city)"
+              :external="true"
+              target="_blank"
+              class="text-white justify-center bg-white/10 hover:bg-white/20 ring-1 ring-white/25 rounded-lg py-3 w-full md:w-fit font-normal transition-colors"
+            >
+              Alquiler de carros en <span class="font-bold">{{ city.name }}</span>
+            </UButton>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Footer -->
-    <UFooter class="bg-black text-white text-center">
-      <p class="text-white">
-        copyright 2025 © {{ franchise.name }} renta car Colombia
-      </p>
-    </UFooter>
+      <!-- Enlaces legales -->
+      <section class="border-t border-white/15 py-8 lg:py-6">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4">
+            <template v-for="(footerLink, index) in franchise.footerLinks" :key="`footer-${index}`">
+              <NuxtLink
+                :to="footerLink.link"
+                class="underline hover:no-underline"
+              >
+                {{ footerLink.label }}
+              </NuxtLink>
+              <span class="hidden md:block" v-if="index != franchise.footerLinks.length - 1">|</span>
+            </template>
+          </div>
+        </div>
+      </section>
+
+      <!-- Copyright -->
+      <div class="border-t border-white/15 text-center py-6">
+        <p class="text-white font-sans">
+          copyright 2025 © {{ franchise.name }} renta car Colombia
+        </p>
+      </div>
+    </footer>
 
     <!-- Widget chat (lazy loaded) -->
     <LazyChatWidget />

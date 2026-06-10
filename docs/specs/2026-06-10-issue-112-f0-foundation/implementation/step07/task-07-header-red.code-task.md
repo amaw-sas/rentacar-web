@@ -1,6 +1,16 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step03/task-03-primary-color.code-task.md, step06/task-06-logo-inline.code-task.md
-## Completed:
+## Completed: 2026-06-10
+
+> Evidence: `default.vue:2` root → `bg-surface-softest` (light surface per design);
+> header `:6` → `bg-gradient-to-r from-hero-from to-hero-to ... sticky top-0` (red,
+> sticky). Logo keeps `variant="white"` (3 consumers, self-closing). Nav items
+> unchanged (already point to safe anchors `/#requisitos`,`/#sedes`,`/blog`,`/#faqs`
+> — no `#fleet`/`#requirements`). Slideover/`ColombiaFlag*`/close button preserved.
+> grep `#000073|#0891b2|blue-[0-9]` over default.vue → 0. Tests: f0-chrome step07 PASS
+> (14 files / 93 tests green). Typecheck delta vs baseline 185 = 0 (the `color:'white'`
+> toggle TS2322 pre-exists on origin/main, untouched). E2E deferred (no Supabase creds
+> locally → /api/rentacar-data 500 → webServer timeout); runtime check → step10.
 
 # Task: Header rojo sticky (default.vue)
 

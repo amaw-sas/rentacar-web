@@ -1,6 +1,16 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step08a/task-08a-footer-structure.code-task.md
-## Completed:
+## Completed: 2026-06-10
+
+> Evidence: guard #109 INTACT — `git diff origin/main` shows ZERO changed lines from
+> `<script lang="ts" setup>` onward (verified: 0 +/- content lines after the script
+> tag). `reservationInitDay/EndDay` stay `ref<string|null>(null)`, computed ONLY in
+> `onMounted`; `getCityReservationURL` unchanged → `/${city.id}` stable href at SSR.
+> City buttons keep `v-for="city in cities"` (useData), `:to="getCityReservationURL"`,
+> `:external="true"`, `target="_blank"` — no `wa.me`. Restyle to red-on-red:
+> `bg-white/10 hover:bg-white/20 ring-1 ring-white/25` (was `bg-blue-600 hover:bg-blue-800`).
+> f0-chrome step08b PASS (guard refs + onMounted-assignment + internal-link asserts).
+> 19-count + no-hydration-warning are runtime → step10 (E2E blocked: no Supabase creds).
 
 # Task: Enlaces de ciudad internos + guard de hidratación #109 (default.vue)
 

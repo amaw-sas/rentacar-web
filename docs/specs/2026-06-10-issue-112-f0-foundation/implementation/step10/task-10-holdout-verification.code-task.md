@@ -23,6 +23,7 @@ F0 define el holdout SCEN-F0-01..08 en el design doc. Esta tarea recolecta evide
 3. `git diff --stat origin/main` → cambios SOLO en `packages/ui-alquilame/` (SCEN-F0-02).
 4. Build de las otras 2 marcas → árbol git sin cambios (aislamiento).
 5. `/agent-browser` + `/dogfood` en el alias `-git-main-`: cero errores de consola, cero requests fallidos; inspección de color/fuentes/footer/assets-200 (SCEN-F0-01,03,04,05,06).
+5b. **Chequeo de contraste explícito** (un fondo claro NO dispara error de consola): snapshot de `/`, `/pendiente`, `/sindisponibilidad` confirmando que el texto `text-white` del hero/páginas es legible sobre el root oscuro de marca (no blanco-sobre-claro). Guard contra la regresión B1 del root.
 6. Lighthouse/CLS vs baseline (SCEN-F0-08).
 
 ## Dependencies
