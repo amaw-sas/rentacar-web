@@ -64,14 +64,14 @@ Añadir `ui.colors.primary='brand'` (y `neutral`) al `ui` de `app.config.ts` ví
 ### Fase 2 — Assets de marca
 
 **Step 4 — Script de optimización webp** · Size: S · Dep: ninguna
-Crear `scripts/optimize-images.mjs` con `sharp@^4.x` (la `^0.34.5` del repo): convierte PNG→webp, reporta peso, umbral <500 KB critical-path. Documentar uso (reutilizable por F1/F2).
+Crear `scripts/optimize-images.mjs` con `sharp@^0.34.5` (versión del repo, `package.json:24`): convierte PNG→webp, reporta peso, umbral <500 KB critical-path. `sharp` también rasteriza SVG→PNG (lo usa el Step 5 para `og-logo.png`). Documentar uso (reutilizable por F1/F2).
 - **Escenario:** Given el script y una imagen PNG, when se corre, then emite un `.webp` y reporta el peso resultante.
 - **Aceptación:** script ejecuta sobre una imagen de prueba; no se integra ningún asset pesado en F0 (solo establece la convención).
 
 **Step 5 — Assets de identidad de marca** · Size: M · Dep: Step 4
-Crear `public/images/brand/` con `logo.svg` + `logo-white.svg` (de `dist/`), `og-logo.png` (raster del logo). Copiar `dist/favicon.svg` → `public/favicon.svg` y declarar `<link rel="icon" type="image/svg+xml" href="/favicon.svg">` en `nuxt.config.ts` (mantener `.ico` fallback). Reemplazar `public/img/og-alquilame.jpg` por `dist/og-image.jpg`.
+Crear `public/images/brand/` con `logo.svg` + `logo-white.svg` (copiados de `dist/`). **`og-logo.png` no existe en `dist/`** → generarlo rasterizando con sharp: `sharp('dist/logo.svg').resize({ width: 512 }).png().toFile('public/images/brand/og-logo.png')` (usa la capacidad SVG→PNG del Step 4). Copiar `dist/favicon.svg` → `public/favicon.svg` y declarar `<link rel="icon" type="image/svg+xml" href="/favicon.svg">` en `nuxt.config.ts` `app.head.link` (`:413`, hoy `[]`; mantener `.ico` fallback). Reemplazar `public/img/og-alquilame.jpg` (109 KB) por `dist/og-image.jpg` (67 KB).
 - **Escenario (SCEN-F0-05):** Given el HTML renderizado, when se hace HTTP GET a `logo`, `svglogo`, `oglogo`, `ogImage` (de `app.config`) + favicon, then todos responden 200.
-- **Aceptación:** los 4 paths de marca + favicon devuelven 200; `app.config` no requiere cambio de paths (ya apuntan ahí).
+- **Aceptación:** los 4 paths de marca + favicon devuelven 200 (incl. `og-logo.png` generado); `app.config` no requiere cambio de paths (ya apuntan ahí).
 
 **Step 6 — Logo inline nuevo** · Size: M · Dep: Step 5
 Comparar `dist/logo.svg` (200×55) con el SVG inline actual de `Logo.vue` (577×167). Si difiere, reemplazar los paths inline por los del diseño y añadir prop de variante (blanco sobre fondo rojo / color sobre fondo claro), dado que el diseño trae `logo.svg` + `logo-white.svg`. Mantener la prop `cls` y los 3 puntos de consumo en `default.vue`.
@@ -85,19 +85,24 @@ Reescribir el header: root gradient `from-[#000073]...` y `bg-[#000073]` (`:2,:6
 - **Escenario (parcial SCEN-F0-06):** Given `default.vue`, when se grep `#000073`/`blue-[0-9]` en el header, then 0 coincidencias; header rojo sticky.
 - **Aceptación:** header rojo; sin azul en `:2,:6`; nav funcional sin anchors rotos.
 
-**Step 8 — Footer rojo unificado (`default.vue`)** · Size: L · Dep: Steps 1, 3 (secuencial tras Step 7 — mismo archivo)
-Fusionar las 3 secciones actuales (`#sedes` `bg-blue-700`, barra legal `bg-[#000073]`, `UFooter`) en un footer con gradiente rojo (`from-footer-from to-footer-to`) + `font-heading`. **Preservar el guard de hidratación #109:** mantener `reservationInitDay/EndDay` calculados solo en `onMounted`, `getCityReservationURL(city)` → `/${city.id}` en SSR, `:external target="_blank"`, y el `v-for` sobre `cities` de `useData()`.
-- **Escenario (SCEN-F0-04 + SCEN-F0-06 footer):** Given cualquier página, when se ve el footer, then gradiente rojo + `font-heading`, y cada uno de los 19 enlaces de ciudad tiene `href="/{city.id}"` (interno, no `wa.me`); grep de azul en el footer = 0.
-- **Aceptación:** footer rojo; 19 enlaces internos; SSR sin hydration mismatch (#109 intacto); E2E `BRAND=alquilame` verde para selectores de footer/ciudad.
+**Step 8a — Fusión estructural del footer rojo (`default.vue`)** · Size: M · Dep: Steps 1, 3 (secuencial tras Step 7 — mismo archivo)
+Fusionar las 3 secciones actuales (`#sedes` `bg-blue-700`, barra legal `bg-[#000073]`, `UFooter`) en un footer con gradiente rojo (`from-footer-from to-footer-to`) + `font-heading`. Des-azular los sitios `:67,:85,:94`. **No** alterar la lógica del `v-for` de ciudades ni el cálculo de fechas — solo el markup/estilo contenedor.
+- **Escenario (SCEN-F0-06 footer):** Given el footer, when se grep `#000073`/`blue-[0-9]` en las secciones de footer de `default.vue`, then 0 coincidencias; footer con gradiente rojo + `font-heading`.
+- **Aceptación:** footer rojo unificado; sin azul; estructura de las 3 secciones consolidada.
+
+**Step 8b — Enlaces de ciudad + guard #109 (`default.vue`)** · Size: M · Dep: Step 8a
+Verificar/preservar el guard de hidratación **#109** (money-landmine) en la sección de ciudades: `reservationInitDay/EndDay` calculados solo en `onMounted` (`:195-201`), `getCityReservationURL(city)` → `/${city.id}` en SSR cuando las fechas son null (`buildCityReservationURL.ts:43-44`), `:external target="_blank"`, `v-for` sobre `cities` de `useData()`. Restyle de los 19 `UButton` a rojo sin tocar esa lógica.
+- **Escenario (SCEN-F0-04):** Given cualquier página, when se ve el footer, then cada uno de los 19 enlaces de ciudad tiene `href="/{city.id}"` (interno, p.ej. `/bogota`, no `wa.me`); SSR y primera hidratación producen el mismo href estable (sin hydration mismatch).
+- **Aceptación:** 19 enlaces internos rojos; SSR sin hydration warning (#109 intacto); E2E `BRAND=alquilame` verde para selectores de footer/ciudad.
 
 **Step 9 — Des-azular `error.vue` + `.link-*`** · Size: S · Dep: Step 1
-`error.vue:2` (`from-blue-900 to-blue-950`) → fondo de marca. `typography.css:174,180` `.link-light`/`.link-dark` (`text-blue-*`) → tokens de marca.
+`error.vue:2` (`from-blue-900 to-blue-950`) → fondo de marca. `typography.css:173-181` bloque `.link-light`/`.link-dark` (`text-blue-*` **y** `focus:ring-blue-*` en `:175,:181`) → tokens de marca.
 - **Escenario (SCEN-F0-06 completo):** Given `default.vue` + `error.vue` + `typography.css`, when se grep `#000073`/`#0891b2`/`blue-[0-9]`, then 0 coincidencias (los cuerpos F1–F3 y `/gana` quedan como deuda declarada, fuera de este escenario).
 - **Aceptación:** grep de chrome limpio; boundary de error en rojo.
 
 ### Fase 4 — Integración y verificación
 
-**Step 10 — Verificación del holdout** · Size: M · Dep: Steps 1–9
+**Step 10 — Verificación del holdout** · Size: M · Dep: Steps 1–9 (incl. 8a, 8b)
 Ejecutar `/verification-before-completion` con evidencia fresca contra los 8 escenarios:
 - `pnpm install` (ya hecho en paso 0); `pnpm --filter ui-alquilame typecheck` vía `ionice -c3 nice -n19` (SCEN-F0-07).
 - E2E `BRAND=alquilame` (SCEN-F0-07, testids preservados).
@@ -113,10 +118,10 @@ Ejecutar `/verification-before-completion` con evidencia fresca contra los 8 esc
 
 ```
 0 (install) → todo
-1 (theme.css) → 2, 3, 7, 8, 9
+1 (theme.css) → 2, 3, 7, 8a, 9
 4 (script) → 5 → 6 → 7
-3 → 7, 8
-7 → 8 (mismo archivo, secuencial)
+3 → 7, 8a
+7 → 8a (mismo archivo, secuencial) → 8b
 1..9 → 10 (verificación)
 ```
 
@@ -124,8 +129,8 @@ Ejecutar `/verification-before-completion` con evidencia fresca contra los 8 esc
 
 - Cada paso embebe su escenario (sin pasos "solo tests").
 - Holdout = SCEN-F0-01..08 del design doc; define "done", no se debilita para pasar.
-- Unit: tests existentes de `ui-alquilame` (`__tests__/`, `tests/`) deben seguir verdes (no se tocan componentes con testid en F0 salvo `default.vue` — verificar `SelectBranch`/footer testids).
-- E2E: `pnpm test:e2e:alquilame` (`BRAND=alquilame`).
+- Unit: **ningún test lee `default.vue`/`layouts/`/`Logo.vue` como source** (verificado por grep) → el riesgo de Steps 7/8a/8b sobre la suite unit es nulo. `SelectBranch.test.ts` lee `SelectBranch.vue`, no el layout. El único gate relevante para el chrome es **E2E**.
+- E2E: `pnpm test:e2e:alquilame` (`BRAND=alquilame`) — cubre footer/ciudad/#109.
 
 ## Rollout Plan
 
