@@ -1,79 +1,65 @@
 // External dependencies
-import type { Product, AggregateOffer } from 'schema-dts';
+import type { Product, Offer, UnitPriceSpecification } from 'schema-dts';
 
-interface CityPricing {
-  lowPrice: number
-  highPrice: number
-}
+// Internal dependencies - utils
+import { pickRepresentativeDailyPrice } from '../utils';
 
-// Base prices per city (in COP) - from useCityFAQs.ts
-const cityPricing: Record<string, CityPricing> = {
-  'Bogotá': { lowPrice: 110000, highPrice: 450000 },
-  'Medellín': { lowPrice: 115000, highPrice: 460000 },
-  'Cali': { lowPrice: 105000, highPrice: 420000 },
-  'Cartagena': { lowPrice: 120000, highPrice: 480000 },
-  'Barranquilla': { lowPrice: 100000, highPrice: 400000 },
-  'Santa Marta': { lowPrice: 110000, highPrice: 440000 },
-  'Pereira': { lowPrice: 105000, highPrice: 420000 },
-  'Bucaramanga': { lowPrice: 100000, highPrice: 400000 },
-  'Armenia': { lowPrice: 100000, highPrice: 400000 },
-  'Manizales': { lowPrice: 105000, highPrice: 420000 },
-  'Villavicencio': { lowPrice: 95000, highPrice: 380000 },
-  'Valledupar': { lowPrice: 95000, highPrice: 380000 },
-  'Ibagué': { lowPrice: 95000, highPrice: 380000 },
-  'Neiva': { lowPrice: 90000, highPrice: 360000 },
-  'Cúcuta': { lowPrice: 90000, highPrice: 360000 },
-  'Montería': { lowPrice: 95000, highPrice: 380000 },
-  'Floridablanca': { lowPrice: 95000, highPrice: 380000 },
-  'Palmira': { lowPrice: 100000, highPrice: 400000 },
-  'Soledad': { lowPrice: 95000, highPrice: 380000 },
-}
-
-// Representative vehicle categories for schema
+// Representative vehicle categories featured in the city landing schema.
+// Curated Spanish names/descriptions (the Localiza catalog descriptions are in
+// Portuguese — see issue #74). The real PRICE is no longer hardcoded: it is read
+// per category from category_pricing (SSR via rentacar-data). See issue #68.
 const representativeCategories = [
   {
     code: 'C',
     name: 'Económico',
     description: 'Vehículos compactos perfectos para ciudad. Fiat Mobi, Kia Picanto, Renault Kwid.',
-    priceMultiplier: 1.0
   },
   {
     code: 'FX',
     name: 'Sedán Automático',
     description: 'Sedanes cómodos con transmisión automática. Kia Rio, Hyundai Accent, Suzuki Dzire.',
-    priceMultiplier: 1.3
   },
   {
     code: 'GC',
     name: 'Camioneta SUV',
     description: 'Camionetas compactas ideales para familias. Suzuki Vitara, Hyundai Creta, Fiat Pulse.',
-    priceMultiplier: 1.8
   },
   {
     code: 'LE',
     name: 'Camioneta Premium',
     description: 'SUVs de lujo con todas las comodidades. Kia Sportage, Hyundai Tucson, Renault Koleos.',
-    priceMultiplier: 2.5
-  }
+  },
 ]
 
 /**
- * Generates Product Schema for city landing pages
- * This provides structured data for Google to show rich results
- * even when no search has been performed
+ * Generates Product schema for city landing pages so a JS-less crawler reads a
+ * real, representative "from" price per featured category.
+ *
+ * The price is the cheapest positive active `one_day_price` from
+ * category_pricing (`pickRepresentativeDailyPrice`) — the same source the
+ * checkout uses — emitted as a per-day `UnitPriceSpecification`. A category with
+ * no real price (absent, or no monthly plan) is omitted rather than published
+ * with a fabricated or $0 value. The brand label comes from `organization.brand`
+ * (per-brand), never a hardcoded name.
  */
 export function useCityProductSchema(cityName: string, citySlug: string) {
-  const { franchise } = useAppConfig()
-  const { vehicleCategories } = useFetchRentacarData()
+  const { franchise, organization } = useAppConfig()
+  const { vehicleCategories, categories } = useFetchRentacarData()
 
-  const pricing = cityPricing[cityName] || { lowPrice: 100000, highPrice: 400000 }
+  const brandName = organization.brand
 
-  const productSchemas = representativeCategories.map((category) => {
-    const categoryLowPrice = Math.round(pricing.lowPrice * category.priceMultiplier)
-    const categoryHighPrice = Math.round(pricing.highPrice * category.priceMultiplier)
+  const productSchemas = representativeCategories.flatMap((category) => {
+    const categoryData = categories?.find((c) => c.id === category.code)
+    const priceRow = categoryData ? pickRepresentativeDailyPrice(categoryData.month_prices) : undefined
+
+    // Fail-soft: no real price → omit this category (never $0 or fabricated).
+    if (!priceRow) return []
+
+    const dailyPrice = priceRow.one_day_price
     const categoryImage = vehicleCategories?.[category.code]?.modelos?.[0]?.image || ''
+    const validUntil = priceRow.end_date || undefined
 
-    return <Product>{
+    return [<Product>{
       '@type': 'Product',
       '@id': `${franchise.website}/${citySlug}#vehicle-${category.code}`,
       name: `Alquiler ${category.name} en ${cityName}`,
@@ -81,37 +67,42 @@ export function useCityProductSchema(cityName: string, citySlug: string) {
       category: 'Alquiler de Vehículos',
       brand: {
         '@type': 'Brand',
-        name: 'Alquilatucarro'
+        name: brandName,
       },
-      image: categoryImage,
-      offers: <AggregateOffer>{
-        '@type': 'AggregateOffer',
+      // Omit empty image rather than emit image:'' (incomplete Product node).
+      ...(categoryImage ? { image: categoryImage } : {}),
+      offers: <Offer>{
+        '@type': 'Offer',
         priceCurrency: 'COP',
-        lowPrice: categoryLowPrice,
-        highPrice: categoryHighPrice,
-        offerCount: 4,
+        price: dailyPrice,
+        priceSpecification: <UnitPriceSpecification>{
+          '@type': 'UnitPriceSpecification',
+          priceCurrency: 'COP',
+          price: dailyPrice,
+          unitCode: 'DAY', // UN/CEFACT: per-day rate, not a rental total
+        },
         availability: 'https://schema.org/InStock',
-        priceValidUntil: '2026-12-31',
+        ...(validUntil ? { priceValidUntil: validUntil } : {}),
         seller: {
           '@type': 'Organization',
-          name: 'Alquilatucarro',
-          url: franchise.website
+          name: brandName,
+          url: franchise.website,
         },
         areaServed: {
           '@type': 'City',
           name: cityName,
           containedInPlace: {
             '@type': 'Country',
-            name: 'Colombia'
-          }
-        }
-      }
-    }
+            name: 'Colombia',
+          },
+        },
+      },
+    }]
   })
 
   useSchemaOrg(productSchemas)
 
   return {
-    productSchemas
+    productSchemas,
   }
 }
