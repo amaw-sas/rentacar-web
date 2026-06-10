@@ -77,6 +77,17 @@
    Heading Classes
    -------------------------------------------------------------------------- */
 
+/* Brand heading font — Plus Jakarta Sans (self-hosted via @nuxt/fonts).
+   Body inherits --font-sans (DM Sans) from Tailwind's global font-sans. */
+.heading-hero,
+.heading-page,
+.heading-section,
+.heading-card,
+.heading-sub,
+.heading-label {
+    font-family: var(--font-heading);
+}
+
 /* Hero/Display headings - largest text for hero sections */
 .heading-hero {
     @apply text-4xl md:text-5xl lg:text-7xl font-extrabold leading-tight tracking-tight;

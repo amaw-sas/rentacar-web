@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step01/task-01-theme-tokens.code-task.md
-## Completed:
+## Completed: 2026-06-10
 
 # Task: Primario de marca en app.config (ui.colors.primary='brand')
 
@@ -53,3 +53,25 @@ Hoy `app.config.ts` hace `ui: uiConfig` (compartido, sin `colors`). El override 
 - **Files to Read**: design doc §1, logic/src/config/ui.config.ts
 - **Context Estimate**: S
 - **Scenario-Strategy**: required
+
+## Completion Evidence (2026-06-10)
+- **AC1 (primario rojo, parcial):** `app.config.ts` ahora hace
+  `ui: { ...uiConfig, colors: { primary: 'brand', neutral: 'zinc' } }`. Además se fija
+  `--ui-primary: var(--color-brand-600)` en `theme.css` (`:root` + `.dark`) para que el
+  botón quede exactamente `#CC022B` (=600) en lugar del shade 500/400 por defecto de
+  @nuxt/ui v4. Verificación visual final del botón diferida a step10.
+- **AC2 (typecheck verde — gate riesgo TS):** RIESGO TS NO SE MATERIALIZÓ.
+  `pnpm --filter ui-alquilame typecheck` da 185 errores; comparado contra baseline
+  (origin/main, mismo worktree con `git stash`): **185 idénticos, diff vacío → 0
+  errores nuevos**. Ningún error en `app.config.ts`, ningún TS2322 por `'brand'` fuera
+  de la unión de colores. NO fue necesario `as const`/`satisfies` local ni cast — el
+  spread tipa limpio. Los 185 son baseline preexistente (cluster B/C/D: composables
+  logic, fixtures de tests, blog/wordpress).
+- **AC3 (aislamiento):** `git diff --name-only HEAD` → solo
+  `packages/ui-alquilame/app/app.config.ts` (+ theme.css del step01); `logic/` intacto.
+
+### Cómo se resolvió el riesgo TS
+El spread `{ ...uiConfig, colors: { primary: 'brand', neutral: 'zinc' } }` se asigna
+limpiamente sin TS2322. `defineAppConfig` acepta `colors.primary` como string libre en
+esta versión de @nuxt/ui v4 (la unión de colores no es cerrada para `primary`), así que
+no hubo colapso de inferencia. Sin workarounds, sin `any`, sin `@ts-ignore`.

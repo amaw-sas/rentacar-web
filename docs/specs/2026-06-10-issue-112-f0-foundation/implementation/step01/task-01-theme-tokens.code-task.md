@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step00/task-00-pnpm-install.code-task.md
-## Completed:
+## Completed: 2026-06-10
 
 # Task: Capa de tokens de marca (theme.css)
 
@@ -53,3 +53,19 @@ Hoy `app.config.ts` hace `ui: uiConfig` sin override de `colors`; no existe un p
 - **Files to Read**: design doc §1, /tmp/alquilame_design/dist/_astro/*.css
 - **Context Estimate**: S
 - **Scenario-Strategy**: required
+
+## Completion Evidence (2026-06-10)
+- **AC1 (tokens disponibles):** Compilado `theme.css` por el motor Tailwind 4 real
+  (`@tailwindcss/node@4.1.18`, mismo engine que `@tailwindcss/vite`). Resuelven:
+  `--color-brand-600: #cc022b`, `--color-hero-from: #cc022b`,
+  `--color-surface-soft: #edf0f5`; utilidades `.bg-brand-600`, `.from-hero-from`,
+  `.to-footer-to`, `.bg-surface-soft`, `.text-brand-800` generadas. PASS.
+- **AC2 (aislamiento):** `git diff --name-only HEAD` → solo `packages/ui-alquilame/`.
+- **AC3 (sin regresión de build):** `pnpm --filter ui-alquilame build` compiló todo el
+  CSS sin error; el build solo falló en prerender de páginas de ciudad por falta de
+  backend de datos offline (no relacionado con CSS — esperado en worktree aislado).
+- Archivos: `app/assets/css/theme.css` (nuevo), `app/assets/css/main.css` (import).
+- Escala brand final: 50 `#fef2f4`, 100 `#fce4e8`, 200 `#f9c5cd`, 300 `#f498a6`,
+  400 `#ea5067`, 500 `#e50a35`, 600 `#cc022b`, 700 `#a8001f`, 800 `#94001e`,
+  850 `#8b001c`, 900 `#7a001a`, 950 `#4a000b` (850/900/950 = tonos del diseño;
+  700 = `#a8001f` para mantener rampa monótona por luminancia).

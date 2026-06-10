@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step01/task-01-theme-tokens.code-task.md
-## Completed:
+## Completed: 2026-06-10
 
 # Task: Fuentes self-hosted (Plus Jakarta Sans + DM Sans)
 
@@ -56,3 +56,20 @@ Cargar las fuentes del diseño vía `@nuxt/fonts` (self-hosted, sin `<link>` a G
 - **Files to Read**: design doc §2, theme.css (Step 1), nuxt.config.ts:36
 - **Context Estimate**: S
 - **Scenario-Strategy**: required
+
+## Completion Evidence (2026-06-10)
+- **AC1 (fuentes self-hosted, parcial):** Bloque top-level `fonts` añadido en
+  `nuxt.config.ts:422` (Plus Jakarta Sans [700,800] + DM Sans [400,500,600]), NO en
+  `modules[]`. `.heading-*` ahora aplican `font-family: var(--font-heading)` en
+  `typography.css`; el cuerpo hereda `--font-sans`. Sin `<link>` a Google Fonts en
+  fuente. El build de @nuxt/fonts resolvió ambas familias (cache
+  `node_modules/.cache/nuxt/fonts/meta/google/*`) y las prepara para self-host local
+  (las URLs gstatic viven solo en cache build-time, no en el HTML renderizado).
+  La verificación del `font-family` computado en runtime se difiere a step10 (necesita
+  servidor en ejecución).
+- **AC2 (CLS):** Critical CSS inline `nuxt.config.ts:36` actualizado de `system-ui` a
+  `'DM Sans', ui-sans-serif, system-ui, …`; `font-display: swap` es el default de
+  @nuxt/fonts. Medición CLS vs baseline diferida a step10.
+- **AC3 (aislamiento):** `git diff --name-only HEAD` → solo `packages/ui-alquilame/`.
+- Archivos: `nuxt.config.ts` (fonts + critical CSS),
+  `app/assets/css/rentacar-main/typography.css` (font-family en `.heading-*`).
