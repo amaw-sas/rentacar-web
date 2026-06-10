@@ -16,8 +16,8 @@ const source = readFileSync(
 )
 
 describe('useCityProductSchema sentinel safety (SCEN-005 part 2)', () => {
-  it('extracts vehicleCategories via destructuring', () => {
-    expect(source).toMatch(/const\s*\{\s*vehicleCategories\s*\}\s*=\s*useFetchRentacarData\(\)/)
+  it('extracts vehicleCategories and categories via destructuring', () => {
+    expect(source).toMatch(/const\s*\{\s*vehicleCategories\s*,\s*categories\s*\}\s*=\s*useFetchRentacarData\(\)/)
   })
 
   it('uses optional chaining on every step into vehicleCategories', () => {
