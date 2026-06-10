@@ -145,7 +145,7 @@ Ejecutar `/verification-before-completion` con evidencia fresca contra los 8 esc
 |---|---|---|
 | Spread `{...uiConfig, colors}` rompe TS | 3 | `as const`/`satisfies`; typecheck gate |
 | @nuxt/ui shade 500≠600 → botón ≠ #CC022B | 3 | Ajustar `--ui-primary`/shade; validar visual |
-| Romper guard #109 al fusionar footer | 8 | Conservar cálculo onMounted + href SSR; E2E |
+| Romper guard #109 al fusionar footer | 8b | Conservar cálculo onMounted + href SSR; E2E |
 | CLS por fuentes + critical CSS compite | 2 | `swap` + métricas fallback; actualizar `:36`; medir |
 
 ## Open questions
