@@ -23,7 +23,7 @@ El reskin completo se descompuso en 4 fases que aterrizan incrementalmente a `ma
 | F2 | Landing ciudad + legales | F0 |
 | F3 | Reskin funcional (resultados/reserva/blog) | F0 |
 
-F0 va primero porque cambia color y fuentes **globalmente**; el resto del sitio adopta el rojo de inmediato (efecto deseado). Las páginas aún no reskinneadas (F1–F3) quedan en estado intermedio en el alias no-público — aceptable.
+F0 va primero porque establece tokens y fuentes **globalmente**. Precisión importante: el flip `ui.colors.primary='brand'` recolorea **solo los componentes @nuxt/ui** (botones, links, badges) de inmediato; **no** afecta clases Tailwind con azul hardcodeado (`bg-[#000073]`, `bg-blue-700`, etc.), que hay que reescribir archivo por archivo. Por eso F0 des-azula el **chrome global** (`default.vue` + `error.vue`), y los cuerpos de página azules quedan como **deuda declarada** asignada a su fase (ver §"Deuda declarada"). Las páginas aún no reskinneadas (F1–F3) quedan en estado intermedio en el alias no-público — aceptable.
 
 ---
 
@@ -43,7 +43,7 @@ El issue fue escrito 2026-06-05. Verificación contra el código real del worktr
    - `base.css:173-204` keyframe decorativo `.bg-animated-gradient` (azul→cyan) — uso sin confirmar; verificar si surface alguna página antes de tocarlo.
    Los 137 `!important` de `base.css` son fixes de @nuxt/ui (calendar, dialog, slideover, carousel), **ninguno fija el primario azul**. La limpieza apunta a `default.vue` + `typography.css`, **no** a `base.css`.
 
-3. **`Logo.vue` ya es un SVG inline** (`components/Logo.vue`, `viewBox="0 0 577.03 167.13"`, `fill="#fff"`), no un placeholder. Es la fuente de verdad visual, consumido 3 veces en `default.vue` con `:cls`.
+3. **`Logo.vue` ya es un SVG inline** (`components/Logo.vue`, `viewBox="0 0 577.03 167.13"`, `fill="#fff"`), no un placeholder. Es la fuente de verdad visual, consumido 3 veces en `default.vue` con prop `cls`.
 
 4. **`public/images/brand/` NO existe.** Pero `app.config.ts` ya referencia archivos ahí (404 latentes hoy):
    - `app.config.ts:23,41,43` `logo`/`svglogo` → `/images/brand/logo.svg` (MISS)
@@ -69,7 +69,8 @@ Solo `packages/ui-alquilame/**`. **No** toca `logic/` ni las otras dos marcas.
 | `app/assets/css/main.css` | `@import './theme.css'` | |
 | `app/app.config.ts` | añadir `ui.colors.primary='brand'` (hoy `ui: uiConfig` sin colors) | Riesgo TS — ver §1 |
 | `nuxt.config.ts` | bloque top-level `fonts`; actualizar critical CSS `font-family` (`:36`) | |
-| `app/layouts/default.vue` | header rojo + footer gradiente rojo unificado; retirar 5 sitios de azul | **Aquí vive el azul** |
+| `app/layouts/default.vue` | header rojo + footer gradiente rojo unificado; retirar 5 sitios de azul | Chrome principal |
+| `app/error.vue` | des-azular chrome del boundary global (`:2` `from-blue-900 to-blue-950`) | Visible en cualquier 404/500 |
 | `app/assets/css/rentacar-main/typography.css` | conectar `font-family` a `.heading-*`; `.link-*` azul → primario | |
 | `app/components/Logo.vue` | actualizar SVG inline al logo del diseño + variante claro/oscuro | Ver §4 |
 | `public/images/brand/logo.svg`, `logo-white.svg` (nuevos) | desde `dist/logo.svg`, `dist/logo-white.svg` — satisface refs SEO de app.config | Crea dir faltante |
@@ -78,10 +79,10 @@ Solo `packages/ui-alquilame/**`. **No** toca `logic/` ni las otras dos marcas.
 | `public/img/og-alquilame.jpg` | reemplazar por `dist/og-image.jpg` (67 KB) | |
 | `scripts/optimize-images.mjs` (nuevo) | convención webp (sharp `^0.34.5` del repo) | |
 
-### Consumidores / propagación
+### Consumidores / propagación (verificado por grep)
 
-- `app.config.ts` `franchise`/`organization` → `useBaseSEO` (logic) emite JSON-LD/og con `logo`, `svglogo`, `oglogo`, `ogImage`. Crear esos archivos cierra 3 referencias 404.
-- `ui.colors.primary` → **todos** los componentes @nuxt/ui de alquilame (botones, links, badges) cambian a rojo de inmediato.
+- `franchise.logo`/`organization.logo` → `useBaseSEO.ts:37,51,60` (JSON-LD org/website) **y** `pages/index.vue`. `ogImage` → `pages/index.vue:279,282,291` (`useSeoMeta`), **no** `useBaseSEO`. `svglogo` y `oglogo` → **cero consumidores** en logic/UI (campos de app.config sin lector hoy). Crear sus archivos es higiene (evita 404 si algún día se consumen), no cierra un 404 SEO activo. El único path de marca emitido en SEO real hoy es `logo`.
+- `ui.colors.primary` → **componentes @nuxt/ui** de alquilame (botones, links, badges) cambian a rojo de inmediato. Las clases Tailwind azules hardcodeadas NO cambian con esto.
 - `default.vue` envuelve todas las páginas → header/footer nuevo en todo el sitio.
 
 ---
@@ -128,7 +129,7 @@ ui: {
 }
 ```
 
-**Riesgo TS (heredado del cluster histórico, documentado en `ui.config.ts:13-19`):** `uiConfig` es `as const satisfies AppConfigInput['ui']`. El spread `{ ...uiConfig, colors }` produce un objeto nuevo cuya asignabilidad a `AppConfigUI` hay que revalidar; `primary: 'brand'` (string custom fuera de la unión de colores de @nuxt/ui) **puede** disparar TS2322. Mitigación: si el typecheck falla, aplicar `colors: { primary: 'brand' } as const` o un `satisfies AppConfigInput['ui']` local. Gate: `pnpm --filter ui-alquilame typecheck` verde.
+**Riesgo TS (heredado del cluster histórico, nota en `ui.config.ts:13-19`):** `uiConfig` es `as const satisfies AppConfigInput['ui']` (`ui.config.ts:55`). El spread `{ ...uiConfig, colors }` produce un objeto nuevo cuya asignabilidad a `AppConfigUI` hay que revalidar; `primary: 'brand'` (string custom fuera de la unión de colores de @nuxt/ui) **puede** disparar TS2322. Mitigación: si el typecheck falla, aplicar `colors: { primary: 'brand' } as const` o un `satisfies AppConfigInput['ui']` local. Gate: `pnpm --filter ui-alquilame typecheck` verde.
 
 **Shade del primario:** @nuxt/ui usa el shade 500 (light) / 400 (dark) por defecto para `primary`. Si el botón no queda exactamente `#CC022B`, ajustar `--ui-primary` o el shade default vía `app.config` `ui.colors`. Se valida visualmente contra el botón del diseño.
 
@@ -167,16 +168,30 @@ CLS: `font-display: swap` + métricas fallback de @nuxt/fonts; medir vs baseline
 - **Footer:** fusionar las 3 secciones actuales (`#sedes` `bg-blue-700`, barra legal `bg-[#000073]`, `UFooter` copyright) en **un footer con gradiente rojo** (`from-footer-from to-footer-to`) y tipografía del diseño (`font-heading`).
 - **PRESERVAR el guard de hidratación (issue #109)** al reescribir la sección de ciudades (`default.vue:78-89,192-201`): los 19 `UButton` usan `getCityReservationURL(city)` con `reservationInitDay/EndDay` calculados **solo en `onMounted`**. SSR/primera hidratación → `null` → href estable `/${city.id}`. La reescritura debe conservar: (a) ese cálculo onMounted, (b) `:external="true" target="_blank"`, (c) el `v-for` sobre `cities` de `useData()`. No mover el cálculo de fecha a SSR.
 - **Enlaces de ciudad (decisión aprobada):** mantener `getCityReservationURL(city)` → rutas **internas** `/[city]`, solo restyle a rojo. Preserva los 19 enlaces internos para el SEO de las landing (F2). El WhatsApp del diseño (18 ciudades) es artefacto del build estático (que solo generó la landing de Bogotá), no intención de marketing.
+- **`error.vue` (boundary global):** des-azular `:2` (`from-blue-900 to-blue-950`) a fondo de marca. Es visible en cualquier 404/500, por eso entra en F0 (no esperar a una fase de páginas).
+
+### Deuda declarada (azul fuera del chrome F0)
+
+`ui.colors.primary='brand'` no toca azul hardcodeado. Estos archivos conservan azul tras F0, asignados a su fase:
+
+| Archivo(s) | Azul | Fase |
+|---|---|---|
+| `pages/sindisponibilidad.vue`, `components/CategorySelectionSection.vue`, `components/ReservationResume.vue` | cuerpo de página/funcional | F3 |
+| `pages/blog/[...slug].vue` | cuerpo blog | F3 |
+| `layouts/gana.vue`, `pages/gana/*` (index, terminos, politicas) | chrome + cuerpo del flujo referido `/gana` | **Fuera de #112** (no está en la lista de páginas del issue) — queda como costura visual conocida: el footer rojo enlaza a `/gana` (app.config:70) que sigue azul. Decisión de incluirlo = ampliar scope, a confirmar con el usuario. |
+| `base.css:173-204` `.bg-animated-gradient` | keyframe decorativo | verificar uso; recolorear o dejar |
+
+Esto se declara explícitamente para que SCEN-F0-06 no sobre-afirme cobertura.
 
 ### 4. Assets de marca
 
 | Origen (zip) | Destino | Propósito |
 |---|---|---|
-| `dist/logo.svg` | `public/images/brand/logo.svg` | ref SEO `logo`/`svglogo` (hoy 404) |
+| `dist/logo.svg` | `public/images/brand/logo.svg` | `logo`/`svglogo` de app.config (`logo` sí lo usa `useBaseSEO`) |
 | `dist/logo-white.svg` | `public/images/brand/logo-white.svg` | variante claro/oscuro |
-| `dist/og-image.jpg` | `public/img/og-alquilame.jpg` (reemplaza) | og:image |
+| `dist/og-image.jpg` | `public/img/og-alquilame.jpg` (reemplaza) | `ogImage` (usado en `index.vue`) |
 | `dist/favicon.svg` | `public/favicon.svg` | favicon |
-| (raster de logo) | `public/images/brand/og-logo.png` | ref SEO `oglogo` (hoy 404) |
+| (raster de logo) | `public/images/brand/og-logo.png` | `oglogo` de app.config (higiene; sin consumidor hoy) |
 
 **Logo (resuelve ambigüedad B2):** la fuente de verdad **visual** sigue siendo el componente `<Logo>` inline (sin request extra, ideal para header/footer). Comparar `dist/logo.svg` contra el SVG inline actual de `Logo.vue`:
 - Si el logo del diseño difiere → actualizar los paths inline de `Logo.vue` y añadir prop de variante (blanco sobre fondo rojo, rojo/oscuro sobre fondo claro), dado que el diseño trae `logo.svg` + `logo-white.svg`.
@@ -224,8 +239,8 @@ CLS: `font-display: swap` + métricas fallback de @nuxt/fonts; medir vs baseline
 - **SCEN-F0-02 (otras marcas intactas):** Given el branch F0, when `git diff --stat origin/main` , then no hay cambios fuera de `packages/ui-alquilame/**` (ni `logic/` ni `ui-alquilatucarro`/`ui-alquicarros`).
 - **SCEN-F0-03 (fuentes):** Given una página de alquilame cargada, when se inspecciona el `font-family` computado de un `.heading-*` y del cuerpo, then es Plus Jakarta Sans / DM Sans respectivamente, self-hosted (sin `<link>` a `fonts.googleapis.com` en el HTML).
 - **SCEN-F0-04 (footer rojo + SEO):** Given cualquier página, when se ve el footer, then tiene gradiente rojo (`#CB032C→#A00425`) con `font-heading`, y cada uno de los 19 enlaces de ciudad tiene `href="/{city.id}"` (p.ej. `/bogota`) — ruta interna, no `wa.me` (se abren con `target="_blank"` por `:external`).
-- **SCEN-F0-05 (assets SEO 200):** Given el HTML renderizado, when se hace HTTP GET a cada path que emite `useBaseSEO` (`logo`, `svglogo`, `oglogo`, `ogImage`) + favicon, then todos responden 200 (cierra los 3 referencias 404 de `/images/brand/*`).
-- **SCEN-F0-06 (sin azul residual):** Given `packages/ui-alquilame/app`, when se hace grep de `#000073`/`#0891b2`/`blue-[0-9]` en `default.vue` y `typography.css`, then no hay coincidencias de color de marca (el azul fue reemplazado por tokens rojos).
+- **SCEN-F0-05 (assets de app.config 200):** Given el HTML renderizado, when se hace HTTP GET a cada path de marca referenciado en `app.config` (`logo`, `svglogo`, `oglogo`, `ogImage`) + favicon, then todos responden 200 (los archivos de `/images/brand/*` existen; independiente de quién los consuma).
+- **SCEN-F0-06 (chrome sin azul):** Given las superficies de chrome de F0 (`default.vue`, `error.vue`, `typography.css`), when se hace grep de `#000073`/`#0891b2`/`blue-[0-9]`, then no hay coincidencias. (Los cuerpos de página azules de F1–F3 y `/gana` quedan como deuda declarada — fuera del alcance de este escenario.)
 - **SCEN-F0-07 (gates verdes):** Given el branch F0, when se corre `pnpm --filter ui-alquilame typecheck` y E2E `BRAND=alquilame`, then ambos en verde y todos los `data-testid` preservados.
 - **SCEN-F0-08 (CLS no peor):** Given la home en el alias, when se mide CLS/Lighthouse, then no es peor que el baseline pre-F0.
 
