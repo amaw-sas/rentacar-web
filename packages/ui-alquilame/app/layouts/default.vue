@@ -23,13 +23,13 @@
         <div class="md:hidden">
           <IconsColombiaFlagCorner cls="absolute top-0 left-0 w-32 h-32 -translate-x-[10%] -translate-y-[10%]" />
           <NuxtLink to="/" :aria-label="franchise.name" class="absolute left-1/2 -translate-x-1/2">
-            <Logo cls="h-8 w-auto" />
+            <Logo cls="h-8 w-auto" variant="white" />
           </NuxtLink>
         </div>
         <!-- Desktop: Bandera + Logo juntos como unidad -->
         <NuxtLink to="/" :aria-label="franchise.name" class="hidden md:flex items-center gap-3">
           <IconsColombiaFlag cls="h-6 w-auto" />
-          <Logo cls="h-10 w-auto" />
+          <Logo cls="h-10 w-auto" variant="white" />
         </NuxtLink>
       </template>
       <template #body>
@@ -68,7 +68,7 @@
       <div class="max-w-7xl mx-auto px-4 space-y-6">
         <div>
           <NuxtLink to="/" :aria-label="franchise.name">
-            <Logo cls="h-10 w-auto mx-auto" />
+            <Logo cls="h-10 w-auto mx-auto" variant="white" />
           </NuxtLink>
         </div>
         <div class="text-2xl font-bold">Ciudades donde ofrecemos alquiler de carros</div>

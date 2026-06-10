@@ -4,7 +4,7 @@
     <header class="py-4 px-6">
       <NuxtLink to="/" class="flex items-center justify-center gap-2">
         <IconsColombiaFlag cls="h-6 md:h-7 w-auto" />
-        <Logo cls="h-8 md:h-10 w-auto" />
+        <Logo cls="h-8 md:h-10 w-auto" variant="white" />
       </NuxtLink>
     </header>
 

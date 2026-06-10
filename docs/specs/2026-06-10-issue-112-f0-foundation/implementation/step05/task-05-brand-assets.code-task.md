@@ -1,6 +1,12 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step04/task-04-optimize-images-script.code-task.md
-## Completed:
+## Completed: 2026-06-10
+
+> Evidence: `public/images/brand/{logo.svg,logo-white.svg,og-logo.png}`, `public/favicon.svg`
+> created; `og-logo.png` rasterized via step04 helper (`svg2png … 512` → 9.4 KB PNG).
+> `public/img/og-alquilame.jpg` replaced 109412 B → 67439 B. `nuxt.config.ts` `app.head.link`
+> now declares the SVG favicon `<link>` + `.ico` fallback. app.config paths untouched.
+> HTTP-200 runtime check (SCEN-F0-05) deferred to step10 per design.
 
 # Task: Assets de identidad de marca + favicon
 

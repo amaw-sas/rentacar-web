@@ -410,7 +410,11 @@ export default defineNuxtConfig({
           `,
         },
       ],
-      link: [],
+      link: [
+        // SVG favicon (modern browsers); .ico kept as fallback for older ones.
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      ],
     },
   },
 

@@ -1,6 +1,14 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step05/task-05-brand-assets.code-task.md
-## Completed:
+## Completed: 2026-06-10
+
+> Evidence: `Logo.vue` replaced — design wordmark (viewBox `0 0 200 54.71`, was
+> `0 0 577.03 167.13`), still inline (no `<img>`). Added `variant: 'color' | 'white'`
+> (default `color`): color = red wordmark `#CC022B` + black accent; white = white
+> wordmark + accent (legible over the step07 red header). `cls` prop preserved;
+> intrinsic `width=200 height=55` preserved (no CLS). The 3 consumers in `default.vue`
+> set `variant="white"` to match the red-header end-state. Logo introduced 0 new
+> typecheck errors (total stays 185 = baseline).
 
 # Task: Logo inline nuevo (Logo.vue)
 

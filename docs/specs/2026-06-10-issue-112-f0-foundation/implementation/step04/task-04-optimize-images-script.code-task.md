@@ -1,6 +1,12 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step00/task-00-pnpm-install.code-task.md
-## Completed:
+## Completed: 2026-06-10
+
+> Evidence: created `packages/ui-alquilame/scripts/optimize-images.mjs` (sharp@^0.34.5,
+> header doc + CLI). Verified on fixtures: `webp test.png → test.webp (518 B)` reported
+> weight; `svg2png logo.svg → logo-raster.png` produced `PNG 256×70 8-bit RGBA`. 500 KB
+> critical-path warning threshold exported. 15 new assertions in `tests/f0-assets.test.ts`
+> (incl. live webp+PNG generation) green.
 
 # Task: Script de optimización de imágenes (webp)
 
