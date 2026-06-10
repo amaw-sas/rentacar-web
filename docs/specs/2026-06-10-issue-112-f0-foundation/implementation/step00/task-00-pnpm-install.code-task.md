@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By:
-## Completed:
+## Completed: 2026-06-10
 
 # Task: Prerequisito — pnpm install
 
