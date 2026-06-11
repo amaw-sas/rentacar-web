@@ -41,7 +41,8 @@ Diseño city: hero, `#intro`, `#fleet`, `#puntos-entrega`, `#how-it-works`, `#re
 **Nota h1**: el hero city adopta el **estilo** del diseño y el h1 city-SEO "Alquiler de carros en {city}" (el del diseño ES city-targeted, válido para SEO). SCEN-F2-02 cubre la preservación de las **secciones de contenido**, no el wording exacto del h1 del hero.
 
 ### Cross-cutting (preservar + lecciones F1)
-- **Engine**: `Searcher`/`SelectBranch`/`CategorySelectionSection` sin cambios de comportamiento; `data-testid` intactos; navegación a `buscar-vehiculos` igual.
+- **Engine**: `Searcher.vue` (hero city, sus `data-testid` `pickup/return-location-test`) + `CategorySelectionSection` (resultados) sin cambios de comportamiento; `SelectBranch` (solo en el modal del Fleet reusado) preserva su flujo; navegación a `buscar-vehiculos` igual.
+- **Heading city de testimonios**: al reemplazar `#testimonios` por `HomeReviews`, conservar un encabezado city-targeted ("…en {city.name}") — pasar `city.name` como prop/heading a `HomeReviews` para no perder ese texto indexable (los cards usan `franchiseTestimonials` reales igual).
 - **#41 pin**: el `<span aria-hidden>` inerte de copy-to-WhatsApp se preserva (no reintroducir el `<button>`).
 - **#109**: sin `Date`/`today()` horneado en SSR/ISR.
 - **SEO/schema**: `useCityProductSchema` (#68, precio real por categoría), `FAQPage`, breadcrumb, canonical, og — preservados.
@@ -56,7 +57,7 @@ Diseño city: hero, `#intro`, `#fleet`, `#puntos-entrega`, `#how-it-works`, `#re
 
 - **SCEN-F2-01 (hero+searcher):** Given `/{city}` en el alias, when se ve el hero, then tiene el estilo del diseño (rojo, city name) y el `Searcher.vue` funciona igual — al completar la búsqueda navega a `/{city}/buscar-vehiculos/...` y conserva sus `data-testid` (`pickup-location-test`/`return-location-test`).
 - **SCEN-F2-02 (SEO content preservado):** Given la city landing, when se inspecciona el texto, then todas las secciones SEO actuales (descripcion/ventajas/destinos/consejos/temporada/ciudades-cercanas) siguen presentes con su contenido indexable (restilizado, no removido).
-- **SCEN-F2-03 (marketing del diseño):** Given la city landing, when se recorre, then existen las secciones de marketing del diseño reusando componentes F1 (fleet, how-it-works, requirements, contact).
+- **SCEN-F2-03 (marketing del diseño):** Given la city landing, when se recorre, then existen las secciones de marketing del diseño reusando componentes F1 (fleet, how-it-works, requirements, contact), y el CTA "Reserva Ahora" del contact ancla a un target existente in-page (`#searcher` del hero city), NO al `#hero` inexistente (prop `reserveAnchor`).
 - **SCEN-F2-04 (puntos-entrega):** Given una ciudad con branches, when se ve `#puntos-entrega`, then lista los `cityBranches` reales con el estilo del diseño.
 - **SCEN-F2-05 (resultados condicionales intactos):** Given una ruta `buscar-vehiculos` con params, when renderiza, then `#seleccion-categorias`/`CategorySelectionSection` muestra resultados como hoy (engine sin cambios).
 - **SCEN-F2-06 (#41 + #109):** Given el hero, when se inspecciona, then el pin de copy-to-WhatsApp sigue inerte (`<span aria-hidden>`, fuera del accessible name del `<h1>`) y no hay `Date`/`today()` horneado bajo ISR.
