@@ -96,13 +96,17 @@ export default defineConfig({
     },
   ],
 
-  // Servidor de desarrollo
-  webServer: {
-    command: `pnpm --filter ui-${brand} dev`,
-    url: `http://localhost:${port}`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 180 * 1000, // 3 minutos para Nuxt en WSL
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  // Servidor de desarrollo — se omite cuando se apunta a un deploy remoto
+  // (PLAYWRIGHT_BASE_URL), p.ej. el preview Vercel. Sin esto Playwright
+  // arrancaría un dev local que sin creds Supabase devuelve 500 en /api.
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: `pnpm --filter ui-${brand} dev`,
+        url: `http://localhost:${port}`,
+        reuseExistingServer: !process.env.CI,
+        timeout: 180 * 1000, // 3 minutos para Nuxt en WSL
+        stdout: 'pipe',
+        stderr: 'pipe',
+      },
 });
