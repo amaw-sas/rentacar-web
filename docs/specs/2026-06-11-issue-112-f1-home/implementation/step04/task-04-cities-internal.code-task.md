@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step01/task-01-hero-restyle.code-task.md
-## Completed:
+## Completed: 2026-06-11
 
 # Task: F1 Step 4 — Cities (todas activas, links internos)
 
