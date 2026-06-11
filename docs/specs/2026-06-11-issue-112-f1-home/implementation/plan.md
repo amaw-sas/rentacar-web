@@ -72,10 +72,10 @@ Todo bajo `packages/ui-alquilame/` (aislamiento F1 — `logic/` y otras marcas i
    - Escenario (SCEN-F1-03 resto, parte 1): contact (config), barra de anuncio descartable (client-only), y FAB de contacto restilizado.
    - AC: `Contact.vue` + `AnnouncementBar.vue` creados; `ChatWidget` **restilizado in-place** (ya montado en `default.vue:126` — NO duplicar); contact usa `franchise.whatsapp` (URL, sin re-envolver) + `franchise.phone`; estado de cierre del anuncio client-only (no SSR/ISR-horneado); test: secciones presentes, sin número hardcoded, un solo FAB.
 
-7b. **Partners "Empresas Aliadas" (marquee)** | S | deps: 1
+7b. **Partners "Empresas Aliadas" (marquee de texto)** | S | deps: 1
    - Escenario (SCEN-F1-03 resto, parte 2): marquee de aliados presente.
-   - **Sub-tarea de assets (bloqueante):** los logos (Localiza/Avis/Alquicarros/Alquilatucarro) **NO existen** en el repo. Sourcing desde el dist del diseño (`/tmp/alqui_f1_design/dist/images|_astro`) hacia `public/images/brand/partners/` (optimizar con el script `optimize-images.mjs` de F0); **fallback** = etiquetas de texto si algún logo no se puede obtener/usar legalmente. Mantener aislamiento (solo `ui-alquilame`).
-   - AC: `Partners.vue` con marquee; assets presentes (o fallback texto documentado); test: marquee presente, assets resuelven 200 en runtime (step 10).
+   - **El diseño usa TEXTO, no logos**: cada aliado (Localiza/Avis/Alquicarros/Alquilatucarro) es un `<span class="font-heading text-2xl font-extrabold text-white/75">` — NO hay `<img>` ni assets de logo en el dist. Replicar el marquee de etiquetas de texto (animación CSS); **sin sourcing de assets** (no existen). Nombres como lista local en el componente.
+   - AC: `Partners.vue` con marquee de texto (spans con nombres, estilo del diseño); test: marquee presente con los nombres; runtime (step 10) asegura que el **texto** renderiza (no 200 de imágenes).
 
 8. **Eliminar #video + schemas promo/video** | S | deps: 1
    - Escenario (SCEN-F1-07): no existe la sección video/60%, y el JSON-LD no tiene `VideoObject` ni `Offer/Promotion` (EarlyBooking).

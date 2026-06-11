@@ -40,7 +40,7 @@ Barra de anuncio (descartable, arriba) · `#hero` · `#fleet` · `#how-it-works`
 | Banda de stats | **Nueva** | copy del diseño tal cual (incl. "desde 2015") — **excepción a "datos reales"**, no hay fuente |
 | `#cities` | **Nueva** en el home | **todas las ciudades activas** del data source, links internos `/{city.id}` (NO wa.me) |
 | `#google-reviews` | **Restyle** del `#testimonios` al estilo review | `franchiseTestimonials` reales; **sin** rating hardcoded del mockup ("43"/"5,0") |
-| "Empresas Aliadas" (marquee) | **Nueva** (incluida) | logos aliados/proveedores (Localiza/Avis/Alquicarros/Alquilatucarro); assets de marca |
+| "Empresas Aliadas" (marquee) | **Nueva** (incluida) | **texto** (el diseño usa spans con los nombres Localiza/Avis/Alquicarros/Alquilatucarro, NO logos — no hay assets); marquee CSS |
 | `#requirements` | **Restyle** del `#requisitos` | 4 requisitos reales (ya existen) |
 | `#faq` | **Restyle** del acordeón | `faqs` del data source + `FAQPage` schema |
 | `#contact` | **Nueva** CTA contacto | `franchise.whatsapp` (URL) + `franchise.phone`, NO el número del mockup |
