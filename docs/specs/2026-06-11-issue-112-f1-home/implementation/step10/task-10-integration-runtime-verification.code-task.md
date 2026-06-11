@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step01/task-01-hero-restyle.code-task.md, step02/task-02-fleet-real-price.code-task.md, step03/task-03-howitworks-valueprops-stats.code-task.md, step04/task-04-cities-internal.code-task.md, step05/task-05-reviews-restyle.code-task.md, step06/task-06-requirements-faq.code-task.md, step07a/task-07a-contact-announcement-fab.code-task.md, step07b/task-07b-partners-marquee.code-task.md, step08/task-08-remove-video-promo-schemas.code-task.md, step09/task-09-headings-plus-jakarta.code-task.md
-## Completed:
+## Completed: 2026-06-11
 
 # Task: F1 Step 10 — Integración + verificación runtime del holdout (preview)
 
