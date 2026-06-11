@@ -1,31 +1,7 @@
 <template>
   <UPage>
-    <!-- Hero Section - Server Components para reducir JS hydration -->
-    <UPageHero orientation="horizontal">
-      <template #headline>
-        <HeroHeadline />
-      </template>
-      <template #title>
-        <HeroTitle />
-      </template>
-      <template #body>
-        <div class="text-center justify-items-center">
-          <div class="mb-4 text-white text-lg font-bold">
-            ¿En que ciudad deseas recoger tu carro?
-          </div>
-          <div class="min-w-80 my-3">
-            <SelectBranch />
-          </div>
-          <HeroDescription />
-        </div>
-      </template>
-      <template #default>
-        <!-- CLS fix: reservar espacio con aspect-ratio (760x616 mobile / 2000x1620 desktop ≈ 100:81) -->
-        <div class="w-full aspect-[100/81]">
-          <ImagesFamily />
-        </div>
-      </template>
-    </UPageHero>
+    <!-- F1 hero — restyled (gradient red, headline, city selector); engine preserved -->
+    <HomeHero />
 
     <!-- Video Section -->
     <UPageSection
