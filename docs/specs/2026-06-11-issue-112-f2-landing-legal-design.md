@@ -35,14 +35,14 @@ Diseño city: hero, `#intro`, `#fleet`, `#puntos-entrega`, `#how-it-works`, `#re
 | `#ventajas` / `#destinos` / `#consejos-conduccion` / `#mejor-temporada` / `#ciudades-cercanas` | **Restyle**, **texto SEO preservado** (indexable) | Cero pérdida de contenido |
 | `#puntos-entrega` (`cityBranches`) | **Restyle** al diseño | Datos branches preservados |
 | `#faqs` | **Restyle in-place — MANTENER `useCityFAQs(city.name)`** (FAQs city-specific: pico y placa, El Dorado, etc.). **NO** reusar `HomeFaq` (renderiza `useData().faqs` brand-level → regresión de contenido SEO city). | El `FAQPage` schema city lo emite `useCityFAQSchema` dentro de `useCityPageSEO` (en `[city]/index.vue`), NO acá — **no moverlo** |
-| `#testimonios` | **REEMPLAZAR por `HomeReviews`** de F1 | `franchiseTestimonials` reales; quita el `#testimonios` viejo (no duplicar `id`) |
+| `#testimonios` | **Restyle in-place** (estilo del diseño + heading city-targeted) | **Mantener `props.city.testimonials`** (city-specific) + `useCityAggregateRating`. **NO** reusar `HomeReviews` (usa `franchiseTestimonials` brand-level → cambia el display city→brand y arriesga inconsistencia con el `AggregateRating` city). Mismo criterio que `#faqs`: contenido city = restyle in-place. |
 | Marketing del diseño (`#fleet`, `#how-it-works`, `#requirements`, `#contact`) | **Agregar reusando `home/*` de F1** (`HomeFleet`, `HomeHowItWorks`, `HomeRequirements`, `HomeContact`) | `HomeContact` hardcodea `href="#hero"` (id del home, **no existe en city** → ancla muerta): añadir prop `reserveAnchor` (default `#hero`; city pasa `#searcher`). Resto DRY (precio real, etc.) |
 
 **Nota h1**: el hero city adopta el **estilo** del diseño y el h1 city-SEO "Alquiler de carros en {city}" (el del diseño ES city-targeted, válido para SEO). SCEN-F2-02 cubre la preservación de las **secciones de contenido**, no el wording exacto del h1 del hero.
 
 ### Cross-cutting (preservar + lecciones F1)
 - **Engine**: `Searcher.vue` (hero city, sus `data-testid` `pickup/return-location-test`) + `CategorySelectionSection` (resultados) sin cambios de comportamiento; `SelectBranch` (solo en el modal del Fleet reusado) preserva su flujo; navegación a `buscar-vehiculos` igual.
-- **Heading city de testimonios**: al reemplazar `#testimonios` por `HomeReviews`, conservar un encabezado city-targeted ("…en {city.name}") — pasar `city.name` como prop/heading a `HomeReviews` para no perder ese texto indexable (los cards usan `franchiseTestimonials` reales igual).
+- **Testimonios city**: restyle in-place conservando `props.city.testimonials` + el heading city-targeted ("…en {city.name}") indexable; `useCityAggregateRating` queda consistente con lo mostrado.
 - **#41 pin**: el `<span aria-hidden>` inerte de copy-to-WhatsApp se preserva (no reintroducir el `<button>`).
 - **#109**: sin `Date`/`today()` horneado en SSR/ISR.
 - **SEO/schema**: `useCityProductSchema` (#68, precio real por categoría), `FAQPage`, breadcrumb, canonical, og — preservados.
