@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* brand tokens (F0) */
+@import './theme.css';
+
 /* rentacar-main */
 @import './rentacar-main/typography.css';
 @import './rentacar-main/base.css';

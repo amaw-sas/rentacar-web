@@ -33,7 +33,7 @@ export default defineNuxtConfig({
           key: 'critical-cls',
           innerHTML: `
             *, *::before, *::after { box-sizing: border-box; }
-            body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+            body { margin: 0; font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif; }
             img { max-width: 100%; height: auto; display: block; }
             picture { display: block; }
             svg { max-width: 100%; height: auto; }
@@ -410,11 +410,25 @@ export default defineNuxtConfig({
           `,
         },
       ],
-      link: [],
+      link: [
+        // SVG favicon (modern browsers); .ico kept as fallback for older ones.
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      ],
     },
   },
 
   modules: ['@nuxtjs/seo', '@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-llms', 'nuxt-vitalizer', '@nuxtjs/mdc'],
+
+  // Fuentes de marca self-hosted (@nuxt/fonts, bundled con @nuxt/ui).
+  // configKey top-level `fonts` — NO se añade a `modules[]`.
+  // Self-hosted: @nuxt/fonts descarga y sirve local (sin <link> a Google).
+  fonts: {
+    families: [
+      { name: 'Plus Jakarta Sans', weights: [700, 800] },
+      { name: 'DM Sans', weights: [400, 500, 600] },
+    ],
+  },
 
   // Optimización de imágenes — Vercel Image Optimization
   image: {

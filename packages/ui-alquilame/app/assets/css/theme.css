@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Brand tokens — Alquilame (F0)
+
+   Única fuente de tokens de marca: escala `brand` 50–950 anclada al diseño
+   nuevo (#CC022B = 600, #94001E = 800), tokens semánticos de gradientes/neutros
+   y variables de fuente. Tailwind 4 expone cada `--color-*` como utilidad
+   (`bg-brand-600`, `from-hero-from`, `bg-surface-soft`, …).
+
+   Anclas verificadas contra el CSS del diseño
+   (/tmp/alquilame_design/dist/_astro/*.css):
+     #cc022b, #94001e, #cb032c, #a00425, #8b001c, #7a001a, #4a000b,
+     #edf0f5, #f4f5f9, #f8f9fc
+   ========================================================================== */
+
+@theme {
+  /* Escala brand. Anclas exactas del diseño: 600 = #CC022B, 800 = #94001E.
+     Extremo claro (50–500): rampa coherente de rojo desaturándose hacia blanco.
+     Extremo oscuro (700/850/900/950): tonos del diseño, orden por luminancia. */
+  --color-brand-50:  #fef2f4;
+  --color-brand-100: #fce4e8;
+  --color-brand-200: #f9c5cd;
+  --color-brand-300: #f498a6;
+  --color-brand-400: #ea5067;
+  --color-brand-500: #e50a35;
+  --color-brand-600: #cc022b; /* ancla — primario de marca */
+  --color-brand-700: #a8001f;
+  --color-brand-800: #94001e; /* ancla — hero gradient end */
+  --color-brand-850: #8b001c; /* tono del diseño */
+  --color-brand-900: #7a001a; /* tono del diseño */
+  --color-brand-950: #4a000b; /* tono del diseño */
+
+  /* Tokens semánticos: gradientes hero/footer y neutros del diseño */
+  --color-hero-from:   #cc022b;
+  --color-hero-to:     #94001e;
+  --color-footer-from: #cb032c;
+  --color-footer-to:   #a00425;
+  --color-surface-soft:    #edf0f5;
+  --color-surface-softer:  #f4f5f9;
+  --color-surface-softest: #f8f9fc;
+
+  /* Fuentes de marca (self-hosted vía @nuxt/fonts; ver nuxt.config.ts) */
+  --font-heading: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Fija el primario @nuxt/ui al shade 600 (=#CC022B) en lugar del 500/400 por
+   defecto, para que botones/links de marca coincidan con el botón del diseño.
+   La verificación visual final es en step10. */
+:root {
+  --ui-primary: var(--color-brand-600);
+}
+
+.dark {
+  --ui-primary: var(--color-brand-600);
+}
