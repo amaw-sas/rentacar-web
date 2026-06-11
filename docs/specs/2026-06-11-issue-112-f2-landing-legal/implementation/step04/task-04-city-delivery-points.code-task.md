@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step01/task-01-homecontact-reserveanchor.code-task.md
-## Completed:
+## Completed: 2026-06-11
 
 # Task: F2 Step 4 — Puntos-entrega restyle (branches reales)
 

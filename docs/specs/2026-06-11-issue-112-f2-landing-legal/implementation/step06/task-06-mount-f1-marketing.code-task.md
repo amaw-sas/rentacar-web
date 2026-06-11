@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By: step01/task-01-homecontact-reserveanchor.code-task.md, step02/task-02-city-hero.code-task.md, step03/task-03-city-seo-content.code-task.md, step04/task-04-city-delivery-points.code-task.md, step05/task-05-city-faq-testimonios.code-task.md
-## Completed:
+## Completed: 2026-06-11
 
 # Task: F2 Step 6 — Montar marketing F1 + orquestación CityPage
 

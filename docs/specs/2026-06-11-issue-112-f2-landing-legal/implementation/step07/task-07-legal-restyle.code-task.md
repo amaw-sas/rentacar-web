@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By:
-## Completed:
+## Completed: 2026-06-11
 
 # Task: F2 Step 7 — Legales restyle (estilo diseño, contenido de intermediación preservado)
 

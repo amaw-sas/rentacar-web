@@ -1,6 +1,6 @@
-## Status: PENDING
+## Status: COMPLETED
 ## Blocked-By:
-## Completed:
+## Completed: 2026-06-11
 
 # Task: F2 Step 1 — HomeContact `reserveAnchor` prop (F1 reuse prereq)
 
