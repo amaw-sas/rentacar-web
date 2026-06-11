@@ -18,7 +18,7 @@
   -->
   <section
     id="contact"
-    class="relative isolate overflow-hidden bg-linear-to-br from-hero-from to-hero-to py-14 md:py-20 lg:py-24"
+    class="relative isolate overflow-hidden bg-linear-to-br from-hero-from to-hero-to py-14 md:py-20 lg:py-24 [--ctx-text-primary:#fff]"
   >
     <!-- Subtle dotted texture overlay -->
     <div

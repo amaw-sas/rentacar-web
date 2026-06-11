@@ -25,7 +25,7 @@
   -->
   <section
     id="partners"
-    class="py-12 md:py-16 bg-linear-to-b from-footer-from to-footer-to"
+    class="py-12 md:py-16 bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <p class="text-center text-sm font-medium uppercase tracking-wider text-white/80 mb-2">

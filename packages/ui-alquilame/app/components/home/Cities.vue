@@ -37,7 +37,7 @@
           :key="city.id"
           :to="`/${city.id}`"
           :aria-label="`Alquiler de carros en ${city.name}`"
-          class="group relative block rounded-2xl overflow-hidden aspect-[4/3] bg-linear-to-br from-red-700 to-red-900 shadow-sm hover:shadow-lg transition-shadow duration-300"
+          class="group relative block rounded-2xl overflow-hidden aspect-[4/3] bg-linear-to-br from-red-700 to-red-900 shadow-sm hover:shadow-lg transition-shadow duration-300 [--ctx-text-primary:#fff]"
         >
           <!-- Dark gradient overlay for text legibility -->
           <div class="absolute inset-0 bg-linear-to-t from-gray-900/80 via-gray-900/20 to-transparent"></div>
