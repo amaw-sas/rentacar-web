@@ -123,7 +123,13 @@ test.describe('Availability error feedback (issue #10)', () => {
     await expect(
       page.getByText('Servicio temporalmente no disponible'),
     ).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('link', { name: /WhatsApp/ })).toBeVisible();
+    // Scope to the results section: the reskinned alquilame city page (issue #112
+    // F2) adds marketing WhatsApp CTAs (HomeContact) + the floating FAB, so a
+    // page-wide WhatsApp-link match is now ambiguous. The fallback block lives
+    // inside #seleccion-categorias.
+    await expect(
+      page.locator('#seleccion-categorias').getByRole('link', { name: /WhatsApp/ }),
+    ).toBeVisible();
 
     await expect(page.getByText('¡Oops!')).toHaveCount(0);
   });
