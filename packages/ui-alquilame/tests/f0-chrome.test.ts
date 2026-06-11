@@ -130,6 +130,25 @@ describe('F0 step09 — de-blue error.vue + typography .link-*', () => {
   })
 })
 
+// Regression guard (step10 runtime): the chrome gradients MUST use the v4
+// canonical `bg-linear-to-*` utility, NOT the v3 alias `bg-gradient-to-*`.
+// In this Tailwind 4.1 build, `from-*`/`to-*` built from custom @theme tokens
+// emit position-aware `--tw-gradient-stops` ("to bottom in oklab, …"); the v3
+// `bg-gradient-to-b` shim prepends its OWN direction → `linear-gradient(to
+// bottom, to bottom in oklab, …)` → invalid → background-image:none. The header,
+// footer and dark root backdrop then render transparent and white text turns
+// invisible (the exact B1 failure). `bg-linear-to-*` consumes the stops as-is
+// and renders. Verified live on the preview before this guard was written.
+describe('chrome gradients use v4 bg-linear-* (render), not v3 bg-gradient-* (transparent)', () => {
+  for (const rel of ['app/layouts/default.vue', 'app/error.vue']) {
+    it(`${rel} uses bg-linear-to-* and never the broken bg-gradient-to-*`, () => {
+      const src = read(rel)
+      expect(src).toMatch(/bg-linear-to-[a-z]/)
+      expect(src).not.toMatch(/bg-gradient-to-/)
+    })
+  }
+})
+
 describe('SCEN-F0-06 — chrome surfaces have zero blue', () => {
   const surfaces = [
     'app/layouts/default.vue',

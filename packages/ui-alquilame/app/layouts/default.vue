@@ -4,11 +4,11 @@
        The design's light body lands in F1, when each page gets its own section
        background (e.g. the red hero). Flipping to a light surface here would make
        that white text invisible. -->
-  <div class="min-h-screen bg-gradient-to-b from-brand-900 to-brand-950 font-sans text-gray-800">
+  <div class="min-h-screen bg-linear-to-b from-brand-900 to-brand-950 font-sans text-gray-800">
     <!-- Header -->
     <UHeader
       v-model:open="mobileMenuOpen"
-      class="bg-gradient-to-r from-hero-from to-hero-to z-50 py-4 md:py-6 px-6 border-none sticky top-0"
+      class="bg-linear-to-r from-hero-from to-hero-to z-50 py-4 md:py-6 px-6 border-none sticky top-0"
       mode="slideover"
       :toggle="{
         color: 'white',
@@ -69,7 +69,7 @@
     </main>
 
     <!-- Footer unificado (gradiente rojo de marca) -->
-    <footer class="bg-gradient-to-b from-footer-from to-footer-to text-white font-heading">
+    <footer class="bg-linear-to-b from-footer-from to-footer-to text-white font-heading">
       <!-- Enlaces de ciudades (#sedes) -->
       <section id="sedes" class="text-center py-12 lg:py-20">
         <div class="max-w-7xl mx-auto px-4 space-y-6">
