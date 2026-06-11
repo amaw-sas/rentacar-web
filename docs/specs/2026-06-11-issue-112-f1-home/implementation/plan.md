@@ -18,9 +18,9 @@ Todo bajo `packages/ui-alquilame/` (aislamiento F1 — `logic/` y otras marcas i
 |---|---|---|
 | `AnnouncementBar.vue` | Barra superior descartable | copy diseño; estado de cierre **client-only** (no hornear bajo ISR) |
 | `Hero.vue` | Hero restilizado (gradiente `bg-linear`, headline, selector) | **`SelectBranch`** (preservar), `ImagesFamily`, HeroHeadline/Title/Description |
-| `Fleet.vue` | 4 cards de categoría con "Desde $X/día" real + modal→Ver disponibilidad | lista local `{code,title,desc,image}` (C/FX/GC/LE) + `pickRepresentativeDailyPrice(categories.find(code).month_prices)` (import de logic); `SelectBranch` en modal |
+| `Fleet.vue` | 4 cards de categoría con "Desde $X/día" real + modal→Ver disponibilidad | lista local `{code,title,desc,image}` con **los nombres curados** (C=Económico, FX=Sedán Automático, GC=Camioneta SUV, LE=Camioneta Premium — copiados de `representativeCategories`, ver deuda abajo) + `pickRepresentativeDailyPrice(categories.find(code).month_prices)` (import de logic); `SelectBranch` en modal |
 | `HowItWorks.vue` | 3 pasos | copy diseño |
-| `ValueProps.vue` | 4 props; headline desde `franchise.shortname` | config |
+| `ValueProps.vue` | 4 props; headline con el nombre de marca desde **`organization.brand`** ("Alquilame", capitalizado — NO `franchise.shortname` que es minúscula `"alquilame"`) | config |
 | `Stats.vue` | Banda de stats | copy diseño (excepción nombrada en spec) |
 | `Cities.vue` | Grid de ciudades, links internos `/{city.id}` | `useData().cities` (todas activas); imágenes `Images/Ciudades` |
 | `Reviews.vue` | Testimonios estilo review | `franchiseTestimonials[brandCode]`; `StarIcon` |
@@ -34,9 +34,11 @@ Todo bajo `packages/ui-alquilame/` (aislamiento F1 — `logic/` y otras marcas i
 | Archivo | Cambio |
 |---|---|
 | `app/pages/index.vue` | Orquestar los `home/*` en el orden del diseño; **eliminar** sección `#video` + llamadas `usePromoVideoSchema()` y `useEarlyBookingPromotion()`; **conservar** `useBaseSEO`/`useHomeBreadcrumb`/og/`FAQPage`/canonical; `useHomeAggregateRating` **sin tocar** (no-regresión); headings adoptan `.heading-*` |
-| `app/components/ChatWidget.vue` | Restilizar/montar como **FAB flotante** de contacto (ya usa `franchise.whatsapp`/phone) |
+| `app/components/ChatWidget.vue` | **Restyle in-place** del FAB existente (ya montado como `LazyChatWidget` en `app/layouts/default.vue:126`, ya usa `franchise.whatsapp`/phone) — NO montar uno nuevo en `index.vue` (evita FAB duplicado) |
 
 **Decomposición:** cada sección es un componente independiente, testeable por separado (un `*.test.ts` por contrato observable). `index.vue` queda como orquestador delgado. Imágenes reusan `Images/*` existentes (CLS: `aspect-ratio` reservado).
+
+**Deuda declarada (F1-isolation):** `representativeCategories` es un `const` privado de `useCityProductSchema.ts` (logic) — para no tocar logic en F1, la lista de fleet se **duplica** localmente en `Fleet.vue` con los mismos nombres curados. Extraer/exportar la lista compartida (cambio que toca logic) queda diferido a una fase posterior. No es cost-free: es duplicación de un dato de dominio, asumida a propósito por aislamiento.
 
 ### Pasos de implementación (SDD: escenario → código → satisfacer)
 
@@ -48,11 +50,11 @@ Todo bajo `packages/ui-alquilame/` (aislamiento F1 — `logic/` y otras marcas i
 
 2. **Fleet con precio real** | M | deps: 1
    - Escenario (SCEN-F1-02): 4 cards (C/FX/GC/LE) cada una con "Desde $X/día" de `pickRepresentativeDailyPrice` (omitida fail-soft si no hay fila activa; **nunca $0**), y "Ver disponibilidad" abre modal con `SelectBranch`.
-   - AC: `Fleet.vue` con lista local de 4 categorías; precio vía import de `pickRepresentativeDailyPrice`; card sin precio cuando `undefined` (no muestra $0); modal→`SelectBranch` preservado; test: 4 cards, precio formateado, fail-soft sin $0, botón abre modal.
+   - AC: `Fleet.vue` con lista local de 4 categorías **con nombres curados** (Económico/Sedán Automático/Camioneta SUV/Camioneta Premium — alineado con la spec, no las etiquetas genéricas del mockup); precio vía import de `pickRepresentativeDailyPrice`; card sin precio cuando `undefined` (no muestra $0); modal→`SelectBranch` preservado; test: 4 cards, precio formateado, fail-soft sin $0, botón abre modal.
 
 3. **How-it-works + Value props + Stats** | M | deps: 1
-   - Escenario (SCEN-F1-03 parcial): existen 3 pasos (Elige/Reserva/Recoge), 4 value props con headline desde `franchise.shortname`, y banda de stats con copy del diseño.
-   - AC: 3 componentes creados y montados; headline NO hardcodea "Alquilame"; test: secciones presentes, headline usa shortname.
+   - Escenario (SCEN-F1-03 parcial): existen 3 pasos (Elige/Reserva/Recoge), 4 value props con headline usando el nombre de marca desde `organization.brand`, y banda de stats con copy del diseño.
+   - AC: 3 componentes creados y montados; headline desde `organization.brand` ("Alquilame", capitalizado) — NO hardcodea "Alquilame" ni usa `franchise.shortname` (minúscula); test: secciones presentes, headline deriva de config.
 
 4. **Cities** | M | deps: 1
    - Escenario (SCEN-F1-04): la sección lista **todas las ciudades activas** (`useData().cities`) con `href="/{city.id}"` interno; cero `wa.me`.
@@ -66,9 +68,14 @@ Todo bajo `packages/ui-alquilame/` (aislamiento F1 — `logic/` y otras marcas i
    - Escenario (SCEN-F1-06): requisitos y faq con estilo del diseño, datos reales; `FAQPage` schema persiste.
    - AC: `Requirements.vue` + `Faq.vue` (acordeón con `faqs`); `FAQPage` schema sigue en `index.vue`; test: faqs reales, schema presente.
 
-7. **Partners + Contact + Announcement + FAB** | M | deps: 1
-   - Escenario (SCEN-F1-03 resto): marquee "Empresas Aliadas", contact (config), barra de anuncio descartable (client-only), y FAB flotante (ChatWidget) presentes.
-   - AC: `Partners.vue`, `Contact.vue`, `AnnouncementBar.vue` creados; `ChatWidget` montado como FAB; contact usa `franchise.whatsapp`/phone (sin re-envolver URL); estado de cierre del anuncio client-only; test: secciones presentes, sin número hardcoded.
+7a. **Contact + Announcement + FAB restyle** | M | deps: 1
+   - Escenario (SCEN-F1-03 resto, parte 1): contact (config), barra de anuncio descartable (client-only), y FAB de contacto restilizado.
+   - AC: `Contact.vue` + `AnnouncementBar.vue` creados; `ChatWidget` **restilizado in-place** (ya montado en `default.vue:126` — NO duplicar); contact usa `franchise.whatsapp` (URL, sin re-envolver) + `franchise.phone`; estado de cierre del anuncio client-only (no SSR/ISR-horneado); test: secciones presentes, sin número hardcoded, un solo FAB.
+
+7b. **Partners "Empresas Aliadas" (marquee)** | S | deps: 1
+   - Escenario (SCEN-F1-03 resto, parte 2): marquee de aliados presente.
+   - **Sub-tarea de assets (bloqueante):** los logos (Localiza/Avis/Alquicarros/Alquilatucarro) **NO existen** en el repo. Sourcing desde el dist del diseño (`/tmp/alqui_f1_design/dist/images|_astro`) hacia `public/images/brand/partners/` (optimizar con el script `optimize-images.mjs` de F0); **fallback** = etiquetas de texto si algún logo no se puede obtener/usar legalmente. Mantener aislamiento (solo `ui-alquilame`).
+   - AC: `Partners.vue` con marquee; assets presentes (o fallback texto documentado); test: marquee presente, assets resuelven 200 en runtime (step 10).
 
 8. **Eliminar #video + schemas promo/video** | S | deps: 1
    - Escenario (SCEN-F1-07): no existe la sección video/60%, y el JSON-LD no tiene `VideoObject` ni `Offer/Promotion` (EarlyBooking).
@@ -80,7 +87,7 @@ Todo bajo `packages/ui-alquilame/` (aislamiento F1 — `logic/` y otras marcas i
 
 10. **Integración + verificación del holdout (runtime, preview)** | M | deps: 1–9
     - Escenario: holdout completo satisfecho en el preview Vercel.
-    - AC: `agent-browser` confirma — layout por sección, precio real en fleet, font-family Plus Jakarta en headings (F1-08), cities internas (F1-04), gradientes renderizan `bg-linear` (F1-10), consola limpia, CLS ≤ baseline (F1-12), JSON-LD sin VideoObject/Promotion (F1-07); grep aislamiento `git diff main --stat` solo `ui-alquilame`+`docs/specs` (F1-13) y cero `bg-gradient-to-`; SEO no-regresión (F1-11); E2E `BRAND=alquilame` subconjunto home sin regresión + `data-testid` intactos (F1-09). Cierre con `/verification-before-completion`.
+    - AC: `agent-browser` confirma — layout por sección, precio real en fleet, font-family Plus Jakarta en headings (F1-08), cities internas (F1-04), gradientes renderizan `bg-linear` (F1-10), consola limpia, CLS ≤ baseline (F1-12), JSON-LD sin VideoObject/Promotion (F1-07); aislamiento `git diff main --stat` solo `ui-alquilame`+`docs/specs` (F1-13); grep `bg-gradient-to-` **acotado a los archivos de home/chrome tocados por F1** = 0 (NO repo-wide — `gana.vue`/`blog/[...slug].vue` tienen `bg-gradient-to-*` pre-existente fuera de scope); SEO no-regresión (F1-11); E2E `BRAND=alquilame` subconjunto home sin regresión + `data-testid` intactos (F1-09, baseline = los 3 fallos pre-existentes acoplados a alquilatucarro). Cierre con `/verification-before-completion`.
 
 ### Prerequisitos
 - Worktree `.worktrees/issue-112-f1-home` (branch desde `main` con F0). Sin nuevas deps.

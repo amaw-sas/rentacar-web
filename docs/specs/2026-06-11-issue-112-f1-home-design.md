@@ -36,7 +36,7 @@ Barra de anuncio (descartable, arriba) · `#hero` · `#fleet` · `#how-it-works`
 | `#hero` | **Restyle** al hero del diseño (gradiente, headline, layout) | **Preservar `SelectBranch`** + HeroHeadline/Title/Description, ImagesFamily |
 | `#fleet` | **Rebuild** al grid del diseño; **precio "Desde $X/día" real** | 4 categorías representativas (C/FX/GC/LE); precio vía `pickRepresentativeDailyPrice` (fail-soft, nunca $0); modal→`SelectBranch`→"Ver disponibilidad" (verde, ya existe). **Toggle Diario/Mensual del mockup → fuera de F1** (el "desde" ya es la tarifa diaria de la mensualidad). El split manual/automática del mockup se simplifica a las 4 representativas con precio real. |
 | `#how-it-works` | **Nueva** (3 pasos) | copy del diseño |
-| Value props | **Nueva** (4) | copy del diseño; el headline ("¿Por qué elegir …?") toma el nombre de marca de `franchise.shortname`, NO hardcodear "Alquilame" |
+| Value props | **Nueva** (4) | copy del diseño; el headline ("¿Por qué elegir …?") toma el nombre de marca de `organization.brand` ("Alquilame", capitalizado — `franchise.shortname` es minúscula), NO hardcodear |
 | Banda de stats | **Nueva** | copy del diseño tal cual (incl. "desde 2015") — **excepción a "datos reales"**, no hay fuente |
 | `#cities` | **Nueva** en el home | **todas las ciudades activas** del data source, links internos `/{city.id}` (NO wa.me) |
 | `#google-reviews` | **Restyle** del `#testimonios` al estilo review | `franchiseTestimonials` reales; **sin** rating hardcoded del mockup ("43"/"5,0") |
