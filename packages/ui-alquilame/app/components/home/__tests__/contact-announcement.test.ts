@@ -73,19 +73,22 @@ describe('F1 step07a — Contact.vue', () => {
 describe('F1 step07a — AnnouncementBar.vue', () => {
   const bar = read('app/components/home/AnnouncementBar.vue')
 
-  it('keeps the dismissed state CLIENT-ONLY (onMounted, never baked under SSR)', () => {
-    // The bar is revealed only after onMounted flips a flag that starts false,
-    // so SSR renders the SSR-safe default — no per-session attribute is baked.
+  it('renders the bar in SSR by default so it does not shift the hero on mount (CLS)', () => {
+    // CLS fix (step10 runtime): the bar must occupy its space from first paint.
+    // dismissed starts false (SSR-safe default) and the bar is shown under v-if,
+    // so SSR + the first client render BOTH show the bar → no hydration mismatch
+    // and no post-mount appearance shift that pushes the hero down.
+    expect(bar).toMatch(/const dismissed = ref\(false\)/)
+    expect(bar).toMatch(/v-if="!dismissed"/)
+    // The bar is NOT gated behind a mount flag / ClientOnly (that caused the shift).
+    expect(bar).not.toMatch(/v-if="mounted/)
+    expect(bar).not.toMatch(/<ClientOnly>/)
+  })
+
+  it('keeps the dismissed state CLIENT-ONLY (onMounted restore, never baked under SSR)', () => {
+    // Only the per-session dismissed flag is client-side: restored in onMounted
+    // (post-hydration, so SSR never observes it) and set on dismiss.
     expect(bar).toMatch(/onMounted\(/)
-    expect(bar).toMatch(/const mounted = ref\(false\)/)
-  })
-
-  it('guards the bar with a v-if so SSR never renders the closed branch', () => {
-    expect(bar).toMatch(/v-if="mounted && !dismissed"/)
-  })
-
-  it('isolates the per-session state inside <ClientOnly> (no SSR hydration mismatch)', () => {
-    expect(bar).toMatch(/<ClientOnly>/)
   })
 
   it('persists the dismissed flag to sessionStorage (per-session, client-side)', () => {
