@@ -121,22 +121,23 @@ describe('useUnavailabilityContext', () => {
   })
 
   describe('locationLabel', () => {
-    it('formato "{ciudad} · {nombre sucursal}" con city capitalizada', () => {
+    it('cuando el nombre de sucursal ya empieza con la ciudad, no la duplica', () => {
       const formStore = useStoreReservationForm()
       formStore.lugarRecogida = 'AABOT'
 
       const { locationLabel } = useUnavailabilityContext()
 
-      expect(locationLabel.value).toBe('Bogotá · Bogotá Aeropuerto')
+      // 'Bogotá Aeropuerto' ya lleva la ciudad → sin prefijo redundante.
+      expect(locationLabel.value).toBe('Bogotá Aeropuerto')
     })
 
-    it('capitaliza cada segmento de un slug de ciudad con guión (#30)', () => {
+    it('slug de ciudad con guión cuyo nombre ya lo incluye no se duplica (#30)', () => {
       const formStore = useStoreReservationForm()
       formStore.lugarRecogida = 'POBLADO'
 
       const { locationLabel } = useUnavailabilityContext()
 
-      expect(locationLabel.value).toBe('El Poblado · El Poblado')
+      expect(locationLabel.value).toBe('El Poblado')
     })
 
     it('city solo-whitespace cae al nombre de la sucursal, sin separador malformado (#32)', () => {
@@ -148,12 +149,13 @@ describe('useUnavailabilityContext', () => {
       expect(locationLabel.value).toBe('Sucursal Centro')
     })
 
-    it('city con espacios alrededor se normaliza vía el mapa (#32)', () => {
+    it('nombre suffix-only conserva el contexto de ciudad: "Bogotá · Sucursal Norte" (#32)', () => {
       const formStore = useStoreReservationForm()
       formStore.lugarRecogida = 'UNTRIM'
 
       const { locationLabel } = useUnavailabilityContext()
 
+      // 'Sucursal Norte' NO empieza con la ciudad → se conserva el prefijo.
       expect(locationLabel.value).toBe('Bogotá · Sucursal Norte')
     })
 
@@ -177,7 +179,7 @@ describe('useUnavailabilityContext', () => {
       const { bannerText, isSpecific } = useUnavailabilityContext()
 
       expect(bannerText.value).toBe(
-        'No disponible para el 12-15 mayo en Bogotá · Bogotá Aeropuerto',
+        'No disponible para el 12-15 mayo en Bogotá Aeropuerto',
       )
       expect(isSpecific.value).toBe(true)
     })

@@ -4,10 +4,10 @@
     <div class="bg-red-50 border-l-4 border-red-500 px-4 py-3 flex items-start gap-2">
       <UIcon name="i-lucide-alert-triangle" class="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
       <div>
-        <div class="text-sm font-semibold text-red-800">No disponible</div>
+        <div class="text-2xl font-semibold text-red-800 leading-tight">No disponible</div>
         <div
           v-if="isSpecific"
-          class="text-xs text-red-700 mt-0.5"
+          class="text-sm text-red-700 mt-0.5"
         >
           {{ bannerText }}
         </div>
@@ -23,40 +23,42 @@
       />
     </div>
 
-    <!-- Bloque inferior: titulo + CTAs -->
-    <div class="contenedor-descripcion-carro px-5 py-4">
-      <div class="text-gray-600 text-sm">Grupo {{ categoryCode }}</div>
+    <!-- Bloque inferior: titulo de categoria -->
+    <div class="contenedor-descripcion-carro px-5 pt-4 pb-3">
+      <div class="categoria-carro text-gray-700">Grupo {{ categoryCode }}</div>
       <h3 class="text-2xl font-semibold mt-1 text-gray-800">
         {{ vehicleCategory?.descripcion_corta }}
       </h3>
+    </div>
 
-      <div class="space-y-2 mt-4">
-        <UButton
-          color="neutral"
-          size="xl"
-          block
-          class="bg-gray-900 hover:bg-black text-white py-4"
-          @click="scrollToSearcher"
-        >
-          <template #trailing>
-            <ChevronRightIcon cls="size-5" />
-          </template>
-          Probar otras fechas
-        </UButton>
+    <!-- Cuerpo de CTAs: fondo difuminado (sutil-fondo) que separa los botones
+         del titulo, espejo del cuerpo de precios de la tarjeta disponible -->
+    <div class="sutil-fondo px-5 py-4 rounded-b-lg space-y-2">
+      <UButton
+        color="neutral"
+        size="xl"
+        block
+        class="bg-gray-900 hover:bg-black text-white py-4"
+        @click="scrollToSearcher"
+      >
+        <template #trailing>
+          <ChevronRightIcon cls="size-5" />
+        </template>
+        Probar otras fechas
+      </UButton>
 
-        <UButton
-          color="neutral"
-          size="xl"
-          block
-          class="bg-gray-900 hover:bg-black text-white py-4"
-          @click="scrollToSearcher"
-        >
-          <template #trailing>
-            <ChevronRightIcon cls="size-5" />
-          </template>
-          Probar otra sucursal cercana
-        </UButton>
-      </div>
+      <UButton
+        color="neutral"
+        size="xl"
+        block
+        class="bg-gray-900 hover:bg-black text-white py-4"
+        @click="scrollToSearcher"
+      >
+        <template #trailing>
+          <ChevronRightIcon cls="size-5" />
+        </template>
+        Probar otra sucursal cercana
+      </UButton>
     </div>
   </div>
 </template>
