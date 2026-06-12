@@ -57,6 +57,34 @@ describe('F0 step07 — header rojo sticky (default.vue)', () => {
   })
 })
 
+describe('F3 step05 — CTA "Reservar" → /reservas (default.vue)', () => {
+  const layout = read('app/layouts/default.vue')
+
+  // The desktop CTA lives in the #right region (lg-only nav), the mobile CTA in
+  // the #body slideover. Both must be a NuxtLink to /reservas — the global entry
+  // point to centralized search (issue #112 F3).
+  it('renders a "Reservar" CTA to /reservas in BOTH the desktop nav and the mobile menu', () => {
+    const ctas = layout.match(/<NuxtLink[\s\S]*?<\/NuxtLink>/g) ?? []
+    const reservar = ctas.filter(
+      (l) => /to="\/reservas"/.test(l) && /Reservar/.test(l),
+    )
+    // Two distinct CTAs: one desktop (#right), one mobile (#body slideover).
+    expect(reservar.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('the "Reservar" CTA uses brand-red tokens, never blue', () => {
+    const ctas = (layout.match(/<NuxtLink[\s\S]*?<\/NuxtLink>/g) ?? []).filter(
+      (l) => /to="\/reservas"/.test(l),
+    )
+    for (const cta of ctas) {
+      expect(cta).not.toMatch(BLUE)
+      expect(cta).not.toMatch(/bg-gradient-to-/)
+      // Brand surface: a white CTA on the red header, or a brand-600 fill.
+      expect(cta).toMatch(/bg-(white|brand-\d)/)
+    }
+  })
+})
+
 describe('F0 step08a — footer rojo unificado (default.vue)', () => {
   const layout = read('app/layouts/default.vue')
 
