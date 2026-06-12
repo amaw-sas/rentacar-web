@@ -1,12 +1,16 @@
 import { test, expect } from '@playwright/test';
 
+// F3 (issue #112): alquilame's Searcher moved off the city landing into /reservas.
+// Other brands keep it in the city hero; the mobile inputs are identical at both.
+const SEARCHER_HERO = process.env.BRAND === 'alquilame' ? '/reservas' : '/armenia';
+
 test.describe('Searcher - Mobile Form Field Fix', () => {
   test('componente móvil select está visible y funcional', async ({ page }) => {
     // Configurar viewport móvil (iPhone SE)
     await page.setViewportSize({ width: 375, height: 667 });
 
     // Ir a página de ciudad con searcher
-    await page.goto('/armenia');
+    await page.goto(SEARCHER_HERO);
 
     // Esperar que el componente searcher esté visible
     await page.waitForLoadState('networkidle');
@@ -40,7 +44,7 @@ test.describe('Searcher - Mobile Form Field Fix', () => {
 
   test('input móvil date está visible y funcional', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/armenia');
+    await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
     // Enfocar el input date móvil directamente

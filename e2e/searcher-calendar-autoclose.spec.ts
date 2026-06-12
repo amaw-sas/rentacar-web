@@ -1,5 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
 
+// F3 (issue #112): alquilame's Searcher moved off the city landing into /reservas
+// (landing now shows a 'Reservar' CTA). Other brands keep it in the city hero.
+// The Searcher widget + calendar behaviour are identical at both heroes.
+const SEARCHER_HERO = process.env.BRAND === 'alquilame' ? '/reservas' : '/armenia';
+
 // Holdout: docs/specs/2026-05-06-searcher-calendar-autoclose/scenarios/
 //          searcher-calendar-autoclose.scenarios.md
 // Spec:    docs/specs/2026-05-06-searcher-calendar-autoclose-design.md
@@ -28,7 +33,7 @@ test.describe('Searcher calendar autoclose - desktop', () => {
   test.use({ viewport: { width: 1280, height: 720 } });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/armenia');
+    await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
   });
 
@@ -137,7 +142,7 @@ test.describe('Searcher calendar autoclose - mobile', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
   test('SCEN-004: inputs móviles type=date visibles, desktop ocultos', async ({ page }) => {
-    await page.goto('/armenia');
+    await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
     const mobilePickup = page.locator('#pickup-date-mobile').last();
