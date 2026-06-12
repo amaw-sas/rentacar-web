@@ -1,9 +1,9 @@
 <template>
   <UPage v-if="post">
     <!-- Reading Progress Bar -->
-    <div class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
+    <div class="fixed top-0 left-0 right-0 h-1 bg-surface-soft z-50">
       <div
-        class="h-full bg-red-700 transition-all duration-150 ease-out"
+        class="h-full bg-brand-600 transition-all duration-150 ease-out"
         :style="{ width: `${readingProgress}%` }"
       />
     </div>
@@ -16,14 +16,14 @@
         class="w-full h-full object-cover"
         fetchpriority="high"
       >
-      <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+      <div class="absolute inset-0 bg-linear-to-t from-gray-900/80 to-transparent" />
       <div class="absolute bottom-0 left-0 right-0 p-6 md:p-12">
         <div class="max-w-4xl mx-auto">
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-red-700 rounded-full mb-4">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-brand-600 rounded-full mb-4">
             <UIcon :name="getCategoryIcon(post.category)" class="size-3.5" />
             {{ formatCategory(post.category) }}
           </span>
-          <h1 class="text-2xl md:text-4xl font-bold text-white mb-4">
+          <h1 class="text-2xl md:text-4xl font-bold font-heading text-white mb-4">
             {{ post.title }}
           </h1>
           <div class="flex flex-wrap items-center gap-4 text-sm text-gray-300">
@@ -62,13 +62,13 @@
           <aside class="lg:w-1/3">
             <div class="sticky top-24 space-y-8">
               <!-- Table of Contents -->
-              <nav v-if="post.body?.toc?.links?.length" class="bg-gray-50 rounded-xl p-6">
+              <nav v-if="post.body?.toc?.links?.length" class="bg-surface-softer rounded-xl p-6">
                 <h3 class="font-bold text-gray-900 mb-4">Contenido</h3>
                 <ul class="space-y-2">
                   <li v-for="link in post.body.toc.links" :key="link.id">
                     <a
                       :href="`#${link.id}`"
-                      class="text-sm text-gray-600 hover:text-red-700 underline underline-offset-2 transition-colors"
+                      class="text-sm text-gray-600 hover:text-brand-700 underline underline-offset-2 transition-colors"
                     >
                       {{ link.text }}
                     </a>
@@ -76,7 +76,7 @@
                       <li v-for="child in link.children" :key="child.id">
                         <a
                           :href="`#${child.id}`"
-                          class="text-xs text-gray-500 hover:text-red-700 underline underline-offset-2 transition-colors"
+                          class="text-xs text-gray-500 hover:text-brand-700 underline underline-offset-2 transition-colors"
                         >
                           {{ child.text }}
                         </a>
@@ -87,13 +87,13 @@
               </nav>
 
               <!-- Tags -->
-              <div v-if="post.tags?.length" class="bg-gray-50 rounded-xl p-6">
+              <div v-if="post.tags?.length" class="bg-surface-softer rounded-xl p-6">
                 <h3 class="font-bold text-gray-900 mb-4">Etiquetas</h3>
                 <div class="flex flex-wrap gap-2">
                   <span
                     v-for="tag in post.tags"
                     :key="tag"
-                    class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-full"
+                    class="px-3 py-1 text-xs bg-surface-soft text-gray-700 rounded-full"
                   >
                     {{ tag }}
                   </span>
@@ -101,7 +101,7 @@
               </div>
 
               <!-- Share Buttons (Desktop) -->
-              <div class="hidden lg:block bg-gray-50 rounded-xl p-6">
+              <div class="hidden lg:block bg-surface-softer rounded-xl p-6">
                 <h3 class="font-bold text-gray-900 mb-4">Compartir</h3>
                 <div class="flex gap-3">
                   <button
@@ -127,7 +127,7 @@
                   </button>
                   <button
                     @click="copyLink"
-                    class="flex items-center justify-center w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-full transition-colors"
+                    class="flex items-center justify-center w-10 h-10 bg-brand-600 hover:bg-brand-700 text-white rounded-full transition-colors"
                     aria-label="Copiar enlace"
                   >
                     <UIcon :name="linkCopied ? 'i-lucide-check' : 'i-lucide-link'" class="size-5" />
@@ -136,12 +136,12 @@
               </div>
 
               <!-- CTA -->
-              <div class="bg-red-700 rounded-xl p-6 text-white">
+              <div class="bg-brand-600 rounded-xl p-6 text-white">
                 <h3 class="font-bold mb-2">¿Listo para reservar?</h3>
-                <p class="text-sm text-red-100 mb-4">Sin anticipos, sin compromisos</p>
+                <p class="text-sm text-brand-100 mb-4">Sin anticipos, sin compromisos</p>
                 <NuxtLink
-                  to="/"
-                  class="block text-center bg-white text-red-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-100 transition-colors"
+                  to="/reservas"
+                  class="block text-center bg-white text-brand-700 px-4 py-2 rounded-lg font-bold hover:bg-brand-100 transition-colors"
                 >
                   Reservar Ahora
                 </NuxtLink>
@@ -155,7 +155,7 @@
     <!-- Author Bio -->
     <section class="bg-white py-8 px-4 md:px-8 border-t border-gray-200">
       <div class="max-w-4xl mx-auto">
-        <div class="bg-gray-50 rounded-2xl p-6 md:p-8">
+        <div class="bg-surface-softer rounded-2xl p-6 md:p-8">
           <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <img
               :src="post.author.avatar"
@@ -172,15 +172,15 @@
               </p>
               <div class="mt-4 flex flex-col sm:flex-row items-center gap-3">
                 <NuxtLink
-                  to="/"
-                  class="inline-flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-lg font-medium transition-colors"
+                  to="/reservas"
+                  class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors"
                 >
                   <UIcon name="i-lucide-car" class="size-4" />
                   Reservar un Carro
                 </NuxtLink>
                 <NuxtLink
                   to="/blog"
-                  class="inline-flex items-center gap-2 text-gray-600 hover:text-red-700 font-medium transition-colors"
+                  class="inline-flex items-center gap-2 text-gray-600 hover:text-brand-700 font-medium transition-colors"
                 >
                   <UIcon name="i-lucide-book-open" class="size-4" />
                   Más artículos
@@ -193,7 +193,7 @@
     </section>
 
     <!-- Related Posts -->
-    <section v-if="relatedPosts?.length" class="bg-gray-100 py-12 px-4 md:px-8">
+    <section v-if="relatedPosts?.length" class="bg-surface-soft py-12 px-4 md:px-8">
       <div class="max-w-7xl mx-auto">
         <h2 class="text-xl font-bold text-gray-800 mb-6">Artículos Relacionados</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -211,7 +211,7 @@
                 loading="lazy"
               >
               <div class="p-4">
-                <h3 class="font-bold text-gray-900 group-hover:text-red-700 transition-colors line-clamp-2">
+                <h3 class="font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors line-clamp-2">
                   {{ related.title }}
                 </h3>
                 <p class="text-sm text-gray-500 mt-2">{{ related.readingTime }} min de lectura</p>
@@ -227,7 +227,7 @@
       <div class="max-w-4xl mx-auto text-center">
         <NuxtLink
           to="/blog"
-          class="inline-flex items-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-black font-medium rounded-lg transition-colors"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-surface-soft hover:bg-surface-softer text-brand-700 font-medium rounded-lg transition-colors"
         >
           <span>&larr;</span>
           <span>Volver al Blog</span>
@@ -262,7 +262,7 @@
         </button>
         <button
           @click="copyLink"
-          class="flex items-center justify-center w-9 h-9 bg-gray-600 hover:bg-gray-700 text-white rounded-full transition-colors"
+          class="flex items-center justify-center w-9 h-9 bg-brand-600 hover:bg-brand-700 text-white rounded-full transition-colors"
           aria-label="Copiar enlace"
         >
           <UIcon :name="linkCopied ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
@@ -272,13 +272,13 @@
   </UPage>
 
   <!-- 404 -->
-  <div v-else class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div v-else class="min-h-screen flex items-center justify-center bg-surface-soft">
     <div class="text-center">
-      <h1 class="text-4xl font-bold text-gray-900 mb-4">Artículo no encontrado</h1>
+      <h1 class="text-4xl font-bold font-heading text-gray-900 mb-4">Artículo no encontrado</h1>
       <p class="text-gray-600 mb-6">El artículo que buscas no existe o ha sido movido.</p>
       <NuxtLink
         to="/blog"
-        class="inline-block bg-red-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-800 transition-colors"
+        class="inline-block bg-brand-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-brand-700 transition-colors"
       >
         Ir al Blog
       </NuxtLink>
@@ -580,12 +580,12 @@ definePageMeta({
 }
 
 .prose a {
-  color: rgb(185, 28, 28);
+  color: #cc022b;
   text-decoration: underline;
 }
 
 .prose a:hover {
-  color: rgb(153, 27, 27);
+  color: #94001e;
 }
 
 .prose strong {
@@ -596,7 +596,7 @@ definePageMeta({
 .prose blockquote {
   border-left-width: 4px;
   border-left-style: solid;
-  border-color: rgb(185, 28, 28);
+  border-color: #cc022b;
   padding-left: 1rem;
   font-style: italic;
   color: rgb(75, 85, 99);
@@ -606,7 +606,7 @@ definePageMeta({
 
 .prose code {
   background-color: rgb(243, 244, 246);
-  color: rgb(185, 28, 28);
+  color: #cc022b;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
