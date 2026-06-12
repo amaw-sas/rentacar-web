@@ -34,6 +34,14 @@ export const useCityPageSEO = () => {
         ? `Alquiler de Carros en ${city.name} desde $32/día`
         : franchise.title
 
+    // Social share image: the per-brand static asset (franchise.ogImage,
+    // absolutized by nuxt-seo via site.url), NOT a Blob model image — so social
+    // caches never break when the vehicle catalog churns. Without this, city
+    // landing pages rendered with no og:image/twitter:image (issue #49).
+    const cityShareImageAlt = city
+        ? `Alquiler de carros en ${city.name} — ${franchise.name}`
+        : franchise.name
+
     useHead({
         title: cityTitle,
         htmlAttrs: {
@@ -51,6 +59,10 @@ export const useCityPageSEO = () => {
         description: cityDescription,
         ogDescription: cityDescription,
         twitterDescription: cityDescription,
+        ogImage: franchise.ogImage,
+        ogImageAlt: cityShareImageAlt,
+        twitterImage: franchise.ogImage,
+        twitterImageAlt: cityShareImageAlt,
     })
 
     if (city) {
