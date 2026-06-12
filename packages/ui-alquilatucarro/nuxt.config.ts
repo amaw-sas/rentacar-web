@@ -468,7 +468,11 @@ export default defineNuxtConfig({
     // Whitelist del host Blob compartido (modelos de vehículos en Supabase, las 3 marcas).
     // Sin esto, @nuxt/image NO optimiza URLs externas y las imágenes salen como JPEG ~412KB crudo
     // en vez de enrutarse por el optimizador Vercel (/_vercel/image → webp ~45KB).
-    domains: ['9grznib0czdjtk77.public.blob.vercel-storage.com'],
+    // Configurable vía NUXT_IMAGE_DOMAINS (lista CSV) con FALLBACK al host actual: si la env falta
+    // en cualquier target de Vercel, la red de seguridad de #48/#72 se mantiene (no hay fallo
+    // silencioso → las imágenes nunca vuelven a salir crudas). La env solo habilita rotar el host.
+    domains: (process.env.NUXT_IMAGE_DOMAINS || '9grznib0czdjtk77.public.blob.vercel-storage.com')
+      .split(',').map((d) => d.trim()).filter(Boolean),
     screens: {
       xs: 320,
       sm: 640,
