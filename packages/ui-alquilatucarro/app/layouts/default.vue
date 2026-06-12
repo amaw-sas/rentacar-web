@@ -90,8 +90,6 @@
             v-for="city in cities"
             :key="city.id"
             :to="getCityReservationURL(city)"
-            :external="true"
-            target="_blank"
             class="text-white justify-center bg-blue-600 hover:bg-blue-800 rounded-lg py-3 w-full md:w-fit font-normal transition-colors"
           >
             Alquiler de carros en <span class="font-bold">{{ city.name }}</span>
