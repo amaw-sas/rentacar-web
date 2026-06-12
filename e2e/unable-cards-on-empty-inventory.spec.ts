@@ -123,9 +123,9 @@ test.describe('Unable cards on empty inventory', () => {
 
     // Both CTAs render — the user has two routes back to the searcher.
     const probarFechas = firstCard.getByRole('button', { name: 'Probar otras fechas' });
-    const cambiarSucursal = firstCard.getByRole('button', { name: 'Cambiar sucursal' });
+    const otraSucursal = firstCard.getByRole('button', { name: 'Probar otra sucursal cercana' });
     await expect(probarFechas).toBeVisible();
-    await expect(cambiarSucursal).toBeVisible();
+    await expect(otraSucursal).toBeVisible();
 
     // No "Solicitar / Reservar / Cotizar" CTA inside the card — unavailable means
     // unbookable, surfacing those would be a contract regression.

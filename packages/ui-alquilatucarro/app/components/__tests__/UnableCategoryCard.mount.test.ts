@@ -217,7 +217,7 @@ describe('UnableCategoryCard mount — observable behavior', () => {
     const wrapper = mountCard();
     const labels = wrapper.findAll('button').map((b) => b.text().trim());
     expect(labels.some((l) => l.includes('Probar otras fechas'))).toBe(true);
-    expect(labels.some((l) => l.includes('Cambiar sucursal'))).toBe(true);
+    expect(labels.some((l) => l.includes('Probar otra sucursal cercana'))).toBe(true);
   });
 
   it('does NOT render the legacy red pill (bg-red-100)', () => {
