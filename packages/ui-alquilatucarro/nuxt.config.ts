@@ -433,6 +433,16 @@ export default defineNuxtConfig({
           innerHTML:
             "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1G7MWTDK71');",
         },
+        // Google Ads conversion — fires the GA4 event `clic_boton_whatsapp` on
+        // every WhatsApp click via event delegation (same pattern as the beacon).
+        // No per-button onclick and no delayed navigation: all WA buttons are
+        // target=_blank (current tab never unloads) and gtag uses sendBeacon
+        // transport, so the event always reaches GA4 before any navigation.
+        // Capture phase, never preventDefault → native nav + the beacon both run.
+        {
+          innerHTML:
+            "(function(){document.addEventListener('click',function(e){try{var t=e.target;if(!t||typeof t.closest!=='function')return;var a=t.closest('a[href*=\"wa.me\"],a[href*=\"api.whatsapp.com\"],a[href*=\"web.whatsapp.com\"]');if(!a||typeof window.gtag!=='function')return;window.gtag('event','clic_boton_whatsapp');}catch(_e){}},true);})();",
+        },
         // WhatsApp attribution click beacon (shared connector). Event delegation
         // over wa.me anchors — fires a ping on every WhatsApp click without
         // touching the button. data-ga4 lets it use the GA4 client_id as
