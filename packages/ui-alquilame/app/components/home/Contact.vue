@@ -41,9 +41,10 @@
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start">
-          <!-- Reserve → internal engine (city selector in the hero) -->
+          <!-- Reserve → internal engine; anchor is configurable per host page
+               (home: #hero / city landing: #searcher) via the reserveAnchor prop. -->
           <a
-            href="#hero"
+            :href="reserveAnchor"
             class="w-full sm:w-auto inline-flex items-center justify-center px-9 py-4 text-lg font-semibold rounded-full bg-white text-red-700 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             Reserva Ahora
@@ -138,6 +139,10 @@
 
 <script setup lang="ts">
 import { IconsWhatsappIcon as WhatsappIcon } from '#components'
+
+// "Reserva Ahora" anchor target. Defaults to the home's city-selector hero
+// (#hero); the city landing passes '#searcher' (its hero has no #hero id).
+withDefaults(defineProps<{ reserveAnchor?: string }>(), { reserveAnchor: '#hero' })
 
 const { franchise } = useAppConfig()
 </script>

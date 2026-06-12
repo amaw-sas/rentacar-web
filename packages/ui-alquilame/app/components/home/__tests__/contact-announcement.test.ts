@@ -68,6 +68,16 @@ describe('F1 step07a — Contact.vue', () => {
   it('exposes the contact section under id="contact"', () => {
     expect(contact).toMatch(/id="contact"/)
   })
+
+  it('makes the "Reserva Ahora" anchor configurable via a reserveAnchor prop (default #hero)', () => {
+    // F2 step01: the reserve CTA must anchor to a per-page target. The default
+    // keeps the home intact (#hero); the city landing passes '#searcher'.
+    expect(contact).toMatch(/defineProps<\{\s*reserveAnchor\?: string\s*\}>/)
+    expect(contact).toMatch(/reserveAnchor:\s*'#hero'/)
+    // The CTA binds the prop, never the old hardcoded home id.
+    expect(contact).toMatch(/:href="reserveAnchor"/)
+    expect(contact).not.toMatch(/href="#hero"/)
+  })
 })
 
 describe('F1 step07a — AnnouncementBar.vue', () => {
