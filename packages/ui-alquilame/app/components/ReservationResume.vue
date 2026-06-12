@@ -10,8 +10,9 @@
       <div class="grid grid-cols-2 gap-2">
         <!-- lado izquierdo -->
         <div class="reservation-data">
-          
-          <div class="category-name" v-text="`Gama ${categoryCode}`"></div>
+          <!-- Red accent bar (alquilame brand signature, mirrors city/Intro) -->
+          <div class="h-1 w-10 rounded-full bg-red-600 mb-2"></div>
+          <div class="category-name heading-card text-red-700" v-text="`Gama ${categoryCode}`"></div>
           <div class="category-description" v-text="categoryDescription"></div>
           <div v-if="isPicoyPlacaExempt()" class="category-picoyplaca" >
             <span class="inline-block px-2 py-0.5 text-xs border border-blue-500 text-blue-600 rounded-full">sin pico y placa</span>
@@ -76,7 +77,7 @@
               $ {{ currencyDailyBasePrice }}
             </div>
             <div class="text-right" v-if="hasDiscount()">
-              <span class="bg-[#a3f78b] text-black text-xs px-1 inline-block">Dto Hoy {{ getDiscount }} %</span>
+              <span class="bg-red-600 text-white font-semibold text-xs px-1.5 py-0.5 rounded-full inline-block">Dto Hoy {{ getDiscount }} %</span>
             </div>
             <div class="text-right text-sm">
               $ {{ currencyDailyPrice }}
@@ -108,7 +109,7 @@
 
             <div class="text-right mt-3 leading-tight">
               <div class="text-sm font-bold">Total renta</div>
-              <div class="!text-xl !leading-none">
+              <div class="!text-xl !leading-none font-extrabold text-red-700">
                 $ {{ currencyTotalPrice }}
               </div>
             </div>
@@ -118,7 +119,7 @@
 
             <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
               <div class="text-sm font-bold">Total renta + adicionales</div>
-              <div class="!text-xl !leading-none">
+              <div class="!text-xl !leading-none font-extrabold text-red-700">
                 $ {{ currencyTotalWithAdditionals }}
               </div>
             </div>

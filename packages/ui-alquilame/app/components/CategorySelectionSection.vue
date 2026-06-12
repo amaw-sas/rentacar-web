@@ -1,7 +1,7 @@
 <template>
-  <div v-if="isServerError && !pendingSearch" class="text-center">
+  <div v-if="isServerError && !pendingSearch" class="text-center [--ctx-text-primary:#fff]">
     <div class="text-white text-center">
-      <div class="text-3xl">Servicio temporalmente no disponible</div>
+      <div class="heading-section text-3xl">Servicio temporalmente no disponible</div>
       <p class="text-lg mt-2">
         Estamos experimentando problemas técnicos. Por favor, intenta de nuevo en unos minutos.
       </p>
@@ -19,9 +19,9 @@
       </p>
     </div>
   </div>
-  <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center">
+  <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center [--ctx-text-primary:#fff]">
     <div class="text-white text-center">
-      <div class="text-3xl">¡Oops!</div>
+      <div class="heading-section text-3xl">¡Oops!</div>
       <div class="text-lg">
         Nos quedamos sin carritos en {{pickupCityName}} para el {{ humanFormattedPickupDate }}.
       </div>
@@ -32,9 +32,10 @@
     </div>
   </div>
   <template v-if="!pendingSearch">
-    <div v-if="hasRenderableAvailable" class="text-white text-center">
-      <div class="text-lg md:text-xl font-bold">¡Vehículos Disponibles!</div>
-      <div class="text-sm md:text-base">
+    <div v-if="hasRenderableAvailable" class="text-white text-center [--ctx-text-primary:#fff] mb-6">
+      <span class="inline-block h-1 w-10 rounded-full bg-white/80 mb-3" aria-hidden="true"></span>
+      <div class="heading-section text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!</div>
+      <div class="text-sm md:text-base mt-1">
         <span>En <span class="text-yellow-400 font-semibold">{{pickupCityName}}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDate }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
@@ -76,8 +77,8 @@
       :close="{ color: 'neutral', variant: 'outline', class: 'text-gray-700 border-gray-300 hover:bg-gray-100' }"
       :ui="{
         content: 'bg-white',
-        header: 'bg-white',
-        title: 'text-gray-900 text-2xl font-bold',
+        header: 'bg-white border-b-2 border-red-600/15',
+        title: 'heading-card font-heading text-gray-900 text-2xl font-extrabold',
         description: 'text-gray-600',
         body: 'bg-white text-gray-900',
         footer: 'bg-white gap-2 border-t-0',

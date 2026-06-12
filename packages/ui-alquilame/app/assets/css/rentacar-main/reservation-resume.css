@@ -12,8 +12,10 @@
     .reservation-data {
         @apply flex flex-col text-sm text-black;
 
+        /* Brand: Gama title uses .heading-card (Plus Jakarta) + red from the
+           template; keep tight bottom margin here. */
         .category-name {
-            @apply mb-0 text-2xl;
+            @apply mb-0;
         }
 
         .category-description, .category-picoyplaca {
@@ -24,7 +26,7 @@
             @apply my-2;
 
             .pickup-location-label {
-                @apply font-bold;
+                @apply font-bold text-red-700;
             }
 
             .pickup-date, .pickup-hour {
@@ -36,7 +38,7 @@
             @apply mb-3;
 
             .return-location-label {
-                @apply font-bold;
+                @apply font-bold text-red-700;
             }
 
             .return-date, .return-hour {
@@ -46,7 +48,7 @@
 
         .renting {
             .renting-label {
-                @apply font-bold;
+                @apply font-bold text-red-700;
             }
         }
     }
