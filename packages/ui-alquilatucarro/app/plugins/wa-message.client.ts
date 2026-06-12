@@ -15,35 +15,42 @@
 // free-form for the human reading the chat — it does NOT need to match the
 // connector's parse templates.
 
-// Display names (with accents) for the 19 city landing routes. Any other path
-// (home, blog, gana, …) falls back to the generic message.
-const CITY_BY_PATH: Record<string, string> = {
-  '/armenia': 'Armenia',
-  '/barranquilla': 'Barranquilla',
-  '/bogota': 'Bogotá',
-  '/bucaramanga': 'Bucaramanga',
-  '/cali': 'Cali',
-  '/cartagena': 'Cartagena',
-  '/cucuta': 'Cúcuta',
-  '/ibague': 'Ibagué',
-  '/manizales': 'Manizales',
-  '/medellin': 'Medellín',
-  '/monteria': 'Montería',
-  '/neiva': 'Neiva',
-  '/pereira': 'Pereira',
-  '/santa-marta': 'Santa Marta',
-  '/valledupar': 'Valledupar',
-  '/villavicencio': 'Villavicencio',
-  '/floridablanca': 'Floridablanca',
-  '/palmira': 'Palmira',
-  '/soledad': 'Soledad',
+// Display names (with accents) keyed by city id (the FIRST path segment). The
+// city id leads every city route — both the bare landing (`/bogota`) and the
+// whole search flow (`/bogota/buscar-vehiculos/lugar-recogida/…/categoria/…`).
+// Matching on the first segment (not the full path) keeps the city in the
+// message as the user advances the search; it only changes when they switch
+// cities. Other top-level routes (home, blog, gana, seo, tarifas, …) are not
+// city ids, so they fall through to the generic message.
+const CITY_BY_ID: Record<string, string> = {
+  armenia: 'Armenia',
+  barranquilla: 'Barranquilla',
+  bogota: 'Bogotá',
+  bucaramanga: 'Bucaramanga',
+  cali: 'Cali',
+  cartagena: 'Cartagena',
+  cucuta: 'Cúcuta',
+  ibague: 'Ibagué',
+  manizales: 'Manizales',
+  medellin: 'Medellín',
+  monteria: 'Montería',
+  neiva: 'Neiva',
+  pereira: 'Pereira',
+  'santa-marta': 'Santa Marta',
+  valledupar: 'Valledupar',
+  villavicencio: 'Villavicencio',
+  floridablanca: 'Floridablanca',
+  palmira: 'Palmira',
+  soledad: 'Soledad',
 }
 
 const WA_NUMBER = '573016729250'
 
 function buildMessage(): string {
-  const path = window.location.pathname.replace(/\/+$/, '') || '/'
-  const city = CITY_BY_PATH[path]
+  // First non-empty path segment = city id, for both the landing and the
+  // search flow. Extra segments (dates, locations, category) are ignored.
+  const firstSegment = window.location.pathname.split('/').filter(Boolean)[0] ?? ''
+  const city = CITY_BY_ID[firstSegment]
   const base = 'Hola, vi su página de alquiler de carros'
   return city
     ? `${base} en ${city} y quiero saber los requisitos`
