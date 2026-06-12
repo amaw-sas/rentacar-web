@@ -121,7 +121,16 @@ export default function useUnavailabilityContext(): UnavailabilityContext {
     // fixed at the source, not patched defensively here.
     const city = formatCity(branch.city);
     if (!city) return branch.name;
-    return `${city} · ${branch.name}`;
+    // Branch names already lead with the city in the admin data ("Bogotá
+    // Aeropuerto", "Floridablanca"), so prefixing it again reads as the
+    // redundant "Bogotá · Bogotá Aeropuerto". Only prepend the city when the
+    // name does NOT already start with it, so suffix-only branches ("Sucursal
+    // Norte") keep their city context.
+    const nameStartsWithCity = branch.name
+      .trim()
+      .toLowerCase()
+      .startsWith(city.toLowerCase());
+    return nameStartsWithCity ? branch.name : `${city} · ${branch.name}`;
   });
 
   const isSpecific = computed<boolean>(() =>
