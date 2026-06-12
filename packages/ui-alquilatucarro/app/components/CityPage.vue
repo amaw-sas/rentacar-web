@@ -7,23 +7,15 @@
       <UPageHero
         orientation="horizontal"
       >
-      <template #headline>
-        <div
-          class="flex max-md:hidden! flex-row space-x-0.5 text-white text-center justify-center items-center text-sm"
-        >
-          <StarIcon v-for="i in [1,2,3,4,5]" :key="i" cls="w-2.5 h-2.5 md:w-4 md:h-4" />
-          <span class="ml-2">4.9 reviews</span>
-        </div>
-      </template>
       <template #title>
         <!-- UPageHero renderiza <h1> para slot #title — usar solo phrasing content (span, no div) -->
-        <span class="block text-white text-center uppercase font-bold" style="letter-spacing: -0.025em;">
-          <span class="block text-2xl md:text-3xl lg:text-4xl" style="letter-spacing: -0.025em;">
-            ALQUILER <br>DE CARROS EN
+        <span class="block text-white text-center uppercase font-bold lg:leading-[1.2] lg:mt-20" style="letter-spacing: -0.025em;">
+          <span class="block whitespace-nowrap text-xl md:text-2xl lg:text-[26px]/[1.17]!" style="letter-spacing: -0.025em;">
+            ALQUILER DE CARROS EN
           </span>
           {{ ' ' }}
-          <span class="flex flex-row justify-center items-baseline gap-2 text-4xl md:text-5xl lg:text-7xl lg:whitespace-nowrap" style="letter-spacing: -0.025em;">
-            <span class="size-8 md:size-10 lg:size-14" aria-hidden="true"></span>
+          <span class="flex flex-row justify-center items-baseline gap-2 text-3xl md:text-4xl lg:text-[46px]/[1.17]! lg:whitespace-nowrap" style="letter-spacing: -0.025em;">
+            <span class="size-8 md:size-10 lg:size-9" aria-hidden="true"></span>
             {{ city?.name }}
             <!-- Pin inerte: acción copy-to-WhatsApp es secreta (operadores, no clientes).
                  <span> aria-hidden no-focusable → fuera del accessible name del <h1>
@@ -32,11 +24,11 @@
               aria-hidden="true"
               @click="copySearchToWhatsapp"
             >
-              <LocationIcon cls="text-red-600 size-8 md:size-10 lg:size-14 translate-y-1" />
+              <LocationIcon cls="text-red-600 size-8 md:size-10 lg:size-9 translate-y-1" />
             </span>
           </span>
           {{ ' ' }}
-          <span class="block text-2xl md:text-3xl lg:text-4xl text-white colombia-sweep" style="letter-spacing: 0.025em;">Colombia</span>
+          <span class="block text-xl md:text-2xl lg:text-[26px]/[1.17]! text-white colombia-sweep" style="letter-spacing: 0.025em;">Colombia</span>
         </span>
       </template>
       <template #body>
@@ -49,6 +41,9 @@
             Elige ciudades, fechas y horarios y renta un vehículo por días, semanas o el tiempo que necesites
           </p>
         </div>
+        <!-- Carro: columna izquierda bajo el titular, SOLO desktop (lg+). En móvil
+             no se descarga ni renderiza — hero móvil intacto. -->
+        <ImagesHeroCar class="lg:-mt-2" />
       </template>
       <template #default>
         <!-- Contenedor para texto + formulario alineados - solo desktop -->
