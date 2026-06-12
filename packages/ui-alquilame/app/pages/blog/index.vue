@@ -3,8 +3,8 @@
     <!-- Hero Section -->
     <UPageHero orientation="vertical">
       <template #title>
-        <h1 class="text-white text-3xl md:text-4xl text-center font-bold">
-          Blog de <span class="text-red-500">{{ franchise.shortname }}</span>
+        <h1 class="text-white text-3xl md:text-4xl text-center font-bold font-heading">
+          Blog de <span class="text-brand-300">{{ franchise.shortname }}</span>
         </h1>
       </template>
       <template #description>
@@ -16,7 +16,7 @@
     </UPageHero>
 
     <!-- Blog Posts Grid -->
-    <section class="bg-gray-100 py-12 md:py-16 px-4 md:px-8">
+    <section class="bg-surface-soft py-12 md:py-16 px-4 md:px-8">
       <div class="max-w-7xl mx-auto">
         <!-- Featured Post -->
         <div v-if="featuredPost" class="mb-12">
@@ -35,11 +35,11 @@
                 >
               </div>
               <div class="p-6 md:w-1/2 flex flex-col justify-center">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full w-fit mb-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-brand-700 bg-brand-100 rounded-full w-fit mb-3">
                   <UIcon :name="getCategoryIcon(featuredPost.category)" class="size-3.5" />
                   {{ formatCategory(featuredPost.category) }}
                 </span>
-                <h3 class="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-red-700 transition-colors">
+                <h3 class="text-xl md:text-2xl font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors">
                   {{ featuredPost.title }}
                 </h3>
                 <p class="text-gray-600 mt-3 line-clamp-3">
@@ -71,7 +71,7 @@
               :class="[
                 'inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all',
                 selectedCategory === cat.value
-                  ? 'bg-red-700 text-white'
+                  ? 'bg-brand-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
               ]"
             >
@@ -97,13 +97,13 @@
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   loading="lazy"
                 >
-                <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-red-700 rounded-full">
+                <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-brand-600 rounded-full">
                   <UIcon :name="getCategoryIcon(post.category)" class="size-3.5" />
                   {{ formatCategory(post.category) }}
                 </span>
               </div>
               <div class="p-5 flex flex-col flex-grow">
-                <h3 class="text-lg font-bold text-gray-900 group-hover:text-red-700 transition-colors line-clamp-2">
+                <h3 class="text-lg font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors line-clamp-2">
                   {{ post.title }}
                 </h3>
                 <p class="text-gray-600 mt-2 text-sm line-clamp-2 flex-grow">
@@ -134,7 +134,7 @@
           <button
             v-if="selectedCategory"
             @click="setCategory('')"
-            class="mt-4 text-red-700 hover:text-red-800 font-medium"
+            class="mt-4 text-brand-700 hover:text-brand-800 font-medium"
           >
             Ver todos los artículos
           </button>
@@ -143,17 +143,17 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="bg-gray-900 text-white py-12 px-4">
+    <section class="bg-brand-900 text-white py-12 px-4">
       <div class="max-w-4xl mx-auto text-center">
-        <h2 class="text-2xl md:text-3xl font-bold mb-4">
+        <h2 class="text-2xl md:text-3xl font-bold font-heading mb-4">
           ¿Listo para tu próxima aventura?
         </h2>
         <p class="text-gray-300 mb-6">
           Reserva tu carro sin anticipos en cualquiera de nuestras 27 sedes
         </p>
         <NuxtLink
-          to="/"
-          class="inline-block bg-red-700 hover:bg-red-800 text-white px-8 py-3 rounded-xl font-bold uppercase transition-colors"
+          to="/reservas"
+          class="inline-block bg-brand-600 hover:bg-brand-700 text-white px-8 py-3 rounded-xl font-bold uppercase transition-colors"
         >
           Reservar Ahora
         </NuxtLink>

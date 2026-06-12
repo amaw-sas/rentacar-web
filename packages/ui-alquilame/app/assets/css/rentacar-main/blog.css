@@ -1,7 +1,10 @@
-/* Blog callout styling - sobrescribir tema oscuro en área de contenido */
+/* Blog callout styling - sobrescribir tema oscuro en área de contenido.
+   Callouts legibles: fondo claro + texto oscuro; acento de marca alquilame
+   (#cc022b) en el borde izquierdo para alinear con el prose del detalle. */
 .prose div.bg-muted {
   background-color: rgb(243, 244, 246) !important;
   border-color: rgb(209, 213, 219) !important;
+  border-left: 4px solid #cc022b !important;
 }
 
 .prose div.bg-muted,
@@ -21,6 +24,7 @@
 article.prose > div.group {
   background-color: rgb(243, 244, 246) !important;
   border-color: rgb(209, 213, 219) !important;
+  border-left: 4px solid #cc022b !important;
   color: rgb(55, 65, 81) !important;
 }
 
