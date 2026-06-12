@@ -56,10 +56,25 @@
             linkLabel: 'text-lg'
           }"
         />
+        <!-- CTA global de reserva (menú móvil) -->
+        <NuxtLink
+          to="/reservas"
+          class="mt-4 flex items-center justify-center rounded-lg bg-brand-600 px-5 py-3 text-lg font-bold text-white hover:bg-brand-700 transition-colors"
+          @click="mobileMenuOpen = false"
+        >
+          Reservar
+        </NuxtLink>
       </template>
       <template #right>
-        <div class="hidden lg:block">
+        <div class="hidden lg:flex items-center gap-4">
           <UNavigationMenu color="neutral" :items="items" />
+          <!-- CTA global de reserva (nav desktop) -->
+          <NuxtLink
+            to="/reservas"
+            class="rounded-lg bg-white px-5 py-2 font-bold text-brand-700 hover:bg-brand-50 transition-colors"
+          >
+            Reservar
+          </NuxtLink>
         </div>
       </template>
     </UHeader>

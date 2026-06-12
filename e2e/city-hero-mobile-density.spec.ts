@@ -1,9 +1,14 @@
 import { test, expect } from '@playwright/test';
 
+// F3 (issue #112): alquilame's Searcher-in-hero moved to /reservas (the city
+// landing now shows a 'Reservar' CTA). Other brands keep the search hero on the
+// city landing. The hero density / search-button layout is identical at both.
+const SEARCHER_HERO = process.env.BRAND === 'alquilame' ? '/reservas' : '/bogota';
+
 test.describe('City hero - mobile density + hamburger alignment', () => {
   test('search button is visible inside hero on iPhone 13 viewport', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/bogota');
+    await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
     const searchButton = page.getByRole('link', { name: /BUSCAR VEHÍCULOS/i }).last();
@@ -16,7 +21,7 @@ test.describe('City hero - mobile density + hamburger alignment', () => {
 
   test('search button is visible on iPhone SE viewport (worst-case)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/bogota');
+    await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
     const searchButton = page.getByRole('link', { name: /BUSCAR VEHÍCULOS/i }).last();
@@ -25,7 +30,7 @@ test.describe('City hero - mobile density + hamburger alignment', () => {
 
   test('hamburger button is vertically centered with mobile logo in header', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/bogota');
+    await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
     const hamburger = page.getByRole('button', { name: /Abrir menú de navegación/i });
@@ -47,7 +52,7 @@ test.describe('City hero - mobile density + hamburger alignment', () => {
 
   test('mobile form cards use compact vertical padding', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/bogota');
+    await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
     const mobileSelect = page.locator('select#pickup-location-mobile').last();
@@ -68,7 +73,7 @@ test.describe('City hero - mobile density + hamburger alignment', () => {
 
   test('desktop form spacing is preserved at 1280 width', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto('/bogota');
+    await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
     const desktopField = page.locator('#pickup-location').first();

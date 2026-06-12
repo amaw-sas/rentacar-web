@@ -6,6 +6,13 @@
     @submit="onSubmit"
     class="light"
   >
+      <!-- Brand section header (alquilame): red accent bar + Jakarta heading.
+           Lives inside the white .light form card → dark heading text is correct;
+           no [--ctx-text-primary:#fff] override (that is for dark/red surfaces). -->
+      <div class="mb-4">
+        <div class="h-1 w-10 rounded-full bg-red-600 mb-2"></div>
+        <h3 class="heading-card text-red-700">Tus datos</h3>
+      </div>
       <div class="grid grid-cols-2 gap-2">
         <u-form-field name="nombreCompleto" label="Nombres">
           <u-input
@@ -83,12 +90,12 @@
           />
           <div class="ml-6 text-sm space-x-3">
             <nuxt-link
-              class="underline text-gray-600"
+              class="underline text-red-700 hover:text-red-800"
               to="/terminos-condiciones"
               target="_blank"
             >Términos</nuxt-link>
             <nuxt-link
-              class="underline text-gray-600"
+              class="underline text-red-700 hover:text-red-800"
               to="/politica-privacidad"
               target="_blank"
             >Privacidad</nuxt-link>

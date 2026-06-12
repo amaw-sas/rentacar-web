@@ -69,8 +69,18 @@
           </p>
         </div>
 
-        <!-- Engine column — Searcher preserved untouched -->
-        <div class="flex items-center justify-center">
+        <!--
+          Engine column — mode-aware (F3):
+            - mode === 'results': the Searcher engine, preserved untouched
+              (same component → same data-testid, #109 CLS guard). This is the
+              buscar-vehiculos results route refining in-situ.
+            - mode === 'landing': NO Searcher; a primary "Reservar ahora" CTA
+              navigates (SPA) to the centralized /reservas search page. The city
+              landing is marketing-only — the search engine moved out of the hero.
+          The empty <div id="searcher"> anchor above is kept in BOTH modes
+          (harmless in landing; preserves the #searcher scroll-target contract).
+        -->
+        <div v-if="mode === 'results'" class="flex items-center justify-center">
           <!--
             CLS guard (issue #109): reserve the Searcher footprint with a fixed
             height so the ClientOnly fallback and the hydrated form occupy the
@@ -96,6 +106,15 @@
             </div>
           </div>
         </div>
+        <!-- landing — marketing-only: CTA to the centralized /reservas page -->
+        <div v-else class="flex items-center justify-center">
+          <NuxtLink
+            to="/reservas"
+            class="inline-flex items-center justify-center rounded-full bg-white text-hero-from font-semibold px-8 py-4 text-base md:text-lg shadow-lg hover:bg-white/90 transition-colors"
+          >
+            Reservar ahora
+          </NuxtLink>
+        </div>
       </div>
     </div>
   </section>
@@ -113,9 +132,22 @@ import {
 } from '#components'
 
 /** props */
-defineProps<{
-  city: City
-}>()
+withDefaults(
+  defineProps<{
+    city: City
+    /**
+     * Hero engine mode (F3 — issue #112):
+     *   - 'results' (default, fail-safe): mounts the <Searcher> engine to refine
+     *     a search in-situ (buscar-vehiculos route).
+     *   - 'landing': marketing-only city landing — no engine, a "Reservar ahora"
+     *     CTA navigates to the centralized /reservas page.
+     * Each page file passes this explicitly (no router-based detection); if a
+     * caller forgets, the engine stays present rather than silently breaking.
+     */
+    mode?: 'landing' | 'results'
+  }>(),
+  { mode: 'results' },
+)
 
 /**
  * Secret operator action (issue #41): copies the current search params into a

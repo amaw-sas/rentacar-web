@@ -1,11 +1,15 @@
 /**
- * F1 step01 — Hero restyle (issue #112).
+ * F3 step03 — Home hero: engine out, CTA in (issue #112, SCEN-F3-02).
  *
  * Static-source assertions encoding the observable hero contract (full
- * runtime/visual check deferred to the F1 preview verification):
- *   - SCEN-F1-01: the hero renders the brand red gradient and the city selector.
- *   - Engine preserved: Hero mounts <SelectBranch> (same component → same
- *     data-testid/behaviour); the selector copy stays.
+ * runtime/visual check deferred to the F3 preview verification):
+ *   - Pure-marketing home: the inline search engine (<SelectBranch> + the
+ *     "¿En qué ciudad…?" prompt) is GONE — search centralizes at /reservas.
+ *   - Primary CTA: the hero mounts a "Reservar ahora" <NuxtLink to="/reservas">
+ *     (SPA navigation), styled like "Ver Precios" (white button on red).
+ *   - Preserved: "Ver Precios" (#fleet), the CONTACT WhatsApp button bound to
+ *     franchise.whatsapp, the brand red gradient + tokens, HeroHeadline, the
+ *     headline/ImagesFamily, and useAppConfig().
  *   - Gradient guard (F0 lesson): the hero MUST use the v4 `bg-linear-to-*`
  *     utility built from the hero-from/hero-to @theme tokens, NEVER the broken v3
  *     gradient alias (which renders background-image:none with custom tokens,
@@ -26,7 +30,7 @@ function read(rel: string): string {
 // contains the literal token a project-wide grep forbids in rendered markup.
 const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 
-describe('F1 step01 — Hero.vue restyle', () => {
+describe('F3 step03 — Hero.vue engine-out, CTA-in', () => {
   const hero = read('app/components/home/Hero.vue')
 
   it('renders the brand red gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
@@ -38,12 +42,22 @@ describe('F1 step01 — Hero.vue restyle', () => {
     expect(hero).toMatch(/from-hero-from\s+to-hero-to/)
   })
 
-  it('preserves the engine: mounts <SelectBranch> inside the hero', () => {
-    expect(hero).toMatch(/<SelectBranch\b/)
+  it('removes the inline engine: the hero NO longer mounts <SelectBranch>', () => {
+    expect(hero).not.toMatch(/<SelectBranch\b/)
   })
 
-  it('keeps the city-selector prompt copy', () => {
-    expect(hero).toMatch(/ciudad/i)
+  it('drops the "¿En qué ciudad deseas recoger tu carro?" selector prompt label', () => {
+    // The engine prompt label is gone. The marketing subcopy ("…eligiendo tu
+    // ciudad.") is intentionally KEPT, so a bare /ciudad/i would over-match — we
+    // assert the absence of the interrogative prompt specifically.
+    expect(hero).not.toMatch(/¿En qué ciudad/i)
+    expect(hero).not.toMatch(/recoger tu carro\?/i)
+  })
+
+  it('adds the primary CTA "Reservar ahora" as <NuxtLink to="/reservas"> (SPA)', () => {
+    // SPA navigation (NuxtLink), not a plain <a href> to /reservas.
+    expect(hero).toMatch(/<NuxtLink\b[^>]*\bto="\/reservas"/)
+    expect(hero).toMatch(/Reservar ahora/)
   })
 
   it('adopts the .heading-hero utility (Plus Jakarta) for the headline', () => {

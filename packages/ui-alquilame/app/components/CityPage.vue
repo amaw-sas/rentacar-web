@@ -9,8 +9,8 @@
     useCityAggregateRating) sin cambios de comportamiento.
   -->
   <UPage>
-    <!-- Hero (Searcher + pin #41 + #searcher target preservados) -->
-    <CityHero :city="city" />
+    <!-- Hero — mode-aware (F3): landing = marketing-only CTA, results = Searcher engine -->
+    <CityHero :city="city" :mode="mode" />
 
     <!-- Result Section — condicional, PRESERVADO intacto (engine) -->
     <UPageSection
@@ -47,8 +47,13 @@
     <!-- FAQ city (useCityFAQs) -->
     <CityFaq :city="city" />
 
-    <!-- Contacto F1 — "Reserva Ahora" ancla al hero city (#searcher), no al #hero del home -->
-    <HomeContact reserve-anchor="#searcher" />
+    <!--
+      Contacto F1 — "Reserva Ahora" destino mode-aware (F3):
+        - results: ancla in-page al engine del hero city (#searcher), donde el
+          form sí existe (los CTAs de UnableCategoryCard también anclan ahí).
+        - landing: no hay form en #searcher → navega a la página /reservas.
+    -->
+    <HomeContact :reserve-anchor="mode === 'landing' ? '/reservas' : '#searcher'" />
   </UPage>
 </template>
 
@@ -74,9 +79,19 @@ onMounted(() => {
 });
 
 /** props */
-const props = defineProps<{
-  city: City;
-}>();
+const props = withDefaults(
+  defineProps<{
+    city: City;
+    /**
+     * Hero engine mode (F3 — issue #112). Forwarded to <CityHero :mode> and used
+     * to pick the city HomeContact reserve target. Each page file passes it
+     * explicitly: 'landing' for [city]/index.vue, 'results' for buscar-vehiculos.
+     * Default 'results' keeps the engine present if a caller forgets (fail-safe).
+     */
+    mode?: 'landing' | 'results';
+  }>(),
+  { mode: 'results' },
+);
 
 const cityBranches = computed(() =>
   (branches.value || []).filter((branch: { city: string }) => branch.city === props.city?.id)

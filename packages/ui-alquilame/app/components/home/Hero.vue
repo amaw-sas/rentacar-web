@@ -1,15 +1,15 @@
 <template>
   <!--
-    F1 hero — restyle of the design's #hero (bg-linear-to-br red gradient,
-    headline left / family image right). The city-selector engine (SelectBranch)
-    is preserved untouched: same component, same props, same data-testid/behaviour.
-    Gradient uses the v4 bg-linear-to-* utility: with custom @theme tokens the v3
-    alias renders background-image:none (F0 lesson).
+    F3 hero — pure-marketing home hero (bg-linear-to-br red gradient, headline
+    left / family image right). The inline search engine (SelectBranch + city
+    prompt) is GONE: search centralizes at /reservas. The primary action is now a
+    "Reservar ahora" CTA → /reservas (SPA NuxtLink), styled like "Ver Precios"
+    (white button on red). Gradient uses the v4 bg-linear-to-* utility: with
+    custom @theme tokens the v3 alias renders background-image:none (F0 lesson).
 
-    Fidelity principle (F1): faithful to the design, but RESERVE-via-WhatsApp is
-    replaced by our internal engine (SelectBranch). CONTACT WhatsApp stays — the
-    design's hero WhatsApp button is a contact CTA, so it is kept, pointing at
-    franchise.whatsapp (already a full https://wa.me/... URL — never re-wrapped).
+    Fidelity principle: the design's hero WhatsApp button is a CONTACT CTA (not a
+    reserve flow), so it stays, pointing at franchise.whatsapp (already a full
+    https://wa.me/... URL — never re-wrapped).
   -->
   <section
     id="hero"
@@ -17,7 +17,7 @@
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
       <div class="grid lg:grid-cols-2 gap-10 items-center">
-        <!-- Text + engine column -->
+        <!-- Text + CTA column -->
         <div class="text-center lg:text-left">
           <!-- Trust signal: "4.9 reviews" star badge (design hero) -->
           <div class="flex justify-center lg:justify-start mb-3">
@@ -32,16 +32,15 @@
             Reserva en minutos eligiendo tu ciudad.
           </p>
 
-          <!-- City selector block — primary engine action, preserved -->
-          <div class="mt-6 max-w-md mx-auto lg:mx-0">
-            <div class="mb-3 text-white text-lg font-bold">
-              ¿En qué ciudad deseas recoger tu carro?
-            </div>
-            <SelectBranch />
-          </div>
-
-          <!-- Design CTA row: "Ver Precios" (jumps to #fleet) + contact WhatsApp -->
-          <div class="mt-6 flex flex-row items-stretch gap-3 justify-center lg:justify-start">
+          <!-- CTA row: primary "Reservar ahora" (→ /reservas, SPA) +
+               "Ver Precios" (jumps to #fleet) + contact WhatsApp -->
+          <div class="mt-6 flex flex-row flex-wrap items-stretch gap-3 justify-center lg:justify-start">
+            <NuxtLink
+              to="/reservas"
+              class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-red-700 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+            >
+              Reservar ahora
+            </NuxtLink>
             <a
               href="#fleet"
               class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-red-700 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"

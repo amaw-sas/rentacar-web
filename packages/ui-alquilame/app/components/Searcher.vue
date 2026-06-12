@@ -307,7 +307,7 @@
         <div class="col-span-2">
             <u-button
                 :to="{name: searchLinkName, params: searchLinkParams}"
-                :disabled="pendingSearching || !animateSearchButton"
+                :disabled="pendingSearching || !animateSearchButton || !searchLinkParams.city"
                 :loading="pendingSearching"
                 :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
                 size="xl"
@@ -320,6 +320,8 @@
 
 <script setup lang="ts">
 // Note: stores and components are auto-imported by Nuxt
+
+const route = useRoute();
 
 /** Local refs - initialized lazily to avoid SSR Pinia errors */
 const lugarRecogida = ref<string | null>(null);
@@ -411,7 +413,21 @@ onMounted(() => {
   watch(() => searchComposable.pickupHourOptions.value, (val) => pickupHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.returnHourOptions.value, (val) => returnHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.searchLinkName.value, (val) => searchLinkName.value = val, { immediate: true });
-  watch(() => searchComposable.searchLinkParams.value, (val) => searchLinkParams.value = val, { immediate: true });
+  // F3 (issue #112): on /reservas there is no route.params.city, so the
+  // composable's searchLinkParams.city is undefined and the results link would
+  // be broken. Derive the effective city from the chosen pickup branch when the
+  // route has no city. Merge into the local copy — never mutate the composable
+  // params. Stays local to alquilame (zero changes to packages/logic).
+  const syncSearchLinkParams = (params: any) => {
+    const effectiveCity =
+      route.params.city ?? storeAdminData.searchBranchByCode(lugarRecogida.value ?? '')?.city;
+    searchLinkParams.value = { ...params, city: effectiveCity };
+  };
+  watch(() => searchComposable.searchLinkParams.value, (val) => syncSearchLinkParams(val), { immediate: true });
+  // lugarRecogida feeds the composable's searchLinkParams (via the store sync
+  // above), so the watch normally re-fires; this guarantees recomputation of the
+  // derived city even if the composable params object is referentially stable.
+  watch(lugarRecogida, () => syncSearchLinkParams(searchComposable.searchLinkParams.value));
   watch(() => searchComposable.animateSearchButton.value, (val) => animateSearchButton.value = val, { immediate: true });
 });
 

@@ -1,5 +1,6 @@
 .categoria {
     @apply bg-white rounded-lg md:col-span-1 relative text-black p-0 sm:p-0 lg:p-0;
+    @apply border border-red-600/12 shadow-[0_8px_24px_rgba(17,17,34,0.06)] overflow-hidden;
     
     /* .agotado {
       opacity: 0.28 !important;
@@ -56,12 +57,14 @@
     }
 
     .categoria-carro {
-      @apply font-light text-lg leading-tight block;
+      @apply font-heading font-semibold text-red-600 text-lg leading-tight block;
     }
 
     .descripcion-corta {
-      /* @apply roboto-bold text-2xl block; */
-      @apply text-2xl block;
+      /* Brand heading: Plus Jakarta (font-heading token) + brand weight (F3 reskin).
+         font-heading is a real Tailwind utility (--font-heading); the .heading-*
+         classes are plain CSS (not @utility) so they can't be @apply'd here. */
+      @apply font-heading text-gray-900 font-extrabold text-2xl leading-snug block;
     }
 
     .descripcion-larga {
@@ -101,7 +104,7 @@
     }
 
     .porcentaje-descuento{
-      @apply bg-[#a3f78b] text-black text-xs px-1;
+      @apply bg-red-600 text-white font-semibold text-xs px-1.5 py-0.5 rounded-full;
     }
 
     .precio-base-diario {
@@ -118,7 +121,7 @@
     }
 
     .precio-total {
-      @apply text-xl whitespace-nowrap;
+      @apply font-heading text-red-600 font-extrabold text-xl whitespace-nowrap;
     }
 
     .texto-no-incluye {
