@@ -420,6 +420,32 @@ export default defineNuxtConfig({
         },
       ],
       link: [],
+      script: [
+        // Google Analytics 4 — base gtag.js. `async` so it never blocks render
+        // (keeps the CLS / vitalizer budget intact). The inline config below
+        // defines window.gtag synchronously so the WhatsApp click beacon can read
+        // the GA4 client_id immediately on click.
+        {
+          src: 'https://www.googletagmanager.com/gtag/js?id=G-1G7MWTDK71',
+          async: true,
+        },
+        {
+          innerHTML:
+            "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1G7MWTDK71');",
+        },
+        // WhatsApp attribution click beacon (shared connector). Event delegation
+        // over wa.me anchors — fires a ping on every WhatsApp click without
+        // touching the button. data-ga4 lets it use the GA4 client_id as
+        // visitor_id (falls back to a localStorage UUID if GA4 is blocked).
+        // data-tenant MUST match the three connector gates for
+        // static_co_alquilatucarro (tenants/origin-allowlist/CLICK_MATCH_TENANTS).
+        {
+          src: 'https://backend-production-95f5f.up.railway.app/wa-click-track.js',
+          'data-tenant': 'static_co_alquilatucarro',
+          'data-ga4': 'G-1G7MWTDK71',
+          defer: true,
+        },
+      ],
     },
   },
 
