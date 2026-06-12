@@ -102,7 +102,7 @@
 
             <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
               <div class="text-sm font-bold">Total adicionales</div>
-              <div class="!text-xl !leading-none">
+              <div class="!text-xl !leading-none font-extrabold text-red-700">
                 $ {{ currencyAdditionalsTotal }}
               </div>
             </div>
