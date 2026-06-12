@@ -9,8 +9,8 @@
         layout shift (issue #109 — no current-date call baked into SSR/ISR
         markup).
       - The #searcher scroll target: the in-page anchor the UnableCategoryCard
-        CTAs ("Probar otras fechas" / "Cambiar sucursal") and the city
-        HomeContact "Reserva Ahora" CTA (reserveAnchor) scroll to.
+        CTAs ("Probar otras fechas" / "Probar otra sucursal cercana") and the
+        city HomeContact "Reserva Ahora" CTA (reserveAnchor) scroll to.
       - The #41 secret pin: copy-to-WhatsApp is an operator-only action, so it
         stays an INERT aria-hidden span (never a focusable control) — outside
         the accessible name of the <h1> (WCAG 2.5.3) and never exposed via
@@ -27,8 +27,8 @@
     class="relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to [--ctx-text-primary:#fff]"
   >
     <!--
-      Scroll target for "Probar otras fechas" / "Cambiar sucursal" CTAs in
-      UnableCategoryCard and the city HomeContact "Reserva Ahora" CTA. Kept as a
+      Scroll target for "Probar otras fechas" / "Probar otra sucursal cercana"
+      CTAs in UnableCategoryCard and the city HomeContact "Reserva Ahora" CTA. Kept as a
       dedicated anchor so #hero (the section) and #searcher (the engine) stay
       independent and scroll-mt-20 clears the sticky header.
     -->

@@ -33,9 +33,9 @@
       <div class="space-y-2 mt-4">
         <UButton
           color="neutral"
-          size="lg"
+          size="xl"
           block
-          class="bg-gray-900 hover:bg-black text-white"
+          class="bg-gray-900 hover:bg-black text-white py-4"
           @click="scrollToSearcher"
         >
           <template #trailing>
@@ -46,16 +46,15 @@
 
         <UButton
           color="neutral"
-          variant="outline"
-          size="lg"
+          size="xl"
           block
-          class="text-gray-800 ring-1 ring-gray-300 hover:bg-gray-50"
+          class="bg-gray-900 hover:bg-black text-white py-4"
           @click="scrollToSearcher"
         >
           <template #trailing>
             <ChevronRightIcon cls="size-5" />
           </template>
-          Cambiar sucursal
+          Probar otra sucursal cercana
         </UButton>
       </div>
     </div>

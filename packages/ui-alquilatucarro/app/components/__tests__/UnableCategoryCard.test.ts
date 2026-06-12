@@ -37,7 +37,7 @@ describe('UnableCategoryCard — redesigned unavailable state', () => {
 
   it('SCEN-U1[d]: two CTA labels present', () => {
     expect(source).toMatch(/Probar otras fechas/)
-    expect(source).toMatch(/Cambiar sucursal/)
+    expect(source).toMatch(/Probar otra sucursal cercana/)
   })
 
   it('SCEN-U2: scrollToSearcher handler wired', () => {
