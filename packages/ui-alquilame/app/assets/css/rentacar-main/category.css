@@ -137,7 +137,21 @@
     }
 
     .seccion-boton-seleccion {
-      @apply rounded-b-lg bg-white p-4;
+      @apply rounded-b-lg p-4;
+      /* Fondo gris desvanecido compartido con la sección de precios (issue #124) */
+      background: linear-gradient(to right, white, #ededed 50%, white);
+
+      .metodo-pago {
+        @apply text-center mb-3;
+      }
+
+      .metodo-pago-label {
+        @apply inline-flex items-center justify-center gap-1 text-sm font-semibold text-gray-800;
+      }
+
+      .metodo-pago-valor {
+        @apply block text-xs text-gray-600;
+      }
 
       .boton-seleccion {
         @apply w-full justify-center text-white bg-green-700 py-4 hover:bg-green-800 transition-colors;
