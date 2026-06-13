@@ -147,7 +147,7 @@
       }
 
       .metodo-pago-valor {
-        @apply block text-sm text-gray-600;
+        @apply block text-sm text-gray-800;
       }
 
       .boton-seleccion {
