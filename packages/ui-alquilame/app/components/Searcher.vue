@@ -146,7 +146,7 @@
                             </u-button>
                             <template #content>
                                 <u-calendar
-                                    v-model="selectedPickupDate"
+                                    :model-value="selectedPickupDate"
                                     class="p-2 calendar-light"
                                     :min-value="minPickupDate"
                                     color="success"
@@ -155,7 +155,7 @@
                                     :year-controls="false"
                                     :prev-month="{ color: 'gray', variant: 'soft' }"
                                     :next-month="{ color: 'gray', variant: 'soft' }"
-                                    @update:model-value="pickupDateCalendarOpen = false"
+                                    @update:model-value="(v) => { if (v) { selectedPickupDate = v; pickupDateCalendarOpen = false; } }"
                                 />
                             </template>
                         </u-popover>
@@ -211,7 +211,7 @@
                             </u-button>
                             <template #content>
                                 <u-calendar
-                                    v-model="selectedReturnDate"
+                                    :model-value="selectedReturnDate"
                                     class="p-2 calendar-light"
                                     :min-value="minReturnDate"
                                     :max-value="maxReturnDate"
@@ -221,7 +221,7 @@
                                     :year-controls="false"
                                     :prev-month="{ color: 'gray', variant: 'soft' }"
                                     :next-month="{ color: 'gray', variant: 'soft' }"
-                                    @update:model-value="returnDateCalendarOpen = false"
+                                    @update:model-value="(v) => { if (v) { selectedReturnDate = v; returnDateCalendarOpen = false; } }"
                                 />
                             </template>
                         </u-popover>
