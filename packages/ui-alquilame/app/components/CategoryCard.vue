@@ -585,7 +585,7 @@
         <div class="metodo-pago">
           <span class="metodo-pago-label">
             Único método de pago
-            <UPopover>
+            <UPopover :ui="{ content: 'bg-white ring-1 ring-gray-200' }">
               <UButton
                 variant="ghost"
                 color="neutral"
