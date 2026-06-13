@@ -1,3 +1,11 @@
+/* Opt out of mobile-browser force-dark (Chrome Android "auto dark theme").
+   The app is light-only (colorMode preference: 'light'); without this declaration
+   the browser auto-darkens content — most visibly teleported overlays like the
+   popover panel, which turns dark-bg + dark-text and becomes unreadable. */
+html {
+  color-scheme: light;
+}
+
 /* ============================================
    CRITICAL CSS - Previene FOUC en hero section
    Estos estilos deben coincidir con los de Nuxt UI
