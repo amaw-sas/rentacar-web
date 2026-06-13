@@ -316,6 +316,9 @@
       </div>
     </section>
 
+    <!-- Requisitos Section (shared with home) -->
+    <RequisitosSection />
+
     <!-- FAQ Section -->
     <UPageSection id="faqs" class="bg-gray-100 text-black">
       <div class="max-w-7xl mx-auto px-1 sm:px-2 lg:px-6">

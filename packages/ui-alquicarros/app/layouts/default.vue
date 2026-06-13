@@ -131,18 +131,27 @@ const route = useRoute();
 // Estado del menú móvil slideover
 const mobileMenuOpen = ref(false);
 
+// La home (/) y todas las páginas de ciudad ([city] param) renderizan las
+// secciones #requisitos y #faqs. En esas páginas enlazamos con ancla relativa
+// para hacer scroll en sitio sin navegar (no se pierde la selección de ciudad);
+// en el resto caemos a /#... (home). #sedes vive en el layout → siempre presente.
+const hasInPageSections = computed(() => route.path === '/' || !!route.params.city);
+
+const requisitosTo = computed(() => hasInPageSections.value ? '#requisitos' : '/#requisitos');
+const faqsTo = computed(() => hasInPageSections.value ? '#faqs' : '/#faqs');
+
 // Items para menú desktop (texto blanco sobre fondo azul)
 const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Requisitos',
-    to: '/#requisitos',
-    active: route.path.startsWith('#requisitos'),
+    to: requisitosTo.value,
+    active: route.hash === '#requisitos',
     class: "text-white hover:text-white hover:bg-white/10",
   },
   {
     label: 'Sedes',
-    to: '/#sedes',
-    active: route.path.startsWith('#sedes'),
+    to: '#sedes',
+    active: route.hash === '#sedes',
     class: "text-white hover:text-white hover:bg-white/10",
   },
   {
@@ -153,8 +162,8 @@ const items = computed<NavigationMenuItem[]>(() => [
   },
   {
     label: 'Preguntas frecuentes',
-    to: '/#faqs',
-    active: route.path.startsWith('#faqs'),
+    to: faqsTo.value,
+    active: route.hash === '#faqs',
     class: "text-white hover:text-white hover:bg-white/10",
   },
 ])
@@ -163,13 +172,13 @@ const items = computed<NavigationMenuItem[]>(() => [
 const mobileItems = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Requisitos',
-    to: '/#requisitos',
-    active: route.path.startsWith('#requisitos'),
+    to: requisitosTo.value,
+    active: route.hash === '#requisitos',
   },
   {
     label: 'Sedes',
-    to: '/#sedes',
-    active: route.path.startsWith('#sedes'),
+    to: '#sedes',
+    active: route.hash === '#sedes',
   },
   {
     label: 'Blog',
@@ -178,8 +187,8 @@ const mobileItems = computed<NavigationMenuItem[]>(() => [
   },
   {
     label: 'Preguntas frecuentes',
-    to: '/#faqs',
-    active: route.path.startsWith('#faqs'),
+    to: faqsTo.value,
+    active: route.hash === '#faqs',
   },
 ])
 
