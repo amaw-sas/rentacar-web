@@ -68,45 +68,36 @@ describe('useUnavailabilityContext', () => {
     vi.unstubAllGlobals()
   })
 
-  describe('dateRangeLabel', () => {
-    it('formato compacto cuando pickup y return están en el mismo mes', () => {
+  describe('pickupDateLabel', () => {
+    it('formatea solo el día de recogida: "12 de mayo"', () => {
       const formStore = useStoreReservationForm()
       formStore.fechaRecogida = '2026-05-12'
       formStore.fechaDevolucion = '2026-05-15'
 
-      const { dateRangeLabel } = useUnavailabilityContext()
+      const { pickupDateLabel } = useUnavailabilityContext()
 
-      expect(dateRangeLabel.value).toBe('12-15 mayo')
+      expect(pickupDateLabel.value).toBe('12 de mayo')
     })
 
-    it('mismo día recogida=devolución muestra una sola fecha, no "12-12" (#31)', () => {
+    it('ignora la fecha de devolución (la no disponibilidad solo depende de la recogida)', () => {
       const formStore = useStoreReservationForm()
       formStore.fechaRecogida = '2026-05-12'
-      formStore.fechaDevolucion = '2026-05-12'
+      // Devolución muy posterior y en otro año: no debe afectar el label.
+      formStore.fechaDevolucion = '2027-01-02'
 
-      const { dateRangeLabel } = useUnavailabilityContext()
+      const { pickupDateLabel } = useUnavailabilityContext()
 
-      expect(dateRangeLabel.value).toBe('12 mayo')
+      expect(pickupDateLabel.value).toBe('12 de mayo')
     })
 
-    it('cross-month mismo año usa formato corto separado por " - "', () => {
-      const formStore = useStoreReservationForm()
-      formStore.fechaRecogida = '2026-04-30'
-      formStore.fechaDevolucion = '2026-05-02'
-
-      const { dateRangeLabel } = useUnavailabilityContext()
-
-      expect(dateRangeLabel.value).toBe('30 abr - 2 may')
-    })
-
-    it('cross-year incluye año en ambos lados', () => {
+    it('funciona en cualquier mes (sin año): "30 de diciembre"', () => {
       const formStore = useStoreReservationForm()
       formStore.fechaRecogida = '2026-12-30'
       formStore.fechaDevolucion = '2027-01-02'
 
-      const { dateRangeLabel } = useUnavailabilityContext()
+      const { pickupDateLabel } = useUnavailabilityContext()
 
-      expect(dateRangeLabel.value).toBe('30 dic 2026 - 2 ene 2027')
+      expect(pickupDateLabel.value).toBe('30 de diciembre')
     })
 
     it('retorna string vacío cuando fechaRecogida es null', () => {
@@ -114,9 +105,9 @@ describe('useUnavailabilityContext', () => {
       formStore.fechaRecogida = null
       formStore.fechaDevolucion = '2026-05-15'
 
-      const { dateRangeLabel } = useUnavailabilityContext()
+      const { pickupDateLabel } = useUnavailabilityContext()
 
-      expect(dateRangeLabel.value).toBe('')
+      expect(pickupDateLabel.value).toBe('')
     })
   })
 
@@ -179,7 +170,7 @@ describe('useUnavailabilityContext', () => {
       const { bannerText, isSpecific } = useUnavailabilityContext()
 
       expect(bannerText.value).toBe(
-        'No disponible para el 12-15 mayo en Bogotá Aeropuerto',
+        'No disponible para el 12 de mayo en Bogotá Aeropuerto',
       )
       expect(isSpecific.value).toBe(true)
     })

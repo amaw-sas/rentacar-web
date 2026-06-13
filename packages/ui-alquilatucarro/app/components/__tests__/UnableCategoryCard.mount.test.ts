@@ -41,8 +41,8 @@ const ADMIN_PAYLOAD = {
 // beforeEach (alongside useState/useToast) — `vi.unstubAllGlobals` in afterEach
 // would otherwise blow away a top-level stub after the first test.
 const stubbedUnavailabilityContext = () => ({
-  bannerText: ref('No disponible para el 12-15 mayo en Bogotá Aeropuerto'),
-  dateRangeLabel: ref('12-15 mayo'),
+  bannerText: ref('No disponible para el 12 de mayo en Bogotá Aeropuerto'),
+  pickupDateLabel: ref('12 de mayo'),
   locationLabel: ref('Bogotá Aeropuerto'),
   isSpecific: ref(true),
 });
@@ -209,7 +209,7 @@ describe('UnableCategoryCard mount — observable behavior', () => {
     const banner = wrapper.find('.bg-red-50.border-l-4.border-red-500');
     expect(banner.exists()).toBe(true);
     expect(banner.text()).toContain('No disponible');
-    expect(banner.text()).toContain('12-15 mayo');
+    expect(banner.text()).toContain('12 de mayo');
     expect(banner.text()).toContain('Bogotá Aeropuerto');
   });
 

@@ -58,18 +58,6 @@ function formatCity(raw: string): string {
     .join(' ');
 }
 
-// Compact month abbreviations. Built manually because DateFormatter('es-CO',
-// { month: 'short' }) emits "de abr" / "30 de dic de 2026" — the connector "de"
-// is grammatically correct Spanish but visually noisy for a banner label.
-const SHORT_MONTHS_ES = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-] as const;
-
-function shortMonth(date: DateObject): string {
-  return SHORT_MONTHS_ES[date.month - 1];
-}
-
 function longMonth(date: DateObject): string {
   return new DateFormatter(LOCALE, { month: 'long', timeZone: TIMEZONE })
     .format(date.toDate(TIMEZONE));
@@ -77,9 +65,9 @@ function longMonth(date: DateObject): string {
 
 interface UnavailabilityContext {
   bannerText: ComputedRef<string>;
-  dateRangeLabel: ComputedRef<string>;
+  pickupDateLabel: ComputedRef<string>;
   locationLabel: ComputedRef<string>;
-  // True when both date range and location are populated, i.e. the banner
+  // True when both the pickup day and location are populated, i.e. the banner
   // shows the specific reason rather than the generic fallback. Templates
   // gate the second banner line on this flag so the literal "No disponible
   // para tu búsqueda" never has to be duplicated outside this composable.
@@ -88,29 +76,16 @@ interface UnavailabilityContext {
 
 export default function useUnavailabilityContext(): UnavailabilityContext {
   const formStore = useStoreReservationForm();
-  const { selectedPickupLocation, selectedPickupDate, selectedReturnDate } =
+  const { selectedPickupLocation, selectedPickupDate } =
     storeToRefs(formStore);
 
-  const dateRangeLabel = computed<string>(() => {
+  // Availability is decided by the pickup day alone — the return date never
+  // changes whether a category is bookable — so the banner names only that
+  // day: "13 de junio". (No range, no year: the searcher context supplies it.)
+  const pickupDateLabel = computed<string>(() => {
     const pickup = selectedPickupDate.value;
-    const ret = selectedReturnDate.value;
-    if (!pickup || !ret) return '';
-
-    if (pickup.year !== ret.year) {
-      return `${pickup.day} ${shortMonth(pickup)} ${pickup.year} - ${ret.day} ${shortMonth(ret)} ${ret.year}`;
-    }
-
-    if (pickup.month === ret.month) {
-      if (pickup.day === ret.day) {
-        // Same day (pickup === return): "12 mayo", not the ambiguous "12-12".
-        return `${pickup.day} ${longMonth(pickup)}`;
-      }
-      // Same month: "12-15 mayo"
-      return `${pickup.day}-${ret.day} ${longMonth(pickup)}`;
-    }
-
-    // Different month, same year: "30 abr - 2 may"
-    return `${pickup.day} ${shortMonth(pickup)} - ${ret.day} ${shortMonth(ret)}`;
+    if (!pickup) return '';
+    return `${pickup.day} de ${longMonth(pickup)}`;
   });
 
   const locationLabel = computed<string>(() => {
@@ -134,19 +109,19 @@ export default function useUnavailabilityContext(): UnavailabilityContext {
   });
 
   const isSpecific = computed<boolean>(() =>
-    Boolean(dateRangeLabel.value && locationLabel.value),
+    Boolean(pickupDateLabel.value && locationLabel.value),
   );
 
   const bannerText = computed<string>(() => {
     if (isSpecific.value) {
-      return `No disponible para el ${dateRangeLabel.value} en ${locationLabel.value}`;
+      return `No disponible para el ${pickupDateLabel.value} en ${locationLabel.value}`;
     }
     return 'No disponible para tu búsqueda';
   });
 
   return {
     bannerText,
-    dateRangeLabel,
+    pickupDateLabel,
     locationLabel,
     isSpecific,
   };
