@@ -713,11 +713,10 @@ export default defineNuxtConfig({
         userAgent: ['OAI-SearchBot', 'PerplexityBot', 'Applebot-Extended'],
         allow: ['/'],
       },
-      // Bots de entrenamiento IA — bloqueados (consumen sin retorno)
-      {
-        userAgent: ['GPTBot', 'Google-Extended', 'CCBot', 'Bytespider', 'Amazonbot'],
-        disallow: ['/'],
-      },
+      // Bots de entrenamiento IA (GPTBot, Google-Extended, CCBot, Bytespider,
+      // Amazonbot) — permitidos vía '*'. Decisión #71: priorizar mindshare en
+      // respuestas de IA sobre proteger el contenido del training. Consistente
+      // con alquilame y alquicarros, que ya permiten estos bots.
     ],
     sitemap: "/sitemap.xml"
   },
