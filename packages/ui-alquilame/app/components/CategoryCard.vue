@@ -420,7 +420,7 @@
           </template>
         </UButton>
         <template #content>
-          <div class="flex flex-col gap-1 px-5 pt-3 pb-4 sutil-fondo">
+          <div class="flex flex-col gap-1 px-5 pt-3 pb-4 adicionales-contenido">
             <div class="flex items-center justify-between">
               <div class="flex">
                 <UCheckbox
@@ -599,7 +599,7 @@
                 </template>
               </UButton>
               <template #content>
-                <p class="max-w-[260px] p-3 text-xs font-normal text-gray-700">
+                <p class="max-w-[280px] p-3 text-sm font-normal text-gray-700">
                   El pago se realiza al recoger el vehículo en la sede, únicamente con tarjeta de crédito. No se acepta efectivo, Nequi u otros medios de pago.
                 </p>
               </template>
