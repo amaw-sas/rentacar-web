@@ -581,6 +581,37 @@
       </UCollapsible>
 
       <div class="seccion-boton-seleccion">
+        <!-- Único método de pago (issue #124): info sobre el CTA, mismo fondo difuminado -->
+        <div class="metodo-pago">
+          <span class="metodo-pago-label">
+            Único método de pago
+            <UTooltip
+              :open="paymentTooltipOpen"
+              :delay-duration="0"
+              :content="{ onEscapeKeyDown: forcePaymentTooltipClose, onPointerDownOutside: forcePaymentTooltipClose }"
+              :ui="{ content: 'max-w-[240px] h-auto whitespace-normal text-wrap select-text bg-white text-gray-900 shadow-lg border border-gray-200 p-3 text-xs font-normal' }"
+              @update:open="onPaymentTooltipOpenChange"
+            >
+              <template #content>
+                No se acepta efectivo ni tarjeta débito. El pago se realiza únicamente con tarjeta de crédito al recoger el vehículo en la sede.
+              </template>
+              <UButton
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                aria-label="Más información sobre el método de pago"
+                class="cursor-pointer p-0 -my-1"
+                :ui="questionButtonUIConfig"
+              >
+                <template #leading>
+                  <InfoQuestionIcon cls="size-3.5 text-gray-400" />
+                </template>
+              </UButton>
+            </UTooltip>
+          </span>
+          <span class="metodo-pago-valor">Tarjeta de crédito en sede</span>
+        </div>
+
         <UButton
           class="boton-seleccion"
           size="xl"
@@ -686,6 +717,14 @@ const {
   open: totalPriceTooltipOpen,
   onOpenChange: onTotalPriceTooltipOpenChange,
   forceClose: forceTotalPriceTooltipClose,
+} = useDelayedClose(tooltipCloseDelayMs);
+
+// "Único método de pago" tooltip (issue #124): same controlled pattern as the
+// price tooltip so it opens on tap (touch) and focus (keyboard), not hover-only.
+const {
+  open: paymentTooltipOpen,
+  onOpenChange: onPaymentTooltipOpenChange,
+  forceClose: forcePaymentTooltipClose,
 } = useDelayedClose(tooltipCloseDelayMs);
 
 /** Product Schema for SEO */
