@@ -6,6 +6,20 @@
     @submit="onSubmit"
     class="light"
   >
+      <!-- Requisitos para reservar: texto plano, sin recuadro ni modal anidado
+           (el slideover ya es un diálogo; anidar otro reintroduce el bug #65). -->
+      <div class="mb-5 text-gray-700">
+        <p class="text-sm">
+          Completa el formulario con los datos del <strong>titular de la tarjeta de crédito</strong>, incluso si el conductor será otra persona.
+        </p>
+        <p class="text-sm font-semibold text-gray-900 mt-3 mb-1">Requisitos para alquilar:</p>
+        <ul class="space-y-1 text-sm">
+          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con una tarjeta de crédito</span></li>
+          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Ser mayor de edad con cédula o pasaporte</span></li>
+          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con licencia de conducción vigente.</span></li>
+        </ul>
+      </div>
+
       <div class="grid grid-cols-2 gap-2">
         <u-form-field name="nombreCompleto" label="Nombres">
           <u-input
