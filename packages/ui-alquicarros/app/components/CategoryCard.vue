@@ -585,16 +585,7 @@
         <div class="metodo-pago">
           <span class="metodo-pago-label">
             Único método de pago
-            <UTooltip
-              :open="paymentTooltipOpen"
-              :delay-duration="0"
-              :content="{ onEscapeKeyDown: forcePaymentTooltipClose, onPointerDownOutside: forcePaymentTooltipClose }"
-              :ui="{ content: 'max-w-[240px] h-auto whitespace-normal text-wrap select-text bg-white text-gray-900 shadow-lg border border-gray-200 p-3 text-xs font-normal' }"
-              @update:open="onPaymentTooltipOpenChange"
-            >
-              <template #content>
-                No se acepta efectivo ni tarjeta débito. El pago se realiza únicamente con tarjeta de crédito al recoger el vehículo en la sede.
-              </template>
+            <UPopover>
               <UButton
                 variant="ghost"
                 color="neutral"
@@ -607,7 +598,12 @@
                   <InfoQuestionIcon cls="size-3.5 text-gray-400" />
                 </template>
               </UButton>
-            </UTooltip>
+              <template #content>
+                <p class="max-w-[260px] p-3 text-xs font-normal text-gray-700">
+                  El pago se realiza al recoger el vehículo en la sede, únicamente con tarjeta de crédito. No se acepta efectivo, Nequi u otros medios de pago.
+                </p>
+              </template>
+            </UPopover>
           </span>
           <span class="metodo-pago-valor">Tarjeta de crédito en sede</span>
         </div>
@@ -717,14 +713,6 @@ const {
   open: totalPriceTooltipOpen,
   onOpenChange: onTotalPriceTooltipOpenChange,
   forceClose: forceTotalPriceTooltipClose,
-} = useDelayedClose(tooltipCloseDelayMs);
-
-// "Único método de pago" tooltip (issue #124): same controlled pattern as the
-// price tooltip so it opens on tap (touch) and focus (keyboard), not hover-only.
-const {
-  open: paymentTooltipOpen,
-  onOpenChange: onPaymentTooltipOpenChange,
-  forceClose: forcePaymentTooltipClose,
 } = useDelayedClose(tooltipCloseDelayMs);
 
 /** Product Schema for SEO */
