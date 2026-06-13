@@ -143,11 +143,11 @@
       }
 
       .metodo-pago-label {
-        @apply inline-flex items-center justify-center gap-1 text-sm font-semibold text-gray-800;
+        @apply inline-flex items-center justify-center gap-1 text-sm font-bold text-gray-800;
       }
 
       .metodo-pago-valor {
-        @apply block text-xs text-gray-600;
+        @apply block text-sm text-gray-800;
       }
 
       .boton-seleccion {
@@ -163,6 +163,12 @@
     /* Fondo degradado sutil reutilizable */
     .sutil-fondo {
       background: linear-gradient(to right, white, #ededed 50%, white);
+    }
+
+    /* Contenido abierto de "Servicios adicionales": tono blanco como la sección
+       cerrada, no el gris de la sección de precios */
+    .adicionales-contenido {
+      background: linear-gradient(to right, white, #fafafa 50%, white);
     }
 }
 
