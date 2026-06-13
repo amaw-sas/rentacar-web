@@ -33,9 +33,9 @@ const generateHourOptions = () => {
 
   while (initHour.compare(endHour) < 0) {
     if (initHour.toString() === "00:00:00") {
-      options.push({ value: "00:00", label: "MEDIANOCHE" });
+      options.push({ value: "00:00", label: "Medianoche" });
     } else if (initHour.toString() === "12:00:00") {
-      options.push({ value: "12:00", label: "MEDIODIA" });
+      options.push({ value: "12:00", label: "Mediodía" });
     } else {
       const datetime = toDatetime(createCurrentDateObject(), initHour);
       options.push({ value: formatTime(datetime), label: formatHumanTime(datetime) });
