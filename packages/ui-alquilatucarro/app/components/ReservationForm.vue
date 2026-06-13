@@ -6,32 +6,17 @@
     @submit="onSubmit"
     class="light"
   >
-      <!-- Requisitos para reservar: callout inline (sin modal anidado en el
-           slideover, que reintroduciría el bug de diálogos anidados de #65). -->
-      <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 mb-5 text-gray-700">
-        <div class="flex items-start gap-2">
-          <UIcon name="i-lucide-info" class="size-5 text-blue-600 shrink-0 mt-0.5" />
-          <div>
-            <p class="font-semibold text-gray-900">Información importante</p>
-            <p class="text-sm mt-1">
-              Completa el formulario con los datos del <strong>titular de la tarjeta de crédito</strong>, incluso si el conductor será otra persona.
-            </p>
-          </div>
-        </div>
-        <p class="text-sm font-semibold text-gray-900 mt-3 mb-2">Requisitos para alquilar:</p>
-        <ul class="space-y-1.5 text-sm">
-          <li class="flex items-start gap-2">
-            <span class="shrink-0">✅</span>
-            <span>Contar con una tarjeta de crédito a nombre del titular que realizará el alquiler.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="shrink-0">✅</span>
-            <span>Ser mayor de edad y presentar en físico la cédula de ciudadanía o pasaporte vigente.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="shrink-0">✅</span>
-            <span>Presentar la licencia de conducción original y vigente.</span>
-          </li>
+      <!-- Requisitos para reservar: texto plano, sin recuadro ni modal anidado
+           (el slideover ya es un diálogo; anidar otro reintroduce el bug #65). -->
+      <div class="mb-5 text-gray-700">
+        <p class="text-sm">
+          Completa el formulario con los datos del <strong>titular de la tarjeta de crédito</strong>, incluso si el conductor será otra persona.
+        </p>
+        <p class="text-sm font-semibold text-gray-900 mt-3 mb-1">Requisitos para alquilar:</p>
+        <ul class="space-y-1 text-sm">
+          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con una tarjeta de crédito</span></li>
+          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Ser mayor de edad con cédula o pasaporte</span></li>
+          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con licencia de conducción vigente.</span></li>
         </ul>
       </div>
 

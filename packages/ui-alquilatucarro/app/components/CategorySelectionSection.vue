@@ -69,8 +69,8 @@
          "0 o 1 [role=dialog]" es estructural y no hay swap de capas. -->
     <u-slideover
       v-model:open="slideoverOpen"
-      :title="slideoverStep === 'datos' ? 'Datos para reservar (último paso)' : 'Resumen de la reserva'"
-      :description="slideoverStep === 'datos' ? 'Completa tus datos para solicitar la reserva.' : 'Antes de continuar revisa la información'"
+      :title="slideoverStep === 'datos' ? 'Datos para reservar' : 'Resumen de la reserva'"
+      :description="slideoverStep === 'datos' ? undefined : 'Antes de continuar revisa la información'"
       :overlay="false"
       :content="modalContentProps"
       :close="{ color: 'neutral', variant: 'outline', class: 'text-gray-700 border-gray-300 hover:bg-gray-100' }"
@@ -84,6 +84,12 @@
         close: 'absolute top-4 end-4 z-10',
       }"
     >
+      <template #title>
+        <template v-if="slideoverStep === 'datos'">
+          Datos para reservar <span class="text-base font-normal text-gray-500">(último paso)</span>
+        </template>
+        <template v-else>Resumen de la reserva</template>
+      </template>
       <template #body>
         <reservation-resume v-if="slideoverStep === 'resumen'" :category="selectedCategory"></reservation-resume>
         <reservation-form
