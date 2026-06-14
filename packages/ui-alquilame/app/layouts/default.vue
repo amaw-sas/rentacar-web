@@ -163,33 +163,27 @@ const hasInPageSections = computed(() => route.path === '/' || !!route.params.ci
 const requisitosTo = computed(() => hasInPageSections.value ? '#requisitos' : '/#requisitos');
 const faqsTo = computed(() => hasInPageSections.value ? '#faqs' : '/#faqs');
 
-// Items para menú desktop (texto blanco sobre fondo azul)
-const items = computed<NavigationMenuItem[]>(() => [
-  {
-    label: 'Requisitos',
-    to: requisitosTo.value,
-    active: route.hash === '#requisitos',
-    class: "text-white hover:text-white hover:bg-white/10",
-  },
-  {
-    label: 'Sedes',
-    to: '#sedes',
-    active: route.hash === '#sedes',
-    class: "text-white hover:text-white hover:bg-white/10",
-  },
-  {
-    label: 'Blog',
-    to: '/blog',
-    active: route.path.startsWith('/blog'),
-    class: "text-white hover:text-white hover:bg-white/10",
-  },
-  {
-    label: 'Preguntas frecuentes',
-    to: faqsTo.value,
-    active: route.hash === '#faqs',
-    class: "text-white hover:text-white hover:bg-white/10",
-  },
-])
+// Items para menú desktop (texto blanco sobre fondo azul).
+// El item activo recibe un fondo claro del UNavigationMenu; sin un color de
+// texto que contraste quedaba blanco-sobre-blanco e ilegible. linkClass pasa el
+// texto a gris oscuro cuando el item está activo.
+const linkClass = (active: boolean) =>
+  active
+    ? "text-gray-900 hover:text-gray-900"
+    : "text-white hover:text-white hover:bg-white/10";
+
+const items = computed<NavigationMenuItem[]>(() => {
+  const requisitosActive = route.hash === '#requisitos';
+  const sedesActive = route.hash === '#sedes';
+  const blogActive = route.path.startsWith('/blog');
+  const faqsActive = route.hash === '#faqs';
+  return [
+    { label: 'Requisitos', to: requisitosTo.value, active: requisitosActive, class: linkClass(requisitosActive) },
+    { label: 'Sedes', to: '#sedes', active: sedesActive, class: linkClass(sedesActive) },
+    { label: 'Blog', to: '/blog', active: blogActive, class: linkClass(blogActive) },
+    { label: 'Preguntas frecuentes', to: faqsTo.value, active: faqsActive, class: linkClass(faqsActive) },
+  ];
+})
 
 // Items para menú móvil (texto oscuro sobre fondo blanco)
 const mobileItems = computed<NavigationMenuItem[]>(() => [

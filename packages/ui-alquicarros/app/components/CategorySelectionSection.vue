@@ -107,28 +107,28 @@
               <span class="text-sm text-gray-600 font-medium">Compartir</span>
               <button
                 @click="shareWhatsApp"
-                class="flex items-center justify-center w-9 h-9 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors"
+                class="flex items-center justify-center w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors"
                 aria-label="Compartir en WhatsApp"
               >
-                <UIcon name="i-lucide-message-circle" class="size-4" />
+                <WhatsappIcon cls="size-4 text-white" />
               </button>
               <button
                 @click="shareFacebook"
-                class="flex items-center justify-center w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
+                class="flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
                 aria-label="Compartir en Facebook"
               >
-                <UIcon name="i-lucide-facebook" class="size-4" />
+                <FacebookIcon cls="size-4 text-white" />
               </button>
               <button
                 @click="shareTwitter"
-                class="flex items-center justify-center w-9 h-9 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
+                class="flex items-center justify-center w-8 h-8 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
                 aria-label="Compartir en X"
               >
-                <UIcon name="i-lucide-twitter" class="size-4" />
+                <XIcon cls="size-4 text-white" />
               </button>
               <button
                 @click="copyReservationLink"
-                class="flex items-center justify-center w-9 h-9 bg-gray-500 hover:bg-gray-600 text-white rounded-full transition-colors"
+                class="flex items-center justify-center w-8 h-8 bg-gray-500 hover:bg-gray-600 text-white rounded-full transition-colors"
                 aria-label="Copiar enlace"
               >
                 <UIcon :name="linkCopied ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
@@ -176,11 +176,11 @@
           <u-button
             color="neutral"
             size="xl"
-            class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
+            class="flex-1 py-4 justify-center whitespace-nowrap bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
             :loading="isSubmittingForm"
             :disabled="isSubmittingForm"
             @click="reservationFormComponent?.submit()"
-            >Solicitar reserva
+            >{{ isSubmittingForm ? 'Solicitando' : 'Solicitar reserva' }}
             <template #trailing>
               <ChevronRightIcon v-if="!isSubmittingForm" cls="size-5" />
             </template>
@@ -206,7 +206,10 @@ import {
   CategoryCard,
   ReservationResume,
   ReservationForm,
-  IconsChevronRightIcon as ChevronRightIcon
+  IconsChevronRightIcon as ChevronRightIcon,
+  IconsWhatsappIcon as WhatsappIcon,
+  IconsFacebookIcon as FacebookIcon,
+  IconsXIcon as XIcon
 } from "#components";
 
 // Note: composables and functions are auto-imported by Nuxt

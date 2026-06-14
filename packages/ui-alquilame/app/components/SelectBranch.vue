@@ -1,7 +1,7 @@
 <template>
     <!-- Móvil: select nativo (mejor UX táctil) -->
     <div class="relative w-full sm:hidden">
-      <LocationIcon cls="absolute left-3 top-1/2 -translate-y-1/2 text-red-600 size-5 pointer-events-none" />
+      <LocationIcon cls="absolute left-3 inset-y-0 m-auto text-red-600 size-5 pointer-events-none" />
       <select
         id="select-branch-mobile"
         v-model="selectedBranch"
@@ -20,7 +20,7 @@
           v-text="branch.name"
         ></option>
       </select>
-      <ChevronDownIcon cls="absolute right-4 top-1/2 -translate-y-1/2 size-6 pointer-events-none text-gray-600" />
+      <ChevronDownIcon cls="absolute right-4 inset-y-0 m-auto size-6 pointer-events-none text-gray-600" />
     </div>
     <!-- Desktop: USelectMenu con búsqueda -->
     <USelectMenu
