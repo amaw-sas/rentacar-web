@@ -1,5 +1,6 @@
 import { type CategoryType } from '../type/CategoryType';
 import { type MonthlyMileage } from '../type/MonthlyMileage';
+import type AttributionInput from '../type/AttributionInput';
 
 export default interface FormFields {
   fullname: string | null;
@@ -36,4 +37,5 @@ export default interface FormFields {
   aeroline?: string | null;
   flight_number?: string | null;
   monthly_mileage?: MonthlyMileage | null;
+  attribution?: AttributionInput;
 }

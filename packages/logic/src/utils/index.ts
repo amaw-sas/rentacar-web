@@ -32,6 +32,17 @@ export { buildCityReservationURL } from './buildCityReservationURL';
 export type { CityReservationDates } from './buildCityReservationURL';
 
 // ============================================================================
+// Attribution (marketing origin capture)
+// ============================================================================
+export { default as buildAttributionTouch } from './attribution/buildAttributionTouch';
+export type { AttributionTouch } from './attribution/buildAttributionTouch';
+export {
+  persistAttribution,
+  readStoredAttribution,
+  ATTRIBUTION_STORAGE_KEY,
+} from './attribution/attributionStorage';
+
+// ============================================================================
 // Server Helpers
 // ============================================================================
 export { extractStructuredError } from './helpers/extractStructuredError';
@@ -73,6 +84,7 @@ export type { default as CategoryProps } from './types/props/CategoryProps';
 // ============================================================================
 // Type Definitions - General Types
 // ============================================================================
+export type { default as AttributionInput } from './types/type/AttributionInput';
 export type { default as City } from './types/type/City';
 export type { default as FAQ } from './types/type/FAQ';
 export type { default as Testimonial } from './types/type/Testimonial';

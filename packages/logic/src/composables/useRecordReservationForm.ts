@@ -8,6 +8,9 @@ import type { FetchError } from 'ofetch';
 import useStoreReservationForm from '../stores/useStoreReservationForm';
 import useStoreSearchData from '../stores/useStoreSearchData';
 
+// Internal dependencies - utils
+import { readStoredAttribution } from '@rentacar-main/logic/utils';
+
 // Types
 import type { FormRecordFields, RecordReservationApiData } from '@rentacar-main/logic/utils';
 
@@ -41,6 +44,7 @@ export default async function useRecordReservationForm() {
     haveTotalInsurance,
     haveMonthlyReservation,
     selectedMonthlyMileage,
+    attribution,
   } = storeToRefs(storeForm);
 
   const { selectedCategory } = storeToRefs(useStoreSearchData());
@@ -77,6 +81,11 @@ export default async function useRecordReservationForm() {
   };
 
   if (referido.value) partialData["user"] = referido.value;
+
+  // Marketing attribution: prefer the store's last-touch, fall back to storage
+  // (e.g. store re-created mid-session). Always send an object — `{}` signals
+  // "Directo" to the dashboard; an absent key would signal "Desconocido".
+  partialData.attribution = attribution.value ?? readStoredAttribution() ?? {};
 
   let total_price_to_pay: number = 0,
     total_price: number = 0;

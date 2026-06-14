@@ -19,6 +19,9 @@ import {
   formatHumanDate,
   formatHumanTime,
   toDatetime,
+  buildAttributionTouch,
+  persistAttribution,
+  readStoredAttribution,
 } from '@rentacar-main/logic/utils';
 
 // Types
@@ -31,6 +34,7 @@ import type {
   TimeObject,
   ReservationWithFlightFormValidationSchemaType,
   ReservationFormValidationSchemaType,
+  AttributionInput,
 } from '@rentacar-main/logic/utils';
 
 
@@ -58,6 +62,34 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   const email = ref<string | null>(null);
 
   const aerolinea = ref<string | null>(null);
+
+  // Marketing attribution (click-id + utm + external referrer). Captured by the
+  // per-brand client plugin on load; the record composable reads it at submit.
+  const attribution = ref<AttributionInput | null>(null);
+
+  // Client-only. Reads the current URL + referrer; if this load is a real touch
+  // (has a click-id/utm or an external referrer) it overwrites the stored
+  // last-touch. Otherwise it seeds from storage so a signal captured earlier in
+  // the funnel survives to the reservation. Never throws — attribution must
+  // never break hydration or the reservation flow.
+  function captureAttribution(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const { attribution: touch, isTouch } = buildAttributionTouch(
+        window.location.search,
+        document.referrer,
+        window.location.hostname,
+      );
+      if (isTouch) {
+        attribution.value = touch;
+        persistAttribution(touch);
+      } else if (attribution.value === null) {
+        attribution.value = readStoredAttribution();
+      }
+    } catch {
+      /* never block the flow on attribution capture */
+    }
+  }
   const numeroVueloIda = ref<string | null>(null);
   const referido = ref<string | null>(null);
 
@@ -261,6 +293,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     numeroVueloIda,
     politicaPrivacidad,
     referido,
+    attribution,
     // other vars
     selectedDays,
     selectedMonthlyMileage,
@@ -269,6 +302,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     haveMonthlyReservation,
     haveFlight,
     // functions
+    captureAttribution,
     registerConvertion,
     serverFailed,
     submitForm,
