@@ -13,10 +13,14 @@
         @apply flex flex-col text-sm text-black;
 
         .category-name {
-            @apply mb-0 text-2xl;
+            @apply mb-0 text-sm;
         }
 
-        .category-description, .category-picoyplaca {
+        .category-description {
+            @apply lowercase leading-tight font-bold;
+        }
+
+        .category-picoyplaca {
             @apply lowercase leading-tight;
         }
 
