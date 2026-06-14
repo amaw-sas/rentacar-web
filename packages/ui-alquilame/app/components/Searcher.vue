@@ -348,7 +348,8 @@ const returnDateCalendarOpen = ref<boolean>(false);
 // Calendar UI configuration for better contrast
 const calendarUIConfig = {
     heading: '!text-gray-900 !font-bold',
-    cellTrigger: '!text-gray-900 !font-semibold data-[disabled]:!text-gray-300 data-[disabled]:!opacity-40 data-[unavailable]:!text-gray-300 data-[unavailable]:!opacity-40 data-[outside-view]:!text-gray-400 data-[outside-view]:!opacity-50'
+    gridRow: 'w-full',
+    cellTrigger: '!text-gray-900 !font-semibold data-[disabled]:!text-gray-400 data-[disabled]:!opacity-50 data-[unavailable]:!text-gray-400 data-[unavailable]:!opacity-50 data-[outside-view]:!text-gray-400 data-[outside-view]:!opacity-50'
 };
 
 // bfcache restoration: the Searcher has 15+ watchers binding local refs to
