@@ -164,7 +164,11 @@
             </u-form-field>
         </div>
         <!-- MÓVIL: Form field con input date nativo -->
-        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm sm:hidden">
+        <div class="relative bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm sm:hidden">
+            <span
+                v-if="rentalDays > 0"
+                class="absolute top-0 right-0 z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+            >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <input
                     v-if="minReturnDate"
@@ -181,7 +185,11 @@
         </div>
 
         <!-- DESKTOP: Form field con u-input-date -->
-        <div class="bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm hidden sm:block">
+        <div class="relative bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm hidden sm:block">
+            <span
+                v-if="rentalDays > 0"
+                class="absolute top-0 right-0 z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+            >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <u-input-date
                     v-if="minReturnDate"
@@ -331,6 +339,7 @@ const minPickupDate = ref<any>(null);
 const maxReturnDate = ref<any>(null);
 const selectedPickupDate = ref<any>(null);
 const selectedReturnDate = ref<any>(null);
+const rentalDays = ref<number>(0);
 const minReturnDate = computed<any>(() => selectedPickupDate.value ?? minPickupDate.value);
 const pendingSearching = ref<boolean>(false);
 const sortedBranches = ref<any[]>([]);
@@ -396,6 +405,7 @@ onMounted(() => {
   watch(() => formRefs.maxReturnDate.value, (val) => maxReturnDate.value = val, { immediate: true });
   watch(() => formRefs.selectedPickupDate.value, (val) => selectedPickupDate.value = val, { immediate: true });
   watch(() => formRefs.selectedReturnDate.value, (val) => selectedReturnDate.value = val, { immediate: true });
+  watch(() => formRefs.rentalDays.value, (val) => rentalDays.value = val, { immediate: true });
   watch(() => searchRefs.pending.value, (val) => pendingSearching.value = val, { immediate: true });
   watch(() => adminRefs.sortedBranches.value, (val) => sortedBranches.value = val, { immediate: true });
 

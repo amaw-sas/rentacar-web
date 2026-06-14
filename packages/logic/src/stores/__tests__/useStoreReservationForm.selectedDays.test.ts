@@ -44,7 +44,9 @@ describe('useStoreReservationForm — selectedDays delegates to rentalDayCount',
 
   it('imports rentalDayCount and no longer imports the dropped date helpers', () => {
     expect(source).toMatch(/rentalDayCount/)
-    expect(source).not.toMatch(/\bdayDifference\b/)
+    // dayDifference now legitimately backs the `rentalDays` computed (issue #152,
+    // a plain calendar-day span). The guard that selectedDays itself does NOT use
+    // it lives at block level above (`expect(block).not.toMatch(/dayDifference/)`).
     expect(source).not.toMatch(/\bhourDifference\b/)
   })
 })

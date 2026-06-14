@@ -15,6 +15,7 @@ import {
   createCurrentDateObject,
   createDateFromString,
   createTimeFromString,
+  dayDifference,
   rentalDayCount,
   formatHumanDate,
   formatHumanTime,
@@ -205,6 +206,18 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     return rentalDayCount(pickupAt, returnAt);
   });
 
+  // Calendar-day span between pickup and return (issue #152). Plain date
+  // subtraction — ignores time-of-day, unlike selectedDays/rentalDayCount which
+  // counts billable days. Drives the day-count chip in the Searcher; returns 0
+  // when either date is missing so the chip can hide (empty state).
+  const rentalDays = computed<number>(() => {
+    const pickupDate = selectedPickupDate.value;
+    const returnDate = selectedReturnDate.value;
+    if (!pickupDate || !returnDate) return 0;
+
+    return dayDifference(pickupDate, returnDate);
+  });
+
   const minPickupDate = computed<DateObject>(() => {
     return createCurrentDateObject();
   });
@@ -296,6 +309,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     attribution,
     // other vars
     selectedDays,
+    rentalDays,
     selectedMonthlyMileage,
     isSubmittingForm,
     haveTotalInsurance,
