@@ -15,11 +15,11 @@
         /* Brand: Gama title uses .heading-card (Plus Jakarta) + red from the
            template; keep tight bottom margin here. */
         .category-name {
-            @apply mb-0 text-sm;
+            @apply mb-0 text-sm font-bold;
         }
 
         .category-description {
-            @apply lowercase leading-tight font-bold;
+            @apply lowercase first-letter:uppercase leading-tight font-bold;
         }
 
         .category-picoyplaca {
