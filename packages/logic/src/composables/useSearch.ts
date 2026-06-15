@@ -16,6 +16,7 @@ import {
   createTimeFromString,
   createCurrentDateObject,
   createCurrentDateTimeObject,
+  extraHourChipLabel,
   futurePickupHourOptions,
   toDatetime,
   formatHumanTime,
@@ -115,22 +116,21 @@ export default function useSearch() {
       }
     }
 
-    // Only warn about extra-hour charges when the return time-of-day is strictly
-    // later than pickup's. Returning at the same hour or earlier (e.g. pickup
-    // 12 p.m. June 5 → return 10 a.m. June 6) bills whole days with no extra-hour
-    // surcharge, so the old `horaRecogida != horaDevolucion` test fired a false
-    // warning whenever the hours merely differed.
-    if (horaRecogida.value && horaDevolucion.value) {
-      const pickupTime = createTimeFromString(horaRecogida.value);
-      const returnTime = createTimeFromString(horaDevolucion.value);
-      if (returnTime.compare(pickupTime) > 0) {
-        createMessage({
-          type: "info",
-          title: "Tarifa adicional por horas extras",
-          message:
-            "las horas extras de uso pueden incrementar el precio total del alquiler.",
-        });
-      }
+    // Warn about extra-hour charges under the exact same condition that renders
+    // the return-hour chip — extraHourChipLabel returns non-null. So the toast
+    // and the chip always agree: nothing for a return <= 1 h after pickup (grace)
+    // or same/earlier; shown from 1 h 30 on.
+    const extraHoursNotice = extraHourChipLabel(
+      horaRecogida.value ? createTimeFromString(horaRecogida.value) : null,
+      horaDevolucion.value ? createTimeFromString(horaDevolucion.value) : null,
+    );
+    if (extraHoursNotice) {
+      createMessage({
+        type: "info",
+        title: "Tarifa adicional por horas extras",
+        message:
+          "las horas extras de uso pueden incrementar el precio total del alquiler.",
+      });
     }
 
     if (lugarRecogida.value != lugarDevolucion.value) {
