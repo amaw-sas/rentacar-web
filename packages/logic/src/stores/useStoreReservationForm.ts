@@ -17,6 +17,7 @@ import {
   createTimeFromString,
   dayDifference,
   rentalDayCount,
+  extraHourChipLabel,
   formatHumanDate,
   formatHumanTime,
   toDatetime,
@@ -218,6 +219,14 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     return dayDifference(pickupDate, returnDate);
   });
 
+  // Extra-hour surcharge hint for the Searcher's return-hour chip. Delegates to
+  // extraHourChipLabel, which compares the chosen TIME-OF-DAY of return vs pickup
+  // (not the full datetime) so it stays consistent with the calendar-day chip
+  // (rentalDays) and with the GRACE_HOURS billing rule.
+  const extraHoursLabel = computed<string | null>(() =>
+    extraHourChipLabel(selectedPickupHour.value, selectedReturnHour.value)
+  );
+
   const minPickupDate = computed<DateObject>(() => {
     return createCurrentDateObject();
   });
@@ -310,6 +319,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     // other vars
     selectedDays,
     rentalDays,
+    extraHoursLabel,
     selectedMonthlyMileage,
     isSubmittingForm,
     haveTotalInsurance,
