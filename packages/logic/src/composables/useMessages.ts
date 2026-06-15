@@ -42,6 +42,17 @@ export default function useMessages(){
             error.message = "Por favor escoge una hora de recogida posterior a la hora actual.";
         }
 
+        // The chosen pickup/return HOUR is outside the branch's opening hours.
+        // The backend message reads harsh and date-centric; replace it with a
+        // clear "the location is closed then" notice. Covers both hour codes.
+        if (
+            message.error == "out_of_schedule_pickup_hour_error" ||
+            message.error == "out_of_schedule_return_hour_error"
+        ) {
+            error.title = "Local cerrado a esa hora";
+            error.message = "La sede seleccionada no está abierta en el horario que elegiste.";
+        }
+
         toast.add({
             title: error.title,
             description: error.message,

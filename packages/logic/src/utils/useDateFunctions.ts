@@ -29,11 +29,19 @@ export function createCurrentDateTimeObject(): DateTimeObject {
 }
 
 /**
+ * Minimum lead time, in minutes, for a same-day pickup: the earliest hour we
+ * offer when the customer picks today is at least this far ahead of "now".
+ */
+export const SAME_DAY_PICKUP_LEAD_MINUTES = 60;
+
+/**
  * Filter pickup-hour options to those still valid for `pickupDate` relative to
  * `nowDateTime`. When `pickupDate` is the same calendar day as `nowDateTime`,
- * only keep slots whose time-of-day is strictly after the current time, so a
- * customer can't choose a pickup hour that already passed. Any future date keeps
- * every option. Pure (now is injected) → deterministic and unit-testable.
+ * only keep slots at least SAME_DAY_PICKUP_LEAD_MINUTES (1 hour) ahead of the
+ * current time, so a customer can't pick an hour that already passed or is too
+ * soon for the branch to prepare the car. Any future date keeps every option.
+ * Works in minutes-of-day so a late-night "now" (lead past midnight) trims to
+ * empty and lets the caller fall back. Pure (now is injected) → unit-testable.
  */
 export function futurePickupHourOptions<T extends { value: string }>(
     options: T[],
@@ -46,8 +54,12 @@ export function futurePickupHourOptions<T extends { value: string }>(
         pickupDate.day === nowDateTime.day;
     if (!sameDay) return options;
 
-    const currentTime = new Time(nowDateTime.hour, nowDateTime.minute, nowDateTime.second);
-    return options.filter((opt) => parseTime(opt.value).compare(currentTime) > 0);
+    const earliestMinutes =
+        nowDateTime.hour * 60 + nowDateTime.minute + SAME_DAY_PICKUP_LEAD_MINUTES;
+    return options.filter((opt) => {
+        const slot = parseTime(opt.value);
+        return slot.hour * 60 + slot.minute >= earliestMinutes;
+    });
 }
 
 export function createDateFromString(
