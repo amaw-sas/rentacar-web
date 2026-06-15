@@ -434,6 +434,13 @@ export default defineNuxtConfig({
       md: 768,
       lg: 1024,
       xl: 1280,
+      // The Vercel image optimizer only accepts widths present in images.sizes,
+      // which @nuxt/image derives from these screen values at build time. The
+      // runtime srcset for our 800px images on 2x screens requests w=1536, so
+      // 1536 must be a screen value here — otherwise /_vercel/image returns 400
+      // and the image breaks (#161). Keep this in sync with the widths the
+      // generated srcset can actually request.
+      xxl: 1536,
     },
   },
 
@@ -537,7 +544,11 @@ export default defineNuxtConfig({
       nitroConfig.vercel = nitroConfig.vercel || {}
       nitroConfig.vercel.config = nitroConfig.vercel.config || {}
       nitroConfig.vercel.config.images = {
-        sizes: [320, 640, 768, 1024, 1280],
+        // Must include every width the @nuxt/image srcset can request, or the
+        // Vercel optimizer returns 400 and the image breaks. Our 800px images on
+        // 2x screens request w=1536, so 1536 must be here. Keep in sync with
+        // `image.screens` above (#161).
+        sizes: [320, 640, 768, 1024, 1280, 1536],
         qualities: [80],
         formats: ['image/webp'],
         minimumCacheTTL: 2678400,
