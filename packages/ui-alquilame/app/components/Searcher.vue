@@ -172,7 +172,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm sm:hidden">
             <span
                 v-if="rentalDays > 0"
-                class="absolute top-0 right-0 z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <!-- No `min`/`max` here on purpose — see the pickup-date note above.
@@ -194,7 +194,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm hidden sm:block">
             <span
                 v-if="rentalDays > 0"
-                class="absolute top-0 right-0 z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <u-input-date
