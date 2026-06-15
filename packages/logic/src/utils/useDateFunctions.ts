@@ -169,10 +169,17 @@ export function hourDifference(
 }
 
 /**
+ * Hours past a full 24h block that are NOT billed as an extra day (grace window).
+ * Single source of truth: shared by rentalDayCount (billing) and the Searcher's
+ * extra-hour chip (extraHoursLabel) so neither drifts from the other.
+ */
+export const GRACE_HOURS = 4;
+
+/**
  * Counts billable rental days between two datetimes.
  *
  * Bills each full 24h block, plus one extra day when the leftover beyond the
- * last full block exceeds a 4h grace window. Any positive duration bills at
+ * last full block exceeds the GRACE_HOURS window. Any positive duration bills at
  * least one day. Returns 0 when the return is not strictly after the pickup.
  *
  * Replaces the prior calendar-day + abs(hour-of-day) heuristic, which
@@ -187,7 +194,6 @@ export function rentalDayCount(
     pickup: DateTimeObject,
     return_: DateTimeObject,
 ): number {
-    const GRACE_HOURS = 4;
     const totalHours =
         (return_.toDate('UTC').getTime() - pickup.toDate('UTC').getTime()) / (1000 * 60 * 60);
 
@@ -198,6 +204,38 @@ export function rentalDayCount(
     const days = fullDays + (leftoverHours > GRACE_HOURS ? 1 : 0);
 
     return days === 0 ? 1 : days;
+}
+
+/**
+ * Builds the Searcher's extra-hour chip label from the chosen pickup/return
+ * TIMES-OF-DAY (not full datetimes). Mirrors the company's hourly surcharge:
+ * any fraction of an hour rounds UP (whole-hour ceiling), so 1..60 min → "+1
+ * hora", 61..120 min → "+2 horas". Once the difference passes the GRACE_HOURS
+ * window it bills a full extra day → "+1 día".
+ *
+ * Returns null when there is nothing to charge — a time is missing, or the
+ * return hour is the same as or earlier than pickup — so the chip stays hidden.
+ * Hour-of-day (not datetime) on purpose: it complements the calendar-day chip,
+ * which already counts the day when the return hour is earlier than pickup.
+ *
+ * @param pickupHour chosen pickup time-of-day
+ * @param returnHour chosen return time-of-day
+ * @returns chip label, or null when nothing extra applies
+ */
+export function extraHourChipLabel(
+    pickupHour: TimeObject | null,
+    returnHour: TimeObject | null,
+): string | null {
+    if (!pickupHour || !returnHour) return null;
+
+    const diffMinutes =
+        (returnHour.hour * 60 + returnHour.minute) -
+        (pickupHour.hour * 60 + pickupHour.minute);
+    if (diffMinutes <= 0) return null;
+
+    const extraHours = Math.ceil(diffMinutes / 60);
+    if (extraHours > GRACE_HOURS) return '+1 día';
+    return extraHours === 1 ? '+1 hora' : `+${extraHours} horas`;
 }
 
 export function isTimeObject(obj: TimeObject | DateTimeObject | null): obj is TimeObject {

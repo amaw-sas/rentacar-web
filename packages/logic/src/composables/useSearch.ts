@@ -115,13 +115,22 @@ export default function useSearch() {
       }
     }
 
-    if (horaRecogida.value != horaDevolucion.value) {
-      createMessage({
-        type: "info",
-        title: "Tarifa adicional por horas extras",
-        message:
-          "El tiempo extra de uso puede incrementar el precio total del alquiler",
-      });
+    // Only warn about extra-hour charges when the return time-of-day is strictly
+    // later than pickup's. Returning at the same hour or earlier (e.g. pickup
+    // 12 p.m. June 5 → return 10 a.m. June 6) bills whole days with no extra-hour
+    // surcharge, so the old `horaRecogida != horaDevolucion` test fired a false
+    // warning whenever the hours merely differed.
+    if (horaRecogida.value && horaDevolucion.value) {
+      const pickupTime = createTimeFromString(horaRecogida.value);
+      const returnTime = createTimeFromString(horaDevolucion.value);
+      if (returnTime.compare(pickupTime) > 0) {
+        createMessage({
+          type: "info",
+          title: "Tarifa adicional por horas extras",
+          message:
+            "las horas extras de uso pueden incrementar el precio total del alquiler.",
+        });
+      }
     }
 
     if (lugarRecogida.value != lugarDevolucion.value) {

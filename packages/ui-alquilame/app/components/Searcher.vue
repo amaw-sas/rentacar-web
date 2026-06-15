@@ -281,7 +281,11 @@
             </u-form-field>
         </div>
         <!-- MÓVIL: Form field con select nativo -->
-        <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
+        <div class="relative bg-white rounded-xl p-2 shadow-sm sm:hidden">
+            <span
+                v-if="extraHoursLabel"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+            >{{ extraHoursLabel }}</span>
             <u-form-field label="Hora de devolución" size="xl">
                 <select
                     id="return-hour-mobile"
@@ -300,7 +304,11 @@
         </div>
 
         <!-- DESKTOP: Form field con u-select-menu -->
-        <div class="bg-white rounded-xl p-2 shadow-sm hidden sm:block">
+        <div class="relative bg-white rounded-xl p-2 shadow-sm hidden sm:block">
+            <span
+                v-if="extraHoursLabel"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+            >{{ extraHoursLabel }}</span>
             <u-form-field label="Hora de devolución" size="xl">
                 <u-select-menu
                     id="return-hour"
@@ -348,6 +356,7 @@ const maxReturnDate = ref<any>(null);
 const selectedPickupDate = ref<any>(null);
 const selectedReturnDate = ref<any>(null);
 const rentalDays = ref<number>(0);
+const extraHoursLabel = ref<string | null>(null);
 const minReturnDate = computed<any>(() => selectedPickupDate.value ?? minPickupDate.value);
 
 // Mobile uses a native <input type="date">. On some Android date pickers an
@@ -451,6 +460,7 @@ onMounted(() => {
   watch(() => formRefs.selectedPickupDate.value, (val) => selectedPickupDate.value = val, { immediate: true });
   watch(() => formRefs.selectedReturnDate.value, (val) => selectedReturnDate.value = val, { immediate: true });
   watch(() => formRefs.rentalDays.value, (val) => rentalDays.value = val, { immediate: true });
+  watch(() => formRefs.extraHoursLabel.value, (val) => extraHoursLabel.value = val, { immediate: true });
   watch(() => searchRefs.pending.value, (val) => pendingSearching.value = val, { immediate: true });
   watch(() => adminRefs.sortedBranches.value, (val) => sortedBranches.value = val, { immediate: true });
 
