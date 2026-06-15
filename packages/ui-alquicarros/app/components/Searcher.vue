@@ -112,6 +112,7 @@
                     aria-label="Día de recogida"
                     class="w-full"
                     :min="minPickupDate.toString()"
+                    @change="onMobilePickupDateChange"
                 >
             </u-form-field>
         </div>
@@ -180,6 +181,7 @@
                     class="w-full"
                     :min="minReturnDate.toString()"
                     :max="maxReturnDate?.toString()"
+                    @change="onMobileReturnDateChange"
                 >
             </u-form-field>
         </div>
@@ -341,6 +343,38 @@ const selectedPickupDate = ref<any>(null);
 const selectedReturnDate = ref<any>(null);
 const rentalDays = ref<number>(0);
 const minReturnDate = computed<any>(() => selectedPickupDate.value ?? minPickupDate.value);
+
+// Mobile uses a native <input type="date">. On some Android date pickers an
+// out-of-range value can still be committed, which makes the browser surface
+// its native validation bubble ("El valor debe ser igual o posterior a …").
+// That bubble is unstyleable and renders dark-on-dark under Android force-dark.
+// We never want it: silently snap any out-of-range value back into range on
+// change (the user can't rent in the past anyway). Native date inputs always
+// emit ISO `YYYY-MM-DD`, so lexicographic comparison is chronological. Desktop
+// uses <u-calendar>, which already disables out-of-range days.
+const clampMobileDateInput = (event: Event, min?: string | null, max?: string | null): string | null => {
+    const target = event.target as HTMLInputElement;
+    let value = target.value;
+    if (!value) return null;
+    if (min && value < min) value = min;
+    if (max && value > max) value = max;
+    if (value !== target.value) target.value = value;
+    return value;
+};
+
+const onMobilePickupDateChange = (event: Event) => {
+    const clamped = clampMobileDateInput(event, minPickupDate.value?.toString());
+    if (clamped !== null) selectedPickupDate.value = clamped;
+};
+
+const onMobileReturnDateChange = (event: Event) => {
+    const clamped = clampMobileDateInput(
+        event,
+        minReturnDate.value?.toString(),
+        maxReturnDate.value?.toString(),
+    );
+    if (clamped !== null) selectedReturnDate.value = clamped;
+};
 const pendingSearching = ref<boolean>(false);
 const sortedBranches = ref<any[]>([]);
 const pickupHourOptions = ref<any[]>([]);
@@ -356,6 +390,11 @@ const returnDateCalendarOpen = ref<boolean>(false);
 const calendarUIConfig = {
     heading: '!text-gray-900 !font-bold',
     gridRow: 'w-full',
+    // Center each weekday letter within its column so it lines up vertically
+    // with the day numbers. The default `gridRow` already has place-items-center
+    // (numbers centered) but `gridWeekDaysRow` does not, so without this the
+    // letters left-align inside their column and drift left of the numbers.
+    gridWeekDaysRow: 'w-full place-items-center',
     cellTrigger: '!text-gray-900 !font-semibold data-[disabled]:!text-gray-400 data-[disabled]:!opacity-50 data-[unavailable]:!text-gray-400 data-[unavailable]:!opacity-50 data-[outside-view]:!text-gray-400 data-[outside-view]:!opacity-50'
 };
 
