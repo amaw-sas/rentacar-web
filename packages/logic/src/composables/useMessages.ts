@@ -33,6 +33,15 @@ export default function useMessages(){
         if (message.error == "no_available_categories_error")
             error.title = "No hay vehículos";
 
+        // A pickup datetime in the past (e.g. an hour earlier today than now).
+        // The backend's raw message talks about the "fecha" and reads harsh;
+        // override title + message with a friendly, hour-focused notice so the
+        // customer knows exactly what to fix. Same copy as the doSearch guard.
+        if (message.error == "inferior_pickup_date") {
+            error.title = "Revisa la hora de recogida";
+            error.message = "Por favor escoge una hora de recogida posterior a la hora actual.";
+        }
+
         toast.add({
             title: error.title,
             description: error.message,
