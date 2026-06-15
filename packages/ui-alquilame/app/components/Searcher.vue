@@ -103,6 +103,11 @@
         <!-- MÓVIL: Form field con input date nativo -->
         <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
             <u-form-field label="Día de recogida" size="xl">
+                <!-- No `min`/`max` here on purpose: a native `min` makes the field
+                     `:invalid` for out-of-range dates, and Android Chrome then shows
+                     an unstyleable dark validation balloon (unreadable under
+                     force-dark). The @change handler clamps the value into range
+                     instead, so the field is never `:invalid`. -->
                 <input
                     v-if="minPickupDate"
                     type="date"
@@ -111,7 +116,6 @@
                     v-model="selectedPickupDate"
                     aria-label="Día de recogida"
                     class="w-full"
-                    :min="minPickupDate.toString()"
                     @change="onMobilePickupDateChange"
                 >
             </u-form-field>
@@ -171,6 +175,8 @@
                 class="absolute top-0 right-0 z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
+                <!-- No `min`/`max` here on purpose — see the pickup-date note above.
+                     The @change handler clamps into [minReturnDate, maxReturnDate]. -->
                 <input
                     v-if="minReturnDate"
                     type="date"
@@ -179,8 +185,6 @@
                     v-model="selectedReturnDate"
                     aria-label="Día de devolución"
                     class="w-full"
-                    :min="minReturnDate.toString()"
-                    :max="maxReturnDate?.toString()"
                     @change="onMobileReturnDateChange"
                 >
             </u-form-field>
