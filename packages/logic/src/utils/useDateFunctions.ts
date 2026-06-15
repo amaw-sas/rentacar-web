@@ -1,12 +1,14 @@
-import { 
+import {
     toCalendarDateTime,
     DateFormatter,
-    parseDate, 
-    parseDateTime, 
-    parseTime, 
-    today
+    parseDate,
+    parseDateTime,
+    parseTime,
+    today,
+    now,
+    Time
 } from '@internationalized/date';
-import type { CalendarDate, CalendarDateTime, Time } from '@internationalized/date';
+import type { CalendarDate, CalendarDateTime } from '@internationalized/date';
 
 export type DateObject = CalendarDate;
 export type DateTimeObject = CalendarDateTime;
@@ -16,6 +18,36 @@ const defaultTimezone = 'America/Bogota';
 
 export function createCurrentDateObject(): DateObject {
     return today(defaultTimezone);
+}
+
+/**
+ * Current wall-clock datetime in the app timezone (America/Bogota), as a
+ * CalendarDateTime. Used to compare a chosen pickup moment against "now".
+ */
+export function createCurrentDateTimeObject(): DateTimeObject {
+    return toCalendarDateTime(now(defaultTimezone));
+}
+
+/**
+ * Filter pickup-hour options to those still valid for `pickupDate` relative to
+ * `nowDateTime`. When `pickupDate` is the same calendar day as `nowDateTime`,
+ * only keep slots whose time-of-day is strictly after the current time, so a
+ * customer can't choose a pickup hour that already passed. Any future date keeps
+ * every option. Pure (now is injected) → deterministic and unit-testable.
+ */
+export function futurePickupHourOptions<T extends { value: string }>(
+    options: T[],
+    pickupDate: DateObject,
+    nowDateTime: DateTimeObject,
+): T[] {
+    const sameDay =
+        pickupDate.year === nowDateTime.year &&
+        pickupDate.month === nowDateTime.month &&
+        pickupDate.day === nowDateTime.day;
+    if (!sameDay) return options;
+
+    const currentTime = new Time(nowDateTime.hour, nowDateTime.minute, nowDateTime.second);
+    return options.filter((opt) => parseTime(opt.value).compare(currentTime) > 0);
 }
 
 export function createDateFromString(

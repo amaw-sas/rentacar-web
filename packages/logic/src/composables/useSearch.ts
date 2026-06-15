@@ -15,6 +15,8 @@ import useMessages from './useMessages';
 import {
   createTimeFromString,
   createCurrentDateObject,
+  createCurrentDateTimeObject,
+  futurePickupHourOptions,
   toDatetime,
   formatHumanTime,
   formatTime,
@@ -96,6 +98,22 @@ export default function useSearch() {
   
   const doSearch = () => {
     flushMessages();
+
+    // Block a pickup that is already in the past before hitting the backend.
+    // Realistically this is only the hour on today's date (past dates are
+    // blocked by the calendar/mobile clamp). Show a friendly notice instead of
+    // the backend's harsh "Error" toast, and skip the search entirely.
+    if (selectedPickupDate.value && horaRecogida.value) {
+      const pickupAt = toDatetime(selectedPickupDate.value, createTimeFromString(horaRecogida.value));
+      if (pickupAt.compare(createCurrentDateTimeObject()) <= 0) {
+        createMessage({
+          type: "info",
+          title: "Revisa la hora de recogida",
+          message: "Por favor escoge una hora de recogida posterior a la hora actual.",
+        });
+        return;
+      }
+    }
 
     if (horaRecogida.value != horaDevolucion.value) {
       createMessage({
@@ -222,8 +240,28 @@ export default function useSearch() {
     };
   });
 
-  // Usa cache estático - no regenera 48 opciones en cada re-render
-  const pickupHourOptions = computed(() => getHourOptions());
+  // When the pickup date is today, only offer hours strictly after the current
+  // time (a customer can't pick a slot that already passed → no backend "past
+  // date" error). Any future date offers the full static list. Late-night
+  // fallback: if nothing is left today, keep all options so the select isn't
+  // empty — the doSearch guard still blocks an actually-past pickup.
+  const pickupHourOptions = computed(() => {
+    const allOptions = getHourOptions();
+    const pickupDate = selectedPickupDate.value;
+    if (!pickupDate) return allOptions;
+    const filtered = futurePickupHourOptions(allOptions, pickupDate, createCurrentDateTimeObject());
+    return filtered.length ? filtered : allOptions;
+  });
+
+  // Keep the selected pickup hour valid: when the date moves to today and the
+  // chosen hour is now in the past, snap to the earliest still-available slot.
+  // horaDevolucion follows via the horaRecogida → horaDevolucion sync watcher.
+  watch(pickupHourOptions, (options) => {
+    if (!horaRecogida.value || !options.length) return;
+    if (!options.some((o) => o.value === horaRecogida.value)) {
+      horaRecogida.value = options[0].value;
+    }
+  });
 
   // Filtra desde cache cuando hay restricción mensual
   const returnHourOptions = computed(() => {
