@@ -40,6 +40,18 @@ export default function useMessages(){
             progress: false,
             color: 'error',
             icon: 'lucide:x',
+            // Force an explicit light surface + dark text (same pattern as
+            // createMessage). Without it the error toast inherits theme tokens
+            // that Android Chrome force-dark paints black, leaving the "Error"
+            // title dark-on-dark and unreadable. `bg-white` (a literal colour,
+            // not a token) resists force-dark, so the toast stays legible on
+            // mobile and desktop alike.
+            ui: {
+                root: 'bg-white text-gray-900',
+                icon: 'text-red-500',
+                title: 'text-gray-900 text-base font-semibold',
+                description: 'text-gray-600',
+            },
         })
     }
 
