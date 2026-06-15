@@ -208,13 +208,15 @@ export function rentalDayCount(
 
 /**
  * Builds the Searcher's extra-hour chip label from the chosen pickup/return
- * TIMES-OF-DAY (not full datetimes). Mirrors the company's hourly surcharge:
- * any fraction of an hour rounds UP (whole-hour ceiling), so 1..60 min → "+1
- * hora", 61..120 min → "+2 horas". Once the difference passes the GRACE_HOURS
- * window it bills a full extra day → "+1 día".
+ * TIMES-OF-DAY (not full datetimes). The first full hour is free and silent:
+ * a return 1 h or less after pickup (or the same/earlier hour) shows nothing.
+ * From 1 h 30 on it counts COMPLETED extra hours (floor) — 1h30 → "+1 hora",
+ * 2h00/2h30 → "+2 horas", … up to GRACE_HOURS ("+4 horas"). Beyond that the
+ * surcharge becomes a full extra day → "+1 día".
  *
- * Returns null when there is nothing to charge — a time is missing, or the
- * return hour is the same as or earlier than pickup — so the chip stays hidden.
+ * This same non-null/null result also gates the "Tarifa adicional por horas
+ * extras" toast in useSearch, so the toast and the chip always agree.
+ *
  * Hour-of-day (not datetime) on purpose: it complements the calendar-day chip,
  * which already counts the day when the return hour is earlier than pickup.
  *
@@ -231,9 +233,10 @@ export function extraHourChipLabel(
     const diffMinutes =
         (returnHour.hour * 60 + returnHour.minute) -
         (pickupHour.hour * 60 + pickupHour.minute);
-    if (diffMinutes <= 0) return null;
+    // First full hour is grace → nothing shown for <= 1 h (and same/earlier).
+    if (diffMinutes <= 60) return null;
 
-    const extraHours = Math.ceil(diffMinutes / 60);
+    const extraHours = Math.floor(diffMinutes / 60);
     if (extraHours > GRACE_HOURS) return '+1 día';
     return extraHours === 1 ? '+1 hora' : `+${extraHours} horas`;
 }
