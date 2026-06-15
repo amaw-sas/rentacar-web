@@ -6,6 +6,15 @@ html {
   color-scheme: light;
 }
 
+/* Hide the native clear (✕) button on date inputs. The searcher's date fields
+   are always populated (store defaults + the mobile clamp), so a clear action
+   would only let users empty a required field. Note: the Android OS date-picker
+   dialog's own "Borrar"/"Clear" is drawn by the operating system and cannot be
+   removed from the web side — this only hides the field-level control. */
+input[type="date"]::-webkit-clear-button {
+  display: none;
+}
+
 /* ============================================
    CRITICAL CSS - Previene FOUC en hero section
    Estos estilos deben coincidir con los de Nuxt UI

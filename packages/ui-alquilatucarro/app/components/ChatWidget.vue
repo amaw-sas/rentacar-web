@@ -9,7 +9,7 @@
           <p class="text-gray-600">Estamos a un mensaje de distancia</p>
           <UButton
             size="xl"
-            class="bg-[#25D366] hover:bg-[#128C7E] text-white mt-3 transition-colors"
+            class="bg-[#25D366] hover:bg-[#128C7E] text-white mt-3 transition-colors w-64 justify-center py-4"
             label="Whatsapp"
             target="_blank"
             :external="true"
@@ -26,7 +26,7 @@
           <UButton
             color="info"
             size="xl"
-            class="text-white mt-3"
+            class="text-white mt-3 w-64 justify-center py-4"
             :external="true"
             :label="franchise.phone"
             :to="`tel:${franchise.phone}`"
