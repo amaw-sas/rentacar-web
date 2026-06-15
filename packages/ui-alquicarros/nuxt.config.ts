@@ -544,7 +544,11 @@ export default defineNuxtConfig({
       nitroConfig.vercel = nitroConfig.vercel || {}
       nitroConfig.vercel.config = nitroConfig.vercel.config || {}
       nitroConfig.vercel.config.images = {
-        sizes: [320, 640, 768, 1024, 1280],
+        // Must include every width the @nuxt/image srcset can request, or the
+        // Vercel optimizer returns 400 and the image breaks. Our 800px images on
+        // 2x screens request w=1536, so 1536 must be here. Keep in sync with
+        // `image.screens` above (#161).
+        sizes: [320, 640, 768, 1024, 1280, 1536],
         qualities: [80],
         formats: ['image/webp'],
         minimumCacheTTL: 2678400,
