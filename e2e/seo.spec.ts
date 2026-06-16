@@ -85,6 +85,69 @@ test.describe('SEO y metadatos', () => {
     expect(content).toContain('User-agent');
   });
 
+  // Issue #71: política de bots de entrenamiento IA.
+  // Decisión de negocio (#71): permitir GPTBot/CCBot/Google-Extended para
+  // maximizar mindshare en respuestas de IA, de forma consistente en las 3
+  // marcas. Este test corre por marca vía la env BRAND.
+  test('robots.txt debe permitir bots de entrenamiento IA (#71)', async ({ page }) => {
+    // En dev, nuxt-robots bloquea todo (Disallow: /). ?mockProductionEnv
+    // renderiza las reglas reales de producción (los groups de nuxt.config).
+    const response = await page.goto('/robots.txt?mockProductionEnv');
+    expect(response?.status()).toBe(200);
+    const content = (await page.textContent('body')) ?? '';
+
+    // Evalúa la regla efectiva de robots.txt para un user-agent sobre un path.
+    // Grupo aplicable: el que nombra exactamente el UA, o el de '*' si ninguno.
+    // Dentro del grupo gana el prefijo más largo; en empate gana Allow.
+    const isAllowed = (txt: string, ua: string, path: string): boolean => {
+      const lines = txt.split('\n').map((l) => l.trim());
+      type Group = { agents: string[]; rules: { allow: boolean; path: string }[] };
+      const groups: Group[] = [];
+      let current: Group | null = null;
+      let lastWasAgent = false;
+      for (const line of lines) {
+        if (!line || line.startsWith('#')) continue;
+        const [rawKey, ...rest] = line.split(':');
+        const key = rawKey.toLowerCase().trim();
+        const value = rest.join(':').trim();
+        if (key === 'user-agent') {
+          if (!current || !lastWasAgent) {
+            current = { agents: [], rules: [] };
+            groups.push(current);
+          }
+          current.agents.push(value.toLowerCase());
+          lastWasAgent = true;
+        } else if ((key === 'allow' || key === 'disallow') && current) {
+          current.rules.push({ allow: key === 'allow', path: value });
+          lastWasAgent = false;
+        } else {
+          lastWasAgent = false;
+        }
+      }
+      const named = groups.find((g) => g.agents.includes(ua.toLowerCase()));
+      const group = named ?? groups.find((g) => g.agents.includes('*'));
+      if (!group) return true; // sin reglas → permitido
+      let best: { allow: boolean; path: string } | null = null;
+      for (const rule of group.rules) {
+        if (rule.path === '' ) continue;
+        if (path.startsWith(rule.path)) {
+          if (
+            !best ||
+            rule.path.length > best.path.length ||
+            (rule.path.length === best.path.length && rule.allow)
+          ) {
+            best = rule;
+          }
+        }
+      }
+      return best ? best.allow : true;
+    };
+
+    for (const bot of ['GPTBot', 'CCBot', 'Google-Extended']) {
+      expect(isAllowed(content, bot, '/'), `${bot} debe poder rastrear /`).toBe(true);
+    }
+  });
+
   test('las páginas de ciudades deben tener canonical correcto', async ({ page }) => {
     const ciudades = ['bogota', 'medellin', 'cali'];
 

@@ -660,6 +660,9 @@ export default defineNuxtConfig({
   },
 
   robots: {
+    // Bots de entrenamiento IA (GPTBot, CCBot, Google-Extended, etc.) permitidos
+    // vía wildcard. Decisión #71: priorizar mindshare en IA. No agregar grupos de
+    // bloqueo aquí — rompe la consistencia con las 3 marcas.
     blockNonSeoBots: false,
     disallow: ['/seo', '/seo/*'],
     allow: [
