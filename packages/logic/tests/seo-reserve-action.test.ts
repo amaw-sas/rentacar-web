@@ -22,6 +22,8 @@ let captured: any[] = []
 beforeEach(() => {
   captured = []
   vi.stubGlobal('useAppConfig', () => ({ franchise: FRANCHISE, organization: ORGANIZATION }))
+  // #116: useBaseSEO ahora lee la base de la API pública del dashboard.
+  vi.stubGlobal('useRuntimeConfig', () => ({ public: { rentacarPublicApiBase: 'https://api.test' } }))
   vi.stubGlobal('useRoute', () => ({ path: '/' }))
   vi.stubGlobal('useSeoMeta', () => {})
   vi.stubGlobal('useHead', () => {})
@@ -61,12 +63,16 @@ describe('#64 useBaseSEO — ReserveAction reemplaza SearchAction falso', () => 
     const actions = findByType(captured, 'ReserveAction')
     expect(actions).toHaveLength(1)
     const action = actions[0]
-    // target = EntryPoint a una URL resoluble (no la raíz con {search_term_string})
-    expect(action.target['@type']).toBe('EntryPoint')
-    expect(action.target.urlTemplate).toBe(FRANCHISE.website)
-    expect(action.target.urlTemplate).not.toContain('{search_term_string}')
+    // #116: target ahora es [web, programático]. El EntryPoint web es el que NO
+    // lleva httpMethod (el programático sí). Sus garantías de #64 se mantienen tal cual.
+    const targets = Array.isArray(action.target) ? action.target : [action.target]
+    const web = targets.find((t: any) => t['@type'] === 'EntryPoint' && !t.httpMethod)
+    // EntryPoint a una URL resoluble (no la raíz con {search_term_string})
+    expect(web['@type']).toBe('EntryPoint')
+    expect(web.urlTemplate).toBe(FRANCHISE.website)
+    expect(web.urlTemplate).not.toContain('{search_term_string}')
     // actionPlatform debe usar los IRIs canónicos https:// del enum (no http://)
-    expect(action.target.actionPlatform).toEqual([
+    expect(web.actionPlatform).toEqual([
         'https://schema.org/DesktopWebPlatform',
         'https://schema.org/MobileWebPlatform',
     ])

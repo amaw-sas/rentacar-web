@@ -126,6 +126,25 @@ structured data no tiene capa de unit test; el holdout son checks sobre el rende
 - **Monitoring:** validar JSON-LD del home en prod tras deploy (Rich Results / curl).
 - **Rollback:** revert del commit; cambio aislado a JSON-LD, sin estado ni migración.
 
+## Verification evidence (2026-06-16)
+
+- **SCEN-001/002/003/005 + hardening:** `pnpm --filter @rentacar-main/logic test -- --run` →
+  68 files / 434 tests passed (incl. new `useBaseSEO.reserveAction.test.ts`: 6 tests, and
+  adapted #64 holdout `seo-reserve-action.test.ts`: 3 tests). SEO tests deterministic 9/9 ×5 runs.
+- **SCEN-004 (type-clean):** `pnpm --filter ui-alquilatucarro typecheck` → ZERO errors in
+  `useBaseSEO.ts` / `logic/nuxt.config.ts` (219 total = pre-existing baseline red); no `@ts-*`,
+  no `'@type':'WebAPI'` in `actionApplication`.
+- **SCEN-002/003 runtime:** home rendered on `:4000` → JSON-LD emits `target:[web, programmatic]`,
+  programmatic EntryPoint `httpMethod:POST` `/api/reservations`, `actionApplication.url`
+  `…/api/openapi`; no SSR errors.
+- **SCEN-003b (advisory):** `GET https://rentacar-dashboard-delta.vercel.app/api/openapi` → 200 OpenAPI.
+- **Quality Integration:** code-reviewer (approve + runtime check done), edge-case-detector
+  (2 Medium → fixed: trailing-slash trim + fail-soft), code-simplifier (clean), performance (negligible).
+- **Reward-hacking:** clean — #116 test written failing-first; #64 test adapted to array shape with all
+  assertions preserved.
+- **Note:** full-suite shows pre-existing flaky `useStoreSearchData.*` timeouts (5000ms under load),
+  unrelated to this diff (no store files touched).
+
 ## Open / deferred
 
 - Tipado del key del layer en `runtimeConfig.public` — única incógnita; resuelta en
