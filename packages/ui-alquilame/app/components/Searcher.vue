@@ -368,10 +368,16 @@ const minReturnDate = computed<any>(() => selectedPickupDate.value ?? minPickupD
 // change (the user can't rent in the past anyway). Native date inputs always
 // emit ISO `YYYY-MM-DD`, so lexicographic comparison is chronological. Desktop
 // uses <u-calendar>, which already disables out-of-range days.
-const clampMobileDateInput = (event: Event, min?: string | null, max?: string | null): string | null => {
+const clampMobileDateInput = (event: Event, min?: string | null, max?: string | null, fallback?: string | null): string | null => {
     const target = event.target as HTMLInputElement;
     let value = target.value;
-    if (!value) return null;
+    if (!value) {
+        // Disallow clearing the date: the native clear affordance (Android picker /
+        // desktop ✕) empties the field. Repaint the last valid value so the input
+        // never goes blank, and report "no change" so the shared ref is left intact.
+        target.value = fallback ?? '';
+        return null;
+    }
     if (min && value < min) value = min;
     if (max && value > max) value = max;
     if (value !== target.value) target.value = value;
@@ -389,7 +395,7 @@ const onMobilePickupDateChange = (event: Event) => {
     // clamp leaves the value unchanged (e.g. re-picking a past date already at today),
     // so a second search is never blocked by a stale disabled state.
     animateSearchButton.value = true;
-    const clamped = clampMobileDateInput(event, minPickupDate.value?.toString());
+    const clamped = clampMobileDateInput(event, minPickupDate.value?.toString(), undefined, selectedPickupDate.value ? selectedPickupDate.value.toString() : '');
     if (clamped !== null) selectedPickupDate.value = createDateFromString(clamped);
 };
 
@@ -399,6 +405,7 @@ const onMobileReturnDateChange = (event: Event) => {
         event,
         minReturnDate.value?.toString(),
         maxReturnDate.value?.toString(),
+        selectedReturnDate.value ? selectedReturnDate.value.toString() : '',
     );
     if (clamped !== null) selectedReturnDate.value = createDateFromString(clamped);
 };

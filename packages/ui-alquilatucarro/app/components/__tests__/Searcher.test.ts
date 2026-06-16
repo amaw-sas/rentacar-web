@@ -59,3 +59,25 @@ describe('Searcher — defensive body sanitization on mount (issue #25, SCEN-003
     expect(source).toMatch(/console\.warn\(.*Searcher.*body|console\.warn\(.*body.*Searcher/i)
   })
 })
+
+describe('Searcher — mobile date cannot be cleared (no-clear guard)', () => {
+  // The mobile pickup/return fields are native <input type="date">, whose browser
+  // clear affordance (Android picker / desktop ✕) would otherwise blank the field.
+  // The @change clamp repaints the last valid value on an empty input, and the
+  // inputs bind :value one-way so the empty `input` event never reaches the shared
+  // ref (which the desktop Reka UI picker requires as a CalendarDate, see #174).
+
+  it('binds both mobile date inputs one-way with :value (not v-model)', () => {
+    expect(source).toMatch(/name="pickup-date-mobile"[\s\S]{0,40}?:value="selectedPickupDate/)
+    expect(source).toMatch(/name="return-date-mobile"[\s\S]{0,40}?:value="selectedReturnDate/)
+  })
+
+  it('repaints the last valid value when the mobile date input is cleared', () => {
+    expect(source).toMatch(/if\s*\(\s*!value\s*\)\s*\{[\s\S]*?target\.value\s*=\s*fallback/)
+  })
+
+  it('passes the current date as fallback to the clamp from both mobile handlers', () => {
+    expect(source).toMatch(/selectedPickupDate\.value\s*\?\s*selectedPickupDate\.value\.toString\(\)\s*:/)
+    expect(source).toMatch(/selectedReturnDate\.value\s*\?\s*selectedReturnDate\.value\.toString\(\)\s*:/)
+  })
+})
