@@ -1,5 +1,5 @@
 // External dependencies
-import { onMounted, nextTick } from 'vue';
+import { onMounted } from 'vue';
 
 /**
  * Fire a GA4 `page_view` for a reservation-result page (`/reservado`,
@@ -19,24 +19,25 @@ import { onMounted, nextTick } from 'vue';
  * double-count the conversion. So this only fills the SPA-navigation gap.
  *
  * No-ops on the server and when gtag is absent (ad blocker, consent, etc.).
+ *
+ * `pageTitle` is passed explicitly because this fires on mount, before useHead
+ * has applied the page's <title>; reading document.title here would report the
+ * page_view under the PREVIOUS page's title.
  */
-export default function useResultPageView() {
+export default function useResultPageView(pageTitle?: string) {
   const nuxtApp = useNuxtApp();
 
-  onMounted(async () => {
+  onMounted(() => {
     // Full load / refresh: the gtag config already auto-sent the page_view.
     if (nuxtApp.isHydrating) return;
 
     const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
     if (typeof gtag !== 'function') return;
 
-    // Let useHead apply this page's <title> before we read document.title.
-    await nextTick();
-
     gtag('event', 'page_view', {
       page_location: window.location.href,
       page_path: window.location.pathname,
-      page_title: document.title,
+      page_title: pageTitle ?? document.title,
     });
   });
 }
