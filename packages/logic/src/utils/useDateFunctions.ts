@@ -63,6 +63,38 @@ export function futurePickupHourOptions<T extends { value: string }>(
 }
 
 /**
+ * Minimum rental length, in minutes, when pickup and return fall on the SAME
+ * day: the return must be at least this far after the pickup hour. Below this a
+ * same-day rental has zero/negative duration, which the backend rejects with
+ * `same_hour_error`.
+ */
+export const SAME_DAY_RETURN_GAP_MINUTES = 60;
+
+/**
+ * Filter return-hour options for the chosen return day. When the return lands on
+ * the same calendar day as pickup, only keep slots at least
+ * SAME_DAY_RETURN_GAP_MINUTES (1 hour) after the pickup hour — so a 8 a.m.
+ * pickup can be returned the same day from 9 a.m. on, never at/ before pickup.
+ * A different (later) return day keeps every option; branch opening hours are
+ * enforced server-side. Returns empty when the pickup is so late no same-day
+ * slot remains (caller falls back). Pure (pickup hour injected) → unit-testable.
+ */
+export function sameDayReturnHourOptions<T extends { value: string }>(
+    options: T[],
+    pickupHour: TimeObject | null,
+    sameDay: boolean,
+    minGapMinutes: number = SAME_DAY_RETURN_GAP_MINUTES,
+): T[] {
+    if (!sameDay || !pickupHour) return options;
+
+    const earliestMinutes = pickupHour.hour * 60 + pickupHour.minute + minGapMinutes;
+    return options.filter((opt) => {
+        const slot = parseTime(opt.value);
+        return slot.hour * 60 + slot.minute >= earliestMinutes;
+    });
+}
+
+/**
  * Decide whether a chosen pickup must roll forward because today is no longer
  * bookable. When `pickupDate` is today AND no same-day hour is still valid (it is
  * too late for the lead time, e.g. 11 p.m.), the earliest bookable pickup is

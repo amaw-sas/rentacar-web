@@ -18,6 +18,7 @@ import {
   createCurrentDateTimeObject,
   extraHourChipLabel,
   futurePickupHourOptions,
+  sameDayReturnHourOptions,
   rolloverWhenSameDayExhausted,
   toDatetime,
   formatHumanTime,
@@ -32,19 +33,22 @@ import type { BranchData } from '@rentacar-main/logic/utils';
 // Evita regenerar 48 opciones en cada re-render
 const generateHourOptions = () => {
   const options: Array<{ value: string; label: string }> = [];
-  let initHour = createTimeFromString('00:00');
-  const endHour = createTimeFromString('23:30');
+  let slot = createTimeFromString('00:00');
 
-  while (initHour.compare(endHour) < 0) {
-    if (initHour.toString() === "00:00:00") {
+  // 48 half-hour slots from 00:00 to 23:30 inclusive. A `while (slot < 23:30)`
+  // loop drops the final 23:30 (the original off-by-one — last option was 23:00),
+  // and switching to `<=` would wrap past midnight back to 00:00 and loop
+  // forever, so count the 48 slots explicitly.
+  for (let i = 0; i < 48; i++) {
+    if (slot.toString() === "00:00:00") {
       options.push({ value: "00:00", label: "Medianoche" });
-    } else if (initHour.toString() === "12:00:00") {
+    } else if (slot.toString() === "12:00:00") {
       options.push({ value: "12:00", label: "Mediodía" });
     } else {
-      const datetime = toDatetime(createCurrentDateObject(), initHour);
+      const datetime = toDatetime(createCurrentDateObject(), slot);
       options.push({ value: formatTime(datetime), label: formatHumanTime(datetime) });
     }
-    initHour = initHour.add({ minutes: 30 });
+    slot = slot.add({ minutes: 30 });
   }
   return options;
 };
@@ -297,19 +301,45 @@ export default function useSearch() {
   const returnHourOptions = computed(() => {
     const allOptions = getHourOptions();
 
-    // Sin restricción mensual, devuelve todas las opciones
-    if (selectedDays.value !== 30 || !selectedPickupHour.value) {
-      return allOptions;
+    // Reservas mensuales (30 días): filtra opciones hasta la hora de recogida.
+    if (selectedDays.value === 30 && selectedPickupHour.value) {
+      const cutoffIndex = allOptions.findIndex(opt => {
+        const optTime = createTimeFromString(opt.value);
+        return optTime.compare(selectedPickupHour.value!) > 0;
+      });
+      return cutoffIndex === -1 ? allOptions : allOptions.slice(0, cutoffIndex);
     }
 
-    // Filtra opciones hasta la hora de recogida (para reservas mensuales)
-    const cutoffIndex = allOptions.findIndex(opt => {
-      const optTime = createTimeFromString(opt.value);
-      return optTime.compare(selectedPickupHour.value!) > 0;
-    });
-
-    return cutoffIndex === -1 ? allOptions : allOptions.slice(0, cutoffIndex);
+    // Same-day return: must be at least 1 h after pickup so the rental never has
+    // zero/negative duration (the backend's same_hour_error). A later return day
+    // keeps the full list. Fallback to all if the pickup is so late nothing is
+    // left, so the select is never empty — the friendly same_hour_error toast
+    // still guards that residual case.
+    const sameDay =
+      !!fechaRecogida.value && fechaRecogida.value === fechaDevolucion.value;
+    const filtered = sameDayReturnHourOptions(
+      allOptions,
+      selectedPickupHour.value,
+      sameDay,
+    );
+    return filtered.length ? filtered : allOptions;
   });
+
+  // Keep the return hour valid: when same-day rules shrink the options (the
+  // pickup hour moved later, or the return date collapsed onto the pickup day),
+  // snap to the earliest allowed slot. This is what turns the raw horaRecogida →
+  // horaDevolucion copy into the "≥ 1 h after pickup" default on a same-day rental.
+  // immediate: a results page loaded straight from a URL whose return hour is
+  // already invalid (e.g. an old same-day link with return ≤ pickup) sets the
+  // store params before this watcher is registered, so it would never see the
+  // "change" — snap on registration too, otherwise the select renders blank.
+  watch(returnHourOptions, (options) => {
+    const earliest = options[0];
+    if (!horaDevolucion.value || !earliest) return;
+    if (!options.some((o) => o.value === horaDevolucion.value)) {
+      horaDevolucion.value = earliest.value;
+    }
+  }, { immediate: true });
   
   return { 
     doSearch,

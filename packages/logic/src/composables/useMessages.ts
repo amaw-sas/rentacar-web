@@ -82,7 +82,9 @@ export default function useMessages(){
             duration: 20000,
             progress: false,
             color: 'error',
-            icon: 'lucide:x',
+            // Warning triangle, not an "x": the close control is already an "x",
+            // and two x's read as "error + error" instead of "alert + dismiss".
+            icon: 'lucide:alert-triangle',
             // Force an explicit light surface + dark text (same pattern as
             // createMessage). Without it the error toast inherits theme tokens
             // that Android Chrome force-dark paints black, leaving the "Error"
