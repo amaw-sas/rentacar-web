@@ -22,8 +22,10 @@ overridable vía `NUXT_PUBLIC_RENTACAR_PUBLIC_API_BASE`).
   - `httpMethod == "POST"`
   - `contentType == "application/json"` y `encodingType == "application/json"`
   - `urlTemplate == ${API_BASE}/api/reservations` (endpoint de creación)
-- **Verify:** `curl -s <url> | grep` del JSON-LD → encuentra el EntryPoint con
-  `"httpMethod":"POST"` y `urlTemplate` al endpoint `/api/reservations`
+- **Verify:** `curl -s <url-home>` y grep del `<script type="application/ld+json">`
+  → encuentra el EntryPoint con `"httpMethod":"POST"` y `urlTemplate` al endpoint
+  `/api/reservations`. (Se grepea el JSON-LD renderizado del home; NO se curlea
+  `/api/reservations`, que devolvería 401.)
 
 ## SCEN-116-003 — actionApplication apunta al OpenAPI documentado (gating)
 - **Given** el `EntryPoint` programático

@@ -36,11 +36,18 @@ documentada (creación de reservas + OpenAPI), que es justo lo que entregó D2.
 - `/api/openapi` y `/api/locations` → **totalmente públicos, sin key** (la data ya
   es pública en los sitios de marca). El `actionApplication.url` es resoluble por
   cualquier agente sin credenciales.
-- `/api/reservations` → requiere `x-api-key` (documentado en el propio OpenAPI bajo
-  `apiKey`). Advertir este `EntryPoint` **no es engañoso**: es justo la "ruta MCP/API
-  (requiere registrar el conector)" del épico #63 — el agente lee el OpenAPI vía
-  `actionApplication.url`, descubre el requisito de key, y registra el conector. La
-  discoverability apunta a la doc de auth; el endpoint no se presenta como anónimo.
+- `/api/reservations` → requiere `x-api-key` (el OpenAPI declara `security` global
+  `ApiKeyAuth` header `x-api-key`; verificado: POST sin key → 401). Advertir este
+  `EntryPoint` **no es engañoso**: el agente lee el OpenAPI vía `actionApplication.url`,
+  descubre el requisito de key, y no lo trata como anónimo. La discoverability apunta a
+  la doc de auth.
+
+**Por qué el `EntryPoint` apunta a `/api/reservations` (REST) y no a `/api/mcp`:**
+el dashboard también expone `/api/mcp/{transport}` (el conector MCP del épico, también
+401-gated). Pero un `EntryPoint` schema.org modela una llamada HTTP REST
+(`httpMethod`/`contentType` sobre un recurso), no el protocolo JSON-RPC de MCP — el
+endpoint REST de creación es el mapeo idiomático. La existencia del MCP se descubre vía
+el OpenAPI enlazado en `actionApplication.url`; no se modela como `EntryPoint`.
 
 ### Nota de tipado (tensión issue vs. schema.org)
 
@@ -70,15 +77,30 @@ un único chokepoint brand-agnóstico hacia Localiza). El composable lo lee con
   un string stale. El alias real es `-delta`, verificado live:
   `GET /api/openapi` → 200 (OpenAPI 3.0.3) y `GET /api/locations` → 200 (31 sedes).
   Coincide con el `NUXT_RENTACAR_ADMIN_URL` de prod (`.env`, comentado).
-- **Override por entorno:** `NUXT_PUBLIC_RENTACAR_PUBLIC_API_BASE` (p.ej. localhost en
-  dev, preview vs prod). Se elige `runtimeConfig.public` sobre una constante hardcodeada
-  precisamente porque la fragilidad del host quedó demostrada.
+- **Override por entorno (camino canónico en prod):** `NUXT_PUBLIC_RENTACAR_PUBLIC_API_BASE`.
+  El default del layer es solo un **fallback**: `-delta` es un alias de *sufijo de
+  proyecto* Vercel (no un dominio propio), justo el tipo de string que mutó y causó el
+  bug de rev1. Por eso **prod DEBE setear el override** (`NUXT_PUBLIC_*` en Vercel env
+  de las 3 marcas), no depender del default. Dev usa localhost vía el mismo override.
+  Cuando exista un dominio estable propio (p.ej. `api.rentacar…`), pasa a ser el nuevo
+  default y se elimina la dependencia del alias `-delta`.
+- **Coexisten 3 strings "prod" hoy:** `-delta` (vivo, verificado), el host pelado
+  `rentacar-dashboard.vercel.app` (muerto, citado en `servers.enum`/`info.description`
+  del OpenAPI del dashboard y en `.env` comentado — stale, lo posee el dashboard), y
+  localhost (dev). El override por env evita atar este repo a cuál es el correcto.
 
 ## Alcance
 
 - **Archivos:**
-  - `packages/logic/nuxt.config.ts` — añadir `runtimeConfig.public.rentacarPublicApiBase`.
+  - `packages/logic/nuxt.config.ts` — **crear** el bloque `runtimeConfig` (hoy no existe
+    ninguno en el layer) con `public.rentacarPublicApiBase`.
   - `packages/logic/src/composables/useBaseSEO.ts` — bloque `potentialAction`.
+- **Tipado de runtimeConfig (relevante para SCEN-116-004 "sin casts"):** Nuxt genera
+  tipos de `runtimeConfig` desde los defaults del config mergeado (incluye layers), así
+  que `useRuntimeConfig().public.rentacarPublicApiBase` debería tipar como `string` sin
+  cast. **A confirmar en implementación:** si el key del layer no llega a los tipos
+  generados y sale `unknown`, la salida NO es un cast — es declarar el key en
+  `runtimeConfig.public` de las marcas o una augmentación `RuntimeConfig` en `.d.ts`.
 - **Imports:** añadir `SoftwareApplication` a los tipos de `schema-dts`.
 - **Blast radius:** `useBaseSEO` corre site-wide en las 3 marcas. El nuevo
   `EntryPoint` aparece junto al web existente. Nuevo key en `runtimeConfig.public`
