@@ -18,6 +18,7 @@ import {
   createCurrentDateTimeObject,
   extraHourChipLabel,
   futurePickupHourOptions,
+  rolloverWhenSameDayExhausted,
   toDatetime,
   formatHumanTime,
   formatTime,
@@ -178,6 +179,26 @@ export default function useSearch() {
   watch(fechaRecogida, (): void => {
     if (selectedPickupDate.value)
       fechaDevolucion.value = selectedPickupDate.value.copy().add({ days: 7 }).toString() ?? null
+  }, { flush: 'sync' });
+
+  // When the form lands the pickup on today but no same-day hour is still valid
+  // (too late for the 1h lead, e.g. 11 p.m.), today is no longer bookable. Roll
+  // the pickup to tomorrow at the first slot (00:00) so the searcher never emits
+  // a past-time URL that the results page rejects with "Revisa la hora". Not
+  // immediate on purpose: it must react to a form/clamp date change, never
+  // reinterpret the fixed params on the results page (useSearchByRouteParams
+  // sets the date before instantiating useSearch and never changes it after).
+  watch(selectedPickupDate, (pickupDate) => {
+    if (!pickupDate) return;
+    const rollover = rolloverWhenSameDayExhausted(
+      pickupDate,
+      createCurrentDateTimeObject(),
+      getHourOptions(),
+    );
+    if (rollover) {
+      fechaRecogida.value = rollover.date;
+      horaRecogida.value = rollover.hour;
+    }
   }, { flush: 'sync' });
 
   watch(

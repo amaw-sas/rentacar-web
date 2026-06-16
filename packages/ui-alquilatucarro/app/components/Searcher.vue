@@ -376,11 +376,16 @@ const clampMobileDateInput = (event: Event, min?: string | null, max?: string | 
 };
 
 const onMobilePickupDateChange = (event: Event) => {
+    // Re-enable the search button on any mobile date interaction, even when the
+    // clamp leaves the value unchanged (e.g. re-picking a past date already at today),
+    // so a second search is never blocked by a stale disabled state.
+    animateSearchButton.value = true;
     const clamped = clampMobileDateInput(event, minPickupDate.value?.toString());
     if (clamped !== null) selectedPickupDate.value = clamped;
 };
 
 const onMobileReturnDateChange = (event: Event) => {
+    animateSearchButton.value = true;
     const clamped = clampMobileDateInput(
         event,
         minReturnDate.value?.toString(),
