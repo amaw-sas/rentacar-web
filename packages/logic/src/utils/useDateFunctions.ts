@@ -62,6 +62,31 @@ export function futurePickupHourOptions<T extends { value: string }>(
     });
 }
 
+/**
+ * Decide whether a chosen pickup must roll forward because today is no longer
+ * bookable. When `pickupDate` is today AND no same-day hour is still valid (it is
+ * too late for the lead time, e.g. 11 p.m.), the earliest bookable pickup is
+ * tomorrow at the first slot ("00:00"). Returns the corrected { date, hour } in
+ * those cases, or null when today is still bookable or the date is in the future.
+ *
+ * Keeps the searcher from emitting a past-time search the results page rejects.
+ * Pure (now + options injected) → deterministic and unit-testable.
+ */
+export function rolloverWhenSameDayExhausted(
+    pickupDate: DateObject,
+    nowDateTime: DateTimeObject,
+    hourOptions: { value: string }[],
+): { date: string; hour: string } | null {
+    const isToday =
+        pickupDate.year === nowDateTime.year &&
+        pickupDate.month === nowDateTime.month &&
+        pickupDate.day === nowDateTime.day;
+    if (!isToday) return null;
+    if (futurePickupHourOptions(hourOptions, pickupDate, nowDateTime).length > 0) return null;
+
+    return { date: pickupDate.add({ days: 1 }).toString(), hour: '00:00' };
+}
+
 export function createDateFromString(
     date_string: string,
 ): DateObject {
