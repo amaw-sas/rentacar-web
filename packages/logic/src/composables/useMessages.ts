@@ -53,6 +53,29 @@ export default function useMessages(){
             error.message = "La sede seleccionada no está abierta en el horario que elegiste.";
         }
 
+        // Return is at or before pickup. The backend reports this as
+        // `same_hour_error` (LLNRRE010) with a confusing "recogida y devolución
+        // son iguales" message even when return is strictly earlier. Reframe it
+        // as the actionable rule the customer has to satisfy.
+        if (message.error == "same_hour_error") {
+            error.title = "Revisa las fechas";
+            error.message = "La devolución debe ser posterior a la recogida.";
+        }
+
+        // Infrastructure / unexpected failures (timeouts, 5xx, anything the
+        // backend can't classify). Their raw messages are technical or empty and
+        // the bare "Error" title is alarming — show a calm, generic retry notice
+        // instead. Specific validation codes are handled above and never reach
+        // this fallback.
+        if (
+            message.error == "server_error" ||
+            message.error == "connection_timeout" ||
+            message.error == "unknown_error"
+        ) {
+            error.title = "No pudimos completar la búsqueda";
+            error.message = "Ocurrió un problema al consultar la disponibilidad. Por favor intenta de nuevo en unos minutos.";
+        }
+
         toast.add({
             title: error.title,
             description: error.message,
