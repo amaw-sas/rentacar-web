@@ -4,6 +4,9 @@ Holdout observable. Verificación sobre el **JSON-LD renderizado** (no el source
 Aplica a las 3 marcas (alquilatucarro, alquilame, alquicarros). El `ReserveAction`
 y su `EntryPoint` web de #64 (SCEN-002/003) siguen presentes y no se rompen.
 
+`API_BASE` = `https://rentacar-dashboard-delta.vercel.app` (alias prod del dashboard,
+overridable vía `NUXT_PUBLIC_RENTACAR_PUBLIC_API_BASE`).
+
 ## SCEN-116-001 — EntryPoint web preservado
 - **Given** el grafo JSON-LD renderizado de la home de una marca
 - **When** un agente recorre `potentialAction[ReserveAction].target`
@@ -18,19 +21,26 @@ y su `EntryPoint` web de #64 (SCEN-002/003) siguen presentes y no se rompen.
 - **Then** existe un segundo `EntryPoint` con:
   - `httpMethod == "POST"`
   - `contentType == "application/json"` y `encodingType == "application/json"`
-  - `urlTemplate` que resuelve a la API pública de creación de reservas
-    (`https://rentacar-dashboard.vercel.app/api/reservations`)
+  - `urlTemplate == ${API_BASE}/api/reservations` (endpoint de creación)
 - **Verify:** `curl -s <url> | grep` del JSON-LD → encuentra el EntryPoint con
   `"httpMethod":"POST"` y `urlTemplate` al endpoint `/api/reservations`
 
-## SCEN-116-003 — actionApplication resoluble hacia la API documentada
+## SCEN-116-003 — actionApplication apunta al OpenAPI documentado (gating)
 - **Given** el `EntryPoint` programático
 - **When** un agente lee su `actionApplication`
-- **Then** encuentra un nodo cuyo `url` resuelve al OpenAPI público de D2
-  (`https://rentacar-dashboard.vercel.app/api/openapi`)
-- **And** el nodo declara `name` y `applicationCategory`
-- **Verify:** el JSON-LD contiene `actionApplication.url` == `/api/openapi`;
-  un `GET` a esa URL devuelve un documento OpenAPI válido (smoke check de resolubilidad)
+- **Then** encuentra un nodo `SoftwareApplication` con:
+  - `url == ${API_BASE}/api/openapi`
+  - `name` y `applicationCategory` declarados
+- **Verify:** el JSON-LD emitido contiene `actionApplication.url` == `/api/openapi`
+  bien formado. (Verificación repo-local sobre el JSON-LD; no depende de red externa.)
+
+## SCEN-116-003b — OpenAPI externo resoluble (advisory smoke check)
+- **Given** la `actionApplication.url` emitida
+- **When** se hace `GET` a esa URL
+- **Then** responde `200` con un documento OpenAPI válido
+- **Verify:** `curl -s -w '%{http_code}' ${API_BASE}/api/openapi` → 200 + JSON OpenAPI.
+  **Advisory:** depende de un deployment de terceros (dashboard); si está caído, no
+  invalida el cambio de este repo — se reporta aparte, no es gate del holdout.
 
 ## SCEN-116-004 — Schema válido (type-clean, sin casts mentirosos)
 - **Given** el código del `ReserveAction` enriquecido
@@ -44,8 +54,9 @@ y su `EntryPoint` web de #64 (SCEN-002/003) siguen presentes y no se rompen.
 ## SCEN-116-005 — Brand-agnóstico (3 marcas)
 - **Given** el JSON-LD renderizado de cada marca
 - **When** se compara el `actionApplication.url` y el `urlTemplate` programático
-- **Then** los tres apuntan al mismo dashboard público (`rentacar-dashboard.vercel.app`),
-  mientras el `EntryPoint` web sigue siendo el dominio propio de cada marca
+- **Then** los tres apuntan al mismo dashboard (`${API_BASE}`), mientras el
+  `EntryPoint` web sigue siendo el dominio propio de cada marca
+  (`alquilatucarro.com`, `alquilame.co`, `alquicarros.com`)
 - **Verify:** render en las 3 marcas → API base idéntica, `franchise.website` distinto
 
 ## Fuera de alcance (follow-up)

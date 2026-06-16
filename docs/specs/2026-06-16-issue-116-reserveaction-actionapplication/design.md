@@ -24,11 +24,23 @@ documentada (creación de reservas + OpenAPI), que es justo lo que entregó D2.
    - `urlTemplate: ${API_BASE}/api/reservations` (POST de creación de reserva).
    - `httpMethod: 'POST'`, `contentType: 'application/json'`,
      `encodingType: 'application/json'`.
-   - `actionApplication` → `SoftwareApplication` con
-     `url: ${API_BASE}/api/openapi` (el OpenAPI fetchable de D2),
-     `applicationCategory: 'BusinessApplication'`, `name`.
+   - `actionApplication` → `SoftwareApplication` con:
+     - `name: 'Rentacar Reservations API'`
+     - `applicationCategory: 'BusinessApplication'`
+     - `url: ${API_BASE}/api/openapi` (el OpenAPI fetchable de D2)
 
 `result` → `RentalCarReservation` se conserva.
+
+### Modelo de auth (verificado en `middleware.ts` del dashboard)
+
+- `/api/openapi` y `/api/locations` → **totalmente públicos, sin key** (la data ya
+  es pública en los sitios de marca). El `actionApplication.url` es resoluble por
+  cualquier agente sin credenciales.
+- `/api/reservations` → requiere `x-api-key` (documentado en el propio OpenAPI bajo
+  `apiKey`). Advertir este `EntryPoint` **no es engañoso**: es justo la "ruta MCP/API
+  (requiere registrar el conector)" del épico #63 — el agente lee el OpenAPI vía
+  `actionApplication.url`, descubre el requisito de key, y registra el conector. La
+  discoverability apunta a la doc de auth; el endpoint no se presenta como anónimo.
 
 ### Nota de tipado (tensión issue vs. schema.org)
 
@@ -38,31 +50,40 @@ El issue pide literalmente `@type: WebAPI`. Ground truth de `schema-dts@1.1.5`:
 Forzarlo requeriría un cast mentiroso que rompe el tipado estricto del proyecto y
 produce JSON-LD semánticamente dudoso.
 
-**Resolución:** el nodo se modela como `SoftwareApplication` puro
+**Resolución:** el nodo se modela como `SoftwareApplication`
 (`'@type': 'SoftwareApplication'`) y referencia el OpenAPI vía `url`. Cumple el
 escenario observable del issue ("`actionApplication` resoluble hacia la API pública
-documentada") sin sacrificar validez. Se descartó modelar un nodo `WebAPI`
-separado con `documentation` porque no se conecta al `ReserveAction` y es menos
-descubrible para un agente que recorre `potentialAction`.
+documentada") sin sacrificar validez. Se descartó modelar un nodo `WebAPI` separado
+con `documentation` porque no se conecta al `ReserveAction` y es menos descubrible
+para un agente que recorre `potentialAction`.
 
 ## Origen de `API_BASE`
 
-Constante única en `packages/logic/src/config` →
-`https://rentacar-dashboard.vercel.app` (servidor prod del OpenAPI de D2). Es
-**brand-agnóstica** (un solo dashboard, chokepoint hacia Localiza para las 3
-marcas), estable y **pública** (la API está documentada para consumo de agentes —
-no es un secreto). Se evita añadir config a las 3 `nuxt.config.ts`. Promovible a
-`runtimeConfig.public` si más adelante se requiere override por entorno
-(preview vs prod).
+**`runtimeConfig.public.rentacarPublicApiBase`**, con default declarado en el layer
+`packages/logic/nuxt.config.ts` (heredado por las 3 marcas — la API del dashboard es
+un único chokepoint brand-agnóstico hacia Localiza). El composable lo lee con
+`useRuntimeConfig().public.rentacarPublicApiBase`.
+
+- **Default:** `https://rentacar-dashboard-delta.vercel.app` — alias de **producción**
+  del proyecto Vercel del dashboard. ⚠️ El host "pelado" `rentacar-dashboard.vercel.app`
+  (que cita la *descripción* del OpenAPI) **no resuelve** (`DEPLOYMENT_NOT_FOUND`); es
+  un string stale. El alias real es `-delta`, verificado live:
+  `GET /api/openapi` → 200 (OpenAPI 3.0.3) y `GET /api/locations` → 200 (31 sedes).
+  Coincide con el `NUXT_RENTACAR_ADMIN_URL` de prod (`.env`, comentado).
+- **Override por entorno:** `NUXT_PUBLIC_RENTACAR_PUBLIC_API_BASE` (p.ej. localhost en
+  dev, preview vs prod). Se elige `runtimeConfig.public` sobre una constante hardcodeada
+  precisamente porque la fragilidad del host quedó demostrada.
 
 ## Alcance
 
-- **Archivos:** `packages/logic/src/composables/useBaseSEO.ts` (bloque
-  `potentialAction`) + nueva constante en `packages/logic/src/config`.
+- **Archivos:**
+  - `packages/logic/nuxt.config.ts` — añadir `runtimeConfig.public.rentacarPublicApiBase`.
+  - `packages/logic/src/composables/useBaseSEO.ts` — bloque `potentialAction`.
 - **Imports:** añadir `SoftwareApplication` a los tipos de `schema-dts`.
 - **Blast radius:** `useBaseSEO` corre site-wide en las 3 marcas. El nuevo
-  `EntryPoint` aparece junto al web existente. **Sin consumidores de código** — solo
-  enriquece el output JSON-LD. Sin cambios de API, datos ni runtime de reservas.
+  `EntryPoint` aparece junto al web existente. Nuevo key en `runtimeConfig.public`
+  (aditivo, con default — no rompe builds existentes). **Sin consumidores de código**
+  — solo enriquece el output JSON-LD. Sin cambios de API, datos ni runtime de reservas.
 
 ## Fuera de alcance
 
@@ -77,6 +98,7 @@ no es un secreto). Se evita añadir config a las 3 `nuxt.config.ts`. Promovible 
 - Render real del JSON-LD: levantar dev y `curl | grep`/agent-browser sobre el
   `<script type="application/ld+json">` del home → confirmar el segundo EntryPoint
   con `httpMethod` y el `actionApplication.url` al OpenAPI.
+- Smoke check externo (advisory): `GET ${API_BASE}/api/openapi` → 200 + OpenAPI válido.
 
 ## Escenarios observables (holdout)
 
