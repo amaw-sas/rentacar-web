@@ -113,7 +113,7 @@
                     type="date"
                     id="pickup-date-mobile"
                     name="pickup-date-mobile"
-                    v-model="selectedPickupDate"
+                    :value="selectedPickupDate ? selectedPickupDate.toString() : ''"
                     aria-label="Día de recogida"
                     class="w-full"
                     @change="onMobilePickupDateChange"
@@ -182,7 +182,7 @@
                     type="date"
                     id="return-date-mobile"
                     name="return-date-mobile"
-                    v-model="selectedReturnDate"
+                    :value="selectedReturnDate ? selectedReturnDate.toString() : ''"
                     aria-label="Día de devolución"
                     class="w-full"
                     @change="onMobileReturnDateChange"
@@ -341,7 +341,8 @@
 </template>
 
 <script setup lang="ts">
-// Note: stores and components are auto-imported by Nuxt
+// Note: stores and components are auto-imported by Nuxt; utils are not.
+import { createDateFromString } from '@rentacar-main/logic/utils';
 
 const route = useRoute();
 
@@ -377,13 +378,19 @@ const clampMobileDateInput = (event: Event, min?: string | null, max?: string | 
     return value;
 };
 
+// The selectedPickupDate/selectedReturnDate refs are shared with the DESKTOP
+// <u-input-date> (Reka UI), which requires a CalendarDate and crashes on a raw
+// string. The native mobile input only ever yields a 'YYYY-MM-DD' string, so we
+// parse it into a DateObject before writing — never let a string into the ref.
+// (The mobile inputs bind :value one-way for the same reason; v-model would push
+// the raw string straight into the shared ref on every keystroke.)
 const onMobilePickupDateChange = (event: Event) => {
     // Re-enable the search button on any mobile date interaction, even when the
     // clamp leaves the value unchanged (e.g. re-picking a past date already at today),
     // so a second search is never blocked by a stale disabled state.
     animateSearchButton.value = true;
     const clamped = clampMobileDateInput(event, minPickupDate.value?.toString());
-    if (clamped !== null) selectedPickupDate.value = clamped;
+    if (clamped !== null) selectedPickupDate.value = createDateFromString(clamped);
 };
 
 const onMobileReturnDateChange = (event: Event) => {
@@ -393,7 +400,7 @@ const onMobileReturnDateChange = (event: Event) => {
         minReturnDate.value?.toString(),
         maxReturnDate.value?.toString(),
     );
-    if (clamped !== null) selectedReturnDate.value = clamped;
+    if (clamped !== null) selectedReturnDate.value = createDateFromString(clamped);
 };
 const pendingSearching = ref<boolean>(false);
 const sortedBranches = ref<any[]>([]);
