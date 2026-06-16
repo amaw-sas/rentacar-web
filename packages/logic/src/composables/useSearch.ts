@@ -329,13 +329,17 @@ export default function useSearch() {
   // pickup hour moved later, or the return date collapsed onto the pickup day),
   // snap to the earliest allowed slot. This is what turns the raw horaRecogida →
   // horaDevolucion copy into the "≥ 1 h after pickup" default on a same-day rental.
+  // immediate: a results page loaded straight from a URL whose return hour is
+  // already invalid (e.g. an old same-day link with return ≤ pickup) sets the
+  // store params before this watcher is registered, so it would never see the
+  // "change" — snap on registration too, otherwise the select renders blank.
   watch(returnHourOptions, (options) => {
     const earliest = options[0];
     if (!horaDevolucion.value || !earliest) return;
     if (!options.some((o) => o.value === horaDevolucion.value)) {
       horaDevolucion.value = earliest.value;
     }
-  });
+  }, { immediate: true });
   
   return { 
     doSearch,
