@@ -31,7 +31,7 @@ documentada (creación de reservas + OpenAPI), que es justo lo que entregó D2.
 
 `result` → `RentalCarReservation` se conserva.
 
-### Modelo de auth (verificado en `middleware.ts` del dashboard)
+### Modelo de auth (verificado vía `middleware.ts` del dashboard + OpenAPI `security` + probe 401)
 
 - `/api/openapi` y `/api/locations` → **totalmente públicos, sin key** (la data ya
   es pública en los sitios de marca). El `actionApplication.url` es resoluble por
