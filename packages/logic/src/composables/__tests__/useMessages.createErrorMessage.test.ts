@@ -54,12 +54,20 @@ describe('useMessages.createErrorMessage copy mapping', () => {
     expect(toast.description).toBe('Por favor escoge una hora de recogida posterior a la hora actual.')
   })
 
-  it('out_of_schedule HOUR codes keep the "local cerrado" mapping (regression)', async () => {
+  it('out_of_schedule PICKUP hour → names the pickup branch (pickup ≠ return possible)', async () => {
+    const toast = await callCreateErrorMessage(
+      makeError('out_of_schedule_pickup_hour_error', 'La hora de recogida está por fuera del horario'),
+    )
+    expect(toast.title).toBe('Sede de recogida cerrada')
+    expect(toast.description).toBe('La sede donde recoges el carro no abre a esa hora. Elige otra hora de recogida.')
+  })
+
+  it('out_of_schedule RETURN hour → names the return branch (distinct from pickup)', async () => {
     const toast = await callCreateErrorMessage(
       makeError('out_of_schedule_return_hour_error', 'La hora de devolución está por fuera del horario'),
     )
-    expect(toast.title).toBe('Local cerrado a esa hora')
-    expect(toast.description).toBe('La sede seleccionada no está abierta en el horario que elegiste.')
+    expect(toast.title).toBe('Sede de devolución cerrada')
+    expect(toast.description).toBe('La sede donde entregas el carro no abre a esa hora. Elige otra hora de devolución.')
   })
 
   it('an unmapped validation code (out_of_schedule_pickup_date_error) still passes its backend message through', async () => {

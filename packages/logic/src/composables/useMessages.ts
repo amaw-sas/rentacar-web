@@ -42,15 +42,16 @@ export default function useMessages(){
             error.message = "Por favor escoge una hora de recogida posterior a la hora actual.";
         }
 
-        // The chosen pickup/return HOUR is outside the branch's opening hours.
-        // The backend message reads harsh and date-centric; replace it with a
-        // clear "the location is closed then" notice. Covers both hour codes.
-        if (
-            message.error == "out_of_schedule_pickup_hour_error" ||
-            message.error == "out_of_schedule_return_hour_error"
-        ) {
-            error.title = "Local cerrado a esa hora";
-            error.message = "La sede seleccionada no está abierta en el horario que elegiste.";
+        // The chosen HOUR is outside the branch's opening hours. Pickup and
+        // return can be different branches, so name which one is closed and
+        // which hour field to fix instead of a single ambiguous "el local".
+        if (message.error == "out_of_schedule_pickup_hour_error") {
+            error.title = "Sede de recogida cerrada";
+            error.message = "La sede donde recoges el carro no abre a esa hora. Elige otra hora de recogida.";
+        }
+        if (message.error == "out_of_schedule_return_hour_error") {
+            error.title = "Sede de devolución cerrada";
+            error.message = "La sede donde entregas el carro no abre a esa hora. Elige otra hora de devolución.";
         }
 
         // Return is at or before pickup. The backend reports this as
