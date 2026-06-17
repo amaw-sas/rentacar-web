@@ -1,10 +1,15 @@
 // External dependencies
-import type { AutoRental, Brand, OpeningHoursSpecification, EntryPoint, ReserveAction, RentalCarReservation } from 'schema-dts';
+import type { AutoRental, Brand, OpeningHoursSpecification, EntryPoint, ReserveAction, RentalCarReservation, SoftwareApplication } from 'schema-dts';
 
 export const useBaseSEO = () => {
 
     const { franchise, organization } = useAppConfig();
     const route = useRoute();
+    // Issue #116: public base of the dashboard's documented API (D2), shared by
+    // the 3 brands. Default + NUXT_PUBLIC_* override declared in logic nuxt.config.
+    // Trailing slashes are trimmed so `${apiBase}/api/...` never doubles up; an
+    // empty/missing value disables the programmatic EntryPoint (fail-soft below).
+    const apiBase = (useRuntimeConfig().public.rentacarPublicApiBase ?? '').replace(/\/+$/, '');
 
     useSeoMeta({
         title: franchise.name,
@@ -85,20 +90,39 @@ export const useBaseSEO = () => {
                 "alquiler de autos"
             ],
             sameAs: franchise.socialmedia,
-            // Acción de reserva descubrible por agentes (épico #63, W1).
-            // EntryPoint web resoluble hoy; el actionApplication (WebAPI) se
-            // añade cuando cierre D2 (amaw-sas/rentacar-dashboard#73).
+            // Acción de reserva descubrible por agentes (épico #63, W1 + #116).
+            // Dos EntryPoints: (1) web humano resoluble hoy; (2) programático hacia
+            // la API pública documentada del dashboard (D2). El actionApplication
+            // apunta al OpenAPI fetchable; el endpoint de creación exige x-api-key
+            // (documentado en ese OpenAPI).
             potentialAction: <ReserveAction>{
                 '@type': 'ReserveAction',
                 name: `Reservar vehículo en ${franchise.name}`,
-                target: <EntryPoint>{
-                    '@type': 'EntryPoint',
-                    urlTemplate: franchise.website,
-                    actionPlatform: [
-                        'https://schema.org/DesktopWebPlatform',
-                        'https://schema.org/MobileWebPlatform',
-                    ],
-                },
+                target: [
+                    <EntryPoint>{
+                        '@type': 'EntryPoint',
+                        urlTemplate: franchise.website,
+                        actionPlatform: [
+                            'https://schema.org/DesktopWebPlatform',
+                            'https://schema.org/MobileWebPlatform',
+                        ],
+                    },
+                    // Programmatic route emitted only when the API base resolves —
+                    // otherwise we degrade to the web-only EntryPoint of #64.
+                    ...(apiBase ? [<EntryPoint>{
+                        '@type': 'EntryPoint',
+                        urlTemplate: `${apiBase}/api/reservations`,
+                        httpMethod: 'POST',
+                        contentType: 'application/json',
+                        encodingType: 'application/json',
+                        actionApplication: <SoftwareApplication>{
+                            '@type': 'SoftwareApplication',
+                            name: 'Rentacar Reservations API',
+                            applicationCategory: 'BusinessApplication',
+                            url: `${apiBase}/api/openapi`,
+                        },
+                    }] : []),
+                ],
                 result: <RentalCarReservation>{
                     '@type': 'RentalCarReservation',
                 },

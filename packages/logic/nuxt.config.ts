@@ -27,6 +27,18 @@ export default defineNuxtConfig({
     fileURLToPath(new URL('./src/assets/issue-50-toaster.css', import.meta.url)),
   ],
 
+  // Issue #116: public base URL of the dashboard's documented API (D2), shared
+  // by the 3 brands (single brand-agnostic chokepoint). Consumed in useBaseSEO
+  // to point the ReserveAction's programmatic EntryPoint + actionApplication at
+  // the public OpenAPI. Prod MUST override via NUXT_PUBLIC_RENTACAR_PUBLIC_API_BASE
+  // — the default is a Vercel project-suffix alias (fragile); a stable custom
+  // domain should replace it once it exists.
+  runtimeConfig: {
+    public: {
+      rentacarPublicApiBase: 'https://rentacar-dashboard-delta.vercel.app',
+    },
+  },
+
   // Configuración para desarrollo del layer
   devtools: { enabled: false },
 })
