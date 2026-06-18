@@ -28,6 +28,8 @@ export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
+export { openRangesForDate, isDayOpen, bookableSlotsForDate } from './scheduleAvailability';
+export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
 export type { CityReservationDates } from './buildCityReservationURL';
 
