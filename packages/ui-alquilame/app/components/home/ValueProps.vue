@@ -10,7 +10,7 @@
   <section class="bg-white py-16 md:py-24">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
-        <h2 class="heading-section text-3xl md:text-4xl font-extrabold text-gray-900">
+        <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
           ¿Por Qué Elegir {{ brand }}?
         </h2>
       </div>

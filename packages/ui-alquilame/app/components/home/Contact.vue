@@ -1,39 +1,65 @@
 <template>
   <!--
-    F1 contact — new CTA section ported from the design's #contact band.
+    contact — CTA "Reserva tu Carro Hoy", paridad visual con golden 10-contact.html.
 
-    Data sources (NEVER the mockup's hardcoded numbers — F1 rule):
-      - WhatsApp CTA → franchise.whatsapp (already a full deep-link URL,
-        consumed as-is, never re-wrapped).
-      - Phone CTA → franchise.phone, wrapped in a tel: link (distinct number from
-        WhatsApp).
-      - "Reserva Ahora" reuses the internal engine: it anchors back to #hero
-        (city selector) instead of the design's external reservation site —
-        same fidelity principle applied in Hero.vue.
+    Decisión de directiva: PARIDAD VISUAL → botones (Reserva Ahora + WhatsApp),
+    NO formulario. Conserva los links reales:
+      - "Reserva Ahora" → motor interno; el ancla es configurable por página
+        host (home: #hero / city landing: #searcher) vía reserveAnchor.
+      - WhatsApp → franchise.whatsapp (URL completa, jamás re-envuelta).
 
-    Gradient uses the v4 bg-linear utility; the deprecated v3 alias
-    renders background-image:none against the custom @theme tokens (F0 lesson).
-    Headings adopt the project `.heading-*` utilities (→ Plus Jakarta), closing
-    the F0-03 font debt instead of the design's raw font-heading.
+    Background: réplica exacta del gradiente del golden (radiales naranjas +
+    linear rojo) como inline style — los radiales no son expresables con
+    utilidades Tailwind. Botón WhatsApp = bg-[#090] (único verde legítimo de
+    marca; el golden usa el alias `bg-whatsapp` que mapea al mismo #090).
+    SUV transparente flota sobre el rojo (desktop alineado al contenedor, móvil
+    full-width debajo), igual al golden.
   -->
   <section
     id="contact"
-    class="relative isolate overflow-hidden bg-linear-to-br from-hero-from to-hero-to py-14 md:py-20 lg:py-24 [--ctx-text-primary:#fff]"
+    class="relative isolate overflow-hidden flex items-center lg:min-h-[520px] py-12 lg:py-0 [--ctx-text-primary:#fff]"
+    :style="bgStyle"
   >
-    <!-- Subtle dotted texture overlay -->
+    <!-- Capa de textura sutil (puntos) -->
     <div
       class="pointer-events-none absolute inset-0 -z-10 opacity-[0.05] [background-image:radial-gradient(rgba(255,255,255,0.9)_1px,transparent_1px)] [background-size:22px_22px]"
       aria-hidden="true"
     />
-    <!-- Depth vignette -->
+    <!-- Glow difuso detrás del SUV -->
+    <div
+      class="pointer-events-none absolute right-[14%] top-1/2 -z-10 hidden h-[460px] w-[460px] -translate-y-1/2 rounded-full bg-[#FF7A45]/45 blur-[95px] lg:block"
+      aria-hidden="true"
+    />
+    <!-- Viñeta de profundidad -->
     <div
       class="pointer-events-none absolute inset-0 -z-10 shadow-[inset_0_0_200px_70px_rgba(74,0,11,0.45)]"
       aria-hidden="true"
     />
+    <!-- Sheen superior -->
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-white/15"
+      aria-hidden="true"
+    />
+
+    <!-- Desktop: composición transparente alineada al contenedor → margen
+         derecho = margen izquierdo del texto -->
+    <div class="hidden lg:block absolute inset-0 -z-10" aria-hidden="true">
+      <div class="relative mx-auto h-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <img
+          src="/images/cta/cta-suv.webp"
+          alt=""
+          width="1152"
+          height="684"
+          loading="lazy"
+          decoding="async"
+          class="absolute right-0 top-0 h-full w-[44%] object-contain object-right drop-shadow-[0_25px_45px_rgba(0,0,0,0.35)] xl:w-[52%]"
+        >
+      </div>
+    </div>
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-      <div class="max-w-2xl mx-auto text-center lg:mx-0 lg:text-left">
-        <h2 class="heading-section text-3xl md:text-4xl font-extrabold text-white mb-5">
+      <div class="max-w-lg mx-auto text-center lg:mx-0 lg:text-left">
+        <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-white mb-5">
           Reserva tu Carro Hoy
         </h2>
         <p class="text-lg md:text-xl text-white/85 mb-8">
@@ -45,35 +71,24 @@
                (home: #hero / city landing: #searcher) via the reserveAnchor prop. -->
           <a
             :href="reserveAnchor"
-            class="w-full sm:w-auto inline-flex items-center justify-center px-9 py-4 text-lg font-semibold rounded-full bg-white text-red-700 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
+            class="w-full sm:w-auto inline-flex items-center justify-center px-9 py-4 text-lg font-semibold rounded-full bg-white text-red-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             Reserva Ahora
           </a>
 
-          <!-- Contact via WhatsApp → franchise.whatsapp (full URL, not re-wrapped) -->
+          <!-- Contact via WhatsApp → franchise.whatsapp (full URL, not re-wrapped).
+               bg-[#090] = único verde legítimo de marca (golden `bg-whatsapp`). -->
           <a
             :href="franchise.whatsapp"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Habla con un asesor por WhatsApp"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 text-lg font-semibold rounded-full bg-[#25D366] text-white hover:brightness-110 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 text-lg font-semibold rounded-full bg-[#090] text-white hover:brightness-110 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
           >
             <WhatsappIcon cls="size-5" />
             Habla con un Asesor
           </a>
         </div>
-
-        <!-- Phone CTA → franchise.phone (distinct from WhatsApp) -->
-        <p class="mt-6 text-white/85">
-          o llámanos al
-          {{ ' ' }}
-          <a
-            :href="`tel:${franchise.phone}`"
-            class="font-semibold text-white underline decoration-white/40 underline-offset-4 hover:decoration-white transition-colors"
-          >
-            {{ franchise.phone }}
-          </a>
-        </p>
 
         <!-- Trust badges -->
         <ul class="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-3">
@@ -145,4 +160,13 @@ import { IconsWhatsappIcon as WhatsappIcon } from '#components'
 withDefaults(defineProps<{ reserveAnchor?: string }>(), { reserveAnchor: '#hero' })
 
 const { franchise } = useAppConfig()
+
+// golden 10-contact.html background: a radial-gradient stack (warm orange glows)
+// over a linear red base. Radials aren't Tailwind utilities → bound inline.
+const bgStyle =
+  'background:' +
+  'radial-gradient(60% 110% at 73% 42%, rgba(255,146,96,0.72) 0%, rgba(249,94,66,0.40) 34%, rgba(249,94,66,0) 62%),' +
+  'radial-gradient(55% 90% at 6% 12%, rgba(255,126,80,0.34) 0%, rgba(255,126,80,0) 55%),' +
+  'radial-gradient(135% 115% at 50% 138%, rgba(118,10,6,0.74) 0%, rgba(118,10,6,0) 58%),' +
+  'linear-gradient(122deg, #E53A1F 0%, #C71A16 47%, #93070B 100%);'
 </script>

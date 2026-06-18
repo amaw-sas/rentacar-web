@@ -26,33 +26,41 @@ function read(rel: string): string {
 // contains the literal token a project-wide grep forbids in rendered markup.
 const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 
-describe('F1 step06 — Requirements.vue restyle', () => {
+describe('Requirements.vue — golden parity', () => {
   const requirements = read('app/components/home/Requirements.vue')
 
-  it('carries the 4 real requirements (current home copy)', () => {
-    expect(requirements).toMatch(/Reserva previa/i)
-    expect(requirements).toMatch(/Documento de identidad/i)
-    expect(requirements).toMatch(/Tarjeta de crédito/i)
-    expect(requirements).toMatch(/Licencia de conducir/i)
+  it('carries the 5 golden requirement items (verbatim copy)', () => {
+    expect(requirements).toMatch(/Realizar una reserva previa\./)
+    expect(requirements).toMatch(/Cédula de ciudadanía o pasaporte vigente/)
+    expect(requirements).toMatch(/Licencia de conducción vigente/)
+    expect(requirements).toMatch(/Tarjeta de crédito a nombre del conductor/)
+    expect(requirements).toMatch(/Ser mayor de 18 años/)
   })
 
-  it('iterates exactly 4 requirement entries from a data array', () => {
-    const matches = requirements.match(/title:\s*"/g) ?? []
-    expect(matches).toHaveLength(4)
+  it('iterates exactly 5 requirement entries from a data array', () => {
+    // The string[] literal — 5 quoted entries between the array brackets.
+    const block = requirements.match(/const requirements: string\[\] = \[([\s\S]*?)\]/)
+    expect(block).not.toBeNull()
+    const entries = (block?.[1]?.match(/'[^']+'/g) ?? [])
+    expect(entries).toHaveLength(5)
   })
 
-  it('reuses ImagesPersona inside an aspect-ratio box (CLS)', () => {
-    expect(requirements).toMatch(/<LazyImagesPersona\b/)
-    expect(requirements).toMatch(/aspect-\[/)
+  it('renders the golden full-bleed photographic layout (no ImagesPersona column)', () => {
+    expect(requirements).toMatch(/requisitos-fondo-2\.webp/)
+    expect(requirements).toMatch(/object-cover/)
+    expect(requirements).not.toMatch(/LazyImagesPersona/)
   })
 
-  it('reads the brand name from useAppConfig (not hardcoded)', () => {
+  it('wires the "Reserva Ahora" CTA to the brand reservation website (not hardcoded)', () => {
     expect(requirements).toMatch(/useAppConfig\(\)/)
-    expect(requirements).toMatch(/franchise\.shortname/)
+    expect(requirements).toMatch(/reservation\.website/)
+    expect(requirements).toMatch(/Reserva Ahora/)
+    // The golden's literal external URL must not be hardcoded.
+    expect(requirements).not.toContain('reservatuauto.com')
   })
 
   it('adopts the .heading-* utility for the section title', () => {
-    expect(requirements).toMatch(/heading-/)
+    expect(requirements).toMatch(/font-heading/)
   })
 
   it('uses the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
@@ -82,7 +90,7 @@ describe('F1 step06 — Faq.vue restyle', () => {
   })
 
   it('adopts the .heading-* utility for the section title', () => {
-    expect(faq).toMatch(/heading-/)
+    expect(faq).toMatch(/font-heading/)
   })
 
   it('uses the v4 bg-linear-to-* utility, not the broken v3 alias', () => {

@@ -1,17 +1,17 @@
 /**
- * F1 step05 — Reviews (issue #112).
+ * Reviews (issue #112) — GOLDEN PARITY contract.
  *
- * Static-source assertions encoding the observable reviews contract (full
- * runtime/visual check deferred to the F1 preview verification):
- *   - SCEN-F1-05: the section renders the REAL testimonials
- *     (franchiseTestimonials[brandCode] via useFetchRentacarData) in the design's
- *     review-card look, and contains NONE of the mockup's hardcoded marketing
- *     numbers ("43 reseñas", "5,0").
- *   - The data source is identical to the legacy #testimonios — never a
+ * Updated from the F1 "no marketing numbers" stance: the directive confirmed the
+ * Google rating block (5,0 · 43 reseñas) is REAL data — alquilame's actual Google
+ * Business profile (cid=11824841242913553901). The golden #google-reviews section
+ * therefore surfaces it, and these assertions encode that golden contract:
+ *   - The REAL Google rating block: "5,0", "43 reseñas verificadas en Google",
+ *     the multicolor Google logo, and the "Ver reseñas en Google" CTA → the
+ *     google.com/maps CID link is the legitimate brand destination.
+ *   - The 3 featured cards STILL render the REAL testimonials
+ *     (franchiseTestimonials[brandCode] via useFetchRentacarData), never a
  *     hardcoded testimonial array.
- *   - Gradient guard (F0 lesson): the section MUST use the v4 `bg-linear-to-*`
- *     utility, NEVER the broken v3 `bg-gradient-to-*` alias.
- *   - Headings adopt the `.heading-*` utilities (Plus Jakarta).
+ *   - The section background is the golden's flat gray-100 (no gradient).
  *   - No-regression: index.vue keeps calling useHomeAggregateRating() unchanged.
  */
 import { describe, it, expect } from 'vitest'
@@ -28,10 +28,10 @@ function read(rel: string): string {
 // contains the literal token a project-wide grep forbids in rendered markup.
 const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 
-describe('F1 step05 — Reviews.vue', () => {
+describe('Reviews.vue — golden #google-reviews parity', () => {
   const reviews = read('app/components/home/Reviews.vue')
 
-  it('sources testimonials from franchiseTestimonials[brandCode] via useFetchRentacarData (same as legacy)', () => {
+  it('sources the featured cards from franchiseTestimonials[brandCode] via useFetchRentacarData (same as legacy)', () => {
     expect(reviews).toMatch(/useFetchRentacarData\(\)/)
     expect(reviews).toMatch(/franchiseTestimonials\[brandCode\]/)
     expect(reviews).toMatch(/rentacarFranchise/)
@@ -43,42 +43,47 @@ describe('F1 step05 — Reviews.vue', () => {
     expect(reviews).toMatch(/testimonio\.user/)
   })
 
-  it('does NOT reproduce the mockup marketing numbers ("43 reseñas" / "5,0")', () => {
-    expect(reviews).not.toMatch(/43\s*reseñas/i)
-    expect(reviews).not.toContain('5,0')
-    // No Google-maps CID review links nor "Local Guide" fiction from the build.
-    expect(reviews).not.toMatch(/google\.com\/maps/)
-    expect(reviews).not.toMatch(/Local Guide/i)
+  it('renders the REAL Google rating block (5,0 · 43 reseñas verificadas en Google)', () => {
+    expect(reviews).toContain('5,0')
+    expect(reviews).toMatch(/43 reseñas verificadas en Google/)
+    expect(reviews).toMatch(/Verificadas con autor y fecha/)
   })
 
-  it('surfaces no aggregate-rating number (debt stays in index.vue, untouched)', () => {
+  it('links to the real Google Business reviews profile + CTA', () => {
+    expect(reviews).toMatch(/google\.com\/maps\?cid=11824841242913553901/)
+    expect(reviews).toMatch(/Ver reseñas en Google/)
+  })
+
+  it('renders the multicolor Google logo (real brand colors, not a brand button)', () => {
+    expect(reviews).toContain('#EA4335') // red
+    expect(reviews).toContain('#4285F4') // blue
+    expect(reviews).toContain('#FBBC05') // yellow
+    expect(reviews).toContain('#34A853') // green
+  })
+
+  it('surfaces no aggregate-rating SCHEMA composable here (debt stays in index.vue)', () => {
     expect(reviews).not.toMatch(/useHomeAggregateRating/)
     expect(reviews).not.toMatch(/AggregateRating/)
   })
 
-  it('renders the design review-card look (white rounded-2xl bordered cards with star row)', () => {
+  it('renders the golden card look (white rounded-2xl bordered cards with star row + initials avatar)', () => {
     expect(reviews).toMatch(/rounded-2xl/)
     expect(reviews).toMatch(/<StarIcon\b/)
+    expect(reviews).toMatch(/circulo-rojo\.svg/)
+    expect(reviews).toMatch(/initials\(/)
   })
 
-  it('renders the gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
-    expect(reviews).toMatch(/bg-linear-to-[a-z]/)
+  it('uses the golden flat gray-100 background and the brand red token #CC022B (no gradient)', () => {
+    expect(reviews).toMatch(/bg-gray-100/)
+    expect(reviews).toContain('#CC022B')
     expect(reviews).not.toMatch(BROKEN_V3_GRADIENT)
-  })
-
-  it('adopts the .heading-* utilities (Plus Jakarta) for its heading', () => {
-    expect(reviews).toMatch(/heading-(section|card)/)
-  })
-
-  it('reserves avatar space (CLS) before the lazy avatar loads', () => {
-    expect(reviews).toMatch(/min-h-\[48px\]/)
   })
 })
 
-describe('F1 step05 — index.vue keeps AggregateRating without regression', () => {
+describe('Reviews — index.vue keeps AggregateRating without regression', () => {
   const index = read('app/pages/index.vue')
 
-  it('still calls useHomeAggregateRating() (pre-existing debt, untouched by F1)', () => {
+  it('still calls useHomeAggregateRating() (pre-existing debt, untouched)', () => {
     expect(index).toMatch(/useHomeAggregateRating\(\)/)
   })
 })
