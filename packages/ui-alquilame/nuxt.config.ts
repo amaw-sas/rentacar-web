@@ -31,13 +31,16 @@ export default defineNuxtConfig({
       style: [
         {
           key: 'critical-cls',
-          innerHTML: `
+          innerHTML: `@layer theme, base, components, utilities;
+            @layer base {
             *, *::before, *::after { box-sizing: border-box; }
             body { margin: 0; font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif; }
             img { max-width: 100%; height: auto; display: block; }
             picture { display: block; }
             svg { max-width: 100%; height: auto; }
             header svg { max-height: 3.5rem !important; max-width: 10rem !important; }
+            }
+            @layer utilities {
             .w-2\\.5 { width: 0.625rem; } .h-2\\.5 { height: 0.625rem; }
             .w-4 { width: 1rem; } .h-4 { height: 1rem; }
             .w-5 { width: 1.25rem; } .h-5 { height: 1.25rem; }
@@ -407,6 +410,7 @@ export default defineNuxtConfig({
             .duration-500 { transition-duration: 500ms; }
             .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
             .placeholder-gray-400::placeholder { color: #9ca3af; }
+            }
           `,
         },
       ],
