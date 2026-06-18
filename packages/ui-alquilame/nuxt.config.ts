@@ -87,11 +87,19 @@ export default defineNuxtConfig({
             .h-8 { height: 2rem; }
             .h-10 { height: 2.5rem; }
             .w-auto { width: auto; }
-            /* Tailwind transform composición - usar CSS variables */
+            /*
+              Tailwind v4 translate: usar la PROPIEDAD CSS translate (no
+              transform: translate(...)). Tailwind v4 emite estas utilidades
+              mediante la propiedad translate; si el critical CSS las emitiera
+              por transform, ambas (distintas propiedades) se APILAN al cargar
+              el CSS principal y el translate se dobla (-translate-y-1/2 da -100%).
+              Emitir por translate hace que critical y CSS principal usen la
+              misma propiedad: no se apilan (cascada, no suma).
+            */
             .transform, .-translate-x-1\\/2, .-translate-y-1\\/2, .-translate-x-\\[10\\%\\], .-translate-y-\\[10\\%\\] {
               --tw-translate-x: 0;
               --tw-translate-y: 0;
-              transform: translate(var(--tw-translate-x), var(--tw-translate-y));
+              translate: var(--tw-translate-x) var(--tw-translate-y);
             }
             .-translate-x-1\\/2 { --tw-translate-x: -50%; }
             .-translate-y-1\\/2 { --tw-translate-y: -50%; }

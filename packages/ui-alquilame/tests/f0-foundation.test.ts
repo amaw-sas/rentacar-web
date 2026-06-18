@@ -98,3 +98,30 @@ describe('F0 step03 — brand primary color', () => {
     expect(theme).not.toContain('#000073')
   })
 })
+
+describe('critical CSS — translate utilities do not double under Tailwind v4', () => {
+  const config = read('nuxt.config.ts')
+
+  // Root cause (SCEN-004, announcement-close-button.scenarios.md): the inline
+  // critical CSS hand-rolled the v3 `transform: translate(var(--tw-translate-*))`
+  // mechanism for -translate-x/y utilities. Tailwind v4's main stylesheet emits
+  // the SAME utilities via the modern CSS `translate` PROPERTY. Because those are
+  // two different properties they STACK once the main CSS loads → every
+  // above-the-fold translate is doubled (e.g. -translate-y-1/2 → -100%), which
+  // pushed the announcement close button 12px too high and shoved the HowItWorks
+  // step badges ~24px left. The critical CSS must use the `translate` property too
+  // so it never stacks with the main CSS.
+
+  // Locate the critical-CSS rule that declares the --tw-translate-* defaults.
+  const translateBlock = config.match(
+    /\.transform[^}]*--tw-translate-y:\s*0;[^}]*}/,
+  )
+
+  it('declares the -translate utilities via the `translate` property, not `transform`', () => {
+    expect(translateBlock, 'critical-CSS translate utility block should exist').not.toBeNull()
+    // The modern, non-stacking property.
+    expect(translateBlock![0]).toMatch(/translate:\s*var\(--tw-translate-x\)\s+var\(--tw-translate-y\)/)
+    // The v3 transform-based composition must be gone (it is what doubled).
+    expect(translateBlock![0]).not.toMatch(/transform:\s*translate\(/)
+  })
+})
