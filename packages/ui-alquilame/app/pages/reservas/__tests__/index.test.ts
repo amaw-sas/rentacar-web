@@ -1,11 +1,10 @@
 /**
- * F3 step02 — /reservas page (issue #112, alquilame only).
+ * F3 step02 — /reservas page (issue #112, alquilame only) + SCEN-003.
  *
  * Static-source assertions encoding the observable /reservas contract (full
  * runtime/visual check deferred to the F3 preview verification):
  *   - SCEN-F3-01: /reservas renders a red brand hero with the <Searcher> engine
- *     prominent, preserved untouched (same component → same data-testid, same
- *     navigation to buscar-vehiculos via the step01 city-derivation).
+ *     prominent.
  *   - Gradient guard (F0/F1 lesson): the hero MUST use the v4 bg-linear-to-*
  *     utility from the hero-from/hero-to @theme tokens with
  *     [--ctx-text-primary:#fff] (so .heading-* renders white on red), NEVER the
@@ -15,6 +14,14 @@
  *     SSR/ISR markup.
  *   - SCEN-F3-08: /reservas does NOT inject the city Product/FAQPage schemas.
  *   - F1 trust sections (HowItWorks/Requirements/Stats/Contact) are reused.
+ *
+ * SCEN-003 (behavior change — search stays on /reservas): the page is no longer
+ * a pure search page that navigates away. It now drives the search FROM the
+ * query string (useSearchByQueryParams), renders availability results IN-PLACE
+ * (#seleccion-categorias / CategorySelectionSection), gates the generic trust
+ * marketing on the query presence, and emits robots:noindex,follow on a results
+ * query (clean /reservas stays indexable). The "navigation to buscar-vehiculos
+ * via city-derivation" framing of the old contract is intentionally replaced.
  *
  * This file asserts the page SOURCE (same style as city/__tests__/Hero.test.ts).
  */
@@ -101,6 +108,52 @@ describe('F3 — /reservas reuses the F1 trust sections', () => {
   })
   it('mounts HomeContact', () => {
     expect(page).toMatch(/<HomeContact\b/)
+  })
+})
+
+describe('SCEN-003 — /reservas drives search from the query string', () => {
+  it('calls the query-param search driver (useSearchByQueryParams), not the route-param one', () => {
+    expect(page).toMatch(/useSearchByQueryParams\(\)/)
+    expect(page).not.toMatch(/useSearchByRouteParams\(/)
+  })
+
+  it('mounts the results block (#seleccion-categorias → CategorySelectionSection)', () => {
+    expect(page).toMatch(/id="seleccion-categorias"/)
+    expect(page).toMatch(/<CategorySelectionSection\b/)
+  })
+
+  it('gates the results block on an active search (resultsActive from useStoreSearchData)', () => {
+    expect(page).toMatch(/v-if="resultsActive"/)
+    expect(page).toMatch(/useStoreSearchData\(\)/)
+  })
+})
+
+describe('SCEN-003 — trust marketing hides on a results query (SSR-stable gate)', () => {
+  // Gate on route.query.lugar_recogida (SSR-available, so no flash/CLS), mirroring
+  // CityPage's mode gate. HomeContact stays rendered (CTA back to the searcher).
+  it('derives a results-query flag from route.query.lugar_recogida (SSR-stable)', () => {
+    expect(page).toMatch(/route\.query\.lugar_recogida/)
+  })
+
+  it('gates HomeHowItWorks / HomeRequirements / HomeStats with v-if (hidden on a results query)', () => {
+    expect(page).toMatch(/<HomeHowItWorks\b[^>]*v-if=/)
+    expect(page).toMatch(/<HomeRequirements\b[^>]*v-if=/)
+    expect(page).toMatch(/<HomeStats\b[^>]*v-if=/)
+  })
+
+  it('keeps HomeContact unconditionally rendered (no v-if gate)', () => {
+    expect(page).toMatch(/<HomeContact\b(?:(?!v-if)[^>])*reserve-anchor/)
+  })
+})
+
+describe('SCEN-003 — robots noindex,follow only on a results query', () => {
+  it('emits noindex, follow when a results query is present', () => {
+    expect(page).toMatch(/noindex,\s*follow/)
+  })
+
+  it('makes the robots value conditional on the query presence (computed/ternary on route.query)', () => {
+    // The noindex must NOT be unconditional — clean /reservas stays indexable.
+    expect(page).toMatch(/route\.query\.lugar_recogida[\s\S]{0,80}?noindex|noindex[\s\S]{0,80}?route\.query\.lugar_recogida/)
   })
 })
 

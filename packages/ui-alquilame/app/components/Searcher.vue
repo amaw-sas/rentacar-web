@@ -328,8 +328,8 @@
         </div>
         <div class="col-span-2">
             <u-button
-                :to="{name: searchLinkName, params: searchLinkParams}"
-                :disabled="pendingSearching || !animateSearchButton || !searchLinkParams.city"
+                :to="searchDestination"
+                :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied"
                 :loading="pendingSearching"
                 :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
                 size="xl"
@@ -416,6 +416,48 @@ const returnHourOptions = ref<any[]>([]);
 const searchLinkName = ref<string>('');
 const searchLinkParams = ref<any>({});
 const animateSearchButton = ref<boolean>(true);
+
+// SCEN-003 — context-aware submit destination.
+//   - On a CITY page (route.params.city present) the submit keeps the EXACT F3
+//     behavior: the named-route deep link → /[city]/buscar-vehiculos/... (preserves
+//     programmatic SEO + cross-brand isolation). searchLinkParams already carries
+//     the derived/real city (see syncSearchLinkParams below).
+//   - On /reservas (no :city in the route) the submit STAYS on /reservas with the
+//     search params in the QUERY STRING (shareable/bookmarkable); the page then
+//     renders availability in-place via useSearchByQueryParams. We do NOT redirect
+//     to /[branchCity]/... here — the city-derivation stays for the city-link path
+//     only. The query mirrors searchLinkParams: pickup/return SLUGS + dates + the
+//     12h-formatted times (the same values that build the deep route).
+const searchDestination = computed(() => {
+  const params = searchLinkParams.value ?? {};
+  if (route.params.city) {
+    return { name: searchLinkName.value, params: searchLinkParams.value };
+  }
+  return {
+    path: '/reservas',
+    query: {
+      lugar_recogida: params.lugar_recogida,
+      lugar_devolucion: params.lugar_devolucion,
+      fecha_recogida: params.fecha_recogida,
+      fecha_devolucion: params.fecha_devolucion,
+      hora_recogida: params.hora_recogida,
+      hora_devolucion: params.hora_devolucion,
+    },
+  };
+});
+
+// The disabled guard stays meaningful in BOTH contexts: block until a valid pickup
+// branch + dates exist. On a city page this is still effectively `city` (the deep
+// link is broken without it); on /reservas there is no `city`, so we require a
+// resolved pickup-branch slug + both dates instead (otherwise the query would be
+// half-empty and the search guard would no-op).
+const searchDisabledGuardSatisfied = computed(() => {
+  const params = searchLinkParams.value ?? {};
+  if (route.params.city) {
+    return Boolean(params.city);
+  }
+  return Boolean(params.lugar_recogida && params.fecha_recogida && params.fecha_devolucion);
+});
 
 const pickupDateCalendarOpen = ref<boolean>(false);
 const returnDateCalendarOpen = ref<boolean>(false);
