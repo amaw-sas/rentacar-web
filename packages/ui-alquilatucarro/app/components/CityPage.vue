@@ -190,9 +190,9 @@
               <LocationIcon cls="text-red-600 size-5 flex-shrink-0" />
               <span class="font-semibold text-gray-900">{{ branch.name }}</span>
             </div>
-            <div v-if="branch.schedule" class="flex items-start gap-2 text-sm text-gray-600">
+            <div v-if="branch.schedule?.display" class="flex items-start gap-2 text-sm text-gray-600">
               <ClockIcon cls="text-gray-400 size-4 flex-shrink-0 mt-0.5" />
-              <span>{{ branch.schedule }}</span>
+              <span>{{ branch.schedule.display }}</span>
             </div>
           </div>
         </div>

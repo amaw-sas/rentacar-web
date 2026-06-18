@@ -3,6 +3,7 @@ import type CategoryData from '../../src/utils/types/data/CategoryData'
 import type CategoryModelData from '../../src/utils/types/data/CategoryModelData'
 import type CategoryMonthPriceData from '../../src/utils/types/data/CategoryMonthPriceData'
 import type BranchData from '../../src/utils/types/data/BranchData'
+import type LocationSchedule from '../../src/utils/types/data/LocationSchedule'
 import type VehicleCategoryData from '../../src/utils/types/data/VehicleCategoryData'
 import type ExtrasData from '../../src/utils/types/data/ExtrasData'
 import type City from '../../src/utils/types/type/City'
@@ -60,7 +61,9 @@ interface SupabaseLocation {
   name: string
   city: string
   slug: string
-  schedule: { display?: string } | null
+  // Structured schedule (contract v2, issue #47): day keys + `hol` + derived
+  // `display`. `{}` = unconfigured (permissive), null/absent = no schedule.
+  schedule: LocationSchedule | null
   status: string
   cities: { slug: string } | null
 }
@@ -132,7 +135,10 @@ export function transformBranches(rows: SupabaseLocation[]): BranchData[] {
     // often drifted (e.g. "Bogotá" vs "bogota"). Fallback kept for safety.
     city: row.cities?.slug ?? row.city ?? '',
     slug: row.slug || '',
-    schedule: row.schedule?.display || '',
+    // Pass the structured schedule through intact (W1) so the client can read
+    // per-day ranges directly. null → undefined (permissive; the city-page chip
+    // hides on a missing `display`).
+    schedule: row.schedule ?? undefined,
   }))
 }
 

@@ -52,6 +52,7 @@ export type { StructuredErrorForward } from './helpers/extractStructuredError';
 // Type Definitions - Data
 // ============================================================================
 export type { default as BranchData } from './types/data/BranchData';
+export type { default as LocationSchedule, ScheduleDayKey } from './types/data/LocationSchedule';
 export type { default as CategoryAvailabilityData } from './types/data/CategoryAvailabilityData';
 export type { default as CategoryData } from './types/data/CategoryData';
 export type { default as CategoryModelData } from './types/data/CategoryModelData';

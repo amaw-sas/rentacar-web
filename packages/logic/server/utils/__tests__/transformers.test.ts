@@ -197,10 +197,20 @@ describe('transformVehicleCategories', () => {
 })
 
 describe('transformBranches', () => {
+  // W1 (issue #47): the structured schedule (contract v2) passes through intact
+  // — day keys + `hol` + the derived `display` — so the web can read it directly
+  // from Supabase. The city pages render only `schedule.display`.
+  const aabotSchedule = {
+    mon: ['00:00-24:00'], tue: ['00:00-24:00'], wed: ['00:00-24:00'],
+    thu: ['00:00-24:00'], fri: ['00:00-24:00'], sat: ['00:00-24:00'],
+    sun: ['00:00-24:00'], hol: ['06:00-21:00'],
+    display: 'Lun-Dom 24 horas | Festivos 06:00-21:00',
+  }
+
   it('prefers cities.slug (canonical) over legacy city text', () => {
     const input = [
-      { id: 'uuid-a', code: 'AABOT', name: 'Bogotá Aeropuerto', city: 'Bogotá', slug: 'bogota-aeropuerto', schedule: { display: 'Lun-Dom 24 horas | Festivos 06:00-21:00' }, status: 'active', cities: { slug: 'bogota' } },
-      { id: 'uuid-b', code: 'AAMDL', name: 'Medellín Aeropuerto José María Córdoba', city: 'Medellin', slug: 'medellin-aeropuerto-jose-maria-cordoba', schedule: { display: 'Todos los días 06:00-23:00' }, status: 'active', cities: { slug: 'medellin' } },
+      { id: 'uuid-a', code: 'AABOT', name: 'Bogotá Aeropuerto', city: 'Bogotá', slug: 'bogota-aeropuerto', schedule: aabotSchedule, status: 'active', cities: { slug: 'bogota' } },
+      { id: 'uuid-b', code: 'AAMDL', name: 'Medellín Aeropuerto José María Córdoba', city: 'Medellin', slug: 'medellin-aeropuerto-jose-maria-cordoba', schedule: {}, status: 'active', cities: { slug: 'medellin' } },
     ]
 
     const result = transformBranches(input)
@@ -212,9 +222,20 @@ describe('transformBranches', () => {
       name: 'Bogotá Aeropuerto',
       city: 'bogota',
       slug: 'bogota-aeropuerto',
-      schedule: 'Lun-Dom 24 horas | Festivos 06:00-21:00',
+      schedule: aabotSchedule,
     })
     expect(result[1].city).toBe('medellin')
+  })
+
+  it('passes the structured schedule (day keys + hol + display) through intact', () => {
+    const input = [
+      { id: 'uuid-a', code: 'AABOT', name: 'Bogotá Aeropuerto', city: 'Bogotá', slug: 'bogota-aeropuerto', schedule: aabotSchedule, status: 'active', cities: { slug: 'bogota' } },
+    ]
+
+    const result = transformBranches(input)
+    expect(result[0].schedule).toEqual(aabotSchedule)
+    expect(result[0].schedule?.hol).toEqual(['06:00-21:00'])
+    expect(result[0].schedule?.display).toBe('Lun-Dom 24 horas | Festivos 06:00-21:00')
   })
 
   it('falls back to legacy city text when cities join is null (safety net for unmigrated rows)', () => {
@@ -226,13 +247,22 @@ describe('transformBranches', () => {
     expect(result[0].city).toBe('bogota')
   })
 
-  it('handles missing schedule gracefully', () => {
+  it('preserves an unconfigured `{}` schedule as `{}` (permissive — no horario invented)', () => {
+    const input = [
+      { id: 'uuid-d', code: 'ACBED', name: 'Bogotá Fontibón', city: 'bogota', slug: 'bogota-fontibon', schedule: {}, status: 'active', cities: { slug: 'bogota' } },
+    ]
+
+    const result = transformBranches(input)
+    expect(result[0].schedule).toEqual({})
+  })
+
+  it('maps a null schedule to undefined (permissive; the city page chip hides)', () => {
     const input = [
       { id: 'uuid-c', code: 'ACBOT', name: 'Bogotá Caracas', city: 'bogota', slug: 'bogota-av-caracas', schedule: null, status: 'active', cities: { slug: 'bogota' } },
     ]
 
     const result = transformBranches(input)
-    expect(result[0].schedule).toBe('')
+    expect(result[0].schedule).toBeUndefined()
   })
 })
 
