@@ -123,6 +123,21 @@ describe('F1 step07a — AnnouncementBar.vue', () => {
     expect(bar).toMatch(/@click="dismiss"/)
     expect(bar).toMatch(/aria-label="Cerrar anuncio"/)
   })
+
+  it('anchors the close button to the centered content container, not the full-bleed bar', () => {
+    // Bug (runtime): on wide desktop the absolutely-positioned close button had
+    // no positioned ancestor except the full-width bar, so it floated at the far
+    // viewport corner and rode above the bar's vertical center (top:50% measured
+    // against the bar's py-2 padding box). The inner max-w-7xl content container
+    // must be `relative` so the button anchors to the CENTERED content edge and
+    // its top-1/2 / -translate-y-1/2 centers within the content line.
+    // SCEN-001 / SCEN-002 (announcement-close-button.scenarios.md).
+    const containerEl = bar.match(/<div class="[^"]*\bmax-w-7xl\b[^"]*"/)
+    expect(containerEl, 'max-w-7xl content container should exist').not.toBeNull()
+    expect(containerEl![0]).toMatch(/\brelative\b/)
+    // The button keeps its absolute + vertical-centering recipe.
+    expect(bar).toMatch(/class="[^"]*\babsolute\b[^"]*top-1\/2[^"]*-translate-y-1\/2/)
+  })
 })
 
 describe('F1 step07a — ChatWidget.vue (FAB restyle in place)', () => {
