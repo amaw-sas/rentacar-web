@@ -442,6 +442,9 @@ const searchDestination = computed(() => {
       fecha_devolucion: params.fecha_devolucion,
       hora_recogida: params.hora_recogida,
       hora_devolucion: params.hora_devolucion,
+      // Preserve referral attribution on the /reservas round-trip (mirrors the
+      // city-page branch, which carries referido via searchLinkParams).
+      ...(params.referido ? { referido: params.referido } : {}),
     },
   };
 });

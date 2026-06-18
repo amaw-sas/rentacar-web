@@ -2,9 +2,9 @@
 // from the QUERY STRING, not from path params. This composable mirrors the shared
 // `useSearchByRouteParams` (packages/logic) — which reads route.params on a
 // `/[city]/buscar-vehiculos/...` deep URL — but reads `route.query` instead, and
-// RE-RUNS when the query changes (so the back/forward button and a fresh submit
-// both re-search). It lives in the app layer to keep packages/logic and the other
-// brands untouched (F3 cross-brand isolation).
+// RE-RUNS when the search-relevant query changes (so the back/forward button and a
+// fresh submit both re-search). It lives in the app layer to keep packages/logic
+// and the other brands untouched (F3 cross-brand isolation).
 //
 // Guard: it only fires `doSearch()` when the required search keys are present in
 // the query. A clean `/reservas` (no query) must NOT run a search — it stays the
@@ -20,6 +20,16 @@ import {
   toDatetime,
   createCurrentDateObject,
 } from '@rentacar-main/logic/utils';
+
+// Vue Router query values are `string | string[] | null` — a duplicated key
+// (?lugar_recogida=a&lugar_recogida=b, from a hand-edited or doubly-appended link)
+// arrives as an ARRAY. Take the first element so the slug resolves to `a` instead
+// of the comma-joined `"a,b"` that `.toString()` would produce (which matches no
+// branch → silent empty results).
+function firstQueryValue(v: unknown): string | undefined {
+  const raw = Array.isArray(v) ? v[0] : v;
+  return raw == null ? undefined : String(raw);
+}
 
 export default function useSearchByQueryParams() {
   const route = useRoute();
@@ -41,20 +51,24 @@ export default function useSearchByQueryParams() {
     } = storeToRefs(storeForm);
 
     const runSearchFromQuery = () => {
-      const slugRecogida = route.query.lugar_recogida?.toString();
-      const slugDevolucion = route.query.lugar_devolucion?.toString();
-      const fecha_recogida = route.query.fecha_recogida?.toString();
-      const fecha_devolucion = route.query.fecha_devolucion?.toString();
-      const hora_recogida = route.query.hora_recogida?.toString();
-      const hora_devolucion = route.query.hora_devolucion?.toString();
-
       // Guard: a clean /reservas (no results query) must NOT trigger a search, so
-      // the page stays a plain indexable landing/search page. lugar_recogida +
-      // fecha_recogida are the essentials the availability fetch needs (and the
-      // canonical "results query present" signal, same as hasResultsQuery + robots).
-      if (!route.query.lugar_recogida || !route.query.fecha_recogida) {
+      // the page stays a plain indexable landing/search page. Require the same
+      // essentials the submit button's guard requires (lugar_recogida + both
+      // dates) so a truncated/hand-crafted link can't fire a malformed search.
+      if (
+        !route.query.lugar_recogida ||
+        !route.query.fecha_recogida ||
+        !route.query.fecha_devolucion
+      ) {
         return;
       }
+
+      const slugRecogida = firstQueryValue(route.query.lugar_recogida);
+      const slugDevolucion = firstQueryValue(route.query.lugar_devolucion);
+      const fecha_recogida = firstQueryValue(route.query.fecha_recogida);
+      const fecha_devolucion = firstQueryValue(route.query.fecha_devolucion);
+      const hora_recogida = firstQueryValue(route.query.hora_recogida);
+      const hora_devolucion = firstQueryValue(route.query.hora_devolucion);
 
       // Convert slugs to branch codes (mirrors the route-param driver).
       const branchRecogida = storeAdminData.searchBranchBySlug(slugRecogida ?? '');
@@ -64,7 +78,7 @@ export default function useSearchByQueryParams() {
       lugarDevolucion.value = branchDevolucion?.code ?? null;
       fechaRecogida.value = fecha_recogida ?? null;
       fechaDevolucion.value = fecha_devolucion ?? null;
-      referido.value = route.query.referido?.toString() ?? null;
+      referido.value = firstQueryValue(route.query.referido) ?? null;
 
       // Parse times (12h from the URL or 24h), normalize to the store's 24h format.
       const pickupTime = parseTime12hOr24h(hora_recogida ?? '');
@@ -82,9 +96,24 @@ export default function useSearchByQueryParams() {
 
     // Run on mount (handles direct load / refresh on a shared /reservas?... link)…
     runSearchFromQuery();
-    // …and re-run whenever the query changes (a new submit on /reservas updates the
-    // query in-place; back/forward navigates between query states). Deep watch so a
-    // changed value inside the same query object is caught.
-    watch(() => route.query, () => runSearchFromQuery(), { deep: true });
+    // …and re-run only when a SEARCH-relevant query value changes (a new submit on
+    // /reservas, or back/forward between query states). The getter returns a joined
+    // key of just the search params, so the watch's value-equality skips redundant
+    // re-fetches: an identical re-submit and unrelated params (utm_*, fbclid, …) do
+    // NOT re-trigger doSearch().
+    watch(
+      () =>
+        [
+          route.query.lugar_recogida,
+          route.query.lugar_devolucion,
+          route.query.fecha_recogida,
+          route.query.fecha_devolucion,
+          route.query.hora_recogida,
+          route.query.hora_devolucion,
+        ]
+          .map((v) => firstQueryValue(v) ?? '')
+          .join('|'),
+      () => runSearchFromQuery(),
+    );
   });
 }

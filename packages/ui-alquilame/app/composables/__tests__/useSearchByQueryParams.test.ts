@@ -43,7 +43,7 @@ describe('useSearchByQueryParams — guarded + reactive', () => {
 
   it('runs on mount AND re-runs when route.query changes (watch)', () => {
     expect(source).toMatch(/onMounted\(/)
-    expect(source).toMatch(/watch\(\s*\(\)\s*=>\s*route\.query/)
+    expect(source).toMatch(/watch\([\s\S]*route\.query\.lugar_recogida/)
   })
 
   it('is SSR-safe — store access happens inside onMounted (no top-level store call)', () => {
