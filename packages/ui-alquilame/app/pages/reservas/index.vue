@@ -63,7 +63,7 @@
             mobile keep distinct heights matching the form layout.
           -->
           <div class="flex items-center justify-center">
-            <div class="w-full max-w-md mx-auto">
+            <div class="w-full max-w-lg mx-auto">
               <div class="hidden lg:block h-[410px]">
                 <ClientOnly>
                   <Searcher />
@@ -86,10 +86,33 @@
       </div>
     </section>
 
-    <!-- F1 trust sections reused as-is. HomeContact anchors to this page's #hero. -->
-    <HomeHowItWorks />
-    <HomeRequirements />
-    <HomeStats />
+    <!--
+      SCEN-003 — in-place results. When /reservas carries a results query, the
+      search runs from the query string (useSearchByQueryParams) and the real
+      category grid renders here, mirroring CityPage's #seleccion-categorias
+      block. `resultsActive` is derived from useStoreSearchData (pending / has
+      categories / error), exactly like CityPage. Placed directly under the hero,
+      above the trust sections.
+    -->
+    <UPageSection
+      id="seleccion-categorias"
+      v-if="resultsActive"
+      :ui="{ container: 'pt-0' }"
+    >
+      <CategorySelectionSection />
+    </UPageSection>
+
+    <!--
+      F1 trust sections. SCEN-003: hidden on a results view (when /reservas has a
+      results query) so the page doesn't show generic home marketing over the
+      results — same intent as SCEN-001 on CityPage. Gate on the route query
+      (`hasResultsQuery`, derived from route.query.lugar_recogida) which is
+      SSR-stable, so the sections don't paint in SSR and vanish on hydrate (no
+      flash/CLS). HomeContact stays rendered (its CTA anchors back to #hero).
+    -->
+    <HomeHowItWorks v-if="!hasResultsQuery" />
+    <HomeRequirements v-if="!hasResultsQuery" />
+    <HomeStats v-if="!hasResultsQuery" />
     <HomeContact reserve-anchor="#hero" />
   </div>
 </template>
@@ -99,6 +122,44 @@
 import { defineAsyncComponent } from 'vue'
 
 const { franchise } = useAppConfig()
+const route = useRoute()
+
+/**
+ * SCEN-003 — results query flag. SSR-stable (route.query is available at SSR), so
+ * the trust-section gate and the robots meta are correct in the server-rendered
+ * HTML (no flash/CLS, no client-only meta drift). A "results query" = a /reservas
+ * URL carrying the search params (lugar_recogida is the load-bearing key).
+ */
+const hasResultsQuery = computed(() => Boolean(route.query.lugar_recogida))
+
+/**
+ * SCEN-003 — drive the in-place search from the query string. Runs doSearch only
+ * when the required query keys are present; a clean /reservas does nothing. Mirrors
+ * CityPage's useSearchByRouteParams but reads route.query (alquilame-local, so
+ * packages/logic and other brands stay untouched).
+ */
+useSearchByQueryParams()
+
+/**
+ * SCEN-003 — results gating, mirroring CityPage. Lazy store init (onMounted) to
+ * avoid SSR Pinia errors. The result block stays mounted while pending, when
+ * categories are present, or on a search error (so error UX still surfaces).
+ */
+const pendingSearch = ref(false)
+const filteredCategories = ref<unknown[]>([])
+const searchError = ref<unknown>(null)
+
+onMounted(() => {
+  const storeSearch = useStoreSearchData()
+  const refs = storeToRefs(storeSearch)
+  watch(() => refs.pending.value, (val) => (pendingSearch.value = val), { immediate: true })
+  watch(() => refs.filteredCategories.value, (val) => (filteredCategories.value = val), { immediate: true })
+  watch(() => refs.error.value, (val) => (searchError.value = val), { immediate: true })
+})
+
+const resultsActive = computed(
+  () => pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value,
+)
 
 const Searcher = defineAsyncComponent(() => import('../../components/Searcher.vue'))
 const PlaceholdersSearcher = defineAsyncComponent(
@@ -122,6 +183,11 @@ useBreadcrumbs([
 ])
 
 useSeoMeta({
+  // SCEN-003: the parameterized results state (/reservas?lugar_recogida=...) is
+  // noindex,follow — it duplicates the richer crawlable city pages and would
+  // cannibalize them; clean /reservas (no query) stays indexable. SSR-stable
+  // (route.query is available at SSR). Provisional, pending directiva sign-off.
+  robots: () => (route.query.lugar_recogida ? 'noindex, follow' : undefined),
   title,
   description,
   ogType: 'website',

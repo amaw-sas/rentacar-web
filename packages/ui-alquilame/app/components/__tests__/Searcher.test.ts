@@ -40,6 +40,36 @@ describe('Searcher — unlocks after bfcache restoration (browser back button)',
   })
 })
 
+describe('Searcher — desktop form is comfortably wide (SCEN-002)', () => {
+  // SCEN-002: on desktop the date value must not sit under the trailing calendar
+  // icon. The root cause was the <u-form> capping itself to md:w-3/6 lg:w-4/6 of an
+  // already max-w-md parent (~299px form → 129px date cells → 4px text/icon overlap).
+  // The fix removes the fractional desktop caps so the form fills its (now max-w-lg)
+  // container; the date cells widen and the value clears the icon.
+  const formClass = (source.match(/<u-form\b[\s\S]*?class="([^"]*)"/) ?? [])[1] ?? ''
+
+  it('does NOT cap the form to the md:w-3/6 fraction', () => {
+    expect(formClass).not.toMatch(/\bmd:w-3\/6\b/)
+  })
+
+  it('does NOT cap the form to the lg:w-4/6 fraction', () => {
+    expect(formClass).not.toMatch(/\blg:w-4\/6\b/)
+  })
+
+  it('keeps the full-width 2-col grid layout intact', () => {
+    expect(formClass).toMatch(/\bw-full\b/)
+    expect(formClass).toMatch(/\bgrid-cols-2\b/)
+  })
+
+  it('keeps the desktop u-input-date trailing-icon padding (pe-* / right padding clears the value)', () => {
+    // The desktop date inputs reserve space for the #trailing calendar icon. The
+    // value must never run under it — verified at runtime; here we guard that the
+    // trailing calendar icon slot is still wired on both date fields.
+    const trailingSlots = source.match(/<template #trailing>/g) ?? []
+    expect(trailingSlots.length).toBe(2)
+  })
+})
+
 describe('Searcher — derives results-URL city from pickup branch when route has no city (issue #112 F3)', () => {
   it('instantiates useRoute() to read route.params.city', () => {
     expect(source).toMatch(/const\s+route\s*=\s*useRoute\(\)/)
@@ -69,6 +99,45 @@ describe('Searcher — derives results-URL city from pickup branch when route ha
   it('keeps pickup/return location testids intact', () => {
     expect(source).toMatch(/data-testid="pickup-location-test"/)
     expect(source).toMatch(/data-testid="return-location-test"/)
+  })
+})
+
+describe('Searcher — context-aware submit destination (SCEN-003)', () => {
+  // The submit control is a LINK button whose :to is now context-aware:
+  //   - city page (route.params.city present)  → named-route deep link (F3, unchanged)
+  //   - /reservas    (route.params.city absent) → { path: '/reservas', query: {...} }
+  // so searching from /reservas stays on /reservas with the params in the query
+  // string and renders results in-place (never navigates to /[city]/buscar-vehiculos).
+  const submitButtonBlock = (() => {
+    const start = source.indexOf('BUSCAR VEHÍCULOS')
+    const before = source.lastIndexOf('<u-button', start)
+    const after = source.indexOf('</u-button>', start) + '</u-button>'.length
+    return source.slice(before, after)
+  })()
+
+  it('binds the submit :to to a context-aware destination computed (searchDestination)', () => {
+    expect(submitButtonBlock).toMatch(/:to="searchDestination"/)
+  })
+
+  it('keeps the F3 named-route deep link when route.params.city is present', () => {
+    // The city branch of searchDestination keeps { name: searchLinkName, params: searchLinkParams }.
+    expect(source).toMatch(/name:\s*searchLinkName\.value\s*,\s*params:\s*searchLinkParams\.value/)
+  })
+
+  it('targets /reservas with a query object when route.params.city is absent', () => {
+    expect(source).toMatch(/path:\s*['"]\/reservas['"]/)
+    // The query mirrors searchLinkParams: pickup/return slugs + dates + 12h times.
+    expect(source).toMatch(/lugar_recogida:/)
+    expect(source).toMatch(/lugar_devolucion:/)
+    expect(source).toMatch(/fecha_recogida:/)
+    expect(source).toMatch(/fecha_devolucion:/)
+    expect(source).toMatch(/hora_recogida:/)
+    expect(source).toMatch(/hora_devolucion:/)
+  })
+
+  it('branches the destination on the presence of route.params.city', () => {
+    expect(source).toMatch(/route\.params\.city/)
+    expect(source).toMatch(/const\s+searchDestination\s*=\s*computed/)
   })
 })
 

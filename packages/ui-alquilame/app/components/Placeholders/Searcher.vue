@@ -1,6 +1,6 @@
 <template>
-    <u-form 
-        class="w-full mx-auto md:w-3/6 lg:w-4/6 grid grid-cols-2 auto-rows-min gap-2 light"
+    <u-form
+        class="w-full mx-auto grid grid-cols-2 auto-rows-min gap-2 light"
     >
         <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm">
             <u-form-field label="Lugar de recogida" size="xl">
