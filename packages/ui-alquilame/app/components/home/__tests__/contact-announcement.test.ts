@@ -5,12 +5,17 @@
  * check deferred to the F1 preview verification):
  *   - SCEN-F1-03: the home has a dismissible announcement bar, a contact CTA
  *     section, and a floating contact FAB — in the design's style.
- *   - Contact + FAB are CONFIG-DRIVEN: they consume franchise.whatsapp (full URL,
- *     never re-wrapped) and franchise.phone — never the mockup's hardcoded number.
+ *   - Contact CTA is BUTTONS, not a form (golden 10-contact.html paridad visual):
+ *     "Reserva Ahora" + WhatsApp. The WhatsApp CTA is CONFIG-DRIVEN
+ *     (franchise.whatsapp full URL, never re-wrapped); the FAB additionally drives
+ *     franchise.phone. Neither hardcodes the mockup's number.
+ *   - WhatsApp green guard (brand hard rule): the contact WhatsApp surface is the
+ *     only legitimate brand green, the literal #090 — no other green is allowed.
  *   - The announcement bar dismiss state is CLIENT-ONLY (onMounted + v-if guard /
  *     ClientOnly) so SSR/ISR never bakes the closed state (#109 hydration lesson).
- *   - Gradient guard (F0 lesson): contact uses the v4 `bg-linear-to-*` utility,
- *     never the broken v3 `bg-gradient-to-*` alias.
+ *   - Background guard: contact replicates the golden's radial+linear gradient as
+ *     an inline style (radials are not Tailwind utilities) and introduces no
+ *     broken v3 `bg-gradient-to-*` alias.
  *   - Headings adopt the `.heading-*` utilities (Plus Jakarta).
  *   - Single FAB: the FAB lives in ChatWidget.vue (mounted once via the layout);
  *     no home component mounts a second ChatWidget.
@@ -41,9 +46,14 @@ describe('F1 step07a — Contact.vue', () => {
     expect(contact).toMatch(/target="_blank"/)
   })
 
-  it('binds the phone CTA to franchise.phone via a tel: link', () => {
-    expect(contact).toMatch(/:href="`tel:\$\{franchise\.phone\}`"/)
-    expect(contact).toMatch(/\{\{ franchise\.phone \}\}/)
+  it('uses the only legitimate brand green (#090) for the WhatsApp CTA, no other green', () => {
+    // golden 10-contact.html: the WhatsApp button is the sole green surface
+    // (golden alias `bg-whatsapp` === #090). Any green-N utility is a bug.
+    expect(contact).toMatch(/bg-\[#090\]/)
+    expect(contact).not.toMatch(/\bbg-green-\d/)
+    expect(contact).not.toMatch(/\btext-green-\d/)
+    // The superseded #25D366 surface must not reappear.
+    expect(contact).not.toMatch(/#25D366/i)
   })
 
   it('hardcodes NO contact number (no raw wa.me/<digits> or tel:<digits>)', () => {
@@ -56,13 +66,17 @@ describe('F1 step07a — Contact.vue', () => {
     expect(contact).toMatch(/useAppConfig\(\)/)
   })
 
-  it('renders its gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
-    expect(contact).toMatch(/bg-linear-to-[a-z]/)
+  it('replicates the golden radial+linear background as an inline style, no broken v3 alias', () => {
+    // golden 10-contact.html: the red CTA band is a radial-gradient stack over a
+    // linear-gradient — radials are not expressible as Tailwind utilities, so it
+    // is bound as an inline :style. Guard the linear red base + the v3 alias ban.
+    expect(contact).toMatch(/radial-gradient/)
+    expect(contact).toMatch(/linear-gradient\(122deg/)
     expect(contact).not.toMatch(BROKEN_V3_GRADIENT)
   })
 
   it('adopts the .heading-* utilities (Plus Jakarta) for its heading', () => {
-    expect(contact).toMatch(/heading-(section|sub|card)/)
+    expect(contact).toMatch(/font-heading/)
   })
 
   it('exposes the contact section under id="contact"', () => {

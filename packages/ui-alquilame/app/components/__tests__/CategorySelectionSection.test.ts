@@ -8,7 +8,10 @@ const source = readFileSync(
 )
 
 const submitButtonBlock = (() => {
-  const start = source.indexOf('>Solicitar reserva')
+  // The label is rendered via a ternary — `{{ isSubmittingForm ? 'Solicitando'
+  // : 'Solicitar reserva' }}` — so the literal `>Solicitar reserva` never
+  // appears in the source. Anchor on the label text that is actually present.
+  const start = source.indexOf('Solicitar reserva')
   const before = source.lastIndexOf('<u-button', start)
   const after = source.indexOf('</u-button>', start) + '</u-button>'.length
   return source.slice(before, after)
@@ -19,9 +22,9 @@ describe('CategorySelectionSection — Solicitar reserva button loading state', 
     expect(submitButtonBlock).toContain('Solicitar reserva')
   })
 
-  it('preserves brand green background during loading (overrides Nuxt UI neutral+solid disabled:bg-inverted)', () => {
-    expect(submitButtonBlock).toMatch(/disabled:bg-green-700/)
-    expect(submitButtonBlock).toMatch(/aria-disabled:bg-green-700/)
+  it('preserves brand-600 background during loading (overrides Nuxt UI neutral+solid disabled:bg-inverted)', () => {
+    expect(submitButtonBlock).toMatch(/disabled:bg-brand-600/)
+    expect(submitButtonBlock).toMatch(/aria-disabled:bg-brand-600/)
   })
 
   it('dims the button subtly while loading so users perceive the state', () => {

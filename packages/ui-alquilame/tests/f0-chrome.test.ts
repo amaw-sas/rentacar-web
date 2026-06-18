@@ -1,17 +1,18 @@
 /**
- * F0 chrome phase — steps 07, 08a, 08b, 09 (issue #112).
+ * Chrome parity phase — header + footer aligned to the GOLDEN Astro design
+ * (astro-alquilame/index.html), superseding the F0-interim red-on-red chrome.
  *
- * Encodes the observable chrome scenarios as static-source assertions
- * (full runtime/visual check deferred to step10):
- *   - step07: header is the brand red gradient, sticky, no #000073/blue-*.
- *   - step08a: the 3 bottom sections are fused into ONE red-gradient footer
- *             (from-footer-from to-footer-to) with font-heading.
- *   - step08b: the 19 city links stay INTERNAL via getCityReservationURL with
- *             :external + target=_blank, the #109 hydration guard (onMounted-only
- *             date calc, null-initial refs) is preserved untouched.
- *   - step09: error.vue boundary is brand red (no blue); typography .link-* use
- *             brand tokens, not text-blue-*.
- *   - SCEN-F0-06: grep of the 3 chrome surfaces yields zero blue.
+ * Golden contract (observable, static-source assertions; runtime/visual diff
+ * deferred to the dogfood/screenshot pass):
+ *   - header: WHITE sticky surface, RED (color-variant) logo, dark nav links,
+ *             a brand-red "Reserva Ahora" pill + a green (#090) WhatsApp button.
+ *   - footer: dark navy (#1A1A2E) 4-column grid + black bottom bar. The 19 city
+ *             links stay INTERNAL via getCityReservationURL with :external +
+ *             target=_blank; the #109 hydration guard (onMounted-only date calc,
+ *             null-initial refs) is preserved untouched. Legal links still derive
+ *             from franchise data.
+ *   - SCEN-CHROME-NOBLUE: the chrome surfaces yield zero legacy blue.
+ *   - SCEN-CHROME-NOGREEN: the only green in the chrome is the WhatsApp #090.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -25,99 +26,107 @@ function read(rel: string): string {
 
 const BLUE = /#000073|#0891b2|blue-[0-9]/
 
-describe('F0 step07 — header rojo sticky (default.vue)', () => {
+describe('chrome — header blanco golden (default.vue)', () => {
   const layout = read('app/layouts/default.vue')
+  // Slice the header region: from <UHeader to the first <main>.
+  const header = layout.slice(layout.indexOf('<UHeader'), layout.indexOf('<main'))
 
-  it('header background is the brand hero gradient, not the legacy blue', () => {
-    expect(layout).toMatch(/from-hero-from\s+to-hero-to/)
-    expect(layout).not.toContain('bg-[#000073]')
+  it('header background is WHITE, not the red hero gradient nor legacy blue', () => {
+    expect(header).toMatch(/<UHeader[\s\S]*?class="[^"]*\bbg-white\b/)
+    expect(header).not.toMatch(/from-hero-from\s+to-hero-to/)
+    expect(header).not.toContain('bg-[#000073]')
   })
 
   it('header is sticky to the top like the design', () => {
-    expect(layout).toMatch(/sticky\s+top-0/)
+    expect(header).toMatch(/sticky\s+top-0/)
   })
 
-  it('root dropped the blue gradient', () => {
-    expect(layout).not.toMatch(/from-\[#000073\]/)
-    expect(layout).not.toMatch(/via-blue-800/)
-  })
-
-  // Regression guard (B1): the root must stay DARK while pages still render
-  // text-white over it (hero, /pendiente, /sindisponibilidad). A light surface
-  // root would make that white text invisible. The light body is an F1 concern,
-  // landing when each page gets its own section background.
   it('root keeps a dark brand backdrop so white-text pages stay legible', () => {
     const rootLine = layout.split('\n').find((l) => l.includes('min-h-screen')) ?? ''
     expect(rootLine).toMatch(/from-brand-9\d0\s+to-brand-950/)
     expect(rootLine).not.toMatch(/bg-surface/)
   })
 
-  it('keeps the white-variant Logo legible over the red header', () => {
-    expect(layout).toMatch(/<Logo[^>]*variant="white"/)
+  it('logo uses the RED color variant in the header (no variant="white")', () => {
+    const logoTag = header.match(/<Logo\b[^>]*>/)?.[0] ?? ''
+    expect(logoTag).not.toMatch(/variant="white"/)
+  })
+
+  it('desktop nav links are dark, not white', () => {
+    // The active-link helper paints dark text; no white-text default on the nav.
+    expect(layout).toMatch(/text-gray-(800|900)/)
   })
 })
 
-describe('F3 step05 — CTA "Reservar" → /reservas (default.vue)', () => {
+describe('chrome — CTA "Reserva Ahora" + WhatsApp (default.vue)', () => {
   const layout = read('app/layouts/default.vue')
+  const header = layout.slice(layout.indexOf('<UHeader'), layout.indexOf('<main'))
 
-  // The desktop CTA lives in the #right region (lg-only nav), the mobile CTA in
-  // the #body slideover. Both must be a NuxtLink to /reservas — the global entry
-  // point to centralized search (issue #112 F3).
-  it('renders a "Reservar" CTA to /reservas in BOTH the desktop nav and the mobile menu', () => {
-    const ctas = layout.match(/<NuxtLink[\s\S]*?<\/NuxtLink>/g) ?? []
-    const reservar = ctas.filter(
-      (l) => /to="\/reservas"/.test(l) && /Reservar/.test(l),
+  it('renders a brand-red "Reserva Ahora" CTA to /reservas in desktop AND mobile', () => {
+    const reservar = (header.match(/<NuxtLink[\s\S]*?<\/NuxtLink>/g) ?? []).filter(
+      (l) => /to="\/reservas"/.test(l) && /Reserva Ahora/.test(l),
     )
-    // Two distinct CTAs: one desktop (#right), one mobile (#body slideover).
     expect(reservar.length).toBeGreaterThanOrEqual(2)
-  })
-
-  it('the "Reservar" CTA uses brand-red tokens, never blue', () => {
-    const ctas = (layout.match(/<NuxtLink[\s\S]*?<\/NuxtLink>/g) ?? []).filter(
-      (l) => /to="\/reservas"/.test(l),
-    )
-    for (const cta of ctas) {
+    for (const cta of reservar) {
+      expect(cta).toMatch(/bg-brand-\d/)
       expect(cta).not.toMatch(BLUE)
       expect(cta).not.toMatch(/bg-gradient-to-/)
-      // Brand surface: a white CTA on the red header, or a brand-600 fill.
-      expect(cta).toMatch(/bg-(white|brand-\d)/)
+    }
+  })
+
+  it('renders a WhatsApp button using the only legitimate green (#090)', () => {
+    const waButtons = (header.match(/<a[\s\S]*?<\/a>/g) ?? []).filter((a) =>
+      /franchise\.whatsapp/.test(a),
+    )
+    expect(waButtons.length).toBeGreaterThanOrEqual(2) // desktop circle + mobile pill
+    for (const wa of waButtons) {
+      expect(wa).toMatch(/bg-\[#090\]/)
     }
   })
 })
 
-describe('F0 step08a — footer rojo unificado (default.vue)', () => {
+describe('chrome — footer navy golden (default.vue)', () => {
   const layout = read('app/layouts/default.vue')
 
-  it('fuses the bottom sections into a single <footer> with the red gradient', () => {
+  it('renders a single <footer> with the dark navy surface (#1A1A2E)', () => {
     const footers = layout.match(/<footer\b[^>]*>/g) ?? []
     expect(footers).toHaveLength(1)
-    expect(footers[0]).toMatch(/from-footer-from\s+to-footer-to/)
-    expect(footers[0]).toMatch(/font-heading/)
+    expect(footers[0]).toMatch(/bg-\[#1A1A2E\]/)
   })
 
-  it('drops the legacy bg-black UFooter and blue legal/city section', () => {
-    expect(layout).not.toContain('bg-blue-700')
-    expect(layout).not.toContain('bg-blue-600')
-    expect(layout).not.toContain('<UFooter')
-    // The only remaining bg-black is the mobile-slideover close button, never the footer.
+  it('has a black bottom bar inside the footer', () => {
     const footer = layout.slice(layout.indexOf('<footer'))
-    expect(footer).not.toContain('bg-black')
+    expect(footer).toMatch(/bg-black/)
   })
 
-  it('still renders the legal links from franchise.footerLinks inside the footer', () => {
-    expect(layout).toMatch(/v-for="\(footerLink, index\) in franchise\.footerLinks"/)
+  it('renders the four golden section headings', () => {
+    const footer = layout.slice(layout.indexOf('<footer'))
+    for (const heading of ['Quiénes somos', 'Ciudades', 'Enlaces', 'Contacto']) {
+      expect(footer).toContain(heading)
+    }
+  })
+
+  it('renders the Google 5,0 / 43 reseñas trust badge', () => {
+    const footer = layout.slice(layout.indexOf('<footer'))
+    expect(footer).toContain('5,0')
+    expect(footer).toContain('43 reseñas en Google')
+  })
+
+  it('still derives legal links from franchise data', () => {
+    const footer = layout.slice(layout.indexOf('<footer'))
+    expect(footer).toMatch(/legalLinks|franchise\.footerLinks/)
   })
 })
 
-describe('F0 step08b — city links + #109 hydration guard (default.vue)', () => {
+describe('chrome — city links + #109 hydration guard (default.vue)', () => {
   const layout = read('app/layouts/default.vue')
 
-  it('keeps the 19 city links INTERNAL via getCityReservationURL (not wa.me)', () => {
+  it('keeps the city links INTERNAL via getCityReservationURL (not wa.me)', () => {
     expect(layout).toMatch(/:to="getCityReservationURL\(city\)"/)
     expect(layout).not.toContain('wa.me')
   })
 
-  it('preserves :external + target=_blank on the city buttons', () => {
+  it('preserves the v-for over cities with :external + target=_blank', () => {
     expect(layout).toMatch(/v-for="city in cities"/)
     expect(layout).toMatch(/:external="true"/)
     expect(layout).toMatch(/target="_blank"/)
@@ -126,18 +135,12 @@ describe('F0 step08b — city links + #109 hydration guard (default.vue)', () =>
   it('#109 guard: dates are computed ONLY in onMounted from null-initial refs', () => {
     expect(layout).toMatch(/const reservationInitDay = ref<string \| null>\(null\)/)
     expect(layout).toMatch(/const reservationEndDay = ref<string \| null>\(null\)/)
-    // Assignment happens inside onMounted, never at SSR/module scope.
     expect(layout).toMatch(/onMounted\(\(\) => {[\s\S]*reservationInitDay\.value =/)
     expect(layout).toMatch(/onMounted\(\(\) => {[\s\S]*reservationEndDay\.value =/)
   })
-
-  it('restyles the city buttons to a red-on-red translucent treatment, no blue', () => {
-    const section = layout.slice(layout.indexOf('id="sedes"'))
-    expect(section).not.toMatch(BLUE)
-  })
 })
 
-describe('F0 step09 — de-blue error.vue + typography .link-*', () => {
+describe('chrome — de-blue error.vue + typography .link-*', () => {
   const error = read('app/error.vue')
   const typography = read('app/assets/css/rentacar-main/typography.css')
 
@@ -158,26 +161,18 @@ describe('F0 step09 — de-blue error.vue + typography .link-*', () => {
   })
 })
 
-// Regression guard (step10 runtime): the chrome gradients MUST use the v4
-// canonical `bg-linear-to-*` utility, NOT the v3 alias `bg-gradient-to-*`.
-// In this Tailwind 4.1 build, `from-*`/`to-*` built from custom @theme tokens
-// emit position-aware `--tw-gradient-stops` ("to bottom in oklab, …"); the v3
-// `bg-gradient-to-b` shim prepends its OWN direction → `linear-gradient(to
-// bottom, to bottom in oklab, …)` → invalid → background-image:none. The header,
-// footer and dark root backdrop then render transparent and white text turns
-// invisible (the exact B1 failure). `bg-linear-to-*` consumes the stops as-is
-// and renders. Verified live on the preview before this guard was written.
+// Regression guard: any gradient in the chrome MUST use the v4 canonical
+// `bg-linear-to-*` utility, NOT the v3 alias `bg-gradient-to-*` (which renders
+// transparent against custom @theme tokens in this Tailwind 4.1 build).
 describe('chrome gradients use v4 bg-linear-* (render), not v3 bg-gradient-* (transparent)', () => {
   for (const rel of ['app/layouts/default.vue', 'app/error.vue']) {
-    it(`${rel} uses bg-linear-to-* and never the broken bg-gradient-to-*`, () => {
-      const src = read(rel)
-      expect(src).toMatch(/bg-linear-to-[a-z]/)
-      expect(src).not.toMatch(/bg-gradient-to-/)
+    it(`${rel} never uses the broken bg-gradient-to-*`, () => {
+      expect(read(rel)).not.toMatch(/bg-gradient-to-/)
     })
   }
 })
 
-describe('SCEN-F0-06 — chrome surfaces have zero blue', () => {
+describe('SCEN-CHROME-NOBLUE — chrome surfaces have zero blue', () => {
   const surfaces = [
     'app/layouts/default.vue',
     'app/error.vue',
@@ -189,4 +184,17 @@ describe('SCEN-F0-06 — chrome surfaces have zero blue', () => {
       expect(read(rel)).not.toMatch(BLUE)
     })
   }
+})
+
+describe('SCEN-CHROME-NOGREEN — the only green in default.vue is WhatsApp #090', () => {
+  const layout = read('app/layouts/default.vue')
+
+  it('uses no Tailwind green-N utility classes', () => {
+    expect(layout).not.toMatch(/\bbg-green-\d/)
+    expect(layout).not.toMatch(/\btext-green-\d/)
+  })
+
+  it('the WhatsApp surface is the literal brand-safe #090', () => {
+    expect(layout).toContain('bg-[#090]')
+  })
 })

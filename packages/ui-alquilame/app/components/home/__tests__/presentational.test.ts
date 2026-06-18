@@ -42,6 +42,27 @@ describe('F1 step03 — HowItWorks.vue (3 steps)', () => {
     expect(howItWorks).toMatch(/id="how-it-works"/)
     expect(howItWorks).toContain('Cómo Funciona')
   })
+
+  it('renders each step illustration via <NuxtImg> (not a raw <img>)', () => {
+    // The raw <img loading="lazy"> with no intrinsic size collapsed/blew up
+    // the aspect-[4/3] box inside the flex-stretch row → empty giant cards.
+    expect(howItWorks).toMatch(/<NuxtImg\b/)
+    expect(howItWorks).not.toMatch(/<img\b/)
+  })
+
+  it('locks the image aspect with explicit width/height (CLS + no collapse)', () => {
+    // Intrinsic 508×391 matches the real assets so the box reserves space.
+    expect(howItWorks).toMatch(/width="508"/)
+    expect(howItWorks).toMatch(/height="391"/)
+    // The illustration box keeps the design aspect ratio.
+    expect(howItWorks).toMatch(/aspect-\[4\/3\]/)
+  })
+
+  it('wires the 3 real step assets', () => {
+    expect(howItWorks).toContain('/images/howitworks/paso-escoge.jpg')
+    expect(howItWorks).toContain('/images/howitworks/paso-reserva.jpg')
+    expect(howItWorks).toContain('/images/howitworks/paso-recoge.jpg')
+  })
 })
 
 describe('F1 step03 — ValueProps.vue (4 props)', () => {
@@ -89,9 +110,12 @@ describe('F1 step03 — shared invariants', () => {
     }
   })
 
-  it('every section headline adopts a .heading-* utility', () => {
+  it('every section headline adopts a brand heading utility (.heading-* or font-heading)', () => {
+    // Golden parity: section headings moved off the .heading-section token
+    // (text-2xl/md:text-3xl = wrong golden size) to `font-heading` + the
+    // golden size ramp (text-3xl md:text-4xl). Both encode Plus Jakarta.
     for (const src of ALL) {
-      expect(src).toMatch(/heading-(hero|page|section|card|sub|label)/)
+      expect(src).toMatch(/heading-(hero|page|section|card|sub|label)|font-heading/)
     }
   })
 })

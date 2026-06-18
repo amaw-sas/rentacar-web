@@ -1,15 +1,18 @@
 <template>
   <!--
-    F3 hero — pure-marketing home hero (bg-linear-to-br red gradient, headline
-    left / family image right). The inline search engine (SelectBranch + city
-    prompt) is GONE: search centralizes at /reservas. The primary action is now a
-    "Reservar ahora" CTA → /reservas (SPA NuxtLink), styled like "Ver Precios"
-    (white button on red). Gradient uses the v4 bg-linear-to-* utility: with
-    custom @theme tokens the v3 alias renders background-image:none (F0 lesson).
+    Hero — golden parity (astro-alquilame #hero). Red gradient bg via the v4
+    bg-linear-to-* utility (custom @theme tokens render background-image:none
+    with the v3 alias — F0 lesson). Headline left / visual card right.
 
-    Fidelity principle: the design's hero WhatsApp button is a CONTACT CTA (not a
-    reserve flow), so it stays, pointing at franchise.whatsapp (already a full
-    https://wa.me/... URL — never re-wrapped).
+    Golden's visual column is a looping <video> (autoplay/muted/loop/playsinline
+    + poster). We reproduce the exact golden card (max-w-lg, aspect-[16/9],
+    rounded + shadow + ring) — the aspect box reserves space so the poster→video
+    swap never shifts layout (no CLS). Assets live in public/videos/.
+
+    CTAs match the golden exactly: "Ver Precios" (#fleet) + WhatsApp. WhatsApp
+    is a CONTACT CTA pointing at franchise.whatsapp (already a full
+    https://wa.me/... URL — never re-wrapped); the golden's hardcoded number is
+    the same brand line.
   -->
   <section
     id="hero"
@@ -19,28 +22,18 @@
       <div class="grid lg:grid-cols-2 gap-10 items-center">
         <!-- Text + CTA column -->
         <div class="text-center lg:text-left">
-          <!-- Trust signal: "4.9 reviews" star badge (design hero) -->
-          <div class="flex justify-center lg:justify-start mb-3">
-            <HeroHeadline />
-          </div>
-
-          <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
+          <h1
+            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-white leading-[1.1]"
+          >
             Alquiler de Carros en Colombia al Mejor Precio
           </h1>
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
-            Sin anticipos, sin fila. Flota renovada y mantenimiento incluido.
-            Reserva en minutos eligiendo tu ciudad.
+            Sin anticipos, sin fila. Flota con menos de 2 años y mantenimiento incluido.
+            Reserva por WhatsApp en 19 ciudades.
           </p>
 
-          <!-- CTA row: primary "Reservar ahora" (→ /reservas, SPA) +
-               "Ver Precios" (jumps to #fleet) + contact WhatsApp -->
-          <div class="mt-6 flex flex-row flex-wrap items-stretch gap-3 justify-center lg:justify-start">
-            <NuxtLink
-              to="/reservas"
-              class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-red-700 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
-            >
-              Reservar ahora
-            </NuxtLink>
+          <!-- CTA row: "Ver Precios" (jumps to #fleet) + contact WhatsApp -->
+          <div class="mt-6 flex flex-row items-stretch gap-3 justify-center lg:justify-start">
             <a
               href="#fleet"
               class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-red-700 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
@@ -52,7 +45,7 @@
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Contáctanos por WhatsApp"
-              class="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-[#25D366] text-white hover:brightness-110 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+              class="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-[#090] text-white hover:brightness-110 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -69,11 +62,24 @@
           </div>
         </div>
 
-        <!-- Visual column -->
+        <!-- Visual column (golden card, aspect-[16/9] reserves space → no CLS) -->
         <div class="flex items-center justify-center">
-          <!-- CLS fix: reserve space with aspect-ratio (2000x1620 ≈ 100:81) -->
-          <div class="w-full max-w-lg aspect-[100/81]">
-            <ImagesFamily />
+          <div
+            class="w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
+          >
+            <video
+              class="w-full h-full object-cover"
+              poster="/videos/hero-poster.jpg"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+              aria-label="Video promocional de Alquilame Colombia"
+            >
+              <source src="/videos/hero.webm" type="video/webm" />
+              <source src="/videos/hero.mp4" type="video/mp4" />
+            </video>
           </div>
         </div>
       </div>

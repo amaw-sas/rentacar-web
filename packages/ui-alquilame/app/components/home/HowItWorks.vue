@@ -16,7 +16,7 @@
       <!-- Header -->
       <div class="text-center mb-12 md:mb-20">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto" />
-        <h2 class="heading-section text-3xl md:text-4xl font-extrabold text-gray-900">
+        <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
           Cómo Funciona
         </h2>
         <p class="mt-3 text-base md:text-lg text-gray-600">
@@ -38,15 +38,20 @@
               {{ step.number }}
             </span>
 
-            <!-- Illustration -->
+            <!-- Illustration — explicit intrinsic size (508×391, the real asset
+                 dimensions) locks the aspect so the lazy image reserves space
+                 instead of collapsing/blowing up the flex-stretch column. -->
             <div class="w-full aspect-[4/3] rounded-2xl bg-[#F4F5F9] overflow-hidden mb-7">
-              <img
+              <NuxtImg
                 :src="step.image"
                 :alt="step.imageAlt"
+                width="508"
+                height="391"
+                sizes="sm:100vw md:340px"
                 loading="lazy"
                 decoding="async"
-                class="w-full h-full object-contain"
-              >
+                class="w-full h-full object-cover"
+              />
             </div>
 
             <h3 class="heading-sub text-lg md:text-xl font-bold text-gray-900 mb-2">

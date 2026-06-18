@@ -146,13 +146,18 @@ describe('F0 step06 — Logo.vue', () => {
     expect(logo).toMatch(/height="55"/)
   })
 
-  it('all 3 consumers in default.vue compile with cls + white variant', () => {
+  // Golden chrome: the header is now a WHITE surface (red logo) and the footer
+  // is dark navy (white logo). Both consumers carry cls + an explicit variant;
+  // the header logo is color (red over white), the footer logo is white.
+  it('both consumers in default.vue compile with cls + explicit variant', () => {
     const uses = layout.match(/<Logo[^>]*\/>/g) ?? []
-    expect(uses).toHaveLength(3)
+    expect(uses).toHaveLength(2)
     for (const u of uses) {
       expect(u).toMatch(/cls=/)
-      expect(u).toMatch(/variant="white"/)
+      expect(u).toMatch(/variant="(color|white)"/)
     }
+    expect(uses.some((u) => /variant="color"/.test(u))).toBe(true)
+    expect(uses.some((u) => /variant="white"/.test(u))).toBe(true)
   })
 
   // Regression guard: the variant default is 'color' (red/black), illegible on the

@@ -11,7 +11,7 @@
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-10">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto" aria-hidden="true" />
-        <h2 class="heading-section text-3xl md:text-4xl text-gray-900">
+        <h2 class="font-heading text-3xl md:text-4xl text-gray-900">
           Preguntas Frecuentes
         </h2>
         <p class="mt-4 text-lg text-gray-600">

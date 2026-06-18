@@ -1,74 +1,168 @@
 <template>
   <!--
-    F1 reviews — restyle of the design's #google-reviews (white rounded-2xl
-    review cards, yellow star row, gray quote) using the REAL testimonials.
+    Reviews — parity with the golden #google-reviews section.
 
-    DATA (honest): the cards render `franchiseTestimonials[brandCode]` — the same
-    Supabase source the legacy #testimonios used. The mockup's hardcoded marketing
-    rating block, its external CID review links and its reviewer-tier badges are
-    FICTION baked into the design build → NOT reproduced. No rating number is
-    surfaced here; the aggregate-rating schema composable stays in index.vue,
-    untouched (pre-existing debt, no F1 regression).
+    GOOGLE BLOCK (rating + count): the "5,0", "43 reseñas verificadas en Google",
+    the 5-star row, the multicolor Google logo and the "Ver reseñas en Google"
+    CTA are REAL data confirmed by the directive — alquilame's actual Google
+    Business profile (cid=11824841242913553901). Reproduced as fixed golden values.
+    MANUAL upkeep: reviewed 2026-06 — re-verify rating/count at the cid above and
+    keep "5,0"/"43" in sync with the default.vue footer badge.
 
-    Gradient uses the v4 bg-linear-to-* utility (F0 lesson: the broken v3 alias
-    with custom @theme tokens renders background-image:none).
+    CARDS: render the REAL testimonials — franchiseTestimonials[brandCode] from
+    useFetchRentacarData() (same Supabase source as the legacy #testimonios),
+    sliced to the 3 featured slots. The avatar uses derived initials over the
+    brand circle (circulo-rojo.svg), matching the golden bicolor avatar.
+
+    Gradient/utility note: section bg is the golden's flat gray-100.
   -->
-  <section
-    id="testimonios"
-    class="bg-linear-to-b from-gray-50 to-gray-100 text-gray-900 py-12 md:py-16"
-  >
+  <section id="google-reviews" class="section-padding bg-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Section header -->
-      <div class="text-center max-w-2xl mx-auto mb-10 md:mb-12">
-        <div
-          class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"
-          aria-hidden="true"
-        />
-        <h2 class="heading-section text-3xl md:text-4xl text-gray-900 leading-tight mb-3">
-          Lo que dicen nuestros clientes
-        </h2>
-        <p class="text-base text-gray-600">
-          Descubre por qué somos la opción preferida para alquilar carros en
-          Colombia: atención cercana, precios competitivos y un proceso sin
-          complicaciones.
-        </p>
+      <!-- Hero: rating + featured cards -->
+      <div
+        class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-10 lg:gap-12 items-center"
+      >
+        <!-- Rating block (REAL Google data) -->
+        <div class="text-center lg:text-left">
+          <div class="flex flex-col items-center lg:items-start">
+            <!-- Google logo (multicolor, desktop) -->
+            <svg
+              class="hidden lg:block w-9 h-9 mb-3"
+              viewBox="0 0 48 48"
+              aria-hidden="true"
+            >
+              <path
+                fill="#EA4335"
+                d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+              />
+              <path
+                fill="#4285F4"
+                d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+              />
+            </svg>
+            <div class="flex items-center gap-3">
+              <span
+                class="font-heading font-extrabold leading-none text-[#CC022B] text-6xl sm:text-7xl"
+                >5,0</span
+              >
+              <!-- Star row (desktop) -->
+              <div class="hidden lg:flex gap-1">
+                <StarIcon v-for="i in 5" :key="i" cls="text-yellow-400 w-7 h-7" />
+              </div>
+            </div>
+            <!-- Star row + Google logo (mobile) -->
+            <div class="flex lg:hidden items-center gap-2 mt-3">
+              <div class="flex gap-1">
+                <StarIcon
+                  v-for="i in 5"
+                  :key="i"
+                  cls="text-yellow-400 w-[26px] h-[26px]"
+                />
+              </div>
+              <svg class="w-7 h-7" viewBox="0 0 48 48" aria-hidden="true">
+                <path
+                  fill="#EA4335"
+                  d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+                />
+              </svg>
+            </div>
+          </div>
+          <h2
+            class="mt-4 text-3xl md:text-4xl font-extrabold font-heading text-gray-900 leading-tight"
+          >
+            43 reseñas verificadas en Google
+          </h2>
+          <p class="mt-2 text-base text-gray-500">Verificadas con autor y fecha</p>
+        </div>
+
+        <!-- Featured cards — REAL testimonials -->
+        <div class="grid sm:grid-cols-3 gap-4 lg:gap-5">
+          <a
+            v-for="testimonio in testimonios"
+            :key="testimonio.user.name"
+            :href="GOOGLE_REVIEWS_URL"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="`Ver la reseña de ${testimonio.user.name} en Google`"
+            class="group flex flex-row sm:flex-col sm:items-center sm:text-center gap-4 sm:gap-0 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 transition-all duration-200"
+          >
+            <!-- Bicolor avatar with derived initials -->
+            <span
+              class="relative flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 sm:mb-3 inline-flex items-center justify-center"
+            >
+              <img
+                src="/images/howitworks/circulo-rojo.svg"
+                alt=""
+                aria-hidden="true"
+                class="absolute inset-0 w-full h-full pointer-events-none select-none"
+                draggable="false"
+              >
+              <span
+                class="relative font-heading font-extrabold text-white text-sm sm:text-base tracking-tight"
+                >{{ initials(testimonio.user.name) }}</span
+              >
+            </span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2 sm:justify-center">
+                <p class="font-bold text-gray-900 text-base">
+                  {{ testimonio.user.name }}
+                </p>
+              </div>
+              <div class="flex gap-0.5 mt-1.5 sm:justify-center">
+                <StarIcon v-for="i in 5" :key="i" cls="text-yellow-400 w-[15px] h-[15px]" />
+              </div>
+              <p class="mt-2.5 text-sm text-gray-600 leading-relaxed">
+                &ldquo;{{ testimonio.quote }}&rdquo;
+              </p>
+            </div>
+          </a>
+        </div>
       </div>
 
-      <!-- Review cards — real testimonials -->
-      <div
-        v-if="testimonios.length"
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5"
-      >
-        <article
-          v-for="testimonio in testimonios"
-          :key="testimonio.user.name"
-          class="flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+      <!-- CTA below the cards -->
+      <div class="mt-8 lg:mt-10 text-center">
+        <a
+          :href="GOOGLE_REVIEWS_URL"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-full bg-[#CC022B] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 transition-all"
         >
-          <!-- Author + avatar (real data via UUser) -->
-          <!-- CLS fix: reserve space for the avatar (48x48 = size 3xl) -->
-          <div class="min-h-[48px]">
-            <UUser
-              size="3xl"
-              v-bind="testimonio.user"
-              :ui="userUIConfig"
-              loading="lazy"
-            />
-          </div>
-
-          <!-- Star row -->
-          <div class="flex gap-0.5 mt-3" aria-label="5 de 5 estrellas">
-            <StarIcon
-              v-for="i in 5"
-              :key="i"
-              cls="text-yellow-400 w-4 h-4"
-            />
-          </div>
-
-          <!-- Quote -->
-          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-            &ldquo;{{ testimonio.quote }}&rdquo;
-          </p>
-        </article>
+          Ver reseñas en Google
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </a>
       </div>
     </div>
   </section>
@@ -81,16 +175,26 @@ import type Testimonial from "@rentacar-main/logic/utils/types/type/Testimonial"
 /** components */
 import { IconsStarIcon as StarIcon } from "#components";
 
+// alquilame's real Google Business reviews profile (golden: cid confirmed REAL).
+const GOOGLE_REVIEWS_URL =
+  "https://www.google.com/maps?cid=11824841242913553901";
+
 // Same data source as the legacy #testimonios: franchiseTestimonials[brandCode]
 // from useFetchRentacarData() (Supabase). Never a hardcoded testimonial list.
+// The golden surfaces 3 featured cards.
 const brandCode = useRuntimeConfig().public.rentacarFranchise as string;
 const { franchiseTestimonials } = useFetchRentacarData();
 const testimonios = computed<Testimonial[]>(
-  () => franchiseTestimonials[brandCode] ?? []
+  () => (franchiseTestimonials[brandCode] ?? []).slice(0, 3)
 );
 
-const userUIConfig = {
-  name: "text-gray-900 font-bold",
-  description: "text-gray-500",
-};
+// Derive 1-2 letter initials from the reviewer name for the bicolor avatar.
+function initials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join("");
+}
 </script>

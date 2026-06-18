@@ -153,7 +153,7 @@
               label="Siguiente"
               color="neutral"
               size="xl"
-              class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 text-white"
+              class="flex-1 py-4 justify-center bg-brand-600 hover:bg-brand-700 text-white"
               data-testid="reservation-next-test"
               @click="goToForm"
             >
@@ -177,7 +177,7 @@
           <u-button
             color="neutral"
             size="xl"
-            class="flex-1 py-4 justify-center whitespace-nowrap bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
+            class="flex-1 py-4 justify-center whitespace-nowrap bg-brand-600 hover:bg-brand-700 disabled:bg-brand-600 aria-disabled:bg-brand-600 disabled:opacity-80 aria-disabled:opacity-80 text-white"
             :loading="isSubmittingForm"
             :disabled="isSubmittingForm"
             @click="reservationFormComponent?.submit()"

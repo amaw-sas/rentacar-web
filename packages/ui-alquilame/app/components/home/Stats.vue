@@ -34,7 +34,7 @@
               {{ stat.badge }}
             </span>
             <div
-              class="heading-section mt-3 text-5xl font-extrabold leading-none text-gray-900 md:text-6xl"
+              class="font-heading mt-3 text-5xl font-extrabold leading-none text-gray-900 md:text-6xl"
             >
               {{ stat.value }}
             </div>
