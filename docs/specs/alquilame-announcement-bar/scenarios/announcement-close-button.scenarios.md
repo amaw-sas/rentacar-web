@@ -62,3 +62,31 @@ renderizándose en SSR por defecto).
 vertical del botón coincide con el de la barra (`|btnCenterY − barCenterY| ≤ 2px`).
 Los tests existentes de AnnouncementBar (SSR-by-default, dismiss client-only,
 sessionStorage, aria-label) siguen verdes.
+
+---
+
+## SCEN-004: el critical CSS no duplica el translate (causa raíz sistémica)
+
+**Given**: el critical CSS inline de `packages/ui-alquilame/nuxt.config.ts` define
+las utilidades `-translate-x/y-1/2` y `-translate-*-[10%]` para el primer paint
+above-the-fold.
+**When**: la página completa carga y Tailwind v4 (CSS principal) aplica esas
+mismas utilidades mediante la propiedad CSS `translate`.
+**Then**: el critical CSS emite el translate por la MISMA propiedad `translate`
+(no por `transform: translate(...)`, mecanismo v3), de modo que critical y CSS
+principal NO se apilan: el desplazamiento efectivo es el declarado (−50% / −10%),
+no el doble. Como consecuencia observable, los elementos centrados con
+`-translate-*` quedan correctamente posicionados:
+- el badge numérico de cada paso en `HomeHowItWorks` (`-top-6 left-1/2
+  -translate-x-1/2`) queda horizontalmente centrado sobre su tarjeta
+  (`|badgeCenterX − cardCenterX| ≤ 2px`), no corrido ~24px a la izquierda;
+- el botón de cerrar del announcement bar queda centrado vertical (SCEN-002).
+**And (no regresión de centrado/CLS)**: los elementos centrados con translate del
+hero / above-the-fold conservan su posición; el critical CSS sigue presente (no se
+elimina el guard de FOUC/CLS).
+**Evidence**: estilo computado en navegador real — para un elemento con
+`-translate-y-1/2`, `getComputedStyle(el).transform` NO contiene una traslación
+adicional que sume al `translate` (el offset efectivo es −50%, no −100%);
+`HomeHowItWorks` badge `|badgeCenterX − cardCenterX| ≤ 2px`. Test de fuente del
+critical CSS: el bloque de utilidades translate usa la propiedad `translate:` y no
+`transform: translate(`.
