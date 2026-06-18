@@ -15,7 +15,7 @@
     <!-- Result Section — condicional, PRESERVADO intacto (engine) -->
     <UPageSection
       id="seleccion-categorias"
-      v-if="pendingSearch || filteredCategories.length > 0 || searchError"
+      v-if="resultsActive"
       :ui="{ container: 'pt-0' }"
     >
       <CategorySelectionSection />
@@ -24,8 +24,14 @@
     <!-- Intro city (descripcion + introduccion) -->
     <CityIntro :city="city" :expanded-content="expandedContent" />
 
-    <!-- Marketing F1 (nuevo): fleet -->
-    <HomeFleet />
+    <!--
+      Marketing F1 genérico (fleet): SCEN-001 — oculto en una página de RESULTADOS
+      (mode === 'results'). Gate por `mode` (prop conocido en SSR) y NO por el
+      estado onMounted, para que el marketing NO se pinte en SSR y desaparezca al
+      hidratar (evita flash/CLS). La ruta buscar-vehiculos siempre lleva búsqueda
+      activa, así que mode === 'results' ⇔ resultados. Landing siempre lo muestra.
+    -->
+    <HomeFleet v-if="mode !== 'results'" />
 
     <!-- Contenido SEO city (ventajas/destinos/consejos/temporada/ciudades-cercanas) -->
     <CitySeoContent
@@ -37,9 +43,9 @@
     <!-- Puntos de entrega (branches reales) -->
     <CityDeliveryPoints :city-branches="cityBranches" :city="city" />
 
-    <!-- Marketing F1 (nuevo): how-it-works + requirements -->
-    <HomeHowItWorks />
-    <HomeRequirements />
+    <!-- Marketing F1 genérico (how-it-works + requirements): mismo gate SSR-estable -->
+    <HomeHowItWorks v-if="mode !== 'results'" />
+    <HomeRequirements v-if="mode !== 'results'" />
 
     <!-- Reseñas city (city.testimonials) -->
     <CityTestimonios :city="city" />
@@ -77,6 +83,14 @@ onMounted(() => {
   watch(() => refs.filteredCategories.value, (val) => (filteredCategories.value = val), { immediate: true });
   watch(() => refs.error.value, (val) => (searchError.value = val), { immediate: true });
 });
+
+/** A search is "active" when results are pending, present, or errored. Single
+    gate reused by the engine block (#seleccion-categorias) AND the generic-home
+    marketing gate below — SCEN-001: hide generic marketing on a results page
+    with an active search; landing mode (mode !== 'results') never hides it. */
+const resultsActive = computed(
+  () => pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value,
+);
 
 /** props */
 const props = withDefaults(
