@@ -87,7 +87,7 @@
             same box — no shift, and no current-date call in the SSR/ISR markup.
             Desktop and mobile keep distinct heights matching the form layout.
           -->
-          <div class="w-full max-w-md mx-auto">
+          <div class="w-full max-w-lg mx-auto">
             <div class="hidden lg:block h-[410px]">
               <ClientOnly>
                 <Searcher />

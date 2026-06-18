@@ -1,6 +1,6 @@
 <template>
     <u-form
-        class="w-full mx-auto md:w-3/6 lg:w-4/6 grid grid-cols-2 auto-rows-min gap-2 light"
+        class="w-full mx-auto grid grid-cols-2 auto-rows-min gap-2 light"
     >
         <!-- MÓVIL: Form field con select nativo -->
         <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm sm:hidden">

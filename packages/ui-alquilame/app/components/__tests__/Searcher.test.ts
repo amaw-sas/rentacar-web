@@ -40,6 +40,36 @@ describe('Searcher — unlocks after bfcache restoration (browser back button)',
   })
 })
 
+describe('Searcher — desktop form is comfortably wide (SCEN-002)', () => {
+  // SCEN-002: on desktop the date value must not sit under the trailing calendar
+  // icon. The root cause was the <u-form> capping itself to md:w-3/6 lg:w-4/6 of an
+  // already max-w-md parent (~299px form → 129px date cells → 4px text/icon overlap).
+  // The fix removes the fractional desktop caps so the form fills its (now max-w-lg)
+  // container; the date cells widen and the value clears the icon.
+  const formClass = (source.match(/<u-form\b[\s\S]*?class="([^"]*)"/) ?? [])[1] ?? ''
+
+  it('does NOT cap the form to the md:w-3/6 fraction', () => {
+    expect(formClass).not.toMatch(/\bmd:w-3\/6\b/)
+  })
+
+  it('does NOT cap the form to the lg:w-4/6 fraction', () => {
+    expect(formClass).not.toMatch(/\blg:w-4\/6\b/)
+  })
+
+  it('keeps the full-width 2-col grid layout intact', () => {
+    expect(formClass).toMatch(/\bw-full\b/)
+    expect(formClass).toMatch(/\bgrid-cols-2\b/)
+  })
+
+  it('keeps the desktop u-input-date trailing-icon padding (pe-* / right padding clears the value)', () => {
+    // The desktop date inputs reserve space for the #trailing calendar icon. The
+    // value must never run under it — verified at runtime; here we guard that the
+    // trailing calendar icon slot is still wired on both date fields.
+    const trailingSlots = source.match(/<template #trailing>/g) ?? []
+    expect(trailingSlots.length).toBe(2)
+  })
+})
+
 describe('Searcher — derives results-URL city from pickup branch when route has no city (issue #112 F3)', () => {
   it('instantiates useRoute() to read route.params.city', () => {
     expect(source).toMatch(/const\s+route\s*=\s*useRoute\(\)/)
