@@ -14,12 +14,15 @@ import useMessages from './useMessages';
 // Internal dependencies - utils
 import {
   createTimeFromString,
+  createDateFromString,
   createCurrentDateObject,
   createCurrentDateTimeObject,
   extraHourChipLabel,
   futurePickupHourOptions,
   sameDayReturnHourOptions,
   rolloverWhenSameDayExhausted,
+  bookableSlotsForDate,
+  isDayOpen,
   toDatetime,
   formatHumanTime,
   formatTime,
@@ -27,7 +30,7 @@ import {
 } from '@rentacar-main/logic/utils';
 
 // Types
-import type { BranchData } from '@rentacar-main/logic/utils';
+import type { BranchData, DateObject, LocationSchedule } from '@rentacar-main/logic/utils';
 
 // Opciones de hora estáticas (se generan una sola vez al cargar el módulo)
 // Evita regenerar 48 opciones en cada re-render
@@ -274,6 +277,27 @@ export default function useSearch() {
     };
   });
 
+  // Schedule (issue #47) of the branch chosen at each end, looked up by code.
+  // undefined when the branch has no configured schedule → the rules treat it as
+  // permissive (no restriction), so this is safe to feed directly.
+  const pickupBranchSchedule = computed(
+    () => searchBranchByCode(lugarRecogida.value ?? '')?.schedule,
+  );
+  const returnBranchSchedule = computed(
+    () => searchBranchByCode(lugarDevolucion.value ?? '')?.schedule,
+  );
+
+  // The return date as a DateObject for the schedule rules. Derived from the
+  // stored fechaDevolucion string; null when unset or unparseable.
+  const returnDateObject = computed<DateObject | null>(() => {
+    if (!fechaDevolucion.value) return null;
+    try {
+      return createDateFromString(fechaDevolucion.value);
+    } catch {
+      return null;
+    }
+  });
+
   // When the pickup date is today, only offer hours strictly after the current
   // time (a customer can't pick a slot that already passed → no backend "past
   // date" error). Any future date offers the full static list. Late-night
@@ -283,8 +307,12 @@ export default function useSearch() {
     const allOptions = getHourOptions();
     const pickupDate = selectedPickupDate.value;
     if (!pickupDate) return allOptions;
-    const filtered = futurePickupHourOptions(allOptions, pickupDate, createCurrentDateTimeObject());
-    return filtered.length ? filtered : allOptions;
+    const future = futurePickupHourOptions(allOptions, pickupDate, createCurrentDateTimeObject());
+    const base = future.length ? future : allOptions;
+    // Restrict to the pickup branch's open hours for that date (#47 W4). A closed
+    // day yields an empty list on purpose — the calendar disables it on desktop
+    // and the search button is blocked (W5) on mobile. Unconfigured → permissive.
+    return bookableSlotsForDate(pickupBranchSchedule.value, pickupDate, base);
   });
 
   // Keep the selected pickup hour valid: when the date moves to today and the
@@ -300,6 +328,7 @@ export default function useSearch() {
   // Filtra desde cache cuando hay restricción mensual
   const returnHourOptions = computed(() => {
     const allOptions = getHourOptions();
+    let base: Array<{ value: string; label: string }>;
 
     // Reservas mensuales (30 días): filtra opciones hasta la hora de recogida.
     if (selectedDays.value === 30 && selectedPickupHour.value) {
@@ -307,22 +336,86 @@ export default function useSearch() {
         const optTime = createTimeFromString(opt.value);
         return optTime.compare(selectedPickupHour.value!) > 0;
       });
-      return cutoffIndex === -1 ? allOptions : allOptions.slice(0, cutoffIndex);
+      base = cutoffIndex === -1 ? allOptions : allOptions.slice(0, cutoffIndex);
+    } else {
+      // Same-day return: must be at least 1 h after pickup so the rental never has
+      // zero/negative duration (the backend's same_hour_error). A later return day
+      // keeps the full list. Fallback to all if the pickup is so late nothing is
+      // left, so the select is never empty — the friendly same_hour_error toast
+      // still guards that residual case.
+      const sameDay =
+        !!fechaRecogida.value && fechaRecogida.value === fechaDevolucion.value;
+      const filtered = sameDayReturnHourOptions(
+        allOptions,
+        selectedPickupHour.value,
+        sameDay,
+      );
+      base = filtered.length ? filtered : allOptions;
     }
 
-    // Same-day return: must be at least 1 h after pickup so the rental never has
-    // zero/negative duration (the backend's same_hour_error). A later return day
-    // keeps the full list. Fallback to all if the pickup is so late nothing is
-    // left, so the select is never empty — the friendly same_hour_error toast
-    // still guards that residual case.
-    const sameDay =
-      !!fechaRecogida.value && fechaRecogida.value === fechaDevolucion.value;
-    const filtered = sameDayReturnHourOptions(
-      allOptions,
-      selectedPickupHour.value,
-      sameDay,
-    );
-    return filtered.length ? filtered : allOptions;
+    // Restrict to the return branch's open hours for the return date (#47 W4),
+    // independent of the pickup end. Unconfigured branch → permissive.
+    const returnDate = returnDateObject.value;
+    if (!returnDate) return base;
+    return bookableSlotsForDate(returnBranchSchedule.value, returnDate, base);
+  });
+
+  // Calendar predicates (#47 W4): a date is unavailable when the branch at that
+  // end is closed that day. Bound to each calendar's `is-date-unavailable`,
+  // independent for pickup vs return. Exposed as a computed RETURNING a function
+  // so a branch change yields a new function identity → the calendar re-renders
+  // its grid against the new schedule (a bare function wouldn't re-evaluate).
+  const isPickupDateUnavailable = computed(() => {
+    const schedule = pickupBranchSchedule.value;
+    return (date: DateObject) => !isDayOpen(schedule, date);
+  });
+  const isReturnDateUnavailable = computed(() => {
+    const schedule = returnBranchSchedule.value;
+    return (date: DateObject) => !isDayOpen(schedule, date);
+  });
+
+  // Whether a chosen hour falls inside the branch's open hours for that date.
+  // Reuses the slot rule with a single-element list so it can't drift from the
+  // selector. Nothing chosen yet → not blocking.
+  const isHourWithinSchedule = (
+    schedule: LocationSchedule | undefined,
+    date: DateObject | null,
+    hour: string | null,
+  ): boolean => {
+    if (!date || !hour) return true;
+    return bookableSlotsForDate(schedule, date, [{ value: hour }]).length > 0;
+  };
+
+  // Gate for the search button (#47 W5). The selection is within schedule when
+  // BOTH ends have an open day AND an hour inside that day's ranges. The closed
+  // branch (Localiza would reject the reservation anyway) is blocked before
+  // submit; the calendar disables closed days on desktop and this blocks mobile,
+  // where the native date input can't grey out single days.
+  const isSelectionWithinSchedule = computed(() => {
+    const pickupOk =
+      !selectedPickupDate.value ||
+      (isDayOpen(pickupBranchSchedule.value, selectedPickupDate.value) &&
+        isHourWithinSchedule(pickupBranchSchedule.value, selectedPickupDate.value, horaRecogida.value));
+    const returnOk =
+      !returnDateObject.value ||
+      (isDayOpen(returnBranchSchedule.value, returnDateObject.value) &&
+        isHourWithinSchedule(returnBranchSchedule.value, returnDateObject.value, horaDevolucion.value));
+    return pickupOk && returnOk;
+  });
+
+  // Notify once when a previously valid selection falls out of schedule (e.g. the
+  // branch changed under an already-chosen date/hour, SCEN-11). The existing
+  // hour-snap watchers auto-fix what they can; this covers the residual cases
+  // that leave the button blocked so the user knows why.
+  watch(isSelectionWithinSchedule, (ok, was) => {
+    if (!ok && was) {
+      createMessage({
+        type: 'info',
+        title: 'Revisa el horario de la sucursal',
+        message:
+          'La fecha u hora elegida está fuera del horario de atención de la sucursal. Ajústala para continuar.',
+      });
+    }
   });
 
   // Keep the return hour valid: when same-day rules shrink the options (the
@@ -349,10 +442,13 @@ export default function useSearch() {
     stopWatching, 
     animateSearchButton,
     // noAvailableCategories, 
-    searchLinkName, 
+    searchLinkName,
     searchLinkParams,
     pickupHourOptions,
     returnHourOptions,
+    isPickupDateUnavailable,
+    isReturnDateUnavailable,
+    isSelectionWithinSchedule,
     // selectedPickupLocation,
     // selectedReturnLocation,
   };
