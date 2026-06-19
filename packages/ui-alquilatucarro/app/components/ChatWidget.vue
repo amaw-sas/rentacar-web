@@ -55,9 +55,13 @@
               <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
                 Llámanos directamente
               </span>
-              <span class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-blue-600 shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
+              <!-- <div> (no <span>) a propósito: base.css fuerza
+                   `[role=menu] [role=menuitem] span { color:#1f2937!important }`
+                   para los dropdowns; un <div> esquiva esa regla y conserva el
+                   color del ícono. -->
+              <div class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-blue-600 shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
                 <PhoneIcon cls="size-5" />
-              </span>
+              </div>
             </a>
           </li>
           <li role="none" class="flex">
@@ -72,9 +76,9 @@
               <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
                 Chatea por WhatsApp
               </span>
-              <span class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#25D366] shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
+              <div class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#25D366] shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
                 <WhatsappIcon cls="size-5" />
-              </span>
+              </div>
             </a>
           </li>
         </ul>
