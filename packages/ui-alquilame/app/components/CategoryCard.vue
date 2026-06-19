@@ -7,6 +7,7 @@
           :vehicleModels="modelos"
           :category="categoryCode"
           :priority="priority"
+          @select="goNextStep"
         />
       </div>
 
