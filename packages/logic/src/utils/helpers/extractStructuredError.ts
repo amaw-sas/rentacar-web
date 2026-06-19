@@ -11,6 +11,13 @@ export interface StructuredErrorForward {
 // original status). Without this, Nitro wraps the error in its generic
 // envelope and the client receives {error: true, url, statusCode, ...} instead
 // of the Localiza error code it needs to render the matching toast.
+//
+// This gate is deliberately broad (`'error' in data`). The client-side
+// `mapAvailabilityFetchError` is the tighter chokepoint: it only treats a body
+// as a Localiza error when `error` is a non-empty STRING code, so a stray
+// `{error: true}` envelope still resolves to a friendly server_error toast
+// (dogfood ISSUE-003). Don't loosen the client to "match" this — narrow this
+// instead if the two ever need to agree.
 export function extractStructuredError(
   e: unknown,
 ): StructuredErrorForward | null {

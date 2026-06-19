@@ -49,6 +49,7 @@ export {
 // ============================================================================
 export { extractStructuredError } from './helpers/extractStructuredError';
 export type { StructuredErrorForward } from './helpers/extractStructuredError';
+export { mapAvailabilityFetchError } from './helpers/mapAvailabilityFetchError';
 
 // ============================================================================
 // Type Definitions - Data
