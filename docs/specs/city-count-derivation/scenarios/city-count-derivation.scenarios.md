@@ -45,12 +45,22 @@ and the fallback (not 0) when cities is empty/unavailable
 **Given**: alquilame, alquilatucarro and alquicarros sources after the fix
 **When**: each brand's runtime city-count mentions are inspected
 **Then**: every Vue-rendered mention (home sections + layout footers, all brands)
-derives the count — no literal "19"; the one build-time string that cannot read
-runtime data (alquilatucarro `nuxt.config.ts` SEO description) reads "20" and is
-recorded as residual debt
-**Evidence**: grep across the 3 brands shows no runtime literal "19 ciudades";
-the alquilatucarro SEO description string contains "20"; rendered footer text on
-each brand equals the live count
+derives the count from the live data — no hardcoded number; the one build-time
+string that cannot read runtime data (alquilatucarro `nuxt.config.ts` SEO
+description) mirrors the current canonical count (19, == FALLBACK_CITY_COUNT) and
+is recorded as residual debt
+**Evidence**: grep across the 3 brands shows no hardcoded "N ciudades" literal in
+Vue-rendered copy; the alquilatucarro SEO description string contains "19"
+(matching the live count measured at runtime); rendered footer text on each brand
+equals the live count
+
+> AMEND (2026-06-19): the original holdout said the SEO literal "reads 20", authored
+> on the assumption that 20 cities were already active. Runtime measurement of the
+> live data (the app's own /api/rentacar-data) showed 19 active cities, and the
+> directive confirmed keeping the build-time literal at the real current count (19).
+> The durable invariant — "no hardcoded count in derivable copy; the one
+> non-derivable literal mirrors the canonical count and is flagged as debt" — is
+> unchanged; only the transient number was corrected 20 → 19.
 
 ## SCEN-005: CLS-safe and no regression
 **Given**: the alquilame home in a real desktop browser

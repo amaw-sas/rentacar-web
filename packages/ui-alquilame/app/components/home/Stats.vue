@@ -3,10 +3,12 @@
     F1 stats band — new presentational section ported from the design's stats
     strip (Vehículos / Ciudades / Años · "desde 2015").
 
-    EXCEPTION (named in the F1 design): this band has NO real data source, so it
-    is the one section allowed to carry the design's marketing copy verbatim —
-    including "desde 2015". Counts are rendered as static values (no client-side
-    counter animation) to stay CLS-safe and SSR/ISR-deterministic.
+    The "Ciudades" figure is the one real datum here: it derives from the live
+    active-city count (useCityCount). The "Vehículos" and "Años" figures keep
+    the design's marketing copy verbatim — the named "datos reales" exception
+    (no data source backs those two), including "desde 2015". All counts render
+    as plain values (no counter animation): the derived count is read from the
+    SSR-hydrated state at setup, so it stays CLS-safe and SSR/ISR-deterministic.
 
     Headings adopt the project `.heading-*` utilities (→ Plus Jakarta).
   -->
@@ -72,9 +74,10 @@ interface Stat {
   icon: string
 }
 
-// Marketing copy ported verbatim from the design's stats band — the named
-// "datos reales" exception (no data source backs these figures).
-const stats: Stat[] = [
+const cityCount = useCityCount()
+
+// computed so the "Ciudades" value follows cityCount (see component header).
+const stats = computed<Stat[]>(() => [
   {
     badge: 'Flota disponible',
     value: '6.000+',
@@ -84,7 +87,7 @@ const stats: Stat[] = [
   },
   {
     badge: 'Ciudades',
-    value: '19',
+    value: String(cityCount.value),
     label: 'Ciudades en Colombia',
     detail: 'Bogotá, Medellín, Cali, Cartagena y más.',
     icon: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
@@ -96,5 +99,5 @@ const stats: Stat[] = [
     detail: 'Operación constante desde 2015.',
     icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   },
-]
+])
 </script>

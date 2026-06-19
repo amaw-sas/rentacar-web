@@ -29,7 +29,7 @@
           </h1>
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
             Sin anticipos, sin fila. Flota con menos de 2 años y mantenimiento incluido.
-            Reserva por WhatsApp en 19 ciudades.
+            Reserva por WhatsApp en {{ cityCount }} ciudades.
           </p>
 
           <!-- CTA row: "Ver Precios" (jumps to #fleet) + contact WhatsApp -->
@@ -89,4 +89,7 @@
 
 <script setup lang="ts">
 const { franchise } = useAppConfig()
+
+// Live active-city count (Supabase) for the subheading — tracks the dashboard.
+const cityCount = useCityCount()
 </script>

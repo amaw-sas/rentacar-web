@@ -65,8 +65,11 @@ interface ValueProp {
 const { organization } = useAppConfig()
 const brand = organization.brand
 
-// Marketing copy ported verbatim from the design's value-props block.
-const props: ValueProp[] = [
+// Live active-city count — drives the "Cobertura Nacional" figure.
+const cityCount = useCityCount()
+
+// computed so the coverage figure tracks cityCount; the rest stays verbatim.
+const props = computed<ValueProp[]>(() => [
   {
     title: 'Sin Anticipos',
     description: 'Reserva tu vehículo sin depósitos ni pagos adelantados.',
@@ -84,8 +87,8 @@ const props: ValueProp[] = [
   },
   {
     title: 'Cobertura Nacional',
-    description: 'Presentes en más de 19 ciudades de Colombia.',
+    description: `Presentes en ${cityCount.value} ciudades de Colombia.`,
     icon: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
   },
-]
+])
 </script>

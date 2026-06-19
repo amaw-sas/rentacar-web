@@ -122,7 +122,7 @@
             </h3>
             <p class="text-gray-400 text-sm leading-relaxed font-sans">
               Empresa colombiana de alquiler de carros con más de 10 años de experiencia y presencia en
-              más de 19 ciudades. Flota nueva, sin anticipos y atención cercana para que viajes tranquilo.
+              {{ cityCount }} ciudades. Flota nueva, sin anticipos y atención cercana para que viajes tranquilo.
             </p>
             <!-- Badge de confianza: rating de Google. Valores fijos 5,0 / 43 — reviewed 2026-06; sync con Reviews.vue -->
             <a
@@ -328,6 +328,8 @@ const items = computed<NavigationMenuItem[]>(() => {
 })
 
 const { cities } = useData();
+// Live active-city count (Supabase) for the footer "presencia en N ciudades".
+const cityCount = useCityCount();
 const { franchise, defaultTimezone } = useAppConfig();
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 

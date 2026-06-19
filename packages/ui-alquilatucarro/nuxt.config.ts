@@ -748,6 +748,9 @@ export default defineNuxtConfig({
   llms: {
     domain: 'https://alquilatucarro.com',
     title: 'Alquilatucarro',
+    // NOTE: build-time SEO string — cannot read the runtime cities list, so the
+    // city count is hardcoded. Keep in sync with FALLBACK_CITY_COUNT
+    // (packages/logic/src/composables/useCityCount.ts).
     description: 'Plataforma colombiana de reservas de alquiler de carros. Conectamos viajeros con rentadoras verificadas en 19 ciudades de Colombia. Reserva online sin anticipos, con descuentos de hasta 60% y recogida en aeropuerto. Operamos como intermediario digital (AMAW SAS), no como rentadora directa.',
     sections: [
       {
