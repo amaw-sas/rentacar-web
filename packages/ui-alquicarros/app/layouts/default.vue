@@ -73,7 +73,7 @@
         </div>
         <div class="text-2xl font-bold">Ciudades donde ofrecemos alquiler de carros</div>
         <div >
-          Estamos presentes en más de 19 ciudades de Colombia como Bogotá, Medellín, Cali y Cartagena. Explora cada destino y reserva en la sede que más te convenga.
+          Estamos presentes en {{ cityCount }} ciudades de Colombia como Bogotá, Medellín, Cali y Cartagena. Explora cada destino y reserva en la sede que más te convenga.
         </div>
         <div class="flex flex-col md:flex-row md:flex-wrap justify-center gap-1 md:gap-3">
           <UButton
@@ -187,6 +187,8 @@ const mobileItems = computed<NavigationMenuItem[]>(() => [
 ])
 
 const { cities } = useData();
+// Live active-city count (Supabase) for the footer "presentes en N ciudades".
+const cityCount = useCityCount();
 const { franchise, reservation, defaultTimezone } = useAppConfig();
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 

@@ -16,7 +16,10 @@
 
     Gradient/utility note: section bg is the golden's flat gray-100.
   -->
-  <section id="google-reviews" class="section-padding bg-gray-100">
+  <!-- py-12 md:py-16: project section rhythm (sibling home sections use the same).
+       The previous `section-padding` utility was undefined → 0px padding, which
+       left the CTA flush against the next section on desktop (operator #7). -->
+  <section id="google-reviews" class="py-12 md:py-16 bg-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Hero: rating + featured cards -->
       <div
