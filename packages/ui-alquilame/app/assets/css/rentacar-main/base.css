@@ -142,12 +142,24 @@ header [data-slot="right"] > div > div:last-child {
     }
 }
 
-/* Force white color on hamburger button and its Iconify icon */
+/* Header mobile toggle color.
+   Default = white, for dark headers (e.g. /gana on bg-[#000073]) where the
+   toggle must read against a dark surface. */
 header [data-slot="right"] button {
     color: white !important;
 }
 header [data-slot="right"] button .iconify {
     background-color: white !important;
+}
+/* The home header is white since F1 parity, so ITS toggle must be dark or the
+   icon is white-on-white and the mobile menu disappears (dogfood ISSUE-001).
+   Scoped to the white header (.bg-white) so /gana keeps its white icon.
+   Mirrors the slideover close button (#1f2937) so open/close match. */
+header.bg-white [data-slot="right"] button {
+    color: #1f2937 !important;
+}
+header.bg-white [data-slot="right"] button .iconify {
+    background-color: #1f2937 !important;
 }
 
 /* UHeader slideover panel - white background with dark text */
