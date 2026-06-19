@@ -23,6 +23,8 @@ import {
   rolloverWhenSameDayExhausted,
   bookableSlotsForDate,
   isDayOpen,
+  nearestOpenDay,
+  nearestSlotByTime,
   toDatetime,
   formatHumanTime,
   formatTime,
@@ -183,9 +185,15 @@ export default function useSearch() {
     { flush: 'sync' }
   );
 
+  // Default the return date to a week after pickup, but snap it off a closed day
+  // of the return branch to the nearest open one (#47 W6) — never earlier than
+  // the pickup date — so the inherited +7 default can't silently block the search
+  // button (e.g. pickup Monday whose +7 lands on a holiday for ACKAL).
   watch(fechaRecogida, (): void => {
-    if (selectedPickupDate.value)
-      fechaDevolucion.value = selectedPickupDate.value.copy().add({ days: 7 }).toString() ?? null
+    if (!selectedPickupDate.value) return;
+    const target = selectedPickupDate.value.copy().add({ days: 7 });
+    const open = nearestOpenDay(returnBranchSchedule.value, target, selectedPickupDate.value);
+    fechaDevolucion.value = (open ?? target).toString();
   }, { flush: 'sync' });
 
   // When the form lands the pickup on today but no same-day hour is still valid
@@ -427,10 +435,13 @@ export default function useSearch() {
   // store params before this watcher is registered, so it would never see the
   // "change" — snap on registration too, otherwise the select renders blank.
   watch(returnHourOptions, (options) => {
-    const earliest = options[0];
-    if (!horaDevolucion.value || !earliest) return;
+    if (!horaDevolucion.value || !options.length) return;
     if (!options.some((o) => o.value === horaDevolucion.value)) {
-      horaDevolucion.value = earliest.value;
+      // Snap to the nearest open slot, not the earliest (#47 W6): a copied pickup
+      // hour past the return branch's close (e.g. 15:00 vs a 14:00 Saturday close)
+      // lands on 14:00, not 08:00. For same-day rentals the nearest valid slot to
+      // the copied pickup hour is still the earliest (≥ pickup + 1 h), unchanged.
+      horaDevolucion.value = nearestSlotByTime(options, horaDevolucion.value)!.value;
     }
   }, { immediate: true });
   
