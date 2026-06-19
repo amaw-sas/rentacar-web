@@ -28,9 +28,10 @@ describe('F2 delivery-points — real branches (SCEN-F2-04)', () => {
 
   it('renders the real branch name and optional schedule (data preserved)', () => {
     expect(SRC).toContain('{{ branch.name }}')
-    // schedule is optional on BranchData — guarded, never fabricated
-    expect(SRC).toMatch(/v-if="branch\.schedule"/)
-    expect(SRC).toContain('{{ branch.schedule }}')
+    // schedule is a structured object (contract v2, #47) — render only the
+    // derived `display`; guarded so an unconfigured `{}` shows no chip.
+    expect(SRC).toMatch(/v-if="branch\.schedule\?\.display"/)
+    expect(SRC).toContain('{{ branch.schedule.display }}')
   })
 
   it('receives cityBranches (and city) as props, typed BranchData[]', () => {

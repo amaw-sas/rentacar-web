@@ -131,6 +131,7 @@
                     variant="ghost"
                     class="w-full"
                     :min-value="minPickupDate"
+                    :is-date-unavailable="isPickupDateUnavailable"
                     @click="pickupDateCalendarOpen = true"
                 >
                     <template #trailing>
@@ -154,6 +155,7 @@
                                     :model-value="selectedPickupDate"
                                     class="p-2 calendar-light"
                                     :min-value="minPickupDate"
+                                    :is-date-unavailable="isPickupDateUnavailable"
                                     color="success"
                                     :ui="calendarUIConfig"
                                     :month-controls="true"
@@ -205,6 +207,7 @@
                     class="w-full"
                     :min-value="minReturnDate"
                     :max-value="maxReturnDate"
+                    :is-date-unavailable="isReturnDateUnavailable"
                     @click="returnDateCalendarOpen = true"
                 >
                     <template #trailing>
@@ -229,6 +232,7 @@
                                     class="p-2 calendar-light"
                                     :min-value="minReturnDate"
                                     :max-value="maxReturnDate"
+                                    :is-date-unavailable="isReturnDateUnavailable"
                                     color="success"
                                     :ui="calendarUIConfig"
                                     :month-controls="true"
@@ -329,7 +333,7 @@
         <div class="col-span-2">
             <u-button
                 :to="searchDestination"
-                :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied"
+                :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied || !isSelectionWithinSchedule"
                 :loading="pendingSearching"
                 :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
                 size="xl"
@@ -343,6 +347,7 @@
 <script setup lang="ts">
 // Note: stores and components are auto-imported by Nuxt; utils are not.
 import { createDateFromString } from '@rentacar-main/logic/utils';
+import type { DateObject } from '@rentacar-main/logic/utils';
 
 const route = useRoute();
 
@@ -416,6 +421,13 @@ const returnHourOptions = ref<any[]>([]);
 const searchLinkName = ref<string>('');
 const searchLinkParams = ref<any>({});
 const animateSearchButton = ref<boolean>(true);
+
+// Schedule restriction (#47 W4/W5): per-branch calendar predicates and the
+// submit gate, mirrored from useSearch. Defaults are permissive so the form is
+// never blocked before the composable initializes.
+const isPickupDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
+const isReturnDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
+const isSelectionWithinSchedule = ref<boolean>(true);
 
 // SCEN-003 — context-aware submit destination.
 //   - On a CITY page (route.params.city present) the submit keeps the EXACT F3
@@ -557,6 +569,9 @@ onMounted(() => {
   // derived city even if the composable params object is referentially stable.
   watch(lugarRecogida, () => syncSearchLinkParams(searchComposable.searchLinkParams.value));
   watch(() => searchComposable.animateSearchButton.value, (val) => animateSearchButton.value = val, { immediate: true });
+  watch(() => searchComposable.isPickupDateUnavailable.value, (val) => isPickupDateUnavailable.value = val, { immediate: true });
+  watch(() => searchComposable.isReturnDateUnavailable.value, (val) => isReturnDateUnavailable.value = val, { immediate: true });
+  watch(() => searchComposable.isSelectionWithinSchedule.value, (val) => isSelectionWithinSchedule.value = val, { immediate: true });
 });
 
 onBeforeUnmount(() => {

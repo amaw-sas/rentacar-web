@@ -57,12 +57,12 @@
             </div>
 
             <!-- Schedule chip (real data, optional) -->
-            <div v-if="branch.schedule" class="flex flex-wrap gap-2">
+            <div v-if="branch.schedule?.display" class="flex flex-wrap gap-2">
               <span
                 class="inline-flex items-center gap-1.5 rounded-full border border-red-600/40 bg-white text-red-600 text-xs sm:text-sm font-semibold px-3 py-1.5"
               >
                 <ClockIcon cls="size-3.5 shrink-0" />
-                <span>{{ branch.schedule }}</span>
+                <span>{{ branch.schedule.display }}</span>
               </span>
             </div>
           </div>

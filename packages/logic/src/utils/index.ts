@@ -28,6 +28,8 @@ export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
+export { openRangesForDate, isDayOpen, bookableSlotsForDate } from './scheduleAvailability';
+export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
 export type { CityReservationDates } from './buildCityReservationURL';
 
@@ -52,6 +54,7 @@ export type { StructuredErrorForward } from './helpers/extractStructuredError';
 // Type Definitions - Data
 // ============================================================================
 export type { default as BranchData } from './types/data/BranchData';
+export type { default as LocationSchedule, ScheduleDayKey } from './types/data/LocationSchedule';
 export type { default as CategoryAvailabilityData } from './types/data/CategoryAvailabilityData';
 export type { default as CategoryData } from './types/data/CategoryData';
 export type { default as CategoryModelData } from './types/data/CategoryModelData';

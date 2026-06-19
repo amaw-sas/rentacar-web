@@ -28,7 +28,7 @@ const ADMIN_PAYLOAD = {
       name: 'Bogotá Aeropuerto',
       city: 'bogota',
       slug: 'bogota-aeropuerto',
-      schedule: '',
+      schedule: {},
     },
   ],
   extras: undefined,
