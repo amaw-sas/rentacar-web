@@ -126,8 +126,12 @@
             </div>
 
             <!-- CTA: drives the internal engine (modal -> SelectBranch) -->
+            <!-- hydrate-on-visible (not -interaction): on touch the first tap is
+                 consumed by interaction-hydration and never opens the modal.
+                 rootMargin pre-hydrates ~200px early so the island is interactive
+                 before the thumb arrives on slow devices. -->
             <LazyUModal
-              hydrate-on-interaction
+              :hydrate-on-visible="{ rootMargin: '200px' }"
               class="mt-auto"
               :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }"
             >

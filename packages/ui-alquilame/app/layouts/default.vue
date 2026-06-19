@@ -6,7 +6,10 @@
        that white text invisible. -->
   <div class="min-h-screen bg-linear-to-b from-brand-900 to-brand-950 font-sans text-gray-800">
     <!-- Header — golden parity: fondo BLANCO sticky, logo rojo, nav oscuro,
-         CTA rojo "Reserva Ahora" + círculo WhatsApp verde (#090). -->
+         CTA rojo "Reserva Ahora" + círculo WhatsApp verde (#090).
+         Toggle icon color is owned by base.css (.iconify background-color, scoped
+         to header.bg-white → dark) so it stays legible on the white header
+         (ISSUE-001); the toggle `class` below is the dark fallback + hover state. -->
     <UHeader
       v-model:open="mobileMenuOpen"
       class="bg-white z-50 border-b border-gray-100 sticky top-0"
@@ -15,6 +18,7 @@
         color: 'neutral',
         variant: 'ghost',
         size: 'xl',
+        class: 'text-gray-800 hover:text-gray-900',
         'aria-label': 'Abrir menú de navegación'
       }"
       :ui="{

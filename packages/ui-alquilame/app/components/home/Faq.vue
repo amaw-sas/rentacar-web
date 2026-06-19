@@ -19,8 +19,10 @@
         </p>
       </div>
 
+      <!-- hydrate-on-visible (not -interaction): on touch the first tap would be
+           swallowed by interaction-hydration. rootMargin pre-hydrates early. -->
       <LazyUAccordion
-        hydrate-on-interaction
+        :hydrate-on-visible="{ rootMargin: '200px' }"
         :items="faqs"
         :ui="faqAccordionUIConfig"
         class="max-w-3xl mx-auto"
