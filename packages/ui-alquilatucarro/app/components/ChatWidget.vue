@@ -43,32 +43,38 @@
           aria-label="Opciones de contacto"
           class="flex flex-col items-end gap-3 transition-all duration-200"
         >
-          <li role="none" class="flex items-center gap-3">
-            <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
-              Llámanos directamente
-            </span>
+          <!-- Cada item es UN solo <a> que envuelve etiqueta + círculo, así toda
+               el área (incluido el texto) es clickeable, no solo el ícono. -->
+          <li role="none" class="flex">
             <a
               :href="`tel:${franchise.phone}`"
               role="menuitem"
               :aria-label="`Llamar al ${franchise.phone}`"
-              class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-blue-600 shadow-lg ring-1 ring-gray-200 hover:scale-110 transition-transform duration-200"
+              class="group flex items-center gap-3 rounded-full"
             >
-              <PhoneIcon cls="size-5" />
+              <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
+                Llámanos directamente
+              </span>
+              <span class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-blue-600 shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
+                <PhoneIcon cls="size-5" />
+              </span>
             </a>
           </li>
-          <li role="none" class="flex items-center gap-3">
-            <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
-              Chatea por WhatsApp
-            </span>
+          <li role="none" class="flex">
             <a
               :href="franchise.whatsapp"
               target="_blank"
               rel="noopener noreferrer"
               role="menuitem"
               aria-label="Abrir WhatsApp"
-              class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#25D366] shadow-lg ring-1 ring-gray-200 hover:scale-110 transition-transform duration-200"
+              class="group flex items-center gap-3 rounded-full"
             >
-              <WhatsappIcon cls="size-5" />
+              <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
+                Chatea por WhatsApp
+              </span>
+              <span class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#25D366] shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
+                <WhatsappIcon cls="size-5" />
+              </span>
             </a>
           </li>
         </ul>
@@ -134,6 +140,13 @@ const open = ref(false)
 </script>
 
 <style scoped>
+/* iOS Safari dibuja un rectángulo gris al tocar (ignora el rounded-full).
+   Lo eliminamos para que no quede el "cuadrado" alrededor de los botones. */
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
 @keyframes pulse-attention {
   0%,
   100% {
