@@ -1,27 +1,37 @@
 <template>
   <!--
-    F1 contact FAB — restyled IN PLACE to the design's floating #contact-fab.
+    Contact FAB — botón flotante de contacto (WhatsApp + Llamar) SIN modal.
 
-    This is the SINGLE FAB on the page: it is mounted exactly once, via
-    <LazyChatWidget /> in app/layouts/default.vue. This restyle does NOT change
-    where it is mounted and the home (index.vue / home/* components) must NOT
-    mount a second FAB — that would duplicate it.
+    Reemplaza el antiguo UModal de @nuxt/ui, cuyo cuerpo (`flex-1 overflow-y-auto`
+    dentro de un contenido max-h-[100dvh] centrado por transform) colapsaba a ~0
+    en Safari iOS, dejando el chat inservible en iPhone. Este FAB es HTML/CSS
+    plano: no usa Reka UI Dialog, así que el bug de flexbox de iOS no aplica.
 
-    Behaviour: a red pulse toggle that expands into a menu with two
-    config-driven contact actions:
-      - WhatsApp → franchise.whatsapp (already a full deep-link URL,
-        consumed as-is, never re-wrapped).
-      - Call → franchise.phone (distinct number) wrapped in a tel: link.
-    No hardcoded numbers — both come from useAppConfig().franchise.
+    IMPORTANTE — no usar role="menu"/"menuitem" aquí: base.css aplica hacks
+    !important a los dropdowns de @nuxt/ui
+      [role="menu"] { background-color: white !important }       → recuadro blanco
+      [role="menu"] [role="menuitem"] span { color:#1f2937 ... } → íconos grises
+    Esto NO es un menú ARIA (no hay navegación por flechas), es una lista de
+    enlaces con patrón disclosure (el botón toggle tiene aria-expanded /
+    aria-controls). Sin esos roles, los hacks de dropdown no colisionan.
 
-    Hydration safety (#109 lesson): the `open` state is client-only. It starts
-    false and is only toggled by user interaction on the client, so SSR/ISR
-    never bakes an expanded state. The whole widget is wrapped in <ClientOnly>
-    so the floating overlay is never part of the prerendered HTML.
+    Es el ÚNICO FAB de la página: se monta una sola vez vía <LazyChatWidget /> en
+    app/layouts/default.vue (y gana.vue). Ninguna otra vista debe montar otro.
+
+    Acciones config-driven (sin números hardcodeados, todo de useAppConfig()):
+      - WhatsApp → franchise.whatsapp (URL deep-link completa, se usa tal cual).
+      - Llamar   → franchise.phone envuelto en un enlace tel:.
+    Ambos son <a href> → los listeners globales de conversión en nuxt.config.ts
+    (a[href*="wa.me"] y a[href^="tel:"]) siguen disparando clic_boton_whatsapp /
+    clic_boton_llamada sin cambios.
+
+    Hidratación: `open` es client-only (arranca en false, solo lo cambia la
+    interacción del usuario), y todo va dentro de <ClientOnly>, así SSR/ISR nunca
+    hornea un estado expandido.
   -->
   <ClientOnly>
     <div class="fixed inset-0 pointer-events-none z-[60]">
-      <!-- Backdrop (only interactive while open) -->
+      <!-- Backdrop (solo interactivo cuando está abierto) -->
       <button
         v-if="open"
         type="button"
@@ -32,55 +42,48 @@
       />
 
       <div class="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
-        <!-- Expanded menu -->
+        <!-- Lista de enlaces de contacto (sin roles de menú ARIA, ver nota arriba).
+             Cada item es UN solo <a> que envuelve etiqueta + círculo, así toda el
+             área (texto incluido) es clickeable, no solo el ícono. -->
         <ul
           v-show="open"
           id="contact-fab-menu"
-          role="menu"
           aria-label="Opciones de contacto"
           class="flex flex-col items-end gap-3 transition-all duration-200"
         >
-          <!-- Cada item es UN solo <a> que envuelve etiqueta + círculo, así toda
-               el área (incluido el texto) es clickeable, no solo el ícono. -->
-          <li role="none" class="flex">
+          <li class="flex">
             <a
               :href="`tel:${franchise.phone}`"
-              role="menuitem"
               :aria-label="`Llamar al ${franchise.phone}`"
               class="group flex items-center gap-3 rounded-full"
             >
               <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
                 Llámanos directamente
               </span>
-              <!-- <div> (no <span>) a propósito: base.css fuerza
-                   `[role=menu] [role=menuitem] span { color:#1f2937!important }`
-                   para los dropdowns; un <div> esquiva esa regla y conserva el
-                   color del ícono. -->
-              <div class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-blue-600 shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
+              <span class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-blue-600 shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
                 <PhoneIcon cls="size-5" />
-              </div>
+              </span>
             </a>
           </li>
-          <li role="none" class="flex">
+          <li class="flex">
             <a
               :href="franchise.whatsapp"
               target="_blank"
               rel="noopener noreferrer"
-              role="menuitem"
               aria-label="Abrir WhatsApp"
               class="group flex items-center gap-3 rounded-full"
             >
               <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
                 Chatea por WhatsApp
               </span>
-              <div class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#25D366] shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
+              <span class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#25D366] shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
                 <WhatsappIcon cls="size-5" />
-              </div>
+              </span>
             </a>
           </li>
         </ul>
 
-        <!-- Main toggle FAB -->
+        <!-- Botón toggle principal -->
         <button
           type="button"
           :aria-expanded="open"
@@ -135,8 +138,8 @@ import {
 
 const { franchise } = useAppConfig()
 
-// Client-only open state: starts collapsed, only toggled by user interaction on
-// the client. SSR/ISR never bakes an expanded FAB (#109 hydration lesson).
+// Estado client-only: arranca colapsado, solo lo cambia la interacción del
+// usuario en el cliente. SSR/ISR nunca hornea un FAB expandido (lección #109).
 const open = ref(false)
 </script>
 
