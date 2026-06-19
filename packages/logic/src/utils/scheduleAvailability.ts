@@ -78,3 +78,51 @@ export function bookableSlotsForDate<T extends { value: string }>(
     return ranges.some(({ start, end }) => m >= start && m <= end);
   });
 }
+
+/**
+ * The open day nearest to `target` for this branch — issue #47 W6. Searches
+ * outward by growing radius on both sides (forward wins ties so the rental isn't
+ * shortened needlessly), never returning a day earlier than `floor`. Returns
+ * `target` unchanged when it is already open or the schedule is permissive
+ * (`{}`/`undefined`). `null` if no day opens within `maxRadius` (a degenerate
+ * all-closed schedule — the caller keeps the raw target and the server validates).
+ *
+ * Used to snap the inherited "return date = pickup + 7" default off a closed day
+ * instead of blocking the search button.
+ */
+export function nearestOpenDay(
+  schedule: LocationSchedule | null | undefined,
+  target: DateObject,
+  floor?: DateObject | null,
+  maxRadius = 31,
+): DateObject | null {
+  if (isDayOpen(schedule, target)) return target;
+  for (let d = 1; d <= maxRadius; d++) {
+    const forward = target.copy().add({ days: d });
+    if (isDayOpen(schedule, forward)) return forward;
+    const backward = target.copy().add({ days: -d });
+    if ((!floor || backward.compare(floor) >= 0) && isDayOpen(schedule, backward)) {
+      return backward;
+    }
+  }
+  return null;
+}
+
+/**
+ * The slot whose time is nearest `target` (absolute minute distance; ties break
+ * toward the earlier slot) — issue #47 W6. `null` for an empty list. Used to snap
+ * the inherited "return hour = pickup hour" default to the closest open hour
+ * (e.g. a copied 15:00 onto a branch that closes 14:00 → 14:00, not 08:00).
+ */
+export function nearestSlotByTime<T extends { value: string }>(
+  slots: T[],
+  target: string,
+): T | null {
+  if (!slots.length) return null;
+  const t = toMinutes(target);
+  return slots.reduce((best, slot) =>
+    Math.abs(toMinutes(slot.value) - t) < Math.abs(toMinutes(best.value) - t)
+      ? slot
+      : best,
+  );
+}

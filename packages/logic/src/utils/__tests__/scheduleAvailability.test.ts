@@ -3,6 +3,8 @@ import {
   openRangesForDate,
   isDayOpen,
   bookableSlotsForDate,
+  nearestOpenDay,
+  nearestSlotByTime,
 } from '../scheduleAvailability';
 import { createDateFromString } from '../useDateFunctions';
 import type { LocationSchedule } from '../index';
@@ -81,5 +83,67 @@ describe('openRangesForDate / isDayOpen', () => {
     const monOnly: LocationSchedule = { mon: ['08:00-18:00'] };
     expect(isDayOpen(monOnly, SUNDAY)).toBe(false);
     expect(isDayOpen(monOnly, MONDAY)).toBe(true);
+  });
+});
+
+// Issue #47 W6 (followup) — snap the inherited searcher defaults (return date =
+// pickup + 7, return hour = pickup hour) to the nearest open slot instead of
+// blocking the search button.
+describe('nearestOpenDay (SCEN-13)', () => {
+  it('returns an already-open target unchanged', () => {
+    expect(nearestOpenDay(A, MONDAY)?.toString()).toBe(MONDAY.toString());
+  });
+
+  it('snaps a closed target (Sunday for A) to the nearest open day', () => {
+    // Sunday 2026-01-04: Saturday 01-03 (open, -1) and Monday 01-05 (open, +1) tie
+    // → forward wins → Monday.
+    expect(nearestOpenDay(A, SUNDAY)?.toString()).toBe('2026-01-05');
+  });
+
+  it('snaps a holiday target to the nearest open day (skips the closed holiday)', () => {
+    // Mon 2026-01-12 is the observed Reyes holiday → closed even though A opens
+    // Mondays. Sunday 01-11 closed too → nearest open is Tuesday 01-13.
+    expect(nearestOpenDay(A, HOLIDAY_MONDAY)?.toString()).toBe('2026-01-13');
+  });
+
+  it('never returns a day earlier than `floor`, even if closer', () => {
+    // Target Sunday 01-04; floor = Sunday itself → the -1 Saturday is below the
+    // floor, so only forward is allowed → Monday 01-05.
+    expect(nearestOpenDay(A, SUNDAY, SUNDAY)?.toString()).toBe('2026-01-05');
+  });
+
+  it('is permissive for an unconfigured schedule (target unchanged)', () => {
+    expect(nearestOpenDay({}, SUNDAY)?.toString()).toBe(SUNDAY.toString());
+    expect(nearestOpenDay(undefined, SUNDAY)?.toString()).toBe(SUNDAY.toString());
+  });
+});
+
+describe('nearestSlotByTime (SCEN-14)', () => {
+  // ACKAL Saturday opens 08:00-14:00 → bookable slots 08:00 … 14:00.
+  const SAT_SLOTS = bookableSlotsForDate(
+    { sat: ['08:00-14:00'] },
+    SATURDAY,
+    SLOTS,
+  );
+
+  it('snaps an hour above the close down to the latest open slot', () => {
+    expect(nearestSlotByTime(SAT_SLOTS, '15:00')?.value).toBe('14:00');
+  });
+
+  it('snaps an hour below the open up to the earliest open slot', () => {
+    expect(nearestSlotByTime(SAT_SLOTS, '06:00')?.value).toBe('08:00');
+  });
+
+  it('returns an in-range hour unchanged', () => {
+    expect(nearestSlotByTime(SAT_SLOTS, '10:30')?.value).toBe('10:30');
+  });
+
+  it('breaks ties toward the earlier slot', () => {
+    // 09:15 is equidistant from 09:00 and 09:30 → earlier wins.
+    expect(nearestSlotByTime(SAT_SLOTS, '09:15')?.value).toBe('09:00');
+  });
+
+  it('returns null for an empty slot list', () => {
+    expect(nearestSlotByTime([], '10:00')).toBeNull();
   });
 });
