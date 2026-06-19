@@ -3,13 +3,20 @@
     Contact FAB — botón flotante de contacto (WhatsApp + Llamar) SIN modal.
 
     Reemplaza el antiguo UModal de @nuxt/ui, cuyo cuerpo (`flex-1 overflow-y-auto`
-    dentro de un contenido centrado por transform con `max-h-[100dvh]`) colapsaba
-    a ~0 en Safari iOS, dejando el chat inservible en iPhone. Este FAB es HTML/CSS
+    dentro de un contenido max-h-[100dvh] centrado por transform) colapsaba a ~0
+    en Safari iOS, dejando el chat inservible en iPhone. Este FAB es HTML/CSS
     plano: no usa Reka UI Dialog, así que el bug de flexbox de iOS no aplica.
 
+    IMPORTANTE — no usar role="menu"/"menuitem" aquí: base.css aplica hacks
+    !important a los dropdowns de @nuxt/ui
+      [role="menu"] { background-color: white !important }       → recuadro blanco
+      [role="menu"] [role="menuitem"] span { color:#1f2937 ... } → íconos grises
+    Esto NO es un menú ARIA (no hay navegación por flechas), es una lista de
+    enlaces con patrón disclosure (el botón toggle tiene aria-expanded /
+    aria-controls). Sin esos roles, los hacks de dropdown no colisionan.
+
     Es el ÚNICO FAB de la página: se monta una sola vez vía <LazyChatWidget /> en
-    app/layouts/default.vue (y gana.vue). Ninguna otra vista debe montar un
-    segundo FAB.
+    app/layouts/default.vue (y gana.vue). Ninguna otra vista debe montar otro.
 
     Acciones config-driven (sin números hardcodeados, todo de useAppConfig()):
       - WhatsApp → franchise.whatsapp (URL deep-link completa, se usa tal cual).
@@ -35,50 +42,43 @@
       />
 
       <div class="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
-        <!-- Menú expandido -->
+        <!-- Lista de enlaces de contacto (sin roles de menú ARIA, ver nota arriba).
+             Cada item es UN solo <a> que envuelve etiqueta + círculo, así toda el
+             área (texto incluido) es clickeable, no solo el ícono. -->
         <ul
           v-show="open"
           id="contact-fab-menu"
-          role="menu"
           aria-label="Opciones de contacto"
           class="flex flex-col items-end gap-3 transition-all duration-200"
         >
-          <!-- Cada item es UN solo <a> que envuelve etiqueta + círculo, así toda
-               el área (incluido el texto) es clickeable, no solo el ícono. -->
-          <li role="none" class="flex">
+          <li class="flex">
             <a
               :href="`tel:${franchise.phone}`"
-              role="menuitem"
               :aria-label="`Llamar al ${franchise.phone}`"
               class="group flex items-center gap-3 rounded-full"
             >
               <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
                 Llámanos directamente
               </span>
-              <!-- <div> (no <span>) a propósito: base.css fuerza
-                   `[role=menu] [role=menuitem] span { color:#1f2937!important }`
-                   para los dropdowns; un <div> esquiva esa regla y conserva el
-                   color del ícono. -->
-              <div class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-blue-600 shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
+              <span class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-blue-600 shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
                 <PhoneIcon cls="size-5" />
-              </div>
+              </span>
             </a>
           </li>
-          <li role="none" class="flex">
+          <li class="flex">
             <a
               :href="franchise.whatsapp"
               target="_blank"
               rel="noopener noreferrer"
-              role="menuitem"
               aria-label="Abrir WhatsApp"
               class="group flex items-center gap-3 rounded-full"
             >
               <span class="bg-white/95 backdrop-blur-sm text-gray-900 text-sm font-medium px-4 py-2 rounded-full shadow-md whitespace-nowrap">
                 Chatea por WhatsApp
               </span>
-              <div class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#25D366] shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
+              <span class="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#25D366] shadow-lg ring-1 ring-gray-200 transition-transform duration-200 group-hover:scale-110">
                 <WhatsappIcon cls="size-5" />
-              </div>
+              </span>
             </a>
           </li>
         </ul>
