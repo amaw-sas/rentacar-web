@@ -12,7 +12,15 @@
         dot: 'size-2 bg-gray-400/70 rounded-full transition-all duration-300 data-[state=active]:w-6 data-[state=active]:bg-white'
       }"
     >
-      <div class="relative">
+      <div
+        class="relative cursor-pointer"
+        role="button"
+        tabindex="0"
+        :aria-label="`Reservar ${item.nombre}`"
+        @click="onActivate"
+        @keydown.enter.prevent="onActivate"
+        @keydown.space.prevent="onActivate"
+      >
         <div class="nombre-modelo">
           <span>{{ item.nombre }}</span>
         </div>
@@ -44,4 +52,19 @@ interface CarruselProps {
 withDefaults(defineProps<CarruselProps>(), {
   priority: false,
 });
+
+const emit = defineEmits<{
+  select: [];
+}>();
+
+// Tap/click en la foto o Enter/Espacio abren el flujo de reserva (emit `select`
+// → goNextStep en el padre, mismo destino que "Solicitar este vehículo").
+//
+// No se rastrean pointer events para distinguir tap de swipe: Embla
+// (UCarousel) ya suprime el `click` que sigue a un arrastre en fase de captura
+// (`preventClick` + `stopPropagation` sobre el root del carrusel), así que
+// nuestro `@click` solo se dispara en un tap real.
+function onActivate() {
+  emit('select');
+}
 </script>

@@ -17,9 +17,7 @@
         role="button"
         tabindex="0"
         :aria-label="`Reservar ${item.nombre}`"
-        @pointerdown="onPointerDown"
-        @pointercancel="onPointerCancel"
-        @click="onImageClick"
+        @click="onActivate"
         @keydown.enter.prevent="onActivate"
         @keydown.space.prevent="onActivate"
       >
@@ -59,42 +57,18 @@ const emit = defineEmits<{
   select: [];
 }>();
 
-// Umbral (px) para distinguir un tap real de un swipe del carrusel. Coincide
-// con el dragThreshold por defecto de Embla.
-const SWIPE_THRESHOLD_PX = 10;
-
-// Guarda la posición del pointerdown para distinguir un tap real de un
-// arrastre/swipe del carrusel. Así el tap en la imagen abre el flujo de
-// reserva sin afectar la navegación existente (flechas, puntos y deslizar).
-let pointerStart: { x: number; y: number } | null = null;
-
-function onPointerDown(event: PointerEvent) {
-  pointerStart = { x: event.clientX, y: event.clientY };
-}
-
-// Un pointerdown sin click posterior (swipe que el carrusel captura,
-// pointercancel del SO, drag fuera del elemento) dejaría una posición obsoleta.
-// Se limpia para que el próximo tap se mida contra su propio gesto.
-function onPointerCancel() {
-  pointerStart = null;
-}
-
-function onImageClick(event: MouseEvent) {
-  const start = pointerStart;
-  pointerStart = null;
-  // Click sin pointerdown propio (sintético, o cuyo pointerdown capturó el
-  // carrusel): no hay gesto que medir → no se abre, para evitar un emit espurio.
-  if (!start) return;
-  const dx = Math.abs(event.clientX - start.x);
-  const dy = Math.abs(event.clientY - start.y);
-  // Si el pointer se movió más que el umbral fue un swipe: no abrir el modal.
-  if (dx > SWIPE_THRESHOLD_PX || dy > SWIPE_THRESHOLD_PX) return;
-  emit('select');
-}
-
-// Camino de teclado (Enter/Espacio): no hay desplazamiento que medir, abre directo.
+// Tap/click en la foto o Enter/Espacio abren el flujo de reserva (emit `select`
+// → goNextStep en el padre, mismo destino que "Solicitar este vehículo").
+//
+// No se rastrean pointer events para distinguir tap de swipe: Embla
+// (UCarousel) ya suprime el `click` que sigue a un arrastre en fase de captura
+// (`preventClick` + `stopPropagation` sobre el root del carrusel), así que
+// nuestro `@click` solo se dispara en un tap real. El intento anterior de
+// medir el desplazamiento con `pointerdown`/`pointercancel` rompía el tap:
+// Embla hace `preventDefault` en `touchmove`, el navegador emite
+// `pointercancel` ante el micro-movimiento de un tap normal, eso borraba la
+// posición registrada y el `click` quedaba sin emitir.
 function onActivate() {
-  pointerStart = null;
   emit('select');
 }
 </script>
