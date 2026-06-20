@@ -33,15 +33,16 @@
           </button>
         </template>
       <template #left>
-        <!-- Móvil: logo centrado, absoluto sobre la barra `relative`. Va en #left
-             (que sí renderiza en móvil); el slot default de UHeader queda envuelto
-             en `hidden lg:flex` y nunca se ve en móvil. -->
-        <div class="md:hidden">
-          <!-- Centrado con `left-1/2` sin `-translate-x-1/2`: en este UHeader el
-               containing block efectivo del absoluto mide (viewport − anchoLogo),
-               así que `left:50%` sobre el Logo de ancho fijo (110px) ya deja su
-               centro en el centro real de la barra. Verificado en 360/390/414. -->
-          <NuxtLink to="/" aria-label="alquilatucarro" class="absolute left-1/2">
+        <!-- Móvil: logo centrado. Va en #left (que sí renderiza en móvil; el slot
+             default de UHeader queda envuelto en `hidden lg:flex` y nunca se ve).
+             El wrapper se estira a todo el ancho de la barra (`absolute inset-x-0`
+             sobre el header `relative`) y centra el logo con `flex justify-center`
+             — sin números mágicos, robusto a cambios de tamaño del logo.
+             `pointer-events-none` en el wrapper + `pointer-events-auto` en el link:
+             solo el logo es clickable, la hamburguesa sigue recibiendo el tap.
+             Centro exacto verificado en 360/390/414px. -->
+        <div class="md:hidden absolute inset-x-0 flex justify-center pointer-events-none">
+          <NuxtLink to="/" aria-label="alquilatucarro" class="pointer-events-auto">
             <Logo cls="h-8 w-auto" />
           </NuxtLink>
         </div>
