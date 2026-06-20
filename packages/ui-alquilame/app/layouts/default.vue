@@ -83,8 +83,9 @@
             {{ item.label }}
           </NuxtLink>
         </div>
-        <!-- CTAs móvil -->
-        <div class="flex flex-col items-center gap-3 px-6 pb-8">
+        <!-- CTAs móvil — mt-8 keeps the button block off the last nav link
+             ("Contacto"), which otherwise sat flush (0px) under its glow (ISSUE-006). -->
+        <div class="flex flex-col items-center gap-3 px-6 pb-8 mt-8">
           <NuxtLink
             to="/reservas"
             class="inline-flex w-full items-center justify-center text-center font-semibold rounded-full bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-lg shadow-brand-600/25 px-8 py-3 text-base transition-all duration-200"
