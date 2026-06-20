@@ -50,61 +50,41 @@ describe('category-carousel-image-aspect — Carrusel.vue model image box (SCEN-
 })
 
 /**
- * clic-foto-abre-reserva holdout (source-string idiom).
+ * clic-foto-abre-reserva — sentinela de fuente (regresión SCEN-005).
  * Scenarios: docs/specs/clic-foto-abre-reserva/scenarios/clic-foto-abre-reserva.scenarios.md
  *
- * The slide wrapper becomes an actionable affordance that opens the reservation
- * flow (emits `select` → parent `goNextStep`). A tap must open; a swipe used to
- * navigate slides must not; and it must be operable by keyboard. These are
- * static source guards on Carrusel.vue (the regression sentinel, SCEN-005).
+ * El COMPORTAMIENTO (tap/teclado emiten `select`) se prueba montando el
+ * componente en Carrusel.behavior.test.ts, y el swipe-no-abre + flujo completo
+ * en e2e/clic-foto-abre-reserva.spec.ts. Aquí solo se fija que la foto siga
+ * siendo un botón accesible cableado a `onActivate` y que NO regrese el
+ * pointer-tracking que rompía el tap (Embla emite `pointercancel` en un tap
+ * normal y la guarda anterior dejaba el `click` sin emitir).
  */
-
-// The interactive wrapper is the <div> that carries the click handler.
-const wrapperTag = carrusel.match(/<div[^>]*@click="onImageClick"[^>]*>/)?.[0] ?? ''
+const wrapperTag = carrusel.match(/<div[^>]*@click="onActivate"[^>]*>/)?.[0] ?? ''
 const scriptBlock = carrusel.match(/<script[\s\S]*?<\/script>/)?.[0] ?? ''
 
-describe('clic-foto-abre-reserva — Carrusel.vue tap/keyboard opens reservation (SCEN-001..005)', () => {
-  it('declares `select` as an emit so the parent can wire it to goNextStep (SCEN-001)', () => {
+describe('clic-foto-abre-reserva — Carrusel.vue source sentinel (SCEN-005)', () => {
+  it('declares `select` as an emit so the parent can wire it to goNextStep', () => {
     expect(scriptBlock).toMatch(/defineEmits<\{\s*select:/)
   })
 
-  it('opens on a tap within threshold by emitting select from the click handler (SCEN-001)', () => {
-    const handler = scriptBlock.match(/function onImageClick[\s\S]*?\n}/)?.[0] ?? ''
-    expect(handler).toMatch(/emit\(['"]select['"]\)/)
-  })
-
-  it('treats movement beyond the swipe threshold as a swipe and does not open (SCEN-002)', () => {
-    const handler = scriptBlock.match(/function onImageClick[\s\S]*?\n}/)?.[0] ?? ''
-    // dx/dy measured against the recorded pointerdown, early-return past threshold.
-    expect(handler).toMatch(/dx > SWIPE_THRESHOLD_PX \|\| dy > SWIPE_THRESHOLD_PX/)
-    expect(handler).toMatch(/return/)
-    expect(scriptBlock).toMatch(/const SWIPE_THRESHOLD_PX = 10/)
-  })
-
-  it('exposes the image wrapper as a focusable button with an accessible name (SCEN-003)', () => {
-    expect(wrapperTag).toMatch(/role="button"/)
-    expect(wrapperTag).toMatch(/tabindex="0"/)
-    expect(wrapperTag).toMatch(/:aria-label="`Reservar \$\{item\.nombre\}`"/)
-  })
-
-  it('opens on Enter and Space so it is operable without a pointer (SCEN-003)', () => {
+  it('wires the photo wrapper to onActivate on click, Enter and Space', () => {
+    expect(wrapperTag).toMatch(/@click="onActivate"/)
     expect(wrapperTag).toMatch(/@keydown\.enter\.prevent="onActivate"/)
     expect(wrapperTag).toMatch(/@keydown\.space\.prevent="onActivate"/)
     const handler = scriptBlock.match(/function onActivate[\s\S]*?\n}/)?.[0] ?? ''
     expect(handler).toMatch(/emit\(['"]select['"]\)/)
   })
 
-  it('clears the recorded position on pointercancel so a swipe leaves no stale state (SCEN-004)', () => {
-    expect(wrapperTag).toMatch(/@pointercancel="onPointerCancel"/)
-    const handler = scriptBlock.match(/function onPointerCancel[\s\S]*?\n}/)?.[0] ?? ''
-    expect(handler).toMatch(/pointerStart = null/)
+  it('exposes the wrapper as a focusable button with an accessible name', () => {
+    expect(wrapperTag).toMatch(/role="button"/)
+    expect(wrapperTag).toMatch(/tabindex="0"/)
+    expect(wrapperTag).toMatch(/:aria-label="`Reservar \$\{item\.nombre\}`"/)
   })
 
-  it('does not open on a click that has no recorded pointerdown of its own (SCEN-004)', () => {
-    const handler = scriptBlock.match(/function onImageClick[\s\S]*?\n}/)?.[0] ?? ''
-    // Untrusted click (synthetic / pointerdown captured): early-return before any emit.
-    expect(handler).toMatch(/if \(!start\) return/)
-    // The guard must precede the emit (no unconditional emit path).
-    expect(handler.indexOf('if (!start) return')).toBeLessThan(handler.indexOf("emit('select')"))
+  it('does NOT reintroduce the pointer-tracking that broke the tap (regression)', () => {
+    expect(carrusel).not.toMatch(/@pointercancel/)
+    expect(carrusel).not.toMatch(/onImageClick/)
+    expect(carrusel).not.toMatch(/SWIPE_THRESHOLD_PX/)
   })
 })
