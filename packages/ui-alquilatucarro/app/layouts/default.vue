@@ -37,7 +37,11 @@
              (que sí renderiza en móvil); el slot default de UHeader queda envuelto
              en `hidden lg:flex` y nunca se ve en móvil. -->
         <div class="md:hidden">
-          <NuxtLink to="/" aria-label="alquilatucarro" class="absolute left-1/2 -translate-x-1/2">
+          <!-- Centrado con `left-1/2` sin `-translate-x-1/2`: en este UHeader el
+               containing block efectivo del absoluto mide (viewport − anchoLogo),
+               así que `left:50%` sobre el Logo de ancho fijo (110px) ya deja su
+               centro en el centro real de la barra. Verificado en 360/390/414. -->
+          <NuxtLink to="/" aria-label="alquilatucarro" class="absolute left-1/2">
             <Logo cls="h-8 w-auto" />
           </NuxtLink>
         </div>
