@@ -74,18 +74,28 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     // if monthly reservation is selected
     if(haveMonthlyReservation.value){
 
-      if(errorResponse.value){
-        // Mirror the non-monthly branch: no_available_categories_error gets a
-        // flag (UI surfaces it inline via the unable-categories rendering),
-        // every other Localiza error gets a toast. Pre-fix the flag/toast
-        // branches were inverted and the toast call was missing — issue #10
-        // SCEN-002.
-        if(errorResponse.value.error == "no_available_categories_error")
-          noAvailableCategories.value = true;
-        else
-          createErrorMessage(errorResponse.value);
+      // Monthly availability does NOT come from Localiza: the price is sourced
+      // entirely from category_pricing (month_prices) via offersMonthly. Localiza
+      // rejects >=30-day windows with no_available_categories_error (LLNRAG009),
+      // but that must NOT hide monthly categories — what decides availability is
+      // whether the category carries monthly pricing for the pickup date. So a
+      // LLNRAG009 is non-blocking: build the list from the catalog regardless,
+      // with the Localiza-only returnFee degrading to 0. Only a *different*
+      // Localiza error blocks the search with a toast (symmetry with the
+      // non-monthly branch — issue #10 SCEN-002). Issue #201.
+      const blockingError =
+        !!errorResponse.value &&
+        errorResponse.value.error !== "no_available_categories_error";
+
+      if(blockingError){
+        createErrorMessage(errorResponse.value);
       }
       else {
+        // Clear a non-blocking LLNRAG009 (set at the top of search) so the
+        // `categories` computed renders the priced cards instead of the gray
+        // "unable" grid, and the "agotado" inline block stays hidden. #201
+        if(errorResponse.value) error.value = null;
+
         const dataArray = Array.isArray(data.value) ? data.value : [];
         // Index once instead of a linear find per category — issue #15.
         const returnFeeByCode = indexByCode(dataArray);
