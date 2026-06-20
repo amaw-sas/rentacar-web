@@ -83,7 +83,7 @@ describe('useStoreSearchData unable cards on LLNRAG009 (SCEN-U1, U2, U4)', () =>
     vi.unstubAllGlobals()
   })
 
-  it('SCEN-U2: monthly + LLNRAG009 → categories surfaces ALL N admin categories as unable (currently returns [])', async () => {
+  it('SCEN-U2 (#201): monthly + LLNRAG009 → all monthly gamas surface as AVAILABLE, not unable', async () => {
     FETCH_AVAILABILITY.mockResolvedValue({
       data: ref(null),
       error: ref({ ...NO_AVAILABILITY_ERROR }),
@@ -98,9 +98,13 @@ describe('useStoreSearchData unable cards on LLNRAG009 (SCEN-U1, U2, U4)', () =>
 
     await searchStore.search()
 
+    // #201: LLNRAG009 is non-blocking for monthly. Every gama here offers monthly
+    // (positive active row), so each is priced from the DB and surfaces as
+    // AVAILABLE — the old behaviour rendered them all as unable "agotado" cards.
     expect(searchStore.categories.length).toBe(ADMIN_PAYLOAD.categories.length)
-    expect(searchStore.categories.every((c) => c.estimatedTotalAmount === 999999999)).toBe(true)
+    expect(searchStore.categories.every((c) => c.estimatedTotalAmount !== 999999999)).toBe(true)
     expect(searchStore.filteredCategories.length).toBe(ADMIN_PAYLOAD.categories.length)
+    expect(searchStore.noAvailableCategories).toBe(false)
   })
 
   it('SCEN-U1 regression guard: non-monthly + LLNRAG009 → categories surfaces ALL N admin categories as unable', async () => {

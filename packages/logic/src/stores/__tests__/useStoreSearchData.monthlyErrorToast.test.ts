@@ -29,7 +29,9 @@ const ADMIN_PAYLOAD = {
       name: 'B',
       category: 'BÁSICO B',
       models: [],
-      month_prices: {},
+      // Real payloads carry month_prices as an array; the monthly branch now
+      // reads it (offersMonthly) even on LLNRAG009, so use the correct shape.
+      month_prices: [],
       total_coverage_unit_charge: 0,
     },
   ],

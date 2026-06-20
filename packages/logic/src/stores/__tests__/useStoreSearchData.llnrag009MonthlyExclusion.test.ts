@@ -75,7 +75,7 @@ describe('useStoreSearchData LLNRAG009 monthly exclusion (#54)', () => {
     vi.unstubAllGlobals()
   })
 
-  it('monthly + LLNRAG009 excludes monthly-only categories (FU) from unable cards', async () => {
+  it('monthly + LLNRAG009 → monthly gamas are AVAILABLE (priced from DB), not "agotado" (#201)', async () => {
     const { default: useStoreReservationForm } = await import('../useStoreReservationForm')
     useStoreReservationForm().haveMonthlyReservation = true
 
@@ -83,9 +83,18 @@ describe('useStoreSearchData LLNRAG009 monthly exclusion (#54)', () => {
     const searchStore = useStoreSearchData()
     await searchStore.search()
 
-    const codes = searchStore.categories.map((c) => c.categoryCode).sort()
-    expect(codes).toEqual(['B', 'C'])
-    expect(searchStore.categories.every((c) => c.estimatedTotalAmount === 999999999)).toBe(true)
+    // #201: LLNRAG009 from Localiza is non-blocking for monthly — the price comes
+    // from category_pricing, so the monthly gamas (B, C) surface as AVAILABLE.
+    // The old behaviour rendered every category as an unable "agotado" card.
+    const available = searchStore.categories
+      .filter((c) => c.estimatedTotalAmount !== 999999999)
+      .map((c) => c.categoryCode)
+      .sort()
+    expect(available).toEqual(['B', 'C'])
+    // #54 preserved: the non-monthly gama (FU) is never offered as priced.
+    expect((searchStore.categoriesAvailabilityData ?? []).map((c) => c.categoryCode).sort()).toEqual(['B', 'C'])
+    // and the search is not flagged "agotado".
+    expect(searchStore.noAvailableCategories).toBe(false)
   })
 
   it('non-monthly + LLNRAG009 still surfaces every admin category (regression guard)', async () => {
