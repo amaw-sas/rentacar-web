@@ -4,7 +4,7 @@
     <div>
       <UHeader
         v-model:open="mobileMenuOpen"
-        class="bg-[#000073] z-40 py-4 md:py-6 px-4 lg:px-6 border-none"
+        class="bg-[#000073] z-40 py-4 md:py-6 px-4 lg:px-6 border-none relative"
         mode="slideover"
         :toggle="false"
         :ui="{
@@ -33,19 +33,20 @@
           </button>
         </template>
       <template #left>
-        <!-- Móvil: spacer invisible que iguala el ancho del hamburguesa (#right)
-             para que el slot center quede ópticamente centrado -->
-        <div class="md:hidden w-9 h-9" aria-hidden="true"></div>
+        <!-- Móvil: logo centrado, absoluto sobre la barra `relative`. Va en #left
+             (que sí renderiza en móvil); el slot default de UHeader queda envuelto
+             en `hidden lg:flex` y nunca se ve en móvil. -->
+        <div class="md:hidden">
+          <NuxtLink to="/" aria-label="alquilatucarro" class="absolute left-1/2 -translate-x-1/2">
+            <Logo cls="h-8 w-auto" />
+          </NuxtLink>
+        </div>
         <!-- Desktop: Bandera + Logo juntos como unidad (oculto en móvil) -->
         <NuxtLink to="/" aria-label="alquilatucarro" class="hidden md:flex items-center gap-3">
           <IconsColombiaFlag cls="h-6 w-auto" />
           <Logo cls="h-10 w-auto" />
         </NuxtLink>
       </template>
-      <!-- Slot default (center wrapper) — móvil únicamente, centrado por flex -->
-      <NuxtLink to="/" aria-label="alquilatucarro" class="md:hidden flex">
-        <Logo cls="h-8 w-auto" />
-      </NuxtLink>
       <template #body>
         <!-- Botón cerrar manual (UHeader slideover no incluye uno nativo) -->
         <UButton
