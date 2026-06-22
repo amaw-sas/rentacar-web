@@ -42,53 +42,79 @@ un one-way legítimo porque ese caso no entra al bloque.
 
 ### 1. Validación ciudad↔branch (bug primario) — middleware existente
 
-**Dónde:** `packages/ui-{alquilatucarro,alquilame,alquicarros}/app/middleware/validateSearchParams.ts`
-(funcionalmente idénticos: difieren solo en whitespace/imports/un comentario). **No** se crea
-middleware nuevo: el existente ya resuelve `pickupBranch`/`returnBranch`, ya tiene `cityContext`, y
-ya hace `navigateTo` con defaults.
+La **decisión** (qué corregir) se extrae a un helper puro en `packages/logic`; el **efecto**
+(`navigateTo`, `createMessage`) queda en el middleware existente de cada marca. El middleware ya
+resuelve `pickupBranch`/`returnBranch`, ya tiene `cityContext`, y ya hace `navigateTo` con defaults.
 
-**Ubicación del bloque nuevo:** tras el reset de `if (!pickupBranch || !returnBranch)` (que garantiza
-que ambos existen) y **antes** del redirect legacy-code→slug. `searchBranchBySlugOrCode` ya se
-desestructura arriba (`:38`); el bloque solo añade `searchBranchByCity`.
+**Helper puro** — `packages/logic/src/utils/resolveCityBranchCorrection.ts` (patrón de
+`isCategoryVisibleInCity.ts`: export nombrado en `utils/` raíz, re-exportado en `index.ts`, test
+colocado en `utils/__tests__/`). Centraliza la lógica que de otro modo se duplicaría ×3.
 
 ```ts
-const { searchBranchByCity } = useStoreAdminData(); // searchBranchBySlugOrCode ya viene de :38
-// ... pickupBranch / returnBranch resueltos arriba (ambos no-nulos) ...
+import type BranchData from './types/data/BranchData';
 
-// Issue #129: el branch de recogida DEBE ser de la ciudad de la página.
-if (pickupBranch.city !== cityContext) {
-  const cityBranch = searchBranchByCity(cityContext); // primer branch de la ciudad (mismo city tier de useSearch:243)
-  // Guard: slug es opcional en BranchData y la ciudad podría no tener sucursales (ver Riesgo #2).
-  // Sin sede de la ciudad no hay corrección segura → se deja pasar (degradado, no loop, no crash).
-  if (cityBranch?.slug) {
-    to.params.lugar_recogida = cityBranch.slug;
-    // pickup foráneo ⇒ URL corrupta: si el return también era ajeno a la ciudad, alinearlo.
-    if (returnBranch.city !== cityContext) to.params.lugar_devolucion = cityBranch.slug;
+/**
+ * Issue #129: el branch de recogida DEBE pertenecer a la ciudad de la página. Dado el pickup/return
+ * resueltos, la ciudad de la página, y el branch default de esa ciudad (lo busca el caller en el
+ * store), devuelve los params slug corregidos, o `null` si no hace falta corregir.
+ *
+ * Solo se usa el tier de ciudad (nunca un fallback global a 'bogota'): el branch devuelto cumple
+ * `.city === cityContext`, así que re-ejecutar esto sobre la URL corregida da `null` → loop-safe
+ * por construcción.
+ */
+export function resolveCityBranchCorrection(
+  pickupBranch: BranchData,
+  returnBranch: BranchData,
+  cityContext: string,
+  cityBranch: BranchData | undefined,
+): { lugar_recogida: string; lugar_devolucion?: string } | null {
+  if (pickupBranch.city === cityContext) return null;   // pickup ok → one-way legítimo intacto
+  if (!cityBranch?.slug) return null;                   // sin sede de la ciudad → no se corrige (degradado, Riesgo #2)
+  const correction: { lugar_recogida: string; lugar_devolucion?: string } = {
+    lugar_recogida: cityBranch.slug,
+  };
+  // pickup foráneo ⇒ URL corrupta: si el return también era ajeno a la ciudad, alinearlo.
+  if (returnBranch.city !== cityContext) correction.lugar_devolucion = cityBranch.slug;
+  return correction;
+}
+```
 
-    createMessage({
-      type: "info",
-      message: "La sede de recogida no corresponde a la ciudad; se ajustó a la sede por defecto.",
-    });
+**Uso en el middleware** (×3) — tras el reset `!pickupBranch||!returnBranch` (garantiza ambos
+no-nulos) y **antes** del redirect legacy→slug. `searchBranchBySlugOrCode` ya viene de `:38`; solo se
+añade `searchBranchByCity`:
 
-    return navigateTo({ name: to.name, params: to.params, query: to.query });
-  }
+```ts
+const { searchBranchByCity } = useStoreAdminData();
+const correction = resolveCityBranchCorrection(
+  pickupBranch, returnBranch, cityContext, searchBranchByCity(cityContext),
+);
+if (correction) {
+  to.params.lugar_recogida = correction.lugar_recogida;
+  if (correction.lugar_devolucion) to.params.lugar_devolucion = correction.lugar_devolucion;
+  createMessage({
+    type: "info",
+    message: "La sede de recogida no corresponde a la ciudad; se ajustó a la sede por defecto.",
+  });
+  return navigateTo({ name: to.name, params: to.params, query: to.query });
 }
 ```
 
 **Decisiones:**
-- **Solo el primer tier (`searchBranchByCity(cityContext)`), NO la cadena completa de `useSearch.ts:243`.**
-  El default real de `useSearch` es `searchBranchByCity(city) ?? searchBranchByCode(...) ?? searchBranchByCity('bogota')`.
-  Aquí se usa **solo el tier de ciudad** a propósito: garantiza que el branch resultante cumple
-  `.city === cityContext`, así que tras el redirect el bloque **no re-entra** → loop-safe por construcción.
-  El fallback a `bogota` *causaría loop infinito* (`bogota`.city ≠ cityContext → re-entra cada pasada).
-- **`searchBranchByCity(...).slug`** (lookup real) en vez de `useDefaultRouteParams`
-  (`${city}-aeropuerto`, convención de string que asume aeropuerto en toda ciudad). Se guarda con
-  `?.slug` porque `slug` es opcional en `BranchData` (computado en runtime desde `name`).
+- **Helper puro en logic** (no bloque inline ×3): `packages/logic` es la única fuente de lógica
+  (`architecture.md`) y ya tiene Vitest maduro (`createTestingPinia`/`vi.stubGlobal`) + el patrón de
+  predicados puros (`isCategoryVisibleInCity`, `isPicoyPlacaExempt`). Deduplica ×3 y hace SCEN-1/2/3
+  testeables como función pura. El middleware (Nuxt globals) solo orquesta el efecto.
+- **Solo el primer tier (`searchBranchByCity(cityContext)`), NO la cadena de `useSearch.ts:243`.**
+  El default de `useSearch` es `searchBranchByCity(city) ?? searchBranchByCode(...) ?? searchBranchByCity('bogota')`.
+  El helper usa **solo el tier de ciudad** a propósito: garantiza `.city === cityContext` → tras el
+  redirect el helper devuelve `null` → loop-safe por construcción. El fallback a `bogota`
+  *causaría loop infinito* (`bogota`.city ≠ cityContext → re-entra cada pasada).
+- **`cityBranch?.slug`** (lookup real, no `useDefaultRouteParams`/`${city}-aeropuerto`): `slug` es
+  opcional en `BranchData` (runtime desde `name`); sin slug, `null` → se deja pasar (degradado, Riesgo #2).
 - **Redirect `navigateTo` default (302)**, consistente con los hermanos del mismo archivo. 301 sería
-  SEO-óptimo (corrección permanente) pero se cachea duro en browser → riesgo si la data de sucursales
-  cambia. Se mantiene 302.
+  SEO-óptimo pero se cachea duro en browser → riesgo si la data cambia. Se mantiene 302.
 - **Reset de ambos extremos** cuando el pickup es foráneo (ver invariante). Un one-way legítimo no
-  entra al bloque.
+  entra (pickup ok → helper devuelve `null` en la primera línea).
 
 ### 2. Botón re-dispara con params idénticos (bug secundario) — Searcher.vue
 
@@ -143,12 +169,16 @@ doSearchFn.value = searchComposable.doSearch;
 
 ## Blast radius
 
+- **Nuevos:**
+  - `packages/logic/src/utils/resolveCityBranchCorrection.ts` — helper puro (propaga a las 3 marcas vía el layer)
+  - `packages/logic/src/utils/__tests__/resolveCityBranchCorrection.test.ts` — unit (SCEN-1,2,3 + edge cases)
 - **Modificados:**
-  - `packages/ui-{alquilatucarro,alquilame,alquicarros}/app/middleware/validateSearchParams.ts` — bloque de validación (×3)
+  - `packages/logic/src/utils/index.ts` — re-export del helper
+  - `packages/ui-{alquilatucarro,alquilame,alquicarros}/app/middleware/validateSearchParams.ts` — llamada al helper + `navigateTo` (×3)
   - `packages/ui-{alquilatucarro,alquilame,alquicarros}/app/components/Searcher.vue` — handler `@click` + hoist (×3)
-- **Sin cambios en `packages/logic`** (`searchBranchByCity` ya existe).
+- **`packages/logic`** gana un helper puro (sin tocar stores/composables existentes); `searchBranchByCity` ya existe.
 - **Consumidores:** páginas `[city]/buscar-vehiculos/**` — 4 rutas (con/sin `referido`, con/sin `categoria`) × 3 marcas.
-- **Tests:** unit de middleware en `packages/ui-*/tests/`; e2e Playwright multi-marca (`BRAND=...`) cubriendo SCEN-1..4.
+- **Tests:** unit del helper en `packages/logic` (harness existente); e2e Playwright multi-marca (`BRAND=...`) cubriendo SCEN-1..4.
 
 ## Riesgos
 
