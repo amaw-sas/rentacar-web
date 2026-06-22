@@ -12,7 +12,9 @@ import { test, expect, type Route } from '@playwright/test';
  *   SCEN-002: legitimate one-way    → NO redirect (return in another city kept)
  *   SCEN-003: already-consistent    → NO redirect
  *   SCEN-004: identical-URL re-click → a fresh availability POST is fired
- *   SCEN-006: city w/o branch slug  → no crash, no redirect loop
+ *
+ * (SCEN-006 — city without a resolvable branch → null, no crash/loop — is covered
+ *  by the helper unit test, not here, since it can't be observed via a browser URL.)
  *
  * Branch slugs used (`bogota-aeropuerto`, `monteria-aeropuerto`) are canonical
  * production data, vouched by e2e/availability-error-feedback.spec.ts. The brand

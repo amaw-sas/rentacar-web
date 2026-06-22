@@ -430,10 +430,15 @@ const route = useRoute();
 const router = useRouter();
 const doSearchFn = ref<(() => void) | null>(null);
 const onSearchClick = (e: MouseEvent) => {
+  // Resolve BOTH sides through the router so the comparison is query-order- and
+  // encoding-insensitive (a reordered bookmarked link would otherwise false-negative).
+  // Only preventDefault when doSearch is ready (captured in onMounted): before mount,
+  // let NuxtLink's harmless same-URL no-op run instead of swallowing the tap.
   const target = router.resolve({ name: searchLinkName.value, params: searchLinkParams.value });
-  if (target.href === route.fullPath) {
+  const current = router.resolve(route.fullPath);
+  if (target.href === current.href && doSearchFn.value) {
     e.preventDefault();
-    doSearchFn.value?.();
+    doSearchFn.value();
   }
 };
 
