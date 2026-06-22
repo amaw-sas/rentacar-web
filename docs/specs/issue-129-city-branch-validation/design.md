@@ -73,8 +73,9 @@ export function resolveCityBranchCorrection(
   const correction: { lugar_recogida: string; lugar_devolucion?: string } = {
     lugar_recogida: cityBranch.slug,
   };
-  // pickup foráneo ⇒ URL corrupta: si el return también era ajeno a la ciudad, alinearlo.
-  if (returnBranch.city !== cityContext) correction.lugar_devolucion = cityBranch.slug;
+  // pickup foráneo: alinear el return SOLO si refleja la ciudad del pickup foráneo (el
+  // eco del bug); un return a una tercera ciudad válida y distinta se preserva.
+  if (returnBranch.city === pickupBranch.city) correction.lugar_devolucion = cityBranch.slug;
   return correction;
 }
 ```
@@ -113,8 +114,10 @@ if (correction) {
   opcional en `BranchData` (runtime desde `name`); sin slug, `null` → se deja pasar (degradado, Riesgo #2).
 - **Redirect `navigateTo` default (302)**, consistente con los hermanos del mismo archivo. 301 sería
   SEO-óptimo pero se cachea duro en browser → riesgo si la data cambia. Se mantiene 302.
-- **Reset de ambos extremos** cuando el pickup es foráneo (ver invariante). Un one-way legítimo no
-  entra (pickup ok → helper devuelve `null` en la primera línea).
+- **Reset del return solo en el caso eco** (`returnBranch.city === pickupBranch.city`): el repro
+  tiene pickup=return en la misma ciudad ajena → round-trip de la ciudad de la página. Un return a
+  una tercera ciudad válida y distinta se **preserva** (no se descarta la intención). Un one-way
+  legítimo no entra al bloque (pickup ok → `null` en la primera línea).
 
 ### 2. Botón re-dispara con params idénticos (bug secundario) — Searcher.vue
 

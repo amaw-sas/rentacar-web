@@ -13,9 +13,11 @@ import type BranchData from './types/data/BranchData';
  * Invariant: only the pickup must match the city. The return may be elsewhere (one-way /
  * traslado is valid by design), so a legitimate one-way — which always has a valid in-city
  * pickup — returns `null` on the first line and is never touched. When the *pickup* is
- * foreign the whole URL is corrupt, so the return is realigned to the city too **only if it
- * is also foreign** (a deliberate Barranquilla→Medellín one-way under a Barranquilla page
- * keeps its Medellín return).
+ * foreign the return is realigned to the city **only when it mirrors the foreign pickup's
+ * city** — the echo case of the bug (`armenia` pickup + `armenia` return under a Barranquilla
+ * page), which a Barranquilla round-trip clearly satisfies. A return in any *other* city —
+ * including a third valid city (`armenia` pickup + `medellin` return) — is preserved, so the
+ * user's distinct return intent is never silently dropped.
  *
  * Loop-safe by construction: only the city tier is used (never a global `bogota` fallback),
  * so the returned branch satisfies `.city === cityContext`. Re-evaluating the corrected URL
@@ -36,9 +38,9 @@ export function resolveCityBranchCorrection(
   const correction: { lugar_recogida: string; lugar_devolucion?: string } = {
     lugar_recogida: cityBranch.slug,
   };
-  // Foreign pickup ⇒ corrupt URL: realign the return too, but only when it is
-  // also foreign — never clobber a legitimate cross-city return.
-  if (returnBranch.city !== cityContext) {
+  // Foreign pickup: realign the return too only when it mirrors the foreign pickup
+  // (the echo case) — never clobber a return pointing at a distinct, valid city.
+  if (returnBranch.city === pickupBranch.city) {
     correction.lugar_devolucion = cityBranch.slug;
   }
   return correction;

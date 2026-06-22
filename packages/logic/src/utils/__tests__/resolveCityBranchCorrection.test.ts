@@ -40,6 +40,15 @@ describe('resolveCityBranchCorrection', () => {
     ).toEqual({ lugar_recogida: 'barranquilla-aeropuerto' })
   })
 
+  // Pickup foráneo + return en una TERCERA ciudad válida (distinta del pickup) →
+  // corrige solo la recogida y PRESERVA el return (no es el eco del bug; es un
+  // destino intencional). Sin esto se descartaría silenciosamente la intención.
+  it('preserves a distinct third-city return, correcting only the pickup', () => {
+    expect(
+      resolveCityBranchCorrection(armenia, medellin, 'barranquilla', barranquilla),
+    ).toEqual({ lugar_recogida: 'barranquilla-aeropuerto' })
+  })
+
   // SCEN-002: one-way legítimo (pickup de la ciudad, return de otra) → null.
   it('does not redirect a legitimate one-way (pickup in city, return elsewhere)', () => {
     expect(
