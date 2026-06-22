@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-06-22
 **Branch:** `fix/issue-129-city-branch-validation`
-**Estado:** diseño aprobado → pendiente plan + implementación (SDD)
+**Estado:** spec aprobado (reviewer + usuario) → pendiente plan + implementación (SDD)
 
 ## Problema
 
@@ -138,7 +138,8 @@ doSearchFn.value = searchComposable.doSearch;
 | **SCEN-2** | one-way legítimo: pickup de la ciudad, return de otra: `/barranquilla/.../barranquilla-aeropuerto/lugar-devolucion/medellin-aeropuerto/...` | el middleware corre | **sin** redirect; pickup Barranquilla y return Medellín intactos |
 | **SCEN-3** | URL ya consistente (pickup y return de la ciudad) | el middleware corre | sin redirect, sin cambios de params |
 | **SCEN-4** | en la **página base de resultados** (no `/categoria/...`), params sin cambios (p. ej. tras un error) | click en `BUSCAR VEHÍCULOS` | se registra **una nueva POST a `/api/reservations/availability`** (observable en Network) y `useStoreSearchData.pending` pasa a `true`, aunque la URL no cambie |
-| **SCEN-5** | slug inexistente / legacy code | el middleware corre | sigue cayendo al default (bloque existente) / legacy code→slug sigue redirigiendo — sin regresión |
+| **SCEN-5a** | slug de sucursal inexistente | el middleware corre | cae al default de la ciudad (bloque existente `!pickupBranch||!returnBranch`) — sin regresión |
+| **SCEN-5b** | legacy branch *code* en vez de slug | el middleware corre | redirige a la URL slug-based (bloque existente legacy→slug) — sin regresión |
 
 ## Blast radius
 
