@@ -48,16 +48,19 @@ middleware nuevo: el existente ya resuelve `pickupBranch`/`returnBranch`, ya tie
 ya hace `navigateTo` con defaults.
 
 **Ubicación del bloque nuevo:** tras el reset de `if (!pickupBranch || !returnBranch)` (que garantiza
-que ambos existen) y **antes** del redirect legacy-code→slug.
+que ambos existen) y **antes** del redirect legacy-code→slug. `searchBranchBySlugOrCode` ya se
+desestructura arriba (`:38`); el bloque solo añade `searchBranchByCity`.
 
 ```ts
-const { searchBranchBySlugOrCode, searchBranchByCity } = useStoreAdminData();
-// ... pickupBranch / returnBranch resueltos arriba ...
+const { searchBranchByCity } = useStoreAdminData(); // searchBranchBySlugOrCode ya viene de :38
+// ... pickupBranch / returnBranch resueltos arriba (ambos no-nulos) ...
 
-// Issue #129: el branch de recogida debe ser de la ciudad de la página.
+// Issue #129: el branch de recogida DEBE ser de la ciudad de la página.
 if (pickupBranch.city !== cityContext) {
-  const cityBranch = searchBranchByCity(cityContext); // lookup real = default de useSearch:243
-  if (cityBranch) {
+  const cityBranch = searchBranchByCity(cityContext); // primer branch de la ciudad (mismo city tier de useSearch:243)
+  // Guard: slug es opcional en BranchData y la ciudad podría no tener sucursales (ver Riesgo #2).
+  // Sin sede de la ciudad no hay corrección segura → se deja pasar (degradado, no loop, no crash).
+  if (cityBranch?.slug) {
     to.params.lugar_recogida = cityBranch.slug;
     // pickup foráneo ⇒ URL corrupta: si el return también era ajeno a la ciudad, alinearlo.
     if (returnBranch.city !== cityContext) to.params.lugar_devolucion = cityBranch.slug;
@@ -69,15 +72,18 @@ if (pickupBranch.city !== cityContext) {
 
     return navigateTo({ name: to.name, params: to.params, query: to.query });
   }
-  // cityBranch undefined (ciudad sin sucursales) → no rompemos: validateCityParams ya 404 las
-  // ciudades desconocidas, así que una ciudad válida tiene ≥1 sucursal; si no, se deja pasar.
 }
 ```
 
 **Decisiones:**
-- **`searchBranchByCity(cityContext).slug`** (lookup real) en vez de `useDefaultRouteParams`
-  (`${city}-aeropuerto`, convención de string que asume que toda ciudad tiene aeropuerto). El lookup
-  coincide con el default que ya usa `useSearch.ts:243`.
+- **Solo el primer tier (`searchBranchByCity(cityContext)`), NO la cadena completa de `useSearch.ts:243`.**
+  El default real de `useSearch` es `searchBranchByCity(city) ?? searchBranchByCode(...) ?? searchBranchByCity('bogota')`.
+  Aquí se usa **solo el tier de ciudad** a propósito: garantiza que el branch resultante cumple
+  `.city === cityContext`, así que tras el redirect el bloque **no re-entra** → loop-safe por construcción.
+  El fallback a `bogota` *causaría loop infinito* (`bogota`.city ≠ cityContext → re-entra cada pasada).
+- **`searchBranchByCity(...).slug`** (lookup real) en vez de `useDefaultRouteParams`
+  (`${city}-aeropuerto`, convención de string que asume aeropuerto en toda ciudad). Se guarda con
+  `?.slug` porque `slug` es opcional en `BranchData` (computado en runtime desde `name`).
 - **Redirect `navigateTo` default (302)**, consistente con los hermanos del mismo archivo. 301 sería
   SEO-óptimo (corrección permanente) pero se cachea duro en browser → riesgo si la data de sucursales
   cambia. Se mantiene 302.
@@ -118,6 +124,12 @@ doSearchFn.value = searchComposable.doSearch;
 > alquilame usa `:to="searchDestination"` (computed) en vez del objeto inline; el handler resuelve
 > el mismo `searchDestination`/params según marca. Detalle a confirmar en planning.
 
+> **Alcance del re-disparo:** `searchLinkName`/`searchLinkParams` (`useSearch.ts:258-286`) **nunca**
+> incluyen el segmento `categoria`. En la página `/categoria/[categoria]`, el botón siempre apunta a
+> la ruta base → `target.href !== route.fullPath` siempre → NuxtLink navega (descartando el filtro de
+> categoría) y re-dispara al montar. Por eso el "botón muerto" solo ocurre en la **página base de
+> resultados**, y ahí aplica el `@click` (de ahí el scope explícito de SCEN-4).
+
 ## Escenarios observables (holdout SDD)
 
 | ID | Given | When | Then |
@@ -125,7 +137,7 @@ doSearchFn.value = searchComposable.doSearch;
 | **SCEN-1** | URL con pickup foráneo: `/barranquilla/.../lugar-recogida/armenia-aeropuerto/lugar-devolucion/armenia-aeropuerto/...` | el middleware corre | redirect a `…/barranquilla-aeropuerto/…/barranquilla-aeropuerto/…`; banner "En Barranquilla"; selector de recogida = sede de Barranquilla |
 | **SCEN-2** | one-way legítimo: pickup de la ciudad, return de otra: `/barranquilla/.../barranquilla-aeropuerto/lugar-devolucion/medellin-aeropuerto/...` | el middleware corre | **sin** redirect; pickup Barranquilla y return Medellín intactos |
 | **SCEN-3** | URL ya consistente (pickup y return de la ciudad) | el middleware corre | sin redirect, sin cambios de params |
-| **SCEN-4** | en la página de resultados, params sin cambios (p. ej. tras un error) | click en `BUSCAR VEHÍCULOS` | se dispara una nueva request de availability aunque la URL no cambie |
+| **SCEN-4** | en la **página base de resultados** (no `/categoria/...`), params sin cambios (p. ej. tras un error) | click en `BUSCAR VEHÍCULOS` | se registra **una nueva POST a `/api/reservations/availability`** (observable en Network) y `useStoreSearchData.pending` pasa a `true`, aunque la URL no cambie |
 | **SCEN-5** | slug inexistente / legacy code | el middleware corre | sigue cayendo al default (bloque existente) / legacy code→slug sigue redirigiendo — sin regresión |
 
 ## Blast radius
@@ -139,11 +151,28 @@ doSearchFn.value = searchComposable.doSearch;
 
 ## Riesgos
 
-- **`branch.city` vs slug de ciudad:** la comparación `pickupBranch.city === cityContext` asume que
-  `branch.city` es el slug de ciudad. Confirmado: `searchBranchByCity(city)` (`useStoreAdminData:28`)
-  compara `branch.city == city` con `route.params.city` en producción. Validar con data real en QA.
-- **Doble redirect:** el bloque nuevo precede a los redirects existentes; cada uno hace `return
-  navigateTo`, así que a lo sumo encadenan un redirect por corrección (idempotentes: la segunda
-  pasada ya cumple el invariante).
-- **Botón cross-brand:** alquilame diverge en el `:to`; el handler debe resolver el destino correcto
-  por marca.
+- **#1 — `branch.city` vs slug de ciudad:** la comparación `pickupBranch.city === cityContext` asume que
+  `branch.city` es el slug de ciudad. Confirmado: `useSearch.ts:243/277` ya usa
+  `searchBranchByCity(route.params.city)` y `city: route.params.city` en producción — equivalencia
+  establecida por convención. Bajo riesgo; validar con data real en QA.
+- **#2 — orden de middleware + ciudad sin sucursales (relevante):** los search pages declaran
+  `middleware: ['validate-search-params', 'validate-city-params']` → **search-params corre PRIMERO**,
+  la ciudad aún no está 404-validada cuando corre nuestro bloque. Además `validateCityParams` valida
+  contra el dataset `cities` (con `id`), **no** contra `branches` — son arrays distintos en
+  `rentacar-data`. Una ciudad presente en `cities` pero sin sucursales haría `searchBranchByCity`
+  devolver `undefined` → el guard `cityBranch?.slug` deja pasar el pickup foráneo (bug #129 persiste
+  para esa ciudad, sin crash ni loop). **Asunción de datos:** toda ciudad servida tiene ≥1 sucursal.
+  **Acción QA:** enumerar `cities` sin `branches` en data real; si existen, escalar upstream
+  (no listar la ciudad) — fuera del alcance de este PR.
+- **#3 — `slug` opcional:** `BranchData.slug` es `string | undefined` (computado en runtime). El guard
+  `cityBranch?.slug` cubre el caso type-level; en runtime el slug está poblado server-side (el redirect
+  legacy→slug existente ya depende de ello).
+- **Doble redirect / loop:** el bloque nuevo precede a los redirects existentes; cada uno hace `return
+  navigateTo`. Loop-safe **por construcción**: `searchBranchByCity(cityContext)` devuelve un branch con
+  `.city === cityContext`, así que tras el redirect el bloque no re-entra. (El fallback a `bogota`
+  *sí* haría loop — por eso se excluye; ver Decisiones.)
+- **#7 — `cityContext = pathSegments[0]`:** todas las rutas `buscar-vehiculos/**` (con/sin `referido`,
+  con/sin `categoria`) empiezan con `[city]` → el primer segmento siempre es la ciudad. Verificado en
+  el árbol de rutas; safe para las rutas que cargan este middleware.
+- **Botón cross-brand:** alquilame diverge en el `:to` (`searchDestination` computed); el handler debe
+  resolver el destino correcto por marca.
