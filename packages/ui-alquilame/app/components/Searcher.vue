@@ -333,6 +333,7 @@
         <div class="col-span-2">
             <u-button
                 :to="searchDestination"
+                @click="onSearchClick"
                 :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied || !isSelectionWithinSchedule"
                 :loading="pendingSearching"
                 :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
@@ -461,6 +462,21 @@ const searchDestination = computed(() => {
   };
 });
 
+// Issue #129: the search button is a NuxtLink (:to). When the resolved target URL
+// equals the current one (e.g. retrying after an error without changing any field),
+// NuxtLink does not navigate, so useSearchByRouteParams never re-mounts and the
+// search is never re-fired. Re-trigger doSearch directly in that case. doSearch is
+// captured in onMounted, where useSearch is instantiated.
+const router = useRouter();
+const doSearchFn = ref<(() => void) | null>(null);
+const onSearchClick = (e: MouseEvent) => {
+  const target = router.resolve(searchDestination.value);
+  if (target.href === route.fullPath) {
+    e.preventDefault();
+    doSearchFn.value?.();
+  }
+};
+
 // The disabled guard stays meaningful in BOTH contexts: block until a valid pickup
 // branch + dates exist. On a city page this is still effectively `city` (the deep
 // link is broken without it); on /reservas there is no `city`, so we require a
@@ -550,6 +566,7 @@ onMounted(() => {
 
   // Initialize useSearch composable
   const searchComposable = useSearch();
+  doSearchFn.value = searchComposable.doSearch; // #129: expose for same-URL re-fire
   watch(() => searchComposable.pickupHourOptions.value, (val) => pickupHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.returnHourOptions.value, (val) => returnHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.searchLinkName.value, (val) => searchLinkName.value = val, { immediate: true });
