@@ -123,7 +123,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     ).toBeVisible();
     // El de "Resumen" NO debe estar visible.
     await expect(
-      page.locator('[role="dialog"]:visible', { hasText: 'Resumen de la reserva' }),
+      page.locator('[role="dialog"]:visible', { hasText: 'Resumen de la selección' }),
     ).toHaveCount(0);
   });
 
@@ -139,7 +139,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 15_000 });
     await expect(visibleModalDialogs(page)).toHaveCount(1);
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la reserva' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
     ).toBeVisible();
   });
 
@@ -155,7 +155,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await page.getByRole('button', { name: 'Solicitar este vehículo' }).first().click();
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 10_000 });
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la reserva' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
     ).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/categoria/${code.toLowerCase()}$`));
 
@@ -172,7 +172,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await page.getByTestId('reservation-form-back-test').click();
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 10_000 });
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la reserva' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
     ).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/categoria/${code.toLowerCase()}$`));
     await expect(page).not.toHaveURL(/reservar=/);
@@ -285,7 +285,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     // Flujo completo en la MISMA página (sin cambio de ruta): Resumen → Datos.
     await page.getByRole('button', { name: 'Solicitar este vehículo' }).first().click();
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la reserva' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
     ).toBeVisible({ timeout: 10_000 });
     await page.getByTestId('reservation-next-test').click();
     await expect(
@@ -314,7 +314,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     // "Resumen". Antes del fix el click no llegaba (puntero interceptado).
     await page.getByRole('button', { name: 'Solicitar este vehículo' }).first().click();
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la reserva' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
     ).toBeVisible({ timeout: 10_000 });
   });
 

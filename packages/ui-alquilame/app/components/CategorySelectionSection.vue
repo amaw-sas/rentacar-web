@@ -69,7 +69,8 @@
          la grilla (regresión SCEN-011). Con un único DialogContent el invariante
          "0 o 1 [role=dialog]" es estructural y no hay swap de capas. -->
     <u-slideover
-      v-model:open="slideoverOpen"
+      :open="slideoverOpen"
+      @update:open="(v: boolean) => { if (!v) requestSlideoverClose() }"
       :title="slideoverStep === 'datos' ? 'Datos para reservar' : 'Resumen de la selección'"
       :description="slideoverStep === 'datos' ? undefined : 'Antes de continuar revisa la información'"
       :overlay="false"
@@ -145,7 +146,7 @@
               size="xl"
               class="flex-1 py-4 justify-center bg-gray-200 !text-black hover:bg-gray-300"
               data-testid="reservation-resume-back-test"
-              @click="slideoverOpen = false"
+              @click="backFromResume"
             />
             <!-- "Siguiente" cambia el paso a "datos" SIN cerrar/reabrir el
                  diálogo (issue #65): no hay swap de capas modales. -->
@@ -338,22 +339,39 @@ const abrirFormularioDirecto = computed(() => !!reservarParam.value);
 // primera invocación no abre la ventana mientras la segunda sigue en vuelo.
 const urlSyncDepth = ref(0);
 
+// Cuántas entradas de historial empujó este slideover (0 cerrado, 1 resumen,
+// 2 datos). Lo usa la X / Esc para retroceder TODAS de una y no dejar entradas
+// que reabran el slideover con el botón "atrás". El retroceso normal lo decrementa.
+let pushedEntries = 0;
+
 // Actualizar URL con categoría sin disparar navegación Vue Router.
 // Usa history.replaceState para evitar que Nuxt desmonte/remonte la página
 // (la ruta /categoria/[codigo] es una página Nuxt separada, y router.replace
 // causaba re-mount → re-search → scroll al tope → loop).
-function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean) {
+function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean, mode: 'push' | 'replace' = 'replace') {
   if (!import.meta.client) return;
 
   const currentPath = window.location.pathname;
   const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^/]+$/, '');
+  // `push` agrega una entrada de historial (el botón "atrás" del navegador cierra
+  // el slideover / baja de paso en vez de abandonar el listado); `replace`
+  // sobrescribe la actual (cambios sin nueva entrada: cierre, sync desde URL).
+  const write = (url: string) => {
+    if (mode === 'push') {
+      window.history.pushState({ slideover: true }, '', url);
+      pushedEntries++;
+    } else {
+      window.history.replaceState(window.history.state, '', url);
+    }
+  };
 
   if (codigoCategoria) {
     const newPath = `${basePathWithoutCategoria}/categoria/${codigoCategoria.toLowerCase()}`;
     const newUrl = reservar ? `${newPath}?reservar=${codigoCategoria}` : newPath;
-    window.history.replaceState(window.history.state, '', newUrl);
+    write(newUrl);
   } else {
-    window.history.replaceState(window.history.state, '', basePathWithoutCategoria);
+    pushedEntries = 0; // cierre/limpieza: ya no poseemos entradas
+    write(basePathWithoutCategoria);
   }
 }
 
@@ -364,8 +382,17 @@ function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean) {
 // Con un solo slideover NO hay transición Resumen→Datos que cierre una capa y
 // abra otra, así que no hace falta el guard que antes preservaba ?reservar
 // durante el swap: el cambio de paso solo reescribe la query (issue #65).
+// Estado previo para distinguir transición HACIA ADELANTE (abrir, Resumen→Datos
+// → empuja entrada de historial) de las demás (cierre, sync). El retroceso pasa
+// por `handleSlideoverPopState` (enmascarado), no por aquí.
+let prevSlideoverOpen = false;
+let prevSlideoverStep: 'resumen' | 'datos' = 'resumen';
 watch([slideoverOpen, slideoverStep], ([open, step]) => {
-  if (urlSyncDepth.value > 0) return;
+  if (urlSyncDepth.value > 0) {
+    prevSlideoverOpen = open;
+    prevSlideoverStep = step;
+    return;
+  }
 
   // Cerrado → limpiar la URL SIEMPRE, sin gatear por `vehiculo`: si el form se
   // reseteó (submit fallido, rehidratación) `vehiculo` puede quedar vacío con el
@@ -373,11 +400,13 @@ watch([slideoverOpen, slideoverStep], ([open, step]) => {
   // cierre (si no, un reload reabriría un slideover ya descartado).
   if (!open) {
     updateCategoriaUrl(undefined);
-    return;
+  } else if (vehiculo.value) {
+    // Abierto → se necesita la categoría para construir /categoria/X.
+    const isForward = !prevSlideoverOpen || (prevSlideoverStep === 'resumen' && step === 'datos');
+    updateCategoriaUrl(vehiculo.value, step === 'datos', isForward ? 'push' : 'replace');
   }
-  // Abierto → se necesita la categoría para construir /categoria/X.
-  if (!vehiculo.value) return;
-  updateCategoriaUrl(vehiculo.value, step === 'datos');
+  prevSlideoverOpen = open;
+  prevSlideoverStep = step;
 });
 
 // Auto-abrir el slideover cuando carguen las categorías y exista el param.
@@ -385,6 +414,15 @@ watch(
   [filteredCategories, codigoCategoria],
   ([categories, codigo]) => {
     if (!codigo || categories.length === 0) return;
+
+    // Tras enviar, el historial puede conservar `/categoria/X` (el slideover
+    // empuja entradas). Si el usuario retrocede hasta ahí, NO reabrir: consumir
+    // el guard una vez y mostrar el listado. Sin esto, el Back post-submit
+    // reabriría el resumen (regresión de reservation-back-url-cleanup).
+    if (codigo === storeForm.lastSubmittedCode) {
+      storeForm.lastSubmittedCode = null;
+      return;
+    }
 
     const categoryData = categories.find(c => c.categoryCode === codigo);
     if (!categoryData || !vehicleCategories[codigo]) return;
@@ -429,6 +467,38 @@ onBeforeRouteLeave(async () => {
   }
 });
 
+// "Atrás" del navegador (y los botones internos vía history.back): el navegador
+// ya cambió la URL; aquí solo reconciliamos el estado del slideover, paso a paso:
+//   - en "datos" → baja a "resumen" (no cierra)
+//   - en "resumen" → cierra y deja el listado
+// Enmascaramos el watcher de URL (urlSyncDepth) para no reescribir la URL que el
+// navegador ya retrocedió.
+function handleSlideoverPopState() {
+  if (!slideoverOpen.value) return;
+  // Reconciliar por la URL ya retrocedida (robusto si el navegador colapsa
+  // varios popstate en uno, p.ej. la X que hace history.go(-2)):
+  //   - sin /categoria/ → volvimos al listado → cerrar
+  //   - /categoria/X    → resumen
+  const hasCategoria = /\/categoria\//.test(window.location.pathname);
+  urlSyncDepth.value++;
+  if (!hasCategoria) {
+    slideoverOpen.value = false;
+    pushedEntries = 0;
+  } else {
+    slideoverStep.value = 'resumen';
+    pushedEntries = 1;
+  }
+  nextTick(() => {
+    urlSyncDepth.value--;
+  });
+}
+onMounted(() => {
+  if (import.meta.client) window.addEventListener('popstate', handleSlideoverPopState);
+});
+onBeforeUnmount(() => {
+  if (import.meta.client) window.removeEventListener('popstate', handleSlideoverPopState);
+});
+
 /** functions */
 function setSelectedCategory(category: ReturnType<typeof useCategory>) {
   vehiculo.value = category.categoryCode.value;
@@ -447,8 +517,26 @@ function setSelectedCategory(category: ReturnType<typeof useCategory>) {
 function goToForm() {
   slideoverStep.value = 'datos';
 }
+// Botón "Volver" en Datos: retrocede una entrada (Datos→Resumen) vía el mismo
+// camino que el botón "atrás" del navegador, para que ambos queden simétricos.
 function backToResume() {
-  slideoverStep.value = 'resumen';
+  if (import.meta.client) window.history.back();
+  else slideoverStep.value = 'resumen';
+}
+// Botón "Volver" en Resumen: retrocede una entrada (Resumen→cerrar→listado).
+function backFromResume() {
+  if (import.meta.client) window.history.back();
+  else slideoverOpen.value = false;
+}
+// X / Esc / clic fuera: cierre TOTAL desde cualquier paso. Retrocede todas las
+// entradas que empujamos (history.go), así el botón "atrás" no reabre el
+// slideover. Sin entradas propias (deep-link) cierra directo y limpia la URL.
+function requestSlideoverClose() {
+  if (import.meta.client && pushedEntries > 0) {
+    window.history.go(-pushedEntries);
+  } else {
+    slideoverOpen.value = false;
+  }
 }
 
 const { submitForm } = storeForm;
