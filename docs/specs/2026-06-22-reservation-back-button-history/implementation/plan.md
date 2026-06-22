@@ -36,25 +36,30 @@ index.
 
 ## Escenarios observables
 
-1. **Back desde Datos** → vuelve a **Resumen** (slideover sigue abierto), no al index.
+1. **Back desde Datos** → **cierra** y vuelve al **listado** (una sola entrada; NO re-busca, conserva scroll). El "Volver" interno sí hace Datos→Resumen.
 2. **Back desde Resumen** → **cierra** el slideover y vuelve al **listado** con su scroll, no al index.
 3. **Back desde el listado** → index (un paso más).
 4. **Deep-link / reload** de `/…/categoria/X` (y `?reservar=X`) → auto-abre el paso correcto, sin empujar entradas extra.
 5. **Tras enviar la reserva** → "atrás" desde la confirmación **no reabre** el slideover ni bloquea el Searcher (invariante existente preservado).
 6. En todo momento: un solo `[role=dialog]`; al cerrar, `<body>` sin `pointer-events:none` pegado.
 
-## Diseño — máquina de estados de historial (2 pasos)
+## Diseño — UNA sola entrada de historial (decisión final tras prueba en móvil)
 
-Hacia adelante (empuja una entrada por paso):
+> El plan inicial empujaba **dos** entradas (Resumen y Datos) para que "atrás"
+> hiciera Datos→Resumen. La prueba en móvil mostró que la entrada de Datos
+> (`/categoria/X?reservar`) difiere de la ruta donde Vue Router cree estar (el
+> listado), así que "atrás" desde Datos **navegaba/re-montaba** → flash de
+> "recargar los carros". Decisión: **una sola entrada** para todo el slideover;
+> "atrás" desde cualquier paso vuelve al listado limpio.
 
-| Acción | Hoy | Plan |
-|---|---|---|
-| Abrir Resumen (clic en vehículo, `setSelectedCategory`) | `replaceState` | **`pushState`** → entrada "Resumen" |
-| Resumen → Datos (`goToForm`) | `replaceState` | **`pushState`** → entrada "Datos" |
-| Apertura desde URL (deep-link/reload, enmascarada por `urlSyncDepth`) | `replaceState` | sin cambio (no empuja: la URL ya es la correcta) |
+| Acción | Plan final |
+|---|---|
+| Abrir Resumen (`setSelectedCategory`) | **`pushState`** → única entrada `/categoria/X` |
+| Resumen → Datos (`goToForm`) | `replaceState` a `?reservar` (**no** empuja) |
+| Datos → Resumen ("Volver" interno) | cambio de paso + `replaceState` (no toca historial) |
+| Apertura desde URL (deep-link, enmascarada) | sin cambio |
 
-Hacia atrás — nuevo listener `popstate` (fuente de verdad, porque las entradas
-creadas por history API pueden no actualizar el `route` de Vue Router):
+Hacia atrás — listener `popstate` que reconcilia por la URL ya retrocedida:
 
 | Estado al recibir `popstate` | Acción |
 |---|---|

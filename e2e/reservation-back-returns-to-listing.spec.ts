@@ -55,7 +55,7 @@ test.describe('Reservation Back button — recorre pasos, no salta al index', ()
     await expect(cardButtons(page).first()).toBeVisible();
   });
 
-  test('Back desde Datos baja a Resumen (no cierra ni salta)', async ({ page }) => {
+  test('Back desde Datos vuelve al listado (una sola entrada), sin re-buscar', async ({ page }) => {
     await gotoListingWithHistory(page);
     const cards = cardButtons(page);
     test.skip((await cards.count()) === 0, 'Sin disponibilidad');
@@ -67,10 +67,26 @@ test.describe('Reservation Back button — recorre pasos, no salta al index', ()
 
     await page.goBack();
 
-    // Bajó a Resumen: diálogo sigue abierto, paso "Resumen de la selección".
+    // El slideover tiene UNA sola entrada de historial: Back desde Datos cierra
+    // y vuelve al listado (NO navega a /categoria/X → no re-monta ni re-busca).
+    await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+    await expect(page).not.toHaveURL(/\/categoria\//);
+    await expect(page).toHaveURL(/\/buscar-vehiculos\//);
+    await expect(cardButtons(page).first()).toBeVisible();
+  });
+
+  test('"Volver" interno en Datos baja a Resumen (paso, sin tocar historial)', async ({ page }) => {
+    await gotoListingWithHistory(page);
+    const cards = cardButtons(page);
+    test.skip((await cards.count()) === 0, 'Sin disponibilidad');
+
+    await cards.first().click();
+    await page.getByTestId('reservation-next-test').click();
+    await expect(page.getByText('Datos para reservar')).toBeVisible();
+
+    await page.getByTestId('reservation-form-back-test').click();
     await expect(page.locator('[role="dialog"]').first()).toBeVisible();
     await expect(page.getByText('Resumen de la selección')).toBeVisible();
-    await expect(page).not.toHaveURL(/reservar=/);
   });
 
   test('Cerrar (X) desde Datos cierra del todo y deja el body interactivo', async ({ page }) => {

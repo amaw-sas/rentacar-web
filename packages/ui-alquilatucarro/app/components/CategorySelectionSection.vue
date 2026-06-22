@@ -381,15 +381,17 @@ function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean, mode: 
 // Con un solo slideover NO hay transición Resumen→Datos que cierre una capa y
 // abra otra, así que no hace falta el guard que antes preservaba ?reservar
 // durante el swap: el cambio de paso solo reescribe la query (issue #65).
-// Estado previo para distinguir transición HACIA ADELANTE (abrir, Resumen→Datos
-// → empuja entrada de historial) de las demás (cierre, sync). El retroceso pasa
-// por `handleSlideoverPopState` (enmascarado), no por aquí.
+// El slideover usa UNA SOLA entrada de historial (la de abrir). El paso
+// Resumen↔Datos solo reescribe la URL (replace), NO empuja otra entrada: si
+// empujara una `/categoria/X?reservar`, al dar "atrás" esa URL difiere de la
+// ruta donde Vue Router cree estar (el listado) y dispararía navegación →
+// re-montaje → "recargar los carros". Con una sola entrada, "atrás" desde
+// CUALQUIER paso vuelve al listado (misma ruta → sin navegación → sin
+// re-búsqueda, conserva scroll). El retroceso pasa por handleSlideoverPopState.
 let prevSlideoverOpen = false;
-let prevSlideoverStep: 'resumen' | 'datos' = 'resumen';
 watch([slideoverOpen, slideoverStep], ([open, step]) => {
   if (urlSyncDepth.value > 0) {
     prevSlideoverOpen = open;
-    prevSlideoverStep = step;
     return;
   }
 
@@ -400,12 +402,11 @@ watch([slideoverOpen, slideoverStep], ([open, step]) => {
   if (!open) {
     updateCategoriaUrl(undefined);
   } else if (vehiculo.value) {
-    // Abierto → se necesita la categoría para construir /categoria/X.
-    const isForward = !prevSlideoverOpen || (prevSlideoverStep === 'resumen' && step === 'datos');
-    updateCategoriaUrl(vehiculo.value, step === 'datos', isForward ? 'push' : 'replace');
+    // Empujar solo al ABRIR (cerrado→abierto); el cambio de paso usa replace.
+    const opening = !prevSlideoverOpen;
+    updateCategoriaUrl(vehiculo.value, step === 'datos', opening ? 'push' : 'replace');
   }
   prevSlideoverOpen = open;
-  prevSlideoverStep = step;
 });
 
 // Auto-abrir el slideover cuando carguen las categorías y exista el param.
@@ -516,13 +517,13 @@ function setSelectedCategory(category: ReturnType<typeof useCategory>) {
 function goToForm() {
   slideoverStep.value = 'datos';
 }
-// Botón "Volver" en Datos: retrocede una entrada (Datos→Resumen) vía el mismo
-// camino que el botón "atrás" del navegador, para que ambos queden simétricos.
+// Botón "Volver" en Datos: solo cambia de paso a Resumen (NO toca el historial;
+// el slideover tiene una sola entrada). El watcher reescribe la URL a
+// /categoria/X. El botón "atrás" del navegador, en cambio, cierra al listado.
 function backToResume() {
-  if (import.meta.client) window.history.back();
-  else slideoverStep.value = 'resumen';
+  slideoverStep.value = 'resumen';
 }
-// Botón "Volver" en Resumen: retrocede una entrada (Resumen→cerrar→listado).
+// Botón "Volver" en Resumen: retrocede la única entrada (Resumen→cerrar→listado).
 function backFromResume() {
   if (import.meta.client) window.history.back();
   else slideoverOpen.value = false;
