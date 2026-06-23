@@ -27,6 +27,11 @@
         <p class="cc-status">En línea · Disponible 24/7</p>
       </div>
 
+      <button v-if="messages.length" type="button" class="cc-restart" aria-label="Reiniciar conversación" @click="clear()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" />
+        </svg>
+      </button>
       <button type="button" class="cc-dismiss" aria-label="Cerrar chat" @click="emit('dismiss')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -92,7 +97,7 @@ import { renderChatMarkdown } from '@rentacar-main/logic/utils'
 withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
 const emit = defineEmits<{ dismiss: [] }>()
 
-const { messages, input, isStreaming, error, submit } = useChatConversation()
+const { messages, input, isStreaming, error, submit, clear } = useChatConversation()
 
 const inputFocused = ref(false)
 const scrollEl = ref<HTMLElement | null>(null)
@@ -157,6 +162,11 @@ button { -webkit-tap-highlight-color: transparent; }
   width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 9999px; color: #6b7280;
 }
 .cc-dismiss:hover { background: #f3f4f6; color: #111827; }
+.cc-restart {
+  display: flex; align-items: center; justify-content: center;
+  width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 9999px; color: #6b7280;
+}
+.cc-restart:hover { background: #f3f4f6; color: #111827; }
 
 /* --- Mensajes (gris ~10%: separa los globos con un fondo muy suave;
    min-height:0 = fix iOS) --- */
