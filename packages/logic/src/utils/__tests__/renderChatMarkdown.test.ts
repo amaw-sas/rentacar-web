@@ -35,4 +35,29 @@ describe('renderChatMarkdown', () => {
     const out = renderChatMarkdown('[<img src=x>](https://a.co)');
     expect(out).toContain('class="cc-link-btn">&lt;img src=x&gt;</a>');
   });
+
+  it('renders **bold** as <strong>', () => {
+    expect(renderChatMarkdown('Total a pagar: **$1.103.873 COP**')).toBe(
+      'Total a pagar: <strong>$1.103.873 COP</strong>',
+    );
+    expect(renderChatMarkdown('Número de solicitud: **AVO2Y3949OP**')).toBe(
+      'Número de solicitud: <strong>AVO2Y3949OP</strong>',
+    );
+  });
+
+  it('renders bold and a link together, still escaping the rest', () => {
+    const out = renderChatMarkdown(
+      '**Listo** <ok>\n[Web](https://a.co)',
+    );
+    expect(out).toContain('<strong>Listo</strong>');
+    expect(out).toContain('&lt;ok&gt;');
+    expect(out).toContain('<br>');
+    expect(out).toContain('class="cc-link-btn">Web</a>');
+  });
+
+  it('keeps bold safe — inner markup stays escaped', () => {
+    expect(renderChatMarkdown('**<b>x</b>**')).toBe(
+      '<strong>&lt;b&gt;x&lt;/b&gt;</strong>',
+    );
+  });
 });

@@ -1,15 +1,18 @@
 /**
- * Minimal, safe Markdown-link renderer for chat bubbles.
+ * Minimal, safe Markdown renderer for chat bubbles.
  *
- * The chat bot emits `[label](url)` for its fallback CTAs (finish on the web /
- * message an advisor). We render those as button-styled anchors and HTML-escape
- * everything else, so the bubble shows short clickable buttons instead of a long
- * raw URL. Content comes from our own server, but we escape defensively so a
- * stray `<` can never inject markup. Only http(s) and tel URLs are linkified;
- * anything else is left as escaped text.
+ * Supports two inline marks the bot emits:
+ *  - `[label](url)`  → button-styled anchor (fallback CTAs). Only http(s)/tel URLs.
+ *  - `**bold**`       → `<strong>` (e.g. price, request code).
+ *
+ * Everything else is HTML-escaped FIRST, then the two marks are applied on the
+ * escaped string (the `*`, `[`, `]`, `(`, `)` markers survive escaping). Content
+ * comes from our own server, but we escape defensively so a stray `<` can never
+ * inject markup. Newlines become <br>.
  */
 
 const LINK_RE = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|tel:[^\s)]+)\)/g;
+const BOLD_RE = /\*\*([^*\n]+)\*\*/g;
 
 function escapeHtml(s: string): string {
   return s
@@ -21,17 +24,12 @@ function escapeHtml(s: string): string {
 }
 
 export function renderChatMarkdown(text: string): string {
-  let out = '';
-  let last = 0;
-  for (const m of text.matchAll(LINK_RE)) {
-    const [full, label, url] = m;
-    const idx = m.index ?? 0;
-    out += escapeHtml(text.slice(last, idx));
-    out +=
-      `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" ` +
-      `class="cc-link-btn">${escapeHtml(label)}</a>`;
-    last = idx + full.length;
-  }
-  out += escapeHtml(text.slice(last));
-  return out.replace(/\n/g, '<br>');
+  let html = escapeHtml(text);
+  html = html.replace(
+    LINK_RE,
+    (_m, label: string, url: string) =>
+      `<a href="${url}" target="_blank" rel="noopener noreferrer" class="cc-link-btn">${label}</a>`,
+  );
+  html = html.replace(BOLD_RE, '<strong>$1</strong>');
+  return html.replace(/\n/g, '<br>');
 }
