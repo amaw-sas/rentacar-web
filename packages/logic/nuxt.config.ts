@@ -36,6 +36,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       rentacarPublicApiBase: 'https://rentacar-dashboard-delta.vercel.app',
+      // Feature flag (Escudo): muestra el chat IA. Default OFF; se enciende por
+      // ENTORNO y por marca con la env var NUXT_PUBLIC_CHAT_ENABLED=true en el
+      // proyecto Vercel correspondiente (ej. Preview ON / Production OFF). Permite
+      // probar en preview sin exponerlo en producción, y encender por marca.
+      chatEnabled: false,
     },
   },
 

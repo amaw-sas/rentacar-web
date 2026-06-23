@@ -37,7 +37,7 @@
           aria-label="Opciones de contacto"
           class="flex flex-col items-end gap-3"
         >
-          <li v-if="franchise.chatEnabled === true" class="flex">
+          <li v-if="chatEnabled" class="flex">
             <button type="button" class="fab-item" @click="openChat">
               <span class="fab-label">Chat 24 horas</span>
               <span class="fab-circle fab-chat">
@@ -101,6 +101,9 @@ import { ref } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 
 const { franchise } = useAppConfig()
+// Feature flag por entorno (Escudo): NUXT_PUBLIC_CHAT_ENABLED en el proyecto Vercel.
+const { chatEnabled: chatEnabledRaw } = useRuntimeConfig().public
+const chatEnabled = chatEnabledRaw === true
 
 // Estado client-only: arranca colapsado (lección #109).
 const menuOpen = ref(false)

@@ -16,10 +16,10 @@
 definePageMeta({ layout: false })
 useSeoMeta({ title: 'Chat', robots: 'noindex, nofollow' })
 
-// Feature flag (Escudo): si el chat está apagado para la marca, /chat no debe
-// exponer la conversación. Corre en SSR y cliente.
-const { franchise } = useAppConfig()
-if (franchise.chatEnabled !== true) {
+// Feature flag por entorno (Escudo): si el chat está apagado, /chat no debe
+// exponer la conversación. Corre en SSR y cliente. NUXT_PUBLIC_CHAT_ENABLED.
+const { chatEnabled } = useRuntimeConfig().public
+if (chatEnabled !== true) {
   await navigateTo('/')
 }
 
