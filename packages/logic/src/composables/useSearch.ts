@@ -274,7 +274,14 @@ export default function useSearch() {
       : null;
 
     return {
-      city: route.params.city,
+      // Derive the URL city from the SELECTED pickup branch, not the current page
+      // (issue #129 followup). Selecting another city's branch in the searcher must
+      // navigate to that city; keeping route.params.city produced an inconsistent
+      // `/cityA/.../cityB-branch/` URL that the #129 middleware then bounced back to
+      // cityA's default branch — the "La sede de recogida no corresponde a la ciudad"
+      // reset. Fallback to the route city when no pickup branch is resolved yet, so
+      // the named-route link never loses its required `city` param.
+      city: pickupBranch?.city ?? route.params.city,
       referido: referido.value,
       lugar_recogida: pickupBranch?.slug,
       lugar_devolucion: returnBranch?.slug,
