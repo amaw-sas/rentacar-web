@@ -40,9 +40,9 @@ export default defineNuxtConfig({
       // ENTORNO y por marca con la env var NUXT_PUBLIC_CHAT_ENABLED=true en el
       // proyecto Vercel correspondiente (ej. Preview ON / Production OFF). Permite
       // probar en preview sin exponerlo en producción, y encender por marca.
-      // STRING a propósito ('true'/'false'): evita la ambigüedad de coerción de
-      // env→boolean de Nuxt; los lectores comparan `=== 'true'`.
-      chatEnabled: 'false',
+      // Nuxt coerciona la env string a boolean (destr), así que el valor en runtime
+      // es boolean; los lectores comparan `=== true`.
+      chatEnabled: false,
     },
   },
 

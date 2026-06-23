@@ -102,7 +102,7 @@ import { useMediaQuery } from '@vueuse/core'
 
 const { franchise } = useAppConfig()
 // Feature flag por entorno (Escudo): NUXT_PUBLIC_CHAT_ENABLED en el proyecto Vercel.
-const chatEnabled = useRuntimeConfig().public.chatEnabled === 'true'
+const chatEnabled = useRuntimeConfig().public.chatEnabled === true
 
 // Estado client-only: arranca colapsado (lección #109).
 const menuOpen = ref(false)
