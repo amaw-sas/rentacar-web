@@ -50,3 +50,19 @@ puede diferir (one-way legítimo). El botón BUSCAR re-dispara la búsqueda aunq
 **When**: el flujo de validación evalúa la URL
 **Then**: el helper devuelve `null` (no hay sede de ciudad para corregir) → no crash, no redirect loop (≤1 navegación)
 **Evidence**: retorno `null` del helper (unit test, `cityBranch === undefined`); ausencia de error de runtime y ≤1 navegación (E2E)
+
+## SCEN-007: cambiar de ciudad en el buscador navega a esa ciudad, NO se resetea (followup del bug del operador)
+Complemento de SCEN-001: la corrección del middleware debe actuar SOLO sobre URLs foráneas que llegan
+de fuera del buscador (enlaces obsoletos), nunca sobre una selección legítima de otra ciudad.
+**Given**: el usuario está en la página/resultados de una ciudad A (p.ej. `/armenia`) y en el selector
+"Lugar de recogida" elige una sede de otra ciudad B (p.ej. "Bogotá Aeropuerto")
+**When**: pulsa "BUSCAR VEHÍCULOS"
+**Then**: el enlace se construye con la ciudad de la **sede elegida** (B) — `searchLinkParams.city` deriva
+de `pickupBranch.city`, no de `route.params.city` — así la URL final es
+`/bogota/.../lugar-recogida/bogota-aeropuerto/...`; NO aparece el toast "La sede de recogida no corresponde
+a la ciudad; se ajustó a la sede por defecto"; el banner dice "En Bogotá" y el selector mantiene la sede de Bogotá.
+La red de seguridad de SCEN-001 sigue intacta: si una URL foránea llega por fuera del buscador, el middleware aún la corrige.
+**Evidence**: `searchLinkParams` deriva `city` de `pickupBranch?.city ?? route.params.city` (unit source-level
+sobre `useSearch.ts`, `useSearch.searchLinkParams.test.ts`); runtime → URL final con ciudad B + ausencia del
+toast + banner "En Bogotá" (agent-browser sobre dev server de la rama). El override de alquilame
+(`syncSearchLinkParams`) usa la misma precedencia (sede primero, ruta como fallback).

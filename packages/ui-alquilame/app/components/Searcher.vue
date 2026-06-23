@@ -577,12 +577,16 @@ onMounted(() => {
   watch(() => searchComposable.searchLinkName.value, (val) => searchLinkName.value = val, { immediate: true });
   // F3 (issue #112): on /reservas there is no route.params.city, so the
   // composable's searchLinkParams.city is undefined and the results link would
-  // be broken. Derive the effective city from the chosen pickup branch when the
-  // route has no city. Merge into the local copy — never mutate the composable
+  // be broken. Derive the effective city from the chosen pickup branch.
+  // Issue #129 followup: PREFER the chosen pickup branch's city over the route
+  // city, so selecting another city's branch navigates to that city instead of
+  // being bounced back to the current page's default branch ("La sede de recogida
+  // no corresponde a la ciudad" reset). Fallback to the route city when no pickup
+  // branch is resolved yet. Merge into the local copy — never mutate the composable
   // params. Stays local to alquilame (zero changes to packages/logic).
   const syncSearchLinkParams = (params: any) => {
     const effectiveCity =
-      route.params.city ?? storeAdminData.searchBranchByCode(lugarRecogida.value ?? '')?.city;
+      storeAdminData.searchBranchByCode(lugarRecogida.value ?? '')?.city ?? route.params.city;
     searchLinkParams.value = { ...params, city: effectiveCity };
   };
   watch(() => searchComposable.searchLinkParams.value, (val) => syncSearchLinkParams(val), { immediate: true });
