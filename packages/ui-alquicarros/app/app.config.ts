@@ -34,6 +34,9 @@ export default defineAppConfig({
   franchise: {
     name: "alquicarros.com",
     shortname: "alquicarros",
+    // Feature flag (Escudo): muestra el chat IA por marca. Apagar = ocultar el
+    // item "Chat" del FAB y redirigir /chat. Toggle por config + redeploy.
+    chatEnabled: false,
     website: "https://alquicarros.com",
     title: "Alquiler de Carros en Colombia desde $32/día",
     description:

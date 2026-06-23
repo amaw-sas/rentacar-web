@@ -37,7 +37,7 @@
           aria-label="Opciones de contacto"
           class="flex flex-col items-end gap-3"
         >
-          <li class="flex">
+          <li v-if="franchise.chatEnabled === true" class="flex">
             <button type="button" class="fab-item" @click="openChat">
               <span class="fab-label">Chat 24 horas</span>
               <span class="fab-circle fab-chat">

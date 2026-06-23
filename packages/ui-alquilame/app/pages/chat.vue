@@ -16,6 +16,13 @@
 definePageMeta({ layout: false })
 useSeoMeta({ title: 'Chat', robots: 'noindex, nofollow' })
 
+// Feature flag (Escudo): si el chat está apagado para la marca, /chat no debe
+// exponer la conversación. Corre en SSR y cliente.
+const { franchise } = useAppConfig()
+if (franchise.chatEnabled !== true) {
+  await navigateTo('/')
+}
+
 const router = useRouter()
 function dismiss() {
   if (import.meta.client && window.history.length > 1) router.back()

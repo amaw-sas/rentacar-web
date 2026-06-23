@@ -34,6 +34,9 @@ export default defineAppConfig({
   franchise: {
     name: "alquilatucarro.com",
     shortname: "alquilatucarro",
+    // Feature flag (Escudo): muestra el chat IA por marca. Apagar = ocultar el
+    // item "Chat" del FAB y redirigir /chat. Toggle por config + redeploy.
+    chatEnabled: true,
     website: "https://alquilatucarro.com",
     title: "Alquiler de Carros en Colombia desde $32/día",
     description:
