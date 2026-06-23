@@ -131,6 +131,11 @@ export function useChatConversation() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      // Accumulate the streamed reply and reveal it ALL AT ONCE when the turn
+      // finishes (WhatsApp-style: typing dots while it "writes", then the full
+      // bubble) — no live typewriter. The dots keep showing because the visible
+      // assistant.text stays empty until the stream ends.
+      let assistantText = '';
 
       for (;;) {
         const { done, value } = await reader.read();
@@ -157,7 +162,7 @@ export function useChatConversation() {
             continue;
           }
           if (event.type === 'text-delta' && typeof event.delta === 'string') {
-            assistant.text += event.delta;
+            assistantText += event.delta;
           } else if (event.type === 'tool-output-available') {
             // Render the fallback CTAs from the structured tool result — never
             // from model text (it corrupts long URLs).
@@ -168,6 +173,9 @@ export function useChatConversation() {
           }
         }
       }
+
+      // Reveal the full reply at once now that the stream finished (WhatsApp-style).
+      assistant.text = assistantText;
 
       // Defense-in-depth: a turn that streams no text deltas (e.g. the model ended
       // on a tool call, or the function was cut short) would otherwise leave an
