@@ -333,6 +333,7 @@
         <div class="col-span-2">
             <u-button
                 :to="{name: searchLinkName, params: searchLinkParams}"
+                @click="onSearchClick"
                 :disabled="pendingSearching || !animateSearchButton || !isSelectionWithinSchedule"
                 :loading="pendingSearching"
                 :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
@@ -420,6 +421,27 @@ const searchLinkName = ref<string>('');
 const searchLinkParams = ref<any>({});
 const animateSearchButton = ref<boolean>(true);
 
+// Issue #129: the search button is a NuxtLink (:to). When the resolved target URL
+// equals the current one (e.g. retrying after an error without changing any field),
+// NuxtLink does not navigate, so useSearchByRouteParams never re-mounts and the
+// search is never re-fired. Re-trigger doSearch directly in that case. doSearch is
+// captured in onMounted, where useSearch is instantiated.
+const route = useRoute();
+const router = useRouter();
+const doSearchFn = ref<(() => void) | null>(null);
+const onSearchClick = (e: MouseEvent) => {
+  // Resolve BOTH sides through the router so the comparison is query-order- and
+  // encoding-insensitive (a reordered bookmarked link would otherwise false-negative).
+  // Only preventDefault when doSearch is ready (captured in onMounted): before mount,
+  // let NuxtLink's harmless same-URL no-op run instead of swallowing the tap.
+  const target = router.resolve({ name: searchLinkName.value, params: searchLinkParams.value });
+  const current = router.resolve(route.fullPath);
+  if (target.href === current.href && doSearchFn.value) {
+    e.preventDefault();
+    doSearchFn.value();
+  }
+};
+
 // Schedule restriction (#47 W4/W5): per-branch calendar predicates and the
 // submit gate, mirrored from useSearch. Defaults are permissive so the form is
 // never blocked before the composable initializes.
@@ -503,6 +525,7 @@ onMounted(() => {
 
   // Initialize useSearch composable
   const searchComposable = useSearch();
+  doSearchFn.value = searchComposable.doSearch; // #129: expose for same-URL re-fire
   watch(() => searchComposable.pickupHourOptions.value, (val) => pickupHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.returnHourOptions.value, (val) => returnHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.searchLinkName.value, (val) => searchLinkName.value = val, { immediate: true });
