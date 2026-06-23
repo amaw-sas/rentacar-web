@@ -47,6 +47,7 @@
         <span v-if="m.role === 'assistant' && !m.text && isStreaming" class="cc-typing" aria-live="polite">
           <span class="cc-bdot" /><span class="cc-bdot" /><span class="cc-bdot" />
         </span>
+        <span v-else-if="m.role === 'assistant'" class="cc-text" v-html="renderChatMarkdown(m.text)" />
         <template v-else>{{ m.text }}</template>
       </div>
       <p v-if="error" class="cc-error" role="alert">
@@ -82,6 +83,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
+import { renderChatMarkdown } from '@rentacar-main/logic/utils'
 
 withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
 const emit = defineEmits<{ dismiss: [] }>()
@@ -188,6 +190,20 @@ button { -webkit-tap-highlight-color: transparent; }
   border-bottom-left-radius: 0.25rem;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
+.cc-text { display: block; }
+.cc-link-btn {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  background: var(--ui-primary, #cc022b);
+  color: #fff !important;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.cc-link-btn:hover { opacity: 0.92; }
 .cc-error { align-self: center; color: #b91c1c; font-size: 0.8rem; text-align: center; }
 .cc-typing { display: flex; gap: 0.25rem; align-items: center; }
 .cc-bdot { width: 0.4rem; height: 0.4rem; border-radius: 9999px; background: #6b7280; animation: cc-bounce 1.2s infinite ease-in-out; }

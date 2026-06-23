@@ -18,6 +18,7 @@ export * from './useValidateFunctions';
 // String Functions
 // ============================================================================
 export { slugify } from './slugify';
+export { renderChatMarkdown } from './renderChatMarkdown';
 
 // ============================================================================
 // Pricing
