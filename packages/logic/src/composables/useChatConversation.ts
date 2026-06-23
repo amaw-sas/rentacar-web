@@ -154,6 +154,14 @@ export function useChatConversation() {
         }
       }
 
+      // Defense-in-depth: a turn that streams no text deltas (e.g. the model ended
+      // on a tool call, or the function was cut short) would otherwise leave an
+      // empty white bubble. Replace it with a recoverable message.
+      if (assistant.text.trim() === '') {
+        assistant.text =
+          'Disculpa, no alcancé a completar esa respuesta. ¿Lo intentamos de nuevo?';
+      }
+
       status.value = 'ready';
       persist();
     } catch (e) {
