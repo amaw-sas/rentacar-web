@@ -43,22 +43,36 @@
       <p v-if="!messages.length" class="cc-empty">
         ¡Hola! 👋 Pregúntame por ciudades, precios, requisitos o tu reserva.
       </p>
-      <div
-        v-for="m in messages"
-        :key="m.id"
-        class="cc-msg"
-        :class="m.role === 'user' ? 'is-user' : 'is-assistant'"
-      >
-        <span v-if="m.role === 'assistant' && !m.text && isStreaming" class="cc-typing" aria-live="polite">
-          <span class="cc-bdot" /><span class="cc-bdot" /><span class="cc-bdot" />
-        </span>
-        <span v-else-if="m.role === 'assistant'" class="cc-text" v-html="renderChatMarkdown(m.text)" />
-        <template v-else>{{ m.text }}</template>
-        <span v-if="m.actions" class="cc-actions">
-          <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
-          <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Escribir a un asesor</a>
-        </span>
-      </div>
+      <template v-for="m in messages" :key="m.id">
+        <!-- Usuario: siempre una sola burbuja -->
+        <div v-if="m.role === 'user'" class="cc-msg is-user">
+          {{ m.text }}
+          <span v-if="m.createdAt" class="cc-time">{{ fmtTime(m.createdAt) }}</span>
+        </div>
+
+        <!-- Asistente "escribiendo": 3 puntos mientras llega la respuesta -->
+        <div v-else-if="!m.text && isStreaming" class="cc-msg is-assistant">
+          <span class="cc-typing" aria-live="polite">
+            <span class="cc-bdot" /><span class="cc-bdot" /><span class="cc-bdot" />
+          </span>
+        </div>
+
+        <!-- Asistente: una burbuja por tema (separador ---) -->
+        <template v-else>
+          <div
+            v-for="(chunk, i) in bubblesFor(m)"
+            :key="`${m.id}-${i}`"
+            class="cc-msg is-assistant"
+          >
+            <span v-if="chunk" class="cc-text" v-html="renderChatMarkdown(chunk)" />
+            <span v-if="m.actions && i === bubblesFor(m).length - 1" class="cc-actions">
+              <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
+              <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Escribir a un asesor</a>
+            </span>
+            <span v-if="m.createdAt" class="cc-time">{{ fmtTime(m.createdAt) }}</span>
+          </div>
+        </template>
+      </template>
       <p v-if="error" class="cc-error" role="alert">
         No pude responder ahora. Intenta de nuevo en un momento.
       </p>
@@ -92,7 +106,24 @@
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { renderChatMarkdown } from '@rentacar-main/logic/utils'
+import { renderChatMarkdown, splitBubbles } from '@rentacar-main/logic/utils'
+
+// Hora por mensaje (estilo WhatsApp), hora de Colombia, 12h.
+const timeFmt = new Intl.DateTimeFormat('es-CO', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+  timeZone: 'America/Bogota',
+})
+function fmtTime(ms?: number): string {
+  return ms ? timeFmt.format(new Date(ms)) : ''
+}
+// Una burbuja por tema (separador --- del bot). Si no hay texto pero sí botones
+// de respaldo, deja una burbuja vacía para mostrarlos.
+function bubblesFor(m: { text: string; actions?: unknown }): string[] {
+  const chunks = splitBubbles(m.text)
+  return chunks.length ? chunks : m.actions ? [''] : []
+}
 
 withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
 const emit = defineEmits<{ dismiss: [] }>()
@@ -205,6 +236,7 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 .cc-text, .cc-actions { display: block; }
+.cc-time { display: block; font-size: 0.65rem; line-height: 1; opacity: 0.55; text-align: right; margin-top: 0.25rem; }
 .cc-link-btn {
   display: block;
   margin-top: 0.5rem;

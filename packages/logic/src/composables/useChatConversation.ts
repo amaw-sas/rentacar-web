@@ -26,6 +26,9 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  // ms epoch stamped when the message is created (client). Persisted so the
+  // WhatsApp-style time stays stable across reloads. Optional for legacy rows.
+  createdAt?: number;
   // Fallback CTAs (finish on the web / message an advisor) rendered as buttons
   // from the server tool output — never from the model's text. Set when a booking
   // fails. See extractChatActions.
@@ -91,7 +94,7 @@ export function useChatConversation() {
     input.value = '';
     error.value = null;
 
-    messages.value.push({ id: genId(), role: 'user', text });
+    messages.value.push({ id: genId(), role: 'user', text, createdAt: Date.now() });
 
     // Build the request history BEFORE adding the assistant placeholder, in the
     // UIMessage shape the endpoint expects (parts[], not a content string).
@@ -102,7 +105,7 @@ export function useChatConversation() {
     }));
 
     // Placeholder assistant message; grab the reactive proxy to stream into it.
-    messages.value.push({ id: genId(), role: 'assistant', text: '' });
+    messages.value.push({ id: genId(), role: 'assistant', text: '', createdAt: Date.now() });
     const assistant = messages.value[messages.value.length - 1]!;
 
     status.value = 'submitting';

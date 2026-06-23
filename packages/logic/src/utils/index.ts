@@ -19,6 +19,7 @@ export * from './useValidateFunctions';
 // ============================================================================
 export { slugify } from './slugify';
 export { renderChatMarkdown } from './renderChatMarkdown';
+export { splitBubbles } from './splitBubbles';
 export { extractChatActions } from './extractChatActions';
 export type { ChatActions } from './extractChatActions';
 
