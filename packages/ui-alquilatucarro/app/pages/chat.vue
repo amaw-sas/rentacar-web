@@ -18,8 +18,7 @@ useSeoMeta({ title: 'Chat', robots: 'noindex, nofollow' })
 
 // Feature flag por entorno (Escudo): si el chat está apagado, /chat no debe
 // exponer la conversación. Corre en SSR y cliente. NUXT_PUBLIC_CHAT_ENABLED.
-const { chatEnabled } = useRuntimeConfig().public
-if (chatEnabled !== true) {
+if (useRuntimeConfig().public.chatEnabled !== 'true') {
   await navigateTo('/')
 }
 
