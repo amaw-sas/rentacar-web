@@ -217,7 +217,7 @@ button { -webkit-tap-highlight-color: transparent; }
   max-width: 85%;
   padding: 0.5rem 0.75rem;
   border-radius: 0.875rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
@@ -263,7 +263,7 @@ button { -webkit-tap-highlight-color: transparent; }
   flex: 1; min-width: 0;
   padding: 0.625rem 0.875rem;
   border: 2px solid #cbd0d6; border-radius: 9999px;
-  font-size: 0.9rem; color: #111827; outline: none;
+  font-size: 1rem; color: #111827; outline: none;
   transition: border-color 0.15s ease;
 }
 .cc-input input:focus { border-color: var(--ui-primary, #cc022b); }
