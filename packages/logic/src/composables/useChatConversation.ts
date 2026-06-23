@@ -20,11 +20,16 @@
  * reloads and SSR/ISR navigation. Reasoning parts are ignored.
  */
 import { computed, ref } from 'vue';
+import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
 
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  // Fallback CTAs (finish on the web / message an advisor) rendered as buttons
+  // from the server tool output — never from the model's text. Set when a booking
+  // fails. See extractChatActions.
+  actions?: ChatActions;
 }
 
 type ChatStatus = 'ready' | 'submitting' | 'streaming' | 'error';
@@ -140,7 +145,12 @@ export function useChatConversation() {
           if (!trimmed.startsWith('data:')) continue;
           const data = trimmed.slice(5).trim();
           if (!data || data === '[DONE]') continue;
-          let event: { type?: string; delta?: string; errorText?: string };
+          let event: {
+            type?: string;
+            delta?: string;
+            errorText?: string;
+            output?: unknown;
+          };
           try {
             event = JSON.parse(data);
           } catch {
@@ -148,6 +158,11 @@ export function useChatConversation() {
           }
           if (event.type === 'text-delta' && typeof event.delta === 'string') {
             assistant.text += event.delta;
+          } else if (event.type === 'tool-output-available') {
+            // Render the fallback CTAs from the structured tool result — never
+            // from model text (it corrupts long URLs).
+            const actions = extractChatActions(event.output);
+            if (actions) assistant.actions = actions;
           } else if (event.type === 'error') {
             throw new Error(event.errorText || 'stream error');
           }
@@ -157,7 +172,7 @@ export function useChatConversation() {
       // Defense-in-depth: a turn that streams no text deltas (e.g. the model ended
       // on a tool call, or the function was cut short) would otherwise leave an
       // empty white bubble. Replace it with a recoverable message.
-      if (assistant.text.trim() === '') {
+      if (assistant.text.trim() === '' && !assistant.actions) {
         assistant.text =
           'Disculpa, no alcancé a completar esa respuesta. ¿Lo intentamos de nuevo?';
       }

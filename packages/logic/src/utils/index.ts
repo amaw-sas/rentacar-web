@@ -19,6 +19,8 @@ export * from './useValidateFunctions';
 // ============================================================================
 export { slugify } from './slugify';
 export { renderChatMarkdown } from './renderChatMarkdown';
+export { extractChatActions } from './extractChatActions';
+export type { ChatActions } from './extractChatActions';
 
 // ============================================================================
 // Pricing

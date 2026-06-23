@@ -49,6 +49,10 @@
         </span>
         <span v-else-if="m.role === 'assistant'" class="cc-text" v-html="renderChatMarkdown(m.text)" />
         <template v-else>{{ m.text }}</template>
+        <span v-if="m.actions" class="cc-actions">
+          <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
+          <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Escribir a un asesor</a>
+        </span>
       </div>
       <p v-if="error" class="cc-error" role="alert">
         No pude responder ahora. Intenta de nuevo en un momento.
@@ -190,7 +194,7 @@ button { -webkit-tap-highlight-color: transparent; }
   border-bottom-left-radius: 0.25rem;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
-.cc-text { display: block; }
+.cc-text, .cc-actions { display: block; }
 .cc-link-btn {
   display: block;
   margin-top: 0.5rem;
