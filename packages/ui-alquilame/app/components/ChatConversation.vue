@@ -74,7 +74,7 @@
         </template>
       </template>
       <p v-if="error" class="cc-error" role="alert">
-        No pude responder ahora. Intenta de nuevo en un momento.
+        {{ error.message }}
       </p>
     </div>
 

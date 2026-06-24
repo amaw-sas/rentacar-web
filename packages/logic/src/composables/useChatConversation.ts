@@ -37,6 +37,10 @@ export interface ChatMessage {
 
 type ChatStatus = 'ready' | 'submitting' | 'streaming' | 'error';
 
+// Shown when the request fails without a usable server message (network / 5xx
+// without body / stream error). Known server errors override this with their text.
+const CHAT_GENERIC_ERROR = 'No pude responder ahora. Intenta de nuevo en un momento.';
+
 export function useChatConversation() {
   const { franchise } = useAppConfig();
   const { rentacarPublicApiBase } = useRuntimeConfig().public;
@@ -127,7 +131,21 @@ export function useChatConversation() {
       if (id) conversationId.value = id;
 
       if (!response.ok || !response.body) {
-        throw new Error(`Chat request failed (${response.status})`);
+        // Surface the server's friendly message (rate limits, validation, missing
+        // config, etc.) to the customer instead of a generic error. Falls back to
+        // the generic text for empty/non-JSON bodies (network / 5xx without body).
+        let userMessage = CHAT_GENERIC_ERROR;
+        try {
+          const body = (await response.json()) as { error?: unknown };
+          if (typeof body?.error === 'string' && body.error) userMessage = body.error;
+        } catch {
+          // no JSON body — keep the generic message
+        }
+        const err = new Error(
+          `Chat request failed (${response.status})`,
+        ) as Error & { userMessage?: string };
+        err.userMessage = userMessage;
+        throw err;
       }
 
       status.value = 'streaming';
@@ -191,10 +209,13 @@ export function useChatConversation() {
       status.value = 'ready';
       persist();
     } catch (e) {
-      if ((e as { name?: string }).name === 'AbortError') {
+      const err = e as { name?: string; userMessage?: string };
+      if (err.name === 'AbortError') {
         status.value = 'ready';
       } else {
-        error.value = e as Error;
+        // error.message is what the bubble shows — always a customer-safe string:
+        // the server's friendly text when we captured one, else the generic retry.
+        error.value = new Error(err.userMessage ?? CHAT_GENERIC_ERROR);
         status.value = 'error';
       }
       persist();
