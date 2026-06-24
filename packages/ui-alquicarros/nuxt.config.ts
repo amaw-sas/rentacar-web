@@ -34,7 +34,7 @@ export default defineNuxtConfig({
           innerHTML: `@layer theme, base, components, utilities;
             @layer base {
             *, *::before, *::after { box-sizing: border-box; }
-            body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+            body { margin: 0; font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, sans-serif; }
             img { max-width: 100%; height: auto; display: block; }
             picture { display: block; }
             svg { max-width: 100%; height: auto; }
@@ -419,6 +419,16 @@ export default defineNuxtConfig({
   },
 
   modules: ['@nuxtjs/seo', '@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-llms', 'nuxt-vitalizer', '@nuxtjs/mdc'],
+
+  // Fuente institucional self-hosted (@nuxt/fonts, bundled con @nuxt/ui).
+  // configKey top-level `fonts` — NO se añade a `modules[]`.
+  // Self-hosted: @nuxt/fonts descarga y sirve local (sin <link> a Google Fonts).
+  // Una sola familia (Montserrat) para titulares y cuerpo, igual que el legacy.
+  fonts: {
+    families: [
+      { name: 'Montserrat', weights: [400, 500, 600, 700, 800] },
+    ],
+  },
 
   // Optimización de imágenes — Vercel Image Optimization
   image: {

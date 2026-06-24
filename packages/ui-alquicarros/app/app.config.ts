@@ -14,8 +14,12 @@ export default defineAppConfig({
   // Shared default timezone
   defaultTimezone: defaultConfig.defaultTimezone,
 
-  // Shared UI configuration (Nuxt UI component slots and variants)
-  ui: uiConfig,
+  // Shared UI configuration (Nuxt UI component slots and variants) +
+  // brand primary. `brand` is the custom scale defined in theme.css (#EF9600).
+  ui: {
+    ...uiConfig,
+    colors: { primary: 'brand', neutral: 'zinc' },
+  },
 
   // Organization: shared base + brand-specific overrides
   organization: {
