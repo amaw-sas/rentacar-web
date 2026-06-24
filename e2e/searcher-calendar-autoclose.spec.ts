@@ -82,7 +82,7 @@ test.describe('Searcher calendar autoclose - desktop', () => {
     await expect(page.locator('[role="dialog"]')).toHaveCount(0);
   });
 
-  test('SCEN-005: seleccionar recogida setea devolución +7 días sin abrir su popover', async ({ page }) => {
+  test('SCEN-005: seleccionar recogida setea devolución +1 día sin abrir su popover', async ({ page }) => {
     const pickupTrigger = page.locator(PICKUP_TRIGGER).first();
     const returnTrigger = page.locator(RETURN_TRIGGER).first();
 
@@ -103,7 +103,7 @@ test.describe('Searcher calendar autoclose - desktop', () => {
     const [py, pm, pd] = targetISO!.split('-').map((n) => parseInt(n, 10));
     const pickupLocal = new Date(py, pm - 1, pd);
     const returnLocal = new Date(pickupLocal);
-    returnLocal.setDate(pickupLocal.getDate() + 7);
+    returnLocal.setDate(pickupLocal.getDate() + 1);
     const expectedReturnISO =
       `${returnLocal.getFullYear()}-` +
       `${String(returnLocal.getMonth() + 1).padStart(2, '0')}-` +
