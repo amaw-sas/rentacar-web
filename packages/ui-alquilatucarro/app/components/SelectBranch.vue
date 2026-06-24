@@ -1,26 +1,61 @@
 <template>
-    <!-- Móvil: select nativo (mejor UX táctil) -->
-    <div class="relative w-full sm:hidden">
-      <LocationIcon cls="absolute left-3 inset-y-0 m-auto text-red-600 size-5 pointer-events-none" />
-      <select
+    <!-- Móvil: drawer a pantalla completa con buscador (directiva 2026-06-23),
+         mismo patrón que el searcher. Reemplaza el dropdown nativo. El trigger
+         conserva el look prominente del selector del home (icono rojo + chevron). -->
+    <div class="w-full sm:hidden">
+      <button
         id="select-branch-mobile"
-        v-model="selectedBranch"
+        type="button"
         aria-label="Selecciona ciudad de recogida"
         :class="[
-          'select-branch-critical w-full rounded-xl text-black py-6 pl-10 pr-12 border border-gray-400 appearance-none',
+          'select-branch-critical relative flex items-center w-full rounded-xl text-black py-6 pl-10 pr-12 border border-gray-400 text-left',
           variant === 'gray' ? 'bg-gray-200' : 'bg-white'
         ]"
-        @change="handleMobileChange"
+        @click="drawerOpen = true"
       >
-        <option value="null">Elige una ciudad</option>
-        <option
-          v-for="branch in branches"
-          :key="branch.code"
-          :value="branch.code"
-          v-text="branch.name"
-        ></option>
-      </select>
-      <ChevronDownIcon cls="absolute right-4 inset-y-0 m-auto size-6 pointer-events-none text-gray-600" />
+        <LocationIcon cls="absolute left-3 inset-y-0 m-auto text-red-600 size-5 pointer-events-none" />
+        <span :class="{ 'text-gray-500': !selectedLabel }">{{ selectedLabel || 'Elige una ciudad' }}</span>
+        <ChevronDownIcon cls="absolute right-4 inset-y-0 m-auto size-6 pointer-events-none text-gray-600" />
+      </button>
+      <u-slideover
+        v-model:open="drawerOpen"
+        side="bottom"
+        title="Elige una ciudad"
+        :ui="{ content: 'bg-white h-dvh max-h-dvh ring-0', body: 'p-0 flex flex-col min-h-0' }"
+        @update:open="onDrawerToggle"
+      >
+        <template #body>
+          <div class="p-3 border-b border-gray-100">
+            <u-input
+              v-model="query"
+              placeholder="Buscar ciudad"
+              size="xl"
+              class="w-full"
+              :ui="{ base: 'text-lg' }"
+              :autofocus="false"
+            >
+              <template #leading>
+                <SearchIcon cls="size-5 text-gray-400" />
+              </template>
+            </u-input>
+          </div>
+          <div class="flex-1 overflow-y-auto min-h-0">
+            <button
+              v-for="branch in filteredBranches"
+              :key="branch.code"
+              type="button"
+              class="relative flex w-full items-center justify-center px-12 py-4 text-center text-lg text-gray-900 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50"
+              @click="selectBranch(branch)"
+            >
+              <span>{{ branch.name }}</span>
+            </button>
+            <p
+              v-if="!filteredBranches.length"
+              class="px-4 py-8 text-center text-lg text-gray-500"
+            >Sin resultados</p>
+          </div>
+        </template>
+      </u-slideover>
     </div>
     <!-- Desktop: USelectMenu con búsqueda -->
     <USelectMenu
@@ -49,6 +84,7 @@
 <script setup lang="ts">
 /** types */
 import type { SelectMenuItem } from "@nuxt/ui";
+import type { BranchData } from "@rentacar-main/logic/utils";
 
 /** imports */
 import { today } from "@internationalized/date";
@@ -59,6 +95,7 @@ import { computed } from "vue";
 import {
   IconsLocationIcon as LocationIcon,
   IconsChevronDownIcon as ChevronDownIcon,
+  IconsSearchIcon as SearchIcon,
 } from "#components";
 
 /** props */
@@ -94,11 +131,32 @@ const items = computed<SelectMenuItem[]>(() =>
 /** refs */
 const selectedBranch = ref<BranchData['code'] | null>(null)
 
+/** mobile drawer state (directiva 2026-06-23): full-screen slideover with a
+ * non-autofocusing search, mirroring the searcher select drawers. */
+const drawerOpen = ref<boolean>(false)
+const query = ref<string>('')
+
+const filteredBranches = computed<BranchData[]>(() => {
+  const list = branches.value || []
+  const q = query.value.trim().toLowerCase()
+  if (!q) return list
+  return list.filter((b: BranchData) => b.name.toLowerCase().includes(q))
+})
+
+const selectedLabel = computed<string>(() => {
+  const match = (branches.value || []).find((b: BranchData) => b.code === selectedBranch.value)
+  return match ? match.name : ''
+})
+
 /** bfcache restoration: after browser back, the persisted v-model value
  * prevents @change / onSelect from firing again for the same option.
  * Reset to placeholder on restoration so any re-selection navigates. */
 const handlePageShow = (event: PageTransitionEvent) => {
-  if (event.persisted) selectedBranch.value = null
+  if (event.persisted) {
+    selectedBranch.value = null
+    drawerOpen.value = false
+    query.value = ''
+  }
 }
 
 onMounted(() => {
@@ -114,13 +172,16 @@ onBeforeUnmount(() => {
 })
 
 /** functions */
-const handleMobileChange = () => {
-  if (selectedBranch.value && selectedBranch.value !== 'null') {
-    const branch = (branches.value || []).find((b: BranchData) => b.code === selectedBranch.value);
-    if (branch) {
-      goToReservationPage(branch);
-    }
-  }
+const selectBranch = (branch: BranchData) => {
+  selectedBranch.value = branch.code;
+  query.value = '';
+  drawerOpen.value = false;
+  goToReservationPage(branch);
+};
+
+// Clear the filter when the drawer is dismissed (X / overlay / escape).
+const onDrawerToggle = (value: boolean) => {
+  if (!value) query.value = '';
 };
 
 const goToReservationPage = async (branch: BranchData) =>
