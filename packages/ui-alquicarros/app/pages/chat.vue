@@ -24,7 +24,10 @@ if (useRuntimeConfig().public.chatEnabled !== true) {
 
 const router = useRouter()
 function dismiss() {
-  if (import.meta.client && window.history.length > 1) router.back()
+  // Volver dentro del sitio solo si la pagina previa es de la app (Vue Router
+  // llena history.state.back); si /chat se abrio directo o desde fuera, ir al
+  // home — nunca salir al escritorio del movil.
+  if (import.meta.client && window.history.state?.back) router.back()
   else navigateTo('/')
 }
 </script>
