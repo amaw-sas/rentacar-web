@@ -170,11 +170,11 @@ button { -webkit-tap-highlight-color: transparent; }
   height: 2.5rem;
   flex-shrink: 0;
   border-radius: 9999px;
-  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
   background: color-mix(in oklab, var(--ui-primary, #cc022b) 14%, white);
   color: var(--ui-primary, #cc022b);
 }
-.cc-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cc-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 9999px; }
 .cc-avatar-dot {
   position: absolute;
   right: -1px;
