@@ -187,7 +187,7 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .cc-titlewrap { flex: 1; min-width: 0; }
 .cc-title { font-weight: 700; color: #111827; font-size: 0.95rem; line-height: 1.15; margin: 0; }
-.cc-status { font-size: 0.8rem; color: #6b7280; margin: 0; }
+.cc-status { font-size: 0.8rem; color: #6b7280; margin: 0.125rem 0 0; }
 .cc-dismiss {
   display: flex; align-items: center; justify-content: center;
   width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 9999px; color: #6b7280;
