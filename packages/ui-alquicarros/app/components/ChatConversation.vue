@@ -15,10 +15,8 @@
   -->
   <section class="cc-root" :class="`cc-${variant}`">
     <header class="cc-header">
-      <span class="cc-avatar" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-        </svg>
+      <span class="cc-avatar">
+        <img class="cc-avatar-img" src="/images/asesora-avatar.webp" alt="Asesora" width="40" height="40" decoding="async" />
         <span class="cc-avatar-dot" />
       </span>
 
@@ -172,9 +170,11 @@ button { -webkit-tap-highlight-color: transparent; }
   height: 2.5rem;
   flex-shrink: 0;
   border-radius: 9999px;
+  overflow: hidden;
   background: color-mix(in oklab, var(--ui-primary, #cc022b) 14%, white);
   color: var(--ui-primary, #cc022b);
 }
+.cc-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cc-avatar-dot {
   position: absolute;
   right: -1px;
@@ -184,6 +184,14 @@ button { -webkit-tap-highlight-color: transparent; }
   border-radius: 9999px;
   background: #22c55e;
   border: 2px solid #fff;
+  animation: cc-chip-glow 1.6s ease-in-out infinite;
+}
+@keyframes cc-chip-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  50% { box-shadow: 0 0 7px 2px rgba(34, 197, 94, 0.95); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-avatar-dot { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
 }
 .cc-titlewrap { flex: 1; min-width: 0; }
 .cc-title { font-weight: 700; color: #111827; font-size: 0.95rem; line-height: 1.15; margin: 0; }
