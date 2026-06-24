@@ -210,7 +210,7 @@ button { -webkit-tap-highlight-color: transparent; }
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  background: #e5e7eb;
+  background: #ece5dd;
 }
 .cc-empty { color: #6b7280; font-size: 0.875rem; text-align: center; margin: auto 0; padding: 1rem; }
 .cc-msg {
@@ -224,8 +224,8 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .cc-msg.is-user {
   align-self: flex-end;
-  background: var(--ui-primary, #cc022b);
-  color: #fff;
+  background: #d9fdd3;
+  color: #111b21;
   border-bottom-right-radius: 0.25rem;
 }
 .cc-msg.is-assistant {
