@@ -258,12 +258,12 @@ button { -webkit-tap-highlight-color: transparent; }
 @keyframes cc-bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-0.25rem); opacity: 1; } }
 
 /* --- Input --- */
-.cc-input { display: flex; gap: 0.5rem; padding: 0.75rem; border-top: 1px solid #f0f0f0; flex-shrink: 0; background: #fff; }
+.cc-input { display: flex; gap: 0.5rem; padding: 0.75rem; border-top: 1px solid #f0f0f0; flex-shrink: 0; background: #ece5dd; }
 .cc-input input {
   flex: 1; min-width: 0;
   padding: 0.625rem 0.875rem;
   border: 2px solid #cbd0d6; border-radius: 9999px;
-  font-size: 1rem; color: #111827; outline: none;
+  font-size: 1rem; color: #111827; background: #fff; outline: none;
   transition: border-color 0.15s ease;
 }
 .cc-input input:focus { border-color: var(--ui-primary, #cc022b); }
