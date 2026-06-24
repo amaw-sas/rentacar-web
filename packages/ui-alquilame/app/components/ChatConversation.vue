@@ -159,7 +159,7 @@ button { -webkit-tap-highlight-color: transparent; }
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.75rem 0.875rem;
+  padding: 0.5rem 0.875rem;
   border-bottom: 1px solid #f0f0f0;
   flex-shrink: 0;
 }
@@ -186,8 +186,8 @@ button { -webkit-tap-highlight-color: transparent; }
   border: 2px solid #fff;
 }
 .cc-titlewrap { flex: 1; min-width: 0; }
-.cc-title { font-weight: 700; color: #111827; font-size: 0.95rem; line-height: 1.15; }
-.cc-status { font-size: 0.8rem; color: #6b7280; margin-top: 0; }
+.cc-title { font-weight: 700; color: #111827; font-size: 0.95rem; line-height: 1.15; margin: 0; }
+.cc-status { font-size: 0.8rem; color: #6b7280; margin: 0; }
 .cc-dismiss {
   display: flex; align-items: center; justify-content: center;
   width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 9999px; color: #6b7280;
