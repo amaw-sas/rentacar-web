@@ -114,7 +114,7 @@
               </div>
             </div>
             <div class="text-right text-[10px] text-gray-500">
-              No incluye IVA ni tasa admin
+              {{ haveMonthlyReservation ? 'Incluye IVA y tasa admin' : 'No incluye IVA ni tasa admin' }}
             </div>
 
             <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
@@ -176,6 +176,7 @@ const {
     selectedReturnLocation,
     selectedMonthlyMileage,
     selectedDays,
+    haveMonthlyReservation,
     haveTotalInsurance,
     humanFormattedPickupDate: formattedPickupDate,
     humanFormattedReturnDate: formattedReturnDate,
