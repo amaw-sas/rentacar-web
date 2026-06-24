@@ -10,8 +10,9 @@ const source = readFileSync(
 describe('Searcher — pickup/return calendars hide year controls', () => {
   const calendarTags = source.match(/<u-calendar\b[\s\S]*?\/>/g) ?? []
 
-  it('renders both pickup and return u-calendar instances', () => {
-    expect(calendarTags.length).toBe(2)
+  it('renders pickup and return u-calendar instances (mobile slideover + desktop popover)', () => {
+    // 4 instances: mobile slideover + desktop popover, for both pickup and return.
+    expect(calendarTags.length).toBe(4)
   })
 
   it('disables year controls on every u-calendar so the << / >> chevrons are not shown', () => {
@@ -19,6 +20,35 @@ describe('Searcher — pickup/return calendars hide year controls', () => {
       expect(tag).toMatch(/:year-controls="false"/)
       expect(tag).not.toMatch(/:year-controls="true"/)
     }
+  })
+})
+
+describe('Searcher — mobile uses full-screen drawers (no native select/date input)', () => {
+  // directiva 2026-06-23: mobile no longer uses native <select> or
+  // <input type="date">; it uses the shared SearcherSelectDrawer for
+  // location/hour and a u-slideover + u-calendar for dates. Source-string
+  // assertions: the .vue imports from #components (no vitest alias) so it
+  // can't be mounted here.
+
+  it('drops the native <select> on mobile', () => {
+    expect(source).not.toMatch(/<select\b/)
+  })
+
+  it('drops the native <input type="date"> on mobile', () => {
+    expect(source).not.toMatch(/type="date"/)
+  })
+
+  it('uses the shared SearcherSelectDrawer for location/hour fields', () => {
+    expect(source).toMatch(/SearcherSelectDrawer/)
+  })
+
+  it('opens full-height slideover drawers for the date calendars', () => {
+    expect(source).toMatch(/<u-slideover/)
+    expect(source).toMatch(/h-dvh/)
+  })
+
+  it('scales the mobile calendar with a dedicated UI config', () => {
+    expect(source).toMatch(/mobileCalendarUIConfig/)
   })
 })
 
@@ -96,9 +126,16 @@ describe('Searcher — derives results-URL city from pickup branch when route ha
     expect(source).toMatch(/watch\(\s*lugarRecogida\s*,\s*\(\)\s*=>\s*syncSearchLinkParams/)
   })
 
-  it('keeps pickup/return location testids intact', () => {
-    expect(source).toMatch(/data-testid="pickup-location-test"/)
-    expect(source).toMatch(/data-testid="return-location-test"/)
+  it('keeps pickup/return location testids intact (mobile drawer prop + desktop data-testid)', () => {
+    // directiva 2026-06-23: the mobile location selectors are now the shared
+    // SearcherSelectDrawer, which receives the testid via its `testid` prop
+    // (rendered as data-testid on the trigger button). The desktop u-select-menu
+    // keeps a distinct `*-desktop-test` data-testid. Both surfaces remain
+    // addressable, so the F3 selectors stay stable.
+    expect(source).toMatch(/testid="pickup-location-test"/)
+    expect(source).toMatch(/testid="return-location-test"/)
+    expect(source).toMatch(/data-testid="pickup-location-desktop-test"/)
+    expect(source).toMatch(/data-testid="return-location-desktop-test"/)
   })
 })
 
@@ -155,24 +192,39 @@ describe('Searcher — defensive body sanitization on mount (issue #25, SCEN-003
   })
 })
 
-describe('Searcher — mobile date cannot be cleared (no-clear guard)', () => {
-  // The mobile pickup/return fields are native <input type="date">, whose browser
-  // clear affordance (Android picker / desktop ✕) would otherwise blank the field.
-  // The @change clamp repaints the last valid value on an empty input, and the
-  // inputs bind :value one-way so the empty `input` event never reaches the shared
-  // ref (which the desktop Reka UI picker requires as a CalendarDate, see #174).
+describe('Searcher — mobile date is chosen via a calendar slideover (no clearable native input)', () => {
+  // directiva 2026-06-23: the mobile pickup/return date fields are no longer
+  // native <input type="date"> (whose clear affordance could blank the field and
+  // whose Android validation balloon was unstyleable). They are now u-button
+  // triggers that open a u-slideover + u-calendar. The date can only be replaced
+  // by picking another day — there is no clear affordance — so the old clamp /
+  // one-way :value / fallback machinery is structurally unnecessary. These
+  // assertions encode the new contract.
 
-  it('binds both mobile date inputs one-way with :value (not v-model)', () => {
-    expect(source).toMatch(/name="pickup-date-mobile"[\s\S]{0,40}?:value="selectedPickupDate/)
-    expect(source).toMatch(/name="return-date-mobile"[\s\S]{0,40}?:value="selectedReturnDate/)
+  it('exposes mobile date triggers that open the calendar slideover', () => {
+    expect(source).toMatch(/data-testid="pickup-date-mobile-trigger"/)
+    expect(source).toMatch(/data-testid="return-date-mobile-trigger"/)
+    expect(source).toMatch(/pickupDateSlideoverOpen\s*=\s*true/)
+    expect(source).toMatch(/returnDateSlideoverOpen\s*=\s*true/)
   })
 
-  it('repaints the last valid value when the mobile date input is cleared', () => {
-    expect(source).toMatch(/if\s*\(\s*!value\s*\)\s*\{[\s\S]*?target\.value\s*=\s*fallback/)
+  it('labels the triggers with the human date and a placeholder fallback', () => {
+    expect(source).toMatch(/pickupDateLabel/)
+    expect(source).toMatch(/returnDateLabel/)
+    expect(source).toMatch(/formatHumanDate/)
+    expect(source).toMatch(/'Selecciona la fecha'/)
   })
 
-  it('passes the current date as fallback to the clamp from both mobile handlers', () => {
-    expect(source).toMatch(/selectedPickupDate\.value\s*\?\s*selectedPickupDate\.value\.toString\(\)\s*:/)
-    expect(source).toMatch(/selectedReturnDate\.value\s*\?\s*selectedReturnDate\.value\.toString\(\)\s*:/)
+  it('selects the date through the unified onPickupDateSelect/onReturnDateSelect handlers', () => {
+    expect(source).toMatch(/const onPickupDateSelect\s*=/)
+    expect(source).toMatch(/const onReturnDateSelect\s*=/)
+    expect(source).toMatch(/@update:model-value="\(v\) => onPickupDateSelect\(/)
+    expect(source).toMatch(/@update:model-value="\(v\) => onReturnDateSelect\(/)
+  })
+
+  it('no longer references the removed native-date clamp helpers', () => {
+    expect(source).not.toMatch(/clampMobileDateInput/)
+    expect(source).not.toMatch(/onMobilePickupDateChange/)
+    expect(source).not.toMatch(/onMobileReturnDateChange/)
   })
 })

@@ -55,10 +55,12 @@ test.describe('City hero - mobile density + hamburger alignment', () => {
     await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
-    const mobileSelect = page.locator('select#pickup-location-mobile').last();
-    await expect(mobileSelect).toBeVisible();
+    // El <select> nativo móvil se reemplazó por el trigger del SearcherSelectDrawer
+    // (drawer redesign): mismo card .rounded-xl con padding compacto en móvil.
+    const mobileTrigger = page.locator('[data-testid="pickup-location-test"]').last();
+    await expect(mobileTrigger).toBeVisible();
 
-    const card = mobileSelect.locator('xpath=ancestor::div[contains(@class,"rounded-xl")][1]');
+    const card = mobileTrigger.locator('xpath=ancestor::div[contains(@class,"rounded-xl")][1]');
     const padding = await card.evaluate((el) => {
       const style = window.getComputedStyle(el);
       return {

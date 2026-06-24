@@ -141,19 +141,33 @@ test.describe('Searcher calendar autoclose - desktop', () => {
 test.describe('Searcher calendar autoclose - mobile', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
-  test('SCEN-004: inputs móviles type=date visibles, desktop ocultos', async ({ page }) => {
+  // Updated for the unified widget (docs/specs/2026-06-22-searcher-unified-widget):
+  // the native <input type="date"> mobile inputs were removed in favour of
+  // full-screen u-slideover date pickers. The mobile surface is now a button
+  // trigger (data-testid="*-date-mobile-trigger") that opens a [role=dialog]
+  // calendar; the desktop date segments stay hidden at this viewport. The full
+  // drawer behaviour is covered by e2e/searcher-unified-widget.spec.ts.
+  test('SCEN-004: triggers de fecha móviles abren slideover, segmentos desktop ocultos', async ({ page }) => {
     await page.goto(SEARCHER_HERO);
     await page.waitForLoadState('networkidle');
 
-    const mobilePickup = page.locator('#pickup-date-mobile').last();
-    const mobileReturn = page.locator('#return-date-mobile').last();
+    const mobilePickup = page.getByTestId('pickup-date-mobile-trigger').last();
+    const mobileReturn = page.getByTestId('return-date-mobile-trigger').last();
 
     await expect(mobilePickup).toBeVisible();
-    await expect(mobilePickup).toHaveAttribute('type', 'date');
     await expect(mobileReturn).toBeVisible();
-    await expect(mobileReturn).toHaveAttribute('type', 'date');
 
-    // Desktop variant is hidden via `hidden sm:block` parent at this viewport
+    // No native date input exists anywhere on the mobile searcher view.
+    await expect(page.locator('input[type="date"]')).toHaveCount(0);
+
+    // Tapping the pickup trigger opens a bottom-sheet calendar dialog.
+    await mobilePickup.click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute('data-side', 'bottom');
+    await expect(dialog.getByRole('grid')).toHaveCount(1);
+
+    // Desktop variant is hidden via `hidden sm:block` parent at this viewport.
     const desktopPickup = page.locator('#pickup-date').first();
     await expect(desktopPickup).toBeHidden();
   });
