@@ -258,7 +258,7 @@ button { -webkit-tap-highlight-color: transparent; }
 @keyframes cc-bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-0.25rem); opacity: 1; } }
 
 /* --- Input --- */
-.cc-input { display: flex; gap: 0.5rem; padding: 0.75rem; border-top: 1px solid #f0f0f0; flex-shrink: 0; background: #ece5dd; }
+.cc-input { display: flex; gap: 0.5rem; padding: 0.375rem 0.75rem 0.75rem; flex-shrink: 0; background: #ece5dd; }
 .cc-input input {
   flex: 1; min-width: 0;
   padding: 0.625rem 0.875rem;
