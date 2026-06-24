@@ -185,13 +185,13 @@ export default function useSearch() {
     { flush: 'sync' }
   );
 
-  // Default the return date to a week after pickup, but snap it off a closed day
+  // Default the return date to the day after pickup, but snap it off a closed day
   // of the return branch to the nearest open one (#47 W6) — never earlier than
-  // the pickup date — so the inherited +7 default can't silently block the search
-  // button (e.g. pickup Monday whose +7 lands on a holiday for ACKAL).
+  // the pickup date — so the inherited +1 default can't silently block the search
+  // button (e.g. pickup whose +1 lands on a holiday for ACKAL).
   watch(fechaRecogida, (): void => {
     if (!selectedPickupDate.value) return;
-    const target = selectedPickupDate.value.copy().add({ days: 7 });
+    const target = selectedPickupDate.value.copy().add({ days: 1 });
     const open = nearestOpenDay(returnBranchSchedule.value, target, selectedPickupDate.value);
     fechaDevolucion.value = (open ?? target).toString();
   }, { flush: 'sync' });
