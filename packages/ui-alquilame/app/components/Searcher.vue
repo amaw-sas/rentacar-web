@@ -112,7 +112,7 @@
                         <u-calendar
                             :model-value="selectedPickupDate"
                             size="xl"
-                            class="w-full calendar-light"
+                            class="w-full calendar-light scale-80 origin-top"
                             :min-value="minPickupDate"
                             :is-date-unavailable="isPickupDateUnavailable"
                             color="success"
@@ -209,7 +209,7 @@
                         <u-calendar
                             :model-value="selectedReturnDate"
                             size="xl"
-                            class="w-full calendar-light"
+                            class="w-full calendar-light scale-80 origin-top"
                             :min-value="minReturnDate"
                             :max-value="maxReturnDate"
                             :is-date-unavailable="isReturnDateUnavailable"
