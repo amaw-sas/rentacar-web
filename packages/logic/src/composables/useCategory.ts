@@ -336,7 +336,13 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const getTotalWithAdditionals = computed<number>(() =>
       getTotalPrice.value + getAdditionalsTotal.value
    );
-   
+
+   // Marketing test (revertible): "Total a pagar" = actual total with IVA + tasa
+   // included (getActualTotalPrice) plus the informative additionals.
+   const getTotalToPayWithAdditionals = computed<number>(() =>
+      getActualTotalPrice.value + getAdditionalsTotal.value
+   );
+
    const getFormattedDays = computed<string>(() => {
       if(haveMonthlyReservation.value) return "30 días";
       else return (numberDays.value > 1) ? `${numberDays.value} días` : `${numberDays.value} día`
@@ -373,6 +379,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const currencyWashDeepUpholsteryPrice = computed<string>(() => getFormattedPrice(WASH_DEEP_UPHOLSTERY_PRICE));
    const currencyAdditionalsTotal = computed<string>(() => getFormattedPrice(getAdditionalsTotal.value));
    const currencyTotalWithAdditionals = computed<string>(() => getFormattedPrice(getTotalWithAdditionals.value));
+   const currencyTotalToPayWithAdditionals = computed<string>(() => getFormattedPrice(getTotalToPayWithAdditionals.value));
    
    
    // tooltip stuff
@@ -446,7 +453,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       hasAdditionalServices,
       getAdditionalsTotal,
       getTotalWithAdditionals,
-      
+      getTotalToPayWithAdditionals,
+
       // currency formatted prices
       currencyTotalPrice,
       currencyActualTotalPrice,
@@ -468,7 +476,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       currencyWashDeepUpholsteryPrice,
       currencyAdditionalsTotal,
       currencyTotalWithAdditionals,
-      
+      currencyTotalToPayWithAdditionals,
+
       // other functions
       isPicoyPlacaExempt,
       hasDiscount,

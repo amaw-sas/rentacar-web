@@ -122,6 +122,24 @@
                 $ {{ currencyTotalWithAdditionals }}
               </div>
             </div>
+
+            <!-- Marketing test (fin de semana, revertible): total con IVA + tasa incluidos.
+                 Solo per-day: en mensual "Total renta" ya incluye IVA y tasa, así que
+                 "Total a pagar" sería un duplicado. -->
+            <div v-if="!haveMonthlyReservation" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-line">
+              <div class="text-sm font-bold">Total a pagar</div>
+              <div class="!text-xl !leading-none">
+                $ {{ currencyActualTotalPrice }}
+              </div>
+              <div class="text-[10px] text-gray-500">Incluye IVA y tasa</div>
+            </div>
+
+            <div v-if="!haveMonthlyReservation && hasAdditionalServices" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-adicionales-line">
+              <div class="text-sm font-bold">Total a pagar + adicionales</div>
+              <div class="!text-xl !leading-none">
+                $ {{ currencyTotalToPayWithAdditionals }}
+              </div>
+            </div>
          </div>
       </div>
   </div>
@@ -158,6 +176,8 @@ const {
   currencyWashPrice,
   currencyAdditionalsTotal,
   currencyTotalWithAdditionals,
+  currencyActualTotalPrice,
+  currencyTotalToPayWithAdditionals,
   numberDays,
   isPicoyPlacaExempt,
   hasDiscount,

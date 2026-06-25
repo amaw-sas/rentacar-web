@@ -62,7 +62,35 @@ describe('useCategory.getTotalWithAdditionals — base total plus additionals', 
   })
 })
 
+describe('useCategory.getTotalToPayWithAdditionals — tax-inclusive total plus additionals', () => {
+  const block = extractComputed('getTotalToPayWithAdditionals')
+
+  it('is the sum of getActualTotalPrice (IVA + tasa included) and getAdditionalsTotal', () => {
+    expect(block).toContain('getActualTotalPrice.value')
+    expect(block).toContain('getAdditionalsTotal.value')
+  })
+
+  it('uses the actual (tax-inclusive) total, not the pre-tax getTotalPrice', () => {
+    expect(block).not.toContain('getTotalPrice.value')
+  })
+})
+
 describe('useCategory — formatted currency refs and public exports for the new totals', () => {
+  it('exposes currencyTotalToPayWithAdditionals formatted through getFormattedPrice', () => {
+    expect(source).toMatch(
+      /const currencyTotalToPayWithAdditionals = computed<string>\(\(\) => getFormattedPrice\(getTotalToPayWithAdditionals\.value\)\)/,
+    )
+  })
+
+  it('returns the tax-inclusive combined total and its currency ref from the composable', () => {
+    const returnStart = source.indexOf('return {')
+    const returnBlock = source.slice(returnStart)
+    expect(returnBlock).toContain('getTotalToPayWithAdditionals')
+    expect(returnBlock).toContain('currencyTotalToPayWithAdditionals')
+  })
+})
+
+describe('useCategory — formatted currency refs and public exports for the additionals totals', () => {
   it('exposes currencyAdditionalsTotal formatted through getFormattedPrice', () => {
     expect(source).toMatch(
       /const currencyAdditionalsTotal = computed<string>\(\(\) => getFormattedPrice\(getAdditionalsTotal\.value\)\)/,
