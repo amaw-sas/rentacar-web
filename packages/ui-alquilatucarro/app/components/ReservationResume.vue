@@ -94,7 +94,7 @@
             
             <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
               <div class="text-sm font-bold">Total adicionales</div>
-              <div class="!text-xl !leading-none">
+              <div class="text-sm">
                 $ {{ currencyAdditionalsTotal }}
               </div>
             </div>
@@ -111,7 +111,7 @@
 
             <!-- IVA + tasa desglosado entre "Total renta" (sin) y "Total a pagar" (con).
                  Solo per-day: en mensual "Total renta" ya los incluye. -->
-            <div v-if="!haveMonthlyReservation" class="text-right text-sm text-gray-500 mt-3" data-testid="iva-tax-line">
+            <div v-if="!haveMonthlyReservation" class="text-right text-sm mt-3" data-testid="iva-tax-line">
               IVA + Tasa: $ {{ currencyIvaAndTax }}
             </div>
 
@@ -125,7 +125,7 @@
               <div class="!text-xl !leading-none">
                 $ {{ currencyTotalToPayWithAdditionals }}
               </div>
-              <div class="text-[10px] text-gray-500">Incluye IVA y tasa</div>
+              <div class="text-sm font-bold">Incluye IVA y tasa</div>
             </div>
          </div>
       </div>

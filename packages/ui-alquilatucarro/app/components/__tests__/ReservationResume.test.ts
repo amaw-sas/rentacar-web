@@ -21,11 +21,19 @@ describe('ReservationResume — totals use tight leading so label and value sit 
   })
 
   it('forces tight leading on the !text-xl value div (overrides text-xl built-in line-height)', () => {
+    // Total renta + Total a pagar keep the large !text-xl size; Total adicionales
+    // was downsized to text-sm (visual fix), so expect at least these two.
     const valueClassMatches = source.match(/class="!text-xl[^"]*"/g) ?? []
-    expect(valueClassMatches.length).toBeGreaterThanOrEqual(3)
+    expect(valueClassMatches.length).toBeGreaterThanOrEqual(2)
     for (const cls of valueClassMatches) {
       expect(cls).toContain('!leading-none')
     }
+  })
+
+  it('renders "Total adicionales" value at the small (text-sm) size, not the large total size', () => {
+    expect(source).toMatch(
+      /<div class="text-sm font-bold">Total adicionales<\/div>\s*<div class="text-sm">/,
+    )
   })
 })
 
