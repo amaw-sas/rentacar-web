@@ -72,10 +72,10 @@ describe('ReservationResume — "Total a pagar" is the grand total (IVA + tasa +
 })
 
 // IVA + tasa desglosado entre "Total renta" y "Total a pagar".
-describe('ReservationResume — "IVA + TAX" breakdown line', () => {
-  it('SCEN-03: renders an "IVA + TAX" line only on per-day, before "Total a pagar"', () => {
+describe('ReservationResume — "IVA + Tasa" breakdown line', () => {
+  it('SCEN-03: renders an "IVA + Tasa" line only on per-day, before "Total a pagar"', () => {
     expect(source).toMatch(
-      /data-testid="iva-tax-line"[\s\S]*?IVA \+ TAX/,
+      /data-testid="iva-tax-line"[\s\S]*?IVA \+ Tasa/,
     )
     expect(source).toMatch(
       /<div v-if="!haveMonthlyReservation"[^>]*data-testid="iva-tax-line">/,
