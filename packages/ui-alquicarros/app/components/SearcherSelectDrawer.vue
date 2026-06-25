@@ -2,7 +2,7 @@
     <div class="relative bg-white rounded-xl px-2 py-2 max-sm:py-0.5! shadow-sm">
         <span
             v-if="badge"
-            class="absolute -top-[3px] -right-[3px] z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+            class="absolute -top-[3px] -right-[3px] z-10 bg-brand-600 text-gray-900 text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
         >{{ badge }}</span>
         <u-form-field :label="label" size="xl">
             <u-button

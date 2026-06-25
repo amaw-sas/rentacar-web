@@ -1,6 +1,6 @@
 <template>
     <u-form
-        class="w-full mx-auto md:w-3/6 lg:w-4/6 grid grid-cols-2 auto-rows-min gap-2 light"
+        class="w-full mx-auto grid grid-cols-2 auto-rows-min gap-2 light"
     >
         <!-- MÓVIL: Lugar de recogida → drawer full-screen con buscador -->
         <SearcherSelectDrawer
@@ -181,7 +181,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm sm:hidden">
             <span
                 v-if="rentalDays > 0"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-brand-600 text-gray-900 text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <u-button
@@ -230,7 +230,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm hidden sm:block">
             <span
                 v-if="rentalDays > 0"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-brand-600 text-gray-900 text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <u-input-date
@@ -336,7 +336,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm hidden sm:block">
             <span
                 v-if="extraHoursLabel"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-brand-600 text-gray-900 text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ extraHoursLabel }}</span>
             <u-form-field label="Hora de devolución" size="xl">
                 <u-select-menu
@@ -359,9 +359,9 @@
         </div>
         <div class="col-span-2">
             <u-button
-                :to="{name: searchLinkName, params: searchLinkParams}"
+                :to="searchDestination"
                 @click="onSearchClick"
-                :disabled="pendingSearching || !animateSearchButton || !isSelectionWithinSchedule"
+                :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied || !isSelectionWithinSchedule"
                 :loading="pendingSearching"
                 :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
                 size="xl"
@@ -376,6 +376,8 @@
 // Note: stores and components are auto-imported by Nuxt; utils are not.
 import { formatHumanDate } from '@rentacar-main/logic/utils';
 import type { DateObject } from '@rentacar-main/logic/utils';
+
+const route = useRoute();
 
 /** Local refs - initialized lazily to avoid SSR Pinia errors */
 const lugarRecogida = ref<string | null>(null);
@@ -427,20 +429,58 @@ const searchLinkName = ref<string>('');
 const searchLinkParams = ref<any>({});
 const animateSearchButton = ref<boolean>(true);
 
+// Schedule restriction (#47 W4/W5): per-branch calendar predicates and the
+// submit gate, mirrored from useSearch. Defaults are permissive so the form is
+// never blocked before the composable initializes.
+const isPickupDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
+const isReturnDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
+const isSelectionWithinSchedule = ref<boolean>(true);
+
+// SCEN-003 — context-aware submit destination.
+//   - On a CITY page (route.params.city present) the submit keeps the EXACT F3
+//     behavior: the named-route deep link → /[city]/buscar-vehiculos/... (preserves
+//     programmatic SEO + cross-brand isolation). searchLinkParams already carries
+//     the derived/real city (see syncSearchLinkParams below).
+//   - On /reservas (no :city in the route) the submit STAYS on /reservas with the
+//     search params in the QUERY STRING (shareable/bookmarkable); the page then
+//     renders availability in-place via useSearchByQueryParams. We do NOT redirect
+//     to /[branchCity]/... here — the city-derivation stays for the city-link path
+//     only. The query mirrors searchLinkParams: pickup/return SLUGS + dates + the
+//     12h-formatted times (the same values that build the deep route).
+const searchDestination = computed(() => {
+  const params = searchLinkParams.value ?? {};
+  if (route.params.city) {
+    return { name: searchLinkName.value, params: searchLinkParams.value };
+  }
+  return {
+    path: '/reservas',
+    query: {
+      lugar_recogida: params.lugar_recogida,
+      lugar_devolucion: params.lugar_devolucion,
+      fecha_recogida: params.fecha_recogida,
+      fecha_devolucion: params.fecha_devolucion,
+      hora_recogida: params.hora_recogida,
+      hora_devolucion: params.hora_devolucion,
+      // Preserve referral attribution on the /reservas round-trip (mirrors the
+      // city-page branch, which carries referido via searchLinkParams).
+      ...(params.referido ? { referido: params.referido } : {}),
+    },
+  };
+});
+
 // Issue #129: the search button is a NuxtLink (:to). When the resolved target URL
 // equals the current one (e.g. retrying after an error without changing any field),
 // NuxtLink does not navigate, so useSearchByRouteParams never re-mounts and the
 // search is never re-fired. Re-trigger doSearch directly in that case. doSearch is
 // captured in onMounted, where useSearch is instantiated.
-const route = useRoute();
 const router = useRouter();
 const doSearchFn = ref<(() => void) | null>(null);
 const onSearchClick = (e: MouseEvent) => {
   // Resolve BOTH sides through the router so the comparison is query-order- and
-  // encoding-insensitive (a reordered bookmarked link would otherwise false-negative).
-  // Only preventDefault when doSearch is ready (captured in onMounted): before mount,
-  // let NuxtLink's harmless same-URL no-op run instead of swallowing the tap.
-  const target = router.resolve({ name: searchLinkName.value, params: searchLinkParams.value });
+  // encoding-insensitive — critical on /reservas, whose :to is a query object whose
+  // key order need not match a bookmarked link's. Only preventDefault when doSearch is
+  // ready (captured in onMounted): before mount, let NuxtLink's same-URL no-op run.
+  const target = router.resolve(searchDestination.value);
   const current = router.resolve(route.fullPath);
   if (target.href === current.href && doSearchFn.value) {
     e.preventDefault();
@@ -448,12 +488,18 @@ const onSearchClick = (e: MouseEvent) => {
   }
 };
 
-// Schedule restriction (#47 W4/W5): per-branch calendar predicates and the
-// submit gate, mirrored from useSearch. Defaults are permissive so the form is
-// never blocked before the composable initializes.
-const isPickupDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
-const isReturnDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
-const isSelectionWithinSchedule = ref<boolean>(true);
+// The disabled guard stays meaningful in BOTH contexts: block until a valid pickup
+// branch + dates exist. On a city page this is still effectively `city` (the deep
+// link is broken without it); on /reservas there is no `city`, so we require a
+// resolved pickup-branch slug + both dates instead (otherwise the query would be
+// half-empty and the search guard would no-op).
+const searchDisabledGuardSatisfied = computed(() => {
+  const params = searchLinkParams.value ?? {};
+  if (route.params.city) {
+    return Boolean(params.city);
+  }
+  return Boolean(params.lugar_recogida && params.fecha_recogida && params.fecha_devolucion);
+});
 
 // Desktop popover y móvil slideover usan refs SEPARADOS: comparten estado haría
 // que abrir el slideover móvil también dispare el popover desktop, cuyo contenido
@@ -558,7 +604,25 @@ onMounted(() => {
   watch(() => searchComposable.pickupHourOptions.value, (val) => pickupHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.returnHourOptions.value, (val) => returnHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.searchLinkName.value, (val) => searchLinkName.value = val, { immediate: true });
-  watch(() => searchComposable.searchLinkParams.value, (val) => searchLinkParams.value = val, { immediate: true });
+  // F3 (issue #112): on /reservas there is no route.params.city, so the
+  // composable's searchLinkParams.city is undefined and the results link would
+  // be broken. Derive the effective city from the chosen pickup branch.
+  // Issue #129 followup: PREFER the chosen pickup branch's city over the route
+  // city, so selecting another city's branch navigates to that city instead of
+  // being bounced back to the current page's default branch ("La sede de recogida
+  // no corresponde a la ciudad" reset). Fallback to the route city when no pickup
+  // branch is resolved yet. Merge into the local copy — never mutate the composable
+  // params. Stays local to alquilame (zero changes to packages/logic).
+  const syncSearchLinkParams = (params: any) => {
+    const effectiveCity =
+      storeAdminData.searchBranchByCode(lugarRecogida.value ?? '')?.city ?? route.params.city;
+    searchLinkParams.value = { ...params, city: effectiveCity };
+  };
+  watch(() => searchComposable.searchLinkParams.value, (val) => syncSearchLinkParams(val), { immediate: true });
+  // lugarRecogida feeds the composable's searchLinkParams (via the store sync
+  // above), so the watch normally re-fires; this guarantees recomputation of the
+  // derived city even if the composable params object is referentially stable.
+  watch(lugarRecogida, () => syncSearchLinkParams(searchComposable.searchLinkParams.value));
   watch(() => searchComposable.animateSearchButton.value, (val) => animateSearchButton.value = val, { immediate: true });
   watch(() => searchComposable.isPickupDateUnavailable.value, (val) => isPickupDateUnavailable.value = val, { immediate: true });
   watch(() => searchComposable.isReturnDateUnavailable.value, (val) => isReturnDateUnavailable.value = val, { immediate: true });

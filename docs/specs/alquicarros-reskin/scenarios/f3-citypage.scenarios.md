@@ -134,10 +134,18 @@ ausencia de `blue-900`/`blue-700`/`red-`; computed contrast del CTA ≥ 4.5:1
 **When**: las páginas cargan
 **Then**: renderizan los posts reales (data-driven, sin placeholders fabricados);
 los acentos usan tokens `brand-*` (naranja); no hay literales `red-*` hardcoded ni
-el azul residual de enlaces (`blue-600`/`blue-700`); no aparece la palabra
-"Alquilame" ni datos de otra marca
-**Evidence**: DOM (cards/post reales) + grep sin `red-`/`blue-6`/`blue-7`/"Alquilame"
-sobre `app/pages/blog/`
+azul de MARCA residual de alquilame; los colores semánticos de plataforma en los
+botones de compartir SÍ se preservan como en ambas marcas (Facebook azul, WhatsApp
+verde, X negro, Copiar naranja); no aparece la palabra "Alquilame" ni datos de otra
+marca
+**Evidence**: DOM (cards/post reales) + grep sin `red-`/"Alquilame" sobre
+`app/pages/blog/`; todo `blue-[67]00` restante está en un botón "Compartir en
+Facebook" (semántico, no residual de marca)
+**Nota de corrección (impl)**: el holdout original prohibía `blue-600/700` por
+asumirlos azul residual de enlaces; en implementación se verificó que el único azul
+es el botón Facebook (semántico, idéntico en alquilame y alquicarros, no introducido
+por F3). El invariante "sin color de marca ajena" se mantiene vía las aserciones
+`red-*`/`brand-*`.
 
 ## SCEN-F3-12: cero data de otra marca; copy config-driven
 **Given**: todas las superficies F3 renderizadas (landing, resultados, /reservas,
