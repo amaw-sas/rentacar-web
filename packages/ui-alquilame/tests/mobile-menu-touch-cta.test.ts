@@ -69,10 +69,16 @@ describe('ISSUE-001: mobile menu toggle icon stays visible on the white header',
 })
 
 describe('ISSUE-002: conversion CTAs hydrate before the tap, not on it', () => {
-  it('Fleet "Ver disponibilidad" modal hydrates on visible, not on interaction', () => {
+  it('Fleet "Ver disponibilidad" is a direct button, never an interaction-hydrated island', () => {
+    // The CTA changed from a LazyUModal (branch picker) to a plain UButton that
+    // navigates to /reservas. A non-lazy button hydrates with the page, so the
+    // first-tap-loss that motivated ISSUE-002 cannot occur here. Guard that the CTA
+    // never regresses back to an interaction-hydrated island, and that the direct
+    // navigation is in place.
     const src = readFileSync(FLEET, 'utf-8')
-    expect(src).toMatch(/hydrate-on-visible/)
     expect(src).not.toMatch(/hydrate-on-interaction/)
+    expect(src).not.toMatch(/LazyUModal/)
+    expect(src).toContain("navigateTo('/reservas')")
   })
 
   it('FAQ accordion hydrates on visible, not on interaction', () => {
