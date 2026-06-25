@@ -112,8 +112,8 @@
                 $ {{ currencyTotalPrice }}
               </div>
             </div>
-            <div class="text-right text-[10px] text-gray-500">
-              {{ haveMonthlyReservation ? 'Incluye IVA y tasa admin' : 'No incluye IVA ni tasa admin' }}
+            <div v-if="haveMonthlyReservation" class="text-right text-[10px] text-gray-500">
+              Incluye IVA y tasa admin
             </div>
 
             <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
@@ -121,6 +121,12 @@
               <div class="!text-xl !leading-none">
                 $ {{ currencyTotalWithAdditionals }}
               </div>
+            </div>
+
+            <!-- IVA + tasa desglosado entre "Total renta" (sin) y "Total a pagar" (con).
+                 Solo per-day: en mensual "Total renta" ya los incluye. -->
+            <div v-if="!haveMonthlyReservation" class="text-right text-sm text-gray-500 mt-3" data-testid="iva-tax-line">
+              IVA + TAX: $ {{ currencyIvaAndTax }}
             </div>
 
             <!-- Marketing test (fin de semana, revertible): total con IVA + tasa incluidos.
@@ -178,6 +184,7 @@ const {
   currencyTotalWithAdditionals,
   currencyActualTotalPrice,
   currencyTotalToPayWithAdditionals,
+  currencyIvaAndTax,
   numberDays,
   isPicoyPlacaExempt,
   hasDiscount,
