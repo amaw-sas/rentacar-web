@@ -69,3 +69,28 @@ describe('ReservationResume — "Total a pagar" (IVA + tasa included)', () => {
     expect(source).not.toMatch(/moneyFormat\(/)
   })
 })
+
+// IVA + tasa desglosado entre "Total renta" y "Total a pagar".
+describe('ReservationResume — "IVA + TAX" breakdown line', () => {
+  it('SCEN-03: renders an "IVA + TAX" line only on per-day, before "Total a pagar"', () => {
+    expect(source).toMatch(
+      /data-testid="iva-tax-line"[\s\S]*?IVA \+ TAX/,
+    )
+    // Gated per-day, just like "Total a pagar".
+    expect(source).toMatch(
+      /<div v-if="!haveMonthlyReservation"[^>]*data-testid="iva-tax-line">/,
+    )
+    // Must appear before the "Total a pagar" block in source order.
+    expect(source.indexOf('data-testid="iva-tax-line"'))
+      .toBeLessThan(source.indexOf('data-testid="total-a-pagar-line"'))
+  })
+
+  it('SCEN-03: binds the pre-formatted IVA + tasa amount (currencyIvaAndTax)', () => {
+    expect(source).toMatch(/data-testid="iva-tax-line"[\s\S]*?currencyIvaAndTax/)
+    expect(source).toContain('currencyIvaAndTax,')
+  })
+
+  it('SCEN-04: drops the misleading "No incluye IVA ni tasa admin" disclaimer', () => {
+    expect(source).not.toMatch(/No incluye IVA ni tasa admin/)
+  })
+})

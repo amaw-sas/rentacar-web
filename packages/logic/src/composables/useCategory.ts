@@ -343,6 +343,13 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       getActualTotalPrice.value + getAdditionalsTotal.value
    );
 
+   // IVA + tasa amount = the gap between "Total a pagar" (IVA + tasa incluidos)
+   // and "Total renta" (sin ellos). Derived from the same totals shown to the
+   // client so the three figures always reconcile (renta + esto = a pagar).
+   const getIvaAndTaxAmount = computed<number>(() =>
+      Math.max(0, getActualTotalPrice.value - getTotalPrice.value)
+   );
+
    const getFormattedDays = computed<string>(() => {
       if(haveMonthlyReservation.value) return "30 días";
       else return (numberDays.value > 1) ? `${numberDays.value} días` : `${numberDays.value} día`
@@ -380,6 +387,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const currencyAdditionalsTotal = computed<string>(() => getFormattedPrice(getAdditionalsTotal.value));
    const currencyTotalWithAdditionals = computed<string>(() => getFormattedPrice(getTotalWithAdditionals.value));
    const currencyTotalToPayWithAdditionals = computed<string>(() => getFormattedPrice(getTotalToPayWithAdditionals.value));
+   const currencyIvaAndTax = computed<string>(() => getFormattedPrice(getIvaAndTaxAmount.value));
    
    
    // tooltip stuff
@@ -477,6 +485,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       currencyAdditionalsTotal,
       currencyTotalWithAdditionals,
       currencyTotalToPayWithAdditionals,
+      currencyIvaAndTax,
 
       // other functions
       isPicoyPlacaExempt,
