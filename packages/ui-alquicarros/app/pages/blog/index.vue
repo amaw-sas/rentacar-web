@@ -1,19 +1,22 @@
 <template>
   <UPage>
-    <!-- Hero Section -->
-    <UPageHero orientation="vertical">
-      <template #title>
-        <h1 class="text-white text-3xl md:text-4xl text-center font-bold font-heading">
-          Blog de <span class="text-brand-300">{{ franchise.shortname }}</span>
-        </h1>
-      </template>
-      <template #description>
-        <p class="text-white text-center max-w-2xl mx-auto">
-          Guías, tips y consejos para alquilar carros en Colombia.
-          Descubre las mejores rutas, requisitos y recomendaciones para tu viaje.
-        </p>
-      </template>
-    </UPageHero>
+    <!--
+      Hero plano en vez de <UPageHero>: su contenedor (lg:grid) detecta los slots
+      de forma distinta en SSR↔cliente → "Hydration completed but contains
+      mismatches" en /blog. UPageHero era transparente (el fondo oscuro lo aporta el
+      layout: bg-linear-to-b from-brand-900 to-brand-950), así que esta <section>
+      reproduce exacto lo visual (mismo padding, título+descripción centrados,
+      blanco sobre el dark del layout) y elimina el mismatch.
+    -->
+    <section class="px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24 text-center">
+      <h1 class="text-white text-3xl md:text-4xl font-bold font-heading">
+        Blog de <span class="text-brand-300">{{ franchise.shortname }}</span>
+      </h1>
+      <p class="text-white max-w-2xl mx-auto mt-4">
+        Guías, tips y consejos para alquilar carros en Colombia.
+        Descubre las mejores rutas, requisitos y recomendaciones para tu viaje.
+      </p>
+    </section>
 
     <!-- Blog Posts Grid -->
     <section class="bg-surface-soft py-12 md:py-16 px-4 md:px-8">
