@@ -16,12 +16,13 @@
     Fail-soft: a category with no active positive row shows NO price block —
     never "$0" nor a fabricated value.
 
-    Fidelity note: the golden's "Consultar disponibilidad" CTA points at an
-    external site; here it drives our internal engine instead — the modal ->
-    SelectBranch (variant="gray") -> "Ver disponibilidad" flow ported untouched
-    from the legacy #categorias, data-testids preserved. Button is brand red
-    (#CC022B = bg-brand-600), per the brand spec — the golden's bg-red-600 was a
-    placeholder.
+    CTA note: the golden's "Consultar disponibilidad" CTA points at an external
+    site; here "Ver disponibilidad" redirects to /reservas instead. On a city page
+    it preselects a branch of that city (searchBranchByCity) by seeding the
+    reservation-form store before navigating, so /reservas opens with the pickup
+    ready WITHOUT running a search; on the home (no city) it goes to a clean
+    /reservas. Button is brand red (#CC022B = bg-brand-600), per the brand spec —
+    the golden's bg-red-600 was a placeholder.
 
     Gradient on the image frame uses the v4 bg-linear-to-* utility: with custom
     @theme tokens the v3 alias renders background-image:none (F0 lesson).
@@ -125,28 +126,16 @@
               </span>
             </div>
 
-            <!-- CTA: drives the internal engine (modal -> SelectBranch) -->
-            <!-- hydrate-on-visible (not -interaction): on touch the first tap is
-                 consumed by interaction-hydration and never opens the modal.
-                 rootMargin pre-hydrates ~200px early so the island is interactive
-                 before the thumb arrives on slow devices. -->
-            <LazyUModal
-              :hydrate-on-visible="{ rootMargin: '200px' }"
-              class="mt-auto"
-              :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }"
+            <!-- CTA: redirige a /reservas. En una city page preselecciona una
+                 sucursal de esa ciudad (searchBranchByCity) sembrando el store
+                 antes de navegar, así /reservas abre con la recogida lista SIN
+                 disparar búsqueda. En el home no hay ciudad → /reservas limpio. -->
+            <UButton
+              class="mt-auto block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold uppercase transition-colors"
+              @click="goToReservas"
             >
-              <template #body>
-                <div class="mb-4 text-black text-lg">
-                  ¿En que ciudad<br>deseas recoger tu carro?
-                </div>
-                <div class="min-w-80 my-3">
-                  <SelectBranch variant="gray" />
-                </div>
-              </template>
-              <UButton class="block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold uppercase transition-colors">
-                Ver disponibilidad
-              </UButton>
-            </LazyUModal>
+              Ver disponibilidad
+            </UButton>
           </div>
         </div>
       </div>
@@ -268,6 +257,25 @@ function pickRepresentativeMonthlyPrice(prices: CategoryMonthPriceData[]): numbe
 
 const { categories } = useFetchRentacarData()
 const { moneyFormat } = useMoneyFormat()
+
+// CTA → /reservas. On a city page, preselect a branch of that city (reusing the
+// shared searchBranchByCity helper) by seeding the reservation-form store before
+// navigating; the Searcher on /reservas reads lugarRecogida from the store. No
+// query params are passed, so no auto-search runs and /reservas stays clean and
+// indexable (a `?lugar_recogida` would trip the page's noindex/results gate).
+const route = useRoute()
+const storeAdminData = useStoreAdminData()
+const storeReservationForm = useStoreReservationForm()
+
+function goToReservas() {
+  const city = route.params.city
+  const branch = city ? storeAdminData.searchBranchByCity(city) : undefined
+  if (branch) {
+    storeReservationForm.lugarRecogida = branch.code
+    storeReservationForm.lugarDevolucion = branch.code
+  }
+  return navigateTo('/reservas')
+}
 
 // Prices are global per category code (not per-city): work on the home with no
 // city. undefined => that card's price block is hidden (never $0 / fabricated).

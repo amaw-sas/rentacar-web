@@ -97,11 +97,20 @@ describe('Fleet — real prices + fail-soft', () => {
   })
 })
 
-describe('Fleet — engine flow preserved', () => {
-  it('mounts SelectBranch (variant="gray") inside a lazy modal', () => {
+describe('Fleet — engine flow (redirect to /reservas)', () => {
+  it('redirects to /reservas instead of opening a branch modal', () => {
     expect(FLEET).not.toMatch(/<UModal[\s>]/)
-    expect(FLEET).toContain('LazyUModal')
-    expect(FLEET).toContain('<SelectBranch variant="gray" />')
+    expect(FLEET).not.toContain('LazyUModal')
+    expect(FLEET).not.toContain('SelectBranch')
+    expect(FLEET).toContain("navigateTo('/reservas')")
+  })
+
+  it('preselects a branch of the current city when on a city page', () => {
+    // On a city page the redirect resolves a branch from route.params.city via
+    // the shared searchBranchByCity helper, so /reservas opens with the pickup
+    // branch preset (no auto-search). On the home there is no city → clean /reservas.
+    expect(FLEET).toContain('route.params.city')
+    expect(FLEET).toContain('searchBranchByCity')
   })
 
   it('keeps the "Ver disponibilidad" CTA in BRAND RED, never green', () => {
