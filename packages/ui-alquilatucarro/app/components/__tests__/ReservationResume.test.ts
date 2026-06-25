@@ -34,3 +34,38 @@ describe('ReservationResume — totals use tight leading so label and value sit 
     }
   })
 })
+
+// Marketing test (fin de semana, revertible): "Total a pagar" = total con IVA + tasa.
+describe('ReservationResume — "Total a pagar" (IVA + tasa included)', () => {
+  it('SCEN-01: renders "Total a pagar" only on per-day (hidden for monthly, where it would duplicate "Total renta")', () => {
+    expect(source).toMatch(
+      /<div v-if="!haveMonthlyReservation" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-line">\s*<div class="text-sm font-bold">Total a pagar<\/div>/,
+    )
+  })
+
+  it('SCEN-01: "Total a pagar" binds the tax-inclusive total (currencyActualTotalPrice)', () => {
+    expect(source).toMatch(/data-testid="total-a-pagar-line"[\s\S]*?currencyActualTotalPrice/)
+  })
+
+  it('SCEN-01: clarifies the total includes IVA and tasa', () => {
+    expect(source).toMatch(/Incluye IVA y tasa/)
+  })
+
+  it('SCEN-02: "Total a pagar + adicionales" is gated by per-day AND hasAdditionalServices', () => {
+    expect(source).toMatch(
+      /<div v-if="!haveMonthlyReservation && hasAdditionalServices" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-adicionales-line">\s*<div class="text-sm font-bold">Total a pagar \+ adicionales<\/div>/,
+    )
+  })
+
+  it('SCEN-02: "Total a pagar + adicionales" binds currencyTotalToPayWithAdditionals', () => {
+    expect(source).toMatch(/data-testid="total-a-pagar-adicionales-line"[\s\S]*?currencyTotalToPayWithAdditionals/)
+  })
+
+  it('consumes the pre-formatted string from props.category (no inline .value math, which NaNs under prop ref-unwrapping)', () => {
+    expect(source).toContain('currencyTotalToPayWithAdditionals,')
+    // The combined total must come from useCategory, never recomputed in the
+    // component — props.category unwraps refs, so getX.value is undefined → NaN.
+    expect(source).not.toMatch(/getActualTotalPrice\.value/)
+    expect(source).not.toMatch(/moneyFormat\(/)
+  })
+})
