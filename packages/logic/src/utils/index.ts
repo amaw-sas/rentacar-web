@@ -32,6 +32,7 @@ export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
+export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';
 export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, nearestSlotByTime } from './scheduleAvailability';
 export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
@@ -53,6 +54,7 @@ export {
 // ============================================================================
 export { extractStructuredError } from './helpers/extractStructuredError';
 export type { StructuredErrorForward } from './helpers/extractStructuredError';
+export { mapAvailabilityFetchError } from './helpers/mapAvailabilityFetchError';
 
 // ============================================================================
 // Type Definitions - Data

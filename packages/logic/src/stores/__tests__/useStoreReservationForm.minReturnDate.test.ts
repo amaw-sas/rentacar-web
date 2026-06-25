@@ -64,24 +64,26 @@ describe.each(BRANDS)(
       expect(calendarBlock).not.toMatch(/:min-value="minPickupDate"/)
     })
 
-    it('clamps the mobile return <input type="date"> into [minReturnDate, maxReturnDate] via @change, with no native min/max', () => {
-      // The mobile native input carries NO `min`/`max` on purpose: a native
-      // `min` makes the field `:invalid` for out-of-range dates and Android
-      // Chrome then shows an unstyleable dark validation balloon (unreadable
-      // under force-dark). Range is enforced by the @change clamp instead, so
-      // the field is never `:invalid`.
-      const mobileInput = extractBlock(source, 'id="return-date-mobile"', '>')
-      expect(mobileInput).toContain('@change="onMobileReturnDateChange"')
-      expect(mobileInput).not.toMatch(/:min=/)
-      expect(mobileInput).not.toMatch(/:max=/)
+    it('floors the mobile return calendar (slideover) at [minReturnDate, maxReturnDate], not minPickupDate', () => {
+      // The native <input type="date"> was replaced by a full-screen
+      // <u-slideover> with a <u-calendar> (drawer redesign, directiva 2026-06):
+      // se elimina el globo de validación dark-mode de Android junto con el
+      // input nativo. El rango ya NO se aplica con un @change clamp sino con
+      // los props :min-value/:max-value del calendario — una fecha de
+      // devolución anterior a la recogida elegida queda no-seleccionable.
+      // Esto preserva el escenario original que protege esta suite.
+      const mobileReturn = extractBlock(
+        source,
+        'v-model:open="returnDateSlideoverOpen"',
+        '</u-slideover>',
+      )
+      expect(mobileReturn).toContain(':min-value="minReturnDate"')
+      expect(mobileReturn).toContain(':max-value="maxReturnDate"')
+      expect(mobileReturn).not.toMatch(/:min-value="minPickupDate"/)
 
-      // The clamp still floors the return at minReturnDate (tracks the selected
-      // pickup), not minPickupDate, so a return before the chosen pickup snaps
-      // back up — preserving the original scenario this suite guards.
-      const handler = extractBlock(source, 'const onMobileReturnDateChange =', '};')
-      expect(handler).toContain('minReturnDate.value?.toString()')
-      expect(handler).toContain('maxReturnDate.value?.toString()')
-      expect(handler).not.toMatch(/minPickupDate\.value/)
+      // El input nativo móvil y su clamp desaparecieron del componente.
+      expect(source).not.toMatch(/id="return-date-mobile"/)
+      expect(source).not.toMatch(/onMobileReturnDateChange/)
     })
   },
 )

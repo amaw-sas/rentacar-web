@@ -2,10 +2,12 @@
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { $fetch } from 'ofetch';
-import type { FetchError } from 'ofetch';
 
 // Internal dependencies - stores
 import useStoreReservationForm from '../stores/useStoreReservationForm';
+
+// Helpers
+import { mapAvailabilityFetchError } from '../utils/helpers/mapAvailabilityFetchError';
 
 // Types
 import type { CategoryAvailabilityData, LocalizaErrorResponse } from '@rentacar-main/logic/utils';
@@ -43,16 +45,11 @@ export default async function useFetchCategoriesAvailabilityData() {
     });
 
     data.value = response;
-  } catch (e: any) {
-    const er = e as FetchError;
-    if (er.data && typeof er.data === 'object' && 'error' in er.data) {
-      error.value = er.data as LocalizaErrorResponse;
-    } else {
-      error.value = {
-        error: 'server_error',
-        message: 'El servicio no está disponible en este momento. Por favor, intenta de nuevo en unos minutos.',
-      } as LocalizaErrorResponse;
-    }
+  } catch (e) {
+    // Forward genuine Localiza codes; downgrade infra failures (incl. the Nitro
+    // {error:true} envelope) to a friendly server_error — never leak raw tech
+    // strings to the toast (ISSUE-003).
+    error.value = mapAvailabilityFetchError(e);
   }
 
   return { data, error };

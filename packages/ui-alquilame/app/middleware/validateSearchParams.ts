@@ -10,7 +10,8 @@ import {
   formatTime,
   formatTime12h,
   parseTime12hOr24h,
-  isTime12hFormat
+  isTime12hFormat,
+  resolveCityBranchCorrection
 } from '@rentacar-main/logic/utils';
 
 export default defineNuxtRouteMiddleware((to, from) => {
@@ -35,7 +36,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
   }
 
   // Validate branch slugs (or legacy codes)
-  const { searchBranchBySlugOrCode } = useStoreAdminData();
+  const { searchBranchBySlugOrCode, searchBranchByCity } = useStoreAdminData();
   const pickupBranch = searchBranchBySlugOrCode(lugar_recogida);
   const returnBranch = searchBranchBySlugOrCode(lugar_devolucion);
 
@@ -59,6 +60,35 @@ export default defineNuxtRouteMiddleware((to, from) => {
     createMessage({
       type: "info",
       message: "Ubicación inválida. Se ajustó a la sede por defecto.",
+    });
+
+    return navigateTo({
+      name: to.name,
+      params: to.params,
+      query: to.query,
+    });
+  }
+
+  // Issue #129: the pickup branch must belong to the page's city. If it's foreign,
+  // fall to the city's default branch and redirect to the corrected URL (the return
+  // is realigned only when it is also foreign — a legitimate one-way is untouched).
+  const cityCorrection = cityContext
+    ? resolveCityBranchCorrection(
+        pickupBranch,
+        returnBranch,
+        cityContext,
+        searchBranchByCity(cityContext),
+      )
+    : null;
+  if (cityCorrection) {
+    to.params.lugar_recogida = cityCorrection.lugar_recogida;
+    if (cityCorrection.lugar_devolucion) {
+      to.params.lugar_devolucion = cityCorrection.lugar_devolucion;
+    }
+
+    createMessage({
+      type: "info",
+      message: "La sede de recogida no corresponde a la ciudad; se ajustó a la sede por defecto.",
     });
 
     return navigateTo({

@@ -5,7 +5,7 @@ import { test, expect, type Page } from '@playwright/test';
  *                  clic-foto-abre-reserva.scenarios.md
  *
  * El clic/tap en la foto del vehículo debe abrir el flujo de reserva (slideover
- * "Resumen de la reserva"), el mismo destino que el botón "Solicitar este
+ * "Resumen de la selección"), el mismo destino que el botón "Solicitar este
  * vehículo". El PR #199 lo cableó pero solo lo "probó" con coincidencias de
  * strings del source; en navegador no abre. Este spec ejecuta el comportamiento.
  *
@@ -74,7 +74,7 @@ async function gotoSearchWithGrid(page: Page): Promise<boolean> {
 const firstPhoto = (page: Page) =>
   page.getByRole('button', { name: /^Reservar / }).first();
 const resumeDialog = (page: Page) =>
-  page.getByRole('dialog').filter({ hasText: 'Resumen de la reserva' });
+  page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' });
 
 test.describe('clic-foto-abre-reserva — desktop', () => {
   test.use({ viewport: { width: 1280, height: 800 } });

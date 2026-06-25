@@ -130,6 +130,11 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   // other vars ref
   const selectedMonthlyMileage = ref<MonthlyMileage | null>(null); // either 2_kms or 3_kms
   const isSubmittingForm = ref<boolean>(false);
+  // Tras enviar, el código del vehículo cuya entrada `/categoria/X` puede quedar
+  // en el historial (el slideover empuja entradas; ver CategorySelectionSection).
+  // El watcher de auto-apertura lo consulta para NO reabrir el slideover si el
+  // usuario retrocede hasta esa entrada después de enviar. One-shot por código.
+  const lastSubmittedCode = ref<string | null>(null);
   const haveTotalInsurance = ref<boolean>(false);
   const haveMonthlyReservation = ref<boolean>(false);
   const haveFlight = ref<boolean>(false);
@@ -260,6 +265,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   // availability, and the user starts a new reservation from a fresh state.
   const stripReservarParam = () => {
     if (!import.meta.client) return;
+    // Marcar el código enviado: el slideover empuja entradas `/categoria/X` al
+    // historial; sin esto, retroceder hasta ellas tras enviar reabriría el
+    // resumen. El watcher de auto-apertura las ignora una vez (one-shot).
+    lastSubmittedCode.value = vehiculo.value;
     const cleanPath = window.location.pathname.replace(/\/categoria\/[^/]+$/, '');
     const alreadyClean =
       cleanPath === window.location.pathname &&
@@ -305,6 +314,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     telefono,
     email,
     vehiculo,
+    lastSubmittedCode,
     lugarRecogida,
     fechaRecogida,
     horaRecogida,

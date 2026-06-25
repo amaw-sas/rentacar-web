@@ -1,29 +1,21 @@
 <template>
     <u-form
-        class="w-full mx-auto md:w-3/6 lg:w-4/6 grid grid-cols-2 auto-rows-min gap-2 light"
+        class="w-full mx-auto grid grid-cols-2 auto-rows-min gap-2 light"
     >
-        <!-- MÓVIL: Form field con select nativo -->
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm sm:hidden">
-            <u-form-field label="Lugar de recogida" size="xl">
-                <select
-                    v-if="lugarRecogida"
-                    id="pickup-location-mobile"
-                    v-model="lugarRecogida"
-                    aria-label="Lugar de recogida"
-                    class="w-full"
-                >
-                    <option
-                        v-for="branch in sortedBranches"
-                        :key="branch.code"
-                        v-text="branch.name"
-                        :value="branch.code"
-                    ></option>
-                </select>
-                <select v-else disabled class="w-full text-gray-400" aria-label="Lugar de recogida">
-                    <option>Cargando...</option>
-                </select>
-            </u-form-field>
-        </div>
+        <!-- MÓVIL: Lugar de recogida → drawer full-screen con buscador -->
+        <SearcherSelectDrawer
+            v-model="lugarRecogida"
+            class="col-span-2 sm:hidden"
+            :items="sortedBranches"
+            value-key="code"
+            label-key="name"
+            label="Lugar de recogida"
+            title="Lugar de recogida"
+            placeholder="Selecciona la sucursal"
+            search-placeholder="Buscar sucursal"
+            icon-type="location"
+            testid="pickup-location-test"
+        />
 
         <!-- DESKTOP: Form field con u-select-menu -->
         <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm hidden sm:block">
@@ -35,7 +27,7 @@
                     value-key="code"
                     class="w-full"
                     variant="ghost"
-                    data-testid="pickup-location-test"
+                    data-testid="pickup-location-desktop-test"
                     :items="sortedBranches"
                     :search-input="{
                         placeholder: 'Buscar sucursal',
@@ -51,28 +43,20 @@
                 />
             </u-form-field>
         </div>
-        <!-- MÓVIL: Form field con select nativo -->
-        <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm sm:hidden">
-            <u-form-field label="Lugar de devolución" size="xl">
-                <select
-                    v-if="lugarDevolucion"
-                    id="return-location-mobile"
-                    v-model="lugarDevolucion"
-                    aria-label="Lugar de devolución"
-                    class="w-full"
-                >
-                    <option
-                        v-for="branch in sortedBranches"
-                        :key="branch.code"
-                        v-text="branch.name"
-                        :value="branch.code"
-                    ></option>
-                </select>
-                <select v-else disabled class="w-full text-gray-400" aria-label="Lugar de devolución">
-                    <option>Cargando...</option>
-                </select>
-            </u-form-field>
-        </div>
+        <!-- MÓVIL: Lugar de devolución → drawer full-screen con buscador -->
+        <SearcherSelectDrawer
+            v-model="lugarDevolucion"
+            class="col-span-2 sm:hidden"
+            :items="sortedBranches"
+            value-key="code"
+            label-key="name"
+            label="Lugar de devolución"
+            title="Lugar de devolución"
+            placeholder="Selecciona la sucursal"
+            search-placeholder="Buscar sucursal"
+            icon-type="location"
+            testid="return-location-test"
+        />
 
         <!-- DESKTOP: Form field con u-select-menu -->
         <div class="col-span-2 bg-white rounded-xl p-2 shadow-sm hidden sm:block">
@@ -80,7 +64,7 @@
                 <u-select-menu
                     v-model="lugarDevolucion"
                     id="return-location"
-                    data-testid="return-location-test"
+                    data-testid="return-location-desktop-test"
                     label-key="name"
                     value-key="code"
                     variant="ghost"
@@ -100,24 +84,47 @@
                 />
             </u-form-field>
         </div>
-        <!-- MÓVIL: Form field con input date nativo -->
+        <!-- MÓVIL: Día de recogida → botón que abre u-slideover con u-calendar (patrón Kayak) -->
         <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
             <u-form-field label="Día de recogida" size="xl">
-                <!-- No `min`/`max` here on purpose: a native `min` makes the field
-                     `:invalid` for out-of-range dates, and Android Chrome then shows
-                     an unstyleable dark validation balloon (unreadable under
-                     force-dark). The @change handler clamps the value into range
-                     instead, so the field is never `:invalid`. -->
-                <input
+                <u-button
                     v-if="minPickupDate"
-                    type="date"
-                    id="pickup-date-mobile"
-                    name="pickup-date-mobile"
-                    :value="selectedPickupDate ? selectedPickupDate.toString() : ''"
-                    aria-label="Día de recogida"
-                    class="w-full"
-                    @change="onMobilePickupDateChange"
+                    block
+                    color="neutral"
+                    variant="ghost"
+                    class="justify-start text-gray-900 font-semibold px-0"
+                    data-testid="pickup-date-mobile-trigger"
+                    aria-label="Seleccionar día de recogida"
+                    @click="pickupDateSlideoverOpen = true"
                 >
+                    <template #leading>
+                        <IconsCalendarIcon cls="size-4 text-gray-500" />
+                    </template>
+                    {{ pickupDateLabel }}
+                </u-button>
+                <u-slideover
+                    v-model:open="pickupDateSlideoverOpen"
+                    side="bottom"
+                    title="Día de recogida"
+                    :ui="{ content: 'bg-white h-dvh max-h-dvh ring-0', body: 'flex flex-col justify-center items-center p-4 overflow-y-auto' }"
+                >
+                    <template #body>
+                        <u-calendar
+                            :model-value="selectedPickupDate"
+                            size="xl"
+                            class="w-full calendar-light scale-80 origin-top"
+                            :min-value="minPickupDate"
+                            :is-date-unavailable="isPickupDateUnavailable"
+                            color="success"
+                            :ui="mobileCalendarUIConfig"
+                            :month-controls="true"
+                            :year-controls="false"
+                            :prev-month="{ color: 'gray', variant: 'soft' }"
+                            :next-month="{ color: 'gray', variant: 'soft' }"
+                            @update:model-value="(v) => onPickupDateSelect(v as DateObject | null)"
+                        />
+                    </template>
+                </u-slideover>
             </u-form-field>
         </div>
 
@@ -162,7 +169,7 @@
                                     :year-controls="false"
                                     :prev-month="{ color: 'gray', variant: 'soft' }"
                                     :next-month="{ color: 'gray', variant: 'soft' }"
-                                    @update:model-value="(v) => { if (v) { selectedPickupDate = v; pickupDateCalendarOpen = false; } }"
+                                    @update:model-value="(v) => onPickupDateSelect(v as DateObject | null)"
                                 />
                             </template>
                         </u-popover>
@@ -170,25 +177,52 @@
                 </u-input-date>
             </u-form-field>
         </div>
-        <!-- MÓVIL: Form field con input date nativo -->
+        <!-- MÓVIL: Día de devolución → botón que abre u-slideover con u-calendar -->
         <div class="relative bg-white rounded-xl p-2 shadow-sm sm:hidden">
             <span
                 v-if="rentalDays > 0"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-brand-600 text-gray-900 text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
-                <!-- No `min`/`max` here on purpose — see the pickup-date note above.
-                     The @change handler clamps into [minReturnDate, maxReturnDate]. -->
-                <input
+                <u-button
                     v-if="minReturnDate"
-                    type="date"
-                    id="return-date-mobile"
-                    name="return-date-mobile"
-                    :value="selectedReturnDate ? selectedReturnDate.toString() : ''"
-                    aria-label="Día de devolución"
-                    class="w-full"
-                    @change="onMobileReturnDateChange"
+                    block
+                    color="neutral"
+                    variant="ghost"
+                    class="justify-start text-gray-900 font-semibold px-0"
+                    data-testid="return-date-mobile-trigger"
+                    aria-label="Seleccionar día de devolución"
+                    @click="returnDateSlideoverOpen = true"
                 >
+                    <template #leading>
+                        <IconsCalendarIcon cls="size-4 text-gray-500" />
+                    </template>
+                    {{ returnDateLabel }}
+                </u-button>
+                <u-slideover
+                    v-model:open="returnDateSlideoverOpen"
+                    side="bottom"
+                    title="Día de devolución"
+                    :ui="{ content: 'bg-white h-dvh max-h-dvh ring-0', body: 'flex flex-col justify-center items-center p-4 overflow-y-auto' }"
+                >
+                    <template #body>
+                        <u-calendar
+                            :model-value="selectedReturnDate"
+                            size="xl"
+                            class="w-full calendar-light scale-80 origin-top"
+                            :min-value="minReturnDate"
+                            :max-value="maxReturnDate"
+                            :is-date-unavailable="isReturnDateUnavailable"
+                            color="success"
+                            :ui="mobileCalendarUIConfig"
+                            :month-controls="true"
+                            :year-controls="false"
+                            :prev-month="{ color: 'gray', variant: 'soft' }"
+                            :next-month="{ color: 'gray', variant: 'soft' }"
+                            @update:model-value="(v) => onReturnDateSelect(v as DateObject | null)"
+                        />
+                    </template>
+                </u-slideover>
             </u-form-field>
         </div>
 
@@ -196,7 +230,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm hidden sm:block">
             <span
                 v-if="rentalDays > 0"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-brand-600 text-gray-900 text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <u-input-date
@@ -239,7 +273,7 @@
                                     :year-controls="false"
                                     :prev-month="{ color: 'gray', variant: 'soft' }"
                                     :next-month="{ color: 'gray', variant: 'soft' }"
-                                    @update:model-value="(v) => { if (v) { selectedReturnDate = v; returnDateCalendarOpen = false; } }"
+                                    @update:model-value="(v) => onReturnDateSelect(v as DateObject | null)"
                                 />
                             </template>
                         </u-popover>
@@ -247,24 +281,20 @@
                 </u-input-date>
             </u-form-field>
         </div>
-        <!-- MÓVIL: Form field con select nativo -->
-        <div class="bg-white rounded-xl p-2 shadow-sm sm:hidden">
-            <u-form-field label="Hora de recogida" size="xl">
-                <select
-                    id="pickup-hour-mobile"
-                    v-model="horaRecogida"
-                    aria-label="Hora de recogida"
-                    class="w-full"
-                >
-                    <option
-                        v-for="hour in pickupHourOptions"
-                        :key="hour.value"
-                        v-text="hour.label"
-                        :value="hour.value"
-                    ></option>
-                </select>
-            </u-form-field>
-        </div>
+        <!-- MÓVIL: Hora de recogida → drawer full-screen con buscador -->
+        <SearcherSelectDrawer
+            v-model="horaRecogida"
+            class="sm:hidden"
+            :items="pickupHourOptions"
+            value-key="value"
+            label-key="label"
+            label="Hora de recogida"
+            title="Hora de recogida"
+            placeholder="Selecciona la hora"
+            search-placeholder="Buscar hora"
+            icon-type="clock"
+            testid="pickup-hour-test"
+        />
 
         <!-- DESKTOP: Form field con u-select-menu -->
         <div class="bg-white rounded-xl p-2 shadow-sm hidden sm:block">
@@ -275,7 +305,9 @@
                     label-key="label"
                     class="w-full"
                     variant="ghost"
+                    data-testid="pickup-hour-desktop-test"
                     :autofocus="false"
+                    :search-input="false"
                     :items="pickupHourOptions"
                     :ui="{
                         content: 'bg-white',
@@ -284,34 +316,27 @@
                 />
             </u-form-field>
         </div>
-        <!-- MÓVIL: Form field con select nativo -->
-        <div class="relative bg-white rounded-xl p-2 shadow-sm sm:hidden">
-            <span
-                v-if="extraHoursLabel"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
-            >{{ extraHoursLabel }}</span>
-            <u-form-field label="Hora de devolución" size="xl">
-                <select
-                    id="return-hour-mobile"
-                    v-model="horaDevolucion"
-                    aria-label="Hora de devolución"
-                    class="w-full"
-                >
-                    <option
-                        v-for="hour in returnHourOptions"
-                        :key="hour.value"
-                        v-text="hour.label"
-                        :value="hour.value"
-                    ></option>
-                </select>
-            </u-form-field>
-        </div>
+        <!-- MÓVIL: Hora de devolución → drawer full-screen con buscador -->
+        <SearcherSelectDrawer
+            v-model="horaDevolucion"
+            class="sm:hidden"
+            :items="returnHourOptions"
+            value-key="value"
+            label-key="label"
+            label="Hora de devolución"
+            title="Hora de devolución"
+            placeholder="Selecciona la hora"
+            search-placeholder="Buscar hora"
+            icon-type="clock"
+            :badge="extraHoursLabel"
+            testid="return-hour-test"
+        />
 
         <!-- DESKTOP: Form field con u-select-menu -->
         <div class="relative bg-white rounded-xl p-2 shadow-sm hidden sm:block">
             <span
                 v-if="extraHoursLabel"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-[#a3f78b] text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-brand-600 text-gray-900 text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ extraHoursLabel }}</span>
             <u-form-field label="Hora de devolución" size="xl">
                 <u-select-menu
@@ -321,7 +346,9 @@
                     label-key="label"
                     variant="ghost"
                     class="w-full"
+                    data-testid="return-hour-desktop-test"
                     :autofocus="false"
+                    :search-input="false"
                     :items="returnHourOptions"
                     :ui="{
                         content: 'bg-white',
@@ -332,8 +359,9 @@
         </div>
         <div class="col-span-2">
             <u-button
-                :to="{name: searchLinkName, params: searchLinkParams}"
-                :disabled="pendingSearching || !animateSearchButton || !isSelectionWithinSchedule"
+                :to="searchDestination"
+                @click="onSearchClick"
+                :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied || !isSelectionWithinSchedule"
                 :loading="pendingSearching"
                 :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
                 size="xl"
@@ -346,8 +374,10 @@
 
 <script setup lang="ts">
 // Note: stores and components are auto-imported by Nuxt; utils are not.
-import { createDateFromString } from '@rentacar-main/logic/utils';
+import { formatHumanDate } from '@rentacar-main/logic/utils';
 import type { DateObject } from '@rentacar-main/logic/utils';
+
+const route = useRoute();
 
 /** Local refs - initialized lazily to avoid SSR Pinia errors */
 const lugarRecogida = ref<string | null>(null);
@@ -363,54 +393,33 @@ const rentalDays = ref<number>(0);
 const extraHoursLabel = ref<string | null>(null);
 const minReturnDate = computed<any>(() => selectedPickupDate.value ?? minPickupDate.value);
 
-// Mobile uses a native <input type="date">. On some Android date pickers an
-// out-of-range value can still be committed, which makes the browser surface
-// its native validation bubble ("El valor debe ser igual o posterior a …").
-// That bubble is unstyleable and renders dark-on-dark under Android force-dark.
-// We never want it: silently snap any out-of-range value back into range on
-// change (the user can't rent in the past anyway). Native date inputs always
-// emit ISO `YYYY-MM-DD`, so lexicographic comparison is chronological. Desktop
-// uses <u-calendar>, which already disables out-of-range days.
-const clampMobileDateInput = (event: Event, min?: string | null, max?: string | null, fallback?: string | null): string | null => {
-    const target = event.target as HTMLInputElement;
-    let value = target.value;
-    if (!value) {
-        // Disallow clearing the date: the native clear affordance (Android picker /
-        // desktop ✕) empties the field. Repaint the last valid value so the input
-        // never goes blank, and report "no change" so the shared ref is left intact.
-        target.value = fallback ?? '';
-        return null;
-    }
-    if (min && value < min) value = min;
-    if (max && value > max) value = max;
-    if (value !== target.value) target.value = value;
-    return value;
-};
+// Mobile y desktop comparten el mismo widget @nuxt/ui (u-calendar sobre
+// @internationalized/date). En móvil el calendario vive en un u-slideover
+// (bottom sheet, patrón Kayak); en desktop en un u-popover. Ya no hay
+// input de fecha nativo, así que desaparecen el clamp anti-globo de
+// Android, el bridge string↔CalendarDate y el binding one-way.
+const pickupDateLabel = computed<string>(() =>
+    selectedPickupDate.value ? formatHumanDate(selectedPickupDate.value) : 'Selecciona la fecha',
+);
+const returnDateLabel = computed<string>(() =>
+    selectedReturnDate.value ? formatHumanDate(selectedReturnDate.value) : 'Selecciona la fecha',
+);
 
-// The selectedPickupDate/selectedReturnDate refs are shared with the DESKTOP
-// <u-input-date> (Reka UI), which requires a CalendarDate and crashes on a raw
-// string. The native mobile input only ever yields a 'YYYY-MM-DD' string, so we
-// parse it into a DateObject before writing — never let a string into the ref.
-// (The mobile inputs bind :value one-way for the same reason; v-model would push
-// the raw string straight into the shared ref on every keystroke.)
-const onMobilePickupDateChange = (event: Event) => {
-    // Re-enable the search button on any mobile date interaction, even when the
-    // clamp leaves the value unchanged (e.g. re-picking a past date already at today),
-    // so a second search is never blocked by a stale disabled state.
+// Handler único para recogida/devolución (desktop popover + móvil slideover):
+// escribe el CalendarDate, re-habilita el botón BUSCAR y cierra el overlay.
+const onPickupDateSelect = (v: DateObject | null) => {
+    if (!v) return;
+    selectedPickupDate.value = v;
     animateSearchButton.value = true;
-    const clamped = clampMobileDateInput(event, minPickupDate.value?.toString(), undefined, selectedPickupDate.value ? selectedPickupDate.value.toString() : '');
-    if (clamped !== null) selectedPickupDate.value = createDateFromString(clamped);
+    pickupDateCalendarOpen.value = false;
+    pickupDateSlideoverOpen.value = false;
 };
-
-const onMobileReturnDateChange = (event: Event) => {
+const onReturnDateSelect = (v: DateObject | null) => {
+    if (!v) return;
+    selectedReturnDate.value = v;
     animateSearchButton.value = true;
-    const clamped = clampMobileDateInput(
-        event,
-        minReturnDate.value?.toString(),
-        maxReturnDate.value?.toString(),
-        selectedReturnDate.value ? selectedReturnDate.value.toString() : '',
-    );
-    if (clamped !== null) selectedReturnDate.value = createDateFromString(clamped);
+    returnDateCalendarOpen.value = false;
+    returnDateSlideoverOpen.value = false;
 };
 const pendingSearching = ref<boolean>(false);
 const sortedBranches = ref<any[]>([]);
@@ -427,8 +436,80 @@ const isPickupDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
 const isReturnDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
 const isSelectionWithinSchedule = ref<boolean>(true);
 
+// SCEN-003 — context-aware submit destination.
+//   - On a CITY page (route.params.city present) the submit keeps the EXACT F3
+//     behavior: the named-route deep link → /[city]/buscar-vehiculos/... (preserves
+//     programmatic SEO + cross-brand isolation). searchLinkParams already carries
+//     the derived/real city (see syncSearchLinkParams below).
+//   - On /reservas (no :city in the route) the submit STAYS on /reservas with the
+//     search params in the QUERY STRING (shareable/bookmarkable); the page then
+//     renders availability in-place via useSearchByQueryParams. We do NOT redirect
+//     to /[branchCity]/... here — the city-derivation stays for the city-link path
+//     only. The query mirrors searchLinkParams: pickup/return SLUGS + dates + the
+//     12h-formatted times (the same values that build the deep route).
+const searchDestination = computed(() => {
+  const params = searchLinkParams.value ?? {};
+  if (route.params.city) {
+    return { name: searchLinkName.value, params: searchLinkParams.value };
+  }
+  return {
+    path: '/reservas',
+    query: {
+      lugar_recogida: params.lugar_recogida,
+      lugar_devolucion: params.lugar_devolucion,
+      fecha_recogida: params.fecha_recogida,
+      fecha_devolucion: params.fecha_devolucion,
+      hora_recogida: params.hora_recogida,
+      hora_devolucion: params.hora_devolucion,
+      // Preserve referral attribution on the /reservas round-trip (mirrors the
+      // city-page branch, which carries referido via searchLinkParams).
+      ...(params.referido ? { referido: params.referido } : {}),
+    },
+  };
+});
+
+// Issue #129: the search button is a NuxtLink (:to). When the resolved target URL
+// equals the current one (e.g. retrying after an error without changing any field),
+// NuxtLink does not navigate, so useSearchByRouteParams never re-mounts and the
+// search is never re-fired. Re-trigger doSearch directly in that case. doSearch is
+// captured in onMounted, where useSearch is instantiated.
+const router = useRouter();
+const doSearchFn = ref<(() => void) | null>(null);
+const onSearchClick = (e: MouseEvent) => {
+  // Resolve BOTH sides through the router so the comparison is query-order- and
+  // encoding-insensitive — critical on /reservas, whose :to is a query object whose
+  // key order need not match a bookmarked link's. Only preventDefault when doSearch is
+  // ready (captured in onMounted): before mount, let NuxtLink's same-URL no-op run.
+  const target = router.resolve(searchDestination.value);
+  const current = router.resolve(route.fullPath);
+  if (target.href === current.href && doSearchFn.value) {
+    e.preventDefault();
+    doSearchFn.value();
+  }
+};
+
+// The disabled guard stays meaningful in BOTH contexts: block until a valid pickup
+// branch + dates exist. On a city page this is still effectively `city` (the deep
+// link is broken without it); on /reservas there is no `city`, so we require a
+// resolved pickup-branch slug + both dates instead (otherwise the query would be
+// half-empty and the search guard would no-op).
+const searchDisabledGuardSatisfied = computed(() => {
+  const params = searchLinkParams.value ?? {};
+  if (route.params.city) {
+    return Boolean(params.city);
+  }
+  return Boolean(params.lugar_recogida && params.fecha_recogida && params.fecha_devolucion);
+});
+
+// Desktop popover y móvil slideover usan refs SEPARADOS: comparten estado haría
+// que abrir el slideover móvil también dispare el popover desktop, cuyo contenido
+// se portalea al <body> e ignora el `hidden sm:block` del ancestro → calendario
+// fantasma arriba-izquierda. El trigger desktop está display:none en móvil, así
+// que su ref nunca se activa.
 const pickupDateCalendarOpen = ref<boolean>(false);
 const returnDateCalendarOpen = ref<boolean>(false);
+const pickupDateSlideoverOpen = ref<boolean>(false);
+const returnDateSlideoverOpen = ref<boolean>(false);
 
 // Calendar UI configuration for better contrast
 const calendarUIConfig = {
@@ -440,6 +521,22 @@ const calendarUIConfig = {
     // letters left-align inside their column and drift left of the numbers.
     gridWeekDaysRow: 'w-full place-items-center',
     cellTrigger: '!text-gray-900 !font-semibold data-[disabled]:!text-gray-400 data-[disabled]:!opacity-50 data-[unavailable]:!text-gray-400 data-[unavailable]:!opacity-50 data-[outside-view]:!text-gray-400 data-[outside-view]:!opacity-50'
+};
+
+// Mobile calendar lives in a full-screen slideover (directiva 2026-06-23): the
+// default md size (cellTrigger size-8/32px) looks lost in the full-dvh drawer.
+// Scale cells up to size-12 (48px) with text-lg and add vertical row gaps so the
+// month fills the panel with large tap targets. Capped at 48px because the 7
+// grid tracks are ~51px wide at 390px (col-width = (390 - 32 padding) / 7) — any
+// larger overflows the row. Desktop popover keeps the compact calendarUIConfig.
+const mobileCalendarUIConfig = {
+    heading: '!text-gray-900 !font-bold text-xl',
+    grid: 'w-full space-y-2',
+    gridRow: 'w-full',
+    gridWeekDaysRow: 'w-full place-items-center mb-2',
+    gridBody: 'gap-y-3',
+    headCell: 'text-base',
+    cellTrigger: '!text-gray-900 !font-semibold !size-12 !text-lg !m-0 data-[disabled]:!text-gray-400 data-[disabled]:!opacity-50 data-[unavailable]:!text-gray-400 data-[unavailable]:!opacity-50 data-[outside-view]:!text-gray-400 data-[outside-view]:!opacity-50',
 };
 
 // bfcache restoration: the Searcher has 15+ watchers binding local refs to
@@ -503,10 +600,29 @@ onMounted(() => {
 
   // Initialize useSearch composable
   const searchComposable = useSearch();
+  doSearchFn.value = searchComposable.doSearch; // #129: expose for same-URL re-fire
   watch(() => searchComposable.pickupHourOptions.value, (val) => pickupHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.returnHourOptions.value, (val) => returnHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.searchLinkName.value, (val) => searchLinkName.value = val, { immediate: true });
-  watch(() => searchComposable.searchLinkParams.value, (val) => searchLinkParams.value = val, { immediate: true });
+  // F3 (issue #112): on /reservas there is no route.params.city, so the
+  // composable's searchLinkParams.city is undefined and the results link would
+  // be broken. Derive the effective city from the chosen pickup branch.
+  // Issue #129 followup: PREFER the chosen pickup branch's city over the route
+  // city, so selecting another city's branch navigates to that city instead of
+  // being bounced back to the current page's default branch ("La sede de recogida
+  // no corresponde a la ciudad" reset). Fallback to the route city when no pickup
+  // branch is resolved yet. Merge into the local copy — never mutate the composable
+  // params. Stays local to alquilame (zero changes to packages/logic).
+  const syncSearchLinkParams = (params: any) => {
+    const effectiveCity =
+      storeAdminData.searchBranchByCode(lugarRecogida.value ?? '')?.city ?? route.params.city;
+    searchLinkParams.value = { ...params, city: effectiveCity };
+  };
+  watch(() => searchComposable.searchLinkParams.value, (val) => syncSearchLinkParams(val), { immediate: true });
+  // lugarRecogida feeds the composable's searchLinkParams (via the store sync
+  // above), so the watch normally re-fires; this guarantees recomputation of the
+  // derived city even if the composable params object is referentially stable.
+  watch(lugarRecogida, () => syncSearchLinkParams(searchComposable.searchLinkParams.value));
   watch(() => searchComposable.animateSearchButton.value, (val) => animateSearchButton.value = val, { immediate: true });
   watch(() => searchComposable.isPickupDateUnavailable.value, (val) => isPickupDateUnavailable.value = val, { immediate: true });
   watch(() => searchComposable.isReturnDateUnavailable.value, (val) => isReturnDateUnavailable.value = val, { immediate: true });

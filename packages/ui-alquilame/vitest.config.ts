@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   // Vue SFC support so component tests can mount real .vue files. Per-file
-  // env override (`// @vitest-environment happy-dom`) opts those into a DOM;
+  // env override (`// @vitest-environment jsdom`) opts those into a DOM;
   // utility/source tests keep the default node env.
   plugins: [vue()],
   test: {

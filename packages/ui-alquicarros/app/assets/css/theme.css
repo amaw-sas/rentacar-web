@@ -1,0 +1,67 @@
+/* ==========================================================================
+   Brand tokens — Alquicarros (F0)
+
+   Única fuente de tokens de marca: escala `brand` 50–950 anclada al naranja
+   institucional de alquicarros (#EF9600 / #FF9500), tokens semánticos de
+   gradientes/neutros y la fuente institucional (Montserrat). Tailwind 4 expone
+   cada `--color-*` como utilidad (`bg-brand-600`, `from-hero-from`,
+   `bg-surface-soft`, …).
+
+   Anclas verificadas contra el sitio legacy (alquicarros.com, computed styles
+   vía agent-browser 2026-06-24):
+     primario  rgb(255,149,0) = #ff9500  (38 usos, dominante)
+     primario  rgb(239,150,0) = #ef9600  (botón institucional)
+     ámbar     rgb(255,107,28) = #ff6b1c  (gradiente / hover)
+     verde WA  rgb(4,191,41)  = #04bf29
+     texto     rgb(51,51,51)  = #333333
+     fuente    Montserrat (bodyFont legacy)
+
+   Espejo estructural de packages/ui-alquilame/app/assets/css/theme.css, pero
+   con la identidad NARANJA de alquicarros (alquilame es roja).
+   ========================================================================== */
+
+@theme {
+  /* Escala brand. Anclas exactas del legacy: 500 = #FF9500, 600 = #EF9600.
+     Extremo claro (50–400): rampa cálida desaturándose hacia blanco.
+     Extremo oscuro (700–950): ámbares profundos para hover y contraste de CTA. */
+  --color-brand-50:  #fff7ed;
+  --color-brand-100: #ffedd4;
+  --color-brand-200: #fed8aa;
+  --color-brand-300: #fdbb74;
+  --color-brand-400: #fb9d3c;
+  --color-brand-500: #ff9500; /* ancla — naranja dominante del legacy */
+  --color-brand-600: #ef9600; /* ancla — naranja del botón institucional (primario) */
+  --color-brand-700: #c2700a; /* ámbar profundo — hover / texto sobre claro */
+  --color-brand-800: #9a5811;
+  --color-brand-900: #7c2d12;
+  --color-brand-950: #431407;
+
+  /* Tokens semánticos: gradientes hero/footer y neutros del diseño */
+  --color-hero-from:   #ff9500;
+  --color-hero-to:     #ff6b1c;
+  --color-footer-from: #ff8a00;
+  --color-footer-to:   #e35d0a;
+  --color-surface-soft:    #f5f6f8;
+  --color-surface-softer:  #f8f9fa;
+  --color-surface-softest: #fbfcfd;
+
+  /* Fuente institucional (self-hosted vía @nuxt/fonts; ver nuxt.config.ts).
+     Una sola familia para titulares y cuerpo, igual que el legacy. */
+  --font-heading: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    'Montserrat', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Fija el primario @nuxt/ui al shade 600 (=#EF9600) en lugar del 500/400 por
+   defecto, para que botones/links de marca coincidan con el naranja institucional.
+
+   CAVEAT DE CONTRASTE (resolver en QA visual de F1): texto blanco sobre el
+   naranja #EF9600 NO cumple WCAG AA para texto normal (~2.6:1). Los CTAs con
+   texto deben usar brand-700+ o texto oscuro. La verificación final es
+   computed-style en browser (step de QA). */
+:root {
+  --ui-primary: var(--color-brand-600);
+}
+
+.dark {
+  --ui-primary: var(--color-brand-600);
+}
