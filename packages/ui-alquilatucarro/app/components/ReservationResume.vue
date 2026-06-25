@@ -112,7 +112,7 @@
             <!-- IVA + tasa desglosado entre "Total renta" (sin) y "Total a pagar" (con).
                  Solo per-day: en mensual "Total renta" ya los incluye. -->
             <div v-if="!haveMonthlyReservation" class="text-right text-sm text-gray-500 mt-3" data-testid="iva-tax-line">
-              IVA + TAX: $ {{ currencyIvaAndTax }}
+              IVA + Tasa: $ {{ currencyIvaAndTax }}
             </div>
 
             <!-- "Total a pagar" = gran total con IVA + tasa + adicionales ya incluidos
