@@ -5,9 +5,9 @@
 
     The 6 cards mirror the golden exactly (copy/specs/structure). Each maps to a
     real category CODE that carries active pricing in category_pricing:
-      C  → Compacto · Manual            FX → Sedán · Automática
-      F  → Sedán · Manual               GC → Camioneta · Automática
-      G4 → Camioneta · Manual           LE → Camioneta Premium · Automática
+      C  → Compacto · Mecánica          FX → Sedán · Automática
+      F  → Sedán · Mecánica             GC → Camioneta · Automática
+      G4 → Camioneta · Mecánica         LE → Camioneta Premium · Automática
 
     Prices are REAL, never the mockup's hardcoded figures:
       - Diario: pickRepresentativeDailyPrice over month_prices (cheapest active
@@ -184,7 +184,7 @@ const CATEGORIES: {
   {
     code: 'C',
     title: 'Compacto',
-    transmission: 'Manual',
+    transmission: 'Mecánica',
     example: 'Kia Picanto / Suzuki S-Presso',
     description: 'Ágil en el tráfico y fácil de parquear. Perfecto para moverte por la ciudad.',
     passengers: 5,
@@ -195,7 +195,7 @@ const CATEGORIES: {
   {
     code: 'F',
     title: 'Sedán',
-    transmission: 'Manual',
+    transmission: 'Mecánica',
     example: 'Renault Logan / Suzuki Swift Dzire',
     description: 'Más baúl y espacio para viajar en familia sin gastar de más.',
     passengers: 5,
@@ -217,7 +217,7 @@ const CATEGORIES: {
   {
     code: 'G4',
     title: 'Camioneta',
-    transmission: 'Manual',
+    transmission: 'Mecánica',
     example: 'Hyundai Creta / Suzuki Vitara',
     description: 'Posición alta y buen baúl para carretera y salidas fuera de la ciudad.',
     passengers: 5,

@@ -37,7 +37,7 @@ describe('Fleet — 6 cards mapped to real category codes', () => {
     expect(FLEET).toContain('Sedán')
     expect(FLEET).toContain('Camioneta')
     expect(FLEET).toContain('Camioneta Premium')
-    expect(FLEET).toContain('Manual')
+    expect(FLEET).toContain('Mecánica')
     expect(FLEET).toContain('Automática')
   })
 
