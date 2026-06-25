@@ -20,12 +20,6 @@ describe('ReservationResume — totals use tight leading so label and value sit 
     )
   })
 
-  it('applies leading-tight to the Total renta + adicionales block', () => {
-    expect(source).toMatch(
-      /class="text-right mt-3 leading-tight"[^<]*>\s*<div class="text-sm font-bold">Total renta \+ adicionales<\/div>/,
-    )
-  })
-
   it('forces tight leading on the !text-xl value div (overrides text-xl built-in line-height)', () => {
     const valueClassMatches = source.match(/class="!text-xl[^"]*"/g) ?? []
     expect(valueClassMatches.length).toBeGreaterThanOrEqual(3)
@@ -35,35 +29,42 @@ describe('ReservationResume — totals use tight leading so label and value sit 
   })
 })
 
-// Marketing test (fin de semana, revertible): "Total a pagar" = total con IVA + tasa.
-describe('ReservationResume — "Total a pagar" (IVA + tasa included)', () => {
-  it('SCEN-01: renders "Total a pagar" only on per-day (hidden for monthly, where it would duplicate "Total renta")', () => {
+describe('ReservationResume — "Total a pagar" is the grand total (IVA + tasa + adicionales)', () => {
+  it('SCEN-01: "Total a pagar" shows per-day OR whenever there are additionals (monthly w/o additionals stays hidden — it would duplicate "Total renta")', () => {
     expect(source).toMatch(
-      /<div v-if="!haveMonthlyReservation" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-line">\s*<div class="text-sm font-bold">Total a pagar<\/div>/,
+      /<div v-if="!haveMonthlyReservation \|\| hasAdditionalServices" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-line">\s*<div class="text-sm font-bold">Total a pagar<\/div>/,
     )
   })
 
-  it('SCEN-01: "Total a pagar" binds the tax-inclusive total (currencyActualTotalPrice)', () => {
-    expect(source).toMatch(/data-testid="total-a-pagar-line"[\s\S]*?currencyActualTotalPrice/)
+  it('SCEN-01: "Total a pagar" binds the all-in total with additionals included (currencyTotalToPayWithAdditionals)', () => {
+    expect(source).toMatch(/data-testid="total-a-pagar-line"[\s\S]*?currencyTotalToPayWithAdditionals/)
+    expect(source).toContain('currencyTotalToPayWithAdditionals,')
   })
 
   it('SCEN-01: clarifies the total includes IVA and tasa', () => {
     expect(source).toMatch(/Incluye IVA y tasa/)
   })
 
-  it('SCEN-02: "Total a pagar + adicionales" is gated by per-day AND hasAdditionalServices', () => {
-    expect(source).toMatch(
-      /<div v-if="!haveMonthlyReservation && hasAdditionalServices" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-adicionales-line">\s*<div class="text-sm font-bold">Total a pagar \+ adicionales<\/div>/,
-    )
+  it('SCEN-05: drops the per-additional breakdown (Conductor / Silla bebé / Lavado lines)', () => {
+    expect(source).not.toMatch(/data-testid="extra-driver-line"/)
+    expect(source).not.toMatch(/data-testid="baby-seat-line"/)
+    expect(source).not.toMatch(/data-testid="wash-line"/)
+    expect(source).not.toMatch(/Conductor: \$/)
   })
 
-  it('SCEN-02: "Total a pagar + adicionales" binds currencyTotalToPayWithAdditionals', () => {
-    expect(source).toMatch(/data-testid="total-a-pagar-adicionales-line"[\s\S]*?currencyTotalToPayWithAdditionals/)
+  it('SCEN-05: keeps the "Total adicionales" summary line', () => {
+    expect(source).toMatch(/Total adicionales/)
+    expect(source).toMatch(/currencyAdditionalsTotal/)
+  })
+
+  it('SCEN-05: removes the redundant "Total renta + adicionales" and "Total a pagar + adicionales" lines', () => {
+    expect(source).not.toMatch(/Total renta \+ adicionales/)
+    expect(source).not.toMatch(/Total a pagar \+ adicionales/)
+    expect(source).not.toMatch(/data-testid="total-a-pagar-adicionales-line"/)
   })
 
   it('consumes the pre-formatted string from props.category (no inline .value math, which NaNs under prop ref-unwrapping)', () => {
-    expect(source).toContain('currencyTotalToPayWithAdditionals,')
-    // The combined total must come from useCategory, never recomputed in the
+    // The all-in total must come from useCategory, never recomputed in the
     // component — props.category unwraps refs, so getX.value is undefined → NaN.
     expect(source).not.toMatch(/getActualTotalPrice\.value/)
     expect(source).not.toMatch(/moneyFormat\(/)
@@ -76,11 +77,9 @@ describe('ReservationResume — "IVA + TAX" breakdown line', () => {
     expect(source).toMatch(
       /data-testid="iva-tax-line"[\s\S]*?IVA \+ TAX/,
     )
-    // Gated per-day, just like "Total a pagar".
     expect(source).toMatch(
       /<div v-if="!haveMonthlyReservation"[^>]*data-testid="iva-tax-line">/,
     )
-    // Must appear before the "Total a pagar" block in source order.
     expect(source.indexOf('data-testid="iva-tax-line"'))
       .toBeLessThan(source.indexOf('data-testid="total-a-pagar-line"'))
   })

@@ -92,13 +92,6 @@
             </div>
             
             
-            <div v-if="hasAdditionalServices" class="text-right mt-3">
-              <div class="font-bold">Adicionales</div>
-              <div v-if="withExtraDriver" data-testid="extra-driver-line">Conductor: $ {{ currencyExtraDriverPrice }}</div>
-              <div v-if="withBabySeat" data-testid="baby-seat-line">Silla bebé: $ {{ currencyBabySeatPrice }}</div>
-              <div v-if="withWash" data-testid="wash-line">Lavado: $ {{ currencyWashPrice }}</div>
-            </div>
-
             <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
               <div class="text-sm font-bold">Total adicionales</div>
               <div class="!text-xl !leading-none">
@@ -116,35 +109,23 @@
               Incluye IVA y tasa admin
             </div>
 
-            <div v-if="hasAdditionalServices" class="text-right mt-3 leading-tight">
-              <div class="text-sm font-bold">Total renta + adicionales</div>
-              <div class="!text-xl !leading-none">
-                $ {{ currencyTotalWithAdditionals }}
-              </div>
-            </div>
-
             <!-- IVA + tasa desglosado entre "Total renta" (sin) y "Total a pagar" (con).
                  Solo per-day: en mensual "Total renta" ya los incluye. -->
             <div v-if="!haveMonthlyReservation" class="text-right text-sm text-gray-500 mt-3" data-testid="iva-tax-line">
               IVA + TAX: $ {{ currencyIvaAndTax }}
             </div>
 
-            <!-- Marketing test (fin de semana, revertible): total con IVA + tasa incluidos.
-                 Solo per-day: en mensual "Total renta" ya incluye IVA y tasa, así que
-                 "Total a pagar" sería un duplicado. -->
-            <div v-if="!haveMonthlyReservation" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-line">
+            <!-- "Total a pagar" = gran total con IVA + tasa + adicionales ya incluidos
+                 (currencyTotalToPayWithAdditionals; sin adicionales == actual total).
+                 No desglosamos adicionales aquí: el valor final ya los contempla.
+                 Per-day siempre; mensual solo si hay adicionales (sin ellos duplicaría
+                 "Total renta", que ya incluye IVA y tasa). -->
+            <div v-if="!haveMonthlyReservation || hasAdditionalServices" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-line">
               <div class="text-sm font-bold">Total a pagar</div>
-              <div class="!text-xl !leading-none">
-                $ {{ currencyActualTotalPrice }}
-              </div>
-              <div class="text-[10px] text-gray-500">Incluye IVA y tasa</div>
-            </div>
-
-            <div v-if="!haveMonthlyReservation && hasAdditionalServices" class="text-right mt-3 leading-tight" data-testid="total-a-pagar-adicionales-line">
-              <div class="text-sm font-bold">Total a pagar + adicionales</div>
               <div class="!text-xl !leading-none">
                 $ {{ currencyTotalToPayWithAdditionals }}
               </div>
+              <div class="text-[10px] text-gray-500">Incluye IVA y tasa</div>
             </div>
          </div>
       </div>
@@ -177,12 +158,7 @@ const {
   currencyTotalPrice,
   currencyDailyBasePrice,
   currencyDailyPrice,
-  currencyExtraDriverPrice,
-  currencyBabySeatPrice,
-  currencyWashPrice,
   currencyAdditionalsTotal,
-  currencyTotalWithAdditionals,
-  currencyActualTotalPrice,
   currencyTotalToPayWithAdditionals,
   currencyIvaAndTax,
   numberDays,
@@ -192,9 +168,6 @@ const {
   hasReturnFee,
   getDiscount,
   hasAdditionalServices,
-  withExtraDriver,
-  withBabySeat,
-  withWash,
 } = props.category;
 
 const {
