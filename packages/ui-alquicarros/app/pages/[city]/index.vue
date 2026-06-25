@@ -1,5 +1,5 @@
 <template>
-  <CityPage v-if="city" :city />
+  <CityPage v-if="city" :city mode="landing" />
 </template>
 
 <script lang="ts" setup>
