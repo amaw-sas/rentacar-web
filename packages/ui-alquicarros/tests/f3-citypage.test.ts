@@ -100,6 +100,16 @@ describe('F3 — CityPage orquestador (reemplaza el monolito rojo viejo)', () =>
   it('ya NO contiene las secciones rojas inline del monolito viejo', () => {
     expect(cp()).not.toMatch(RED_CLASS)
   })
+  // BUG (fuga de resultados): resultsActive era solo-store (pending||results||error).
+  // El store Pinia es singleton de la SPA, así que tras una búsqueda CON resultados
+  // una navegación SPA a un landing /[city] dejaba el store poblado y el bloque de
+  // resultados (#seleccion-categorias) se renderizaba BAJO el hero de marketing. El
+  // gate debe AND-ear mode === 'results' (simétrico al gate de marketing).
+  it('SCEN-F3-01b: resultados solo en mode results — landing no filtra estado viejo', () => {
+    expect(cp()).toMatch(
+      /const resultsActive\s*=\s*computed\([\s\S]*?mode\s*===\s*['"]results['"]/,
+    )
+  })
 })
 
 describe('F3 — SCEN-F3-01/02: wiring de mode en las páginas', () => {

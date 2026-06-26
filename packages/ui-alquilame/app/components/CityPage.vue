@@ -84,12 +84,16 @@ onMounted(() => {
   watch(() => refs.error.value, (val) => (searchError.value = val), { immediate: true });
 });
 
-/** A search is "active" when results are pending, present, or errored. Single
-    gate reused by the engine block (#seleccion-categorias) AND the generic-home
-    marketing gate below — SCEN-001: hide generic marketing on a results page
-    with an active search; landing mode (mode !== 'results') never hides it. */
+/** A search is "active" only on a RESULTS page (mode === 'results') AND when
+    results are pending, present, or errored. The Pinia store is a SPA singleton,
+    so WITHOUT the mode guard a store still populated from a prior search leaks the
+    results block (#seleccion-categorias) onto a landing /[city] after client-side
+    navigation. The gate is symmetric with the marketing v-if below (SCEN-001):
+    landing never shows results; results mode never shows generic marketing. */
 const resultsActive = computed(
-  () => pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value,
+  () =>
+    props.mode === 'results' &&
+    (pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value),
 );
 
 /** props */

@@ -114,4 +114,16 @@ describe('CityPage — generic home marketing is gated off on active results (SC
     const expr = vIfOn(source, 'HomeFleet') ?? ''
     expect(expr).toMatch(/mode\s*!==\s*['"]results['"]/)
   })
+
+  // BUG (stale-results leak): resultsActive was store-only (pending || results ||
+  // error). The Pinia store is a SPA singleton, so after a search WITH results an
+  // SPA navigation to a landing /[city] left the store populated and the results
+  // block (#seleccion-categorias) rendered UNDER the marketing hero. The gate must
+  // AND-in mode === 'results' — symmetric with the marketing gate — so a landing
+  // page never shows results regardless of leftover store state.
+  it('only activates results in results mode — landing never leaks stale search state', () => {
+    expect(source).toMatch(
+      /const resultsActive\s*=\s*computed\([\s\S]*?mode\s*===\s*['"]results['"]/,
+    )
+  })
 })
