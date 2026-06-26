@@ -22,6 +22,31 @@
 import { computed, ref } from 'vue';
 import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
 
+// Code-owned data parts emitted by the hybrid orchestrator (dashboard /api/chat)
+// ALONGSIDE the streamed text. They arrive as `data-*` SSE events and are
+// rendered as rich UI (table / cards) — never as text. Shapes mirror the
+// reference renderer (rentacar-dashboard app/chat-test/page.tsx) 1:1.
+export interface QuoteTablePart {
+  sede: string;
+  dias: number;
+  filas: Array<{
+    categoria: string; // gama code, e.g. "C", "CX"
+    descripcion: string; // e.g. "Económico Mecánico"
+    precioTotal: number; // COP integer, already rounded server-side
+    horasExtra: number;
+    precioHoraExtra: number;
+  }>;
+}
+
+export interface GamaCardsPart {
+  gama: string; // upper-case code, e.g. "F"
+  descripcion?: string; // e.g. "Sedán mecánico"
+  modelos: Array<{
+    nombre: string;
+    imagen: string; // photo URL; "" when missing → placeholder
+  }>;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -30,9 +55,14 @@ export interface ChatMessage {
   // WhatsApp-style time stays stable across reloads. Optional for legacy rows.
   createdAt?: number;
   // Fallback CTAs (finish on the web / message an advisor) rendered as buttons
-  // from the server tool output — never from the model's text. Set when a booking
-  // fails. See extractChatActions.
+  // from the server tool output OR a `data-buttons` part — never from the model's
+  // text. Set when a booking fails or the bot offers an advisor. See
+  // extractChatActions.
   actions?: ChatActions;
+  // Deterministic quote table emitted by code as a `data-quoteTable` part.
+  quoteTable?: QuoteTablePart;
+  // Vehicle model cards (photo + name) per gama, emitted as `data-gamaCards`.
+  gamaCards?: GamaCardsPart;
 }
 
 type ChatStatus = 'ready' | 'submitting' | 'streaming' | 'error';
@@ -157,6 +187,11 @@ export function useChatConversation() {
       // bubble) — no live typewriter. The dots keep showing because the visible
       // assistant.text stays empty until the stream ends.
       let assistantText = '';
+      // Code-owned parts accumulate locally and reveal ALL AT ONCE with the text
+      // (below), so the table/cards land with the bubble — not mid-stream.
+      let actions: ChatActions | null = null;
+      let quoteTable: QuoteTablePart | undefined;
+      let gamaCards: GamaCardsPart | undefined;
 
       for (;;) {
         const { done, value } = await reader.read();
@@ -176,6 +211,7 @@ export function useChatConversation() {
             delta?: string;
             errorText?: string;
             output?: unknown;
+            data?: unknown;
           };
           try {
             event = JSON.parse(data);
@@ -187,8 +223,25 @@ export function useChatConversation() {
           } else if (event.type === 'tool-output-available') {
             // Render the fallback CTAs from the structured tool result — never
             // from model text (it corrupts long URLs).
-            const actions = extractChatActions(event.output);
-            if (actions) assistant.actions = actions;
+            const a = extractChatActions(event.output);
+            if (a) actions = a;
+          } else if (event.type === 'data-quoteTable') {
+            // Deterministic quote table (code-emitted). Guard the array so a
+            // malformed payload can't crash the render.
+            const d = event.data as QuoteTablePart | undefined;
+            if (d && Array.isArray(d.filas)) quoteTable = d;
+          } else if (event.type === 'data-gamaCards') {
+            const d = event.data as GamaCardsPart | undefined;
+            if (d && Array.isArray(d.modelos)) gamaCards = d;
+          } else if (event.type === 'data-buttons') {
+            // Code-emitted CTAs feeding the SAME `actions` slot. Either button
+            // may arrive alone (e.g. hablar_asesor → whatsapp only); keep a URL
+            // only if it's a non-empty string.
+            const b = event.data as { web?: unknown; whatsapp?: unknown } | undefined;
+            const web = typeof b?.web === 'string' && b.web ? b.web : undefined;
+            const whatsapp =
+              typeof b?.whatsapp === 'string' && b.whatsapp ? b.whatsapp : undefined;
+            if (web || whatsapp) actions = { web, whatsapp };
           } else if (event.type === 'error') {
             throw new Error(event.errorText || 'stream error');
           }
@@ -197,11 +250,20 @@ export function useChatConversation() {
 
       // Reveal the full reply at once now that the stream finished (WhatsApp-style).
       assistant.text = assistantText;
+      if (actions) assistant.actions = actions;
+      if (quoteTable) assistant.quoteTable = quoteTable;
+      if (gamaCards) assistant.gamaCards = gamaCards;
 
       // Defense-in-depth: a turn that streams no text deltas (e.g. the model ended
       // on a tool call, or the function was cut short) would otherwise leave an
-      // empty white bubble. Replace it with a recoverable message.
-      if (assistant.text.trim() === '' && !assistant.actions) {
+      // empty white bubble. Replace it with a recoverable message — unless code
+      // parts (buttons / table / cards) carry the answer on their own.
+      if (
+        assistant.text.trim() === '' &&
+        !assistant.actions &&
+        !assistant.quoteTable &&
+        !assistant.gamaCards
+      ) {
         assistant.text =
           'Disculpa, no alcancé a completar esa respuesta. ¿Lo intentamos de nuevo?';
       }

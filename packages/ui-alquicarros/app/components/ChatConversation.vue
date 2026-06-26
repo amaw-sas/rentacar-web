@@ -63,10 +63,47 @@
             class="cc-msg is-assistant"
           >
             <span v-if="chunk" class="cc-text" v-html="renderChatMarkdown(chunk)" />
-            <span v-if="m.actions && i === bubblesFor(m).length - 1" class="cc-actions">
-              <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
-              <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Escribir a un asesor</a>
-            </span>
+
+            <!-- Partes "code-owned": solo en la última burbuja del mensaje -->
+            <template v-if="i === bubblesFor(m).length - 1">
+              <!-- Tabla de cotización: una fila por gama, precio formateado es-CO -->
+              <div v-if="m.quoteTable" class="cc-quote">
+                <div v-for="f in m.quoteTable.filas" :key="f.categoria" class="cc-quote-row">
+                  <span class="cc-quote-gama">Gama {{ f.categoria }} <span class="cc-quote-desc">{{ f.descripcion }}</span></span>
+                  <strong class="cc-quote-price">${{ cop(f.precioTotal) }}</strong>
+                </div>
+                <span class="cc-quote-note">
+                  Total con IVA, tasas, seguro básico y km ilimitado · {{ m.quoteTable.dias }} día(s).
+                </span>
+              </div>
+
+              <!-- Tarjetas de modelos: foto + nombre, placeholder si no hay foto -->
+              <div v-if="m.gamaCards" class="cc-cards">
+                <span class="cc-cards-title">
+                  Modelos de la Gama {{ m.gamaCards.gama }}<template v-if="m.gamaCards.descripcion"> · {{ m.gamaCards.descripcion }}</template>
+                </span>
+                <div class="cc-cards-grid">
+                  <div v-for="(mod, mi) in m.gamaCards.modelos" :key="mi" class="cc-card">
+                    <img
+                      v-if="mod.imagen"
+                      :src="mod.imagen"
+                      :alt="mod.nombre"
+                      loading="lazy"
+                      decoding="async"
+                      class="cc-card-img"
+                    >
+                    <span v-else class="cc-card-noimg">(sin foto)</span>
+                    <span class="cc-card-name">{{ mod.nombre }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <span v-if="m.actions" class="cc-actions">
+                <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
+                <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
+              </span>
+            </template>
+
             <span v-if="m.createdAt" class="cc-time">{{ fmtTime(m.createdAt) }}</span>
           </div>
         </template>
@@ -116,11 +153,17 @@ const timeFmt = new Intl.DateTimeFormat('es-CO', {
 function fmtTime(ms?: number): string {
   return ms ? timeFmt.format(new Date(ms)) : ''
 }
-// Una burbuja por tema (separador --- del bot). Si no hay texto pero sí botones
-// de respaldo, deja una burbuja vacía para mostrarlos.
-function bubblesFor(m: { text: string; actions?: unknown }): string[] {
+// Precios COP enteros (ya redondeados por el server) → puntos de miles es-CO.
+const copFmt = new Intl.NumberFormat('es-CO')
+function cop(n: number): string {
+  return copFmt.format(n)
+}
+// Una burbuja por tema (separador --- del bot). Si no hay texto pero sí partes
+// "code-owned" (botones / tabla / tarjetas), deja una burbuja vacía para mostrarlas.
+function bubblesFor(m: { text: string; actions?: unknown; quoteTable?: unknown; gamaCards?: unknown }): string[] {
   const chunks = splitBubbles(m.text)
-  return chunks.length ? chunks : m.actions ? [''] : []
+  if (chunks.length) return chunks
+  return m.actions || m.quoteTable || m.gamaCards ? [''] : []
 }
 
 withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
@@ -249,7 +292,7 @@ button { -webkit-tap-highlight-color: transparent; }
   display: block;
   margin-top: 0.5rem;
   padding: 0.55rem 0.9rem;
-  background: var(--ui-primary, #cc022b);
+  background: #2563eb; /* web → azul (CTA "terminar reserva") */
   color: #fff !important;
   text-align: center;
   text-decoration: none;
@@ -257,7 +300,52 @@ button { -webkit-tap-highlight-color: transparent; }
   font-weight: 600;
   font-size: 0.9rem;
 }
+.cc-link-btn-wa { background: #16a34a; } /* WhatsApp → verde */
 .cc-link-btn:hover { opacity: 0.92; }
+
+/* --- Tabla de cotización (data-quoteTable) --- */
+.cc-quote { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; }
+.cc-quote-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+.cc-quote-gama { font-size: 0.9rem; color: #111827; }
+.cc-quote-desc { color: #6b7280; }
+.cc-quote-price { font-size: 0.95rem; color: #111827; white-space: nowrap; }
+.cc-quote-note { font-size: 0.72rem; color: #6b7280; margin-top: 0.15rem; }
+
+/* --- Tarjetas de modelos (data-gamaCards) --- */
+.cc-cards { margin-top: 0.5rem; }
+.cc-cards-title { display: block; font-size: 0.85rem; font-weight: 600; color: #111827; }
+.cc-cards-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.cc-card {
+  width: 7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+.cc-card-img { width: 100%; height: 5rem; object-fit: contain; }
+.cc-card-noimg {
+  width: 100%;
+  height: 5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bbb;
+  font-size: 0.75rem;
+}
+.cc-card-name { font-size: 0.75rem; text-align: center; line-height: 1.3; color: #111827; }
 .cc-error { align-self: center; color: #b91c1c; font-size: 0.8rem; text-align: center; }
 .cc-typing { display: flex; gap: 0.25rem; align-items: center; }
 .cc-bdot { width: 0.4rem; height: 0.4rem; border-radius: 9999px; background: #6b7280; animation: cc-bounce 1.2s infinite ease-in-out; }
