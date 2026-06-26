@@ -9,11 +9,11 @@ Holdout para el rediseño de la sección "Cómo Funciona" de alquicarros
 renderizado en home/city/reservas de alquicarros. Diseño de referencia:
 `docs/specs/2026-06-26-alquicarros-howitworks-redesign-design.md`.
 
-## SCEN-HW-01: stepper horizontal con estado
+## SCEN-HW-01: stepper horizontal con los 3 pasos activos
 **Given**: el home de alquicarros con la sección `#how-it-works`
 **When**: se renderiza
-**Then**: sobre las cards hay un rail con tres marcadores numerados "1", "2", "3"; el "1" tiene fondo naranja de marca (`bg-brand-600` / `#ef9600`) y texto blanco; los "2" y "3" tienen fondo claro con número en gris; el conector entre 1 y 2 es naranja de marca y el conector entre 2 y 3 es gris
-**Evidence**: DOM — marcador "1" con `background-color` rgb(239,150,0); marcadores "2"/"3" sin ese fondo; primer segmento conector con bg de marca, segundo gris
+**Then**: sobre las cards hay un rail con tres marcadores numerados "1", "2", "3"; los tres tienen fondo naranja de marca (`bg-brand-600` / `#ef9600`) y texto blanco; ambos conectores (1→2 y 2→3) son naranja de marca
+**Evidence**: DOM — marcadores "1","2","3" con `background-color` rgb(239,150,0); ambos segmentos conector con bg de marca rgb(239,150,0)
 
 ## SCEN-HW-02: iconos de línea naranja, no fotos
 **Given**: una card de paso (ej. la primera)

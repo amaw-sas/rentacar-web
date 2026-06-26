@@ -19,26 +19,29 @@ test.describe('Cómo Funciona alquicarros — rediseño stepper + iconos', () =>
     await expect(page.locator('#how-it-works')).toBeVisible();
   });
 
-  test('SCEN-HW-01: stepper con paso 1 activo y conectores naranja/gris', async ({ page }) => {
+  test('SCEN-HW-01: stepper con los 3 pasos activos (naranja)', async ({ page }) => {
+    const ORANGE = 'rgb(239, 150, 0)';
     const rail = page.getByTestId('howitworks-stepper-test');
     await expect(rail).toBeVisible();
 
-    const step1 = rail.getByTestId('step-marker-1');
-    const step2 = rail.getByTestId('step-marker-2');
-    await expect(step1).toHaveText('1');
-    await expect(step2).toHaveText('2');
+    const m1 = rail.getByTestId('step-marker-1');
+    const m2 = rail.getByTestId('step-marker-2');
+    const m3 = rail.getByTestId('step-marker-3');
+    await expect(m1).toBeVisible();
+    await expect(m2).toBeVisible();
+    await expect(m3).toBeVisible();
+    await expect(m1).toHaveText('1');
+    await expect(m2).toHaveText('2');
+    await expect(m3).toHaveText('3');
 
-    // Paso 1 activo: fondo naranja de marca #ef9600. Paso 2 inactivo: otro fondo.
-    const bg1 = await step1.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg1).toBe('rgb(239, 150, 0)');
-    const bg2 = await step2.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bg2).not.toBe('rgb(239, 150, 0)');
+    // Los 3 marcadores con fondo naranja de marca #ef9600.
+    expect(await m1.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(ORANGE);
+    expect(await m2.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(ORANGE);
+    expect(await m3.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(ORANGE);
 
-    // Conector 1→2 naranja, 2→3 gris.
-    const c1 = await rail.getByTestId('step-connector-1').evaluate((el) => getComputedStyle(el).backgroundColor);
-    const c2 = await rail.getByTestId('step-connector-2').evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(c1).toBe('rgb(239, 150, 0)');
-    expect(c2).not.toBe('rgb(239, 150, 0)');
+    // Ambos conectores naranja.
+    expect(await rail.getByTestId('step-connector-1').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(ORANGE);
+    expect(await rail.getByTestId('step-connector-2').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(ORANGE);
   });
 
   test('SCEN-HW-02: cada card usa un icono de línea naranja, sin fotos', async ({ page }) => {

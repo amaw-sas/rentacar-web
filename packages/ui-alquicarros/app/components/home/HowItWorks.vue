@@ -33,18 +33,14 @@
         <template v-for="(step, index) in steps" :key="`marker-${step.number}`">
           <span
             :data-testid="`step-marker-${step.number}`"
-            class="flex items-center justify-center size-11 md:size-12 rounded-full font-extrabold text-base shrink-0"
-            :class="index === 0
-              ? 'bg-brand-600 text-white shadow-[0_4px_12px_rgba(239,150,0,0.35)]'
-              : 'bg-white border border-gray-300 text-gray-400'"
+            class="flex items-center justify-center size-11 md:size-12 rounded-full font-extrabold text-base shrink-0 bg-brand-600 text-white shadow-[0_4px_12px_rgba(239,150,0,0.35)]"
           >
             {{ step.number }}
           </span>
           <span
             v-if="index < steps.length - 1"
             :data-testid="`step-connector-${step.number}`"
-            class="h-1 w-12 sm:w-20 md:w-28 rounded-full"
-            :class="index === 0 ? 'bg-brand-600' : 'bg-gray-300'"
+            class="h-1 w-12 sm:w-20 md:w-28 rounded-full bg-brand-600"
           />
         </template>
       </div>
