@@ -159,3 +159,42 @@ describe('F3 — mode="landing" drops the engine for a /reservas CTA (SCEN-F3-03
     expect(LANDING_BRANCH).not.toMatch(/<a\b/)
   })
 })
+
+describe('Hero redesign — richer landing (vehicle card + trust chips + depth)', () => {
+  // The landing hero used to be a lone CTA floating on flat red ("escueto").
+  // The redesign mirrors the home hero's visual-card language: a vehicle photo
+  // card beside the text, trust chips in the text column, and soft glow blobs
+  // for depth — all WITHOUT touching the preserved invariants asserted above.
+  it('renders a vehicle-photo visual card in the landing branch (fills the column)', () => {
+    expect(LANDING_BRANCH).toMatch(/<NuxtImg\b/)
+    expect(LANDING_BRANCH).toMatch(/\/images\/vehicles\//)
+    // aspect-ratio box reserves the image footprint → no CLS (no fixed Date).
+    expect(LANDING_BRANCH).toMatch(/aspect-\[\d+\/\d+\]/)
+  })
+
+  it('gives the vehicle image an alt bound to the city name (SEO/a11y)', () => {
+    expect(LANDING_BRANCH).toMatch(/:alt="`[^`]*\$\{city\?\.name\}/)
+  })
+
+  it('prioritizes the landing hero image for LCP (eager + high fetchpriority)', () => {
+    expect(LANDING_BRANCH).toMatch(/loading="eager"/)
+    expect(LANDING_BRANCH).toMatch(/fetchpriority="high"/)
+  })
+
+  it('renders trust chips from a static (Date-free) list in the text column', () => {
+    expect(hero).toMatch(/trustChips\s*=\s*\[/)
+    expect(hero).toMatch(/v-for="chip in trustChips"/)
+    expect(hero).toContain('Sin anticipos')
+  })
+
+  it('adds decorative background-glow blobs (inert, aria-hidden, non-interactive)', () => {
+    expect(hero).toMatch(/blur-3xl/)
+    expect(hero).toMatch(/pointer-events-none[^>]*absolute|absolute[^>]*pointer-events-none/)
+  })
+
+  it('keeps the vehicle card decorations inert (the scrim/pill add no controls)', () => {
+    // Reassert the global no-controls invariant still holds after the redesign.
+    expect(hero).not.toMatch(/<button\b/)
+    expect(hero).not.toMatch(/<UButton\b/)
+  })
+})

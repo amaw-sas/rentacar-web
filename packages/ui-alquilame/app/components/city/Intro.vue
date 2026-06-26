@@ -6,10 +6,12 @@
     look: a clean light document section with the red accent bar (h-1 w-10 rounded
     bg-red-600), a .heading-section title (Plus Jakarta) and relaxed body copy.
 
-    PRESERVATION RULE: every word of city SEO copy is kept verbatim. Only the
-    styling changes — no text is shortened or dropped:
-      - #descripcion: the "En {franchise} {city} la libertad de moverte a tu
-        manera es realidad" poster + city.description + the city illustration.
+    COPY: all indexable per-city SEO copy (city.description, expandedContent) is
+    kept verbatim. The only brand-authored line is the #descripcion poster, which
+    alquilame deliberately words differently from alquilatucarro to avoid mirroring
+    the sister brand:
+      - #descripcion: the "En {franchise} {city} muévete a tu ritmo, sin límites"
+        poster + city.description + the city illustration.
       - #introduccion (#intro): the "Explora {city} con tu carro de alquiler"
         heading + expandedContent.intro paragraph (only for cities with rich
         content — same hasExpandedContent guard as before).
@@ -26,17 +28,17 @@
           <LazyImagesCiudadesChica :city-name="city?.name" />
         </div>
 
-        <!-- Poster: "En {franchise} {city} la libertad ... es realidad" -->
+        <!-- Poster: "En {franchise} {city} muévete a tu ritmo, sin límites" -->
         <div class="flex flex-col gap-0 text-center">
           <div class="heading-sub text-red-600 font-extrabold text-xl md:text-3xl">
             En {{ franchise.shortname }}
           </div>
           <div class="heading-section text-red-600 font-extrabold text-3xl md:text-5xl" v-text="city?.name"></div>
           <p class="heading-card text-gray-900 font-extrabold text-2xl md:text-4xl mb-0 leading-snug">
-            la libertad <br />
-            de moverte <br />
-            a tu manera <br />
-            es realidad
+            muévete <br />
+            a tu ritmo, <br />
+            sin <br />
+            límites
           </p>
           <!-- Diamond divider (design rhythm) -->
           <div class="flex items-center w-full my-3 md:my-4">

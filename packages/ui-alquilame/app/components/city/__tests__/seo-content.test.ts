@@ -19,6 +19,10 @@ import { join } from 'node:path'
 
 const INTRO = readFileSync(join(__dirname, '..', 'Intro.vue'), 'utf-8')
 const SEO = readFileSync(join(__dirname, '..', 'SeoContent.vue'), 'utf-8')
+const CHICA = readFileSync(
+  join(__dirname, '..', '..', 'Images', 'Ciudades', 'Chica.vue'),
+  'utf-8',
+)
 
 describe('F2 city Intro — #descripcion + #introduccion preserved (SCEN-F2-02)', () => {
   it('keeps both section ids', () => {
@@ -28,10 +32,15 @@ describe('F2 city Intro — #descripcion + #introduccion preserved (SCEN-F2-02)'
 
   it('keeps the #descripcion poster copy verbatim', () => {
     expect(INTRO).toContain('En {{ franchise.shortname }}')
-    expect(INTRO).toContain('la libertad')
-    expect(INTRO).toContain('de moverte')
-    expect(INTRO).toContain('a tu manera')
-    expect(INTRO).toContain('es realidad')
+    // alquilame-specific tagline (deliberately differs from alquilatucarro's
+    // "la libertad / de moverte / a tu manera / es realidad" — same message,
+    // distinct wording so the city page no longer mirrors the sister brand).
+    expect(INTRO).toContain('muévete')
+    expect(INTRO).toContain('a tu ritmo')
+    expect(INTRO).toContain('sin')
+    expect(INTRO).toContain('límites')
+    // and must NOT regress to the shared alquilatucarro phrasing
+    expect(INTRO).not.toContain('a tu manera')
     // city.description still rendered (indexable per-city copy)
     expect(INTRO).toMatch(/v-text="city\?\.description"/)
   })
@@ -46,6 +55,29 @@ describe('F2 city Intro — #descripcion + #introduccion preserved (SCEN-F2-02)'
   it('renders the city illustration (CLS-safe reserved box)', () => {
     expect(INTRO).toContain('LazyImagesCiudadesChica')
     expect(INTRO).toMatch(/aspect-square/)
+  })
+})
+
+describe('City #descripcion illustration — brand-specific (not the shared chica.webp)', () => {
+  // The #descripcion illustration used to be /images/ciudades/chica.webp, served
+  // from the logic layer and IDENTICAL across the three brands — which made the
+  // alquilame city page look like alquilatucarro. alquilame now ships its own
+  // illustration. These assertions are the regression sentinel: never revert to
+  // the shared asset.
+  it('points at the alquilame-owned image, not the shared logic-layer asset', () => {
+    expect(CHICA).toContain('/images/cities/descripcion.webp')
+    expect(CHICA).not.toContain('/images/ciudades/chica.webp')
+  })
+
+  it('keeps the SEO alt text per-city (city name + alquiler keyword)', () => {
+    expect(CHICA).toMatch(/alt="`[^`]*\$\{cityName\}/)
+    expect(CHICA).toContain('carro de alquiler')
+  })
+
+  it('keeps the CLS-safe 800x800 NuxtImg contract', () => {
+    expect(CHICA).toContain('width="800"')
+    expect(CHICA).toContain('height="800"')
+    expect(CHICA).toMatch(/aspect-square/)
   })
 })
 
