@@ -46,8 +46,8 @@ export default defineAppConfig({
     oglogo: "/images/brand/og-logo.png",
     svglogo: "/images/brand/logo.svg",
     ogImage: "/img/og-alquicarros.jpg",
-    phone: "+57 301 672 9250",
-    whatsapp: "https://wa.me/573146826821",
+    phone: "+57 318 770 3670",
+    whatsapp: "https://wa.me/573187703670",
     email: "alquicarros@gmail.com",
     socialmedia: [
       "https://www.facebook.com/alquilerdecarroscolombia",
