@@ -33,10 +33,10 @@ const stats = read('Stats.vue')
 const ALL = [howItWorks, valueProps, stats]
 
 describe('reskin — HowItWorks.vue (3 steps)', () => {
-  it('renders the 3 design steps with their titles', () => {
-    expect(howItWorks).toContain('Elige tu Ciudad y Vehículo')
-    expect(howItWorks).toContain('Reserva con anticipación')
-    expect(howItWorks).toContain('Recoge y Disfruta')
+  it('renders the 3 redesigned steps with their titles', () => {
+    expect(howItWorks).toContain('Elige ciudad y auto')
+    expect(howItWorks).toContain('Reserva en minutos')
+    expect(howItWorks).toContain('Recoge y conduce')
   })
 
   it('is the #how-it-works section with the design header', () => {
@@ -44,21 +44,27 @@ describe('reskin — HowItWorks.vue (3 steps)', () => {
     expect(howItWorks).toContain('Cómo Funciona')
   })
 
-  it('renders each step illustration via <NuxtImg> (not a raw <img>)', () => {
-    expect(howItWorks).toMatch(/<NuxtImg\b/)
+  it('renders each step via a line icon (UIcon), not a photo', () => {
+    expect(howItWorks).toMatch(/<UIcon\b/)
+    expect(howItWorks).not.toMatch(/<NuxtImg\b/)
     expect(howItWorks).not.toMatch(/<img\b/)
   })
 
-  it('locks the image aspect with explicit width/height (CLS + no collapse)', () => {
-    expect(howItWorks).toMatch(/width="508"/)
-    expect(howItWorks).toMatch(/height="391"/)
-    expect(howItWorks).toMatch(/aspect-\[4\/3\]/)
+  it('has the decorative numbered stepper rail', () => {
+    expect(howItWorks).toContain('howitworks-stepper-test')
+    expect(howItWorks).toMatch(/step-marker-/)
+    expect(howItWorks).toMatch(/step-connector-/)
   })
 
-  it('wires the 3 real step assets', () => {
-    expect(howItWorks).toContain('/images/howitworks/paso-escoge.jpg')
-    expect(howItWorks).toContain('/images/howitworks/paso-reserva.jpg')
-    expect(howItWorks).toContain('/images/howitworks/paso-recoge.jpg')
+  it('wires the 3 lucide step icons', () => {
+    expect(howItWorks).toContain('i-lucide-map-pin')
+    expect(howItWorks).toContain('i-lucide-calendar-check')
+    expect(howItWorks).toContain('i-lucide-key')
+  })
+
+  it('preserves the trust footer', () => {
+    expect(howItWorks).toContain('Seguridad • Transparencia • Soporte 24/7')
+    expect(howItWorks).toContain('Estamos contigo en todo el proceso.')
   })
 })
 
