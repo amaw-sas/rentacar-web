@@ -16,14 +16,9 @@
     Fail-soft: a category with no active positive row shows NO price block —
     never "$0" nor a fabricated value.
 
-    Fidelity note: the golden's "Consultar disponibilidad" CTA points at an
-    external site; here it drives our internal engine instead — the modal ->
-    SelectBranch (variant="gray") -> "Ver disponibilidad" flow ported untouched
-    from the legacy #categorias, data-testids preserved. Button is brand orange
-    (#ef9600 = bg-brand-600), per the brand spec.
-
-    Gradient on the image frame uses the v4 bg-linear-to-* utility: with custom
-    @theme tokens the v3 alias renders background-image:none (F0 lesson).
+    This component is the orchestrator: real-data resolution (prices fail-soft)
+    + the Diario/Mensualidad toggle + the grid. Card presentation (badge, title,
+    price, spec chips, CTA -> modal -> SelectBranch flow) lives in HomeFleetCard.
   -->
   <section id="fleet" class="bg-white text-black py-12 md:py-20 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
@@ -63,94 +58,14 @@
         </div>
       </div>
 
-      <!-- Grid: 6 golden cards with real prices -->
+      <!-- Grid: 6 golden cards with real prices; presentación en FleetCard -->
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
+        <HomeFleetCard
           v-for="card in cards"
           :key="card.code"
-          class="bg-[#F4F5F9] rounded-2xl overflow-hidden shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 border border-gray-200 group flex flex-col"
-        >
-          <!-- Vehicle image (full-bleed top); aspect-ratio reserves space (CLS) -->
-          <div class="aspect-[16/10] bg-linear-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden">
-            <NuxtImg
-              :src="card.image"
-              :alt="card.alt"
-              width="508"
-              height="318"
-              sizes="100vw md:50vw lg:380px"
-              loading="lazy"
-              decoding="async"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          </div>
-
-          <!-- Content -->
-          <div class="p-6 flex flex-col flex-1">
-            <!-- Category + transmission -->
-            <h3 class="text-lg font-bold font-heading text-gray-900 mb-2">
-              {{ card.title }}
-              <span class="text-sm font-normal text-gray-500"> · {{ card.transmission }}</span>
-            </h3>
-            <p class="text-sm text-gray-600 mb-2">Ej: {{ card.example }} o similar</p>
-            <p class="text-sm text-gray-500 mb-4 leading-snug">{{ card.description }}</p>
-
-            <!-- Price: real; omitted (fail-soft) when undefined -->
-            <div class="mb-4 min-h-[2.5rem]">
-              <p
-                v-if="plan === 'daily' && card.dailyPrice !== undefined"
-                class="flex items-baseline gap-2 flex-wrap"
-              >
-                <span class="text-sm text-gray-500">Desde</span>
-                <span class="text-2xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}/día</span>
-                <span class="text-xs text-gray-400">+ IVA</span>
-              </p>
-              <p
-                v-else-if="plan === 'monthly' && card.monthlyPrice !== undefined"
-                class="flex items-baseline gap-2 flex-wrap"
-              >
-                <span class="text-sm text-gray-500">Desde</span>
-                <span class="text-2xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.monthlyPrice) }}/mes</span>
-                <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
-              </p>
-            </div>
-
-            <!-- Specs -->
-            <div class="flex items-center gap-4 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
-              <span class="flex items-center gap-1.5" :title="`${card.passengers} pasajeros`">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                {{ card.passengers }}
-              </span>
-              <span class="flex items-center gap-1.5" :title="`${card.luggage} maletas`">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20h0a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h0" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                {{ card.luggage }}
-                <span class="text-gray-500"> · {{ plan === 'daily' ? 'Kilometraje ilimitado' : '1.000 km/mes incluidos' }}</span>
-              </span>
-            </div>
-
-            <!-- CTA: drives the internal engine (modal -> SelectBranch) -->
-            <!-- hydrate-on-visible (not -interaction): on touch the first tap is
-                 consumed by interaction-hydration and never opens the modal.
-                 rootMargin pre-hydrates ~200px early so the island is interactive
-                 before the thumb arrives on slow devices. -->
-            <LazyUModal
-              :hydrate-on-visible="{ rootMargin: '200px' }"
-              class="mt-auto"
-              :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }"
-            >
-              <template #body>
-                <div class="mb-4 text-black text-lg">
-                  ¿En que ciudad<br>deseas recoger tu carro?
-                </div>
-                <div class="min-w-80 my-3">
-                  <SelectBranch variant="gray" />
-                </div>
-              </template>
-              <UButton class="block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-gray-900 font-bold uppercase transition-colors">
-                Ver disponibilidad
-              </UButton>
-            </LazyUModal>
-          </div>
-        </div>
+          :card="card"
+          :plan="plan"
+        />
       </div>
     </div>
   </section>
@@ -269,7 +184,6 @@ function pickRepresentativeMonthlyPrice(prices: CategoryMonthPriceData[]): numbe
 }
 
 const { categories } = useFetchRentacarData()
-const { moneyFormat } = useMoneyFormat()
 
 // Prices are global per category code (not per-city): work on the home with no
 // city. undefined => that card's price block is hidden (never $0 / fabricated).
