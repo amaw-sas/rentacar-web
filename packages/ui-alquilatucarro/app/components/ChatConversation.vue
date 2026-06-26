@@ -292,7 +292,7 @@ button { -webkit-tap-highlight-color: transparent; }
   display: block;
   margin-top: 0.5rem;
   padding: 0.55rem 0.9rem;
-  background: #2563eb; /* web → azul (CTA "terminar reserva") */
+  background: var(--ui-primary, #cc022b); /* web → color de marca (CTA "terminar reserva") */
   color: #fff !important;
   text-align: center;
   text-decoration: none;
