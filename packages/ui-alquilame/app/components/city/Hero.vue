@@ -1,7 +1,10 @@
 <template>
   <!--
-    F2 city hero — restyle of the design's #hero (bg-linear-to-br red gradient,
-    city-targeted h1 left / Searcher engine right). PRESERVED untouched:
+    City hero — brand-red gradient band. Left column: trust badge + city-targeted
+    h1 + subtitle + trust chips. Right column: the Searcher engine (results mode)
+    OR a vehicle-photo visual card + "Reservar ahora" CTA (landing mode). The lone
+    floating CTA on flat red read as too bare; the car card mirrors the home hero's
+    visual-card language and soft background-glow blobs add depth. PRESERVED untouched:
       - The Searcher engine: same component, same data-testid
         (pickup-location-test / return-location-test), same navigation to
         /{city}/buscar-vehiculos/... It stays wrapped in <ClientOnly> with a
@@ -34,7 +37,15 @@
     -->
     <div id="searcher" aria-hidden="true" class="absolute scroll-mt-20" />
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
+    <!--
+      Atmosphere — two soft radial glow blobs give the flat red band depth.
+      Purely decorative (aria-hidden, pointer-events-none) and clipped by the
+      section's overflow-hidden; they sit behind the relative content grid.
+    -->
+    <div aria-hidden="true" class="pointer-events-none absolute -top-24 -right-32 w-[28rem] h-[28rem] rounded-full bg-white/10 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-40 -left-24 w-[24rem] h-[24rem] rounded-full bg-brand-900/40 blur-3xl"></div>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
       <div class="grid lg:grid-cols-2 gap-10 items-center">
         <!-- Text column -->
         <div class="text-center lg:text-left">
@@ -67,6 +78,29 @@
             Consulta disponibilidad y precios. Elige ciudad, fechas y horarios y
             renta un vehículo por días, semanas o el tiempo que necesites.
           </p>
+
+          <!--
+            Trust chips (both modes) — restate the brand promises and give the
+            text column weight against the visual/engine column. Inert <li>/<span>
+            only: no controls (#41), no Date baked into markup (#109).
+          -->
+          <ul class="mt-6 flex flex-wrap gap-x-5 gap-y-2 justify-center lg:justify-start text-sm font-medium text-white/90">
+            <li v-for="chip in trustChips" :key="chip" class="inline-flex items-center gap-1.5">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-4 h-4 shrink-0 text-white"
+                aria-hidden="true"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              {{ chip }}
+            </li>
+          </ul>
         </div>
 
         <!--
@@ -106,8 +140,26 @@
             </div>
           </div>
         </div>
-        <!-- landing — marketing-only: CTA to the centralized /reservas page -->
-        <div v-else class="flex items-center justify-center">
+        <!-- landing — marketing-only: a vehicle-photo visual card (fills the column
+             that used to hold a lone CTA on flat red) + the "Reservar ahora" CTA
+             that navigates (SPA) to /reservas. NO Searcher engine here
+             (SCEN-F3-03). The car image uses an aspect-ratio box → footprint
+             reserved (no CLS); eager + high fetchpriority as the landing LCP. -->
+        <div v-else class="flex flex-col items-center gap-5">
+          <div
+            class="relative w-full max-w-lg aspect-[16/10] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/30 ring-1 ring-white/15"
+          >
+            <NuxtImg
+              src="/images/vehicles/premium.jpg"
+              :alt="`Carro disponible para alquilar en ${city?.name}`"
+              width="800"
+              height="500"
+              sizes="sm:90vw lg:512px"
+              loading="eager"
+              fetchpriority="high"
+              class="absolute inset-0 w-full h-full object-cover"
+            />
+          </div>
           <NuxtLink
             to="/reservas"
             class="inline-flex items-center justify-center rounded-full bg-white text-hero-from font-semibold px-8 py-4 text-base md:text-lg shadow-lg hover:bg-white/90 transition-colors"
@@ -155,6 +207,9 @@ withDefaults(
  * never a focusable control, so it never enters the tab order or the a11y tree.
  */
 const { copyToWhatsapp: copySearchToWhatsapp } = useShareSearchParams()
+
+/** Static brand promises shown as hero trust chips (no Date — #109 SSR/ISR safe). */
+const trustChips = ['Sin anticipos', 'Hasta 60% de descuento', 'Disponible los 7 días']
 
 const Searcher = defineAsyncComponent(() => import('../Searcher.vue'))
 const PlaceholdersSearcher = defineAsyncComponent(
