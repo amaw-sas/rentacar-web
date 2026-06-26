@@ -93,6 +93,15 @@ describe('reskin — ValueProps.vue (4 props)', () => {
     expect(valueProps).not.toContain('shortname')
     expect(valueProps).not.toContain('franchise')
   })
+
+  it('uses Nuxt UI icons (UIcon/lucide), not hand-rolled SVG via v-html', () => {
+    expect(valueProps).toMatch(/<UIcon\b/)
+    expect(valueProps).not.toMatch(/v-html=/)
+    expect(valueProps).toContain('i-lucide-wallet')
+    expect(valueProps).toContain('i-lucide-car')
+    expect(valueProps).toContain('i-lucide-headset')
+    expect(valueProps).toContain('i-lucide-map-pinned')
+  })
 })
 
 describe('reskin — Stats.vue (stats band, hardcoded-copy exception)', () => {
