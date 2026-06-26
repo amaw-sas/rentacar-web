@@ -46,8 +46,8 @@ export default defineAppConfig({
     oglogo: "/images/brand/og-logo.png",
     svglogo: "/images/brand/logo.svg",
     ogImage: "/img/og-alquilame.jpg",
-    phone: "+57 301 672 9250",
-    whatsapp: "https://wa.me/573146826821",
+    phone: "+57 300 243 6677",
+    whatsapp: "https://wa.me/573002436677",
     email: "alquilame@gmail.com",
     socialmedia: [
       "https://www.facebook.com/alquilamecom",

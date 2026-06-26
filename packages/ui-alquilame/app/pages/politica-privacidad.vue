@@ -80,7 +80,7 @@
           </p>
           <ul class="list-disc pl-6 space-y-2">
             <li><strong>Correo electrónico:</strong> info@amawsas.com</li>
-            <li><strong>WhatsApp:</strong> +57 301 672 9250</li>
+            <li><strong>WhatsApp:</strong> {{ franchise.phone }}</li>
             <li><strong>Formulario de PQRS:</strong> disponible en nuestro sitio web</li>
           </ul>
           <p>
@@ -136,7 +136,7 @@
           <p class="font-semibold text-gray-900">AMAW S.A.S</p>
           <p>NIT: 900.665.917-7</p>
           <p>Cali, Valle del Cauca, Colombia</p>
-          <p>+57 301 672 9250</p>
+          <p>{{ franchise.phone }}</p>
           <p>info@amawsas.com</p>
         </div>
       </div>
