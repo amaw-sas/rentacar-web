@@ -75,7 +75,7 @@
         <p class="mt-12 text-gray-400 text-sm">
           ¿Necesitas ayuda?
           <a
-            href="https://wa.me/573016729250"
+            :href="franchise.whatsapp"
             target="_blank"
             class="text-amber-500 hover:underline"
           >
