@@ -1,0 +1,1 @@
+amend: marquesina/masonry rechazado en review por el usuario (4 fotos reales no llenan tiles; 4 lanes excesivo). Nuevo contrato: mosaico estatico de fotos disponibles + listado tipografico de ciudades. Revert path: git revert del commit de implementacion del nuevo diseno.
