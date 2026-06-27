@@ -474,7 +474,7 @@ const calendarUIConfig = {
     // (numbers centered) but `gridWeekDaysRow` does not, so without this the
     // letters left-align inside their column and drift left of the numbers.
     gridWeekDaysRow: 'w-full place-items-center',
-    cellTrigger: '!text-gray-900 !font-semibold data-[disabled]:!text-gray-400 data-[disabled]:!opacity-50 data-[unavailable]:!text-gray-400 data-[unavailable]:!opacity-50 data-[outside-view]:!text-gray-400 data-[outside-view]:!opacity-50'
+    cellTrigger: '!text-gray-900 !font-semibold data-[disabled]:!text-gray-400 data-[disabled]:!opacity-50 data-[unavailable]:!text-gray-400 data-[unavailable]:!opacity-50'
 };
 
 // Mobile calendar lives in a full-screen slideover (directiva 2026-06-23): the
@@ -490,7 +490,7 @@ const mobileCalendarUIConfig = {
     gridWeekDaysRow: 'w-full place-items-center mb-2',
     gridBody: 'gap-y-3',
     headCell: 'text-base',
-    cellTrigger: '!text-gray-900 !font-semibold !size-12 !text-lg !m-0 data-[disabled]:!text-gray-400 data-[disabled]:!opacity-50 data-[unavailable]:!text-gray-400 data-[unavailable]:!opacity-50 data-[outside-view]:!text-gray-400 data-[outside-view]:!opacity-50',
+    cellTrigger: '!text-gray-900 !font-semibold !size-12 !text-lg !m-0 data-[disabled]:!text-gray-400 data-[disabled]:!opacity-50 data-[unavailable]:!text-gray-400 data-[unavailable]:!opacity-50',
 };
 
 // bfcache restoration: the Searcher has 15+ watchers binding local refs to
