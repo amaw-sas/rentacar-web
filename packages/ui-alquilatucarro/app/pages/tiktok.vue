@@ -15,6 +15,12 @@
     con fechas. Sin JS sigue funcionando (cae a /{ciudad}).
   -->
   <div class="tt-root">
+    <!-- Oscurece el fondo cuando el menú de contacto está abierto, para no tocar
+         por accidente un botón de ciudad. Tocarlo cierra el menú. -->
+    <transition name="tt-fade">
+      <div v-if="contactOpen" class="tt-backdrop" @click="contactOpen = false" />
+    </transition>
+
     <header class="tt-header">
       <NuxtLink to="/" aria-label="alquilatucarro">
         <Logo cls="h-9 w-auto mx-auto" />
@@ -193,13 +199,22 @@ const waHref = computed(
 .tt-city-name { flex: 1; font-weight: 700; font-size: 1rem; color: #1e3a8a; }
 .tt-city-arrow { color: #93c5fd; flex-shrink: 0; }
 
+/* Capa que oscurece el resto al abrir el menú de contacto */
+.tt-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 10;
+}
+
 .tt-footer {
   position: relative;
+  z-index: 20; /* footer (botón + opciones) por encima del backdrop */
   flex-shrink: 0;
   padding: 0.5rem 1.25rem calc(env(safe-area-inset-bottom) + 1rem);
 }
 
-/* Botón principal "Contáctanos" */
+/* Botón principal "Contáctanos" (verde) */
 .tt-contact-btn {
   display: flex;
   align-items: center;
@@ -208,13 +223,13 @@ const waHref = computed(
   width: 100%;
   max-width: 21rem;
   margin: 0 auto;
-  background: #fff;
-  color: #1e3a8a;
+  background: #16a34a;
+  color: #fff;
   border-radius: 0.875rem;
   padding: 0.85rem 1rem;
   font-weight: 800;
   font-size: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 .tt-contact-btn:active { transform: scale(0.98); }
 .tt-contact-caret { transition: transform 0.2s ease; }
@@ -255,4 +270,10 @@ const waHref = computed(
 .tt-rise-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
 .tt-rise-enter-from,
 .tt-rise-leave-to { opacity: 0; transform: translateY(0.5rem); }
+
+/* Fade del backdrop */
+.tt-fade-enter-active,
+.tt-fade-leave-active { transition: opacity 0.18s ease; }
+.tt-fade-enter-from,
+.tt-fade-leave-to { opacity: 0; }
 </style>
