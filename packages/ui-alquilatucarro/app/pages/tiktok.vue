@@ -41,12 +41,42 @@
     </main>
 
     <footer class="tt-footer">
-      <a :href="franchise.whatsapp" target="_blank" rel="noopener noreferrer" class="tt-wa">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12.04 2c-5.46 0-9.9 4.44-9.9 9.9 0 1.75.46 3.45 1.32 4.95L2 22l5.3-1.38a9.9 9.9 0 004.74 1.21h.01c5.46 0 9.9-4.44 9.9-9.9 0-2.64-1.03-5.13-2.9-7A9.82 9.82 0 0012.04 2zm5.8 14.16c-.25.7-1.44 1.33-1.99 1.37-.53.05-1.02.24-3.45-.72-2.9-1.14-4.74-4.13-4.88-4.32-.14-.19-1.17-1.55-1.17-2.96s.74-2.1 1-2.39c.25-.29.55-.36.74-.36.18 0 .37 0 .53.01.17.01.4-.06.62.48.25.6.85 2.07.92 2.22.07.15.12.32.02.51-.09.19-.14.31-.28.48-.14.17-.3.37-.42.5-.14.14-.29.29-.12.57.17.29.74 1.22 1.59 1.98 1.09.97 2.01 1.27 2.3 1.42.28.14.45.12.61-.07.17-.19.71-.83.9-1.11.18-.29.37-.24.61-.14.25.09 1.57.74 1.84.88.27.14.45.21.51.32.07.12.07.66-.18 1.36z" />
+      <!-- Opciones de contacto: se despliegan HACIA ARRIBA sobre el botón -->
+      <transition name="tt-rise">
+        <div v-if="contactOpen" class="tt-contact-options">
+          <NuxtLink to="/chat" class="tt-opt tt-opt-chat">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+            </svg>
+            Chat 24 horas
+          </NuxtLink>
+          <a :href="telHref" class="tt-opt tt-opt-call">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0122 16.92z" />
+            </svg>
+            Llamada
+          </a>
+          <a :href="waHref" target="_blank" rel="noopener noreferrer" class="tt-opt tt-opt-wa">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12.04 2c-5.46 0-9.9 4.44-9.9 9.9 0 1.75.46 3.45 1.32 4.95L2 22l5.3-1.38a9.9 9.9 0 004.74 1.21h.01c5.46 0 9.9-4.44 9.9-9.9 0-2.64-1.03-5.13-2.9-7A9.82 9.82 0 0012.04 2zm5.8 14.16c-.25.7-1.44 1.33-1.99 1.37-.53.05-1.02.24-3.45-.72-2.9-1.14-4.74-4.13-4.88-4.32-.14-.19-1.17-1.55-1.17-2.96s.74-2.1 1-2.39c.25-.29.55-.36.74-.36.18 0 .37 0 .53.01.17.01.4-.06.62.48.25.6.85 2.07.92 2.22.07.15.12.32.02.51-.09.19-.14.31-.28.48-.14.17-.3.37-.42.5-.14.14-.29.29-.12.57.17.29.74 1.22 1.59 1.98 1.09.97 2.01 1.27 2.3 1.42.28.14.45.12.61-.07.17-.19.71-.83.9-1.11.18-.29.37-.24.61-.14.25.09 1.57.74 1.84.88.27.14.45.21.51.32.07.12.07.66-.18 1.36z" />
+            </svg>
+            WhatsApp
+          </a>
+        </div>
+      </transition>
+
+      <button
+        type="button"
+        class="tt-contact-btn"
+        :class="{ 'is-open': contactOpen }"
+        :aria-expanded="contactOpen"
+        @click="contactOpen = !contactOpen"
+      >
+        Contáctanos
+        <svg class="tt-contact-caret" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" />
         </svg>
-        Hablar por WhatsApp
-      </a>
+      </button>
     </footer>
   </div>
 </template>
@@ -93,6 +123,18 @@ const getCityReservationURL = (city: CityData): string =>
     initHour: '12:00',
     endHour: '12:00',
   })
+
+// Menú "Contáctanos": Chat 24h (chatbot web), Llamada y WhatsApp.
+const contactOpen = ref(false)
+
+// tel: con el número de la marca, solo dígitos y el +.
+const telHref = computed(() => `tel:${(franchise.phone ?? '').replace(/[^\d+]/g, '')}`)
+
+// WhatsApp con mensaje pre-cargado que identifica el origen (TikTok) para el asesor.
+const WA_MESSAGE = 'Hola, vi su página de alquiler de carros en TikTok y quiero saber los requisitos'
+const waHref = computed(
+  () => `${franchise.whatsapp}?text=${encodeURIComponent(WA_MESSAGE)}`,
+)
 </script>
 
 <style scoped>
@@ -129,7 +171,9 @@ const getCityReservationURL = (city: CityData): string =>
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  max-width: 28rem;
+  /* Más estrecho que el ancho de pantalla → deja ver el fondo a los lados
+     (pensado para una imagen de fondo). */
+  max-width: 21rem;
   margin: 0 auto;
 }
 
@@ -150,23 +194,65 @@ const getCityReservationURL = (city: CityData): string =>
 .tt-city-arrow { color: #93c5fd; flex-shrink: 0; }
 
 .tt-footer {
+  position: relative;
   flex-shrink: 0;
   padding: 0.5rem 1.25rem calc(env(safe-area-inset-bottom) + 1rem);
 }
-.tt-wa {
+
+/* Botón principal "Contáctanos" */
+.tt-contact-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  max-width: 28rem;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 21rem;
   margin: 0 auto;
-  background: #22c55e;
-  color: #fff;
+  background: #fff;
+  color: #1e3a8a;
+  border-radius: 0.875rem;
+  padding: 0.85rem 1rem;
+  font-weight: 800;
+  font-size: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+.tt-contact-btn:active { transform: scale(0.98); }
+.tt-contact-caret { transition: transform 0.2s ease; }
+.tt-contact-btn.is-open .tt-contact-caret { transform: rotate(180deg); }
+
+/* Opciones desplegadas (flotan sobre el botón, no empujan la lista) */
+.tt-contact-options {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: calc(100% - 0.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 21rem;
+  margin: 0 auto 0.5rem;
+}
+.tt-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  justify-content: center;
   border-radius: 0.875rem;
   padding: 0.8rem 1rem;
   font-weight: 700;
   font-size: 0.95rem;
+  color: #fff;
   text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
-.tt-wa:active { transform: scale(0.98); }
+.tt-opt:active { transform: scale(0.98); }
+.tt-opt-chat { background: #2563eb; }
+.tt-opt-call { background: #0ea5e9; }
+.tt-opt-wa { background: #22c55e; }
+
+/* Animación: las opciones suben y aparecen */
+.tt-rise-enter-active,
+.tt-rise-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+.tt-rise-enter-from,
+.tt-rise-leave-to { opacity: 0; transform: translateY(0.5rem); }
 </style>
