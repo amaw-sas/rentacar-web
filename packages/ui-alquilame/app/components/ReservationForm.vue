@@ -93,26 +93,29 @@
           />
         </u-form-field>
         <u-form-field class="col-span-2" name="politicaPrivacidad">
-          <u-checkbox
-            v-model="formState.politicaPrivacidad"
-            color="neutral"
-            label="He leído y estoy de acuerdo con los términos y condiciones como de la política de tratamiento de la información"
-            :ui="{
-              label: '!text-black text-sm',
-              base: 'bg-gray-100 border border-gray-400 rounded',
-            }"
-          />
-          <div class="ml-6 text-sm space-x-3">
-            <nuxt-link
-              class="underline text-red-700 hover:text-red-800"
-              to="/terminos-condiciones"
-              target="_blank"
-            >Términos</nuxt-link>
-            <nuxt-link
-              class="underline text-red-700 hover:text-red-800"
-              to="/politica-privacidad"
-              target="_blank"
-            >Privacidad</nuxt-link>
+          <!-- Checkbox y texto como hermanos (no usar el slot label): así clic en
+               los enlaces navega sin marcar/desmarcar el checkbox. El cuadrito
+               (verde con chulo al marcar) es lo único que togglea. -->
+          <div class="flex items-start gap-2">
+            <u-checkbox
+              v-model="formState.politicaPrivacidad"
+              color="success"
+              class="mt-0.5"
+            />
+            <p class="text-sm text-black">
+              He leído y estoy de acuerdo con los
+              <nuxt-link
+                class="underline font-medium text-red-700 hover:text-red-800"
+                to="/terminos-condiciones"
+                target="_blank"
+              >términos y condiciones</nuxt-link>
+              y con la
+              <nuxt-link
+                class="underline font-medium text-red-700 hover:text-red-800"
+                to="/politica-privacidad"
+                target="_blank"
+              >política de tratamiento de la información</nuxt-link>
+            </p>
           </div>
         </u-form-field>
       </div>
