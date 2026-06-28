@@ -50,25 +50,23 @@
           {{ errorMessage }}
         </p>
 
-        <!-- Botones de acción -->
+        <!-- Botones de acción. Clases Tailwind explícitas (no color de UButton):
+             'amber'/'white' no son colores válidos del tema Nuxt UI y dejaban los
+             botones sin fondo, ilegibles sobre el azul. -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <UButton
+          <NuxtLink
             to="/"
-            size="lg"
-            color="amber"
-            class="font-bold"
+            class="inline-flex items-center justify-center rounded-lg px-6 py-3 font-bold text-base bg-amber-500 text-white hover:bg-amber-600 transition-colors"
           >
             Ir al inicio
-          </UButton>
-          <UButton
-            size="lg"
-            variant="outline"
-            color="white"
-            class="font-bold"
+          </NuxtLink>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-lg px-6 py-3 font-bold text-base border-2 border-white text-white hover:bg-white/10 transition-colors"
             @click="handleError"
           >
             Volver atrás
-          </UButton>
+          </button>
         </div>
 
         <!-- Contacto -->
