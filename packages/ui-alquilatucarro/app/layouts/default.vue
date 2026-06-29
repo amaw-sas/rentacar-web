@@ -84,7 +84,7 @@
               :key="item.label"
               :to="item.to"
               class="flex items-center gap-3 w-full bg-white rounded-xl px-4 py-3.5 shadow-sm text-gray-900 font-semibold hover:bg-gray-50 transition-colors"
-              @click="mobileMenuOpen = false"
+              @click="(e: MouseEvent) => onMobileNavClick(item, e)"
             >
               <UIcon :name="(item.icon as string)" class="size-5 text-[#000073] shrink-0" />
               <span class="flex-1 text-left">{{ item.label }}</span>
@@ -261,6 +261,26 @@ const telHref = computed(() => `tel:${(franchise.phone ?? '').replace(/[^\d+]/g,
 function goReservar() {
   mobileMenuOpen.value = false
   nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
+}
+
+// Click en un item del menú móvil. Para destinos de ancla en página (#seccion)
+// el scroll inmediato se pierde: el slideover sigue abierto y bloquea el scroll
+// del body (scroll-lock del overlay). Cerramos primero y diferimos el scroll
+// hasta que termine la animación de cierre y se libere el lock (mismo patrón
+// que goReservar). Rutas reales (/blog) y ancla-a-home (/#faqs fuera de home)
+// navegan normal con NuxtLink, sin lock que interferir.
+function onMobileNavClick(item: NavigationMenuItem, e: MouseEvent) {
+  mobileMenuOpen.value = false
+  const to = typeof item.to === 'string' ? item.to : ''
+  if (to.startsWith('#')) {
+    e.preventDefault()
+    const id = to.slice(1)
+    nextTick(() => {
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+      }, 250)
+    })
+  }
 }
 
 const { cities } = useData();
