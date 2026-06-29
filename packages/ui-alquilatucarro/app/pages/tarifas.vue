@@ -41,53 +41,52 @@
       </button>
     </div>
 
-    <!-- Table -->
-    <div v-if="tariffs.gamas.length > 0" class="max-w-[900px] mx-auto px-5 pb-10 overflow-x-auto">
-      <table class="w-full border-separate border-spacing-0 rounded-xl overflow-hidden text-sm bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]">
-        <thead>
-          <tr>
-            <th class="bg-gray-50 text-gray-400 text-[0.7rem] font-semibold uppercase tracking-wider px-2.5 sm:px-4 py-3 text-left border-b border-gray-100">Gama</th>
-            <th class="bg-gray-50 text-gray-400 text-[0.7rem] font-semibold uppercase tracking-wider px-2.5 sm:px-4 py-3 text-right border-b border-gray-100">Tarifa / día</th>
-            <th class="bg-gray-50 text-gray-400 text-[0.7rem] font-semibold uppercase tracking-wider px-2.5 sm:px-4 py-3 text-right border-b border-gray-100">Total mes</th>
-            <th class="bg-gray-50 text-gray-400 text-[0.7rem] font-semibold uppercase tracking-wider px-2.5 sm:px-4 py-3 text-center border-b border-gray-100">Km extra</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="gama in tariffs.gamas"
-            :key="gama.code"
-            class="transition-colors hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-          >
-            <!-- Gama -->
-            <td class="px-2.5 sm:px-4 py-3 align-middle">
-              <div class="flex items-center gap-2.5">
-                <span
-                  class="w-2 h-2 rounded-full shrink-0"
-                  :class="tierDotClass(gama.kmExtra)"
-                />
-                <div>
-                  <div class="font-bold text-[0.95rem] text-gray-900">{{ gama.code }}</div>
-                  <div class="text-[0.7rem] text-gray-400 font-medium">{{ gama.name }}</div>
-                </div>
-              </div>
-            </td>
-            <!-- Tarifa/día -->
-            <td class="px-2.5 sm:px-4 py-3 align-middle text-right font-extrabold text-[1.05rem] text-[#0B1A2E] whitespace-nowrap">
-              {{ formatCOP(planData(gama).daily) }}
-            </td>
-            <!-- Total mes -->
-            <td class="px-2.5 sm:px-4 py-3 align-middle text-right font-medium text-gray-400 text-[0.85rem] whitespace-nowrap">
-              {{ formatCOP(planData(gama).monthly) }}
-            </td>
-            <!-- Km extra -->
-            <td class="px-2.5 sm:px-4 py-3 align-middle text-center">
-              <span class="inline-block bg-gray-100 px-2.5 py-0.5 rounded-md text-[0.78rem] font-semibold text-gray-500 whitespace-nowrap">
-                {{ gama.kmExtra !== null ? formatCOP(gama.kmExtra) : '—' }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Table: 3 columns (photo · gama text · prices) -->
+    <div v-if="tariffs.gamas.length > 0" class="max-w-[900px] mx-auto px-5 pb-6">
+      <div class="rounded-xl overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] divide-y divide-gray-100">
+        <div
+          v-for="gama in tariffs.gamas"
+          :key="gama.code"
+          class="grid grid-cols-[96px_1fr_auto] sm:grid-cols-[140px_1fr_auto] items-stretch"
+        >
+          <!-- Col 1: photo -->
+          <div class="relative bg-[#0B1A2E] overflow-hidden min-h-[68px]">
+            <NuxtImg
+              v-if="gama.image"
+              :src="gama.image"
+              :alt="gama.name"
+              width="400"
+              height="240"
+              sizes="140px"
+              loading="lazy"
+              decoding="async"
+              class="absolute inset-0 h-full w-full object-cover"
+            />
+          </div>
+          <!-- Col 2: gama code + name (can wrap to several lines) -->
+          <div class="flex flex-col justify-center px-3 sm:px-4 py-3">
+            <span class="font-bold text-[0.95rem] leading-tight text-gray-900">{{ gama.code }}</span>
+            <span class="text-[0.8rem] text-gray-700 font-medium leading-snug">{{ gama.name }}</span>
+          </div>
+          <!-- Col 3: day + month price, reacts to plan toggle -->
+          <div class="flex flex-col justify-center px-3 sm:px-4 py-3 text-right">
+            <div class="font-extrabold text-[1.05rem] text-[#0B1A2E] whitespace-nowrap">
+              {{ formatCOP(planData(gama).daily) }}<span class="text-[0.7rem] font-medium text-gray-500"> /día</span>
+            </div>
+            <div class="text-gray-600 text-[0.85rem] font-medium whitespace-nowrap">
+              {{ formatCOP(planData(gama).monthly) }}<span class="text-[0.7rem]"> /mes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Km extra note (out of rows; values vary by category) -->
+      <p v-if="kmExtraGroups.length" class="mt-4 text-center text-xs text-gray-500 leading-relaxed">
+        <span class="font-semibold text-gray-600">Km adicional</span> —
+        <span v-for="(grp, i) in kmExtraGroups" :key="grp.km">
+          {{ grp.types.join(', ') }}: {{ formatCOP(grp.km) }}<span v-if="i < kmExtraGroups.length - 1"> · </span>
+        </span>
+      </p>
     </div>
 
     <!-- Empty state when pricing is unavailable -->
@@ -142,12 +141,21 @@ function formatCOP(value: number): string {
   return '$ ' + value.toLocaleString('es-CO');
 }
 
-function tierDotClass(kmExtra: number | null): string {
-  if (kmExtra === null) return 'bg-gray-300';
-  if (kmExtra <= 700) return 'bg-green-500';
-  if (kmExtra <= 900) return 'bg-amber-500';
-  return 'bg-blue-500';
-}
+// Km extra varies per category (e.g. $700 económicos/sedanes, $900 camionetas,
+// $1.100 SUV). Group gamas by their kmExtra and label each group by vehicle type
+// (first word of gama.name) so the footnote stays correct if the DB changes.
+const kmExtraGroups = computed(() => {
+  const byKm = new Map<number, Set<string>>();
+  for (const gama of tariffs.gamas) {
+    if (gama.kmExtra === null) continue;
+    const type = gama.name.split(' ')[0] || gama.name;
+    if (!byKm.has(gama.kmExtra)) byKm.set(gama.kmExtra, new Set());
+    byKm.get(gama.kmExtra)!.add(type);
+  }
+  return [...byKm.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([km, types]) => ({ km, types: [...types] }));
+});
 
 const minMonthly = computed(() => {
   if (tariffs.gamas.length === 0) return null;
