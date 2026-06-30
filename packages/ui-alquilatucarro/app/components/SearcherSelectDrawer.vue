@@ -32,6 +32,9 @@
             :title="title"
             :ui="{
                 content: 'bg-white h-dvh max-h-dvh ring-0',
+                header: 'relative justify-center py-4 border-b border-gray-100',
+                title: 'w-full text-center text-2xl font-extrabold text-[#0B1A2E]',
+                close: 'absolute top-3 right-3 bg-black text-white rounded-full hover:bg-black/80',
                 body: 'p-0 flex flex-col min-h-0',
             }"
             @update:open="onOpenChange"
@@ -52,25 +55,25 @@
                         </template>
                     </u-input>
                 </div>
-                <div class="flex-1 overflow-y-auto min-h-0">
-                    <!-- Texto centrado (directiva 2026-06-23): las opciones de hora
-                         son cortas y alineadas a la izquierda dejaban mucho blanco a
-                         la derecha. El check del seleccionado va absoluto a la derecha
-                         para no descentrar la etiqueta. text-lg = paridad de tamaño
-                         con el calendario (cellTrigger text-lg). -->
+                <div class="flex-1 overflow-y-auto min-h-0 px-3 pt-3 pb-4 space-y-2">
+                    <!-- Cada opción es un botón con borde (acento azul de marca al
+                         seleccionar/hover). Texto centrado; el check del seleccionado
+                         va absoluto a la derecha para no descentrar la etiqueta. -->
                     <button
                         v-for="item in filteredItems"
                         :key="String(item[valueKey])"
                         type="button"
-                        class="relative flex w-full items-center justify-center px-12 py-4 text-center text-lg text-gray-900 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50"
-                        :class="{ 'bg-green-50 font-semibold': item[valueKey] === modelValue }"
+                        class="relative flex w-full items-center justify-center rounded-xl border px-4 py-3.5 text-center text-lg font-semibold transition-colors hover:border-[#000073] hover:bg-blue-50 active:bg-blue-100"
+                        :class="item[valueKey] === modelValue
+                            ? 'border-[#000073] bg-blue-50 text-[#000073]'
+                            : 'border-gray-200 text-gray-900'"
                         @click="select(item)"
                     >
                         <span>{{ item[labelKey] }}</span>
                         <UIcon
                             v-if="item[valueKey] === modelValue"
                             name="i-lucide-check"
-                            class="absolute right-4 top-1/2 -translate-y-1/2 size-6 text-green-600"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 size-6 text-[#000073]"
                         />
                     </button>
                     <p
