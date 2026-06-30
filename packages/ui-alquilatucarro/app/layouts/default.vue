@@ -110,16 +110,6 @@
               <UIcon name="lucide:phone" class="size-5" />
               Llamar
             </a>
-
-            <!-- CTA principal al final (rojo) -->
-            <button
-              type="button"
-              class="flex items-center justify-center gap-2 w-full bg-red-600 text-white font-bold rounded-xl py-3.5 shadow-sm hover:bg-red-700 transition-colors"
-              @click="goReservar"
-            >
-              <UIcon name="lucide:car" class="size-5" />
-              Reservar ahora
-            </button>
           </div>
         </div>
       </template>
@@ -242,6 +232,12 @@ const mobileItems = computed<NavigationMenuItem[]>(() => [
     active: route.hash === '#sedes',
   },
   {
+    label: 'Mensualidades',
+    icon: 'lucide:calendar-days',
+    to: '/tarifas',
+    active: route.path.startsWith('/tarifas'),
+  },
+  {
     label: 'Blog',
     icon: 'lucide:newspaper',
     to: '/blog',
@@ -255,20 +251,14 @@ const mobileItems = computed<NavigationMenuItem[]>(() => [
   },
 ])
 
-// Menú móvil: tel: con el número de la marca y CTA "Reservar ahora" (cierra el
-// menú y sube al buscador, que vive arriba en home y páginas de ciudad).
+// Menú móvil: tel: con el número de la marca.
 const telHref = computed(() => `tel:${(franchise.phone ?? '').replace(/[^\d+]/g, '')}`)
-function goReservar() {
-  mobileMenuOpen.value = false
-  nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
-}
 
 // Click en un item del menú móvil. Para destinos de ancla en página (#seccion)
 // el scroll inmediato se pierde: el slideover sigue abierto y bloquea el scroll
 // del body (scroll-lock del overlay). Cerramos primero y diferimos el scroll
-// hasta que termine la animación de cierre y se libere el lock (mismo patrón
-// que goReservar). Rutas reales (/blog) y ancla-a-home (/#faqs fuera de home)
-// navegan normal con NuxtLink, sin lock que interferir.
+// hasta que termine la animación de cierre y se libere el lock. Rutas reales
+// (/blog, /tarifas) y ancla-a-home (/#faqs fuera de home) navegan normal.
 function onMobileNavClick(item: NavigationMenuItem, e: MouseEvent) {
   mobileMenuOpen.value = false
   const to = typeof item.to === 'string' ? item.to : ''
