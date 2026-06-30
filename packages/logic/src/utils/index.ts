@@ -56,6 +56,8 @@ export { extractStructuredError } from './helpers/extractStructuredError';
 export type { StructuredErrorForward } from './helpers/extractStructuredError';
 export { mapAvailabilityFetchError } from './helpers/mapAvailabilityFetchError';
 export { isBlockingSearchError } from './helpers/isBlockingSearchError';
+export { pickupTimingIssue } from './helpers/pickupTimingIssue';
+export type { PickupTimingIssue } from './helpers/pickupTimingIssue';
 
 // ============================================================================
 // Type Definitions - Data
