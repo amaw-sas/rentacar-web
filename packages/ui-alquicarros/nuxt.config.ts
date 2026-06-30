@@ -414,7 +414,11 @@ export default defineNuxtConfig({
           `,
         },
       ],
-      link: [],
+      link: [
+        // Brand favicon (.ico). Declared explicitly so the brand icon is wired,
+        // not only resolved by the default /favicon.ico convention.
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      ],
     },
   },
 

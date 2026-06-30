@@ -12,6 +12,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { readFileSync, existsSync, statSync, mkdtempSync, rmSync, readdirSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import sharp from 'sharp'
@@ -93,9 +94,20 @@ describe('F0 step05 — brand assets on disk', () => {
     expect(statSync(p).size).toBeGreaterThan(0)
   })
 
-  it('favicon.svg copied from the design', () => {
-    expect(existsSync(join(ROOT, 'public/favicon.svg'))).toBe(true)
-    expect(read('public/favicon.svg')).toContain('#CC022B')
+  // SCEN-FAV-ALQUILAME: the brand favicon is the .ico. The prior favicon.svg
+  // was a generic red "A" placeholder (not the brand mark) and was removed so
+  // it can no longer win over the .ico in modern browsers.
+  it('serves a brand favicon.ico that is NOT the leaked shared placeholder', () => {
+    const ico = join(ROOT, 'public/favicon.ico')
+    expect(existsSync(ico)).toBe(true)
+    expect(statSync(ico).size).toBeGreaterThan(0)
+    const md5 = createHash('md5').update(readFileSync(ico)).digest('hex')
+    // d0dc0cd8… is the single icon that was duplicated across all three brands.
+    expect(md5).not.toBe('d0dc0cd81676758c19ac93674bdd94f0')
+  })
+
+  it('removes the generic placeholder favicon.svg', () => {
+    expect(existsSync(join(ROOT, 'public/favicon.svg'))).toBe(false)
   })
 
   it('og-image replaced by the lighter design jpg (67 KB, not the old 109 KB)', () => {
@@ -112,10 +124,10 @@ describe('F0 step05 — brand assets on disk', () => {
     expect(cfg).toMatch(/ogImage:\s*["']\/img\/og-alquilame\.jpg["']/)
   })
 
-  it('declares the SVG favicon <link> with the .ico fallback', () => {
+  it('declares the .ico favicon <link> and NO svg+xml favicon link', () => {
     const cfg = read('nuxt.config.ts')
-    expect(cfg).toMatch(/rel:\s*['"]icon['"],\s*type:\s*['"]image\/svg\+xml['"],\s*href:\s*['"]\/favicon\.svg['"]/)
     expect(cfg).toMatch(/href:\s*['"]\/favicon\.ico['"]/)
+    expect(cfg).not.toMatch(/type:\s*['"]image\/svg\+xml['"],\s*href:\s*['"]\/favicon\.svg['"]/)
     expect(cfg).not.toMatch(/link:\s*\[\s*\]/)
   })
 })
