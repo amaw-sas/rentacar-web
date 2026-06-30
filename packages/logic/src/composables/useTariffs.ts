@@ -7,13 +7,23 @@ export interface TariffPlan {
   monthly: number
 }
 
+// A season's price for both km plans. Monthly pricing has two levels per gama
+// that alternate by month (high = temporada alta, low = temporada baja).
+export interface TariffSeason {
+  plan1k: TariffPlan
+  plan2k: TariffPlan
+}
+
 export interface TariffGama {
   code: string
   name: string
   image: string
   kmExtra: number | null
+  // Current-month price (kept for the teaser / "desde" and back-compat).
   plan1k: TariffPlan
   plan2k: TariffPlan
+  // Both seasons, derived from the current+future active monthly rows.
+  seasons: { baja: TariffSeason; alta: TariffSeason }
 }
 
 export interface TariffsView {
@@ -67,6 +77,32 @@ function pickGamaImage(cat: CategoryData): string {
   return def?.image || cat.image || cat.models?.[0]?.image || ''
 }
 
+function toPlan(monthly: number): TariffPlan {
+  return { daily: Math.round(monthly / 30), monthly }
+}
+
+// Build the baja/alta seasons for one km plan from the current+future active
+// monthly rows. Prices have two levels per gama; baja = lowest, alta = highest.
+// Past (ended) rows are ignored so old prices don't skew the range.
+function seasonRange(
+  prices: CategoryMonthPriceData[],
+  key: '1k_kms' | '2k_kms',
+  dayIso: string,
+): { baja: TariffPlan; alta: TariffPlan } | null {
+  const dayMs = parseIsoUtc(dayIso)
+  const values = prices
+    .filter((p) => {
+      if (p.status !== 'active') return false
+      if (p[key] <= 0) return false
+      const endMs = p.end_date ? parseIsoUtc(p.end_date) : Number.POSITIVE_INFINITY
+      return endMs >= dayMs
+    })
+    .map((p) => p[key])
+
+  if (values.length === 0) return null
+  return { baja: toPlan(Math.min(...values)), alta: toPlan(Math.max(...values)) }
+}
+
 export function buildTariffs(categories: CategoryData[], todayDate?: string): TariffsView {
   if (!categories || categories.length === 0) {
     return { period: null, gamas: [] }
@@ -93,13 +129,24 @@ export function buildTariffs(categories: CategoryData[], todayDate?: string): Ta
     if (!firstActivePricing) firstActivePricing = pricing
     const code = String(cat.id)
 
+    const plan1k = toPlan(monthly1k)
+    const plan2k = toPlan(monthly2k)
+    // Seasons: derive low/high per plan; fall back to the current-month price
+    // when only one level exists (single active row → baja == alta).
+    const range1k = seasonRange(cat.month_prices, '1k_kms', today) ?? { baja: plan1k, alta: plan1k }
+    const range2k = seasonRange(cat.month_prices, '2k_kms', today) ?? { baja: plan2k, alta: plan2k }
+
     gamas.push({
       code,
       name: stripGamaPrefix(cat.category, code),
       image: pickGamaImage(cat),
       kmExtra: cat.extra_km_charge > 0 ? cat.extra_km_charge : null,
-      plan1k: { daily: Math.round(monthly1k / 30), monthly: monthly1k },
-      plan2k: { daily: Math.round(monthly2k / 30), monthly: monthly2k },
+      plan1k,
+      plan2k,
+      seasons: {
+        baja: { plan1k: range1k.baja, plan2k: range2k.baja },
+        alta: { plan1k: range1k.alta, plan2k: range2k.alta },
+      },
     })
   }
 
