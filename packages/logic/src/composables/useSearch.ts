@@ -93,6 +93,7 @@ export default function useSearch() {
     haveMonthlyReservation,
     selectedDays,
     selectedPickupDate,
+    selectedReturnDate,
     haveTotalInsurance,
     selectedPickupHour
   } = storeToRefs(storeForm);
@@ -139,6 +140,20 @@ export default function useSearch() {
         );
         return;
       }
+    }
+
+    // Block an inverted/zero-length range (return at or before pickup) before
+    // hitting the backend. Reachable via a deep-link/stale URL that seeds the
+    // return before the pickup, bypassing the UI's auto-bump. selectedDays
+    // (rentalDayCount) is 0 exactly when the return is not strictly after the
+    // pickup. Show a clear message instead of the backend's generic error. #3.
+    if (selectedPickupDate.value && selectedReturnDate.value && selectedDays.value === 0) {
+      createMessage({
+        type: "info",
+        title: "Revisa las fechas",
+        message: "La fecha de devolución debe ser posterior a la fecha de recogida.",
+      });
+      return;
     }
 
     // Warn about extra-hour charges under the exact same condition that renders

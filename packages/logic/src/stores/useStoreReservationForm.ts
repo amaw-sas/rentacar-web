@@ -225,6 +225,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     const pickupDate = selectedPickupDate.value;
     const returnDate = selectedReturnDate.value;
     if (!pickupDate || !returnDate) return 0;
+    // dayDifference uses Math.abs, so an inverted range (return before pickup,
+    // reachable via a deep-link/stale URL) would render a misleading positive
+    // "X días" chip. Clamp to 0 so the chip hides. Dogfood #3.
+    if (returnDate.compare(pickupDate) < 0) return 0;
 
     return dayDifference(pickupDate, returnDate);
   });
