@@ -22,8 +22,8 @@
         side="bottom"
         title="Elige una ciudad"
         :ui="{
-          content: 'bg-white h-dvh max-h-dvh ring-0',
-          header: 'relative justify-center py-4 border-b border-gray-100',
+          content: 'bg-gray-50 h-dvh max-h-dvh ring-0',
+          header: 'relative justify-center py-4 border-b border-gray-200 bg-white',
           title: 'w-full text-center text-2xl font-extrabold text-[#0B1A2E]',
           close: 'absolute top-3 right-3 bg-black text-white rounded-full hover:bg-black/80',
           body: 'p-0 flex flex-col min-h-0',
@@ -51,7 +51,7 @@
               v-for="branch in filteredBranches"
               :key="branch.code"
               type="button"
-              class="flex w-full items-center justify-center rounded-xl border border-gray-200 px-4 py-3.5 text-center text-lg font-semibold text-gray-900 transition-colors hover:border-[#000073] hover:bg-blue-50 active:bg-blue-100"
+              class="flex w-full items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-center text-lg font-semibold text-gray-900 transition-colors hover:border-[#000073] hover:bg-blue-50 active:bg-blue-100"
               @click="selectBranch(branch)"
             >
               <span>{{ branch.name }}</span>
