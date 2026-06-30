@@ -1,4 +1,4 @@
-// localStorage persistence for captured attribution, with a 90-day TTL and
+// localStorage persistence for captured attribution, with a 30-day TTL and
 // last-touch semantics (every persisted touch overwrites the previous one).
 // This is what makes attribution survive across pages: a signal captured on the
 // landing page is still there when the user reserves several pages later.
@@ -10,7 +10,7 @@
 import type AttributionInput from '../types/type/AttributionInput';
 
 export const ATTRIBUTION_STORAGE_KEY = 'rentacar_attribution';
-const TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 interface StoredAttribution {
   data: AttributionInput;

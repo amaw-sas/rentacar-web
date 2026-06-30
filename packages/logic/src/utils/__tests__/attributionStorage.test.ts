@@ -39,15 +39,15 @@ describe('attributionStorage', () => {
     expect(readStoredAttribution(1_000)).toBeNull();
   });
 
-  it('SCEN-W3: a signal stored on the landing survives a later read within 90 days', () => {
+  it('SCEN-W3: a signal stored on the landing survives a later read within 30 days', () => {
     persistAttribution({ fbclid: 'fb1' }, 0);
-    // user reserves 89 days later, several pages deep, with no param in the URL
-    expect(readStoredAttribution(89 * DAY)).toEqual({ fbclid: 'fb1' });
+    // user reserves 29 days later, several pages deep, with no param in the URL
+    expect(readStoredAttribution(29 * DAY)).toEqual({ fbclid: 'fb1' });
   });
 
-  it('expires entries older than 90 days and clears them', () => {
+  it('expires entries older than 30 days and clears them', () => {
     persistAttribution({ gclid: 'old' }, 0);
-    expect(readStoredAttribution(91 * DAY)).toBeNull();
+    expect(readStoredAttribution(31 * DAY)).toBeNull();
     // expired entry was removed, so a fresh read at t0 is also null
     expect(localStorage.getItem(ATTRIBUTION_STORAGE_KEY)).toBeNull();
   });
