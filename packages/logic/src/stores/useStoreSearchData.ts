@@ -13,7 +13,7 @@ import useCategory from '../composables/useCategory';
 import useMessages from '../composables/useMessages';
 
 // utils
-import { categoryOffersMonthly, isCategoryVisibleInCity } from '@rentacar-main/logic/utils';
+import { categoryOffersMonthly, isCategoryVisibleInCity, isBlockingSearchError } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -83,9 +83,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
       // with the Localiza-only returnFee degrading to 0. Only a *different*
       // Localiza error blocks the search with a toast (symmetry with the
       // non-monthly branch — issue #10 SCEN-002). Issue #201.
-      const blockingError =
-        !!errorResponse.value &&
-        errorResponse.value.error !== "no_available_categories_error";
+      const blockingError = isBlockingSearchError(errorResponse.value);
 
       if(blockingError){
         createErrorMessage(errorResponse.value);

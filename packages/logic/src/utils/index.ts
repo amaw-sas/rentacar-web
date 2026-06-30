@@ -55,6 +55,7 @@ export {
 export { extractStructuredError } from './helpers/extractStructuredError';
 export type { StructuredErrorForward } from './helpers/extractStructuredError';
 export { mapAvailabilityFetchError } from './helpers/mapAvailabilityFetchError';
+export { isBlockingSearchError } from './helpers/isBlockingSearchError';
 
 // ============================================================================
 // Type Definitions - Data

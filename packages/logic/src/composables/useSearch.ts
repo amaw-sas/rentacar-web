@@ -29,6 +29,7 @@ import {
   formatHumanTime,
   formatTime,
   formatTime12h,
+  isBlockingSearchError,
 } from '@rentacar-main/logic/utils';
 
 // Types
@@ -233,9 +234,14 @@ export default function useSearch() {
     { debounce: 50 }
   );
 
-  // Desactivar animación cuando los vehículos están desplegados
+  // Desactivar animación cuando los vehículos están desplegados.
+  // NO apagar el botón cuando la búsqueda terminó en error bloqueante: el store
+  // deja categoriesAvailabilityData en [] (no-null) igual que un resultado real,
+  // pero el usuario debe poder reintentar la consulta idéntica (onSearchClick
+  // #129 re-dispara doSearch). Un resultado real o inventario vacío
+  // (no_available_categories_error) sí lo deshabilita (dedup). Dogfood #1.
   watch(categoriesAvailabilityData, (newValue) => {
-    if (newValue !== null) {
+    if (newValue !== null && !isBlockingSearchError(errorSearchResponse.value)) {
       animateSearchButton.value = false;
     }
   });
