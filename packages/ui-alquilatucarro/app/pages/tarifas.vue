@@ -15,8 +15,34 @@
       Arriendos mensuales para persona natural. Todas las tarifas incluyen IVA, seguro de protección y mantenimiento preventivo.
     </p>
 
+    <!-- Season toggle -->
+    <div class="flex justify-center gap-1 mx-auto mt-5 mb-3 bg-gray-200 rounded-[10px] p-1 w-fit">
+      <button
+        :class="[
+          'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
+          activeSeason === 'baja'
+            ? 'bg-green-700 text-white shadow-[0_3px_10px_rgba(21,128,61,0.3)]'
+            : 'bg-transparent text-gray-400'
+        ]"
+        @click="activeSeason = 'baja'"
+      >
+        Temporada baja
+      </button>
+      <button
+        :class="[
+          'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
+          activeSeason === 'alta'
+            ? 'bg-green-700 text-white shadow-[0_3px_10px_rgba(21,128,61,0.3)]'
+            : 'bg-transparent text-gray-400'
+        ]"
+        @click="activeSeason = 'alta'"
+      >
+        Temporada alta
+      </button>
+    </div>
+
     <!-- Plan toggle -->
-    <div class="flex justify-center gap-1 mx-auto mt-5 mb-4 bg-gray-200 rounded-[10px] p-1 w-fit">
+    <div class="flex justify-center gap-1 mx-auto mb-2 bg-gray-200 rounded-[10px] p-1 w-fit">
       <button
         :class="[
           'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
@@ -40,6 +66,11 @@
         2.000 kms
       </button>
     </div>
+
+    <!-- Season hint: which months each season covers -->
+    <p class="text-center text-[0.72rem] text-gray-500 mb-4 px-6">
+      {{ activeSeason === 'alta' ? 'Temporada alta: junio, julio, octubre y diciembre.' : 'Temporada baja: agosto, septiembre y noviembre.' }}
+    </p>
 
     <!-- Table: 3 columns (photo · gama text · prices) -->
     <div v-if="tariffs.gamas.length > 0" class="max-w-[900px] mx-auto px-5 pb-6">
@@ -133,8 +164,19 @@ const tariffs = useTariffs();
 
 const activePlan = ref<'1k' | '2k'>('1k');
 
+// Default the season toggle to whichever season is in effect this month, so the
+// first view matches what a customer would actually pay now. gama.plan1k holds
+// the current-month price; compare it to the season levels.
+function detectCurrentSeason(): 'baja' | 'alta' {
+  const g = tariffs.gamas[0];
+  if (!g) return 'alta';
+  return g.plan1k.monthly >= g.seasons.alta.plan1k.monthly ? 'alta' : 'baja';
+}
+const activeSeason = ref<'baja' | 'alta'>(detectCurrentSeason());
+
 function planData(gama: TariffGama) {
-  return activePlan.value === '1k' ? gama.plan1k : gama.plan2k;
+  const season = gama.seasons[activeSeason.value];
+  return activePlan.value === '1k' ? season.plan1k : season.plan2k;
 }
 
 function formatCOP(value: number): string {
@@ -159,7 +201,8 @@ const kmExtraGroups = computed(() => {
 
 const minMonthly = computed(() => {
   if (tariffs.gamas.length === 0) return null;
-  return Math.min(...tariffs.gamas.map((g) => g.plan1k.monthly));
+  // "desde" = the lowest possible = temporada baja, plan 1.000 kms.
+  return Math.min(...tariffs.gamas.map((g) => g.seasons.baja.plan1k.monthly));
 });
 
 const faqs = [
