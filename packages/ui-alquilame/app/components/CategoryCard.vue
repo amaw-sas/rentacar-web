@@ -426,7 +426,7 @@
               <div class="flex">
                 <UCheckbox
                   v-model="withExtraDriver"
-                  color="neutral"
+                  color="success"
                   class="opcion-seleccionable"
                 >
                   <template #label>
@@ -472,7 +472,7 @@
 
             <div class="flex items-center justify-between">
               <div class="flex">
-                <UCheckbox v-model="withBabySeat" color="neutral" class="opcion-seleccionable">
+                <UCheckbox v-model="withBabySeat" color="success" class="opcion-seleccionable">
                   <template #label>
                     Silla para bebe {{ getFormattedDays }}
                   </template>
@@ -524,7 +524,7 @@
 
             <div class="flex items-center justify-between">
               <div class="flex">
-                <UCheckbox v-model="withWash" color="neutral" class="opcion-seleccionable">
+                <UCheckbox v-model="withWash" color="success" class="opcion-seleccionable">
                   <template #label> Lavado del vehículo </template>
                 </UCheckbox>
 

@@ -162,6 +162,20 @@ export function formatHumanDate(date: DateObject){
 }
 
 /**
+ * format date to human readable with a SHORT month (e.g. "1 de sept de 2026").
+ * Used where space is tight (search-results banner); the full-month
+ * formatHumanDate stays for the reservation summary / share text.
+ */
+export function formatHumanDateShort(date: DateObject){
+    return new DateFormatter('es-CO', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        timeZone: defaultTimezone
+    }).format(date.toDate(defaultTimezone))
+}
+
+/**
  * format a datetime object to human readable (hh:mm a)
  * @param datetime 
  * @returns 

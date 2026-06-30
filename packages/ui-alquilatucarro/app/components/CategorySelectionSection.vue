@@ -35,7 +35,7 @@
     <div v-if="hasRenderableAvailable" class="text-white text-center">
       <div class="text-lg md:text-xl font-bold">¡Vehículos Disponibles!</div>
       <div class="text-sm md:text-base">
-        <span>En <span class="text-yellow-400 font-semibold">{{pickupCityName}}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDate }}</span>.</span>
+        <span>En <span class="text-yellow-400 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
     </div>
@@ -70,7 +70,7 @@
     <u-slideover
       :open="slideoverOpen"
       @update:open="(v: boolean) => { if (!v) requestSlideoverClose() }"
-      :title="slideoverStep === 'datos' ? 'Datos para reservar' : 'Resumen de la selección'"
+      :title="slideoverStep === 'datos' ? 'Datos para reservar' : 'Resumen'"
       :description="slideoverStep === 'datos' ? undefined : 'Antes de continuar revisa la información'"
       :overlay="false"
       :content="modalContentProps"
@@ -89,7 +89,7 @@
         <template v-if="slideoverStep === 'datos'">
           Datos para reservar <span class="text-base font-normal text-gray-500">(último paso)</span>
         </template>
-        <template v-else>Resumen de la selección</template>
+        <template v-else>Resumen</template>
       </template>
       <template #body>
         <reservation-resume v-if="slideoverStep === 'resumen'" :category="selectedCategory"></reservation-resume>
@@ -226,7 +226,7 @@ const {
   filteredCategories,
   error: searchError,
 } = storeToRefs(storeSearch);
-const { vehiculo, humanFormattedPickupDate, isSubmittingForm, selectedPickupLocation } = storeToRefs(storeForm);
+const { vehiculo, humanFormattedPickupDate, humanFormattedPickupDateShort, isSubmittingForm, selectedPickupLocation } = storeToRefs(storeForm);
 
 const isServerError = computed(() => searchError.value?.error === 'server_error');
 // Inline "¡Oops! Nos quedamos sin carritos" is reserved for genuine empty
@@ -549,4 +549,10 @@ const pickupCityName = computed(() => {
   const cityData = getCityById(citySlug);
   return cityData?.name ?? null;
 });
+
+// Nombre de la sede de recogida (incluye la ciudad, p.ej. "Bogotá Centro
+// Nuestro"); cae a la ciudad si por alguna razón no hubiera sede seleccionada.
+const pickupBranchName = computed(
+  () => selectedPickupLocation.value?.name ?? pickupCityName.value,
+);
 </script>
