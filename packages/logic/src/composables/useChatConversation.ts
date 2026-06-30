@@ -94,6 +94,10 @@ export function useChatConversation() {
   const input = ref('');
   const status = ref<ChatStatus>('ready');
   const error = ref<Error | null>(null);
+  // Optional action shown alongside an error bubble — e.g. the brand's WhatsApp when
+  // the chat is turned off, so a mid-conversation shut-off hands the customer somewhere
+  // to go instead of a dead end. Set from the server's error JSON (`{error, whatsapp}`).
+  const errorAction = ref<{ whatsapp?: string } | null>(null);
   const conversationId = ref<string | null>(
     import.meta.client ? localStorage.getItem(conversationKey) : null,
   );
@@ -127,6 +131,7 @@ export function useChatConversation() {
     if (!text || isStreaming.value) return;
     input.value = '';
     error.value = null;
+    errorAction.value = null;
 
     messages.value.push({ id: genId(), role: 'user', text, createdAt: Date.now() });
 
@@ -165,16 +170,19 @@ export function useChatConversation() {
         // config, etc.) to the customer instead of a generic error. Falls back to
         // the generic text for empty/non-JSON bodies (network / 5xx without body).
         let userMessage = CHAT_GENERIC_ERROR;
+        let whatsapp: string | undefined;
         try {
-          const body = (await response.json()) as { error?: unknown };
+          const body = (await response.json()) as { error?: unknown; whatsapp?: unknown };
           if (typeof body?.error === 'string' && body.error) userMessage = body.error;
+          if (typeof body?.whatsapp === 'string' && body.whatsapp) whatsapp = body.whatsapp;
         } catch {
           // no JSON body — keep the generic message
         }
         const err = new Error(
           `Chat request failed (${response.status})`,
-        ) as Error & { userMessage?: string };
+        ) as Error & { userMessage?: string; whatsapp?: string };
         err.userMessage = userMessage;
+        err.whatsapp = whatsapp;
         throw err;
       }
 
@@ -283,13 +291,14 @@ export function useChatConversation() {
       status.value = 'ready';
       persist();
     } catch (e) {
-      const err = e as { name?: string; userMessage?: string };
+      const err = e as { name?: string; userMessage?: string; whatsapp?: string };
       if (err.name === 'AbortError') {
         status.value = 'ready';
       } else {
         // error.message is what the bubble shows — always a customer-safe string:
         // the server's friendly text when we captured one, else the generic retry.
         error.value = new Error(err.userMessage ?? CHAT_GENERIC_ERROR);
+        errorAction.value = err.whatsapp ? { whatsapp: err.whatsapp } : null;
         status.value = 'error';
       }
       persist();
@@ -307,6 +316,7 @@ export function useChatConversation() {
     messages.value = [];
     conversationId.value = null;
     error.value = null;
+    errorAction.value = null;
     status.value = 'ready';
     if (import.meta.client) {
       localStorage.removeItem(messagesKey);
@@ -320,6 +330,7 @@ export function useChatConversation() {
     status,
     isStreaming,
     error,
+    errorAction,
     submit,
     stop,
     clear,
