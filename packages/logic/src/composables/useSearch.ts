@@ -30,6 +30,7 @@ import {
   formatTime,
   formatTime12h,
   isBlockingSearchError,
+  pickupTimingIssue,
 } from '@rentacar-main/logic/utils';
 
 // Types
@@ -112,17 +113,30 @@ export default function useSearch() {
     flushMessages();
 
     // Block a pickup that is already in the past before hitting the backend.
-    // Realistically this is only the hour on today's date (past dates are
-    // blocked by the calendar/mobile clamp). Show a friendly notice instead of
-    // the backend's harsh "Error" toast, and skip the search entirely.
+    // The calendar/mobile clamp normally prevents past dates, but a deep-link or
+    // stale URL can still seed one — so distinguish a past DATE from today with a
+    // passed HOUR and point the message at the right field. Show a friendly
+    // notice instead of the backend's harsh "Error" toast, and skip the search.
     if (selectedPickupDate.value && horaRecogida.value) {
-      const pickupAt = toDatetime(selectedPickupDate.value, createTimeFromString(horaRecogida.value));
-      if (pickupAt.compare(createCurrentDateTimeObject()) <= 0) {
-        createMessage({
-          type: "info",
-          title: "Revisa la hora de recogida",
-          message: "Por favor escoge una hora de recogida posterior a la hora actual.",
-        });
+      const issue = pickupTimingIssue(
+        selectedPickupDate.value,
+        createTimeFromString(horaRecogida.value),
+        createCurrentDateTimeObject(),
+      );
+      if (issue) {
+        createMessage(
+          issue === "past_date"
+            ? {
+                type: "info",
+                title: "Revisa la fecha de recogida",
+                message: "Por favor escoge una fecha de recogida igual o posterior a hoy.",
+              }
+            : {
+                type: "info",
+                title: "Revisa la hora de recogida",
+                message: "Por favor escoge una hora de recogida posterior a la hora actual.",
+              },
+        );
         return;
       }
     }
