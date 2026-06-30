@@ -16,9 +16,12 @@
 definePageMeta({ layout: false })
 useSeoMeta({ title: 'Chat', robots: 'noindex, nofollow' })
 
-// Feature flag por entorno (Escudo): si el chat está apagado, /chat no debe
-// exponer la conversación. Corre en SSR y cliente. NUXT_PUBLIC_CHAT_ENABLED.
-if (useRuntimeConfig().public.chatEnabled !== true) {
+// Visibilidad por marca: el switch del dashboard manda (mismo origen que el FAB,
+// useChatStatus). Guard SSR+cliente, fail-closed → si la marca está apagada (o el
+// backend no responde), /chat no expone la conversación y vuelve al home.
+const { franchise } = useAppConfig()
+const { rentacarPublicApiBase } = useRuntimeConfig().public
+if (!(await fetchChatEnabled(rentacarPublicApiBase as string, franchise.shortname as string))) {
   await navigateTo('/')
 }
 
