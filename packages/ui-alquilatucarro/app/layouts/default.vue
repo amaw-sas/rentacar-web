@@ -207,11 +207,13 @@ const linkClass = (active: boolean) =>
 const items = computed<NavigationMenuItem[]>(() => {
   const requisitosActive = route.hash === '#requisitos';
   const sedesActive = route.hash === '#sedes';
+  const mensualidadesActive = route.path.startsWith('/tarifas');
   const blogActive = route.path.startsWith('/blog');
   const faqsActive = route.hash === '#faqs';
   return [
     { label: 'Requisitos', to: requisitosTo.value, active: requisitosActive, class: linkClass(requisitosActive) },
     { label: 'Sedes', to: '#sedes', active: sedesActive, class: linkClass(sedesActive) },
+    { label: 'Mensualidades', to: '/tarifas', active: mensualidadesActive, class: linkClass(mensualidadesActive) },
     { label: 'Blog', to: '/blog', active: blogActive, class: linkClass(blogActive) },
     { label: 'Preguntas frecuentes', to: faqsTo.value, active: faqsActive, class: linkClass(faqsActive) },
   ];
