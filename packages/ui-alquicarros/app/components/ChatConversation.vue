@@ -25,11 +25,6 @@
         <p class="cc-status">En línea · Disponible 24/7</p>
       </div>
 
-      <button v-if="messages.length" type="button" class="cc-restart" aria-label="Reiniciar conversación" @click="clear()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" />
-        </svg>
-      </button>
       <button type="button" class="cc-dismiss" aria-label="Cerrar chat" @click="emit('dismiss')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -48,11 +43,9 @@
           <span v-if="m.createdAt" class="cc-time">{{ fmtTime(m.createdAt) }}</span>
         </div>
 
-        <!-- Asistente "escribiendo": 3 puntos mientras llega la respuesta -->
+        <!-- Asistente "escribiendo": texto estático mientras llega la respuesta -->
         <div v-else-if="!m.text && isStreaming" class="cc-msg is-assistant">
-          <span class="cc-typing" aria-live="polite">
-            <span class="cc-bdot" /><span class="cc-bdot" /><span class="cc-bdot" />
-          </span>
+          <span class="cc-typing-text" aria-live="polite">escribiendo…</span>
         </div>
 
         <!-- Asistente: una burbuja por tema (separador ---) -->
@@ -169,7 +162,7 @@ function bubblesFor(m: { text: string; actions?: unknown; quoteTable?: unknown; 
 withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
 const emit = defineEmits<{ dismiss: [] }>()
 
-const { messages, input, isStreaming, error, submit, clear } = useChatConversation()
+const { messages, input, isStreaming, error, submit } = useChatConversation()
 
 const inputFocused = ref(false)
 const scrollEl = ref<HTMLElement | null>(null)
@@ -244,11 +237,6 @@ button { -webkit-tap-highlight-color: transparent; }
   width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 9999px; color: #6b7280;
 }
 .cc-dismiss:hover { background: #f3f4f6; color: #111827; }
-.cc-restart {
-  display: flex; align-items: center; justify-content: center;
-  width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 9999px; color: #6b7280;
-}
-.cc-restart:hover { background: #f3f4f6; color: #111827; }
 
 /* --- Mensajes (gris ~10%: separa los globos con un fondo muy suave;
    min-height:0 = fix iOS) --- */
@@ -347,11 +335,7 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .cc-card-name { font-size: 0.75rem; text-align: center; line-height: 1.3; color: #111827; }
 .cc-error { align-self: center; color: #b91c1c; font-size: 0.8rem; text-align: center; }
-.cc-typing { display: flex; gap: 0.25rem; align-items: center; }
-.cc-bdot { width: 0.4rem; height: 0.4rem; border-radius: 9999px; background: #6b7280; animation: cc-bounce 1.2s infinite ease-in-out; }
-.cc-bdot:nth-child(2) { animation-delay: 0.15s; }
-.cc-bdot:nth-child(3) { animation-delay: 0.3s; }
-@keyframes cc-bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-0.25rem); opacity: 1; } }
+.cc-typing-text { font-style: italic; color: #6b7280; font-size: 0.875rem; }
 
 /* --- Input --- */
 .cc-input { display: flex; gap: 0.5rem; padding: 0.375rem 0.75rem 0.75rem; flex-shrink: 0; background: #ece5dd; }
