@@ -18,7 +18,11 @@ export default interface LocalizaErrorResponse extends Response {
     | "reservation_cancelled_error"
     | "unknown_error"
     | "connection_timeout"
-    | "server_error";
+    | "server_error"
+    // Web-synthesized (not emitted by Localiza): set by classifyOneWayDistanceError
+    // when Localiza can't price a one-way because the inter-city distance isn't
+    // registered (unknown_error + shortText LLNRRE003). See rentacar-dashboard#205.
+    | "one_way_not_available";
   message: string;
   shortText?: string;
 }

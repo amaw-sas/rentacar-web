@@ -63,6 +63,15 @@ export default function useMessages(){
             error.message = "La devolución debe ser posterior a la recogida.";
         }
 
+        // One-way (recogida ≠ devolución) que Localiza no puede cotizar porque la
+        // distancia entre las ciudades no está registrada (unknown_error +
+        // shortText LLNRRE003, reclasificado por classifyOneWayDistanceError).
+        // Reframe el genérico como un mensaje accionable. Ver rentacar-dashboard#205.
+        if (message.error == "one_way_not_available") {
+            error.title = "Entrega en otra sede no disponible";
+            error.message = "Por ahora no podemos cotizar la entrega en una sede distinta a la de recogida. Elige la misma sede para recoger y devolver, o escríbenos y te ayudamos.";
+        }
+
         // Infrastructure / unexpected failures (timeouts, 5xx, anything the
         // backend can't classify). Their raw messages are technical or empty and
         // the bare "Error" title is alarming — show a calm, generic retry notice

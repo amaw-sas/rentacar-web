@@ -8,6 +8,7 @@ import useStoreReservationForm from '../stores/useStoreReservationForm';
 
 // Helpers
 import { mapAvailabilityFetchError } from '../utils/helpers/mapAvailabilityFetchError';
+import { classifyOneWayDistanceError } from '../utils/helpers/classifyOneWayDistanceError';
 
 // Types
 import type { CategoryAvailabilityData, LocalizaErrorResponse } from '@rentacar-main/logic/utils';
@@ -48,8 +49,14 @@ export default async function useFetchCategoriesAvailabilityData() {
   } catch (e) {
     // Forward genuine Localiza codes; downgrade infra failures (incl. the Nitro
     // {error:true} envelope) to a friendly server_error — never leak raw tech
-    // strings to the toast (ISSUE-003).
-    error.value = mapAvailabilityFetchError(e);
+    // strings to the toast (ISSUE-003). Then re-label the one-way-distance case
+    // (LLNRRE003 + recogida ≠ devolución) so the toast can explain it instead of
+    // the generic "No pudimos completar la búsqueda". See rentacar-dashboard#205.
+    error.value = classifyOneWayDistanceError(
+      mapAvailabilityFetchError(e),
+      lugarRecogida.value,
+      lugarDevolucion.value,
+    );
   }
 
   return { data, error };
