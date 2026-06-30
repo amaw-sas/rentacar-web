@@ -21,7 +21,7 @@
         v-model:open="drawerOpen"
         side="bottom"
         title="Elige una ciudad"
-        :ui="{ content: 'bg-white h-dvh max-h-dvh ring-0', body: 'p-0 flex flex-col min-h-0' }"
+        :ui="{ content: '[color-scheme:light] bg-white h-dvh max-h-dvh ring-0', body: 'p-0 flex flex-col min-h-0' }"
         @update:open="onDrawerToggle"
       >
         <template #body>
@@ -31,7 +31,7 @@
               placeholder="Buscar ciudad"
               size="xl"
               class="w-full"
-              :ui="{ base: 'text-lg' }"
+              :ui="{ base: 'text-lg bg-white text-gray-900 placeholder:text-gray-400' }"
               :autofocus="false"
             >
               <template #leading>
