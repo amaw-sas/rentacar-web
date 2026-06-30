@@ -6,8 +6,7 @@
   >
     <div class="max-w-5xl mx-auto">
       <h2 class="text-2xl md:text-3xl font-bold text-center mb-3">
-        <span class="text-red-700">Emisoras de radio más escuchadas</span>
-        <span class="text-black"> {{ radio.nearbyOf ? `cerca de ${cityName}` : `en ${cityName}` }}</span>
+        <span class="text-red-700">Emisoras de radio más escuchadas</span>{{ ' ' }}<span class="text-black">{{ radio.nearbyOf ? `cerca de ${cityName}` : `en ${cityName}` }}</span>
       </h2>
       <p class="text-gray-600 text-center max-w-2xl mx-auto mb-8">
         Disfruta tu viaje con la mejor música. Sintoniza por internet las emisoras
