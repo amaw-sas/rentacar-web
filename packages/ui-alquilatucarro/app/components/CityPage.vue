@@ -316,6 +316,9 @@
       </div>
     </section>
 
+    <!-- Emisoras de radio por ciudad (entretenimiento para el viaje) -->
+    <CityRadioStations :city-id="city?.id" :city-name="city?.name" />
+
     <!-- Requisitos Section (shared with home) -->
     <RequisitosSection />
 
