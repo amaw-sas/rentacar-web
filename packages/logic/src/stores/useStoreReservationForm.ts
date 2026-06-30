@@ -19,6 +19,7 @@ import {
   rentalDayCount,
   extraHourChipLabel,
   formatHumanDate,
+  formatHumanDateShort,
   formatHumanTime,
   toDatetime,
   buildAttributionTouch,
@@ -182,6 +183,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
 
   const humanFormattedPickupDate = computed<string | undefined>(
     () => selectedPickupDate.value ? formatHumanDate(selectedPickupDate.value) : ''
+  );
+
+  const humanFormattedPickupDateShort = computed<string | undefined>(
+    () => selectedPickupDate.value ? formatHumanDateShort(selectedPickupDate.value) : ''
   );
 
   const humanFormattedReturnDate = computed<string | undefined>(
@@ -352,6 +357,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     minPickupDate,
     maxReturnDate,
     humanFormattedPickupDate,
+    humanFormattedPickupDateShort,
     humanFormattedReturnDate,
     humanFormattedPickupHour,
     humanFormattedReturnHour,
