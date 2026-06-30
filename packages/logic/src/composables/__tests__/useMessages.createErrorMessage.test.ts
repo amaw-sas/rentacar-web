@@ -79,4 +79,17 @@ describe('useMessages.createErrorMessage copy mapping', () => {
     expect(toast.title).toBe('Error')
     expect(toast.description).toBe('La fecha de recogida está fuera del horario')
   })
+
+  it('one_way_not_available → clear "entrega en otra sede" notice (not the generic fallback) — SCEN-OW-01', async () => {
+    const toast = await callCreateErrorMessage(
+      makeError('one_way_not_available', 'Ha ocurrido un error inesperado, por favor contacte a nuestros asesores'),
+    )
+    expect(toast.title).toBe('Entrega en otra sede no disponible')
+    expect(toast.description).toBe(
+      'Por ahora no podemos cotizar la entrega en una sede distinta a la de recogida. Elige la misma sede para recoger y devolver, o escríbenos y te ayudamos.',
+    )
+    expect(toast.color).toBe('error')
+    // Must NOT collapse into the generic unknown_error copy.
+    expect(toast.title).not.toBe('No pudimos completar la búsqueda')
+  })
 })
