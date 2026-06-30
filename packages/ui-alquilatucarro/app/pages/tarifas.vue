@@ -5,9 +5,6 @@
       <h1 class="text-2xl md:text-3xl font-extrabold uppercase text-[#0B1A2E]">
         Tarifas <span class="text-red-600">Mensuales</span>
       </h1>
-      <span v-if="tariffs.period" class="inline-block mt-2 text-gray-500 text-sm">
-        {{ tariffs.period.label }}
-      </span>
     </div>
 
     <!-- Intro -->
@@ -22,7 +19,7 @@
           'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
           activeSeason === 'baja'
             ? 'bg-green-700 text-white shadow-[0_3px_10px_rgba(21,128,61,0.3)]'
-            : 'bg-transparent text-gray-400'
+            : 'bg-transparent text-gray-600'
         ]"
         @click="activeSeason = 'baja'"
       >
@@ -33,7 +30,7 @@
           'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
           activeSeason === 'alta'
             ? 'bg-green-700 text-white shadow-[0_3px_10px_rgba(21,128,61,0.3)]'
-            : 'bg-transparent text-gray-400'
+            : 'bg-transparent text-gray-600'
         ]"
         @click="activeSeason = 'alta'"
       >
@@ -48,7 +45,7 @@
           'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
           activePlan === '1k'
             ? 'bg-green-700 text-white shadow-[0_3px_10px_rgba(21,128,61,0.3)]'
-            : 'bg-transparent text-gray-400'
+            : 'bg-transparent text-gray-600'
         ]"
         @click="activePlan = '1k'"
       >
@@ -59,7 +56,7 @@
           'px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200',
           activePlan === '2k'
             ? 'bg-green-700 text-white shadow-[0_3px_10px_rgba(21,128,61,0.3)]'
-            : 'bg-transparent text-gray-400'
+            : 'bg-transparent text-gray-600'
         ]"
         @click="activePlan = '2k'"
       >
@@ -68,7 +65,7 @@
     </div>
 
     <!-- Season hint: which months each season covers -->
-    <p class="text-center text-[0.72rem] text-gray-500 mb-4 px-6">
+    <p class="text-center text-[0.72rem] text-gray-700 mb-4 px-6">
       {{ activeSeason === 'alta' ? 'Temporada alta: junio, julio, octubre y diciembre.' : 'Temporada baja: agosto, septiembre y noviembre.' }}
     </p>
 
@@ -112,8 +109,8 @@
       </div>
 
       <!-- Km extra note (out of rows; values vary by category) -->
-      <p v-if="kmExtraGroups.length" class="mt-4 text-center text-xs text-gray-500 leading-relaxed">
-        <span class="font-semibold text-gray-600">Km adicional</span> —
+      <p v-if="kmExtraGroups.length" class="mt-4 text-center text-xs text-gray-700 leading-relaxed">
+        <span class="font-semibold text-gray-900">Km adicional</span> —
         <span v-for="(grp, i) in kmExtraGroups" :key="grp.km">
           {{ grp.types.join(', ') }}: {{ formatCOP(grp.km) }}<span v-if="i < kmExtraGroups.length - 1"> · </span>
         </span>
@@ -164,15 +161,8 @@ const tariffs = useTariffs();
 
 const activePlan = ref<'1k' | '2k'>('1k');
 
-// Default the season toggle to whichever season is in effect this month, so the
-// first view matches what a customer would actually pay now. gama.plan1k holds
-// the current-month price; compare it to the season levels.
-function detectCurrentSeason(): 'baja' | 'alta' {
-  const g = tariffs.gamas[0];
-  if (!g) return 'alta';
-  return g.plan1k.monthly >= g.seasons.alta.plan1k.monthly ? 'alta' : 'baja';
-}
-const activeSeason = ref<'baja' | 'alta'>(detectCurrentSeason());
+// Default to temporada baja (lowest price shown first); user toggles to alta.
+const activeSeason = ref<'baja' | 'alta'>('baja');
 
 function planData(gama: TariffGama) {
   const season = gama.seasons[activeSeason.value];
