@@ -50,7 +50,7 @@
       <!-- Opciones de contacto: se despliegan HACIA ARRIBA sobre el botón -->
       <transition name="tt-rise">
         <div v-if="contactOpen" class="tt-contact-options">
-          <NuxtLink to="/chat" class="tt-opt tt-opt-chat">
+          <NuxtLink v-if="chatEnabled" to="/chat" class="tt-opt tt-opt-chat">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
             </svg>
@@ -132,6 +132,10 @@ const getCityReservationURL = (city: CityData): string =>
 
 // Menú "Contáctanos": Chat 24h (chatbot web), Llamada y WhatsApp.
 const contactOpen = ref(false)
+
+// El Chat 24h solo se muestra si el dashboard lo tiene encendido para la marca
+// (mismo origen de verdad que el ChatWidget de los layouts; /tiktok no usa layout).
+const { enabled: chatEnabled } = useChatStatus(franchise.shortname as string)
 
 // tel: con el número de la marca, solo dígitos y el +.
 const telHref = computed(() => `tel:${(franchise.phone ?? '').replace(/[^\d+]/g, '')}`)
