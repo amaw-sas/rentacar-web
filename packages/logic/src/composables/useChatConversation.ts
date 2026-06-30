@@ -187,6 +187,13 @@ export function useChatConversation() {
       // bubble) — no live typewriter. The dots keep showing because the visible
       // assistant.text stays empty until the stream ends.
       let assistantText = '';
+      // The brain (hybrid orchestrator) emits each topic as a SEPARATE stream text
+      // block (its own text-start/text-delta/text-end). Honor that boundary so the
+      // bubbles split instead of gluing ("…por este medio.La que más eligen…"): on a
+      // new block insert the `\n---\n` separator splitBubbles understands. Cap at 3
+      // bubbles (the original design limit) — block 4+ folds into the 3rd as a spaced
+      // paragraph, never glued. Without this the blocks concatenate into one giant bubble.
+      let textBlocks = 0;
       // Code-owned parts accumulate locally and reveal ALL AT ONCE with the text
       // (below), so the table/cards land with the bubble — not mid-stream.
       let actions: ChatActions | null = null;
@@ -218,7 +225,12 @@ export function useChatConversation() {
           } catch {
             continue;
           }
-          if (event.type === 'text-delta' && typeof event.delta === 'string') {
+          if (event.type === 'text-start') {
+            textBlocks += 1;
+            if (textBlocks > 1) {
+              assistantText += textBlocks <= 3 ? '\n---\n' : '\n\n';
+            }
+          } else if (event.type === 'text-delta' && typeof event.delta === 'string') {
             assistantText += event.delta;
           } else if (event.type === 'tool-output-available') {
             // Render the fallback CTAs from the structured tool result — never
