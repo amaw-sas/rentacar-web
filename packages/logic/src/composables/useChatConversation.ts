@@ -47,10 +47,22 @@ export interface GamaCardsPart {
   }>;
 }
 
+// A WhatsApp-style "reply to" reference the customer attaches by tapping/swiping
+// a quote gama row or a model card. `label` shows in the composer chip and as the
+// quoted header above the user bubble; `context` is a natural-language hint
+// prepended to the text sent to the brain so the bot knows which gama/model they
+// mean without the customer typing it.
+export interface ReplyContext {
+  label: string;
+  context: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  // Optional WhatsApp-style quote the user replied to (gama row / model card).
+  replyTo?: ReplyContext;
   // ms epoch stamped when the message is created (client). Persisted so the
   // WhatsApp-style time stays stable across reloads. Optional for legacy rows.
   createdAt?: number;
@@ -92,6 +104,7 @@ export function useChatConversation() {
 
   const messages = ref<ChatMessage[]>(restore());
   const input = ref('');
+  const replyTo = ref<ReplyContext | null>(null);
   const status = ref<ChatStatus>('ready');
   const error = ref<Error | null>(null);
   // Optional action shown alongside an error bubble — e.g. the brand's WhatsApp when
@@ -133,14 +146,26 @@ export function useChatConversation() {
     error.value = null;
     errorAction.value = null;
 
-    messages.value.push({ id: genId(), role: 'user', text, createdAt: Date.now() });
+    // Capture and clear the reply reference for THIS turn (the chip disappears).
+    const reply = replyTo.value;
+    replyTo.value = null;
+
+    messages.value.push({
+      id: genId(),
+      role: 'user',
+      text,
+      createdAt: Date.now(),
+      ...(reply ? { replyTo: reply } : {}),
+    });
 
     // Build the request history BEFORE adding the assistant placeholder, in the
-    // UIMessage shape the endpoint expects (parts[], not a content string).
+    // UIMessage shape the endpoint expects (parts[], not a content string). A
+    // replied-to message prepends its context line so the brain sees which gama /
+    // model the customer means without them typing it.
     const payloadMessages = messages.value.map((m) => ({
       id: m.id,
       role: m.role,
-      parts: [{ type: 'text', text: m.text }],
+      parts: [{ type: 'text', text: m.replyTo ? `${m.replyTo.context}\n${m.text}` : m.text }],
     }));
 
     // Placeholder assistant message; grab the reactive proxy to stream into it.
@@ -315,6 +340,7 @@ export function useChatConversation() {
     stop();
     messages.value = [];
     conversationId.value = null;
+    replyTo.value = null;
     error.value = null;
     errorAction.value = null;
     status.value = 'ready';
@@ -327,6 +353,7 @@ export function useChatConversation() {
   return {
     messages,
     input,
+    replyTo,
     status,
     isStreaming,
     error,
