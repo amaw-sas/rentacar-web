@@ -31,8 +31,8 @@
             side="bottom"
             :title="title"
             :ui="{
-                content: 'bg-white h-dvh max-h-dvh ring-0',
-                header: 'relative justify-center py-4 border-b border-gray-100',
+                content: 'bg-gray-50 h-dvh max-h-dvh ring-0',
+                header: 'relative justify-center py-4 border-b border-gray-200 bg-white',
                 title: 'w-full text-center text-2xl font-extrabold text-[#0B1A2E]',
                 close: 'absolute top-3 right-3 bg-black text-white rounded-full hover:bg-black/80',
                 body: 'p-0 flex flex-col min-h-0',
@@ -66,7 +66,7 @@
                         class="relative flex w-full items-center justify-center rounded-xl border px-4 py-3.5 text-center text-lg font-semibold transition-colors hover:border-[#000073] hover:bg-blue-50 active:bg-blue-100"
                         :class="item[valueKey] === modelValue
                             ? 'border-[#000073] bg-blue-50 text-[#000073]'
-                            : 'border-gray-200 text-gray-900'"
+                            : 'border-gray-200 bg-white text-gray-900'"
                         @click="select(item)"
                     >
                         <span>{{ item[labelKey] }}</span>
