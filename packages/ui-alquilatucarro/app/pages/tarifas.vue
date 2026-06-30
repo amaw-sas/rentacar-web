@@ -72,10 +72,13 @@
     <!-- Table: 3 columns (photo · gama text · prices) -->
     <div v-if="tariffs.gamas.length > 0" class="max-w-[640px] mx-auto px-5 pb-6">
       <div class="rounded-xl overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] divide-y divide-gray-100">
-        <div
+        <!-- Each row opens the city selector (30-day monthly rental) on click -->
+        <button
           v-for="gama in tariffs.gamas"
           :key="gama.code"
-          class="grid grid-cols-[96px_1fr_auto] sm:grid-cols-[140px_1fr_auto] items-stretch"
+          type="button"
+          class="grid grid-cols-[96px_1fr_auto] sm:grid-cols-[140px_1fr_auto] items-stretch w-full text-left cursor-pointer hover:bg-gray-50 transition-colors"
+          @click="cityModalOpen = true"
         >
           <!-- Col 1: photo -->
           <div class="relative bg-[#0B1A2E] overflow-hidden min-h-[68px]">
@@ -105,7 +108,7 @@
               {{ formatCOP(planData(gama).monthly) }}<span class="text-[0.7rem]"> /mes</span>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       <!-- Km extra note (out of rows; values vary by category) -->
@@ -115,6 +118,18 @@
           {{ grp.label }}: {{ formatCOP(grp.km) }}<span v-if="i < kmExtraGroups.length - 1"> / </span>
         </span>
       </p>
+
+      <!-- Shared city selector opened by any row click (30-day monthly rental) -->
+      <UModal v-model:open="cityModalOpen" :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }">
+        <template #body>
+          <div class="mb-4 text-black text-lg">
+            ¿En qué ciudad<br>deseas recoger tu carro?
+          </div>
+          <div class="min-w-80 my-3">
+            <SelectBranch variant="gray" :rental-days="30" />
+          </div>
+        </template>
+      </UModal>
     </div>
 
     <!-- Empty state when pricing is unavailable -->
@@ -163,6 +178,9 @@ const activePlan = ref<'1k' | '2k'>('1k');
 
 // Default to temporada baja (lowest price shown first); user toggles to alta.
 const activeSeason = ref<'baja' | 'alta'>('baja');
+
+// Shared city selector modal, opened when a price row is clicked.
+const cityModalOpen = ref(false);
 
 function planData(gama: TariffGama) {
   const season = gama.seasons[activeSeason.value];
