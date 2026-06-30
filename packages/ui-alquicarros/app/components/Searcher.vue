@@ -106,7 +106,7 @@
                     v-model:open="pickupDateSlideoverOpen"
                     side="bottom"
                     title="Día de recogida"
-                    :ui="{ content: 'bg-white h-dvh max-h-dvh ring-0', body: 'flex flex-col justify-center items-center p-4 overflow-y-auto' }"
+                    :ui="{ content: '[color-scheme:light] bg-white h-dvh max-h-dvh ring-0', body: 'flex flex-col justify-center items-center p-4 overflow-y-auto' }"
                 >
                     <template #body>
                         <u-calendar
@@ -203,7 +203,7 @@
                     v-model:open="returnDateSlideoverOpen"
                     side="bottom"
                     title="Día de devolución"
-                    :ui="{ content: 'bg-white h-dvh max-h-dvh ring-0', body: 'flex flex-col justify-center items-center p-4 overflow-y-auto' }"
+                    :ui="{ content: '[color-scheme:light] bg-white h-dvh max-h-dvh ring-0', body: 'flex flex-col justify-center items-center p-4 overflow-y-auto' }"
                 >
                     <template #body>
                         <u-calendar

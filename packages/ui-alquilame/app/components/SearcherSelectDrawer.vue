@@ -31,7 +31,7 @@
             side="bottom"
             :title="title"
             :ui="{
-                content: 'bg-white h-dvh max-h-dvh ring-0',
+                content: '[color-scheme:light] bg-white h-dvh max-h-dvh ring-0',
                 body: 'p-0 flex flex-col min-h-0',
             }"
             @update:open="onOpenChange"
@@ -43,7 +43,7 @@
                         :placeholder="searchPlaceholder"
                         size="xl"
                         class="w-full"
-                        :ui="{ base: 'text-lg' }"
+                        :ui="{ base: 'text-lg bg-white text-gray-900 placeholder:text-gray-400' }"
                         :autofocus="false"
                         :data-testid="testid ? `${testid}-search` : undefined"
                     >
