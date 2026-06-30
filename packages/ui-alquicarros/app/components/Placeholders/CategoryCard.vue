@@ -1,19 +1,41 @@
 <template>
+  <!-- Skeleton de la tarjeta de vehículo mientras cargan las gamas tras una
+       búsqueda. Solo bloques USkeleton (shimmer), sin texto ni cajas de color
+       planas, para que se lea como "cargando" y no como una tarjeta a medias. -->
   <div class="categoria flex flex-col w-full">
-    <USkeleton class="w-full h-70 rounded-b-none rounded-t-sm"></USkeleton>
-    <div class="bg-white w-full h-20 flex items-center justify-between px-3">
-      <div class="flex flex-col">
-        <span class="font-bold">Gama</span>
-        <span class="text-gray-600">Descripción</span>
+    <!-- Imagen / carrusel -->
+    <USkeleton class="w-full h-70 rounded-b-none rounded-t-sm" />
+
+    <!-- Cabecera: gama + descripción + chevron -->
+    <div class="bg-white w-full flex items-center justify-between gap-3 px-4 py-4">
+      <div class="flex flex-col gap-2 flex-1">
+        <USkeleton class="h-4 w-28" />
+        <USkeleton class="h-3 w-44" />
       </div>
-      <UIcon name="i-heroicons-chevron-down-solid" class="size-5 float-right text-gray-600"></UIcon>
+      <USkeleton class="h-6 w-6 rounded-full shrink-0" />
     </div>
-    <div class="bg-gray-200 w-full h-50 content-end space-y-2 px-3 pb-3">
-        <div class="w-full bg-gray-100 rounded-sm p-2 flex items-center justify-between">
-          <span class="font-bold place-self-center">Adicionales:</span>
-          <Icon name="i-heroicons-chevron-down-solid" class="float-right text-gray-600"></Icon>
+
+    <!-- Cuerpo: tarifa (izq) + protección (der) -->
+    <div class="bg-white w-full px-4 pb-4 space-y-4">
+      <div class="flex gap-4">
+        <div class="flex flex-col gap-2 flex-1">
+          <USkeleton class="h-3 w-24" />
+          <USkeleton class="h-7 w-28" />
+          <USkeleton class="h-4 w-20" />
+          <USkeleton class="h-3 w-16" />
         </div>
-        <UButton disabled loading class="boton-seleccion">Solicitar este vehiculo</UButton>
+        <div class="flex flex-col gap-2 flex-1">
+          <USkeleton class="h-3 w-28" />
+          <USkeleton class="h-5 w-full" />
+          <USkeleton class="h-5 w-full" />
+        </div>
+      </div>
+
+      <!-- Servicios adicionales -->
+      <USkeleton class="h-11 w-full rounded-sm" />
+
+      <!-- CTA "Solicitar este vehículo" -->
+      <USkeleton class="h-12 w-full rounded-sm" />
     </div>
   </div>
 </template>
