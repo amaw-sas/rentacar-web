@@ -101,8 +101,11 @@ import { ref } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 
 const { franchise } = useAppConfig()
-// Feature flag por entorno (Escudo): NUXT_PUBLIC_CHAT_ENABLED en el proyecto Vercel.
-const chatEnabled = useRuntimeConfig().public.chatEnabled === true
+// Visibilidad del chat = el switch por marca del dashboard manda (auto-import
+// useChatStatus). Fetch client-only, fail-closed. Reemplaza al viejo flag de
+// entorno NUXT_PUBLIC_CHAT_ENABLED (runtimeConfig.public.chatEnabled ya no gobierna
+// la visibilidad; el operador prende/apaga cada marca desde /chat-knowledge).
+const { enabled: chatEnabled } = useChatStatus(franchise.shortname as string)
 
 // Estado client-only: arranca colapsado (lección #109).
 const menuOpen = ref(false)
