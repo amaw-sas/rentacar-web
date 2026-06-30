@@ -31,7 +31,7 @@
             side="bottom"
             :title="title"
             :ui="{
-                content: 'bg-gray-50 h-dvh max-h-dvh ring-0',
+                content: 'bg-gray-50 h-dvh max-h-dvh ring-0 [color-scheme:light]',
                 header: 'relative justify-center py-4 border-b border-gray-200 bg-white',
                 title: 'w-full text-center text-2xl font-extrabold text-[#0B1A2E]',
                 close: 'absolute top-3 right-3 bg-black text-white rounded-full hover:bg-black/80',
@@ -46,7 +46,7 @@
                         :placeholder="searchPlaceholder"
                         size="xl"
                         class="w-full"
-                        :ui="{ base: 'text-lg' }"
+                        :ui="{ base: 'text-lg bg-white text-gray-900 placeholder:text-gray-400' }"
                         :autofocus="false"
                         :data-testid="testid ? `${testid}-search` : undefined"
                     >
