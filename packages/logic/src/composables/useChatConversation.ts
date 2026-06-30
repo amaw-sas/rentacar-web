@@ -20,6 +20,7 @@
  * reloads and SSR/ISR navigation. Reasoning parts are ignored.
  */
 import { computed, ref } from 'vue';
+import { readStoredAttribution } from '@rentacar-main/logic/utils';
 import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
 
 // Code-owned data parts emitted by the hybrid orchestrator (dashboard /api/chat)
@@ -183,6 +184,11 @@ export function useChatConversation() {
           brand,
           ...(conversationId.value ? { conversationId: conversationId.value } : {}),
           messages: payloadMessages,
+          // Forward the customer's real marketing origin (utm/click-ids/referrer) the
+          // attribution plugin already captured into localStorage, so a bot-closed
+          // reservation keeps its true "Origen" (TikTok/Meta/Google/…) instead of
+          // "Desconocido". Same source as a normal web reservation; {} = "Directo".
+          attribution: readStoredAttribution() ?? {},
         }),
         signal: controller.signal,
       });
