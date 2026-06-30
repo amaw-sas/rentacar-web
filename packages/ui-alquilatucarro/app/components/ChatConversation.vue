@@ -126,9 +126,16 @@
           </div>
         </template>
       </template>
-      <p v-if="error" class="cc-error" role="alert">
-        {{ error.message }}
-      </p>
+      <div v-if="error" class="cc-error" role="alert">
+        <p>{{ error.message }}</p>
+        <a
+          v-if="errorAction?.whatsapp"
+          :href="errorAction.whatsapp"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="cc-link-btn cc-link-btn-wa"
+        >Escríbenos por WhatsApp</a>
+      </div>
     </div>
 
     <div v-if="replyTo" class="cc-reply-bar">
@@ -195,7 +202,7 @@ function bubblesFor(m: { text: string; actions?: unknown; quoteTable?: unknown; 
 withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
 const emit = defineEmits<{ dismiss: [] }>()
 
-const { messages, input, replyTo, isStreaming, error, submit } = useChatConversation()
+const { messages, input, replyTo, isStreaming, error, errorAction, submit } = useChatConversation()
 
 const inputFocused = ref(false)
 
