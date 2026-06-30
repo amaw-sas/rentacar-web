@@ -110,9 +110,9 @@
 
       <!-- Km extra note (out of rows; values vary by category) -->
       <p v-if="kmExtraGroups.length" class="mt-4 text-center text-xs text-gray-700 leading-relaxed">
-        <span class="font-semibold text-gray-900">Km adicional</span> —
+        <span class="font-semibold text-gray-900">Km adicional:&nbsp;</span>
         <span v-for="(grp, i) in kmExtraGroups" :key="grp.km">
-          {{ grp.types.join(', ') }}: {{ formatCOP(grp.km) }}<span v-if="i < kmExtraGroups.length - 1"> · </span>
+          {{ grp.label }}: {{ formatCOP(grp.km) }}<span v-if="i < kmExtraGroups.length - 1"> / </span>
         </span>
       </p>
     </div>
@@ -173,9 +173,13 @@ function formatCOP(value: number): string {
   return '$ ' + value.toLocaleString('es-CO');
 }
 
-// Km extra varies per category (e.g. $700 económicos/sedanes, $900 camionetas,
-// $1.100 SUV). Group gamas by their kmExtra and label each group by vehicle type
-// (first word of gama.name) so the footnote stays correct if the DB changes.
+// Km extra varies per category. Show only the tiers actually present in the
+// data, with curated labels per value (fallback to vehicle types from the name).
+const KM_EXTRA_LABELS: Record<number, string> = {
+  700: 'Económico y Sedán',
+  900: 'Camioneta',
+  1100: 'Camioneta gama alta',
+};
 const kmExtraGroups = computed(() => {
   const byKm = new Map<number, Set<string>>();
   for (const gama of tariffs.gamas) {
@@ -186,7 +190,7 @@ const kmExtraGroups = computed(() => {
   }
   return [...byKm.entries()]
     .sort((a, b) => a[0] - b[0])
-    .map(([km, types]) => ({ km, types: [...types] }));
+    .map(([km, types]) => ({ km, label: KM_EXTRA_LABELS[km] ?? [...types].join(', ') }));
 });
 
 const minMonthly = computed(() => {
