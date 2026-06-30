@@ -70,7 +70,7 @@
     </p>
 
     <!-- Table: 3 columns (photo · gama text · prices) -->
-    <div v-if="tariffs.gamas.length > 0" class="max-w-[900px] mx-auto px-5 pb-6">
+    <div v-if="tariffs.gamas.length > 0" class="max-w-[640px] mx-auto px-5 pb-6">
       <div class="rounded-xl overflow-hidden bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] divide-y divide-gray-100">
         <div
           v-for="gama in tariffs.gamas"
