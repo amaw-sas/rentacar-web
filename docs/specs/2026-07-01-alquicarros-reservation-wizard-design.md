@@ -29,9 +29,12 @@ comportamiento del motor; aquí lo divergimos a propósito, solo para alquicarro
    conserva el control de qué carro específico reserva.
 2. **Alcance del stepper:** wizard completo desde cero, incluyendo la búsqueda como
    Paso 1.
-3. **Ubicación vs SEO:** el wizard vive en `/reservas`. Las landings de ciudad y los
-   deep-links de resultados siguen siendo superficies SEO; los deep-links entran al
-   wizard pre-cargados. La indexación se preserva.
+3. **Ubicación vs SEO:** `/reservas` es la entrada canónica limpia del wizard (Paso 1).
+   El wizard **es la experiencia de resultados**, así que el mismo componente se monta
+   también en las rutas de resultados por ciudad (`/[city]/buscar-vehiculos/…`), donde
+   `CityPage mode="results"` renderiza el wizard en vez del grid actual. Las landings de
+   ciudad siguen siendo SEO puro; las rutas de resultados conservan su SEO actual
+   (canonical a `/[city]`, sin `noindex` — ver Data flow). La indexación se preserva.
 4. **Divergencia:** solo alquicarros por ahora. Todo el código nuevo es marca-local;
    `logic/` no se toca; cero riesgo para las hermanas.
 5. **Layout del resumen:** sidebar fijo pegajoso en desktop; barra inferior
@@ -41,9 +44,14 @@ comportamiento del motor; aquí lo divergimos a propósito, solo para alquicarro
 
 Todo el código nuevo vive en `packages/ui-alquicarros/`. De `logic/` se reúsan de
 **solo lectura** (sin modificarlos): `useSearch`, `useSearchByRouteParams`,
-`useCategory`, `useStoreSearchData`, `useStoreReservationForm`, `pickPriceForDate`,
-`pickEffectiveTotalCoverageUnitCharge`, el tipo `ExtrasData` y
-`mapAvailabilityFetchError`.
+`useCategory`, `useStoreSearchData` (incluida su ref `selectedCategory`, la instancia
+de `useCategory` de la gama elegida), `useStoreReservationForm`, `pickPriceForDate`,
+`pickEffectiveTotalCoverageUnitCharge`, el tipo `ExtrasData`,
+`mapAvailabilityFetchError` y `classifyOneWayDistanceError`.
+
+De piezas **brand-local ya existentes** se reúsa `app/composables/useSearchByQueryParams.ts`
+(driver de búsqueda desde el query string en `/reservas`) — el wizard se apoya en él
+para la sincronización de query + el parámetro `paso`.
 
 Árbol nuevo `app/components/wizard/`:
 
@@ -96,17 +104,29 @@ oculta**.
 
 ## Data flow y URL
 
-- **Paso 1** reúsa `Searcher`; al validar dispara `useSearch.doSearch()` →
-  `useStoreSearchData.search()` → avanza a Paso 2.
-- **Sincronización de URL** (bookmarkable + SEO): el estado se refleja en el query de
-  `/reservas` (`?lugar_recogida=…&fecha_recogida=…&hora_…=…&paso=vehiculo`).
-  Cualquier estado con parámetros emite `robots: noindex, follow` (invariante F3);
+- **Paso 1 (handshake búsqueda→avance):** el `Searcher` de alquicarros escribe el query
+  string (F3 SCEN-F3-07); `useSearchByQueryParams` corre `doSearch()` →
+  `useStoreSearchData.search()`. El wizard **observa** el fin de la búsqueda (transición
+  de `pending`→resultados con `hasAvailableCategories`) y **entonces** avanza a Paso 2.
+  El Searcher no maneja el avance; el wizard orquesta la transición al completarse la
+  consulta. Añade `&paso=vehiculo` al query.
+- **Sincronización de URL — `/reservas`** (bookmarkable + SEO): el estado se refleja en el
+  query (`?lugar_recogida=…&fecha_recogida=…&hora_…=…&paso=vehiculo`). Cualquier estado
+  con parámetros de búsqueda emite `robots: noindex, follow` (invariante F3 SCEN-F3-06);
   `/reservas` limpio queda **indexable** y arranca en Paso 1 sin disparar búsqueda.
-- **Deep-links preservados:** abrir `/[city]/buscar-vehiculos/…` (ISR, indexable-follow)
-  hidrata la búsqueda desde el path vía `useSearchByRouteParams` y **entra en Paso 2**;
-  la variante `/…/categoria/[gama]` entra en **Paso 3** con la gama preseleccionada.
-- **Rehidratación:** refresh o back del navegador reconstruye el paso desde el query
-  (`paso` + parámetros de búsqueda). Sin flash de paso incorrecto (gate SSR-estable).
+- **Deep-links de resultados por ciudad** `/[city]/buscar-vehiculos/…` (ISR): el wizard se
+  monta en esa ruta (vía `CityPage mode="results"`), hidrata la búsqueda desde el path con
+  `useSearchByRouteParams` y **entra en Paso 2** con disponibilidad cargada. **SEO de esa
+  ruta: sin cambios respecto a hoy** — `useSearchPageSEO` canonicaliza a `/[city]` y NO
+  emite `robots` meta (el `noindex,follow` es exclusivo de `/reservas?query`, no de esta
+  ruta). La variante `/…/categoria/[gama]` entra en **Paso 3** con la gama preseleccionada:
+  además del hidratado de búsqueda, se lee `route.params.categoria` (lectura brand-local
+  extra — `useSearchByRouteParams` NO cubre la gama) y se hace match con la fila de
+  disponibilidad para fijar `selectedCategory`.
+- **Rehidratación / gate SSR-estable:** `currentStep` se deriva de valores SSR-estables —
+  `route.query.paso` (o el segmento de path del deep-link) + presencia de `lugar_recogida`
+  — espejando cómo `reservas/index.vue` gatea en `route.query.lugar_recogida`. Refresh o
+  back reconstruye el paso desde ahí, sin flash de paso incorrecto ni CLS.
 - **Submit** (Paso 5): sin cambios → `submitForm()` → `routeForReservationStatus` →
   `/reservado/[code]` | `/pendiente` | `/sindisponibilidad`.
 
@@ -145,8 +165,9 @@ oculta**.
 ## Invariantes preservadas
 
 - `data-testid="*-test"` que consumen los E2E (`BRAND=alquicarros`).
-- SEO programático: `/reservas` limpio indexable; estados con parámetros `noindex,follow`;
-  landings de ciudad y deep-links ISR intactos.
+- SEO programático: `/reservas` limpio indexable; `/reservas?query` con parámetros
+  `noindex,follow`; landings de ciudad y rutas ISR de resultados con su SEO actual intacto
+  (canonical a `/[city]` vía `useSearchPageSEO`, sin `robots` meta añadido).
 - Aislamiento: solo `packages/ui-alquicarros/**`. `logic/` y las otras dos marcas sin
   cambios de salida.
 - El pin secreto WhatsApp (#41) y demás invariantes de las superficies F3 no se rompen.
@@ -197,9 +218,11 @@ días y el subtotal; el wizard habilita avanzar a Paso 3
 ### SCEN-W-06: el Paso 3 recalcula el total al elegir Seguro Total
 **Given** el Paso 3 con Básico preseleccionado y un subtotal visible en el sidebar
 **When** el usuario elige Seguro Total
-**Then** `haveTotalInsurance`/`withTotalCoverage` = true y el total del sidebar aumenta
-en el cargo de cobertura total del vehículo (recálculo en vivo, sin recargar)
-**Evidence** total del sidebar antes vs después = delta de `getTotalCoveragePrice`
+**Then** `haveTotalInsurance`/`withTotalCoverage` = true y el total renderizado en el
+sidebar aumenta (recálculo en vivo, sin recargar)
+**Evidence** total renderizado en el sidebar (DOM) antes < después; `withTotalCoverage`
+del `selectedCategory` = true (observable vía el total expuesto `getTotalPrice`, no un
+computed interno no exportado)
 
 ### SCEN-W-07: el Paso 4 es opcional y "Omitir" avanza sin adicionales
 **Given** el Paso 4 (Adicionales) sin ninguna opción marcada
@@ -222,10 +245,12 @@ contenido del resumen = estado actual
 **Given** un visitante abre `/[city]/buscar-vehiculos/lugar-recogida/…/hora-devolucion/…`
 **When** la página carga
 **Then** la búsqueda se hidrata desde el path (branches, fechas, horas) y el wizard
-monta directamente el Paso 2 con disponibilidad ya cargada; el `<head>` emite
-`robots: noindex, follow`
+monta directamente el Paso 2 con disponibilidad ya cargada; el SEO de la ruta NO cambia
+respecto a hoy — el `<head>` canonicaliza a `/[city]` (vía `useSearchPageSEO`) y NO añade
+`robots` meta (el `noindex,follow` es de `/reservas?query`, no de esta ruta)
 **Evidence** request de disponibilidad con los slugs del path, barra de pasos en
-"2 Vehículo", meta robots noindex,follow
+"2 Vehículo", `<link rel="canonical">` a `/[city]` y ausencia de meta robots noindex en el
+HTML SSR (idéntico al comportamiento pre-wizard)
 
 ### SCEN-W-10: back preserva el estado ya elegido
 **Given** el wizard en Paso 4 con gama C y Seguro Total elegidos
@@ -252,15 +277,17 @@ no hay error de consola ni navegación dura
 **Given** el paquete tras implementar el wizard
 **When** se corre typecheck 1-marca + Vitest de `ui-alquicarros` y se compara la salida
 de alquilatucarro/alquilame
-**Then** `logic/` sin cambios; alquilatucarro y alquilame renderizan su grid actual sin
-diferencias; typecheck y tests de alquicarros en verde
-**Evidence** diff vacío en `packages/logic` y en las otras dos marcas; typecheck/Vitest verde
+**Then** `logic/`, `ui-alquilatucarro` y `ui-alquilame` sin cambios; typecheck 1-marca y
+Vitest de alquicarros en verde
+**Evidence** diff git vacío en `packages/logic`, `packages/ui-alquilatucarro` y
+`packages/ui-alquilame`; typecheck/Vitest de alquicarros verde
 
 ## Testing y verificación
 
 - **Unit (Vitest, `ui-alquicarros`):** `segmentForCode` + fail-soft "Otros" (SCEN-W-03/04);
   máquina de pasos `canAdvance`/back-preserva-estado (SCEN-W-05/07/10); gating SSR del
-  `noindex` (SCEN-W-01/02/09).
+  `noindex` en `/reservas` (SCEN-W-01/02) y del canonical sin-noindex en rutas de
+  resultados (SCEN-W-09).
 - **E2E (Playwright, `BRAND=alquicarros`):** flujo completo 5 pasos; deep-link entra en
   Paso 2/3; sidebar refleja precio en cada paso; "Omitir" adicionales; sin regresión del
   Searcher unificado ni del submit.
@@ -269,11 +296,21 @@ diferencias; typecheck y tests de alquicarros en verde
 
 ## Blast radius
 
-- **Se modifica:** solo `packages/ui-alquicarros/` — `app/pages/reservas/`, nuevo árbol
-  `app/components/wizard/`, `app/composables/useReservationWizard.ts`,
-  `app/config/vehicleSegments.ts`, y los tests del paquete.
-- **Se reúsa sin tocar:** `packages/logic` (composables/stores/utils/tipos).
+- **Se modifica:** solo `packages/ui-alquicarros/`:
+  - nuevo árbol `app/components/wizard/`, `app/composables/useReservationWizard.ts`,
+    `app/config/vehicleSegments.ts`;
+  - `app/pages/reservas/` (monta el wizard);
+  - `app/components/CityPage.vue` — en `mode="results"` renderiza el wizard en vez de
+    `CategorySelectionSection`;
+  - el árbol de rutas de resultados `app/pages/[city]/buscar-vehiculos/…/index.vue`,
+    su gemelo `referido/…` y la hoja `…/categoria/[categoria]/index.vue` — entran al wizard
+    (Paso 2 / Paso 3) en lugar del grid;
+  - `CategorySelectionSection.vue`/`CategoryCard.vue` quedan disponibles como base para el
+    nivel-2 del Paso 2 (reúso o retiro según la implementación);
+  - los tests del paquete.
+- **Se reúsa sin tocar:** `packages/logic` (composables/stores/utils/tipos) y
+  `app/composables/useSearchByQueryParams.ts` / `useSearchByRouteParams` (hidratado).
 - **No se toca:** `packages/ui-alquilatucarro`, `packages/ui-alquilame`, `packages/logic`,
-  `server/api` de reservas.
-- **Consumidores a revisar:** los E2E `BRAND=alquicarros` y los tests de config/SEO del
-  paquete; los deep-links ISR de resultados (comportamiento de entrada al wizard).
+  `server/api` de reservas, `useSearchPageSEO` (el SEO de las rutas de resultados no cambia).
+- **Consumidores a revisar:** los E2E `BRAND=alquicarros` (flujo de resultados y submit) y
+  los tests de config/SEO del paquete.
