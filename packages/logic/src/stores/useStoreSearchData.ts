@@ -86,7 +86,9 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
       const blockingError = isBlockingSearchError(errorResponse.value);
 
       if(blockingError){
-        createErrorMessage(errorResponse.value);
+        // blockingError is true only when errorResponse.value is truthy
+        // (isBlockingSearchError guards `!!error`), so it is non-null here.
+        createErrorMessage(errorResponse.value!);
       }
       else {
         // Clear a non-blocking LLNRAG009 (set at the top of search) so the

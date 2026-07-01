@@ -55,12 +55,12 @@ function findActivePricingForDay(prices: CategoryMonthPriceData[], dayIso: strin
 
   if (matches.length === 0) return null
   matches.sort((a, b) => b.init_date.localeCompare(a.init_date))
-  return matches[0]
+  return matches[0] ?? null
 }
 
 function formatPeriodLabel(start: string, end: string): string {
-  const [, sm, sd] = start.split('-').map(Number)
-  const [ey, em, ed] = end.split('-').map(Number)
+  const [, sm = 0, sd = 0] = start.split('-').map(Number)
+  const [ey = 0, em = 0, ed = 0] = end.split('-').map(Number)
   return `${sd} ${MONTH_ABBR_ES[sm - 1]} – ${ed} ${MONTH_ABBR_ES[em - 1]} ${ey}`
 }
 

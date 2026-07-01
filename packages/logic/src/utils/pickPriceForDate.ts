@@ -51,7 +51,7 @@ export function pickPriceForDate(
     .map((p) => ({ p, dist: distanceToRange(pickupMs, p.init_date, p.end_date) }))
     .sort((a, b) => a.dist - b.dist)
 
-  if (legacy.length > 0) return legacy[0].p
+  if (legacy.length > 0) return legacy[0]!.p
 
   const seasonLow = actives
     .slice()

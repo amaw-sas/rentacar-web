@@ -43,7 +43,12 @@ export default defineCachedEventHandler(async () => {
 
   return {
     categories: transformCategories(categoriesResult.data),
-    branches: transformBranches(locationsResult.data),
+    // Supabase infers the to-one `cities(slug)` embed as an array (the explicit-
+    // column select yields a structured type, unlike the `*` selects), but the
+    // FK is to-one, so at runtime `cities` is a single object|null — matching
+    // SupabaseLocation. Assert the real runtime shape; transformBranches reads
+    // `row.cities?.slug`. (The `*`-based transforms above infer `any` and pass.)
+    branches: transformBranches(locationsResult.data as unknown as Parameters<typeof transformBranches>[0]),
     extras: companyResult.error || !companyResult.data
       ? undefined
       : transformExtras(companyResult.data),

@@ -23,7 +23,7 @@ const WEEKDAY_BY_DOW: ScheduleDayKey[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fr
 
 /** Minutes since midnight. The sentinel "24:00" maps to 1440 (end-of-day inclusive). */
 function toMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(':').map(Number);
+  const [h = 0, m = 0] = hhmm.split(':').map(Number);
   return h * 60 + m;
 }
 
@@ -36,7 +36,8 @@ function isConfigured(schedule: LocationSchedule | null | undefined): schedule i
 function effectiveKey(date: DateObject): ScheduleDayKey {
   if (isHoliday(date)) return 'hol';
   const dow = new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay();
-  return WEEKDAY_BY_DOW[dow];
+  // dow ∈ [0,6] and WEEKDAY_BY_DOW has 7 entries — always defined.
+  return WEEKDAY_BY_DOW[dow]!;
 }
 
 /**
@@ -69,7 +70,7 @@ export function bookableSlotsForDate<T extends { value: string }>(
   slots: T[],
 ): T[] {
   const ranges = openRangesForDate(schedule, date).map((r) => {
-    const [start, end] = r.split('-');
+    const [start = '', end = ''] = r.split('-');
     return { start: toMinutes(start), end: toMinutes(end) };
   });
   if (!ranges.length) return [];
