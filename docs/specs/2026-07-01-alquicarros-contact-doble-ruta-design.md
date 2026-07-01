@@ -33,7 +33,7 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
 ### Estructura (de arriba a abajo)
 
 1. **Encabezado centrado**
-   - Accent bar naranja (`h-1 w-11 rounded-full bg-brand-600`, patrón de `HowItWorks.vue`).
+   - Accent bar naranja (`h-1 w-10 rounded-full bg-brand-600`, patrón exacto de `HowItWorks.vue:18`).
    - `<h2>` "Reserva tu Carro Hoy" — `font-heading text-3xl md:text-4xl font-extrabold`, color oscuro cálido (`text-brand-900`/`#7c2d12`) para contraste sobre crema.
    - Subtítulo: "Sin anticipos. Sin cargos ocultos. Cancela gratis hasta 24 horas antes." — texto cálido atenuado.
 
@@ -77,12 +77,14 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
 ## Consumidores / blast radius
 
 - **Archivo modificado (único):** `packages/ui-alquicarros/app/components/home/Contact.vue`.
-- **Hosts que montan `<HomeContact>`:**
-  - `app/pages/index.vue` (home) → usa `reserveAnchor` default `#hero`.
-  - City landing (`/[city]`) → pasa `reserveAnchor="#searcher"`. **La prop `reserveAnchor` se conserva con misma firma y defaults.**
-- **Tests que pueden romper y deben actualizarse:**
-  - `app/components/home/__tests__/reskin-invariants.test.ts` — orden de secciones (no cambia; `HomeContact` sigue en pos. 10). Verificar que no asserte estructura interna de Contact.
-  - `presentational.test.ts` (si asserta copy de Contact) — actualizar strings: nuevos títulos de tiles ("Reserva online", "¿Prefieres hablar?") y microcopy. Los labels de CTA ("Reserva Ahora", "Habla con un Asesor") y del `<h2>` ("Reserva tu Carro Hoy") **no cambian**.
+- **Hosts que montan `<HomeContact>` (3 en total)** — la prop `reserveAnchor` se conserva con misma firma y defaults (`withDefaults(..., { reserveAnchor: '#hero' })`, `Contact.vue:160`). **Importante:** el valor NO siempre es un ancla in-page; el landing pasa una **ruta completa** (`/reservas`), así que el binding `href="{reserveAnchor}"` debe seguir funcionando igual para rutas y para anclas:
+  - `app/pages/index.vue:22` → `<HomeContact />` → default `#hero` (home).
+  - `app/components/CityPage.vue:62` → `:reserve-anchor="mode === 'landing' ? '/reservas' : '#searcher'"` → **landing = `/reservas` (ruta)**, **results = `#searcher` (ancla)**.
+  - `app/pages/reservas/index.vue:116` → `<HomeContact reserve-anchor="#hero" />` (tercer host).
+- **Tests — cobertura real (verificada):**
+  - `app/components/home/__tests__/reskin-invariants.test.ts` — corre sobre **todos** los `home/*.vue`, incluido `Contact.vue`. Asserta, además del orden de secciones (Contact en pos. 10): **sin literal `Alquilame`, sin hex rojo (`RED_HEX`), sin clase `-red-\d`, sin alias `bg-gradient-to-`, y tokens `brand-*`**. El nuevo diseño los cumple (naranja `#ff8a00/#e35d0a/#c2410c`, crema `#fff7ee`, `#090`, y `bg-linear-to-b`) — pero el implementador DEBE mantener los hexes fuera del regex `RED_HEX` y usar `bg-linear-to-*`, nunca `bg-gradient-to-*`.
+  - `presentational.test.ts` — **NO referencia `Contact.vue`** (solo `HowItWorks/ValueProps/Stats`). No requiere cambios. En consecuencia, **hoy ningún test encoda el copy/estructura de Contact** → los scenarios SCEN-01/03/04/05 necesitan un test nuevo (ver Estrategia de satisfacción).
+  - Tests de **hosts** (no tocan internals de Contact, no deben romper si se conserva el nombre de prop `reserve-anchor` y el mount incondicional): `app/pages/reservas/__tests__/index.test.ts:145`, `app/components/city/__tests__/Hero.test.ts:80`.
 - **Assets:** `/images/cta/cta-suv.webp` deja de usarse en alquicarros (sigue usándose en alquilame — no borrar).
 - **Otras marcas:** sin impacto (cambio aislado a `ui-alquicarros`).
 
@@ -91,8 +93,8 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
 - **SCEN-CONTACT-01 · CTAs conservados y funcionales**
   Given la home de alquicarros renderizada, When el usuario ve la sección `#contact`, Then existen exactamente dos CTA: "Reserva Ahora" (`href="#hero"`) y "Habla con un Asesor" (`href="{franchise.whatsapp}"`, `target="_blank"`, `rel="noopener noreferrer"`).
 
-- **SCEN-CONTACT-02 · Anchor configurable por host**
-  Given la city landing `/[city]` que pasa `reserveAnchor="#searcher"`, When se renderiza `#contact`, Then el CTA "Reserva Ahora" tiene `href="#searcher"` (no `#hero`).
+- **SCEN-CONTACT-02 · `reserveAnchor` respetado por host (ancla o ruta)**
+  Given un host que pasa `reserve-anchor` (home → `#hero` default; city results → `#searcher`; city landing → `/reservas` ruta; página reservas → `#hero`), When se renderiza `#contact`, Then el CTA "Reserva Ahora" tiene `href` igual al valor pasado, tanto si es ancla in-page como si es ruta completa (`/reservas`).
 
 - **SCEN-CONTACT-03 · Diferenciación de alquilame**
   Given `Contact.vue` de alquicarros, When se inspecciona el markup, Then NO contiene la banda full-bleed con SUV lateral (`cta-suv.webp` ausente en alquicarros) y SÍ contiene dos tiles de acción en grid de 2 columnas en `md+`.
@@ -111,13 +113,19 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
 
 ## Estrategia de satisfacción
 
-- Unit/render: actualizar `presentational.test.ts` (nuevos copys de tiles) y confirmar `reskin-invariants.test.ts` verde.
-- Runtime: `/agent-browser` en el dev server del worktree (SCEN-06: contraste + cero errores de consola + cero requests fallidos) + `/dogfood` exploratorio.
+- **Unit/render (nuevo test):** crear `app/components/home/__tests__/contact.test.ts` que monte `Contact.vue` y encode SCEN-01/02/03/04/05:
+  - dos CTA con los `href`/atributos correctos (01); `href` = `reserveAnchor` para valor ancla y ruta (02);
+  - ausencia de `cta-suv.webp` + presencia de grid de 2 tiles (03);
+  - íconos vía `UIcon`/`i-lucide-*` (04); badge de ciudades derivado de `useCityCount`, no hardcodeado (05).
+  Motivo: `presentational.test.ts` NO cubre Contact y no debe tocarse.
+- **Invariantes:** confirmar `reskin-invariants.test.ts` verde (orden de secciones + sin rojo/`Alquilame`/`bg-gradient-to-` + tokens brand) tras el cambio.
+- **Runtime (SCEN-06):** `/agent-browser` en el dev server del worktree — contraste computado AA de texto blanco del Tile A y labels de CTA, cero errores de consola, cero requests fallidos + `/dogfood` exploratorio.
+- **Regresión de hosts:** correr los tests de host (`reservas/__tests__/index.test.ts`, `city/__tests__/Hero.test.ts`) — deben seguir verdes sin cambios.
 - Verificación desktop y mobile (breakpoint `md`).
 
 ## Riesgos / notas
 
 - Tailwind 4: usar `bg-linear-to-b` (no `bg-gradient-to-b`) para el fondo crema — ver `[[reference_tailwind4_gradient_bg_linear]]`. Solo un check de computed-style en navegador lo confirma.
 - Auto-import por dir-prefix: el componente es `<HomeContact>` (dir `home/`) — no renombrar el archivo ni mover de carpeta.
-- Los radiales del gradiente del Tile A no son utilidades Tailwind → posible `:style` inline (patrón ya usado en la versión actual).
-- Verificar que `presentational.test.ts` efectivamente asserte (o no) copy de Contact antes de asumir cambios de test.
+- Los radiales del gradiente del Tile A no son utilidades Tailwind → posible `:style` inline (patrón ya usado en la versión actual). Cuidado: `reskin-invariants.test.ts` prohíbe hexes rojos y el alias `bg-gradient-to-` incluso en `:style`/clases de Contact.
+- `presentational.test.ts` NO cubre Contact (verificado) → la cobertura estática de los scenarios vive en el nuevo `contact.test.ts`, no ahí.
