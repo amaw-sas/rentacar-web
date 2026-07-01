@@ -114,6 +114,14 @@ export default defineNuxtConfig({
             .gap-10 { gap: 2.5rem; }
             .leading-\\[1\\.1\\] { line-height: 1.1; }
             .aspect-\\[16\\/9\\] { aspect-ratio: 16 / 9; }
+            /*
+              City Intro (#descripcion) illustration box reserves its height ONLY
+              via aspect-square + max-w-[400px] wrapping a lazy async component; sin
+              estas en el crítico el box colapsa a 0 pre-CSS y al aplicar empuja el
+              poster ("En {franchise} {city}…") hacia abajo (residual city CLS).
+            */
+            .aspect-square { aspect-ratio: 1 / 1; }
+            .max-w-\\[400px\\] { max-width: 400px; }
             /* SEO Dashboard Critical CSS */
             .bg-gray-900 { background-color: #111827; }
             .bg-gray-800 { background-color: #1f2937; }

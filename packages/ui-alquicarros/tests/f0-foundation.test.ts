@@ -141,4 +141,17 @@ describe('critical CSS — reskin hero reserves above-the-fold geometry (CLS)', 
     expect(config).toContain('.leading-\\\\[1\\\\.1\\\\] {')
     expect(config).toContain('.leading-\\\\[1\\\\.1\\\\] { line-height: 1.1; }')
   })
+
+  // City Intro (#descripcion) illustration box reserves height via aspect-square
+  // (+ max-w-[400px]) around a lazy component; absent from critical CSS the box
+  // collapses to 0 pre-CSS and shoves the poster down (residual city CLS 0.153).
+  it('declares .aspect-square (city Intro illustration box)', () => {
+    expect(config).toContain('.aspect-square {')
+    expect(config).toContain('.aspect-square { aspect-ratio: 1 / 1; }')
+  })
+
+  it('declares .max-w-[400px] (city Intro illustration cap)', () => {
+    expect(config).toContain('.max-w-\\\\[400px\\\\] {')
+    expect(config).toContain('.max-w-\\\\[400px\\\\] { max-width: 400px; }')
+  })
 })
