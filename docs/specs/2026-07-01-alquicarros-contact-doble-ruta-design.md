@@ -41,7 +41,7 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
    - **Tile A — "Reserva online"** (fondo gradiente naranja, texto blanco):
      - Ícono `i-lucide-car` en badge redondeado translúcido.
      - Título "Reserva online" + microcopy "Cotiza y confirma en 2 minutos, sin llamadas."
-     - CTA **"Reserva Ahora"** — botón blanco full-width, texto `brand-700`, `href="{reserveAnchor}"`.
+     - CTA **"Reserva Ahora"** — botón blanco full-width, texto `brand-800` (AA 5.56:1; ver Accesibilidad), `href="{reserveAnchor}"`.
    - **Tile B — "¿Prefieres hablar?"** (fondo blanco, borde cálido sutil):
      - Ícono `i-lucide-message-circle` en badge verde suave (`bg-[#e9f9ec]` / `text-[#090]`).
      - Título "¿Prefieres hablar?" + microcopy "Un asesor te ayuda a elegir y reservar al instante."

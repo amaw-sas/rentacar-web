@@ -15,7 +15,7 @@
   -->
   <section
     id="contact"
-    class="py-16 md:py-24 bg-linear-to-b from-[#fff7ee] to-[#fdeede] [--ctx-text-primary:#7c2d12]"
+    class="py-16 md:py-24 bg-linear-to-b from-[#fff7ee] to-[#fdeede]"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Encabezado centrado -->
@@ -100,15 +100,15 @@ import { IconsWhatsappIcon as WhatsappIcon } from '#components'
 // on :href so both anchor and route values work unchanged.
 withDefaults(defineProps<{ reserveAnchor?: string }>(), { reserveAnchor: '#hero' })
 
-const { franchise } = useAppConfig()
-
-// Live active-city count → the coverage badge, never a hardcoded number.
-const cityCount = useCityCount()
-
 interface Badge {
   icon: string
   label: string
 }
+
+const { franchise } = useAppConfig()
+
+// Live active-city count → the coverage badge, never a hardcoded number.
+const cityCount = useCityCount()
 
 // computed so the coverage badge tracks cityCount; the rest is static copy.
 const badges = computed<Badge[]>(() => [
@@ -123,7 +123,6 @@ const badges = computed<Badge[]>(() => [
 // aren't Tailwind utilities → bound inline as a real CSS `linear-gradient`, not
 // the broken v3 gradient utility alias.
 const onlineTileStyle =
-  'background:' +
-  'radial-gradient(70% 120% at 50% 0%, rgba(255,146,96,0.55) 0%, rgba(255,107,28,0) 60%),' +
+  'background: radial-gradient(70% 120% at 50% 0%, rgba(255,146,96,0.55) 0%, rgba(255,107,28,0) 60%), ' +
   'linear-gradient(160deg, #ff8a00 0%, #e35d0a 60%, #c2410c 100%);'
 </script>
