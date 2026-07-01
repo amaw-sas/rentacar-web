@@ -5,13 +5,16 @@
     class="bg-gray-50 text-black py-8 md:py-12 px-4 md:px-8"
   >
     <div class="max-w-5xl mx-auto">
-      <h2 class="text-2xl md:text-3xl font-bold text-center mb-3">
-        <span class="text-red-700">Emisoras de radio más escuchadas</span>{{ ' ' }}<span class="text-black">{{ radio.nearbyOf ? `cerca de ${cityName}` : `en ${cityName}` }}</span>
+      <h2 class="text-2xl md:text-3xl font-bold text-center text-red-700 mb-3">
+        {{ radio.title }}
       </h2>
       <p class="text-gray-600 text-center max-w-2xl mx-auto mb-8">
-        Disfruta tu viaje con la mejor música. Sintoniza por internet las emisoras
-        favoritas{{ radio.nearbyOf ? ` de ${radio.nearbyOf}` : ` de ${cityName}` }} y
-        rueda sin interrupciones en la vía.
+        {{ radio.intro.before }}<a
+          :href="cityUrl"
+          target="_blank"
+          rel="noopener"
+          class="text-red-700 font-semibold underline underline-offset-2 hover:text-red-800"
+        >{{ radio.linkAnchor }}</a>{{ radio.intro.after }}
       </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -44,7 +47,7 @@
             <a
               :href="station.url"
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener"
               :aria-label="`Escuchar ${station.name} en otra pestaña`"
               class="inline-flex items-center gap-1.5 bg-red-600 text-white font-semibold text-sm px-4 py-2 rounded-full hover:bg-red-700 transition-colors"
             >
@@ -63,10 +66,14 @@ import { getCityRadio } from '../data/radioStations';
 
 const props = defineProps<{
   cityId?: string;
-  cityName?: string;
 }>();
 
 const radio = computed(() => getCityRadio(props.cityId));
+
+// Enlace seguible a la página de ciudad en la fuente (link 1, con keyword).
+const cityUrl = computed(() =>
+  radio.value ? `https://emisorasdecolombia.com/${radio.value.linkSlug}` : '#',
+);
 
 // Logos que fallaron al cargar (host caído / ruta cambiada) → caen al fallback
 // con la inicial, para que ninguna tarjeta quede con imagen rota.
