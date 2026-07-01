@@ -371,7 +371,7 @@ export default function useSearch() {
   watch(pickupHourOptions, (options) => {
     if (!horaRecogida.value || !options.length) return;
     if (!options.some((o) => o.value === horaRecogida.value)) {
-      horaRecogida.value = options[0].value;
+      horaRecogida.value = options[0]!.value;
     }
   });
 

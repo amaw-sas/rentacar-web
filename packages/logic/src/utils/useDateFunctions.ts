@@ -371,9 +371,9 @@ export function parseTime12hOr24h(timeString: string): TimeObject | null {
   const match = timeString.match(/^(\d{2}):(\d{2})(am|pm)$/i);
   if (!match) return null;
 
-  let hour = parseInt(match[1], 10);
-  const minute = parseInt(match[2], 10);
-  const period = match[3].toLowerCase();
+  let hour = parseInt(match[1]!, 10);
+  const minute = parseInt(match[2]!, 10);
+  const period = match[3]!.toLowerCase();
 
   // Convert to 24h
   if (period === 'am') {
