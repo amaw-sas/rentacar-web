@@ -110,6 +110,26 @@ export default defineNuxtConfig({
             .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
             .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
             .px-4 { padding-left: 1rem; padding-right: 1rem; }
+            /*
+              Reskin hero (#210) above-the-fold — sync con components/{home,city}/Hero.vue
+              y pages/reservas. Sin estas en el crítico viajan SOLO en el CSS inyectado por
+              JS (no hay <link> bloqueante) y aplican tras el primer paint: el hero gana
+              py-10 (+80px móvil), gap-10 y leading-[1.1] → reflow que empuja lo de abajo
+              (city /bogota CLS 0.366, /reservas 0.209). Mirror de alquilame #287.
+            */
+            .py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+            @media (min-width: 768px) { .md\\:py-12 { padding-top: 3rem; padding-bottom: 3rem; } .md\\:gap-10 { gap: 2.5rem; } }
+            .gap-10 { gap: 2.5rem; }
+            .leading-\\[1\\.1\\] { line-height: 1.1; }
+            .aspect-\\[16\\/9\\] { aspect-ratio: 16 / 9; }
+            /*
+              City Intro (#descripcion) illustration box reserves its height ONLY
+              via aspect-square + max-w-[400px] wrapping a lazy async component; sin
+              estas en el crítico el box colapsa a 0 pre-CSS y al aplicar empuja el
+              poster ("En {franchise} {city}…") hacia abajo (residual city CLS).
+            */
+            .aspect-square { aspect-ratio: 1 / 1; }
+            .max-w-\\[400px\\] { max-width: 400px; }
             /* SEO Dashboard Critical CSS */
             .bg-gray-900 { background-color: #111827; }
             .bg-gray-800 { background-color: #1f2937; }
