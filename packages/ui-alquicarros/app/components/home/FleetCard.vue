@@ -9,8 +9,8 @@
     imagen, modelos como título, precio prominente de marca, specs en chips,
     CTA full-width que abre el modal -> SelectBranch (flujo de reserva intacto).
 
-    Color de marca: #ef9600 = bg-brand-600. Tailwind 4: usar bg-linear-to-* (no
-    el alias v3 bg-gradient-to-*, que con tokens @theme renderiza none).
+    Color de marca: #ef9600 = bg-brand-600. Tailwind 4: usar bg-linear-to-*,
+    nunca el alias roto v3 (que con tokens @theme renderiza background-image:none).
   -->
   <div
     class="bg-[#F4F5F9] rounded-2xl overflow-hidden shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 border border-gray-200 group flex flex-col"
