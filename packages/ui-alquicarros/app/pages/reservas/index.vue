@@ -1,115 +1,20 @@
 <template>
   <!--
-    F3 — /reservas (alquilame only): the centralized search page (issue #112).
+    /reservas (alquicarros) — página del WIZARD de reserva acompañada.
 
-    This page is the SEARCH page, not the results page. The <Searcher> engine is
-    preserved untouched (same component → same data-testid, same navigation): on
-    submit it builds the deep `/{city}/buscar-vehiculos/...` URL via the
-    Searcher's city-derivation (step01 — when the route has no :city, the city is
-    derived from the chosen pickup branch). No redirect, no URL collapse: the
-    existing results route + its programmatic SEO stay intact.
+    El wizard reemplaza el hero+Searcher+grid anterior: es la experiencia completa
+    de 5 pasos (Búsqueda → Vehículo → Seguro → Adicionales → Datos) con resumen
+    persistente. La barra de pasos y el resumen viven dentro de <ReservationWizard>.
 
-    Layout reuses the approved F1/F2 visual language:
-      - Red hero (bg-linear-to-br from-hero-from to-hero-to), .heading-hero
-        headline, [--ctx-text-primary:#fff] so .heading-* renders white on red.
-      - The Searcher engine mirrors city/Hero.vue's results mode EXACTLY: wrapped
-        in <ClientOnly> with a fixed-height <PlaceholdersSearcher> fallback
-        (h-[410px] desktop / h-[360px] mobile) so hydration causes no layout
-        shift and NO current-date call is baked into the SSR/ISR markup
-        (issue #109 — the date is computed client-side, after hydration).
-      - F1 trust sections reused as-is below the hero.
-
-    Gradient guard (F0/F1 lesson): the red gradient MUST use the v4
-    bg-linear-to-* utility from the hero-from/hero-to @theme tokens; the broken
-    v3 alias renders background-image:none with custom tokens.
-
-    SEO: own title/description/canonical/og for /reservas + a simple
-    Inicio → Reservas breadcrumb. This page does NOT emit the city Product /
-    FAQPage schemas — those belong to the city pages (#68); /reservas must not
-    duplicate them.
+    SEO preservado (SCEN-W-01/01b): /reservas limpio es indexable y arranca en
+    Paso 1 sin disparar búsqueda; /reservas?lugar_recogida=… entra en Paso 2 y
+    emite robots noindex,follow. Las secciones de confianza F1 se muestran solo en
+    la vista limpia (sin query de resultados), gateadas por route.query
+    (SSR-estable, sin flash/CLS). HomeContact se mantiene (su CTA ancla a #hero).
   -->
   <div>
-    <section
-      id="hero"
-      class="relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to [--ctx-text-primary:#fff]"
-    >
-      <!--
-        In-page anchor for HomeContact's "Reserva Ahora" CTA (reserveAnchor="#hero")
-        and any scroll-to-search affordance. Kept independent from the engine.
-      -->
-      <div id="searcher" aria-hidden="true" class="absolute scroll-mt-20" />
+    <ReservationWizard />
 
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
-        <div class="grid lg:grid-cols-2 gap-10 items-center">
-          <!-- Text column -->
-          <div class="text-center lg:text-left">
-            <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
-              Reserva tu carro
-            </h1>
-
-            <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
-              Elige sucursal de recogida, fechas y horarios y consulta
-              disponibilidad y precios al instante. Renta un vehículo por días,
-              semanas o el tiempo que necesites — sin anticipos.
-            </p>
-          </div>
-
-          <!--
-            Engine column — preserved untouched (same component → same
-            data-testid, same navigation to buscar-vehiculos). CLS guard
-            (issue #109): the fixed-height wrappers reserve the Searcher footprint
-            so the ClientOnly fallback and the hydrated form occupy the same box —
-            no shift, and no current-date call in the SSR/ISR markup. Desktop and
-            mobile keep distinct heights matching the form layout.
-          -->
-          <div class="flex items-center justify-center">
-            <div class="w-full max-w-lg mx-auto">
-              <div class="hidden lg:block h-[410px]">
-                <ClientOnly>
-                  <Searcher />
-                  <template #fallback>
-                    <PlaceholdersSearcher />
-                  </template>
-                </ClientOnly>
-              </div>
-              <div class="lg:hidden h-[360px]">
-                <ClientOnly>
-                  <Searcher />
-                  <template #fallback>
-                    <PlaceholdersSearcher />
-                  </template>
-                </ClientOnly>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!--
-      SCEN-003 — in-place results. When /reservas carries a results query, the
-      search runs from the query string (useSearchByQueryParams) and the real
-      category grid renders here, mirroring CityPage's #seleccion-categorias
-      block. `resultsActive` is derived from useStoreSearchData (pending / has
-      categories / error), exactly like CityPage. Placed directly under the hero,
-      above the trust sections.
-    -->
-    <UPageSection
-      id="seleccion-categorias"
-      v-if="resultsActive"
-      :ui="{ container: 'pt-0' }"
-    >
-      <CategorySelectionSection />
-    </UPageSection>
-
-    <!--
-      F1 trust sections. SCEN-003: hidden on a results view (when /reservas has a
-      results query) so the page doesn't show generic home marketing over the
-      results — same intent as SCEN-001 on CityPage. Gate on the route query
-      (`hasResultsQuery`, derived from route.query.lugar_recogida) which is
-      SSR-stable, so the sections don't paint in SSR and vanish on hydrate (no
-      flash/CLS). HomeContact stays rendered (its CTA anchors back to #hero).
-    -->
     <HomeHowItWorks v-if="!hasResultsQuery" />
     <HomeRequirements v-if="!hasResultsQuery" />
     <HomeStats v-if="!hasResultsQuery" />
@@ -118,63 +23,29 @@
 </template>
 
 <script setup lang="ts">
-/** imports */
-import { defineAsyncComponent } from 'vue'
+// Internal components
+import ReservationWizard from '~/components/wizard/ReservationWizard.vue'
 
 const { franchise } = useAppConfig()
 const route = useRoute()
 
 /**
- * SCEN-003 — results query flag. SSR-stable (route.query is available at SSR), so
- * the trust-section gate and the robots meta are correct in the server-rendered
- * HTML (no flash/CLS, no client-only meta drift). A "results query" = a /reservas
- * URL carrying the search params (lugar_recogida is the load-bearing key).
+ * Results-query flag. SSR-stable (route.query disponible en SSR), así el gate de
+ * las secciones de confianza y el robots meta son correctos en el HTML servido
+ * (sin flash/CLS). "results query" = /reservas con params de búsqueda
+ * (lugar_recogida es la clave load-bearing).
  */
 const hasResultsQuery = computed(() => Boolean(route.query.lugar_recogida))
 
-/**
- * SCEN-003 — drive the in-place search from the query string. Runs doSearch only
- * when the required query keys are present; a clean /reservas does nothing. Mirrors
- * CityPage's useSearchByRouteParams but reads route.query (alquilame-local, so
- * packages/logic and other brands stay untouched).
- */
-useSearchByQueryParams()
-
-/**
- * SCEN-003 — results gating, mirroring CityPage. Lazy store init (onMounted) to
- * avoid SSR Pinia errors. The result block stays mounted while pending, when
- * categories are present, or on a search error (so error UX still surfaces).
- */
-const pendingSearch = ref(false)
-const filteredCategories = ref<unknown[]>([])
-const searchError = ref<unknown>(null)
-
-onMounted(() => {
-  const storeSearch = useStoreSearchData()
-  const refs = storeToRefs(storeSearch)
-  watch(() => refs.pending.value, (val) => (pendingSearch.value = val), { immediate: true })
-  watch(() => refs.filteredCategories.value, (val) => (filteredCategories.value = val), { immediate: true })
-  watch(() => refs.error.value, (val) => (searchError.value = val), { immediate: true })
-})
-
-const resultsActive = computed(
-  () => pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value,
-)
-
-const Searcher = defineAsyncComponent(() => import('../../components/Searcher.vue'))
-const PlaceholdersSearcher = defineAsyncComponent(
-  () => import('../../components/Placeholders/Searcher.vue'),
-)
-
 const title = 'Reserva tu carro | Alquiler de vehículos'
 const description =
-  'Reserva tu carro de alquiler en Colombia: elige sucursal, fechas y horarios y consulta disponibilidad y precios al instante. Sin anticipos.'
+  'Reserva tu carro de alquiler en Colombia: elige sucursal, fechas y horarios y consulta disponibilidad y precios al instante, paso a paso. Sin anticipos.'
 const canonical = `${franchise.website}/reservas`
 
 /**
- * Own SEO for /reservas. useBaseSEO provides the brand-wide WebSite/Organization/
- * AutoRental schemas; here we override title/description and add canonical + og.
- * NO city Product/FAQPage schema is emitted — those live on the city pages (#68).
+ * SEO propio de /reservas. useBaseSEO aporta los schemas de marca; aquí se
+ * sobrescriben title/description + canonical + og. NO se emite Product/FAQPage de
+ * ciudad (viven en las páginas de ciudad, #68).
  */
 useBaseSEO()
 useBreadcrumbs([
@@ -183,10 +54,9 @@ useBreadcrumbs([
 ])
 
 useSeoMeta({
-  // SCEN-003: the parameterized results state (/reservas?lugar_recogida=...) is
-  // noindex,follow — it duplicates the richer crawlable city pages and would
-  // cannibalize them; clean /reservas (no query) stays indexable. SSR-stable
-  // (route.query is available at SSR). Provisional, pending directiva sign-off.
+  // El estado con params de resultados (/reservas?lugar_recogida=…) es
+  // noindex,follow — duplicaría las páginas de ciudad crawlables; la /reservas
+  // limpia (sin query) queda indexable. SSR-estable.
   robots: () => (route.query.lugar_recogida ? 'noindex, follow' : undefined),
   title,
   description,

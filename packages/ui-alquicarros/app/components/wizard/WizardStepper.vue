@@ -1,0 +1,94 @@
+<template>
+  <!--
+    Barra de pasos del wizard. Cada paso ALCANZADO (≤ maxReachedStep) es clicable
+    para volver a editarlo sin perder el avance (SCEN-W-10). El paso activo usa
+    relleno naranja de marca con TEXTO OSCURO (regla AA F0: blanco sobre #ef9600
+    falla). Los pasos futuros quedan inertes.
+  -->
+  <nav aria-label="Progreso de la reserva" class="w-full">
+    <!-- Desktop: pills numeradas con etiqueta + conectores -->
+    <ol class="hidden md:flex items-center justify-center gap-1">
+      <li
+        v-for="(label, i) in STEP_LABELS"
+        :key="label"
+        class="flex items-center"
+      >
+        <button
+          type="button"
+          :disabled="!isReached(i + 1)"
+          :aria-current="current === i + 1 ? 'step' : undefined"
+          :class="pillClass(i + 1)"
+          class="group inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/50 disabled:cursor-default"
+          @click="onSelect(i + 1)"
+        >
+          <span
+            :class="badgeClass(i + 1)"
+            class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+          >
+            <UIcon v-if="isDone(i + 1)" name="i-lucide-check" class="h-3 w-3" />
+            <template v-else>{{ i + 1 }}</template>
+          </span>
+          {{ label }}
+        </button>
+        <span
+          v-if="i < STEP_LABELS.length - 1"
+          aria-hidden="true"
+          :class="isDone(i + 1) ? 'bg-brand-300' : 'bg-gray-200'"
+          class="mx-1 h-px w-6 lg:w-10 transition-colors"
+        />
+      </li>
+    </ol>
+
+    <!-- Mobile: contador + puntos de progreso -->
+    <div class="md:hidden">
+      <div class="flex items-center justify-between">
+        <p class="body-sm font-semibold text-gray-900">
+          Paso {{ current }} de {{ STEP_LABELS.length }}
+        </p>
+        <p class="body-sm text-brand-700 font-semibold">{{ STEP_LABELS[current - 1] }}</p>
+      </div>
+      <ol class="mt-2 flex items-center gap-1.5">
+        <li
+          v-for="(label, i) in STEP_LABELS"
+          :key="label"
+          class="h-1.5 flex-1 rounded-full transition-colors"
+          :class="i + 1 <= current ? 'bg-brand-600' : i + 1 <= maxReached ? 'bg-brand-200' : 'bg-gray-200'"
+        />
+      </ol>
+    </div>
+  </nav>
+</template>
+
+<script setup lang="ts">
+const props = defineProps<{
+  /** Número del paso activo (1..5). */
+  current: number
+  /** Paso más avanzado alcanzado (1..5). */
+  maxReached: number
+}>()
+
+const emit = defineEmits<{ (e: 'goTo', step: number): void }>()
+
+const STEP_LABELS = ['Búsqueda', 'Vehículo', 'Seguro', 'Adicionales', 'Datos'] as const
+
+function isReached(step: number): boolean {
+  return step <= props.maxReached
+}
+function isDone(step: number): boolean {
+  return step < props.current
+}
+function onSelect(step: number): void {
+  if (isReached(step) && step !== props.current) emit('goTo', step)
+}
+
+function pillClass(step: number): string {
+  if (step === props.current) return 'bg-brand-600 text-gray-900 shadow-sm'
+  if (isReached(step)) return 'bg-brand-50 text-brand-800 hover:bg-brand-100'
+  return 'text-gray-400'
+}
+function badgeClass(step: number): string {
+  if (step === props.current) return 'bg-gray-900 text-white'
+  if (isReached(step)) return 'bg-brand-200 text-brand-800'
+  return 'bg-gray-100 text-gray-400'
+}
+</script>

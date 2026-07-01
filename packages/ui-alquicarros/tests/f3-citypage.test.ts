@@ -135,11 +135,16 @@ describe('F3 — SCEN-F3-05/06: /reservas centralizada', () => {
   it('existe', () => {
     expect(existsSync(join(ROOT, 'app/pages/reservas/index.vue'))).toBe(true)
   })
-  it('monta el Searcher', () => {
-    expect(r()).toMatch(/<Searcher\s*\/>/)
+  it('monta el Searcher (vía el wizard: página → ReservationWizard → StepSearch → Searcher)', () => {
+    // El wizard reemplaza el hero+Searcher inline; el Searcher vive ahora en
+    // StepSearch.vue (Paso 1). Observable preservado: /reservas monta el Searcher.
+    expect(r()).toMatch(/<ReservationWizard\b/)
+    expect(tryRead('app/components/wizard/steps/StepSearch.vue')).toMatch(/<Searcher\b/)
   })
-  it('dispara búsqueda desde el query string (useSearchByQueryParams)', () => {
-    expect(r()).toMatch(/useSearchByQueryParams\(\)/)
+  it('dispara búsqueda desde el query string (useSearchByQueryParams, en el shell del wizard)', () => {
+    expect(tryRead('app/components/wizard/ReservationWizard.vue')).toMatch(
+      /useSearchByQueryParams\(\)/,
+    )
   })
   it('SCEN-F3-06: estado de resultados es noindex,follow; limpia indexable', () => {
     expect(r()).toMatch(/noindex,?\s*follow/)
