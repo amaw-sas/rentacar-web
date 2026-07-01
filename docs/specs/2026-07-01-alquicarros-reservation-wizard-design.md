@@ -282,6 +282,16 @@ Vitest de alquicarros en verde
 **Evidence** diff git vacío en `packages/logic`, `packages/ui-alquilatucarro` y
 `packages/ui-alquilame`; typecheck/Vitest de alquicarros verde
 
+### SCEN-W-14: el deep-link con gama entra al wizard en Paso 3 con el vehículo preseleccionado
+**Given** un visitante abre `/[city]/buscar-vehiculos/…/categoria/[gama]` (p.ej. `…/categoria/C`)
+**When** la página carga
+**Then** la búsqueda se hidrata desde el path y, además, se lee `route.params.categoria` para
+fijar `selectedCategory` = esa gama; el wizard monta directamente el **Paso 3 (Seguro)** con
+el vehículo ya elegido reflejado en el sidebar; si la gama del path no está en la
+disponibilidad devuelta, cae al Paso 2 (no rompe)
+**Evidence** barra de pasos en "3 Seguro", sidebar con la gama del path, comparador
+Básico/Total visible; caso sin match → barra en "2 Vehículo" sin error de consola
+
 ## Testing y verificación
 
 - **Unit (Vitest, `ui-alquicarros`):** `segmentForCode` + fail-soft "Otros" (SCEN-W-03/04);
