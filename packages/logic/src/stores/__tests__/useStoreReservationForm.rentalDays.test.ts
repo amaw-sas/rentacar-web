@@ -48,6 +48,12 @@ describe('useStoreReservationForm — rentalDays wiring (issue #152)', () => {
     expect(block).toMatch(/if \(!pickupDate \|\| !returnDate\) return 0/)
   })
 
+  it('clamps an inverted range (return before pickup) to 0 so the chip hides (dogfood #3)', () => {
+    // dayDifference uses Math.abs, so without this guard an inverted deep-link
+    // range (return < pickup) would render a misleading positive "X días" chip.
+    expect(block).toMatch(/returnDate\.compare\(pickupDate\)\s*<\s*0\)\s*return 0/)
+  })
+
   it('is exposed from the store', () => {
     expect(source).toMatch(/^\s*rentalDays,\s*$/m)
   })
