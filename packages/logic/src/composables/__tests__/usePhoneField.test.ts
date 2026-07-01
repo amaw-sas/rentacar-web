@@ -33,3 +33,21 @@ describe('usePhoneField — phone input accessibility config (issue #65)', () =>
     expect(source).toMatch(/name:\s*['"]telefono['"]/)
   })
 })
+
+// Scenario captured (issue #276 SCEN-276-05, unit-level slice): VueTelInput does
+// not wire into UFormField, so UForm never revalidates `telefono` on its own
+// events and a field error goes stale after the user fixes the number. The
+// composable must bridge this: expose a `validatePhoneField` handler that calls
+// UForm's `validate({ name: 'telefono' })`, and set up a debounced watch so a
+// corrected value revalidates without needing a full submit. The observable
+// DOM behavior (error clears without re-submit) is asserted in the runtime
+// scenario; this guards the wiring at the source level (codebase convention).
+describe('usePhoneField — telefono revalidation bridge (issue #276)', () => {
+  it('validates the telefono field by name so the form can clear its stale error', () => {
+    expect(source).toMatch(/validate\(\{\s*name:\s*["']telefono["']\s*\}\)/)
+  })
+
+  it('debounces revalidation while the user edits so a corrected number clears the error', () => {
+    expect(source).toContain('watchDebounced')
+  })
+})

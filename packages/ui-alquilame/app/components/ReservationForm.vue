@@ -90,6 +90,7 @@
             :dropdownOptions="phoneDropdownOptions"
             :inputOptions="phoneInputOptions"
             :preferred-countries="phonePreferredCountries"
+            @blur="validatePhoneField"
           />
         </u-form-field>
         <u-form-field class="col-span-2" name="politicaPrivacidad">
@@ -155,13 +156,6 @@ const {
 } = storeToRefs(storeForm);
 
 /** vars */
-const {
-  phoneDropdownOptions,
-  phoneInputOptions,
-  phonePreferredCountries,
-} = usePhoneField();
-
-
 const identificationTypeOptions = [
   { value: "Cedula Ciudadania", label: "Cédula" },
   { value: "Pasaporte", label: "Pasaporte" },
@@ -205,6 +199,16 @@ const validationSchema = ref(
 );
 
 const reservationForm = ref(null);
+
+// usePhoneField needs formState + reservationForm defined first: it wires the
+// telefono revalidation bridge (VueTelInput doesn't integrate with UFormField,
+// so the field's error goes stale after the user fixes the number — issue #276).
+const {
+  phoneDropdownOptions,
+  phoneInputOptions,
+  phonePreferredCountries,
+  validatePhoneField,
+} = usePhoneField(reservationForm, () => formState.value.telefono);
 
 
 
