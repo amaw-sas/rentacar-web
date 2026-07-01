@@ -28,11 +28,21 @@ pintado hacia abajo. Fix: reservar esa geometría en el bloque `critical-cls` de
 **Then**: Cumulative Layout Shift < 0.1 (baseline 0.366)
 **Evidence**: `lh-city.json` → `audits['cumulative-layout-shift'].numericValue`
 
-## SCEN-ACR-CLS-03: /reservas sin CLS
+## SCEN-ACR-CLS-03: /reservas sin CLS — DEFERIDO (causa raíz distinta)
 **Given**: `/reservas` en el preview de Vercel
 **When**: se corre Lighthouse mobile
 **Then**: Cumulative Layout Shift < 0.1 (baseline 0.209)
 **Evidence**: `lh-reservas.json` → `audits['cumulative-layout-shift'].numericValue`
+
+**Estado: NO satisfecho por este fix — deferido a issue aparte (decisión del usuario).**
+El critical-cls redujo /reservas a 0.187 (no <0.1). Investigación (systematic-debugging):
+la geometría del hero YA está reservada en el crítico (`h-[360px]`/`h-[410px]` del
+guard #109, `py-10`, `gap-10`, `text-3xl`, `text-base`). En navegador real (Playwright,
+incluso con throttling CPU 4x + red 4G) el CLS es 0; el 0.187 es un shift
+Lantern-simulado de la columna del `Searcher` bajo carga lenta (hidratación del chunk
+async), NO un colapso de CSS crítico. Mismo síntoma en alquilame (0.209) → problema
+compartido del componente Searcher, no del critical-cls del hero. Fuera de alcance de
+este fix; requiere investigación propia del Searcher.
 
 ## SCEN-ACR-CLS-04: home sin regresión
 **Given**: `/` en el preview de Vercel
