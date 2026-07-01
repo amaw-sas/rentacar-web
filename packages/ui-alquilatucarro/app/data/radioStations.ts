@@ -36,20 +36,17 @@ const barranquilla: RadioStation[] = [
   { name: 'Barranquilla Estéreo', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/barranquilla/barranquilla-estereo.html', logo: 'https://emisorasdecolombia.com/img/logos/barranquilla-estereo.webp' },
   { name: 'Mi Vallenatísima', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/barranquilla/mivallenatisima.html', logo: 'https://emisorasdecolombia.com/img/logos/mivallenatisima.webp' },
   { name: 'Radio Tiempo Barranquilla', frequency: '96.1 FM', url: 'https://emisorasdecolombia.com/barranquilla/radio-tiempo-barranquilla.html', logo: 'https://emisorasdecolombia.com/img/logos/radio-tiempo.webp' },
-  { name: 'Madrigal Stereo', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/barranquilla/madrigal-stereo.html' },
 ];
 
 const bucaramanga: RadioStation[] = [
   { name: 'Bésame Bucaramanga', frequency: '104.7 FM', url: 'https://emisorasdecolombia.com/bucaramanga/besame-1047-fm-bucaramanga.html', logo: 'https://emisorasdecolombia.com/img/logos/besame-v2.webp' },
   { name: 'Olímpica Stereo Bucaramanga', frequency: '97.7 FM', url: 'https://emisorasdecolombia.com/bucaramanga/olimpica-stereo-bucaramanga-977-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/olimpica-stereo.webp' },
   { name: 'Charalá Estéreo', frequency: '103.2 FM', url: 'https://emisorasdecolombia.com/bucaramanga/charala-estereo-1032-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/charala-estereo-1032-fm.webp' },
-  { name: 'Radio Policía Bucaramanga', frequency: '91.7 FM', url: 'https://emisorasdecolombia.com/bucaramanga/radio-policia-bucaramanga-917-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/radio-policia-bucaramanga-917-fm.webp' },
 ];
 
 const cali: RadioStation[] = [
   { name: 'Tropicana Cali', frequency: '93.1 FM', url: 'https://emisorasdecolombia.com/cali/tropicana-cali-931-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/tropicana.webp' },
   { name: 'La X Cali', frequency: '96.5 FM', url: 'https://emisorasdecolombia.com/cali/la-x-965-cali.html', logo: 'https://emisorasdecolombia.com/img/logos/la-x-965-cali.webp' },
-  { name: 'Pingüino Estéreo', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/cali/pinguino-estereo.html' },
   { name: 'Olímpica Stéreo Cali', frequency: '104.5 FM', url: 'https://emisorasdecolombia.com/cali/olimpica-stereo-1045-cali.html', logo: 'https://emisorasdecolombia.com/img/logos/olimpica-stereo.webp' },
 ];
 
@@ -60,7 +57,6 @@ export const radioStationsByCity: Record<string, CityRadio> = {
     stations: [
       { name: 'Blu Radio Bogotá', frequency: '89.9 FM', url: 'https://emisorasdecolombia.com/bogota/blu-radio-bogota-899-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/blu-radio.webp' },
       { name: 'Caracol Radio Bogotá', frequency: '100.9 FM', url: 'https://emisorasdecolombia.com/bogota/caracol-radio-bogota-1009-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/caracol-radio.webp' },
-      { name: 'W Radio Bogotá', frequency: '99.9 FM', url: 'https://emisorasdecolombia.com/bogota/w-radio-bogota-999-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/w-radio.webp' },
       { name: 'La Kalle Bogotá', frequency: '96.9 FM', url: 'https://emisorasdecolombia.com/bogota/la-kalle-bogota-969-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/la-kalle.webp' },
     ],
   },
@@ -69,7 +65,6 @@ export const radioStationsByCity: Record<string, CityRadio> = {
   cartagena: {
     stations: [
       { name: 'Radio Tiempo Cartagena', frequency: '88.5 FM', url: 'https://emisorasdecolombia.com/cartagena/radio-tiempo-cartagena-colombia.html', logo: 'https://emisorasdecolombia.com/img/logos/radio-tiempo.webp' },
-      { name: 'RCS Cartagena Stereo', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/cartagena/rcs-cartagena-stereo.html' },
       { name: 'Olímpica Stereo Cartagena', frequency: '90.5 FM', url: 'https://emisorasdecolombia.com/cartagena/olimpica-stereo-905-fm-cartagena.html', logo: 'https://emisorasdecolombia.com/img/logos/olimpica-stereo.webp' },
       { name: 'La Reina Cartagena', frequency: '95.5 FM', url: 'https://emisorasdecolombia.com/cartagena/la-reina-cartagena-955-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/la-reina.webp' },
     ],
@@ -85,21 +80,18 @@ export const radioStationsByCity: Record<string, CityRadio> = {
     stations: [
       { name: 'Ecos del Combeima', frequency: '790 AM', url: 'https://emisorasdecolombia.com/ibague/ecos-del-combeima-hjnc-790-khz-am-ibague-tolima.html', logo: 'https://emisorasdecolombia.com/img/logos/ecos-del-combeima-hjnc-790-khz-am-ibague-tolima.webp' },
       { name: 'Radio Cristiano Bíblico', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/ibague/radio-cristiano-biblico.html', logo: 'https://emisorasdecolombia.com/img/logos/radio-cristiano-biblico.webp' },
-      { name: 'Conectando Estéreo', frequency: '91.5 FM', url: 'https://emisorasdecolombia.com/ibague/conectando-estereo-915-fm.html' },
       { name: 'Ondas de Ibagué', frequency: '1470 AM', url: 'https://emisorasdecolombia.com/ibague/ondas-de-ibague-1470-am.html', logo: 'https://emisorasdecolombia.com/img/logos/ondas-de-ibague-1470-am.webp' },
     ],
   },
   manizales: {
     stations: [
       { name: 'Colombia Salsa Dura', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/manizales/colombia-salsa-dura.html' },
-      { name: 'Colombia Pop Rock', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/manizales/colombia-pop-rock.html' },
       { name: 'Colombia Crossover', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/manizales/colombia-crossover.html' },
       { name: 'Colombia Urbana', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/manizales/colombia-urbana.html' },
     ],
   },
   medellin: {
     stations: [
-      { name: '123 Vallenato', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/medellin/123-vallenato.html', logo: 'https://emisorasdecolombia.com/img/logos/123-vallenato.webp' },
       { name: 'Olímpica Stereo Medellín', frequency: '104.9 FM', url: 'https://emisorasdecolombia.com/medellin/olimpica-stereo-medellin-1049-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/olimpica-stereo.webp' },
       { name: 'La Mega Medellín', frequency: '92.9 FM', url: 'https://emisorasdecolombia.com/medellin/la-mega-medellin-929-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/la-mega.webp' },
       { name: 'Bésame Medellín', frequency: '94.9 FM', url: 'https://emisorasdecolombia.com/medellin/besame-medellin-949-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/besame-v2.webp' },
@@ -107,7 +99,6 @@ export const radioStationsByCity: Record<string, CityRadio> = {
   },
   monteria: {
     stations: [
-      { name: 'La Voz de Jesús', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/monteria/la-voz-de-jesus.html', logo: 'https://emisorasdecolombia.com/img/logos/la-voz-de-jesus.webp' },
       { name: 'Olímpica Stereo Montería', frequency: '90.5 FM', url: 'https://emisorasdecolombia.com/monteria/olimpica-stereo-905-fm-monteria.html', logo: 'https://emisorasdecolombia.com/img/logos/olimpica-stereo.webp' },
       { name: 'La Costeña Stereo', frequency: '91.0 FM', url: 'https://emisorasdecolombia.com/monteria/la-costena-stereo-910-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/la-costena-stereo-910-fm.webp' },
       { name: 'Unicórdoba Estéreo', frequency: '90.0 FM', url: 'https://emisorasdecolombia.com/monteria/unicordoba-estereo-900-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/unicordoba-estereo-900-fm.webp' },
@@ -118,7 +109,6 @@ export const radioStationsByCity: Record<string, CityRadio> = {
       { name: 'Fiesta Stereo', frequency: '95.8 FM', url: 'https://emisorasdecolombia.com/neiva/fiesta-stereo-958-fm-la-plata-huila.html', logo: 'https://emisorasdecolombia.com/img/logos/fiesta-stereo-958-fm-la-plata-huila.webp' },
       { name: 'Global Estéreo', frequency: '96.8 FM', url: 'https://emisorasdecolombia.com/neiva/global-estereo-968-fm-la-plata-huila.html', logo: 'https://emisorasdecolombia.com/img/logos/global-estereo-968-fm-la-plata-huila.webp' },
       { name: 'Cristalina Estéreo Neiva', frequency: '101.3 FM', url: 'https://emisorasdecolombia.com/neiva/cristalina-estereo-neiva-1013-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/cristalina-estereo-neiva-1013-fm.webp' },
-      { name: 'HuilaGeek Radio', frequency: 'En vivo', url: 'https://emisorasdecolombia.com/neiva/huilageek-radio.html', logo: 'https://emisorasdecolombia.com/img/logos/huilageek-radio.webp' },
     ],
   },
   palmira: { stations: cali, nearbyOf: 'Cali' },
@@ -127,7 +117,6 @@ export const radioStationsByCity: Record<string, CityRadio> = {
       { name: 'La Mega Pereira', frequency: '105.2 FM', url: 'https://emisorasdecolombia.com/pereira/la-mega-pereira-1052-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/la-mega.webp' },
       { name: 'Bésame Pereira', frequency: '93.7 FM', url: 'https://emisorasdecolombia.com/pereira/besame-937-fm-pereira.html', logo: 'https://emisorasdecolombia.com/img/logos/besame-v2.webp' },
       { name: 'Radio Uno Pereira', frequency: '94.7 FM', url: 'https://emisorasdecolombia.com/pereira/radio-uno-pereira-947-fm.html', logo: 'https://emisorasdecolombia.com/img/logos/radio-uno.webp' },
-      { name: 'Universitaria Estéreo', frequency: '88.2 FM', url: 'https://emisorasdecolombia.com/pereira/universitaria-estereo-882.html' },
     ],
   },
   'santa-marta': {
