@@ -154,4 +154,16 @@ describe('critical CSS — reskin hero reserves above-the-fold geometry (CLS)', 
     expect(config).toContain('.max-w-\\\\[400px\\\\] {')
     expect(config).toContain('.max-w-\\\\[400px\\\\] { max-width: 400px; }')
   })
+
+  // Hero h1 uses the .heading-hero component class (typography.css:
+  // @apply text-4xl md:text-5xl lg:text-7xl leading-tight), which wins over the
+  // inline text-3xl/leading-[1.1] in the final render but ships ONLY in the
+  // JS-injected stylesheet — so pre-CSS the h1 paints at 30px (text-3xl) and jumps
+  // to 36px, shifting the Searcher column (web#289). heading-hero must be in the
+  // critical block, at its FINAL size, so the h1 never resizes after first paint.
+  it('declares .heading-hero at its final size (2.25rem / 1.25 mobile + breakpoints)', () => {
+    expect(config).toContain('.heading-hero { font-size: 2.25rem; line-height: 1.25;')
+    expect(config).toContain('.heading-hero { font-size: 3rem; }')
+    expect(config).toContain('.heading-hero { font-size: 4.5rem; }')
+  })
 })
