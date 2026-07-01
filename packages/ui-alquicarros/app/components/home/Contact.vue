@@ -46,7 +46,7 @@
           <a
             :href="reserveAnchor"
             data-testid="contact-reserve-test"
-            class="mt-auto w-full inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold rounded-full bg-white text-brand-700 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
+            class="mt-auto w-full inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold rounded-full bg-white text-brand-800 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             Reserva Ahora
           </a>

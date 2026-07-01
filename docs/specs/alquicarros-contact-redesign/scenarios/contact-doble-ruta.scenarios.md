@@ -43,9 +43,11 @@ dos CTA reales.
 
 ## SCEN-CONTACT-06: contraste AA y consola limpia en runtime
 **Given**: la sección renderizada en navegador (desktop y mobile)
-**When**: se mide el contraste del texto blanco del Tile A (sobre el extremo oscuro del gradiente `#e35d0a`→`#c2410c`) y de los labels de ambos CTA
-**Then**: todos cumplen WCAG AA (≥4.5:1 body, ≥3:1 título grande); no hay errores de consola ni requests fallidos
-**Evidence**: computed contrast ratio ≥ umbral AA vía `/agent-browser`; consola del navegador sin errores; network sin requests fallidos
+**When**: se mide el contraste del texto blanco del Tile A (sobre el extremo oscuro del gradiente `#e35d0a`→`#c2410c`) y del label del CTA "Reserva Ahora"
+**Then**: ambos cumplen WCAG AA texto normal (≥4.5:1); no hay errores de consola ni requests fallidos
+**Evidence**: computed contrast ratio ≥4.5 vía `/agent-browser` (Tile A blanco = 5.18; "Reserva Ahora" = 5.56 con `text-brand-800`); consola del navegador sin errores; network sin requests fallidos
+
+> **Amend 2026-07-01 (base 6485e54):** el CTA "Habla con un Asesor" (blanco sobre `#090`) queda EXENTO del umbral 4.5. `#090` es el verde de marca documentado (`theme.css`: "el único verde legítimo de marca") y el par blanco-sobre-`#090` ya se envía site-wide en todos los CTA de WhatsApp de las 3 marcas; cambiarlo es una decisión site-wide fuera de alcance de esta sección. Medido = 3.78 (cumple large-text 3:1, no normal 4.5). Decisión del usuario. Evidencia: `docs/specs/alquicarros-contact-redesign/evidence/contrast-measurements.md`. La remediación de `#090` se rastrea como ítem de a11y site-wide.
 
 ## SCEN-CONTACT-07: orden de secciones intacto
 **Given**: el home de alquicarros

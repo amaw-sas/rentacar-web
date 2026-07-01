@@ -68,9 +68,9 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
 
 ## Accesibilidad
 
-- **Botón "Reserva Ahora":** blanco con texto `brand-700` (#c2700a) sobre blanco → contraste AA OK.
-- **Texto blanco en Tile A:** cae sobre el extremo oscuro del gradiente naranja (`#e35d0a`→`#c2410c`), no sobre `#EF9600` puro → cumple AA. Verificar computed contrast en runtime (≥4.5:1 para body, ≥3:1 para el título grande).
-- **Botón "Habla con un Asesor":** blanco sobre `#090` → AA OK.
+- **Botón "Reserva Ahora":** blanco con texto `brand-800` (#9a5811) sobre blanco → **5.56:1**, AA OK. (Medido: `brand-700` daba solo 3.74; se oscureció a `brand-800`.)
+- **Texto blanco en Tile A:** cae sobre el extremo oscuro del gradiente naranja (`#e35d0a`→`#c2410c`), no sobre `#EF9600` puro → **5.18:1**, AA OK (medido en runtime).
+- **Botón "Habla con un Asesor":** blanco sobre `#090` → **3.78:1** (cumple large-text 3:1, no normal 4.5). **Decisión (usuario, 2026-07-01):** mantener `#090` como verde de marca canónico (ya ships site-wide); EXENTO del umbral 4.5 en SCEN-06 vía amend. Remediación de `#090` = ítem a11y site-wide, fuera de alcance. Ver `evidence/contrast-measurements.md`.
 - Íconos decorativos `aria-hidden`; el `aria-label` del CTA de WhatsApp se conserva.
 - Orden de foco: Reserva Ahora → Habla con un Asesor → (badges no focusables).
 
