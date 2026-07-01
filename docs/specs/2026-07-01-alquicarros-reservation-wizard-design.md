@@ -114,6 +114,12 @@ oculta**.
   query (`?lugar_recogida=…&fecha_recogida=…&hora_…=…&paso=vehiculo`). Cualquier estado
   con parámetros de búsqueda emite `robots: noindex, follow` (invariante F3 SCEN-F3-06);
   `/reservas` limpio queda **indexable** y arranca en Paso 1 sin disparar búsqueda.
+- **Entrada directa por parámetros de búsqueda (regla general):** abrir `/reservas` **con
+  parámetros de búsqueda** en el URL (compartido/bookmarkeado) hidrata y ejecuta la búsqueda
+  vía `useSearchByQueryParams` y **entra directo al Paso 2** (resultados), SIN pasar
+  manualmente por el Paso 1 — aunque el URL no traiga `paso=vehiculo`. La presencia de
+  `lugar_recogida` es suficiente. Es el mismo principio que los deep-links de ciudad, pero
+  para el query string de `/reservas`. `/reservas` **sin** parámetros → Paso 1.
 - **Deep-links de resultados por ciudad** `/[city]/buscar-vehiculos/…` (ISR): el wizard se
   monta en esa ruta (vía `CityPage mode="results"`), hidrata la búsqueda desde el path con
   `useSearchByRouteParams` y **entra en Paso 2** con disponibilidad cargada. **SEO de esa
@@ -123,10 +129,13 @@ oculta**.
   además del hidratado de búsqueda, se lee `route.params.categoria` (lectura brand-local
   extra — `useSearchByRouteParams` NO cubre la gama) y se hace match con la fila de
   disponibilidad para fijar `selectedCategory`.
-- **Rehidratación / gate SSR-estable:** `currentStep` se deriva de valores SSR-estables —
-  `route.query.paso` (o el segmento de path del deep-link) + presencia de `lugar_recogida`
-  — espejando cómo `reservas/index.vue` gatea en `route.query.lugar_recogida`. Refresh o
-  back reconstruye el paso desde ahí, sin flash de paso incorrecto ni CLS.
+- **Rehidratación / gate SSR-estable:** `currentStep` se deriva de valores SSR-estables,
+  espejando cómo `reservas/index.vue` gatea en `route.query.lugar_recogida`:
+  1. sin parámetros de búsqueda → **Paso 1**;
+  2. con parámetros de búsqueda presentes (`lugar_recogida`) → **al menos Paso 2**;
+  3. si además hay `route.query.paso` posterior (o el segmento de path `/categoria/[gama]`)
+     → ese paso (2..5), para conservar back/forward y compartir un paso avanzado.
+  Refresh o back reconstruye el paso desde ahí, sin flash de paso incorrecto ni CLS.
 - **Submit** (Paso 5): sin cambios → `submitForm()` → `routeForReservationStatus` →
   `/reservado/[code]` | `/pendiente` | `/sindisponibilidad`.
 
@@ -184,6 +193,15 @@ decisión de diseño tiene al menos uno.
 NO se ejecuta ninguna consulta de disponibilidad; el `<head>` NO lleva `noindex`
 **Evidence** DOM (Searcher presente, barra de pasos en "1 Búsqueda"), 0 requests al
 endpoint de disponibilidad, HTML SSR sin meta robots noindex
+
+### SCEN-W-01b: /reservas CON parámetros de búsqueda entra directo al Paso 2
+**Given** un visitante abre un `/reservas?lugar_recogida=<slug>&lugar_devolucion=<slug>&fecha_recogida=<f>&fecha_devolucion=<f>&hora_recogida=<h>&hora_devolucion=<h>` compartido/bookmarkeado (sin `paso` explícito)
+**When** la página carga
+**Then** la búsqueda se hidrata y ejecuta desde el query vía `useSearchByQueryParams` y el
+wizard monta **directamente el Paso 2** (resultados/segmentos), SIN quedar en el Paso 1; el
+`<head>` emite `robots: noindex, follow`
+**Evidence** request de disponibilidad con los slugs del query en la carga, barra de pasos en
+"2 Vehículo" (no "1 Búsqueda"), meta robots noindex,follow en el HTML SSR
 
 ### SCEN-W-02: completar la búsqueda avanza al Paso 2 y muestra segmentos
 **Given** el wizard en Paso 1 con una selección válida (recogida + fechas + horas)
@@ -295,9 +313,9 @@ Básico/Total visible; caso sin match → barra en "2 Vehículo" sin error de co
 ## Testing y verificación
 
 - **Unit (Vitest, `ui-alquicarros`):** `segmentForCode` + fail-soft "Otros" (SCEN-W-03/04);
-  máquina de pasos `canAdvance`/back-preserva-estado (SCEN-W-05/07/10); gating SSR del
-  `noindex` en `/reservas` (SCEN-W-01/02) y del canonical sin-noindex en rutas de
-  resultados (SCEN-W-09).
+  máquina de pasos `canAdvance`/back-preserva-estado (SCEN-W-05/07/10); derivación
+  SSR-estable del paso inicial desde el URL (sin params→Paso 1, con params→Paso 2, `paso`
+  posterior→ese paso — SCEN-W-01/01b/02/09/14); gating SSR del `noindex`.
 - **E2E (Playwright, `BRAND=alquicarros`):** flujo completo 5 pasos; deep-link entra en
   Paso 2/3; sidebar refleja precio en cada paso; "Omitir" adicionales; sin regresión del
   Searcher unificado ni del submit.
