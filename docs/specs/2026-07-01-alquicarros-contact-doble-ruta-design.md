@@ -43,15 +43,15 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
      - Título "Reserva online" + microcopy "Cotiza y confirma en 2 minutos, sin llamadas."
      - CTA **"Reserva Ahora"** — botón blanco full-width, texto `brand-700`, `href="{reserveAnchor}"`.
    - **Tile B — "¿Prefieres hablar?"** (fondo blanco, borde cálido sutil):
-     - Ícono `i-lucide-message-circle` en badge verde suave (`#e9f9ec` / `text-[#090]`).
+     - Ícono `i-lucide-message-circle` en badge verde suave (`bg-[#e9f9ec]` / `text-[#090]`).
      - Título "¿Prefieres hablar?" + microcopy "Un asesor te ayuda a elegir y reservar al instante."
      - CTA **"Habla con un Asesor"** — botón verde `bg-[#090]` full-width con `WhatsappIcon`, `href="{franchise.whatsapp}"`, `target="_blank" rel="noopener noreferrer"`, `aria-label` conservado.
 
 3. **Fila de trust badges** (una sola fila centrada, `flex-wrap gap-x-7 gap-y-3`) con `UIcon` lucide:
    - `i-lucide-wallet` "Sin anticipos"
    - `i-lucide-shield-check` "Cancela gratis 24h"
-   - `i-lucide-headphones` "Soporte 24/7"
-   - `i-lucide-map-pin` "+{cityCount} ciudades" ← dato real vía `useCityCount` (live=19), NO hardcodeado.
+   - `i-lucide-headset` "Soporte 24/7" (mismo icono que `ValueProps`, no `headphones`)
+   - `i-lucide-map-pinned` "+{cityCount} ciudades" ← dato real vía `useCityCount()` (ref, `cityCount.value`, live=19), NO hardcodeado. Icono alineado a `ValueProps`.
 
 ### Responsive
 
@@ -100,7 +100,7 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
   Given `Contact.vue` de alquicarros, When se inspecciona el markup, Then NO contiene la banda full-bleed con SUV lateral (`cta-suv.webp` ausente en alquicarros) y SÍ contiene dos tiles de acción en grid de 2 columnas en `md+`.
 
 - **SCEN-CONTACT-04 · Iconografía lucide**
-  Given la sección renderizada, When se inspeccionan íconos, Then usan `UIcon` con nombres `i-lucide-*` (car, message-circle, wallet, shield-check, headphones, map-pin) en lugar de los SVG inline previos.
+  Given la sección renderizada, When se inspeccionan íconos, Then usan `UIcon` con nombres `i-lucide-*` (car, message-circle, wallet, shield-check, headset, map-pinned) en lugar de los SVG inline previos.
 
 - **SCEN-CONTACT-05 · Conteo de ciudades dinámico**
   Given `useCityCount` retorna N, When se renderiza el badge de ciudades, Then muestra "+N ciudades" (no un número hardcodeado).
