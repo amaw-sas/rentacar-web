@@ -110,6 +110,25 @@ export default defineNuxtConfig({
             .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
             .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
             .px-4 { padding-left: 1rem; padding-right: 1rem; }
+            /*
+              Reskin hero (F1/F2/F3, #112) above-the-fold utilities — keep in
+              sync with components/{home,city}/Hero.vue. Omitted here they ship
+              ONLY in the JS-injected stylesheet (there is no render-blocking
+              <link>) and apply AFTER first paint, so the hero reflows as they
+              land: the inner container gains py-10 (grid drops +40px), the grid
+              gains gap-10, and the h1 collapses to leading-[1.1] — the residual
+              city CLS after the card fix. These reserve the above-the-fold hero
+              geometry from the first paint.
+            */
+            .py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+            @media (min-width: 768px) { .md\\:py-12 { padding-top: 3rem; padding-bottom: 3rem; } }
+            .gap-10 { gap: 2.5rem; }
+            .gap-5 { gap: 1.25rem; }
+            .gap-x-5 { column-gap: 1.25rem; }
+            .gap-y-2 { row-gap: 0.5rem; }
+            .aspect-\\[16\\/10\\] { aspect-ratio: 16 / 10; }
+            .aspect-\\[16\\/9\\] { aspect-ratio: 16 / 9; }
+            .leading-\\[1\\.1\\] { line-height: 1.1; }
             /* SEO Dashboard Critical CSS */
             .bg-gray-900 { background-color: #111827; }
             .bg-gray-800 { background-color: #1f2937; }

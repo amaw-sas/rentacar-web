@@ -146,8 +146,20 @@
              (SCEN-F3-03). The car image uses an aspect-ratio box → footprint
              reserved (no CLS); eager + high fetchpriority as the landing LCP. -->
         <div v-else class="flex flex-col items-center gap-5">
+          <!--
+            CLS guard: reserve the card's 16:10 box with an INLINE aspect-ratio,
+            not only the aspect-[16/10] utility. The utility rule ships in Nuxt's
+            JS-injected stylesheet (no <link rel=stylesheet>; not in the inlined
+            critical CSS), and the image below is `absolute inset-0` (out of flow,
+            zero height). Without the inline style the card computes
+            aspect-ratio:auto → height 0 until the late CSS lands, then jumps to
+            its full height and shoves the whole hero down (measured CLS 0.839,
+            Lighthouse mobile). The inline style exists in the SSR HTML from the
+            first paint, so the box is reserved regardless of stylesheet timing.
+          -->
           <div
             class="relative w-full max-w-lg aspect-[16/10] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/30 ring-1 ring-white/15"
+            style="aspect-ratio: 16 / 10"
           >
             <NuxtImg
               src="/images/vehicles/premium.jpg"
