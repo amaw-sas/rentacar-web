@@ -437,6 +437,21 @@ export default defineNuxtConfig({
             .duration-500 { transition-duration: 500ms; }
             .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
             .placeholder-gray-400::placeholder { color: #9ca3af; }
+            /*
+              Hero h1 usa la clase de componente .heading-hero (typography.css:
+              @apply text-4xl md:text-5xl lg:text-7xl leading-tight) JUNTO a
+              utilidades text-3xl/leading-[1.1] inline. En el render final gana
+              heading-hero, pero está en el CSS inyectado (no en el crítico): con
+              solo crítico el h1 pinta a text-3xl (30px) y salta a 36px cuando
+              aterriza heading-hero → la columna del Searcher (fila 2 del grid en
+              móvil) se desplaza (city/reservas). Se declara heading-hero aquí, al
+              FINAL del layer para ganar a text-3xl/leading-[1.1] del crítico, con
+              los mismos valores por breakpoint → el h1 tiene su tamaño final desde
+              el primer paint. Mirror del fix de alquicarros (web#289 / PR #291).
+            */
+            .heading-hero { font-size: 2.25rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.025em; }
+            @media (min-width: 768px) { .heading-hero { font-size: 3rem; } }
+            @media (min-width: 1024px) { .heading-hero { font-size: 4.5rem; } }
             }
           `,
         },

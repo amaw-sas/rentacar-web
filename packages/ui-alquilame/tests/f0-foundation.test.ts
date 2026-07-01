@@ -125,3 +125,20 @@ describe('critical CSS — translate utilities do not double under Tailwind v4',
     expect(translateBlock![0]).not.toMatch(/transform:\s*translate\(/)
   })
 })
+
+describe('critical CSS — hero h1 reserves its final size (CLS)', () => {
+  const config = read('nuxt.config.ts')
+
+  // Hero h1 uses the .heading-hero component class (typography.css:
+  // @apply text-4xl md:text-5xl lg:text-7xl leading-tight), which wins over the
+  // inline text-3xl/leading-[1.1] in the final render but ships ONLY in the
+  // JS-injected stylesheet — so pre-CSS the h1 paints at 30px (text-3xl) and jumps
+  // to 36px, shifting the Searcher column (/reservas CLS ~0.209; mirror web#289).
+  // heading-hero must be in the critical block, at its final size, so the h1
+  // never resizes after first paint.
+  it('declares .heading-hero at its final size (2.25rem / 1.25 mobile + breakpoints)', () => {
+    expect(config).toContain('.heading-hero { font-size: 2.25rem; line-height: 1.25;')
+    expect(config).toContain('.heading-hero { font-size: 3rem; }')
+    expect(config).toContain('.heading-hero { font-size: 4.5rem; }')
+  })
+})
