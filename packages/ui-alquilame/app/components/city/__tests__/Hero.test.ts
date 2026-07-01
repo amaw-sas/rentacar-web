@@ -172,6 +172,18 @@ describe('Hero redesign — richer landing (vehicle card + trust chips + depth)'
     expect(LANDING_BRANCH).toMatch(/aspect-\[\d+\/\d+\]/)
   })
 
+  // SCEN-CLS-01: the aspect-[16/10] utility alone does NOT reserve the box before
+  // paint — its rule lives in Nuxt's JS-injected stylesheet, not the inlined
+  // critical CSS, and the <NuxtImg> is `absolute inset-0` (out of flow, zero
+  // height contribution). Pre-CSS the card collapses to height 0, then jumps to
+  // its 16:10 height when the late CSS lands → the whole hero grid shoves down
+  // (measured CLS 0.839, Lighthouse mobile). An INLINE aspect-ratio on the card
+  // container reserves the box in the SSR HTML regardless of stylesheet timing.
+  // See docs/specs/city-hero-cls.
+  it('reserves the image card with an inline aspect-ratio so it survives pre-CSS (CLS fix)', () => {
+    expect(LANDING_BRANCH).toMatch(/style="[^"]*aspect-ratio:\s*16\s*\/\s*10/)
+  })
+
   it('gives the vehicle image an alt bound to the city name (SEO/a11y)', () => {
     expect(LANDING_BRANCH).toMatch(/:alt="`[^`]*\$\{city\?\.name\}/)
   })

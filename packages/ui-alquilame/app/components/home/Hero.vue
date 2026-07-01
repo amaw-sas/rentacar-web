@@ -64,8 +64,17 @@
 
         <!-- Visual column (golden card, aspect-[16/9] reserves space → no CLS) -->
         <div class="flex items-center justify-center">
+          <!--
+            CLS guard: the aspect-[16/9] utility rule ships in Nuxt's JS-injected
+            stylesheet (not the inlined critical CSS), and the <video> below has
+            no width/height attrs, so pre-CSS the card falls back to the 300×150
+            video default and shifts when the real ratio applies (home CLS 0.129).
+            The INLINE aspect-ratio reserves the box in the SSR HTML from the
+            first paint, independent of stylesheet timing.
+          -->
           <div
             class="w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
+            style="aspect-ratio: 16 / 9"
           >
             <video
               class="w-full h-full object-cover"
