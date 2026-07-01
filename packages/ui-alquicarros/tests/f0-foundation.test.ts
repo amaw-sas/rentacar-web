@@ -107,3 +107,38 @@ describe('F0 — Logo supports color/white variants', () => {
     expect(logo).toMatch(/#ef9600/i)
   })
 })
+
+describe('critical CSS — reskin hero reserves above-the-fold geometry (CLS)', () => {
+  const config = read('nuxt.config.ts')
+
+  // Root cause (alquicarros-hero-cls.scenarios.md, SCEN-ACR-CLS-01): there is NO
+  // render-blocking <link rel=stylesheet>; the rest of the CSS is JS-injected on
+  // hydration. The reskin (#210) hero's above-the-fold utilities were omitted
+  // from the hand-curated critical-cls inline block (it predates the reskin —
+  // still carries the navy #000073 gradient / aspect-[100/81]), so they applied
+  // AFTER first paint: on mobile the hero gained py-10 (+80px), gap-10 and the
+  // h1 collapsed to leading-[1.1], reflowing everything below down (city /bogota
+  // CLS 0.366, /reservas 0.209). The critical block MUST declare them so the
+  // geometry is reserved from the first paint. Mirror of alquilame #287.
+  // Source text carries doubled backslashes for escaped Tailwind class names
+  // (JS template string), so match the literal source substrings.
+  it('declares .py-10 (2.5rem vertical padding)', () => {
+    expect(config).toContain('.py-10 {')
+    expect(config).toContain('.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }')
+  })
+
+  it('declares .md\\:py-12 (3rem) inside a min-width:768px query', () => {
+    expect(config).toContain('.md\\\\:py-12 {')
+    expect(config).toContain('.md\\\\:py-12 { padding-top: 3rem; padding-bottom: 3rem; }')
+  })
+
+  it('declares .gap-10 (2.5rem grid gap)', () => {
+    expect(config).toContain('.gap-10 {')
+    expect(config).toContain('.gap-10 { gap: 2.5rem; }')
+  })
+
+  it('declares .leading-[1.1] (tight hero h1 line-height)', () => {
+    expect(config).toContain('.leading-\\\\[1\\\\.1\\\\] {')
+    expect(config).toContain('.leading-\\\\[1\\\\.1\\\\] { line-height: 1.1; }')
+  })
+})
