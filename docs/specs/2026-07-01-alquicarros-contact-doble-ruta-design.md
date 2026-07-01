@@ -116,7 +116,8 @@ La banda única se reemplaza por un **selector de dos caminos**: dos tiles parej
 - **Unit/render (nuevo test):** crear `app/components/home/__tests__/contact.test.ts` que monte `Contact.vue` y encode SCEN-01/02/03/04/05:
   - dos CTA con los `href`/atributos correctos (01); `href` = `reserveAnchor` para valor ancla y ruta (02);
   - ausencia de `cta-suv.webp` + presencia de grid de 2 tiles (03);
-  - íconos vía `UIcon`/`i-lucide-*` (04); badge de ciudades derivado de `useCityCount`, no hardcodeado (05).
+  - íconos vía `UIcon`/`i-lucide-*` (04); badge de ciudades derivado de `useCityCount`, no hardcodeado (05);
+  - que Contact use al menos un token `brand-*` propio (el check `brand orange tokens` de `reskin-invariants` es un `.some(...)` a nivel home, no por-archivo — encodarlo aquí para blindar Contact).
   Motivo: `presentational.test.ts` NO cubre Contact y no debe tocarse.
 - **Invariantes:** confirmar `reskin-invariants.test.ts` verde (orden de secciones + sin rojo/`Alquilame`/`bg-gradient-to-` + tokens brand) tras el cambio.
 - **Runtime (SCEN-06):** `/agent-browser` en el dev server del worktree — contraste computado AA de texto blanco del Tile A y labels de CTA, cero errores de consola, cero requests fallidos + `/dogfood` exploratorio.
