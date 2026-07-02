@@ -13,8 +13,9 @@
         entra en Paso 2 (o Paso 3 con `/categoria/[gama]` preseleccionada).
   -->
   <div>
-    <!-- Barra de pasos -->
-    <div class="border-b border-gray-100 bg-white">
+    <!-- Barra de pasos — sticky bajo el header del sitio (h 64px móvil / 80px desktop,
+         header es sticky top-0 z-50). z-30 < header; la barra inferior móvil es z-40. -->
+    <div class="sticky top-16 md:top-20 z-30 border-b border-gray-100 bg-white">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <WizardStepper
           :current="wizard.currentStepNumber.value"
@@ -126,12 +127,20 @@ function firstQ(v: unknown): string | undefined {
 }
 
 /**
- * Click en un paso del stepper. En búsqueda externa (city), el paso "Búsqueda"
- * no monta un hero interno: ancla al Searcher de CityHero (#searcher). El resto
- * navega la máquina normalmente.
+ * Click en un paso del stepper. Casos especiales del paso "Búsqueda":
+ *   - en Paso 1 con búsqueda YA hecha (maxReached ≥ 2): avanzar a los resultados
+ *     (Paso 2) en vez de no-opear — no hay CTA "Continuar" en el Paso 1.
+ *   - en city (externalSearch): anclar al Searcher de CityHero (#searcher), que
+ *     provee el Paso 1.
+ * El resto navega la máquina normalmente.
  */
 function onGoTo(step: WizardStep | number): void {
-  if (props.externalSearch && (step === 1 || step === 'busqueda')) {
+  const n = typeof step === 'number' ? step : stepNumber(step)
+  if (n === 1 && wizard.currentStep.value === 'busqueda' && wizard.maxReachedStep.value >= 2) {
+    wizard.goTo('vehiculo')
+    return
+  }
+  if (props.externalSearch && n === 1) {
     if (import.meta.client) {
       document.getElementById('searcher')?.scrollIntoView({ behavior: 'smooth' })
     }
@@ -139,6 +148,16 @@ function onGoTo(step: WizardStep | number): void {
   }
   wizard.goTo(step)
 }
+
+// Al cambiar de paso (Continuar, back o salto del stepper), volver al tope de la
+// página para que el paso nuevo se lea desde el inicio (sobre todo en móvil). El
+// scroll a #searcher en city NO cambia currentStep, así que no colisiona.
+watch(
+  () => wizard.currentStep.value,
+  () => {
+    if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+  },
+)
 
 // ── Paso 9: handshake búsqueda→avance + sync de URL (solo /reservas) ───────────
 if (!props.externalSearch) {

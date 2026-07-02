@@ -35,7 +35,7 @@
       type="button"
       class="mt-5 body-sm font-medium text-gray-500 underline underline-offset-4 hover:text-gray-800"
       data-testid="wizard-extras-skip-test"
-      @click="$emit('skip')"
+      @click="onOmitir"
     >
       Omitir — continuar sin adicionales
     </button>
@@ -47,10 +47,25 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
-defineEmits<{ (e: 'skip'): void }>()
+const emit = defineEmits<{ (e: 'skip'): void }>()
 
 const search = useStoreSearchData()
 const { selectedCategory } = storeToRefs(search)
+
+/**
+ * "Omitir — continuar sin adicionales": limpia cualquier adicional que el usuario
+ * hubiera marcado (los tres flags a false) ANTES de avanzar, para que el texto sea
+ * literal (sin adicionales) y el payload/sidebar no arrastren selecciones.
+ */
+function onOmitir(): void {
+  const sc = selectedCategory.value
+  if (sc) {
+    sc.withExtraDriver = false
+    sc.withBabySeat = false
+    sc.withWash = false
+  }
+  emit('skip')
+}
 
 // v-model sobre los flags auto-unwrapeados de la instancia (Pinia reactive):
 // leer/escribir selectedCategory.value.withX propaga al mismo ref que

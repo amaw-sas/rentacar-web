@@ -7,11 +7,15 @@
     step fije `selectedCategory` y avance.
   -->
   <div
-    class="flex flex-col overflow-hidden rounded-2xl border bg-white transition-colors"
+    class="flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white transition-colors"
     :class="selected ? 'border-brand-600 ring-2 ring-brand-600' : 'border-gray-200'"
     :data-testid="`wizard-vehicle-${categoryCode}-test`"
+    @click="$emit('select', category)"
   >
-    <div class="carrusel">
+    <!-- El carrusel aísla sus clics (@click.stop): usar las flechas o arrastrar
+         entre modelos NO selecciona la gama; solo navega imágenes. El botón
+         "Elegir" y el keyboard siguen siendo la vía accesible de selección. -->
+    <div class="carrusel" @click.stop>
       <Carrusel
         :models="categoryModels"
         :vehicle-models="modelos"
@@ -46,7 +50,7 @@
               : 'bg-brand-600 text-gray-900 hover:bg-brand-700'
           "
           :data-testid="`wizard-select-${categoryCode}-test`"
-          @click="$emit('select', category)"
+          @click.stop="$emit('select', category)"
         >
           <template v-if="selected" #leading>
             <UIcon name="i-lucide-check" class="size-5" />

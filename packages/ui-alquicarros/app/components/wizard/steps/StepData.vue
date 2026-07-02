@@ -8,10 +8,8 @@
   <div>
     <header class="mb-5">
       <h2 class="heading-card text-gray-900">Tus datos para reservar</h2>
-      <p class="mt-1 body-base text-gray-500">
-        Completa los datos del titular de la tarjeta de crédito. Revisa el total en
-        el resumen antes de confirmar.
-      </p>
+      <!-- Sin subtítulo: el ReservationForm ya explica "completa con los datos del
+           titular de la tarjeta de crédito" justo debajo (evita redundancia). -->
     </header>
 
     <div class="rounded-2xl border border-gray-200 bg-white p-5">

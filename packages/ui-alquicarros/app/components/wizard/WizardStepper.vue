@@ -101,7 +101,10 @@ function isDone(step: number): boolean {
   return step < props.current
 }
 function onSelect(step: number): void {
-  if (isReached(step) && step !== props.current) emit('goTo', step)
+  // Emite para cualquier paso ALCANZADO, incluido el actual: el shell decide qué
+  // hacer (p.ej. en Paso 1 con búsqueda hecha, clic en "Búsqueda" avanza a Paso 2).
+  // goTo(pasoActual) es idempotente en la máquina para el resto de casos.
+  if (isReached(step)) emit('goTo', step)
 }
 
 function pillClass(step: number): string {

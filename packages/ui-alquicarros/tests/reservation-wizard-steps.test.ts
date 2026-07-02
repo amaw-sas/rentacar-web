@@ -185,6 +185,46 @@ describe('Robustez — hallazgos de edge-case (regresión)', () => {
   })
 })
 
+describe('Refinamientos UX móvil (verificación manual)', () => {
+  const card = () => read(`${C}/WizardVehicleCard.vue`)
+  const stepExtras = () => read(`${C}/steps/StepExtras.vue`)
+  const stepData = () => read(`${C}/steps/StepData.vue`)
+  const stepper = () => read(`${C}/WizardStepper.vue`)
+
+  it('la barra de pasos es sticky bajo el header (offset por breakpoint)', () => {
+    expect(shell()).toMatch(/sticky\s+top-16\s+md:top-20/)
+  })
+
+  it('en Paso 1 con búsqueda hecha, clic en "Búsqueda" avanza a Paso 2', () => {
+    // onGoTo detecta busqueda + maxReached>=2 → goTo(vehiculo); el stepper emite
+    // goTo también para el paso actual (sin el guard step !== current).
+    expect(shell()).toMatch(/maxReachedStep\.value >= 2[\s\S]{0,120}goTo\(['"]vehiculo['"]\)/)
+    expect(stepper()).not.toMatch(/step !== props\.current/)
+  })
+
+  it('la card completa selecciona la categoría; el carrusel NO (aislado)', () => {
+    const src = card()
+    // click en el contenedor de la card emite select; el carrusel detiene la propagación
+    expect(src).toMatch(/@click="[^"]*\$emit\('select'|@click="onCardSelect/)
+    expect(src).toMatch(/carrusel[\s\S]{0,40}@click\.stop/)
+  })
+
+  it('al avanzar de paso, la página vuelve al tope', () => {
+    expect(shell()).toMatch(/window\.scrollTo\(\s*\{\s*top:\s*0/)
+  })
+
+  it('"Omitir" limpia los adicionales seleccionados antes de avanzar', () => {
+    const src = stepExtras()
+    // onOmitir pone los flags en false y luego emite skip
+    expect(src).toMatch(/onOmitir|clearExtras/)
+    expect(src).toMatch(/withExtraDriver[\s\S]{0,80}false|= false/)
+  })
+
+  it('StepData no repite el texto de "titular de la tarjeta" (ya está en ReservationForm)', () => {
+    expect(stepData()).not.toMatch(/Completa los datos del titular de la tarjeta/)
+  })
+})
+
 describe('Stepper móvil navegable (SCEN-W-10 en móvil)', () => {
   const stepper = () => read(`${C}/WizardStepper.vue`)
 
