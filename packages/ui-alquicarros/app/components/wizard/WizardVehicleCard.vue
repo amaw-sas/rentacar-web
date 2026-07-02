@@ -96,3 +96,26 @@ const { categoryCode, categoryModels, currencyTotalPrice, currencyDailyPrice, ge
 const modelos = computed(() => props.vehicleCategory?.modelos ?? [])
 const grupo = computed(() => props.vehicleCategory?.grupo ?? '')
 </script>
+
+<style scoped>
+/*
+  El nombre del modelo (.nombre-modelo, dentro del Carrusel) está anidado bajo
+  `.categoria` en category.css, así que en el wizard —que NO usa esa clase— quedaba
+  como texto plano en flujo, pegado al borde y recortado por el overflow-hidden de
+  la card (se cortaba la primera letra). Se re-estiliza aquí vía :deep como el pill
+  original, posicionado con margen dentro de la imagen.
+*/
+.carrusel :deep(.nombre-modelo) {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  background-color: rgb(0 0 0 / 0.75);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+</style>

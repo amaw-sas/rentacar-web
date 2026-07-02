@@ -39,21 +39,44 @@
       </li>
     </ol>
 
-    <!-- Mobile: contador + puntos de progreso -->
+    <!-- Mobile: "Atrás" + contador + puntos de progreso NAVEGABLES. Los puntos son
+         botones (área de tap ampliada), no <li> inertes: en móvil las pills desktop
+         están ocultas, así que sin esto no habría forma de volver a un paso ya
+         alcanzado (SCEN-W-10). -->
     <div class="md:hidden">
-      <div class="flex items-center justify-between">
-        <p class="body-sm font-semibold text-gray-900">
+      <div class="flex items-center justify-between gap-3">
+        <button
+          v-if="current > 1"
+          type="button"
+          class="-ml-1 inline-flex items-center gap-1 rounded-full px-2 py-1 body-sm font-semibold text-brand-700 hover:bg-brand-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/50"
+          @click="onSelect(current - 1)"
+        >
+          <UIcon name="i-lucide-chevron-left" class="h-4 w-4" />
+          Atrás
+        </button>
+        <span v-else class="body-sm font-semibold text-gray-900">
           Paso {{ current }} de {{ STEP_LABELS.length }}
-        </p>
-        <p class="body-sm text-brand-700 font-semibold">{{ STEP_LABELS[current - 1] }}</p>
+        </span>
+        <span class="body-sm font-semibold text-brand-700 truncate">
+          {{ current }}/{{ STEP_LABELS.length }} · {{ STEP_LABELS[current - 1] }}
+        </span>
       </div>
       <ol class="mt-2 flex items-center gap-1.5">
-        <li
-          v-for="(label, i) in STEP_LABELS"
-          :key="label"
-          class="h-1.5 flex-1 rounded-full transition-colors"
-          :class="i + 1 <= current ? 'bg-brand-600' : i + 1 <= maxReached ? 'bg-brand-200' : 'bg-gray-200'"
-        />
+        <li v-for="(label, i) in STEP_LABELS" :key="label" class="flex-1">
+          <button
+            type="button"
+            :disabled="!isReached(i + 1)"
+            :aria-current="current === i + 1 ? 'step' : undefined"
+            :aria-label="`Ir al paso ${i + 1}: ${label}`"
+            class="block w-full cursor-pointer py-2 -my-1 focus:outline-none disabled:cursor-default"
+            @click="onSelect(i + 1)"
+          >
+            <span
+              class="block h-1.5 rounded-full transition-colors"
+              :class="i + 1 <= current ? 'bg-brand-600' : i + 1 <= maxReached ? 'bg-brand-200' : 'bg-gray-200'"
+            />
+          </button>
+        </li>
       </ol>
     </div>
   </nav>

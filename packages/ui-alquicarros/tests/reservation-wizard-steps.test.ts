@@ -185,6 +185,33 @@ describe('Robustez — hallazgos de edge-case (regresión)', () => {
   })
 })
 
+describe('Stepper móvil navegable (SCEN-W-10 en móvil)', () => {
+  const stepper = () => read(`${C}/WizardStepper.vue`)
+
+  it('la barra móvil ofrece un control "Atrás" que navega al paso anterior alcanzado', () => {
+    const src = stepper()
+    expect(src).toMatch(/Atr[áa]s/)
+    expect(src).toMatch(/onSelect\(current - 1\)/)
+  })
+
+  it('los pasos móviles son botones clicables (no <li> decorativos inertes)', () => {
+    // El bloque md:hidden debe usar <button ... @click="onSelect"> para navegar.
+    const src = stepper()
+    const mobile = src.slice(src.indexOf('md:hidden'))
+    expect(mobile).toMatch(/<button[\s\S]*@click="onSelect\(i \+ 1\)"/)
+  })
+})
+
+describe('WizardVehicleCard — nombre de modelo no recortado (fix borde)', () => {
+  const card = () => read(`${C}/WizardVehicleCard.vue`)
+
+  it('estiliza .nombre-modelo (deep) para que no quede pegado/recortado al borde', () => {
+    // .nombre-modelo está anidada bajo .categoria en category.css → no aplica en el
+    // wizard; se re-estiliza vía :deep para posicionarla con margen (pill).
+    expect(card()).toMatch(/:deep\(\.nombre-modelo\)/)
+  })
+})
+
 describe('Shell — monta los Pasos 2-5 reales (reemplaza el placeholder de Fase 2.1)', () => {
   it('monta StepVehicle / StepCoverage / StepExtras / StepData', () => {
     const src = shell()
