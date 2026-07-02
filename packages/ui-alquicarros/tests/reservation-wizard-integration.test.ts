@@ -35,6 +35,14 @@ describe('Paso 9 — handshake búsqueda→avance en /reservas (SCEN-W-02)', () 
     expect(src).toMatch(/currentStep\.value === 'busqueda'/)
   })
 
+  it('re-búsqueda con MISMOS params (URL igual, NuxtLink no navega) avanza al completarse', () => {
+    // El watch de firma de query no dispara (params iguales); se observa la
+    // transición de `pending` (true→false) estando en Paso 1 para avanzar.
+    const src = shell()
+    expect(src).toMatch(/watch\(\s*pending/)
+    expect(src).toMatch(/wasPending && !isPending[\s\S]{0,80}busqueda/)
+  })
+
   it('sincroniza el paso actual en el query string (?paso=) sin recargar', () => {
     const src = shell()
     expect(src).toMatch(/paso/)

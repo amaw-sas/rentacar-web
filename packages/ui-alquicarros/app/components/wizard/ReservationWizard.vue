@@ -187,6 +187,17 @@ if (!props.externalSearch) {
     },
   )
 
+  // Re-búsqueda con los MISMOS parámetros: el Searcher es un NuxtLink; si la URL
+  // destino es igual a la actual NO navega, así que el watch de arriba (firma de
+  // query) no dispara. Pero el Searcher sí re-ejecuta doSearch (#129), togglando
+  // `pending`. Al completarse una búsqueda (pending true→false) estando en Paso 1,
+  // avanzamos a Paso 2 — si no, "no pasa nada" al re-buscar sin cambiar campos.
+  watch(pending, (isPending, wasPending) => {
+    if (wasPending && !isPending && wizard.currentStep.value === 'busqueda') {
+      wizard.next()
+    }
+  })
+
   // Refleja el paso actual en `?paso=` para compartir/recargar (deriveStepFromRoute
   // lo lee al inicializar). replaceState: sin entradas de historial nuevas ni
   // recarga — el back del navegador NO recorre pasos (sale de /reservas); la
