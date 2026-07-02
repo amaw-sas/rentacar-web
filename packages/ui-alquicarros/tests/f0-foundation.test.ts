@@ -166,4 +166,24 @@ describe('critical CSS — reskin hero reserves above-the-fold geometry (CLS)', 
     expect(config).toContain('.heading-hero { font-size: 3rem; }')
     expect(config).toContain('.heading-hero { font-size: 4.5rem; }')
   })
+
+  // Root cause of the residual /reservas CLS (reservas-margin-collapse.scenarios.md,
+  // SCEN-RMC-02, box-probe): the critical @layer base reset only body/img/picture/svg,
+  // NOT block elements. So at first paint the hero <h1> carries its UA default margin
+  // (0.67em × 36px ≈ 24px top+bottom) and the <p> carries 1em (16px); when the
+  // JS-injected main CSS lands (with Tailwind Preflight → margin:0) those collapse,
+  // shrinking the text column 48px and pulling the Searcher column up 48px. The
+  // Preflight block-margin reset MUST be in critical so first paint == settled.
+  it('declares the Preflight block-margin reset (h1/p) in critical base', () => {
+    expect(config).toContain(
+      'h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, pre { margin: 0; }',
+    )
+  })
+
+  // With the reset alone the hero <p> would lose its settled top margin at first
+  // paint (mt-4 is NOT in critical either) → the shift flips to +16px. .mt-4 must
+  // also be reserved so the <p> keeps margin-top:1rem from the first paint.
+  it('declares .mt-4 so the hero <p> top margin is reserved pre-CSS', () => {
+    expect(config).toContain('.mt-4 { margin-top: 1rem; }')
+  })
 })
