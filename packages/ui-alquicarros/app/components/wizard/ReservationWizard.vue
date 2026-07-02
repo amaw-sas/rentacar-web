@@ -116,14 +116,36 @@ const searchSettled = computed(
     (hasAvailableCategories.value || !!error.value || noAvailableCategories.value),
 )
 
+// Al ARRANCAR una búsqueda nueva (pending false→true), descarta la gama elegida.
+// useCategory congela los precios (totalAmount, cobertura, IVA, returnFee) en refs
+// al construirse, y el store NO resetea selectedCategory en search(). Sin esto,
+// re-buscar con otras fechas/sede SIN re-elegir gama dejaría el sidebar y el submit
+// con la cotización VIEJA (fechas nuevas, precio viejo) — el re-tap de la misma
+// gama es no-op y la red de seguridad solo rescata selectedCategory===null. Forzar
+// re-elegir contra las filas frescas. Sin gate: cubre /reservas y city (que remonta
+// por navegación); en city el preselect de /categoria vuelve a fijarla tras asentar.
+watch(pending, (isPending, wasPending) => {
+  if (isPending && !wasPending) {
+    selectedCategory.value = null
+    vehiculo.value = null
+  }
+})
+
 function isStep(step: WizardStep): boolean {
   return wizard.currentStep.value === step
 }
 
-/** Primer valor string de un param/query (Nuxt entrega string | string[]). */
+/**
+ * Primer valor string de un param/query (Nuxt entrega string | string[]), TRIMEADO
+ * y con vacío→undefined. Debe coincidir con `deriveStepFromRoute` (que trimea el
+ * pickup): sin trim aquí, un `?lugar_recogida=%20` sería "presente" para el
+ * handshake / gate de vacío / ?paso mientras la derivación lo trata como ausente.
+ */
 function firstQ(v: unknown): string | undefined {
   const raw = Array.isArray(v) ? v[0] : v
-  return raw == null ? undefined : String(raw)
+  if (raw == null) return undefined
+  const s = String(raw).trim()
+  return s === '' ? undefined : s
 }
 
 /**

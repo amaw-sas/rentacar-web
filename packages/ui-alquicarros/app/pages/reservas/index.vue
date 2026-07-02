@@ -35,7 +35,14 @@ const route = useRoute()
  * (sin flash/CLS). "results query" = /reservas con params de búsqueda
  * (lugar_recogida es la clave load-bearing).
  */
-const hasResultsQuery = computed(() => Boolean(route.query.lugar_recogida))
+/** Pickup presente (trimeado): un `?lugar_recogida=%20` NO cuenta como resultados —
+ *  consistente con deriveStepFromRoute / el shell del wizard (evita noindex + ocultar
+ *  el marketing con un param en blanco). */
+function hasPickup(v: unknown): boolean {
+  const raw = Array.isArray(v) ? v[0] : v
+  return typeof raw === 'string' ? raw.trim() !== '' : raw != null
+}
+const hasResultsQuery = computed(() => hasPickup(route.query.lugar_recogida))
 
 const title = 'Reserva tu carro | Alquiler de vehículos'
 const description =
@@ -57,7 +64,7 @@ useSeoMeta({
   // El estado con params de resultados (/reservas?lugar_recogida=…) es
   // noindex,follow — duplicaría las páginas de ciudad crawlables; la /reservas
   // limpia (sin query) queda indexable. SSR-estable.
-  robots: () => (route.query.lugar_recogida ? 'noindex, follow' : undefined),
+  robots: () => (hasPickup(route.query.lugar_recogida) ? 'noindex, follow' : undefined),
   title,
   description,
   ogType: 'website',

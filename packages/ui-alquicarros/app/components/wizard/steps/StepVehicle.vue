@@ -188,8 +188,11 @@ const rowByCode = computed(() => {
   return m
 })
 
+// Dedup defensivo: rowByCode ya conserva la primera fila por código; deduplicar
+// aquí evita conteos inflados y cards con :key repetida si filteredCategories
+// devolviera >1 fila por categoryCode (code-review F2).
 const groups = computed<SegmentGroup[]>(() =>
-  groupBySegment(renderable.value.map((r) => r.categoryCode)),
+  groupBySegment([...new Set(renderable.value.map((r) => r.categoryCode))]),
 )
 
 /**

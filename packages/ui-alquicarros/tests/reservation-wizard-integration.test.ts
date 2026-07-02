@@ -109,6 +109,17 @@ describe('Robustez Fase 3 — hallazgos de review (regresión)', () => {
     const src = shell()
     expect(src).toMatch(/fecha_recogida[\s\S]{0,120}fecha_devolucion/)
   })
+
+  it('al arrancar una búsqueda nueva se descarta la gama elegida (evita cotización congelada — hallazgo PR)', () => {
+    const src = shell()
+    expect(src).toMatch(/isPending && !wasPending/)
+    expect(src).toMatch(/selectedCategory\.value = null/)
+  })
+
+  it('la presencia de pickup se evalúa TRIMEADA (whitespace no cuenta), consistente con deriveStepFromRoute', () => {
+    expect(shell()).toMatch(/String\(raw\)\.trim\(\)/)
+    expect(read('app/pages/reservas/index.vue')).toMatch(/hasPickup/)
+  })
 })
 
 describe('Aislamiento SEO — CityPage sigue mode-aware sin romper el landing', () => {
