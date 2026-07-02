@@ -103,12 +103,23 @@ describe('F3 — CityPage orquestador (reemplaza el monolito rojo viejo)', () =>
   // BUG (fuga de resultados): resultsActive era solo-store (pending||results||error).
   // El store Pinia es singleton de la SPA, así que tras una búsqueda CON resultados
   // una navegación SPA a un landing /[city] dejaba el store poblado y el bloque de
-  // resultados (#seleccion-categorias) se renderizaba BAJO el hero de marketing. El
-  // gate debe AND-ear mode === 'results' (simétrico al gate de marketing).
+  // resultados se renderizaba BAJO el hero de marketing. El gate debe depender de
+  // mode === 'results' (simétrico al gate de marketing).
+  //
+  // F3 Paso 10 (wizard): el bloque de resultados ahora es <ReservationWizard>
+  // gateado por `v-if="mode === 'results'"` — un gate PURO por prop SSR-estable
+  // (ya no un computed store-dependiente). Reapuntado del resultsActive computed
+  // al gate del template (SCEN-F3-15, sin debilitar): el observable es idéntico y
+  // más fuerte — sin dependencia de store, un singleton poblado NO puede filtrar
+  // resultados al landing.
   it('SCEN-F3-01b: resultados solo en mode results — landing no filtra estado viejo', () => {
-    expect(cp()).toMatch(
-      /const resultsActive\s*=\s*computed\([\s\S]*?mode\s*===\s*['"]results['"]/,
-    )
+    const src = cp()
+    // El bloque de resultados (#seleccion-categorias) se gatea por mode === 'results'
+    expect(src).toMatch(/id="seleccion-categorias"[\s\S]{0,80}v-if="mode === 'results'"/)
+    // …monta el wizard guiado
+    expect(src).toMatch(/<ReservationWizard\b/)
+    // …y el marketing genérico sigue gateado simétricamente (oculto en results)
+    expect(src).toMatch(/mode !== 'results'/)
   })
 })
 

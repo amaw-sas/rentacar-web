@@ -12,13 +12,20 @@
     <!-- Hero — mode-aware (F3): landing = marketing-only CTA, results = Searcher engine -->
     <CityHero :city="city" :mode="mode" />
 
-    <!-- Result Section — condicional, PRESERVADO intacto (engine) -->
+    <!--
+      Result Section (F3 wizard, Paso 10): en mode="results" monta el wizard guiado
+      arrancando en Paso 2 (external-search: el Searcher es el de CityHero, no un
+      hero interno). Reemplaza el grid CategorySelectionSection. Gate por `mode`
+      (prop SSR-estable) — NO aparece en landing y no se pinta/desaparece al hidratar.
+      El SEO de la ruta buscar-vehiculos no cambia: lo fija useSearchPageSEO en la
+      página (canonical a /[city], sin robots noindex).
+    -->
     <UPageSection
       id="seleccion-categorias"
-      v-if="resultsActive"
+      v-if="mode === 'results'"
       :ui="{ container: 'pt-0' }"
     >
-      <CategorySelectionSection />
+      <ReservationWizard external-search />
     </UPageSection>
 
     <!-- Intro city (descripcion + introduccion) -->
@@ -64,37 +71,20 @@
 </template>
 
 <script setup lang="ts">
+/** components */
+import ReservationWizard from '~/components/wizard/ReservationWizard.vue';
+
 /** types */
 import type { City } from '@rentacar-main/logic/utils';
 
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 
-/** Result-section gating — lazy store init to avoid SSR Pinia error.
-    searchError keeps the result-section mounted when filteredCategories is empty
-    (plugin-empty admin data) so error UX still surfaces — issue #10. */
-const pendingSearch = ref(false);
-const filteredCategories = ref<unknown[]>([]);
-const searchError = ref<unknown>(null);
-
-onMounted(() => {
-  const storeSearch = useStoreSearchData();
-  const refs = storeToRefs(storeSearch);
-  watch(() => refs.pending.value, (val) => (pendingSearch.value = val), { immediate: true });
-  watch(() => refs.filteredCategories.value, (val) => (filteredCategories.value = val), { immediate: true });
-  watch(() => refs.error.value, (val) => (searchError.value = val), { immediate: true });
-});
-
-/** A search is "active" only on a RESULTS page (mode === 'results') AND when
-    results are pending, present, or errored. The Pinia store is a SPA singleton,
-    so WITHOUT the mode guard a store still populated from a prior search leaks the
-    results block (#seleccion-categorias) onto a landing /[city] after client-side
-    navigation. The gate is symmetric with the marketing v-if below (SCEN-001):
-    landing never shows results; results mode never shows generic marketing. */
-const resultsActive = computed(
-  () =>
-    props.mode === 'results' &&
-    (pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value),
-);
+// Nota (F3 Paso 10): el bloque de resultados ahora es el wizard, gateado por
+// `mode === 'results'` (prop SSR-estable). Ya NO hace falta el gate reactivo
+// resultsActive (pending/filteredCategories/error vía onMounted) que sostenía el
+// grid CategorySelectionSection: el wizard maneja sus estados pending/vacío/error
+// internamente (StepVehicle), y el gate por `mode` evita el leak del store
+// singleton al landing igual que antes (landing = mode 'landing').
 
 /** props */
 const props = withDefaults(
