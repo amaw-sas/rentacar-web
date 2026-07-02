@@ -5,9 +5,9 @@
     paso, o el hero de búsqueda a ancho completo (Paso 1) o un grid contenido +
     resumen persistente (Pasos 2-5).
 
-    Fase 2 · incremento 1: Paso 1 (Búsqueda) es real; el contenido de los Pasos 2-5
-    es un placeholder que se reemplaza por StepVehicle/StepCoverage/StepExtras/
-    StepData en el incremento 2. El stepper y el resumen ya quedan cableados.
+    Fase 2 · incremento 2: los Pasos 2-5 son reales (StepVehicle/StepCoverage/
+    StepExtras/StepData). El stepper y el resumen ya quedaban cableados en el
+    incremento 1.
 
     La sincronización de URL (?paso=) y el auto-avance al completar la búsqueda son
     Fase 3 (Pasos 9-10 del plan); aquí la navegación es en-sesión vía la máquina.
@@ -31,25 +31,20 @@
     <div v-else class="bg-surface-soft min-h-[60vh]">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         <div class="grid lg:grid-cols-12 gap-8">
-        <div class="lg:col-span-8 pb-28 lg:pb-0">
-          <!-- Placeholder de contenido (incremento 2 monta los Step*.vue reales) -->
-          <div class="rounded-2xl border border-dashed border-brand-200 bg-brand-50/40 px-6 py-16 text-center">
-            <p class="heading-label text-brand-700">Paso {{ wizard.currentStepNumber.value }}</p>
-            <h2 class="heading-card mt-2 text-gray-900">{{ stepHeading }}</h2>
-            <p class="mt-2 body-base text-gray-500 max-w-md mx-auto">
-              Contenido en construcción — este paso se monta en el próximo incremento
-              de la Fase 2.
-            </p>
+          <div class="lg:col-span-8 pb-28 lg:pb-0">
+            <WizardStepsStepVehicle v-if="isStep('vehiculo')" />
+            <WizardStepsStepCoverage v-else-if="isStep('seguro')" />
+            <WizardStepsStepExtras v-else-if="isStep('adicionales')" @skip="wizard.next" />
+            <WizardStepsStepData v-else-if="isStep('datos')" ref="stepDataRef" />
+          </div>
+          <div class="lg:col-span-4">
+            <WizardSummary
+              :can-advance="canAdvanceCurrent"
+              :cta-label="ctaLabel"
+              @next="onNext"
+            />
           </div>
         </div>
-        <div class="lg:col-span-4">
-          <WizardSummary
-            :can-advance="canAdvanceCurrent"
-            :cta-label="ctaLabel"
-            @next="onNext"
-          />
-        </div>
-      </div>
       </div>
     </div>
   </div>
@@ -57,7 +52,7 @@
 
 <script setup lang="ts">
 // External
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
 // composables (wizard machine — Fase 1)
@@ -84,20 +79,14 @@ const search = useStoreSearchData()
 const form = useStoreReservationForm()
 const { pending, hasAvailableCategories, selectedCategory, error, noAvailableCategories } =
   storeToRefs(search)
-const { politicaPrivacidad } = storeToRefs(form)
+const { politicaPrivacidad, isSubmittingForm } = storeToRefs(form)
 
 function isStep(step: WizardStep): boolean {
   return wizard.currentStep.value === step
 }
 
-const STEP_HEADINGS: Record<WizardStep, string> = {
-  busqueda: '¿Dónde y cuándo?',
-  vehiculo: 'Elige tu vehículo',
-  seguro: 'Elige tu cobertura',
-  adicionales: 'Servicios adicionales',
-  datos: 'Tus datos para reservar',
-}
-const stepHeading = computed(() => STEP_HEADINGS[wizard.currentStep.value])
+/** Ref al Paso 5 para disparar la validación + envío del ReservationForm. */
+const stepDataRef = ref<{ submit: () => void } | null>(null)
 
 /** Estado de dominio que gobierna el avance de cada paso (SCEN-W-05/07). */
 const advanceState = computed(() => ({
@@ -105,7 +94,8 @@ const advanceState = computed(() => ({
     !pending.value &&
     (hasAvailableCategories.value || !!error.value || noAvailableCategories.value),
   hasSelectedCategory: !!selectedCategory.value,
-  // Paso 5 se valida en StepData (incremento 2); hasta entonces no avanza.
+  // Paso 5: politicaPrivacidad (default true) habilita el CTA; la validación
+  // valibot real la corre ReservationForm al invocar submit().
   formValid: Boolean(politicaPrivacidad.value),
 }))
 
@@ -117,7 +107,21 @@ const ctaLabel = computed(() =>
   wizard.currentStep.value === 'datos' ? 'Confirmar reserva' : 'Continuar',
 )
 
+/**
+ * CTA del sidebar. En el Paso 5 dispara el submit del formulario (que valida y,
+ * si es válido, navega según el estado de la reserva); en el resto avanza la
+ * máquina si el paso lo permite.
+ */
 function onNext(): void {
+  if (wizard.currentStep.value === 'datos') {
+    // Guard re-entrante: sin esto un doble-clic durante el round-trip de
+    // useRecordReservationForm dispara dos POST → reservas duplicadas
+    // (isSubmittingForm no gatea el CTA por sí solo). El CTA además se
+    // deshabilita mientras envía (WizardSummary).
+    if (isSubmittingForm.value) return
+    stepDataRef.value?.submit()
+    return
+  }
   if (canAdvanceCurrent.value) wizard.next()
 }
 </script>

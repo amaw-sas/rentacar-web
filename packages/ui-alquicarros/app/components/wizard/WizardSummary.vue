@@ -37,7 +37,7 @@
             block
             size="lg"
             class="mt-4 justify-center rounded-full bg-brand-600 hover:bg-brand-700 text-gray-900 font-bold disabled:opacity-50"
-            :disabled="!canAdvance"
+            :disabled="ctaDisabled"
             data-testid="wizard-continue-desktop-test"
             @click="$emit('next')"
           >
@@ -96,7 +96,7 @@
             block
             size="lg"
             class="flex-1 justify-center rounded-full bg-brand-600 hover:bg-brand-700 text-gray-900 font-bold disabled:opacity-50"
-            :disabled="!canAdvance"
+            :disabled="ctaDisabled"
             data-testid="wizard-continue-mobile-test"
             @click="$emit('next')"
           >
@@ -131,8 +131,13 @@ const mobileOpen = ref(false)
 
 const form = useStoreReservationForm()
 const search = useStoreSearchData()
-const { selectedPickupLocation, selectedDays, humanFormattedPickupDateShort } = storeToRefs(form)
+const { selectedPickupLocation, selectedDays, humanFormattedPickupDateShort, isSubmittingForm } =
+  storeToRefs(form)
 const { selectedCategory } = storeToRefs(search)
+
+// El CTA se deshabilita mientras la reserva está en vuelo (evita el doble-submit
+// que registraría reservas duplicadas — el CTA de datos dispara el envío).
+const ctaDisabled = computed(() => !props.canAdvance || isSubmittingForm.value)
 
 /** Nombre humano del segmento de la gama elegida (Económicos, Sedanes…). */
 function segmentLabel(code: string): string {

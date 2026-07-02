@@ -1,0 +1,177 @@
+<template>
+  <!--
+    Paso 2 — Vehículo. Nivel 1: tiles de segmento (agrupa la disponibilidad por la
+    taxonomía comercial, oculta los vacíos, "desde $X" del más barato). Nivel 2:
+    las gamas del segmento abierto como cards lean. Elegir fija `selectedCategory`
+    (search) + `vehiculo` (form) y habilita avanzar al Paso 3 (SCEN-W-03/04/05).
+
+    Estados vacío/error se refinan en el Paso 12 (Fase 4); aquí un fallback mínimo.
+  -->
+  <div>
+    <header class="mb-5">
+      <h2 class="heading-card text-gray-900">Elige tu vehículo</h2>
+      <p class="mt-1 body-base text-gray-500">
+        Agrupamos las opciones por tipo. Abre un grupo y elige la gama que prefieras.
+      </p>
+    </header>
+
+    <!-- Cargando disponibilidad -->
+    <div v-if="pending" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <PlaceholdersCategoryCard />
+      <PlaceholdersCategoryCard class="hidden sm:block" />
+    </div>
+
+    <!-- Sin vehículos renderizables (CTA a Paso 1 se añade en el Paso 12).
+         Se gatea por `groups.length` — el MISMO conjunto que renderan los tiles —
+         no por `hasAvailableCategories` del store: éste solo descarta el centinela
+         999999999, así que una gama disponible sin metadata de presentación
+         (código no mapeado en Supabase) lo dejaría true con cero tiles → pantalla
+         muerta sin salida. Gatear por groups cubre ambos casos. -->
+    <div
+      v-else-if="groups.length === 0"
+      class="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center"
+      data-testid="wizard-vehicle-empty-test"
+    >
+      <p class="heading-sub text-gray-900">Sin vehículos para esta búsqueda</p>
+      <p class="mt-1 body-base text-gray-500">
+        Ajusta las fechas o el lugar de recogida e intenta de nuevo.
+      </p>
+    </div>
+
+    <template v-else>
+      <!-- Nivel 1 — tiles de segmento -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <WizardVehicleSegmentTile
+          v-for="group in groups"
+          :key="group.segment.id"
+          :segment="group.segment"
+          :count="group.codes.length"
+          :from-price="fromPrice(group)"
+          :active="openSegment === group.segment.id"
+          @select="toggleSegment(group.segment.id)"
+        />
+      </div>
+
+      <!-- Nivel 2 — gamas del segmento abierto -->
+      <div v-if="openGroup" class="mt-6">
+        <h3 class="mb-3 heading-label text-gray-500">{{ openGroup.segment.label }}</h3>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <WizardVehicleCard
+            v-for="(code, index) in openGroup.codes"
+            :key="code"
+            :category="rowByCode.get(code)!"
+            :vehicle-category="vehicleCategories[code]"
+            :priority="index === 0"
+            :selected="selectedCode === code"
+            @select="onSelect"
+          />
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
+
+<script setup lang="ts">
+// External
+import { computed, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+
+// config
+import { groupBySegment, segmentForCode, type SegmentGroup, type SegmentId } from '~/config/vehicleSegments'
+
+// Types
+import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
+
+const search = useStoreSearchData()
+const form = useStoreReservationForm()
+const { filteredCategories, pending, selectedCategory } = storeToRefs(search)
+const { vehiculo, haveTotalInsurance } = storeToRefs(form)
+
+const { vehicleCategories } = useFetchRentacarData()
+const { moneyFormat } = useMoneyFormat()
+
+// Solo gamas renderizables Y disponibles: espeja renderableCategories de
+// CategorySelectionSection (necesitan metadata de presentación) y descarta las
+// "unable" (estimatedTotalAmount centinela 999999999). Ninguna gama sin card se
+// cuela en un tile ni en el conteo del segmento.
+const renderable = computed<CategoryAvailabilityData[]>(() =>
+  filteredCategories.value.filter(
+    (c: CategoryAvailabilityData) =>
+      vehicleCategories[c.categoryCode] && c.estimatedTotalAmount !== 999999999,
+  ),
+)
+
+// Índice code→fila (primera ocurrencia). filteredCategories viene ordenado por
+// estimatedTotalAmount asc, así que el primer código de cada grupo es el más barato.
+const rowByCode = computed(() => {
+  const m = new Map<string, CategoryAvailabilityData>()
+  for (const row of renderable.value) if (!m.has(row.categoryCode)) m.set(row.categoryCode, row)
+  return m
+})
+
+const groups = computed<SegmentGroup[]>(() =>
+  groupBySegment(renderable.value.map((r) => r.categoryCode)),
+)
+
+/**
+ * Total (Seguro Básico) de una fila, MISMA familia de precio que muestran las
+ * cards y el sidebar: getTotalPrice del caso por defecto (no-mensual, sin Total)
+ * = totalAmount + coverageTotalAmount + returnFee (useCategory.ts:230). NO usar
+ * estimatedTotalAmount aquí: ese incluye IVA+tasa (getActualTotalPrice) y dejaría
+ * el "desde" ~19% por encima del precio real de la card más barata (from-floor
+ * mayor que el precio mostrado — lee como bait). Ver code-review Finding 1.
+ */
+function rowBasicTotal(row: CategoryAvailabilityData): number {
+  return (row.totalAmount ?? 0) + (row.coverageTotalAmount ?? 0) + (row.returnFeeAmount ?? 0)
+}
+
+/** "Desde $X" del más barato disponible del segmento (SCEN-W-03). */
+function fromPrice(group: SegmentGroup): string {
+  const cheapest = Math.min(
+    ...group.codes.map((code) => {
+      const row = rowByCode.value.get(code)
+      return row ? rowBasicTotal(row) : Infinity
+    }),
+  )
+  return Number.isFinite(cheapest) ? moneyFormat(cheapest) : ''
+}
+
+const openSegment = ref<SegmentId | null>(null)
+const openGroup = computed<SegmentGroup | null>(
+  () => groups.value.find((g) => g.segment.id === openSegment.value) ?? null,
+)
+
+function toggleSegment(id: SegmentId): void {
+  openSegment.value = openSegment.value === id ? null : id
+}
+
+// Abre por defecto el segmento del vehículo ya elegido (back/deep-link) o, si no
+// hay, el primer grupo (el más barato). Reacciona cuando llega la disponibilidad.
+watch(
+  [groups, selectedCategory],
+  ([gs]) => {
+    if (openSegment.value && gs.some((g) => g.segment.id === openSegment.value)) return
+    const selCode = selectedCategory.value?.categoryCode
+    openSegment.value = selCode ? segmentForCode(selCode) : (gs[0]?.segment.id ?? null)
+  },
+  { immediate: true },
+)
+
+const selectedCode = computed(() => selectedCategory.value?.categoryCode ?? null)
+
+/**
+ * Fija la gama elegida. `cat` es la instancia useCategory que emite la card;
+ * queda como selectedCategory (lo que useRecordReservationForm lee al enviar) y
+ * su código como `vehiculo`. Un vehículo recién elegido arranca en Seguro Básico
+ * (el Paso 3 puede subirlo a Total).
+ */
+function onSelect(cat: ReturnType<typeof useCategory>): void {
+  // Re-tap de la gama ya elegida = no-op: reasignar crearía una instancia fresca
+  // (withTotalCoverage/extras en false) y el reset de haveTotalInsurance borraría
+  // el Seguro Total y los adicionales ya elegidos (data loss en conversión).
+  if (cat.categoryCode.value === selectedCode.value) return
+  selectedCategory.value = cat
+  vehiculo.value = cat.categoryCode.value
+  haveTotalInsurance.value = false
+}
+</script>
