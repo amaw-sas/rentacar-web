@@ -87,6 +87,33 @@ describe('Paso 2 · WizardVehicleCard es un reúso REDUCIDO (sin seguro ni extra
   })
 })
 
+describe('Paso 12 · Estados vacío/error en Paso 2 (SCEN-W-12)', () => {
+  it('el estado vacío ofrece CTA "ajustar búsqueda" que emite adjust-search', () => {
+    const src = stepVehicle()
+    expect(src).toMatch(/wizard-adjust-search-test/)
+    expect(src).toMatch(/adjust-search/)
+    expect(src).toMatch(/ajustar b[úu]squeda/i)
+  })
+
+  it('renderiza un banner de error inline según el error de disponibilidad (server / one-way)', () => {
+    const src = stepVehicle()
+    expect(src).toMatch(/wizard-vehicle-error-test/)
+    expect(src).toMatch(/server_error/)
+    expect(src).toMatch(/one_way_not_available/)
+  })
+
+  it('distingue "sin disponibilidad" (no_available_categories) de un error bloqueante', () => {
+    // no_available_categories_error se trata como vacío (no como error duro)
+    expect(stepVehicle()).toMatch(/no_available_categories_error/)
+  })
+
+  it('el shell devuelve al Paso 1 al pedir ajustar búsqueda (onGoTo busqueda — CTA context-aware)', () => {
+    const src = shell()
+    expect(src).toMatch(/@adjust-search/)
+    expect(src).toMatch(/onGoTo\(['"]busqueda['"]\)/)
+  })
+})
+
 describe('Paso 3 · Seguro — comparador Básico/Total (SCEN-W-06)', () => {
   it('togglea withTotalCoverage en selectedCategory (recálculo en vivo del total)', () => {
     expect(stepCoverage()).toMatch(/withTotalCoverage/)

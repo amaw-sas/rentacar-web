@@ -32,7 +32,10 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         <div class="grid lg:grid-cols-12 gap-8">
           <div class="lg:col-span-8 pb-28 lg:pb-0">
-            <WizardStepsStepVehicle v-if="isStep('vehiculo')" />
+            <WizardStepsStepVehicle
+              v-if="isStep('vehiculo')"
+              @adjust-search="onGoTo('busqueda')"
+            />
             <WizardStepsStepCoverage v-else-if="isStep('seguro')" />
             <WizardStepsStepExtras v-else-if="isStep('adicionales')" @skip="wizard.next" />
             <WizardStepsStepData v-else-if="isStep('datos')" ref="stepDataRef" />

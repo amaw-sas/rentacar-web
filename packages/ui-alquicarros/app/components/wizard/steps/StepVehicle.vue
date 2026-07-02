@@ -21,12 +21,51 @@
       <PlaceholdersCategoryCard class="hidden sm:block" />
     </div>
 
-    <!-- Sin vehículos renderizables (CTA a Paso 1 se añade en el Paso 12).
+    <!-- Error de disponibilidad bloqueante (server / one-way / timeout / horario…):
+         banner inline accionable (Paso 12, SCEN-W-12). server_error añade el
+         fallback humano por WhatsApp. -->
+    <div
+      v-else-if="availabilityError"
+      class="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center"
+      data-testid="wizard-vehicle-error-test"
+    >
+      <template v-if="isServerError">
+        <p class="heading-sub text-gray-900">Servicio temporalmente no disponible</p>
+        <p class="mt-1 body-base text-gray-600">
+          Estamos con problemas técnicos. Intenta de nuevo en unos minutos.
+        </p>
+        <a
+          :href="`https://wa.me/57${whatsappContact.phone}`"
+          target="_blank"
+          rel="noopener"
+          class="mt-3 inline-block body-sm font-semibold text-brand-700 underline"
+        >
+          Escríbenos por WhatsApp {{ whatsappContact.display }}
+        </a>
+      </template>
+      <template v-else>
+        <p class="heading-sub text-gray-900">No pudimos completar la búsqueda</p>
+        <p class="mt-1 body-base text-gray-600">{{ errorMessage }}</p>
+      </template>
+      <div class="mt-4">
+        <button
+          type="button"
+          class="body-sm font-bold text-brand-800 underline underline-offset-4 hover:text-brand-900"
+          data-testid="wizard-adjust-search-test"
+          @click="emit('adjust-search')"
+        >
+          Ajustar búsqueda
+        </button>
+      </div>
+    </div>
+
+    <!-- Sin vehículos renderizables → estado vacío + CTA que vuelve a la búsqueda.
          Se gatea por `groups.length` — el MISMO conjunto que renderan los tiles —
          no por `hasAvailableCategories` del store: éste solo descarta el centinela
          999999999, así que una gama disponible sin metadata de presentación
          (código no mapeado en Supabase) lo dejaría true con cero tiles → pantalla
-         muerta sin salida. Gatear por groups cubre ambos casos. -->
+         muerta sin salida. Gatear por groups cubre ambos casos. `no_available_categories`
+         cae aquí (no es error duro). -->
     <div
       v-else-if="groups.length === 0"
       class="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center"
@@ -34,8 +73,18 @@
     >
       <p class="heading-sub text-gray-900">Sin vehículos para esta búsqueda</p>
       <p class="mt-1 body-base text-gray-500">
-        Ajusta las fechas o el lugar de recogida e intenta de nuevo.
+        No encontramos disponibilidad para estas fechas y sede.
       </p>
+      <div class="mt-4">
+        <button
+          type="button"
+          class="body-sm font-bold text-brand-800 underline underline-offset-4 hover:text-brand-900"
+          data-testid="wizard-adjust-search-test"
+          @click="emit('adjust-search')"
+        >
+          Ajustar búsqueda
+        </button>
+      </div>
     </div>
 
     <template v-else>
@@ -82,13 +131,41 @@ import { groupBySegment, segmentForCode, type SegmentGroup, type SegmentId } fro
 // Types
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
 
+const emit = defineEmits<{
+  /** El usuario pide volver a la búsqueda (Paso 1 en /reservas, #searcher en city). */
+  (e: 'adjust-search'): void
+}>()
+
 const search = useStoreSearchData()
 const form = useStoreReservationForm()
-const { filteredCategories, pending, selectedCategory } = storeToRefs(search)
+const { filteredCategories, pending, selectedCategory, error } = storeToRefs(search)
 const { vehiculo, haveTotalInsurance } = storeToRefs(form)
 
 const { vehicleCategories } = useFetchRentacarData()
 const { moneyFormat } = useMoneyFormat()
+
+// ── Estado de error de disponibilidad (Paso 12, SCEN-W-12) ────────────────────
+// El store ya clasificó el error en useFetchCategoriesAvailabilityData
+// (mapAvailabilityFetchError + classifyOneWayDistanceError). `no_available_categories_error`
+// NO es un error duro: es "sin stock" → cae al estado vacío. El resto (server_error,
+// one_way_not_available, timeout, out_of_schedule…) → banner inline accionable.
+const availabilityError = computed(() =>
+  error.value && error.value.error !== 'no_available_categories_error' ? error.value : null,
+)
+const isServerError = computed(() => availabilityError.value?.error === 'server_error')
+const isOneWayError = computed(() => availabilityError.value?.error === 'one_way_not_available')
+const errorMessage = computed(() => {
+  if (isOneWayError.value) {
+    return 'No podemos cotizar la entrega en una sede distinta a la de recogida para estas ciudades. Elige devolver el vehículo en la misma sede.'
+  }
+  return (
+    availabilityError.value?.message ||
+    'No pudimos completar la búsqueda. Ajusta los datos e intenta de nuevo.'
+  )
+})
+
+// Fallback humano (WhatsApp) ante server_error — espeja CategorySelectionSection.
+const whatsappContact = { phone: '3187703670', display: '318 770 3670' }
 
 // Solo gamas renderizables Y disponibles: espeja renderableCategories de
 // CategorySelectionSection (necesitan metadata de presentación) y descarta las
