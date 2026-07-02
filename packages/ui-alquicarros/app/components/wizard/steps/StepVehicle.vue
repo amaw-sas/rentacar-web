@@ -101,8 +101,10 @@
         />
       </div>
 
-      <!-- Nivel 2 — gamas del segmento abierto -->
-      <div v-if="openGroup" class="mt-6">
+      <!-- Nivel 2 — gamas del segmento abierto. scroll-mt reserva el espacio del
+           header (64px) + la barra de pasos sticky para que scrollIntoView no las
+           esconda debajo. -->
+      <div v-if="openGroup" ref="level2Ref" class="mt-6 scroll-mt-32">
         <h3 class="mb-3 heading-label text-gray-500">{{ openGroup.segment.label }}</h3>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <WizardVehicleCard
@@ -214,12 +216,19 @@ function fromPrice(group: SegmentGroup): string {
 }
 
 const openSegment = ref<SegmentId | null>(null)
+const level2Ref = ref<HTMLElement | null>(null)
 const openGroup = computed<SegmentGroup | null>(
   () => groups.value.find((g) => g.segment.id === openSegment.value) ?? null,
 )
 
 function toggleSegment(id: SegmentId): void {
-  openSegment.value = openSegment.value === id ? null : id
+  const willOpen = openSegment.value !== id
+  openSegment.value = willOpen ? id : null
+  // Al ABRIR un segmento, desplazar a sus cards (en móvil quedan bajo el fold).
+  // Solo en interacción del usuario (no en el auto-open de montaje).
+  if (willOpen && import.meta.client) {
+    nextTick(() => level2Ref.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
 }
 
 // Abre por defecto el segmento del vehículo ya elegido (back/deep-link) o, si no

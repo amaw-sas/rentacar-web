@@ -223,6 +223,18 @@ describe('Refinamientos UX móvil (verificación manual)', () => {
   it('StepData no repite el texto de "titular de la tarjeta" (ya está en ReservationForm)', () => {
     expect(stepData()).not.toMatch(/Completa los datos del titular de la tarjeta/)
   })
+
+  it('al abrir un segmento, se desplaza hacia las cards del nivel 2', () => {
+    const src = stepVehicle()
+    expect(src).toMatch(/level2Ref/)
+    expect(src).toMatch(/scrollIntoView/)
+  })
+
+  it('el ReservationForm apila los campos en una columna en móvil (no grid-cols-2 fijo)', () => {
+    const rf = read('app/components/ReservationForm.vue')
+    expect(rf).toMatch(/grid-cols-1\s+md:grid-cols-2/)
+    expect(rf).not.toMatch(/class="grid grid-cols-2 gap-2"/)
+  })
 })
 
 describe('Stepper móvil navegable (SCEN-W-10 en móvil)', () => {

@@ -20,7 +20,7 @@
         </ul>
       </div>
 
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
         <u-form-field name="nombreCompleto" label="Nombres">
           <u-input
             v-model="formState.nombreCompleto"
@@ -60,7 +60,7 @@
             :ui="inputUi"
           ></u-input>
         </u-form-field>
-        <u-form-field class="col-span-2" name="email" label="Correo electrónico">
+        <u-form-field class="md:col-span-2" name="email" label="Correo electrónico">
           <u-input
             v-model="formState.email"
             class="w-full"
@@ -70,7 +70,7 @@
             :ui="inputUi"
           ></u-input>
         </u-form-field>
-        <u-form-field class="col-span-2" name="telefono">
+        <u-form-field class="md:col-span-2" name="telefono">
           <!-- VueTelInput no usa useFormField, así que el label autogenerado de
                UFormField (for=useId()) no asocia su <input>. Label propio con
                for="telefono" ↔ inputOptions.id="telefono" → nombre accesible
@@ -86,7 +86,7 @@
             @blur="validatePhoneField"
           />
         </u-form-field>
-        <u-form-field class="col-span-2" name="politicaPrivacidad">
+        <u-form-field class="md:col-span-2" name="politicaPrivacidad">
           <!-- Checkbox y texto como hermanos (no usar el slot label): así clic en
                los enlaces navega sin marcar/desmarcar el checkbox. El cuadrito
                (verde con chulo al marcar) es lo único que togglea. -->
