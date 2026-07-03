@@ -13,6 +13,7 @@ import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
 const mockReadBody = vi.fn()
 const mockFetch = vi.fn()
 const mockUseRuntimeConfig = vi.fn()
+const mockGetRequestIP = vi.fn()
 
 vi.stubGlobal('$fetch', (...args: unknown[]) => mockFetch(...args))
 vi.stubGlobal('useRuntimeConfig', () => mockUseRuntimeConfig())
@@ -20,6 +21,7 @@ vi.stubGlobal('useRuntimeConfig', () => mockUseRuntimeConfig())
 vi.mock('h3', () => ({
   defineEventHandler: (handler: Function) => handler,
   readBody: (...args: unknown[]) => mockReadBody(...args),
+  getRequestIP: (...args: unknown[]) => mockGetRequestIP(...args),
   createError: (e: any) => {
     const err = new Error(e.statusMessage || 'error') as Error & {
       statusCode?: number
@@ -45,6 +47,76 @@ async function loadAvailability() {
 async function loadRecord() {
   return (await import('../record.post')).default
 }
+
+// Fix B — both proxies forward the end-user's real IP to the admin in the
+// custom header x-real-client-ip. This funnel is a Vercel project, so Vercel
+// overwrites x-forwarded-for with the funnel's shared NAT egress IP; without
+// this the dashboard buckets every operator under one IP and its per-IP rate
+// limit becomes a global cap. getRequestIP(event,{xForwardedFor:true}) yields
+// the real client IP. The header is OMITTED when the IP is unavailable.
+describe('reservations proxy — real client IP forwarding (Fix B)', () => {
+  const ADMIN = {
+    rentacarAdminUrl: 'https://admin.example.com',
+    rentacarAdminApiKey: 'secret-key',
+  }
+
+  it('availability.post forwards the real IP in x-real-client-ip', async () => {
+    mockUseRuntimeConfig.mockReturnValue(ADMIN)
+    mockReadBody.mockResolvedValue({ pickupLocation: 'BOG' })
+    mockGetRequestIP.mockReturnValue('181.63.178.28')
+    mockFetch.mockResolvedValue([{ code: 'C' }])
+
+    const handler = await loadAvailability()
+    await handler({} as any)
+
+    expect(mockGetRequestIP).toHaveBeenCalledWith(expect.anything(), {
+      xForwardedFor: true,
+    })
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://admin.example.com/api/reservations/availability',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'x-api-key': 'secret-key',
+          'x-real-client-ip': '181.63.178.28',
+        }),
+      })
+    )
+  })
+
+  it('record.post forwards the real IP in x-real-client-ip', async () => {
+    mockUseRuntimeConfig.mockReturnValue(ADMIN)
+    mockReadBody.mockResolvedValue({ fullname: 'Juan Perez' })
+    mockGetRequestIP.mockReturnValue('181.63.178.28')
+    mockFetch.mockResolvedValue({ id: 'res-123' })
+
+    const handler = await loadRecord()
+    await handler({} as any)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://admin.example.com/api/reservations',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'x-api-key': 'secret-key',
+          'x-real-client-ip': '181.63.178.28',
+        }),
+      })
+    )
+  })
+
+  it('omits x-real-client-ip when getRequestIP returns undefined', async () => {
+    mockUseRuntimeConfig.mockReturnValue(ADMIN)
+    mockReadBody.mockResolvedValue({ fullname: 'Juan Perez' })
+    mockGetRequestIP.mockReturnValue(undefined)
+    mockFetch.mockResolvedValue({ id: 'res-123' })
+
+    const handler = await loadRecord()
+    await handler({} as any)
+
+    const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>
+    expect(headers).not.toHaveProperty('x-real-client-ip')
+    expect(headers['x-api-key']).toBe('secret-key')
+  })
+})
 
 describe('availability.post', () => {
   it('throws 500 when admin URL or API key is missing', async () => {
