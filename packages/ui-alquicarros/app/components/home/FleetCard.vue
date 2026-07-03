@@ -7,7 +7,7 @@
 
     Jerarquía (mockup card-estatica): badge de categoría superpuesto sobre la
     imagen, modelos como título, precio prominente de marca, specs en chips,
-    CTA full-width que abre el modal -> SelectBranch (flujo de reserva intacto).
+    CTA full-width que enlaza directo a /reservas (wizard Paso 1 — Búsqueda).
 
     Color de marca: #ef9600 = bg-brand-600. Tailwind 4: usar bg-linear-to-*,
     nunca el alias roto v3 (que con tokens @theme renderiza background-image:none).
@@ -82,31 +82,18 @@
         </span>
       </div>
 
-      <!-- CTA: drives the internal engine (modal -> SelectBranch) -->
-      <!-- hydrate-on-visible (not -interaction): on touch the first tap is
-           consumed by interaction-hydration and never opens the modal.
-           rootMargin pre-hydrates ~200px early so the island is interactive
-           before the thumb arrives on slow devices. -->
-      <LazyUModal
-        :hydrate-on-visible="{ rootMargin: '200px' }"
-        class="mt-auto"
-        :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }"
+      <!-- CTA: enlace directo a /reservas (wizard Paso 1 — Búsqueda). Antes abría
+           un modal con SelectBranch ("¿en qué ciudad?"); la directiva lo elimina:
+           la card estática lleva directo a la página de reservas, donde el usuario
+           elige ciudad/fechas en el wizard. Ser un <a> SSR (UButton `to`) evita la
+           trampa del primer-tap perdido de la isla lazy-hidratada que tenía el modal. -->
+      <UButton
+        to="/reservas"
+        data-testid="fleet-card-cta-test"
+        class="mt-auto block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-gray-900 font-bold uppercase transition-colors"
       >
-        <template #body>
-          <div class="mb-4 text-black text-lg">
-            ¿En que ciudad<br>deseas recoger tu carro?
-          </div>
-          <div class="min-w-80 my-3">
-            <SelectBranch variant="gray" />
-          </div>
-        </template>
-        <UButton
-          data-testid="fleet-card-cta-test"
-          class="block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-gray-900 font-bold uppercase transition-colors"
-        >
-          Ver disponibilidad
-        </UButton>
-      </LazyUModal>
+        Ver disponibilidad
+      </UButton>
     </div>
   </div>
 </template>

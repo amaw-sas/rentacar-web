@@ -357,10 +357,13 @@ test.describe('Searcher unified widget — desktop sin regresión', () => {
 
 // ── Home city selector (SelectBranch) ─────────────────────────────────────────
 // alquilatucarro: SelectBranch INLINE in the home hero.
-// alquilame / alquicarros: SelectBranch lives inside a Fleet-section modal CTA
+// alquilame: SelectBranch lives inside a Fleet-section modal CTA
 // ("Ver disponibilidad") — click it to reveal the selector.
+// alquicarros: NO tiene selector de ciudad en el home — su CTA "Ver disponibilidad"
+// navega directo a /reservas (wizard). Este escenario no aplica → se omite.
 test.describe('SelectBranch home — drawer móvil + navegación', () => {
   test.use({ viewport: MOBILE });
+  test.skip(process.env.BRAND === 'alquicarros', 'alquicarros: home CTA va directo a /reservas, sin selector de ciudad');
 
   // alquilatucarro: SelectBranch is inline in the home hero → the trigger is
   // already present. alquilame/alquicarros: it lives inside a Fleet-section modal

@@ -89,20 +89,21 @@ test.describe('Flota alquicarros — cards estáticas rediseñadas', () => {
     }
   });
 
-  test('SCEN-FC-06: el CTA abre el modal con SelectBranch (flujo intacto)', async ({ page }) => {
+  test('SCEN-FC-06: el CTA es un enlace directo a /reservas (sin modal de ciudad)', async ({ page }) => {
     const cta = compactoCard(page).getByTestId('fleet-card-cta-test');
     await cta.scrollIntoViewIfNeeded();
     await expect(cta).toBeVisible();
     await expect(cta).toContainText(/ver disponibilidad/i);
 
-    const dialog = page.getByRole('dialog');
-    // hydrate-on-visible: el island del modal puede no estar hidratado al primer
-    // tap. Reintentar mantiene el invariante (el click abre el modal) sin perder
-    // el primer tap como objetivo de diseño.
-    await expect(async () => {
-      await cta.click();
-      await expect(dialog).toBeVisible({ timeout: 1000 });
-    }).toPass({ timeout: 15000 });
-    await expect(dialog).toContainText('deseas recoger tu carro');
+    // Es un <a> SSR que apunta a /reservas — no un botón que abre un island.
+    await expect(cta).toHaveJSProperty('tagName', 'A');
+    await expect(cta).toHaveAttribute('href', '/reservas');
+
+    // Al pulsar navega a /reservas y NUNCA abre el modal "¿en qué ciudad?".
+    await cta.click();
+    await page.waitForURL(/\/reservas\/?$/, { timeout: 15000 });
+    expect(new URL(page.url()).pathname).toBe('/reservas');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByText('deseas recoger tu carro')).toHaveCount(0);
   });
 });
