@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, createError, setResponseStatus } from 'h3'
+import { defineEventHandler, readBody, createError, setResponseStatus, getRequestIP } from 'h3'
 import { extractStructuredError } from '@rentacar-main/logic/utils'
 
 export default defineEventHandler(async (event) => {
@@ -15,6 +15,11 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
+  // Fix B: forward the end-user's real IP so the dashboard rate-limits per
+  // operator. Vercel overwrites x-forwarded-for with this funnel's shared NAT
+  // egress IP, masking every operator behind one IP. Omit when unavailable.
+  const clientIp = getRequestIP(event, { xForwardedFor: true })
+
   try {
     // Explicit generic: EXTERNAL URL (admin backend), not an internal route —
     // typing it stops Nuxt matching the string against the internal route union
@@ -24,6 +29,7 @@ export default defineEventHandler(async (event) => {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
+        ...(clientIp ? { 'x-real-client-ip': clientIp } : {}),
       },
       body,
     })
