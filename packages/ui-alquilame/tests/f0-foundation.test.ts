@@ -125,3 +125,38 @@ describe('critical CSS — translate utilities do not double under Tailwind v4',
     expect(translateBlock![0]).not.toMatch(/transform:\s*translate\(/)
   })
 })
+
+describe('critical CSS — /reservas hero margin-collapse + h1 size (CLS)', () => {
+  const config = read('nuxt.config.ts')
+
+  // Root cause (reservas-margin-collapse.scenarios.md, SCEN-RMC-02, box-probe): the
+  // critical @layer base reset only body/img/picture/svg, NOT block elements. So at
+  // first paint the hero <h1> carries its UA default margin (0.67em × 36px ≈ 24px
+  // top+bottom) and the <p> 1em (16px); when the JS-injected main CSS lands (with
+  // Tailwind Preflight → margin:0) those collapse, shrinking the text column 48px and
+  // pulling the Searcher column up 48px. The Preflight block-margin reset MUST be in
+  // critical so first paint == settled.
+  it('declares the Preflight block-margin reset (h1/p) in critical base', () => {
+    expect(config).toContain(
+      'h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, pre { margin: 0; }',
+    )
+  })
+
+  // The hero <p>'s settled top margin (mt-4 = 1rem) must be reserved pre-CSS too, or
+  // the reset alone flips the shift to +16px.
+  it('declares .mt-4 so the hero <p> top margin is reserved pre-CSS', () => {
+    expect(config).toContain('.mt-4 { margin-top: 1rem; }')
+  })
+
+  // The hero h1 uses .heading-hero (typography.css: @apply text-4xl md:text-5xl
+  // lg:text-7xl font-extrabold leading-tight tracking-tight), which wins over the
+  // inline text-3xl/leading-[1.1] in the final render but ships ONLY in the injected
+  // stylesheet — so pre-CSS the h1 paints at 30px (text-3xl) and jumps to 36px,
+  // shifting the Searcher column. heading-hero must be in critical at its FINAL size.
+  // Parity with alquicarros #291.
+  it('declares .heading-hero at its final size (2.25rem / 1.25 mobile + breakpoints)', () => {
+    expect(config).toContain('.heading-hero { font-size: 2.25rem; line-height: 1.25;')
+    expect(config).toContain('.heading-hero { font-size: 3rem; }')
+    expect(config).toContain('.heading-hero { font-size: 4.5rem; }')
+  })
+})

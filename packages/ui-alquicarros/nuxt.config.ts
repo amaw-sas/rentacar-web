@@ -35,6 +35,12 @@ export default defineNuxtConfig({
             @layer base {
             *, *::before, *::after { box-sizing: border-box; }
             body { margin: 0; font-family: 'Montserrat', ui-sans-serif, system-ui, -apple-system, sans-serif; }
+            /* Preflight block-margin reset — sin esto, al primer paint (solo crítico)
+               el <h1> del hero carga su margen UA (0.67em ≈ 24px) y el <p> 1em (16px);
+               al aterrizar el CSS inyectado (trae Preflight → margin:0) colapsan y la
+               columna de texto encoge 48px, jalando el Searcher hacia arriba → CLS
+               /reservas (box-probe). Reservar el estado asentado desde el primer paint. */
+            h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, pre { margin: 0; }
             img { max-width: 100%; height: auto; display: block; }
             picture { display: block; }
             svg { max-width: 100%; height: auto; }

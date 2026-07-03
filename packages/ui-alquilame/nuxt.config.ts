@@ -35,6 +35,12 @@ export default defineNuxtConfig({
             @layer base {
             *, *::before, *::after { box-sizing: border-box; }
             body { margin: 0; font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif; }
+            /* Preflight block-margin reset — sin esto, al primer paint (solo crítico)
+               el <h1> del hero carga su margen UA (0.67em ≈ 24px) y el <p> 1em (16px);
+               al aterrizar el CSS inyectado (trae Preflight → margin:0) colapsan y la
+               columna de texto encoge 48px, jalando el Searcher hacia arriba → CLS
+               /reservas (box-probe). Reservar el estado asentado desde el primer paint. */
+            h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, pre { margin: 0; }
             img { max-width: 100%; height: auto; display: block; }
             picture { display: block; }
             svg { max-width: 100%; height: auto; }
@@ -437,6 +443,21 @@ export default defineNuxtConfig({
             .duration-500 { transition-duration: 500ms; }
             .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
             .placeholder-gray-400::placeholder { color: #9ca3af; }
+            /*
+              Hero h1 usa la clase de componente .heading-hero (typography.css:
+              @apply text-4xl md:text-5xl lg:text-7xl font-extrabold leading-tight
+              tracking-tight) JUNTO a utilidades text-3xl/leading-[1.1] inline. En el
+              render final gana heading-hero, pero está en el CSS inyectado (no en el
+              crítico): con solo crítico el h1 pinta a text-3xl (30px) y salta a 36px
+              cuando aterriza heading-hero → la columna del Searcher (fila 2 del grid
+              en móvil) se desplaza (city/reservas). Se declara heading-hero aquí, al
+              FINAL del layer para ganar a text-3xl/leading-[1.1] del crítico, con los
+              mismos valores por breakpoint → el h1 tiene su tamaño final desde el
+              primer paint. Paridad con alquicarros #291. Ver web#289.
+            */
+            .heading-hero { font-size: 2.25rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.025em; }
+            @media (min-width: 768px) { .heading-hero { font-size: 3rem; } }
+            @media (min-width: 1024px) { .heading-hero { font-size: 4.5rem; } }
             }
           `,
         },
