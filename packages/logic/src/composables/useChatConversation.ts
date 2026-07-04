@@ -30,6 +30,10 @@ import { extractChatActions, type ChatActions } from '../utils/extractChatAction
 export interface QuoteTablePart {
   sede: string;
   dias: number;
+  // Formatted pickup/return hours ("4 pm", "mediodía") when the customer has confirmed them —
+  // rendered next to the day count as the quote-table title. Absent until hours are set.
+  horaRecogida?: string;
+  horaDevolucion?: string;
   filas: Array<{
     categoria: string; // gama code, e.g. "C", "CX"
     descripcion: string; // e.g. "Económico Mecánico"

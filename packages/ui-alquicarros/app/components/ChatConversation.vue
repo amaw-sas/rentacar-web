@@ -62,6 +62,7 @@
             <template v-if="i === bubblesFor(m).length - 1">
               <!-- Tabla de cotización: una fila por gama, precio formateado es-CO -->
               <div v-if="m.quoteTable" class="cc-quote">
+                <span class="cc-quote-title">{{ m.quoteTable.dias }} día(s)<template v-if="m.quoteTable.horaRecogida"> · recoge {{ m.quoteTable.horaRecogida }}, entrega {{ m.quoteTable.horaDevolucion }}</template></span>
                 <div
                   v-for="f in m.quoteTable.filas"
                   :key="f.categoria"
@@ -79,7 +80,7 @@
                   <strong class="cc-quote-price">${{ cop(f.precioTotal) }}</strong>
                 </div>
                 <span class="cc-quote-note">
-                  Total con IVA, tasas, seguro básico y km ilimitado · {{ m.quoteTable.dias }} día(s).
+                  Total con IVA, tasas, seguro básico y km ilimitado.
                 </span>
               </div>
 
@@ -393,10 +394,11 @@ button { -webkit-tap-highlight-color: transparent; }
   border-radius: 0.5rem;
   background: #fff;
 }
+.cc-quote-title { font-size: 0.9rem; font-weight: 700; color: #111827; margin-bottom: 0.1rem; }
 .cc-quote-gama { font-size: 0.9rem; color: #111827; }
 .cc-quote-desc { color: #6b7280; }
 .cc-quote-price { font-size: 0.95rem; color: #111827; white-space: nowrap; }
-.cc-quote-note { font-size: 0.72rem; color: #6b7280; margin-top: 0.15rem; }
+.cc-quote-note { font-size: 0.9rem; color: #6b7280; margin-top: 0.15rem; }
 
 /* --- Tarjetas de modelos (data-gamaCards) --- */
 .cc-cards { margin-top: 0.5rem; }
