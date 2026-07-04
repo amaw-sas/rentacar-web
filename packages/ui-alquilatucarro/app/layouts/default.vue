@@ -134,7 +134,7 @@
         </div>
         <div class="flex flex-col md:flex-row md:flex-wrap justify-center gap-1 md:gap-3">
           <UButton
-            v-for="city in cities"
+            v-for="city in SERVICE_CITIES"
             :key="city.id"
             :to="getCityReservationURL(city)"
             class="text-white justify-center bg-blue-600 hover:bg-blue-800 rounded-lg py-3 w-full md:w-fit font-normal transition-colors"
@@ -176,7 +176,7 @@
 
 <script lang="ts" setup>
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { buildCityReservationURL } from '@rentacar-main/logic/utils'
+import { buildCityReservationURL, SERVICE_CITIES } from '@rentacar-main/logic/utils'
 import type { City as CityData } from '@rentacar-main/logic/utils'
 import { today } from '@internationalized/date'
 import { storeToRefs } from 'pinia'
@@ -275,8 +275,10 @@ function onMobileNavClick(item: NavigationMenuItem, e: MouseEvent) {
   }
 }
 
-const { cities } = useData();
-// Live active-city count (Supabase) for the footer "presentes en N ciudades".
+// Footer city links + "presentes en N ciudades" render from the deterministic
+// SERVICE_CITIES source of truth, not live rentacar-data — live data drifted
+// between the ISR HTML and the hydration payload and caused footer hydration
+// mismatches (issue #221). cityCount now derives from the same constant.
 const cityCount = useCityCount();
 const { franchise, reservation, defaultTimezone } = useAppConfig();
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
@@ -294,7 +296,7 @@ onMounted(() => {
   reservationEndDay.value = today(defaultTimezone).add({ days: 8 }).toString();
 });
 
-const getCityReservationURL = (city: CityData): string =>
+const getCityReservationURL = (city: Pick<CityData, 'id'>): string =>
   buildCityReservationURL(city, branches.value || [], {
     initDay: reservationInitDay.value,
     endDay: reservationEndDay.value,

@@ -29,16 +29,22 @@ const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 describe('F1 step04 — Cities.vue', () => {
   const cities = read('app/components/home/Cities.vue')
 
-  it('sources cities from useData() (Supabase-dynamic, not a hardcoded list)', () => {
-    expect(cities).toMatch(/useData\(\)/)
-    expect(cities).toMatch(/const\s*\{\s*cities\s*\}\s*=\s*useData\(\)/)
+  it('sources cities from the deterministic SERVICE_CITIES set (issue #221, not a hardcoded inline list)', () => {
+    // AMENDED for #221 (see docs/specs/city-count-derivation/
+    // AMEND-2026-07-04-issue-221.md): the pill grid now renders from the
+    // build-time SERVICE_CITIES source of truth, NOT live useData().cities —
+    // live data drifted between the ISR HTML and the hydration payload and
+    // caused hydration mismatches. SERVICE_CITIES is the single guarded list
+    // (still not a hardcoded literal inside this component).
+    expect(cities).toMatch(/import\s*\{\s*SERVICE_CITIES\s*\}\s*from\s*'@rentacar-main\/logic\/utils'/)
+    expect(cities).not.toMatch(/const\s*\{\s*cities\s*\}\s*=\s*useData\(\)/)
   })
 
-  it('iterates the data source — no hardcoded city count or subset for the full grid', () => {
-    // The pill grid must v-for over the full `cities` collection, never a literal
-    // array of city names. The only allowed cap (featuredCities) is a presentation
-    // slice that does not hide any city from the grid.
-    expect(cities).toMatch(/v-for="city in cities"/)
+  it('iterates the full SERVICE_CITIES set — no hardcoded subset/slice for the grid', () => {
+    // The pill grid must v-for over the full SERVICE_CITIES collection, never a
+    // literal array of city names nor a slice that hides a city.
+    expect(cities).toMatch(/v-for="city in SERVICE_CITIES"/)
+    expect(cities).not.toMatch(/SERVICE_CITIES\.slice\(/)
   })
 
   it('links every city INTERNALLY to /{city.id} via NuxtLink :to', () => {

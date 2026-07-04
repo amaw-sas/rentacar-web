@@ -24,7 +24,9 @@ export interface CityReservationDates {
 }
 
 export function buildCityReservationURL(
-  city: City,
+  // Only `city.id` (the DB slug) is read — accept the minimal shape so callers
+  // can pass a SERVICE_CITIES entry (`Pick<City,'id'|'name'>`) directly.
+  city: Pick<City, "id">,
   branches: BranchData[],
   dates: CityReservationDates,
 ): string {

@@ -37,6 +37,7 @@ export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, nea
 export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
 export type { CityReservationDates } from './buildCityReservationURL';
+export { SERVICE_CITIES } from './serviceCities';
 
 // ============================================================================
 // Attribution (marketing origin capture)

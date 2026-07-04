@@ -112,7 +112,8 @@
     </main>
 
     <!-- Footer — golden parity: fondo navy #1A1A2E, 4 columnas + barra negra.
-         Conserva el wiring real: cities (v-for + deep-link), franchise.footerLinks,
+         Conserva el wiring real: SERVICE_CITIES (v-for + deep-link, determinista
+         por hidratación ISR — issue #221), franchise.footerLinks,
          whatsapp/phone/email/socialmedia. -->
     <footer class="bg-[#1A1A2E] text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
@@ -164,7 +165,7 @@
             </h3>
             <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
               <NuxtLink
-                v-for="city in cities"
+                v-for="city in SERVICE_CITIES"
                 :key="city.id"
                 :to="getCityReservationURL(city)"
                 :external="true"
@@ -281,7 +282,7 @@
 
 <script lang="ts" setup>
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { buildCityReservationURL } from '@rentacar-main/logic/utils'
+import { buildCityReservationURL, SERVICE_CITIES } from '@rentacar-main/logic/utils'
 import type { City as CityData } from '@rentacar-main/logic/utils'
 import { today } from '@internationalized/date'
 import { storeToRefs } from 'pinia'
@@ -332,8 +333,10 @@ const items = computed<NavigationMenuItem[]>(() => {
   ];
 })
 
-const { cities } = useData();
-// Live active-city count (Supabase) for the footer "presencia en N ciudades".
+// Footer city links + "presencia en N ciudades" render from the deterministic
+// SERVICE_CITIES source of truth, not live rentacar-data — live data drifted
+// between the ISR HTML and the hydration payload and caused footer hydration
+// mismatches (issue #221). cityCount now derives from the same constant.
 const cityCount = useCityCount();
 const { franchise, defaultTimezone } = useAppConfig();
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
@@ -351,7 +354,7 @@ onMounted(() => {
   reservationEndDay.value = today(defaultTimezone).add({ days: 8 }).toString();
 });
 
-const getCityReservationURL = (city: CityData): string =>
+const getCityReservationURL = (city: Pick<CityData, 'id'>): string =>
   buildCityReservationURL(city, branches.value || [], {
     initDay: reservationInitDay.value,
     endDay: reservationEndDay.value,

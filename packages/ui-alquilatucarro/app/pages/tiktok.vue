@@ -101,6 +101,11 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 
+// Live cities are safe HERE because /tiktok is NOT an `isr` route (see each
+// brand's routeRules) — it renders dynamically per request, so server and client
+// never hydrate against divergent snapshots. If /tiktok is ever promoted to
+// `isr`, switch to the deterministic SERVICE_CITIES set (see issue #221) or this
+// v-for reintroduces the footer hydration-mismatch class.
 const { cities } = useData()
 const { franchise, defaultTimezone } = useAppConfig()
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData())

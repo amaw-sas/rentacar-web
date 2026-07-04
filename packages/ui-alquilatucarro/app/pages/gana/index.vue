@@ -295,7 +295,7 @@ const preguntas = [
   },
   {
     label: '¿Por qué confiar en AlquilaTuCarro.com?',
-    content: 'Somos una plataforma confiable y líder en la renta de autos en Colombia, con una amplia red de socios y rentadoras locales en más de 20 ciudades del país.'
+    content: 'Somos una plataforma confiable y líder en la renta de autos en Colombia, con una amplia red de socios y rentadoras locales en 19 ciudades del país.'
   }
 ]
 

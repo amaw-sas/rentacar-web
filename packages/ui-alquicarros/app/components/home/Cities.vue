@@ -9,15 +9,17 @@
       2. Listado de cobertura: TODAS las ciudades activas como enlaces tipográficos con pin —
          honesto con los assets (foto solo donde la hay), completo para SEO/escaneo.
 
-    Sin marquesina ni animación de scroll. Datos: useData().cities (Supabase-dynamic), count
-    controlado por la DB. Gradient guard (v4): `bg-linear-to-*`, nunca el alias roto v3. Headings
+    Sin marquesina ni animación de scroll. Datos: SERVICE_CITIES (set determinista
+    build-time), NO rentacar-data live — la data live driftaba entre el HTML ISR y el payload
+    de hidratación y causaba hydration mismatches (issue #221); el count deriva del mismo vía
+    useCityCount. Gradient guard (v4): `bg-linear-to-*`, nunca el alias roto v3. Headings
     con `.heading-*` / `font-heading`.
   -->
   <section id="cities" class="bg-gray-100 py-12 md:py-20 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
       <div class="text-center mb-10">
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
-          Presentes en más de {{ cityCount }} Ciudades
+          Presentes en {{ cityCount }} Ciudades
         </h2>
         <p class="mt-4 text-lg text-gray-600">
           Encuentra tu carro en las principales ciudades de Colombia
@@ -66,7 +68,7 @@
       </div>
 
       <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3 max-w-4xl mx-auto">
-        <li v-for="city in cities" :key="city.id">
+        <li v-for="city in SERVICE_CITIES" :key="city.id">
           <NuxtLink
             :to="`/${city.id}`"
             :aria-label="`Alquiler de carros en ${city.name}`"
@@ -82,14 +84,12 @@
 </template>
 
 <script setup lang="ts">
-// Types
-import type { City } from '@rentacar-main/logic/utils'
+// Deterministic city set (build-time). El listado de cobertura, el mosaico y el
+// count derivan de esto — no de rentacar-data live — para que el HTML SSR y el
+// payload de hidratación siempre coincidan bajo ISR; la data live driftaba entre
+// ambos y causaba hydration mismatches (issue #221). cityCount deriva del mismo.
+import { SERVICE_CITIES } from '@rentacar-main/logic/utils'
 
-// useData / useCityCount son auto-imported del logic layer; las ciudades son Supabase-dynamic.
-const { cities } = useData()
-
-// Count vivo (Supabase) para el heading. Guarda el camino degradado: cities.length renderiza 0
-// cuando el data source está vacío (mismo composable que Stats.vue / ValueProps.vue).
 const cityCount = useCityCount()
 
 // Fotos que realmente enviamos, por City.id (=== slug). El orden define el orden del mosaico.
@@ -106,7 +106,7 @@ type FeaturedCity = { id: string; name: string; image: string }
 // cualquier foto cuya ciudad no esté activa — nunca se inventan ciudades.
 const featuredCities = computed<FeaturedCity[]>(() =>
   FEATURED.flatMap(({ id, image }) => {
-    const city = cities.find((c: City) => c.id === id)
+    const city = SERVICE_CITIES.find((c) => c.id === id)
     return city ? [{ id: city.id, name: city.name, image }] : []
   }),
 )

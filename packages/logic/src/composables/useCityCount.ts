@@ -1,41 +1,36 @@
 // External
 import { computed, type ComputedRef } from 'vue'
 
-/**
- * Live count of active service cities, derived from the Supabase-backed
- * rentacar-data (`useFetchRentacarData().cities`, filtered to status=active
- * upstream). Marketing copy ("N ciudades de Colombia") binds to this instead
- * of a hardcoded number, so the figure tracks the dashboard — there is no
- * literal to drift. The cities array is SSR-hydrated by the `rentacar-data`
- * plugin before component setup, so the count is present at first paint
- * (CLS-safe); reading it inside `computed` tracks the underlying `useState`,
- * so it follows the ≤1h SWR refetch.
- *
- * FALLBACK_CITY_COUNT guards the degraded path: when the rentacar-data state
- * is null (SSR before the plugin resolves, or a failed/partial fetch),
- * `useFetchRentacarData` returns a frozen sentinel with `cities: []`. We treat
- * an empty/absent list as "not loaded" and render the fallback so the UI never
- * shows "0 ciudades". A genuine zero-city state is not a real operating
- * condition (the business always serves cities); if it ever became one, the
- * marketing strings — not this guard — would need to handle it explicitly.
- *
- * In practice the live count is always a plural number (19 at the time of
- * writing), so consumers hardcode the plural noun ("N ciudades"); singular
- * ("1 ciudad") is not handled.
- *
- * FALLBACK_CITY_COUNT tracks the current real active-city count (19). The live
- * derivation auto-updates the visible figures the moment a city is added in
- * Supabase; this constant (and the one build-time SEO literal that mirrors it)
- * are the only spots to bump by hand when that happens.
- */
-export const FALLBACK_CITY_COUNT = 19
+import { SERVICE_CITIES } from '../utils/serviceCities'
 
+/**
+ * Count of active service cities, derived from the deterministic build-time
+ * SERVICE_CITIES list (see serviceCities.ts) — NOT from live Supabase data.
+ *
+ * HISTORY. Operator correction #3 (docs/specs/city-count-derivation) replaced 7
+ * scattered hardcoded "N ciudades" literals with a live count off
+ * `useFetchRentacarData().cities`, so the figure self-corrected from the
+ * dashboard. Issue #221 then found that the SAME live derivation caused
+ * intermittent hydration mismatches on ISR pages: the footer and home "Ciudades"
+ * section render a different node count / number on the server vs the client
+ * when the ISR HTML and the hydration `_payload.json` capture different `cities`
+ * snapshots. Those two requirements are mutually exclusive for an SSR text node
+ * under ISR — a number cannot both track a value that may drift and be
+ * drift-proof.
+ *
+ * Resolution (directive, 2026-07-04): keep operator #3's DURABLE intent — ONE
+ * guarded source of truth, never scattered literals — but make that source the
+ * deterministic SERVICE_CITIES list instead of live data, so the server render
+ * and the client's first render always agree. Adding/removing a city is now a
+ * coordinated edit of SERVICE_CITIES + each brand's `isr` routeRules + the
+ * build-time SEO literals (adding a city already required the ISR route). See
+ * SERVICE_CITIES for the lockstep contract, and the AMEND note in
+ * docs/specs/city-count-derivation/scenarios/city-count-derivation.scenarios.md.
+ *
+ * Kept as a composable returning a ComputedRef<number> so every call site
+ * (`{{ cityCount }}`, `cityCount.value`) is unchanged — it simply never drifts
+ * now. The count is always a plural number (19 at the time of writing), so
+ * consumers hardcode the plural noun ("N ciudades"); singular is not handled.
+ */
 export const useCityCount = (): ComputedRef<number> =>
-  computed(() => {
-    const { cities } = useFetchRentacarData()
-    // Explicit: fall back only when the list is genuinely unavailable, not by
-    // coercing a real 0 — `|| FALLBACK` would conflate the two.
-    return Array.isArray(cities) && cities.length > 0
-      ? cities.length
-      : FALLBACK_CITY_COUNT
-  })
+  computed(() => SERVICE_CITIES.length)

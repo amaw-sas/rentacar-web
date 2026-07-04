@@ -7,8 +7,10 @@
     INTERNAL links to the city landing route `/{city.id}` (City.id === slug === the
     /[city] route param). No external contact deep links exist in this section.
 
-    Data: ALL active cities from useData().cities (Supabase-dynamic via
-    rentacar-data). The count is DB-controlled — never hardcoded or sliced.
+    Data: the deterministic SERVICE_CITIES set (build-time source of truth), NOT
+    live rentacar-data — live data drifted between the ISR HTML and the hydration
+    payload and caused hydration mismatches (issue #221). The count derives from
+    the same source via useCityCount; never a hardcoded literal.
 
     Visual (golden parity): a horizontal MARQUEE of "featured" photo cards over a
     pill/chip grid of every active city. Featured cards carry a real city photo
@@ -25,7 +27,7 @@
     <div class="max-w-7xl mx-auto">
       <div class="text-center mb-10">
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
-          Presentes en más de {{ cities.length }} Ciudades
+          Presentes en {{ cityCount }} Ciudades
         </h2>
         <p class="mt-4 text-lg text-gray-600">
           Encuentra tu carro en las principales ciudades de Colombia
@@ -82,7 +84,7 @@
       <!-- All cities — pill / chip grid (every active city, internal link) -->
       <div class="flex flex-wrap justify-center gap-3">
         <NuxtLink
-          v-for="city in cities"
+          v-for="city in SERVICE_CITIES"
           :key="city.id"
           :to="`/${city.id}`"
           :aria-label="`Alquiler de carros en ${city.name}`"
@@ -98,15 +100,18 @@
 <script setup lang="ts">
 // Types
 import type { City } from '@rentacar-main/logic/utils'
+// Deterministic city set (build-time). The pill grid + count render from this,
+// not live rentacar-data, so the SSR HTML and the hydration payload always agree
+// under ISR — live data drifted between the two and caused hydration mismatches
+// (issue #221). cityCount derives from the same constant.
+import { SERVICE_CITIES } from '@rentacar-main/logic/utils'
 
-// useData is auto-imported from the logic layer; cities are Supabase-dynamic.
-const { cities } = useData()
+const cityCount = useCityCount()
 
 // Photos we actually ship, keyed by City.id (=== slug). A city only becomes a
-// featured photo card when both (a) it is an active city in the data source AND
-// (b) we have a real photo for it — no placeholder cities are ever invented.
-// The array order defines the marquee order (golden: Bogotá, Medellín, Cali,
-// Cartagena).
+// featured photo card when both (a) it is in SERVICE_CITIES AND (b) we have a
+// real photo for it — no placeholder cities are ever invented. The array order
+// defines the marquee order (golden: Bogotá, Medellín, Cali, Cartagena).
 const FEATURED: ReadonlyArray<{ id: string; image: string }> = [
   { id: 'bogota', image: '/images/cities/bogota.jpg' },
   { id: 'medellin', image: '/images/cities/medellin.jpg' },
@@ -114,14 +119,14 @@ const FEATURED: ReadonlyArray<{ id: string; image: string }> = [
   { id: 'cartagena', image: '/images/cities/cartagena.jpg' },
 ]
 
-type FeaturedCity = City & { image: string }
+type FeaturedCity = Pick<City, 'id' | 'name'> & { image: string }
 
-// Featured set: the ordered intersection of FEATURED photos with real active
-// cities. flatMap drops any photo whose city is not currently active.
+// Featured set: the ordered intersection of FEATURED photos with SERVICE_CITIES.
+// flatMap drops any photo whose city is not in the served set.
 const featuredCities = computed<FeaturedCity[]>(() =>
   FEATURED.flatMap(({ id, image }) => {
-    const city = cities.find((c: City) => c.id === id)
-    return city ? [{ ...city, image }] : []
+    const city = SERVICE_CITIES.find((c) => c.id === id)
+    return city ? [{ id: city.id, name: city.name, image }] : []
   })
 )
 

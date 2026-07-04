@@ -15,9 +15,15 @@ import { join } from 'node:path'
 const cities = readFileSync(join(__dirname, '..', 'Cities.vue'), 'utf-8')
 
 describe('Cities — SCEN-CITIES-01: todas las ciudades activas son alcanzables', () => {
-  it('el listado itera TODAS las ciudades de useData().cities (sin slice/hardcode)', () => {
-    expect(cities).toMatch(/const\s*\{\s*cities\s*\}\s*=\s*useData\(\)/)
-    expect(cities).toMatch(/v-for="city in cities"/)
+  it('el listado itera TODAS las ciudades del set determinista SERVICE_CITIES (sin slice/hardcode)', () => {
+    // AMENDED para #221 (ver docs/specs/city-count-derivation/
+    // AMEND-2026-07-04-issue-221.md): el listado renderiza desde SERVICE_CITIES
+    // (fuente de verdad build-time), NO desde useData().cities live — la data
+    // live driftaba entre el HTML ISR y el payload de hidratación y causaba
+    // hydration mismatches. SERVICE_CITIES es el set completo (sin slice).
+    expect(cities).toMatch(/import\s*\{\s*SERVICE_CITIES\s*\}\s*from\s*'@rentacar-main\/logic\/utils'/)
+    expect(cities).not.toMatch(/const\s*\{\s*cities\s*\}\s*=\s*useData\(\)/)
+    expect(cities).toMatch(/v-for="city in SERVICE_CITIES"/)
     expect(cities).toMatch(/:to="`\/\$\{city\.id\}`"/)
     expect(cities).not.toMatch(/\.slice\(/)
   })
@@ -26,7 +32,7 @@ describe('Cities — SCEN-CITIES-01: todas las ciudades activas son alcanzables'
 describe('Cities — SCEN-CITIES-02: heading refleja el count vivo', () => {
   it('usa useCityCount() y lo muestra en el heading', () => {
     expect(cities).toMatch(/useCityCount\(\)/)
-    expect(cities).toMatch(/Presentes en más de \{\{\s*cityCount\s*\}\} Ciudades/)
+    expect(cities).toMatch(/Presentes en \{\{\s*cityCount\s*\}\} Ciudades/)
   })
 })
 
@@ -69,7 +75,7 @@ describe('Cities — SCEN-CITIES-05: sin marquesina ni auto-scroll', () => {
 describe('Cities — SCEN-CITIES-06: sin ciudades inventadas', () => {
   it('featuredCities es la intersección de FEATURED con las ciudades activas', () => {
     expect(cities).toMatch(/FEATURED\.flatMap/)
-    expect(cities).toMatch(/cities\.find/)
+    expect(cities).toMatch(/SERVICE_CITIES\.find/)
   })
 })
 

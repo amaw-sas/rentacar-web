@@ -126,8 +126,11 @@ describe('chrome — city links + #109 hydration guard (default.vue)', () => {
     expect(layout).not.toContain('wa.me')
   })
 
-  it('preserves the v-for over cities with :external + target=_blank', () => {
-    expect(layout).toMatch(/v-for="city in cities"/)
+  it('preserves the footer v-for over the deterministic SERVICE_CITIES set with :external + target=_blank', () => {
+    // AMENDED for #221: footer city links render from the build-time
+    // SERVICE_CITIES source of truth (drift-proof under ISR), not live cities.
+    expect(layout).toMatch(/v-for="city in SERVICE_CITIES"/)
+    expect(layout).toMatch(/import\s*\{\s*buildCityReservationURL,\s*SERVICE_CITIES\s*\}/)
     expect(layout).toMatch(/:external="true"/)
     expect(layout).toMatch(/target="_blank"/)
   })
