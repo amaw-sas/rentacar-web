@@ -76,7 +76,7 @@
                   @touchmove.passive="onSwipeMove"
                   @touchend="onSwipeEnd($event, () => replyToGama(f))"
                 >
-                  <span class="cc-quote-gama">Gama {{ f.categoria }} <span class="cc-quote-desc">{{ f.descripcion }}</span></span>
+                  <span class="cc-quote-gama">{{ f.descripcion }} <span class="cc-quote-desc">(Gama {{ f.categoria }})</span></span>
                   <strong class="cc-quote-price">${{ cop(f.precioTotal) }}</strong>
                 </div>
                 <span class="cc-quote-note">
@@ -398,7 +398,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .cc-quote-gama { font-size: 0.9rem; color: #111827; }
 .cc-quote-desc { color: #6b7280; }
 .cc-quote-price { font-size: 0.95rem; color: #111827; white-space: nowrap; }
-.cc-quote-note { font-size: 0.9rem; color: #6b7280; margin-top: 0.15rem; }
+.cc-quote-note { font-size: 0.9rem; color: #111827; margin-top: 0.15rem; }
 
 /* --- Tarjetas de modelos (data-gamaCards) --- */
 .cc-cards { margin-top: 0.5rem; }
