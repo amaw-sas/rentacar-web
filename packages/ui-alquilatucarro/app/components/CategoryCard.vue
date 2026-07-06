@@ -28,10 +28,10 @@
             <span class="text-left text-gray-700 items-center">
               <span class="categoria-carro">
                 Grupo {{ categoryCode }} ({{ grupo }})
-                <CategoryTags :category />
               </span>
               <span class="descripcion-corta">
                 {{ vehicleCategory?.descripcion_corta }}
+                <CategoryTags :category />
               </span>
             </span>
           </template>
