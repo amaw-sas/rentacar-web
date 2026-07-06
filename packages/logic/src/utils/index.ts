@@ -124,3 +124,4 @@ export * from './validation/searcherForm';
 export * from './validation/normalizePhoneNumber';
 export * from './validation/userInformationForm';
 export * from './validation/userInformationWithFlightForm';
+export * from './categoryReadingOrder';
