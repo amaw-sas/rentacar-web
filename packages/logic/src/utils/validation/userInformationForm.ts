@@ -1,6 +1,7 @@
 
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import * as v from "valibot";
+import { normalizePhoneNumber } from "./normalizePhoneNumber";
 import "@valibot/i18n/es";
 v.setGlobalConfig({ lang: "es" });
 
@@ -60,7 +61,7 @@ export const userInformationEntries = {
   telefono: v.pipe(
     v.string("Escribe tu número de teléfono o WhatsApp"),
     v.minLength(5, "Escribe tu número de WhatsApp o teléfono"),
-    v.custom((input) => isValidPhoneNumber(input as string), "Número de teléfono o WhatsApp no válido")
+    v.custom((input) => isValidPhoneNumber(normalizePhoneNumber(input as string)), "Número de teléfono o WhatsApp no válido")
   ),
   email: v.pipe(v.string("Escribe tu email o correo electrónico"), v.email("Email no válido")),
   politicaPrivacidad: v.pipe(
