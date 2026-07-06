@@ -9,7 +9,7 @@ import useStoreReservationForm from '../stores/useStoreReservationForm';
 import useStoreSearchData from '../stores/useStoreSearchData';
 
 // Internal dependencies - utils
-import { readStoredAttribution } from '@rentacar-main/logic/utils';
+import { readStoredAttribution, normalizePhoneNumber } from '@rentacar-main/logic/utils';
 
 // Types
 import type { FormRecordFields, RecordReservationApiData } from '@rentacar-main/logic/utils';
@@ -55,7 +55,7 @@ export default async function useRecordReservationForm() {
     fullname: `${nombreCompleto.value} ${apellidos.value}`,
     identification_type: tipoIdentificacion.value,
     identification: identificacion.value,
-    phone: telefono.value,
+    phone: normalizePhoneNumber(telefono.value),
     email: email.value,
     category: vehiculo.value,
     pickup_location: lugarRecogida.value,
