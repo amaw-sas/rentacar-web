@@ -76,9 +76,9 @@
       @apply font-normal text-black px-2 py-1 rounded-full text-xs bg-white border border-gray-300;
     }
 
-    /* "sin pico y placa" pill filled with the discount-badge background color */
+    /* "sin pico y placa" pill in highlight yellow to make the exemption stand out */
     .etiqueta-carro.etiqueta-sin-pyp {
-      @apply bg-[#a3f78b] border-[#a3f78b];
+      @apply bg-[#fde047] border-[#fde047];
     }
 
     .contenedor-tarifas{
