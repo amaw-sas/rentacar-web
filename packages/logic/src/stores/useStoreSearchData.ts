@@ -13,7 +13,7 @@ import useCategory from '../composables/useCategory';
 import useMessages from '../composables/useMessages';
 
 // utils
-import { categoryOffersMonthly, isCategoryVisibleInCity, isBlockingSearchError } from '@rentacar-main/logic/utils';
+import { categoryOffersMonthly, isCategoryVisibleInCity, isBlockingSearchError, categoryReadingRank } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -191,9 +191,19 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
         }
         else return createCategoryAvailability(categoryAdmin, true);
       })
-      .sort((a: CategoryAvailabilityData, b: CategoryAvailabilityData) =>
-        a.estimatedTotalAmount - b.estimatedTotalAmount
-      );
+      // Reading order (matches the chat): available cards first, then by class
+      // (compacto → sedán → camioneta), then transmission (mecánico → híbrido →
+      // automático), then price. Unable cards carry the 999999999 sentinel, so
+      // rank them last while keeping the same class/price order among themselves.
+      .sort((a: CategoryAvailabilityData, b: CategoryAvailabilityData) => {
+        const unableA = a.estimatedTotalAmount === 999999999 ? 1 : 0;
+        const unableB = b.estimatedTotalAmount === 999999999 ? 1 : 0;
+        return (
+          unableA - unableB ||
+          categoryReadingRank(a.categoryCode) - categoryReadingRank(b.categoryCode) ||
+          a.estimatedTotalAmount - b.estimatedTotalAmount
+        );
+      });
       
     } else return [];
     
