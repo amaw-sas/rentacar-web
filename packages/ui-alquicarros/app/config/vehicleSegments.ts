@@ -29,7 +29,7 @@ export interface VehicleSegment {
 export const VEHICLE_SEGMENTS: VehicleSegment[] = [
   {
     id: 'economicos',
-    label: 'Económicos',
+    label: 'Compactos',
     icon: 'i-lucide-car',
     gamaCodes: ['C', 'CX'],
   },
@@ -47,7 +47,7 @@ export const VEHICLE_SEGMENTS: VehicleSegment[] = [
   },
   {
     id: 'premium',
-    label: 'Premium',
+    label: 'Camionetas de Lujo',
     icon: 'i-lucide-gem',
     gamaCodes: ['LE', 'LP', 'LU', 'LY'],
   },

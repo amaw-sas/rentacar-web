@@ -40,6 +40,15 @@ describe('vehicleSegments — taxonomy (SCEN-W-03/04)', () => {
     ])
   })
 
+  it('shows the commercial labels the customer reads in the wizard', () => {
+    const labelOf = (id: string) =>
+      VEHICLE_SEGMENTS.find((s) => s.id === id)?.label
+    expect(labelOf('economicos')).toBe('Compactos')
+    expect(labelOf('sedanes')).toBe('Sedanes')
+    expect(labelOf('camionetas-suv')).toBe('Camionetas / SUV')
+    expect(labelOf('premium')).toBe('Camionetas de Lujo')
+  })
+
   it('maps each of the 15 named codes to its segment', () => {
     for (const [code, segment] of Object.entries(NAMED_MAPPING)) {
       expect(segmentForCode(code), `${code} → ${segment}`).toBe(segment)
