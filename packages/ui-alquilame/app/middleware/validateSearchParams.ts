@@ -26,9 +26,15 @@ export default defineNuxtRouteMiddleware((to, from) => {
   const hora_devolucion = to.params.hora_devolucion as string;
 
   // Extract city context from URL path for city-aware defaults
-  // e.g., "/armenia/buscar-vehiculos/..." → cityContext = "armenia"
+  // e.g., "/armenia/buscar-vehiculos/..." → cityContext = "armenia".
+  // On alquilame the reservation surface is `/reservas` (PATH, no city segment —
+  // routing independence). There, the first segment is "reservas", NOT a city, so
+  // cityContext is undefined: the #129 city-branch correction is skipped (guarded
+  // by `cityContext ?` below) and useDefaultRouteParams falls back to the global
+  // default (bogota-aeropuerto). navigateTo re-navigates via `to.name`, so the
+  // corrections target these /reservas routes.
   const pathSegments = to.path.split('/').filter(Boolean);
-  const cityContext = pathSegments[0]; // First segment is always the city
+  const cityContext = pathSegments[0] === 'reservas' ? undefined : pathSegments[0];
 
   // Skip validation if route doesn't have search parameters (e.g., /bogota, /medellin)
   if (!fecha_recogida || !fecha_devolucion || !hora_recogida || !hora_devolucion) {

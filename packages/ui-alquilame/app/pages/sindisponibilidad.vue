@@ -50,8 +50,11 @@ const { franchise } = useAppConfig()
 useResultPageView('Sin Disponibilidad');
 const store = useStoreReservationForm()
 
+// "Intentar de nuevo" reconstruye la búsqueda hacia la superficie de reserva de
+// alquilame: `/reservas` por PATH (independencia — ya no existe buscar-vehiculos).
+// El middleware validate-search-params de esas páginas corrige code→slug y el
+// formato de hora, así que pasar los valores crudos del store es seguro.
 const searchUrl = computed(() => {
-  const city = store.selectedPickupLocation?.city || 'bogota'
   const lugar_recogida = store.lugarRecogida || 'bog'
   const lugar_devolucion = store.lugarDevolucion || lugar_recogida
   const fecha_recogida = store.fechaRecogida || ''
@@ -59,7 +62,7 @@ const searchUrl = computed(() => {
   const hora_recogida = store.horaRecogida || '12:00'
   const hora_devolucion = store.horaDevolucion || '12:00'
 
-  return `/${city}/buscar-vehiculos/lugar-recogida/${lugar_recogida}/lugar-devolucion/${lugar_devolucion}/fecha-recogida/${fecha_recogida}/fecha-devolucion/${fecha_devolucion}/hora-recogida/${hora_recogida}/hora-devolucion/${hora_devolucion}`
+  return `/reservas/lugar-recogida/${lugar_recogida}/lugar-devolucion/${lugar_devolucion}/fecha-recogida/${fecha_recogida}/fecha-devolucion/${fecha_devolucion}/hora-recogida/${hora_recogida}/hora-devolucion/${hora_devolucion}`
 })
 
 useHead({

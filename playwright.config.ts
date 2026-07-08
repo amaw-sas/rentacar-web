@@ -27,13 +27,14 @@ if (!(brand in brandPorts)) {
 
 const port = brandPorts[brand];
 
-// Independencia de enrutamiento (directiva): en alquicarros la ruta
-// `/{city}/buscar-vehiculos/...` fue eliminada (redirige 301 → /reservas) y el
-// flujo de reserva vive en el wizard de `/reservas`, cubierto por
-// `alquicarros-reservation-wizard.spec.ts`. Estos specs compartidos entran por el
-// deep-link buscar-vehiculos (el grid de resultados de las marcas hermanas), así
-// que NO aplican a alquicarros y se ignoran SOLO para esa marca — alquilatucarro y
-// alquilame siguen corriéndolos con cobertura completa.
+// Independencia de enrutamiento (directiva): en alquicarros Y alquilame la ruta
+// `/{city}/buscar-vehiculos/...` fue eliminada (redirige 301 → /reservas). En
+// alquicarros el flujo vive en el wizard de `/reservas`; en alquilame vive en el
+// grid de `/reservas` por PATH (mismo CategorySelectionSection). Estos specs
+// compartidos entran por el deep-link buscar-vehiculos y/o hard-assertan esa URL,
+// así que NO aplican a esas dos marcas y se ignoran SOLO para ellas — el flujo de
+// reserva propio se cubre con specs por marca (`alquicarros-reservation-wizard`,
+// `alquilame-reservas-path`). alquilatucarro los sigue corriendo con cobertura completa.
 const BUSCAR_VEHICULOS_FLOW_SPECS = [
   '**/availability-error-feedback.spec.ts',
   '**/city-branch-validation.spec.ts',
@@ -54,7 +55,7 @@ const BUSCAR_VEHICULOS_FLOW_SPECS = [
  */
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: brand === 'alquicarros' ? BUSCAR_VEHICULOS_FLOW_SPECS : [],
+  testIgnore: ['alquicarros', 'alquilame'].includes(brand) ? BUSCAR_VEHICULOS_FLOW_SPECS : [],
 
   // Tiempo máximo de ejecución de una prueba (aumentado para Nuxt)
   timeout: 60 * 1000,

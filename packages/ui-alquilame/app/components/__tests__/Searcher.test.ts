@@ -139,12 +139,11 @@ describe('Searcher — derives results-URL city from pickup branch when route ha
   })
 })
 
-describe('Searcher — context-aware submit destination (SCEN-003)', () => {
-  // The submit control is a LINK button whose :to is now context-aware:
-  //   - city page (route.params.city present)  → named-route deep link (F3, unchanged)
-  //   - /reservas    (route.params.city absent) → { path: '/reservas', query: {...} }
-  // so searching from /reservas stays on /reservas with the params in the query
-  // string and renders results in-place (never navigates to /[city]/buscar-vehiculos).
+describe('Searcher — submit destination is a /reservas PATH (SCEN-AL-02, routing independence)', () => {
+  // La superficie de reserva de alquilame es `/reservas` por PATH (heredando la
+  // estructura buscar-vehiculos, sin el segmento [city], que ya no existe en
+  // alquilame). El submit :to arma el PATH que las páginas de resultados leen vía
+  // useSearchByRouteParams. Ya NO hay rama por route.params.city ni objeto-query.
   const submitButtonBlock = (() => {
     const start = source.indexOf('BUSCAR VEHÍCULOS')
     const before = source.lastIndexOf('<u-button', start)
@@ -152,29 +151,31 @@ describe('Searcher — context-aware submit destination (SCEN-003)', () => {
     return source.slice(before, after)
   })()
 
-  it('binds the submit :to to a context-aware destination computed (searchDestination)', () => {
+  it('binds the submit :to to the searchDestination computed', () => {
     expect(submitButtonBlock).toMatch(/:to="searchDestination"/)
-  })
-
-  it('keeps the F3 named-route deep link when route.params.city is present', () => {
-    // The city branch of searchDestination keeps { name: searchLinkName, params: searchLinkParams }.
-    expect(source).toMatch(/name:\s*searchLinkName\.value\s*,\s*params:\s*searchLinkParams\.value/)
-  })
-
-  it('targets /reservas with a query object when route.params.city is absent', () => {
-    expect(source).toMatch(/path:\s*['"]\/reservas['"]/)
-    // The query mirrors searchLinkParams: pickup/return slugs + dates + 12h times.
-    expect(source).toMatch(/lugar_recogida:/)
-    expect(source).toMatch(/lugar_devolucion:/)
-    expect(source).toMatch(/fecha_recogida:/)
-    expect(source).toMatch(/fecha_devolucion:/)
-    expect(source).toMatch(/hora_recogida:/)
-    expect(source).toMatch(/hora_devolucion:/)
-  })
-
-  it('branches the destination on the presence of route.params.city', () => {
-    expect(source).toMatch(/route\.params\.city/)
     expect(source).toMatch(/const\s+searchDestination\s*=\s*computed/)
+  })
+
+  it('builds the /reservas PATH tail (lugar-recogida/.../hora-devolucion) from searchLinkParams', () => {
+    expect(source).toMatch(/`\/lugar-recogida\/\$\{seg\(p\.lugar_recogida\)\}`/)
+    expect(source).toMatch(/`\/lugar-devolucion\/\$\{seg\(p\.lugar_devolucion\)\}`/)
+    expect(source).toMatch(/`\/fecha-recogida\/\$\{seg\(p\.fecha_recogida\)\}`/)
+    expect(source).toMatch(/`\/fecha-devolucion\/\$\{seg\(p\.fecha_devolucion\)\}`/)
+    expect(source).toMatch(/`\/hora-recogida\/\$\{seg\(p\.hora_recogida\)\}`/)
+    expect(source).toMatch(/`\/hora-devolucion\/\$\{seg\(p\.hora_devolucion\)\}`/)
+  })
+
+  it('prefixes /reservas/referido/[referido] when a referido is present, else /reservas', () => {
+    expect(source).toMatch(/p\.referido\s*\?\s*`\/reservas\/referido\/\$\{seg\(p\.referido\)\}`\s*:\s*'\/reservas'/)
+  })
+
+  it('encodes each dynamic segment (the 12h time carries a ":")', () => {
+    expect(source).toMatch(/const\s+seg\s*=\s*\(v[^)]*\)\s*=>\s*encodeURIComponent/)
+  })
+
+  it('no longer emits the query-object form nor a named-route/city branch', () => {
+    expect(source).not.toMatch(/path:\s*['"]\/reservas['"]\s*,\s*\n?\s*query:/)
+    expect(source).not.toMatch(/name:\s*searchLinkName\.value\s*,\s*params:\s*searchLinkParams\.value/)
   })
 })
 

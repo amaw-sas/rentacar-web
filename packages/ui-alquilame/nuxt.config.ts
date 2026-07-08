@@ -636,6 +636,12 @@ export default defineNuxtConfig({
           'Cache-Control': 'public, max-age=31536000, immutable'
         }
       },
+      // Independencia de enrutamiento (directiva): `/{city}/buscar-vehiculos/...` es
+      // EXCLUSIVA de alquilatucarro. En alquilame la superficie de reserva es
+      // `/reservas` (PATH). El 301 lo emite server/middleware/redirect-buscar-vehiculos.ts
+      // (reescribe path→path preservando el resto — categoria/referido incluidos —,
+      // solo descarta el segmento de ciudad). Un routeRule `**` de Nitro NO sirve:
+      // con el `:city` intermedio reenvía el path completo (/reservas/{city}/buscar-…).
       '/': { isr: 3600 },
       '/armenia': { isr: 3600 },
       '/barranquilla': { isr: 3600 },
@@ -721,7 +727,7 @@ export default defineNuxtConfig({
       { loc: '/blog', changefreq: 'weekly', priority: 0.8 },
     ],
     sources: ['/api/__sitemap__/blog'],
-    exclude: ['/pendiente', '/sindisponibilidad', '/reservado/**', '/*/buscar-vehiculos/**', '/seo/**'],
+    exclude: ['/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**'],
   },
 
   robots: {
