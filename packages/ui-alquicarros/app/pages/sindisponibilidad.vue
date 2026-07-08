@@ -50,16 +50,24 @@ const { franchise } = useAppConfig()
 useResultPageView('Sin Disponibilidad');
 const store = useStoreReservationForm()
 
+// "Modificar búsqueda" vuelve al wizard `/reservas` (única superficie de reserva
+// en alquicarros), con la búsqueda previa como query — los mismos nombres de
+// param que lee el wizard (useSearchByQueryParams). Ya NO reconstruye la ruta
+// legacy `buscar-vehiculos`. La ciudad no es query: el wizard la deriva del lugar
+// de recogida. Objeto {path, query} para encoding correcto de las horas 12h.
 const searchUrl = computed(() => {
-  const city = store.selectedPickupLocation?.city || 'bogota'
   const lugar_recogida = store.lugarRecogida || 'bog'
-  const lugar_devolucion = store.lugarDevolucion || lugar_recogida
-  const fecha_recogida = store.fechaRecogida || ''
-  const fecha_devolucion = store.fechaDevolucion || ''
-  const hora_recogida = store.horaRecogida || '12:00'
-  const hora_devolucion = store.horaDevolucion || '12:00'
-
-  return `/${city}/buscar-vehiculos/lugar-recogida/${lugar_recogida}/lugar-devolucion/${lugar_devolucion}/fecha-recogida/${fecha_recogida}/fecha-devolucion/${fecha_devolucion}/hora-recogida/${hora_recogida}/hora-devolucion/${hora_devolucion}`
+  return {
+    path: '/reservas',
+    query: {
+      lugar_recogida,
+      lugar_devolucion: store.lugarDevolucion || lugar_recogida,
+      fecha_recogida: store.fechaRecogida || '',
+      fecha_devolucion: store.fechaDevolucion || '',
+      hora_recogida: store.horaRecogida || '12:00',
+      hora_devolucion: store.horaDevolucion || '12:00',
+    },
+  }
 })
 
 useHead({

@@ -3,7 +3,8 @@
  *
  * Encoda los escenarios ESTÁTICOS del holdout f3-citypage (los runtime/E2E —
  * SCEN-F3-13/14 — se verifican con dev server + Playwright, no aquí):
- *   - SCEN-F3-01/02: wiring mode-aware de las páginas ([city] landing / buscar results).
+ *   - SCEN-F3-01/02 + SCEN-AC-01/05: [city] landing pasa mode="landing"; las páginas
+ *     buscar-vehiculos (results) fueron eliminadas (independencia) y redirigen 301 → /reservas.
  *   - SCEN-F3-03: city/* branded naranja, sin rojo hardcoded ni hex rojo de alquilame.
  *   - SCEN-F3-04: pin #41 inerte/aria-hidden reubicado a city/Hero.vue.
  *   - SCEN-F3-05/06: /reservas — Searcher, gate de búsqueda por query, robots noindex.
@@ -123,9 +124,15 @@ describe('F3 — CityPage orquestador (reemplaza el monolito rojo viejo)', () =>
   })
 })
 
-describe('F3 — SCEN-F3-01/02: wiring de mode en las páginas', () => {
+describe('F3/SCEN-AC — landing mode + independencia de buscar-vehiculos', () => {
   const landing = tryRead('app/pages/[city]/index.vue')
-  const RESULTS_PAGES = [
+  // Independencia de enrutamiento (directiva): `/{city}/buscar-vehiculos/...` es
+  // EXCLUSIVA de alquilatucarro. En alquicarros esas páginas de resultados fueron
+  // eliminadas — el wizard en /reservas es la única superficie de reserva — y la
+  // ruta legacy redirige 301 → /reservas. (El modo "results" de CityPage queda como
+  // dead-code inalcanzable, limpieza diferida; por eso los tests de CityPage.vue de
+  // arriba siguen verificando su wiring.)
+  const REMOVED_RESULTS_PAGES = [
     'app/pages/[city]/buscar-vehiculos/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/index.vue',
     'app/pages/[city]/buscar-vehiculos/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/categoria/[categoria]/index.vue',
     'app/pages/[city]/buscar-vehiculos/referido/[referido]/lugar-recogida/[lugar_recogida]/lugar-devolucion/[lugar_devolucion]/fecha-recogida/[fecha_recogida]/fecha-devolucion/[fecha_devolucion]/hora-recogida/[hora_recogida]/hora-devolucion/[hora_devolucion]/index.vue',
@@ -134,11 +141,16 @@ describe('F3 — SCEN-F3-01/02: wiring de mode en las páginas', () => {
   it('[city]/index.vue pasa mode="landing"', () => {
     expect(landing).toMatch(/<CityPage[^>]*mode="landing"/)
   })
-  for (const p of RESULTS_PAGES) {
-    it(`results page pasa mode="results": ${p.split('/').slice(-2)[0]}/...`, () => {
-      expect(tryRead(p)).toMatch(/<CityPage[^>]*mode="results"/)
+  for (const p of REMOVED_RESULTS_PAGES) {
+    it(`SCEN-AC-05: la página de resultados buscar-vehiculos NO existe: ${p.split('/').slice(3, 5).join('/')}/…`, () => {
+      expect(existsSync(join(ROOT, p))).toBe(false)
     })
   }
+  it('SCEN-AC-01: nuxt.config redirige /{city}/buscar-vehiculos/** → 301 /reservas', () => {
+    const cfg = tryRead('nuxt.config.ts')
+    expect(cfg).toMatch(/['"]\/:city\/buscar-vehiculos\/\*\*['"]/)
+    expect(cfg).toMatch(/redirect:\s*\{\s*to:\s*'\/reservas',\s*statusCode:\s*301/)
+  })
 })
 
 describe('F3 — SCEN-F3-05/06: /reservas centralizada', () => {

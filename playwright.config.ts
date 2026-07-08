@@ -27,12 +27,34 @@ if (!(brand in brandPorts)) {
 
 const port = brandPorts[brand];
 
+// Independencia de enrutamiento (directiva): en alquicarros la ruta
+// `/{city}/buscar-vehiculos/...` fue eliminada (redirige 301 → /reservas) y el
+// flujo de reserva vive en el wizard de `/reservas`, cubierto por
+// `alquicarros-reservation-wizard.spec.ts`. Estos specs compartidos entran por el
+// deep-link buscar-vehiculos (el grid de resultados de las marcas hermanas), así
+// que NO aplican a alquicarros y se ignoran SOLO para esa marca — alquilatucarro y
+// alquilame siguen corriéndolos con cobertura completa.
+const BUSCAR_VEHICULOS_FLOW_SPECS = [
+  '**/availability-error-feedback.spec.ts',
+  '**/city-branch-validation.spec.ts',
+  '**/clic-foto-abre-reserva.spec.ts',
+  '**/reservation-a11y-single-dialog.spec.ts',
+  '**/reservation-back-returns-to-listing.spec.ts',
+  '**/reservation-back-url-cleanup.spec.ts',
+  '**/reservation-phone-revalidation.spec.ts',
+  '**/reservation-submit-back-unlocks-searcher.spec.ts',
+  '**/time-format-12h.spec.ts',
+  '**/tooltip-price-close-delay.spec.ts',
+  '**/unable-cards-on-empty-inventory.spec.ts',
+];
+
 /**
  * Configuración de Playwright para pruebas E2E
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: brand === 'alquicarros' ? BUSCAR_VEHICULOS_FLOW_SPECS : [],
 
   // Tiempo máximo de ejecución de una prueba (aumentado para Nuxt)
   timeout: 60 * 1000,
