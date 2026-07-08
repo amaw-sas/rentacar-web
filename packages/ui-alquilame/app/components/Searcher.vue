@@ -425,7 +425,6 @@ const pendingSearching = ref<boolean>(false);
 const sortedBranches = ref<any[]>([]);
 const pickupHourOptions = ref<any[]>([]);
 const returnHourOptions = ref<any[]>([]);
-const searchLinkName = ref<string>('');
 const searchLinkParams = ref<any>({});
 const animateSearchButton = ref<boolean>(true);
 
@@ -436,36 +435,25 @@ const isPickupDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
 const isReturnDateUnavailable = ref<(date: DateObject) => boolean>(() => false);
 const isSelectionWithinSchedule = ref<boolean>(true);
 
-// SCEN-003 — context-aware submit destination.
-//   - On a CITY page (route.params.city present) the submit keeps the EXACT F3
-//     behavior: the named-route deep link → /[city]/buscar-vehiculos/... (preserves
-//     programmatic SEO + cross-brand isolation). searchLinkParams already carries
-//     the derived/real city (see syncSearchLinkParams below).
-//   - On /reservas (no :city in the route) the submit STAYS on /reservas with the
-//     search params in the QUERY STRING (shareable/bookmarkable); the page then
-//     renders availability in-place via useSearchByQueryParams. We do NOT redirect
-//     to /[branchCity]/... here — the city-derivation stays for the city-link path
-//     only. The query mirrors searchLinkParams: pickup/return SLUGS + dates + the
-//     12h-formatted times (the same values that build the deep route).
+// Submit destination — alquilame PATH model (routing independence, directiva).
+// `/reservas` is the ONLY reservation surface and carries the search in the PATH
+// (mirroring the old buscar-vehiculos structure, minus the [city] segment). The
+// results pages read these params via useSearchByRouteParams. `buscar-vehiculos`
+// no longer exists in alquilame, so there is no route.params.city branch to keep.
+// referido, when present, is the leading segment (matches the page tree).
+// Values are encoded per-segment (the 12h time carries a ':').
 const searchDestination = computed(() => {
-  const params = searchLinkParams.value ?? {};
-  if (route.params.city) {
-    return { name: searchLinkName.value, params: searchLinkParams.value };
-  }
-  return {
-    path: '/reservas',
-    query: {
-      lugar_recogida: params.lugar_recogida,
-      lugar_devolucion: params.lugar_devolucion,
-      fecha_recogida: params.fecha_recogida,
-      fecha_devolucion: params.fecha_devolucion,
-      hora_recogida: params.hora_recogida,
-      hora_devolucion: params.hora_devolucion,
-      // Preserve referral attribution on the /reservas round-trip (mirrors the
-      // city-page branch, which carries referido via searchLinkParams).
-      ...(params.referido ? { referido: params.referido } : {}),
-    },
-  };
+  const p = searchLinkParams.value ?? {};
+  const seg = (v: unknown) => encodeURIComponent(String(v ?? ''));
+  const tail =
+    `/lugar-recogida/${seg(p.lugar_recogida)}` +
+    `/lugar-devolucion/${seg(p.lugar_devolucion)}` +
+    `/fecha-recogida/${seg(p.fecha_recogida)}` +
+    `/fecha-devolucion/${seg(p.fecha_devolucion)}` +
+    `/hora-recogida/${seg(p.hora_recogida)}` +
+    `/hora-devolucion/${seg(p.hora_devolucion)}`;
+  const prefix = p.referido ? `/reservas/referido/${seg(p.referido)}` : '/reservas';
+  return prefix + tail;
 });
 
 // Issue #129: the search button is a NuxtLink (:to). When the resolved target URL
@@ -476,10 +464,11 @@ const searchDestination = computed(() => {
 const router = useRouter();
 const doSearchFn = ref<(() => void) | null>(null);
 const onSearchClick = (e: MouseEvent) => {
-  // Resolve BOTH sides through the router so the comparison is query-order- and
-  // encoding-insensitive — critical on /reservas, whose :to is a query object whose
-  // key order need not match a bookmarked link's. Only preventDefault when doSearch is
-  // ready (captured in onMounted): before mount, let NuxtLink's same-URL no-op run.
+  // Resolve BOTH sides through the router so the comparison is encoding-insensitive
+  // — the :to is a /reservas PATH string whose 12h time segment is percent-encoded,
+  // so a bookmarked/shared link may differ byte-wise from the freshly built one.
+  // Only preventDefault when doSearch is ready (captured in onMounted): before mount,
+  // let NuxtLink's same-URL no-op run.
   const target = router.resolve(searchDestination.value);
   const current = router.resolve(route.fullPath);
   if (target.href === current.href && doSearchFn.value) {
@@ -488,16 +477,11 @@ const onSearchClick = (e: MouseEvent) => {
   }
 };
 
-// The disabled guard stays meaningful in BOTH contexts: block until a valid pickup
-// branch + dates exist. On a city page this is still effectively `city` (the deep
-// link is broken without it); on /reservas there is no `city`, so we require a
-// resolved pickup-branch slug + both dates instead (otherwise the query would be
-// half-empty and the search guard would no-op).
+// Block submit until a resolved pickup-branch slug + both dates exist (otherwise
+// the PATH would be half-empty and the search guard would no-op). alquilame has a
+// single surface (/reservas, no route.params.city), so the guard is uniform.
 const searchDisabledGuardSatisfied = computed(() => {
   const params = searchLinkParams.value ?? {};
-  if (route.params.city) {
-    return Boolean(params.city);
-  }
   return Boolean(params.lugar_recogida && params.fecha_recogida && params.fecha_devolucion);
 });
 
@@ -603,7 +587,6 @@ onMounted(() => {
   doSearchFn.value = searchComposable.doSearch; // #129: expose for same-URL re-fire
   watch(() => searchComposable.pickupHourOptions.value, (val) => pickupHourOptions.value = val, { immediate: true });
   watch(() => searchComposable.returnHourOptions.value, (val) => returnHourOptions.value = val, { immediate: true });
-  watch(() => searchComposable.searchLinkName.value, (val) => searchLinkName.value = val, { immediate: true });
   // F3 (issue #112): on /reservas there is no route.params.city, so the
   // composable's searchLinkParams.city is undefined and the results link would
   // be broken. Derive the effective city from the chosen pickup branch.

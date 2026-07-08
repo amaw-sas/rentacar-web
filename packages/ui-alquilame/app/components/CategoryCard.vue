@@ -1,5 +1,7 @@
 <template>
-  <div class="categoria flex flex-col">
+  <!-- id scrolleable: el deep-link /reservas/.../categoria/[X] preselecciona y
+       hace scroll a esta card (flujo operador) sin abrir el slideover. -->
+  <div :id="`categoria-${categoryCode}`" class="categoria flex flex-col">
     <!-- Carrusel -->
     <div class="carrusel">
         <Carrusel

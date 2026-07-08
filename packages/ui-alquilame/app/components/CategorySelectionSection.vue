@@ -329,6 +329,12 @@ const resumenParam = computed(() => route.query.resumen as string | undefined);
 const reservarParam = computed(() => route.query.reservar as string | undefined);
 const codigoCategoria = computed(() => categoriaParam.value || resumenParam.value || reservarParam.value);
 const abrirFormularioDirecto = computed(() => !!reservarParam.value);
+// El slideover se auto-abre SOLO cuando la URL lo pide EXPLÍCITAMENTE por query
+// (?resumen / ?reservar — retrocompat de links legacy). Un `categoria` en el PATH
+// (link del operador: /reservas/.../categoria/[X]) preselecciona y hace scroll a
+// la card SIN abrir el slideover, para que el cliente elija seguro + adicionales
+// en la card y luego "Solicitar" → resumen → datos.
+const abrirSlideoverDesdeUrl = computed(() => !!resumenParam.value || !!reservarParam.value);
 
 // Profundidad de sincronización URL→estado (contador, no booleano): enmascara
 // el watcher de URL mientras abrimos el slideover desde la URL. Es un CONTADOR
@@ -357,7 +363,15 @@ function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean, mode: 
   // el slideover / baja de paso en vez de abandonar el listado); `replace`
   // sobrescribe la actual (cambios sin nueva entrada: cierre, sync desde URL).
   const write = (url: string) => {
-    if (mode === 'push') {
+    const current = window.location.pathname + window.location.search;
+    // Flujo operador (/reservas/.../categoria/X): la URL YA trae la categoría antes
+    // de abrir el slideover, así que un `push` agregaría una entrada de historial
+    // DUPLICADA — "atrás" caería en el gemelo /categoria y handleSlideoverPopState
+    // lo reabriría dejando el slideover pegado y <body> con pointer-events:none
+    // (regresión #25/#65). Si el destino no cambia respecto a la URL actual,
+    // degradamos a replace: no se empuja entrada y "atrás" cierra el slideover
+    // saliendo de la ruta (onBeforeRouteLeave desbloquea el body).
+    if (mode === 'push' && url !== current) {
       window.history.pushState({ slideover: true }, '', url);
       pushedEntries++;
     } else {
@@ -440,8 +454,18 @@ watch(
     // /categoria/X o ?resumen=X → "resumen". `abrirFormularioDirecto` deriva
     // solo de reservarParam, así que ?resumen=X cae en la rama "resumen".
     nextTick(() => {
-      slideoverStep.value = abrirFormularioDirecto.value ? 'datos' : 'resumen';
-      slideoverOpen.value = true;
+      if (abrirSlideoverDesdeUrl.value) {
+        // ?reservar=X → "datos"; ?resumen=X → "resumen" (retrocompat legacy).
+        slideoverStep.value = abrirFormularioDirecto.value ? 'datos' : 'resumen';
+        slideoverOpen.value = true;
+      } else {
+        // categoria en el PATH (flujo operador): NO abrir; la card ya quedó
+        // preseleccionada arriba — solo hacer scroll a ella para que el cliente
+        // vea los selectores de seguro/adicionales y pulse "Solicitar".
+        document
+          .getElementById(`categoria-${codigo}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
       // Reset diferido (nextTick anidado): el watcher de URL (flush:'pre')
       // dispara tras abrir el slideover y ANTES de este reset, así queda
       // enmascarado. Decremento (no =0) por reentrancia.
