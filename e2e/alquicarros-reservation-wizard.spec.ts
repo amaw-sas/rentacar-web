@@ -15,8 +15,10 @@ import { test, expect, type Page, type Route } from '@playwright/test';
  * F, G4, LE) deben existir en el catálogo Supabase de alquicarros.
  *
  * Cubre SCEN-W-03/05 (segmentos + selección), W-06 (Seguro recalcula), W-07
- * (Adicionales + Omitir), W-09 (deep-link ciudad → Paso 2), W-11 (submit),
- * W-12 (vacío/error), W-14 (deep-link gama → Paso 3).
+ * (Adicionales + Omitir), W-09 (deep-link /reservas?query → Paso 2), W-11 (submit),
+ * W-12 (vacío/error), W-14 (elegir gama por UI → Paso 3), y SCEN-AC-01 (la ruta
+ * legacy /{city}/buscar-vehiculos redirige 301 → /reservas — independencia de
+ * enrutamiento, buscar-vehiculos quedó exclusiva de alquilatucarro).
  */
 
 const BRAND = process.env.BRAND || 'alquilatucarro';
@@ -75,7 +77,17 @@ function stubRecord(page: Page) {
   );
 }
 
-const CITY_SEARCH =
+// Superficie de reserva de alquicarros = el wizard en `/reservas` (query params).
+// La ruta legacy `/{city}/buscar-vehiculos/...` fue eliminada (independencia de
+// enrutamiento) y ahora redirige 301 → /reservas (ver SCEN-AC-01).
+const RESERVAS_SEARCH =
+  '/reservas' +
+  '?lugar_recogida=bogota-aeropuerto&lugar_devolucion=bogota-aeropuerto' +
+  '&fecha_recogida=2026-10-04&fecha_devolucion=2026-10-11' +
+  '&hora_recogida=12:00pm&hora_devolucion=12:00pm&paso=vehiculo';
+
+// URL legacy buscar-vehiculos — ya no resuelve; solo se usa para asertar el 301.
+const LEGACY_CITY_SEARCH =
   '/bogota/buscar-vehiculos' +
   '/lugar-recogida/bogota-aeropuerto/lugar-devolucion/bogota-aeropuerto' +
   '/fecha-recogida/2026-10-04/fecha-devolucion/2026-10-11' +
@@ -106,12 +118,35 @@ async function gotoWizard(page: Page, path: string, selector: string): Promise<b
   return appears(page, selector, 20_000);
 }
 
+/**
+ * Lleva el wizard hasta el Paso 3 (Seguro) con la gama C elegida, manejando la UI:
+ * deep-link a `/reservas` (Paso 2) → abrir el segmento Económicos → elegir la card
+ * de la gama C → Continuar. Reemplaza el viejo deep-link de path `/categoria/C`
+ * (que vivía en la ruta buscar-vehiculos ya eliminada). Devuelve true si llegó al
+ * selector de cobertura; false si la metadata Supabase no está en el entorno.
+ */
+async function gotoCoverageWithGamaC(page: Page): Promise<boolean> {
+  const atStep2 = await gotoWizard(page, RESERVAS_SEARCH, '[data-testid^="wizard-segment-"]');
+  if (!atStep2) return false;
+  await page.locator('[data-testid="wizard-segment-economicos-test"]').click();
+  await page.locator('[data-testid="wizard-vehicle-C-test"]').click();
+  await page.locator('[data-testid="wizard-continue-desktop-test"]').click();
+  return appears(page, '[data-testid="wizard-coverage-total-test"]');
+}
+
 test.describe('alquicarros — wizard de reserva (desktop)', () => {
   test.use({ viewport: { width: 1280, height: 1000 } });
 
-  test('SCEN-W-09/03: deep-link de ciudad entra en Paso 2 con tiles de segmento', async ({ page }) => {
+  test('SCEN-AC-01: la ruta legacy /{city}/buscar-vehiculos redirige 301 → /reservas', async ({ page }) => {
+    // La request directa NO debe seguir el redirect: asertamos el 301 + Location.
+    const resp = await page.request.get(LEGACY_CITY_SEARCH, { maxRedirects: 0 });
+    expect(resp.status()).toBe(301);
+    expect(resp.headers()['location']).toBe('/reservas');
+  });
+
+  test('SCEN-W-09/03: deep-link (/reservas?query) entra en Paso 2 con tiles de segmento', async ({ page }) => {
     await stubAvailability(page, AVAILABILITY_STUB);
-    const rendered = await gotoWizard(page, CITY_SEARCH, '[data-testid^="wizard-segment-"]');
+    const rendered = await gotoWizard(page, RESERVAS_SEARCH, '[data-testid^="wizard-segment-"]');
     test.skip(!rendered, 'vehicleCategories (Supabase) no disponible en el entorno');
 
     await expect(page.getByRole('heading', { name: 'Elige tu vehículo' })).toBeVisible();
@@ -122,16 +157,12 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     await expect(page.getByRole('button', { name: /2\s*Vehículo/ })).toBeVisible();
   });
 
-  test('SCEN-W-06/07/11: Seguro→Adicionales→Datos→submit (entra por deep-link de gama)', async ({ page }) => {
-    // Entra por /categoria/C (Paso 3, gama C preseleccionada) — ruta determinista
-    // que evita la carrera de render de tiles del Paso 2 (cubierto por el test de
-    // arriba + agent-browser). Ejercita Seguro→Adicionales→Datos→submit.
+  test('SCEN-W-06/07/11: Seguro→Adicionales→Datos→submit (elige gama por UI)', async ({ page }) => {
+    // Entra a /reservas (Paso 2), abre Económicos y elige la gama C por UI para
+    // llegar al Paso 3 (Seguro). Reemplaza el viejo deep-link de path /categoria/C
+    // (ruta buscar-vehiculos eliminada). Ejercita Seguro→Adicionales→Datos→submit.
     await stubAvailability(page, AVAILABILITY_STUB);
-    const rendered = await gotoWizard(
-      page,
-      `${CITY_SEARCH}/categoria/C`,
-      '[data-testid="wizard-coverage-total-test"]',
-    );
+    const rendered = await gotoCoverageWithGamaC(page);
     test.skip(!rendered, 'vehicleCategories (Supabase) no disponible en el entorno');
     await stubRecord(page);
 
@@ -175,13 +206,9 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     expect(page.url()).toContain('/reservado/E2ECODE');
   });
 
-  test('SCEN-W-14: deep-link /categoria/C entra en Paso 3 con la gama preseleccionada', async ({ page }) => {
+  test('SCEN-W-14: elegir la gama C por UI lleva al Paso 3 con la gama fijada', async ({ page }) => {
     await stubAvailability(page, AVAILABILITY_STUB);
-    const cov = await gotoWizard(
-      page,
-      `${CITY_SEARCH}/categoria/C`,
-      '[data-testid="wizard-coverage-total-test"]',
-    );
+    const cov = await gotoCoverageWithGamaC(page);
     test.skip(!cov, 'vehicleCategories (Supabase) no disponible en el entorno');
 
     await expect(page.getByRole('heading', { name: 'Elige tu cobertura' })).toBeVisible();
@@ -190,14 +217,14 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
 
   test('SCEN-W-12: cero categorías → estado vacío con CTA "ajustar búsqueda"', async ({ page }) => {
     await stubAvailability(page, []);
-    await page.goto(CITY_SEARCH);
+    await page.goto(RESERVAS_SEARCH);
     await expect(page.locator('[data-testid="wizard-vehicle-empty-test"]')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('[data-testid="wizard-adjust-search-test"]')).toBeVisible();
   });
 
   test('SCEN-W-12: error de disponibilidad → banner inline accionable', async ({ page }) => {
     await stubAvailability(page, { error: 'server_error', message: 'boom' }, 500);
-    await page.goto(CITY_SEARCH);
+    await page.goto(RESERVAS_SEARCH);
     await expect(page.locator('[data-testid="wizard-vehicle-error-test"]')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('[data-testid="wizard-adjust-search-test"]')).toBeVisible();
   });

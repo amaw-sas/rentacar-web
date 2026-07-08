@@ -639,6 +639,12 @@ export default defineNuxtConfig({
           'Cache-Control': 'public, max-age=31536000, immutable'
         }
       },
+      // Independencia de enrutamiento (directiva): la ruta de resultados
+      // `/{city}/buscar-vehiculos/...` es exclusiva de alquilatucarro. En
+      // alquicarros la superficie de reserva es el wizard en `/reservas`, así que
+      // cualquier deep-link/SEO legacy a buscar-vehiculos (incl. variantes
+      // `referido/…` y `categoria/…`, cubiertas por `**`) redirige 301 al wizard.
+      '/:city/buscar-vehiculos/**': { redirect: { to: '/reservas', statusCode: 301 } },
       '/': { isr: 3600 },
       '/armenia': { isr: 3600 },
       '/barranquilla': { isr: 3600 },
