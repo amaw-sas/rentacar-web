@@ -639,12 +639,12 @@ export default defineNuxtConfig({
           'Cache-Control': 'public, max-age=31536000, immutable'
         }
       },
-      // Independencia de enrutamiento (directiva): la ruta de resultados
-      // `/{city}/buscar-vehiculos/...` es exclusiva de alquilatucarro. En
-      // alquicarros la superficie de reserva es el wizard en `/reservas`, así que
-      // cualquier deep-link/SEO legacy a buscar-vehiculos (incl. variantes
-      // `referido/…` y `categoria/…`, cubiertas por `**`) redirige 301 al wizard.
-      '/:city/buscar-vehiculos/**': { redirect: { to: '/reservas', statusCode: 301 } },
+      // Independencia de enrutamiento (directiva): `/{city}/buscar-vehiculos/...` es
+      // exclusiva de alquilatucarro. En alquicarros la superficie de reserva es el
+      // wizard en `/reservas` (PATH). El 301 lo emite ahora
+      // server/middleware/redirect-buscar-vehiculos.ts (path→path, preserva el resto
+      // — categoria/referido incluidos — para el link del operador). Un routeRule `**`
+      // de Nitro no sirve: con el `:city` intermedio reenvía el path completo.
       '/': { isr: 3600 },
       '/armenia': { isr: 3600 },
       '/barranquilla': { isr: 3600 },
@@ -730,7 +730,7 @@ export default defineNuxtConfig({
       { loc: '/blog', changefreq: 'weekly', priority: 0.8 },
     ],
     sources: ['/api/__sitemap__/blog'],
-    exclude: ['/pendiente', '/sindisponibilidad', '/reservado/**', '/*/buscar-vehiculos/**', '/seo/**'],
+    exclude: ['/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**'],
   },
 
   robots: {

@@ -50,24 +50,27 @@ const { franchise } = useAppConfig()
 useResultPageView('Sin Disponibilidad');
 const store = useStoreReservationForm()
 
-// "Modificar búsqueda" vuelve al wizard `/reservas` (única superficie de reserva
-// en alquicarros), con la búsqueda previa como query — los mismos nombres de
-// param que lee el wizard (useSearchByQueryParams). Ya NO reconstruye la ruta
-// legacy `buscar-vehiculos`. La ciudad no es query: el wizard la deriva del lugar
-// de recogida. Objeto {path, query} para encoding correcto de las horas 12h.
+// "Modificar búsqueda" vuelve al wizard `/reservas` (única superficie de reserva en
+// alquicarros), ahora por PATH (la búsqueda va en el path — el wizard la hidrata vía
+// useSearchByRouteParams, que resuelve las sedes por SLUG). El store guarda el CODE de
+// sede, así que lo convertimos a slug (no hay middleware de corrección code→slug en
+// alquicarros). La ciudad no va en la URL: el wizard la deriva del lugar de recogida.
+const admin = useStoreAdminData()
+const slugFromCode = (code: string | null): string | undefined =>
+  code ? admin.searchBranchByCode(code)?.slug : undefined
 const searchUrl = computed(() => {
-  const lugar_recogida = store.lugarRecogida || 'bog'
-  return {
-    path: '/reservas',
-    query: {
-      lugar_recogida,
-      lugar_devolucion: store.lugarDevolucion || lugar_recogida,
-      fecha_recogida: store.fechaRecogida || '',
-      fecha_devolucion: store.fechaDevolucion || '',
-      hora_recogida: store.horaRecogida || '12:00',
-      hora_devolucion: store.horaDevolucion || '12:00',
-    },
-  }
+  const fecha_recogida = store.fechaRecogida
+  const fecha_devolucion = store.fechaDevolucion
+  // Un segmento de path vacío NO matchea `[fecha_recogida]` → 404. Si el store no
+  // tiene fechas (entrada directa a esta página con store fresco), degradamos a la
+  // `/reservas` limpia (Paso 1) en vez de emitir un PATH inválido.
+  if (!fecha_recogida || !fecha_devolucion) return '/reservas'
+
+  const lugar_recogida = slugFromCode(store.lugarRecogida) || 'bogota-aeropuerto'
+  const lugar_devolucion = slugFromCode(store.lugarDevolucion) || lugar_recogida
+  const hora_recogida = store.horaRecogida || '12:00'
+  const hora_devolucion = store.horaDevolucion || '12:00'
+  return `/reservas/lugar-recogida/${lugar_recogida}/lugar-devolucion/${lugar_devolucion}/fecha-recogida/${fecha_recogida}/fecha-devolucion/${fecha_devolucion}/hora-recogida/${hora_recogida}/hora-devolucion/${hora_devolucion}`
 })
 
 useHead({
