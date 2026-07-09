@@ -232,26 +232,45 @@ test.describe('alquicarros — reserva mensual', () => {
     await page.locator('[data-testid="wizard-step-2-test"]').click();
     await expect(page.locator('[aria-current="step"]').first()).toContainText('Vehículo');
 
-    await page.locator('[data-testid="wizard-segment-economicos-test"]').click();
-
-    // El nivel 2 (cards de gama) no se pinta en este entorno aunque los tiles sí:
-    // `openGroup` depende de `rowByCode`/`vehicleCategories`, y el spec oficial del
-    // wizard salta sus propios casos de Paso 2 por lo mismo. Es preexistente y ajeno
-    // a este cambio; ver la nota en el holdout.
-    const cardRendered = await appears(page, '[data-testid="wizard-vehicle-C-test"]', 8_000);
-    test.skip(!cardRendered, 'Paso 2 nivel 2 sin cards en este entorno (preexistente)');
-
-    await page.locator('[data-testid="wizard-vehicle-C-test"]').click();
+    // NO clickear el tile del segmento: StepVehicle lo AUTO-ABRE (el de la gama elegida,
+    // o el primero). `toggleSegment` es un toggle, así que un click lo cerraría y las
+    // cards desaparecerían.
+    //
+    // Clickear el BOTÓN "Elegir", no la card: el centro de la card es el carrusel, que
+    // aísla sus clics con @click.stop. Pulsar ahí no selecciona nada — y un test que
+    // afirme "no se perdió la selección" pasaría vacuamente.
+    await page.locator('[data-testid="wizard-select-C-test"]').click();
     await page.locator('[data-testid="wizard-step-3-test"]').click();
     await expect(aside).toContainText('Seguro Total');
     await expect(aside).toContainText('2.000 km');
 
     // Cambiar de gama SÍ resetea a los defaults de la instancia nueva.
     await page.locator('[data-testid="wizard-step-2-test"]').click();
-    await page.locator('[data-testid="wizard-segment-economicos-test"]').click();
-    await page.locator('[data-testid="wizard-vehicle-CX-test"]').click();
+    await page.locator('[data-testid="wizard-select-CX-test"]').click();
+    await expect(aside).toContainText('Gama CX');
     await expect(aside).toContainText('Seguro Básico');
     await expect(aside).toContainText('1.000 km');
+  });
+
+  test('SCEN-ACM-11: el "desde" de los tiles no es $0 en mensualidad', async ({ page }) => {
+    await stubAvailability(page, []);
+    // Sin /categoria: el Paso 2 es el paso inicial.
+    const step2 = MONTHLY_PATH.replace('/categoria/c', '');
+    await page.goto(step2);
+    await page.reload();
+    const tiles = page.locator('[data-testid^="wizard-segment-"]');
+    const rendered = await appears(page, '[data-testid^="wizard-segment-"]', 20_000);
+    test.skip(!rendered, 'metadata de gamas (Supabase) no disponible en el entorno');
+
+    const n = await tiles.count();
+    expect(n).toBeGreaterThan(0);
+    for (let i = 0; i < n; i++) {
+      const text = (await tiles.nth(i).innerText()).replace(/\s+/g, ' ');
+      // "desde $ 0" delata que el piso se calculó con totalAmount/coverageTotalAmount,
+      // que en mensual son 0 (el precio vive en month_prices).
+      expect(text, `tile ${i} sin precio mensual`).not.toMatch(/desde\s*\$\s*0\s*$/);
+      expect(text).toMatch(/desde\s*\$\s*[1-9]/);
+    }
   });
 
   test('SCEN-ACM-06: tras recargar, el resumen y el payload coinciden', async ({ page }) => {

@@ -130,6 +130,9 @@ import { storeToRefs } from 'pinia'
 // config
 import { groupBySegment, segmentForCode, type SegmentGroup, type SegmentId } from '~/config/vehicleSegments'
 
+// utils
+import { pickPriceForDate } from '@rentacar-main/logic/utils'
+
 // Types
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
 
@@ -141,7 +144,7 @@ const emit = defineEmits<{
 const search = useStoreSearchData()
 const form = useStoreReservationForm()
 const { filteredCategories, pending, selectedCategory, error } = storeToRefs(search)
-const { vehiculo } = storeToRefs(form)
+const { vehiculo, haveMonthlyReservation, fechaRecogida } = storeToRefs(form)
 
 const { vehicleCategories } = useFetchRentacarData()
 const { moneyFormat } = useMoneyFormat()
@@ -196,14 +199,35 @@ const groups = computed<SegmentGroup[]>(() =>
 )
 
 /**
+ * Precio mensual vendible más barato de una fila: el menor entre los planes de 1.000 y
+ * 2.000 km que tengan precio positivo. Un plan a 0 significa "no se vende" (el dashboard
+ * limpia a NULL y el transformer lo mapea a 0), así que no puede fijar el piso.
+ * `pickPriceForDate` es la MISMA selección de fila que usa useCategory para cobrar.
+ */
+function rowMonthlyBasic(row: CategoryAvailabilityData): number {
+  const prices = row.categoryMonthPrices
+  if (!prices) return Number.POSITIVE_INFINITY
+  const month = pickPriceForDate(prices, fechaRecogida.value ?? '')
+  if (!month) return Number.POSITIVE_INFINITY
+  const sellable = [month['1k_kms'], month['2k_kms']].filter((p) => p > 0)
+  if (sellable.length === 0) return Number.POSITIVE_INFINITY
+  return Math.min(...sellable) + (row.returnFeeAmount ?? 0)
+}
+
+/**
  * Total (Seguro Básico) de una fila, MISMA familia de precio que muestran las
- * cards y el sidebar: getTotalPrice del caso por defecto (no-mensual, sin Total)
+ * cards y el sidebar: getTotalPrice del caso por defecto (sin Total)
  * = totalAmount + coverageTotalAmount + returnFee (useCategory.ts:230). NO usar
  * estimatedTotalAmount aquí: ese incluye IVA+tasa (getActualTotalPrice) y dejaría
  * el "desde" ~19% por encima del precio real de la card más barata (from-floor
  * mayor que el precio mostrado — lee como bait). Ver code-review Finding 1.
+ *
+ * En MENSUAL esos tres campos valen 0: Localiza no cotiza ventanas de 30 días y
+ * `createCategoryAvailability` sintetiza la fila con ceros — el precio vive en
+ * `month_prices`. Sumarlos hacía que los 4 tiles dijeran "desde $ 0".
  */
 function rowBasicTotal(row: CategoryAvailabilityData): number {
+  if (haveMonthlyReservation.value) return rowMonthlyBasic(row)
   return (row.totalAmount ?? 0) + (row.coverageTotalAmount ?? 0) + (row.returnFeeAmount ?? 0)
 }
 

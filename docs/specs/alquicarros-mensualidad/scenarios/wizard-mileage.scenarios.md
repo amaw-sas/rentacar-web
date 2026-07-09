@@ -89,25 +89,19 @@ Evidence: lo que muestra `WizardSummary` contra lo que viaja en el payload.
 
 Evidence: DOM del Paso 3 y del resumen.
 
-> **PARCIALMENTE VERIFICADO (2026-07-09, con dashboard real en :3000).** Lo comprobado:
-> volver al Paso 2 desde un deep-link `/categoria/X` funciona (`3 Seguro y km` → `2 Vehículo`)
-> y los 4 tiles de segmento se pintan. Lo NO comprobado: el **nivel 2** (cards de gama) no se
-> renderiza, así que no se puede re-tocar la gama.
->
-> Dos causas separadas, ambas ajenas a este cambio:
+> **VERIFICADO (2026-07-09).** Tres trampas del entorno de test, ninguna del producto:
 > 1. **Carrera de `rentacar-data`.** `useStoreSearchData.search()` congela
 >    `categoriesAvailabilityData` con el catálogo que exista en ese instante, y ese catálogo
 >    hidrata client-side. Un stub de disponibilidad que responde en 0 ms gana la carrera y deja
->    la lista vacía. Con backend real la petición tarda lo bastante. Por eso el stub del e2e
->    introduce 700 ms — no es cosmético.
-> 2. **Nivel 2 sin cards.** Incluso con backend real y tiles visibles, abrir un segmento no
->    produce `[data-testid="wizard-vehicle-C-test"]`. Preexistente: `alquicarros-reservation-wizard.spec.ts`
->    salta sus propios casos de Paso 2 ("vehicleCategories (Supabase) no disponible en el entorno").
->    Merece investigación propia.
->
-> El test e2e existe y se salta con esa razón. Cobertura estática mientras tanto:
-> `tests/wizard-monthly-mileage.test.ts` asserta que el early-return de re-tap de
-> `StepVehicle.onSelect` sigue en su sitio.
+>    la lista vacía ("Sin vehículos"). Con backend real la petición tarda lo bastante. Por eso
+>    el stub del e2e introduce 700 ms — no es cosmético.
+> 2. **Stepper con `doSearch` en vuelo.** Pulsar el Paso 2 antes de que la búsqueda asiente
+>    pierde el click (la red de seguridad de deep-links devuelve el wizard a su paso).
+> 3. **El segmento se auto-abre.** `StepVehicle` abre el grupo de la gama elegida (o el primero)
+>    en un `watch(..., {immediate:true})`. Clickear su tile lo **cierra** (`toggleSegment` es un
+>    toggle) y las cards desaparecen. Además, el centro de la card es el carrusel (`@click.stop`):
+>    hay que pulsar el botón "Elegir" (`wizard-select-<code>-test`), o el test pasa **vacuamente**
+>    (no seleccionar produce el mismo resultado que el re-tap no-op que se quiere probar).
 
 ## SCEN-ACM-08 — El costo del Seguro Total se expresa en la unidad correcta
 
@@ -120,6 +114,36 @@ El cobro real en mensual es `monthPriceMileage + total_insurance_price` (`useCat
 así que el cargo diario es una unidad distinta a la que se cobra.
 
 Evidence: DOM contra el total cobrado.
+
+## SCEN-ACM-11 — El "desde $X" del segmento no es $0 en mensualidad
+
+**Given** una búsqueda mensual (30 días) en el Paso 2
+**When** se listan los tiles de segmento
+**Then** cada tile muestra el precio mensual de su gama más barata
+**And** ninguno muestra `$ 0`
+**And** ese precio coincide con el total que muestra la card más barata del segmento
+
+Medido antes del fix (backend real, 2026-08-15 → 2026-09-14): los 4 tiles decían `$ 0`,
+mientras el control regular decía `$ 953.990 / $ 1.059.872 / $ 1.733.230 / $ 2.291.519`.
+Causa: `rowBasicTotal` suma `totalAmount + coverageTotalAmount + returnFeeAmount`, y en
+mensual `createCategoryAvailability` sintetiza esos tres campos en `0` — el precio vive en
+`month_prices`. Misma raíz que el `total_price: 0` del payload.
+
+Evidence: texto de los tiles en ambos modos.
+
+## SCEN-ACM-12 — El plan por defecto siempre es uno vendible
+
+**Given** una gama mensual cuya fila de precios NO ofrece el plan de 1.000 km (`1k_kms <= 0`)
+pero sí el de 2.000 km
+**When** el usuario llega al Paso 3
+**Then** queda preseleccionado el plan de 2.000 km
+**And** ni el total ni el "desde" muestran `$ 0`
+
+`useCategory.withMileage` arranca siempre en `"1k_kms"` (logic, no se toca). Si esa gama no
+vende ese plan, el precio mostrado y el cobrado serían 0. Hoy ninguna gama está en ese estado
+(todas las mensuales tienen 1k y 2k positivos), así que se cubre con test estructural.
+
+Evidence: test estructural del guard; DOM cuando exista el dato.
 
 ## SCEN-ACM-09 — Independencia de marca
 

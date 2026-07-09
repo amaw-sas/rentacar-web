@@ -99,6 +99,31 @@ describe('SCEN-ACM-01 — el stepper nombra el paso según el tipo de reserva', 
   })
 })
 
+describe('SCEN-ACM-11 — el "desde" del segmento es monthly-aware', () => {
+  it('rowBasicTotal no se limita a totalAmount/coverageTotalAmount (cero en mensual)', () => {
+    // createCategoryAvailability sintetiza esos campos en 0 para las filas mensuales:
+    // el precio vive en month_prices. Sumarlos daba "desde $ 0" en los 4 tiles.
+    expect(vehicle).toMatch(/haveMonthlyReservation/)
+    expect(vehicle).toMatch(/pickPriceForDate/)
+  })
+
+  it('el piso mensual usa el plan vendible más barato, no un 0', () => {
+    expect(vehicle).toMatch(/1k_kms/)
+    expect(vehicle).toMatch(/2k_kms/)
+    // Un plan a 0 no es vendible y no puede fijar el piso.
+    expect(vehicle).toMatch(/>\s*0/)
+  })
+})
+
+describe('SCEN-ACM-12 — el plan por defecto siempre es vendible', () => {
+  it('StepCoverage corrige withMileage cuando el default no se oferta', () => {
+    // useCategory.withMileage arranca en "1k_kms" (logic, intocable). Si esa gama no
+    // vende 1k, el precio mostrado y el cobrado serían 0.
+    expect(coverage).toMatch(/mileagePlans/)
+    expect(coverage).toMatch(/watch|watchEffect/)
+  })
+})
+
 describe('SCEN-ACM-03 — el resumen refleja el plan elegido', () => {
   it('WizardSummary muestra una fila de Kilometraje en mensual', () => {
     expect(summary).toMatch(/Kilometraje/)

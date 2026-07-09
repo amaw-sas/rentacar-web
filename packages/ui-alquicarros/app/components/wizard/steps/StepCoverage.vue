@@ -105,7 +105,7 @@
 
 <script setup lang="ts">
 // External
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
 // utils
@@ -168,6 +168,21 @@ const mileagePlans = computed<{ value: MonthlyMileage; label: string; price: str
   if (row['2k_kms'] > 0) plans.push({ value: '2k_kms', label: '2.000 km', price: moneyFormat(row['2k_kms']) })
   return plans
 })
+
+/**
+ * `useCategory.withMileage` arranca SIEMPRE en `"1k_kms"` (logic, no se toca). Si la gama
+ * no vende ese plan (`1k_kms <= 0`), el precio mostrado y el cobrado serían 0 y ningún
+ * botón quedaría marcado. Corregir al plan vendible más barato apenas se conoce la fila.
+ */
+watch(
+  [mileagePlans, () => selectedCategory.value?.withMileage],
+  ([plans, current]) => {
+    const sc = selectedCategory.value
+    if (!sc || !haveMonthlyReservation.value || plans.length === 0) return
+    if (!plans.some((p) => p.value === current)) sc.withMileage = plans[0]!.value
+  },
+  { immediate: true, flush: 'sync' },
+)
 
 /**
  * Fija la cobertura en la instancia; recalcula getTotalPrice → sidebar. El flag
