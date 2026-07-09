@@ -60,10 +60,19 @@ const AVAILABILITY_STUB = [
   stubRow('LE', 2200000),
 ];
 
+/**
+ * El retardo NO es cosmético. `useStoreSearchData.search()` congela
+ * `categoriesAvailabilityData` con el catálogo que exista en `categoriesAdminData` en ese
+ * instante, y ese catálogo (`rentacar-data`, Supabase) hidrata client-side. Un stub que
+ * responde en 0 ms gana esa carrera y deja la lista de gamas vacía para siempre: el Paso 2
+ * muestra "Sin vehículos" y estos tests se saltaban solos. Con backend real la petición
+ * tarda lo suficiente; 700 ms reproduce ese orden.
+ */
 function stubAvailability(page: Page, body: unknown, status = 200) {
-  return page.route('**/api/reservations/availability', (route: Route) =>
-    route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) }),
-  );
+  return page.route('**/api/reservations/availability', async (route: Route) => {
+    if (status === 200) await new Promise((r) => setTimeout(r, 700));
+    return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+  });
 }
 function stubRecord(page: Page) {
   return page.route('**/api/reservations/record', (route: Route) =>
@@ -128,8 +137,10 @@ async function gotoWizard(page: Page, path: string, selector: string): Promise<b
 async function gotoCoverageWithGamaC(page: Page): Promise<boolean> {
   const atStep2 = await gotoWizard(page, RESERVAS_SEARCH, '[data-testid^="wizard-segment-"]');
   if (!atStep2) return false;
-  await page.locator('[data-testid="wizard-segment-economicos-test"]').click();
-  await page.locator('[data-testid="wizard-vehicle-C-test"]').click();
+  // NO clickear el tile: StepVehicle auto-abre el primer segmento y `toggleSegment` es un
+  // toggle, así que pulsarlo lo cierra. Y elegir se hace con el botón "Elegir": el centro
+  // de la card es el carrusel, que aísla sus clics con @click.stop.
+  await page.locator('[data-testid="wizard-select-C-test"]').click();
   await page.locator('[data-testid="wizard-continue-desktop-test"]').click();
   return appears(page, '[data-testid="wizard-coverage-total-test"]');
 }
@@ -139,9 +150,13 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
 
   test('SCEN-AC-01: la ruta legacy /{city}/buscar-vehiculos redirige 301 → /reservas', async ({ page }) => {
     // La request directa NO debe seguir el redirect: asertamos el 301 + Location.
+    // Desde el PR #307 el redirect es path→path (server/middleware/redirect-buscar-vehiculos):
+    // conserva el resto de la URL en vez de tirar al usuario a la /reservas limpia.
     const resp = await page.request.get(LEGACY_CITY_SEARCH, { maxRedirects: 0 });
     expect(resp.status()).toBe(301);
-    expect(resp.headers()['location']).toBe('/reservas');
+    expect(resp.headers()['location']).toBe(
+      LEGACY_CITY_SEARCH.replace('/bogota/buscar-vehiculos', '/reservas'),
+    );
   });
 
   test('SCEN-W-09/03: deep-link (/reservas?query) entra en Paso 2 con tiles de segmento', async ({ page }) => {

@@ -55,7 +55,7 @@
           <UIcon v-if="isTotal" name="i-lucide-check-circle-2" class="size-6 text-brand-700" />
         </div>
         <p class="mt-1 body-sm font-semibold text-brand-700">
-          + $ {{ coverageDailyPrice }} / día
+          + $ {{ coveragePrice }} / {{ haveMonthlyReservation ? 'mes' : 'día' }}
         </p>
         <ul class="mt-3 space-y-1.5 body-sm text-gray-600">
           <li class="flex gap-2"><span>✓</span> Todo lo del Básico</li>
@@ -64,6 +64,37 @@
         </ul>
       </button>
     </div>
+
+    <!--
+      Kilometraje — solo en reserva mensual (30 días). El plan cambia el precio del
+      vehículo, así que vive junto a la otra decisión que mueve el total.
+    -->
+    <section v-if="haveMonthlyReservation" class="mt-8">
+      <h3 class="heading-sub text-gray-900">Elige tu kilometraje</h3>
+      <p class="mt-1 body-base text-gray-500">
+        Cuántos kilómetros puedes recorrer al mes. Al superarlos se cobra un excedente
+        por kilómetro.
+      </p>
+
+      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <button
+          v-for="plan in mileagePlans"
+          :key="plan.value"
+          type="button"
+          class="rounded-2xl border p-5 text-left transition-colors"
+          :class="mileage === plan.value ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-600' : 'border-gray-200 bg-white hover:border-brand-300'"
+          :aria-pressed="mileage === plan.value"
+          :data-testid="`wizard-mileage-${plan.value}-test`"
+          @click="chooseMileage(plan.value)"
+        >
+          <div class="flex items-center justify-between">
+            <span class="heading-sub text-gray-900">{{ plan.label }}</span>
+            <UIcon v-if="mileage === plan.value" name="i-lucide-check-circle-2" class="size-6 text-brand-700" />
+          </div>
+          <p class="mt-1 body-sm font-semibold text-brand-700">$ {{ plan.price }} / mes</p>
+        </button>
+      </div>
+    </section>
 
     <p class="mt-4 body-xs text-gray-400">
       Ningún seguro cubre accesorios removibles, documentos, placas, llaves ni multas
@@ -74,38 +105,100 @@
 
 <script setup lang="ts">
 // External
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+
+// utils
+import { pickPriceForDate } from '@rentacar-main/logic/utils'
+
+// Types
+import type { MonthlyMileage } from '@rentacar-main/logic/utils'
 
 const search = useStoreSearchData()
 const form = useStoreReservationForm()
 const { selectedCategory } = storeToRefs(search)
-const { haveTotalInsurance } = storeToRefs(form)
+const { haveMonthlyReservation, fechaRecogida } = storeToRefs(form)
 const { moneyFormat } = useMoneyFormat()
 
 // Las props de useCategory llegan auto-unwrapeadas al leer selectedCategory.value
 // (Pinia envuelve en reactive) — sin `.value` anidado (ese trap da undefined/NaN).
 const isTotal = computed(() => selectedCategory.value?.withTotalCoverage === true)
+const mileage = computed(() => selectedCategory.value?.withMileage ?? null)
 
-// "+$X/día" = costo incremental diario del Total sobre el Básico. useCategory no
-// expone el cargo diario del seguro total, pero sí las cargas raw; el delta
-// replica el floor de pickEffectiveTotalCoverageUnitCharge (nunca negativo) sin
-// tocar logic/.
-const coverageDailyPrice = computed(() => {
+/**
+ * Fila de precios mensuales que aplica a la fecha de recogida. Debe ser la MISMA que
+ * usa useCategory.getCategoryMonthPrice para cobrar: pickPriceForDate puede devolver
+ * una fila `inactive` (la más cercana) cuando ninguna activa cubre la fecha. Elegirla
+ * de otro modo haría que la etiqueta mienta sobre lo que se cobra.
+ */
+const monthPrice = computed(() => {
+  const prices = selectedCategory.value?.categoryMonthPrices
+  return prices ? pickPriceForDate(prices, fechaRecogida.value ?? '') : undefined
+})
+
+/**
+ * Costo incremental del Seguro Total sobre el Básico.
+ *
+ * En reserva regular es un cargo DIARIO: useCategory no expone el cargo diario del
+ * seguro total, pero sí las cargas raw, y el delta replica el floor de
+ * pickEffectiveTotalCoverageUnitCharge (nunca negativo) sin tocar logic/.
+ *
+ * En mensual el cobro real es `total_insurance_price` de la fila del mes
+ * (useCategory.getTotalPrice: monthPriceMileage + total_insurance_price), una unidad
+ * distinta. Mostrar ahí el cargo diario compara peras con naranjas.
+ */
+const coveragePrice = computed(() => {
   const sc = selectedCategory.value
   if (!sc) return ''
+  if (haveMonthlyReservation.value) return moneyFormat(monthPrice.value?.total_insurance_price ?? 0)
   return moneyFormat(Math.max(0, (sc.totalCoverageUnitCharge ?? 0) - (sc.coverageUnitCharge ?? 0)))
 })
 
 /**
- * Fija la cobertura. Escribe en la instancia (recalcula getTotalPrice → sidebar)
- * y sincroniza el flag del form que viaja en el payload de la reserva. Espeja lo
- * que CategoryCard.goNextStep hacía (haveTotalInsurance = withTotalCoverage).
+ * Planes vendibles. El de 3.000 km existe en el tipo y en los datos pero ninguna marca
+ * lo oferta (CategoryCard lo tiene tras `v-if="false"`), y categoryOffersMonthly
+ * tampoco lo cuenta. El de 2.000 km se omite cuando su precio no es positivo: una gama
+ * puede ofrecer mensual solo con el plan de 1.000 km.
+ */
+const mileagePlans = computed<{ value: MonthlyMileage; label: string; price: string }[]>(() => {
+  const row = monthPrice.value
+  if (!row) return []
+  const plans: { value: MonthlyMileage; label: string; price: string }[] = []
+  if (row['1k_kms'] > 0) plans.push({ value: '1k_kms', label: '1.000 km', price: moneyFormat(row['1k_kms']) })
+  if (row['2k_kms'] > 0) plans.push({ value: '2k_kms', label: '2.000 km', price: moneyFormat(row['2k_kms']) })
+  return plans
+})
+
+/**
+ * `useCategory.withMileage` arranca SIEMPRE en `"1k_kms"` (logic, no se toca). Si la gama
+ * no vende ese plan (`1k_kms <= 0`), el precio mostrado y el cobrado serían 0 y ningún
+ * botón quedaría marcado. Corregir al plan vendible más barato apenas se conoce la fila.
+ */
+watch(
+  [mileagePlans, () => selectedCategory.value?.withMileage],
+  ([plans, current]) => {
+    const sc = selectedCategory.value
+    if (!sc || !haveMonthlyReservation.value || plans.length === 0) return
+    if (!plans.some((p) => p.value === current)) sc.withMileage = plans[0]!.value
+  },
+  { immediate: true, flush: 'sync' },
+)
+
+/**
+ * Fija la cobertura en la instancia; recalcula getTotalPrice → sidebar. El flag
+ * `haveTotalInsurance` del payload lo deriva el watcher de ReservationWizard: escribirlo
+ * aquí reintroduciría la doble fuente de verdad que dejó al kilometraje sin sincronizar.
  */
 function choose(total: boolean): void {
   const sc = selectedCategory.value
   if (!sc) return
   sc.withTotalCoverage = total
-  haveTotalInsurance.value = total
+}
+
+/** Ídem para el plan de kilometraje: la instancia manda, el store la espeja. */
+function chooseMileage(plan: MonthlyMileage): void {
+  const sc = selectedCategory.value
+  if (!sc) return
+  sc.withMileage = plan
 }
 </script>

@@ -17,6 +17,7 @@
           type="button"
           :disabled="!isReached(i + 1)"
           :aria-current="current === i + 1 ? 'step' : undefined"
+          :data-testid="`wizard-step-${i + 1}-test`"
           :class="pillClass(i + 1)"
           class="group inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/50 disabled:cursor-default"
           @click="onSelect(i + 1)"
@@ -83,6 +84,10 @@
 </template>
 
 <script setup lang="ts">
+// External
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+
 const props = defineProps<{
   /** Número del paso activo (1..5). */
   current: number
@@ -92,7 +97,17 @@ const props = defineProps<{
 
 const emit = defineEmits<{ (e: 'goTo', step: number): void }>()
 
-const STEP_LABELS = ['Búsqueda', 'Vehículo', 'Seguro', 'Adicionales', 'Datos'] as const
+const { haveMonthlyReservation } = storeToRefs(useStoreReservationForm())
+
+// En mensual el Paso 3 decide cobertura Y plan de kilometraje; el label lo nombra
+// para que el usuario no crea que solo elige seguro.
+const STEP_LABELS = computed(() => [
+  'Búsqueda',
+  'Vehículo',
+  haveMonthlyReservation.value ? 'Seguro y km' : 'Seguro',
+  'Adicionales',
+  'Datos',
+])
 
 function isReached(step: number): boolean {
   return step <= props.maxReached

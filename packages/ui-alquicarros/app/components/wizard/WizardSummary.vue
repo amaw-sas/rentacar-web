@@ -131,8 +131,13 @@ const mobileOpen = ref(false)
 
 const form = useStoreReservationForm()
 const search = useStoreSearchData()
-const { selectedPickupLocation, selectedDays, humanFormattedPickupDateShort, isSubmittingForm } =
-  storeToRefs(form)
+const {
+  selectedPickupLocation,
+  selectedDays,
+  humanFormattedPickupDateShort,
+  isSubmittingForm,
+  haveMonthlyReservation,
+} = storeToRefs(form)
 const { selectedCategory } = storeToRefs(search)
 
 // El CTA se deshabilita mientras la reserva está en vuelo (evita el doble-submit
@@ -157,6 +162,13 @@ const coverageLabel = computed(() => {
   const sc = selectedCategory.value
   if (!sc) return null
   return sc.withTotalCoverage ? 'Seguro Total' : 'Seguro Básico'
+})
+
+/** Plan de kilometraje elegido; solo tiene sentido en reserva mensual. */
+const mileageLabel = computed(() => {
+  const sc = selectedCategory.value
+  if (!sc || !haveMonthlyReservation.value) return null
+  return sc.withMileage === '2k_kms' ? '2.000 km' : sc.withMileage === '1k_kms' ? '1.000 km' : null
 })
 
 const extrasLabel = computed(() => {
@@ -202,6 +214,9 @@ const rows = computed<SummaryRow[]>(() => {
   }
   out.push({ label: 'Vehículo', value: gamaLabel.value ?? 'Elige →', muted: !gamaLabel.value })
   out.push({ label: 'Seguro', value: coverageLabel.value ?? '—', muted: !coverageLabel.value })
+  if (haveMonthlyReservation.value) {
+    out.push({ label: 'Kilometraje', value: mileageLabel.value ?? '—', muted: !mileageLabel.value })
+  }
   out.push({ label: 'Adicionales', value: extrasLabel.value ?? '—', muted: !extrasLabel.value })
   return out
 })
