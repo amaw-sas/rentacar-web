@@ -102,7 +102,43 @@ const {
   error,
   noAvailableCategories,
 } = storeToRefs(search)
-const { politicaPrivacidad, isSubmittingForm, vehiculo, haveTotalInsurance } = storeToRefs(form)
+const {
+  politicaPrivacidad,
+  isSubmittingForm,
+  vehiculo,
+  haveTotalInsurance,
+  haveMonthlyReservation,
+  selectedMonthlyMileage,
+} = storeToRefs(form)
+
+/**
+ * Fuente única de los flags que viajan en el payload (useRecordReservationForm).
+ *
+ * La instancia `selectedCategory` (useCategory) manda: es la que calcula los precios
+ * que el usuario ve en el sidebar y en las cards. El store solo los espeja. Antes cada
+ * paso los escribía a mano — `haveTotalInsurance = …` en tres sitios — y el kilometraje
+ * simplemente se quedó sin su línea: `withMileage` arranca en "1k_kms" mientras
+ * `selectedMonthlyMileage` arranca en null, así que `useRecordReservationForm` tomaba la
+ * rama de reserva regular y enviaba `total_price: 0` sin `monthly_mileage`, cobrando el
+ * mensual. Derivar en un solo punto vuelve estructural lo que era disciplina.
+ *
+ * `sc.withMileage` llega auto-unwrapeado (el ref del store envuelve en reactive): es un
+ * string, no un Ref. Leerlo con `.value` daría undefined.
+ */
+watch(
+  () => [
+    haveMonthlyReservation.value,
+    selectedCategory.value?.withTotalCoverage,
+    selectedCategory.value?.withMileage,
+  ],
+  () => {
+    const sc = selectedCategory.value
+    haveTotalInsurance.value = !!sc?.withTotalCoverage
+    selectedMonthlyMileage.value =
+      haveMonthlyReservation.value && sc ? (sc.withMileage ?? null) : null
+  },
+  { immediate: true, flush: 'sync' },
+)
 
 /**
  * ¿La búsqueda ya se resolvió (con resultados, error o inventario vacío)? `pending`
@@ -271,7 +307,8 @@ if (categoriaParam.value) {
         const cat = useCategory(row)
         selectedCategory.value = cat
         vehiculo.value = cat.categoryCode.value
-        haveTotalInsurance.value = false // Básico por defecto (espeja StepVehicle.onSelect)
+        // Seguro Básico y kilometraje por defecto los fija el watcher de derivación
+        // a partir de la instancia recién creada (withTotalCoverage=false, "1k_kms").
       }
     },
     { immediate: true },

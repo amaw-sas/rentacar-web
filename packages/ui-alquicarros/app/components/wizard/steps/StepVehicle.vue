@@ -141,7 +141,7 @@ const emit = defineEmits<{
 const search = useStoreSearchData()
 const form = useStoreReservationForm()
 const { filteredCategories, pending, selectedCategory, error } = storeToRefs(search)
-const { vehiculo, haveTotalInsurance } = storeToRefs(form)
+const { vehiculo } = storeToRefs(form)
 
 const { vehicleCategories } = useFetchRentacarData()
 const { moneyFormat } = useMoneyFormat()
@@ -252,15 +252,15 @@ const selectedCode = computed(() => selectedCategory.value?.categoryCode ?? null
  * Fija la gama elegida. `cat` es la instancia useCategory que emite la card;
  * queda como selectedCategory (lo que useRecordReservationForm lee al enviar) y
  * su código como `vehiculo`. Un vehículo recién elegido arranca en Seguro Básico
- * (el Paso 3 puede subirlo a Total).
+ * y kilometraje 1k: son los defaults de la instancia, y el watcher de derivación
+ * de ReservationWizard los espeja en el form.
  */
 function onSelect(cat: ReturnType<typeof useCategory>): void {
   // Re-tap de la gama ya elegida = no-op: reasignar crearía una instancia fresca
-  // (withTotalCoverage/extras en false) y el reset de haveTotalInsurance borraría
-  // el Seguro Total y los adicionales ya elegidos (data loss en conversión).
+  // (withTotalCoverage/withMileage/extras en su default) y borraría el Seguro Total,
+  // el plan de kilometraje y los adicionales ya elegidos (data loss en conversión).
   if (cat.categoryCode.value === selectedCode.value) return
   selectedCategory.value = cat
   vehiculo.value = cat.categoryCode.value
-  haveTotalInsurance.value = false
 }
 </script>

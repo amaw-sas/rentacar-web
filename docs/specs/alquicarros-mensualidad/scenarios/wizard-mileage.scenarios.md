@@ -89,6 +89,16 @@ Evidence: lo que muestra `WizardSummary` contra lo que viaja en el payload.
 
 Evidence: DOM del Paso 3 y del resumen.
 
+> **NO VERIFICADO EN RUNTIME LOCAL (2026-07-09).** El Paso 2 no renderiza cards en dev:
+> `StepVehicle` destructura `useFetchRentacarData()` en `setup`, y si `useState('rentacar-data')`
+> todavía es `null` recibe el `EMPTY_SENTINEL` congelado, del que ya no se recupera (no es
+> reactivo). El plugin llena ese estado después del mount. Por eso
+> `alquicarros-reservation-wizard.spec.ts` también salta sus casos de Paso 2
+> ("vehicleCategories (Supabase) no disponible en el entorno") — es preexistente y ajeno
+> a este cambio. El test e2e existe y se salta con esa razón; en CI (SSR con payload) corre.
+> Cobertura estática mientras tanto: `tests/wizard-monthly-mileage.test.ts` asserta que el
+> early-return de re-tap de `StepVehicle.onSelect` sigue en su sitio.
+
 ## SCEN-ACM-08 — El costo del Seguro Total se expresa en la unidad correcta
 
 **Given** una reserva mensual
