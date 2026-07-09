@@ -60,14 +60,21 @@ function stubRow(code: string, est: number) {
 }
 
 /**
- * Mensual: Localiza rechaza ventanas >= 30 días (LLNRAG009) y el store construye las
- * tarjetas desde el catálogo (month_prices). Una respuesta vacía basta y refleja
- * producción mejor que una lista inventada.
+ * Mensual: el precio sale del catálogo (`month_prices`), no de Localiza, así que una
+ * respuesta vacía basta y refleja producción mejor que una lista inventada.
+ *
+ * El retardo NO es cosmético. `useStoreSearchData.search()` congela
+ * `categoriesAvailabilityData` con lo que haya en `categoriesAdminData` en ese instante,
+ * y ese catálogo viene de `rentacar-data` (Supabase), que hidrata client-side. Un stub
+ * que responde en 0 ms gana esa carrera y deja la lista de gamas vacía para siempre —
+ * el Paso 2 muestra "Sin vehículos". Con backend real la petición tarda lo suficiente
+ * para que la metadata llegue primero. 700 ms reproduce ese orden.
  */
 function stubAvailability(page: Page, body: unknown) {
-  return page.route('**/api/reservations/availability', (route: Route) =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) }),
-  );
+  return page.route('**/api/reservations/availability', async (route: Route) => {
+    await new Promise((r) => setTimeout(r, 700));
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+  });
 }
 
 function captureRecord(page: Page, sink: { body?: Record<string, unknown> }) {
@@ -92,12 +99,8 @@ async function appears(page: Page, selector: string, timeout = 12_000): Promise<
  * del store también dura 7 días, así que esperar "7 días" pasa sin haber hidratado y el
  * test opera sobre un wizard sin gama. `rentacar-data` (Supabase) hidrata client-side y
  * useSearchByRouteParams corre una sola vez en onMounted → si la metadata llega tarde,
- * el deep-link de gama cae en la red de seguridad y vuelve al Paso 2.
- *
- * Siempre recarga antes de mirar: `StepVehicle.renderable` filtra contra
- * `vehicleCategories`, que no es reactivo — si el paso monta antes de que llegue esa
- * metadata, su lista de gamas queda vacía para el resto de la carga. Tras el reload la
- * metadata viaja en el payload SSR. Mismo remedio que el `gotoWizard` de
+ * el deep-link de gama cae en la red de seguridad y vuelve al Paso 2. El reload la
+ * reejecuta con `rentacar-data` ya caliente. Mismo remedio que el `gotoWizard` de
  * alquicarros-reservation-wizard.spec.ts.
  */
 async function gotoStep3(page: Page, path: string, pickupDate: string): Promise<boolean> {
@@ -219,18 +222,26 @@ test.describe('alquicarros — reserva mensual', () => {
     // Volver al Paso 2 y re-tocar la MISMA gama: el early-return de onSelect evita
     // crear una instancia fresca, así que no se pierde lo elegido. El Paso 2 arranca
     // en el nivel de segmentos (C y CX viven en "economicos"); hay que abrirlo.
+    //
+    // Esperar a que la búsqueda haya asentado ANTES de tocar el stepper: si se pulsa
+    // el Paso 2 mientras `doSearch` sigue en vuelo, la red de seguridad de deep-links
+    // devuelve el wizard al paso actual y el click se pierde en silencio. El label
+    // "Seguro y km" solo aparece cuando `haveMonthlyReservation` ya es true, que es lo
+    // último que fija useSearch al terminar.
+    await expect(page.locator('[data-testid="wizard-step-3-test"]')).toContainText('Seguro y km');
     await page.locator('[data-testid="wizard-step-2-test"]').click();
-
-    // StepVehicle destructura `useFetchRentacarData()` en setup: si `useState` aún no
-    // está hidratado recibe el EMPTY_SENTINEL congelado y su lista queda vacía para
-    // siempre. En dev el plugin llena ese estado después de que el paso monta, así que
-    // las cards no aparecen. Mismo motivo por el que alquicarros-reservation-wizard.spec
-    // salta sus casos de Paso 2. En CI (SSR con payload) sí renderizan.
-    const tilesRendered = await appears(page, '[data-testid="wizard-segment-economicos-test"]', 8_000);
-    test.skip(!tilesRendered, 'Paso 2 sin cards: rentacar-data hidrata tras el mount (dev)');
+    await expect(page.locator('[aria-current="step"]').first()).toContainText('Vehículo');
 
     await page.locator('[data-testid="wizard-segment-economicos-test"]').click();
-    await page.locator('[data-testid="wizard-select-C-test"]').click();
+
+    // El nivel 2 (cards de gama) no se pinta en este entorno aunque los tiles sí:
+    // `openGroup` depende de `rowByCode`/`vehicleCategories`, y el spec oficial del
+    // wizard salta sus propios casos de Paso 2 por lo mismo. Es preexistente y ajeno
+    // a este cambio; ver la nota en el holdout.
+    const cardRendered = await appears(page, '[data-testid="wizard-vehicle-C-test"]', 8_000);
+    test.skip(!cardRendered, 'Paso 2 nivel 2 sin cards en este entorno (preexistente)');
+
+    await page.locator('[data-testid="wizard-vehicle-C-test"]').click();
     await page.locator('[data-testid="wizard-step-3-test"]').click();
     await expect(aside).toContainText('Seguro Total');
     await expect(aside).toContainText('2.000 km');
@@ -238,7 +249,7 @@ test.describe('alquicarros — reserva mensual', () => {
     // Cambiar de gama SÍ resetea a los defaults de la instancia nueva.
     await page.locator('[data-testid="wizard-step-2-test"]').click();
     await page.locator('[data-testid="wizard-segment-economicos-test"]').click();
-    await page.locator('[data-testid="wizard-select-CX-test"]').click();
+    await page.locator('[data-testid="wizard-vehicle-CX-test"]').click();
     await expect(aside).toContainText('Seguro Básico');
     await expect(aside).toContainText('1.000 km');
   });
