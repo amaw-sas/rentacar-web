@@ -149,6 +149,15 @@ function firstQ(v: unknown): string | undefined {
 }
 
 /**
+ * Pickup presente derivado de query O params. En `/reservas` limpio viene por query
+ * (`?lugar_recogida=`); en las páginas PATH de resultados
+ * (`/reservas/lugar-recogida/...`) viene por `route.params.lugar_recogida`. Espeja a
+ * `deriveStepFromRoute` (que ya lee ambos) para que el sync de `?paso=` (híbrido)
+ * dispare también en las URLs PATH.
+ */
+const pickup = computed(() => firstQ(route.query.lugar_recogida) ?? firstQ(route.params.lugar_recogida))
+
+/**
  * Click en un paso del stepper. Casos especiales del paso "Búsqueda":
  *   - en Paso 1 con búsqueda YA hecha (maxReached ≥ 2): avanzar a los resultados
  *     (Paso 2) en vez de no-opear — no hay CTA "Continuar" en el Paso 1.
@@ -229,7 +238,7 @@ if (!props.externalSearch) {
     () => wizard.currentStep.value,
     (step) => {
       if (!import.meta.client) return
-      if (!firstQ(route.query.lugar_recogida)) return
+      if (!pickup.value) return
       const url = new URL(window.location.href)
       if (step === 'busqueda') url.searchParams.delete('paso')
       else url.searchParams.set('paso', step)

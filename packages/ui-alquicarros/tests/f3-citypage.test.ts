@@ -146,10 +146,14 @@ describe('F3/SCEN-AC — landing mode + independencia de buscar-vehiculos', () =
       expect(existsSync(join(ROOT, p))).toBe(false)
     })
   }
-  it('SCEN-AC-01: nuxt.config redirige /{city}/buscar-vehiculos/** → 301 /reservas', () => {
-    const cfg = tryRead('nuxt.config.ts')
-    expect(cfg).toMatch(/['"]\/:city\/buscar-vehiculos\/\*\*['"]/)
-    expect(cfg).toMatch(/redirect:\s*\{\s*to:\s*'\/reservas',\s*statusCode:\s*301/)
+  it('SCEN-AC-01: buscar-vehiculos redirige 301 → /reservas (server middleware path→path)', () => {
+    // El 301 se movió del routeRule plano a un server middleware que preserva el resto
+    // del path (categoria/referido) — necesario para la migración de /reservas a PATH.
+    expect(existsSync(join(ROOT, 'server/middleware/redirect-buscar-vehiculos.ts'))).toBe(true)
+    const mw = tryRead('server/middleware/redirect-buscar-vehiculos.ts')
+    expect(mw).toMatch(/buscar-vehiculos/)
+    expect(mw).toMatch(/sendRedirect\(\s*event\s*,\s*target\s*,\s*301\s*\)/)
+    expect(tryRead('nuxt.config.ts')).not.toMatch(/buscar-vehiculos\/\*\*['"]\s*:\s*\{\s*redirect/)
   })
 })
 
@@ -191,9 +195,13 @@ describe('F3 — SCEN-F3-05/07: composable alquilame-local portado', () => {
 
 describe('F3 — SCEN-F3-07/08/09: Searcher submit context-aware + badges naranja', () => {
   const s = () => tryRead('app/components/Searcher.vue')
-  it('SCEN-F3-07: define searchDestination (ciudad deep-link / reservas query string)', () => {
+  it('SCEN-F3-07: searchDestination arma el PATH /reservas por segmentos (no query object)', () => {
+    // Migración a PATH (directiva): el submit ya no arma { path:'/reservas', query:{…} }
+    // sino el string `/reservas/lugar-recogida/…` (+ /referido/… ) que leen las páginas PATH.
     expect(s()).toMatch(/searchDestination/)
-    expect(s()).toMatch(/path:\s*'\/reservas'/)
+    expect(s()).toMatch(/`\/lugar-recogida\/\$\{/)
+    expect(s()).toMatch(/\/reservas\/referido\//)
+    expect(s()).not.toMatch(/path:\s*'\/reservas'/)
   })
   it('SCEN-F3-07: guard de submit context-aware (searchDisabledGuardSatisfied)', () => {
     expect(s()).toMatch(/searchDisabledGuardSatisfied/)
