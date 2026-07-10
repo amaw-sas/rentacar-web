@@ -24,7 +24,9 @@ import {
   bookableSlotsForDate,
   isDayOpen,
   nearestOpenDay,
+  latestOpenDayOnOrBefore,
   nearestSlotByTime,
+  MAX_RENTAL_DAYS,
   toDatetime,
   formatHumanTime,
   formatTime,
@@ -375,13 +377,49 @@ export default function useSearch() {
     }
   });
 
+  // Hard MAX_RENTAL_DAYS cap. The calendar's :max-value only guards the widget: a
+  // hydrated route writes the raw dates straight into the store, so clamp the return
+  // end here — the one place every entry path funnels through.
+  //
+  // immediate covers useSearchByRouteParams, which sets the refs BEFORE instantiating
+  // useSearch (a lazy watcher would never see that write). The brand-local
+  // useSearchByQueryParams instantiates first and writes after, so there the plain
+  // reactive trigger does the work. Both paths land on the same clamp.
+  //
+  // Pinning the return hour to the pickup hour makes the window exactly
+  // MAX_RENTAL_DAYS × 24 h: a monthly rental carries no extra hours, per the
+  // operator's rule. Midnight is the fallback — the same default selectedDays uses —
+  // because a URL with no pickup hour would otherwise leave the cap unenforced: the
+  // date already sits at the ceiling, so the watcher never fires again to fix it.
+  watch(selectedDays, () => {
+    if (!selectedPickupDate.value || selectedDays.value <= MAX_RENTAL_DAYS) return;
+
+    const ceiling = selectedPickupDate.value.copy().add({ days: MAX_RENTAL_DAYS });
+    // Backward-only: nearestOpenDay prefers moving forward, which would push the
+    // return past the ceiling and re-break the cap. The floor is pickup + 1 day, so a
+    // branch closed across the whole window yields null (→ the raw ceiling, which the
+    // server validates) instead of collapsing the return onto the pickup day and
+    // billing zero days.
+    const open = latestOpenDayOnOrBefore(
+      returnBranchSchedule.value,
+      ceiling,
+      selectedPickupDate.value.copy().add({ days: 1 }),
+    );
+    fechaDevolucion.value = (open ?? ceiling).toString();
+    horaDevolucion.value = horaRecogida.value ?? '00:00';
+  }, { immediate: true, flush: 'sync' });
+
   // Filtra desde cache cuando hay restricción mensual
   const returnHourOptions = computed(() => {
     const allOptions = getHourOptions();
     let base: Array<{ value: string; label: string }>;
 
     // Reservas mensuales (30 días): filtra opciones hasta la hora de recogida.
-    if (selectedDays.value === 30 && selectedPickupHour.value) {
+    // `>=` y no `===`: subir la hora de devolución sube selectedDays, así que con
+    // `===` la restricción se apagaba justo cuando empezaba a hacer falta (una hora
+    // posterior volvía el rango de 31 días y reabría la lista). Con `>=` la condición
+    // es monótona y el watcher de snap de abajo devuelve la hora al rango legal.
+    if (selectedDays.value >= MAX_RENTAL_DAYS && selectedPickupHour.value) {
       const cutoffIndex = allOptions.findIndex(opt => {
         const optTime = createTimeFromString(opt.value);
         return optTime.compare(selectedPickupHour.value!) > 0;

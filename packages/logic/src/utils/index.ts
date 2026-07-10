@@ -33,7 +33,7 @@ export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCovera
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
 export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';
-export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, nearestSlotByTime } from './scheduleAvailability';
+export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, latestOpenDayOnOrBefore, nearestSlotByTime } from './scheduleAvailability';
 export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
 export type { CityReservationDates } from './buildCityReservationURL';
