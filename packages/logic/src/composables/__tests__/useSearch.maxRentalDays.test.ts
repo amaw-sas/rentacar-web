@@ -19,6 +19,20 @@ const store = readFileSync(
   'utf8',
 )
 
+/**
+ * SOLO el cuerpo del watcher de recorte. Anclar al archivo entero haría vacuas las
+ * aserciones: `immediate: true`, `flush:'sync'` y `add({ days: 1 })` aparecen también en
+ * los watchers vecinos (snap de hora, default de devolución), así que pasarían aunque el
+ * recorte los perdiera.
+ */
+function clampWatcher(): string {
+  const start = source.indexOf('watch(selectedDays')
+  if (start === -1) throw new Error('no existe el watcher de recorte `watch(selectedDays`')
+  const end = source.indexOf('const returnHourOptions', start)
+  if (end === -1) throw new Error('no encuentro el final del watcher de recorte')
+  return source.slice(start, end)
+}
+
 describe('useSearch — tope duro de MAX_RENTAL_DAYS', () => {
   it('importa la constante en vez de repetir el literal', () => {
     expect(source).toMatch(/MAX_RENTAL_DAYS/)
@@ -39,13 +53,12 @@ describe('useSearch — tope duro de MAX_RENTAL_DAYS', () => {
   it('el recorte corre en la hidratación de la ruta (immediate) y en sync', () => {
     // Las composables de ruta fijan los refs ANTES de instanciar useSearch: un watcher
     // no-inmediato nunca vería el cambio.
-    const clamp = source.slice(source.indexOf('MAX_RENTAL_DAYS'))
-    expect(clamp).toMatch(/immediate:\s*true/)
-    expect(clamp).toMatch(/flush:\s*['"]sync['"]/)
+    expect(clampWatcher()).toMatch(/immediate:\s*true/)
+    expect(clampWatcher()).toMatch(/flush:\s*['"]sync['"]/)
   })
 
   it('el recorte iguala la hora de devolución a la de recogida', () => {
-    expect(source).toMatch(/horaDevolucion\.value\s*=\s*horaRecogida\.value/)
+    expect(clampWatcher()).toMatch(/horaDevolucion\.value\s*=\s*horaRecogida\.value/)
   })
 
   it('la hora se fija SIEMPRE, aunque no haya hora de recogida', () => {
@@ -53,14 +66,14 @@ describe('useSearch — tope duro de MAX_RENTAL_DAYS', () => {
     // tardía dejaba la ventana en 31 días: la fecha ya estaba en el techo, así que
     // el watcher no volvía a dispararse. selectedDays usa medianoche como fallback;
     // el recorte debe usar el mismo.
-    expect(source).toMatch(/horaDevolucion\.value\s*=\s*horaRecogida\.value\s*\?\?\s*['"]00:00['"]/)
-    expect(source).not.toMatch(/if\s*\(horaRecogida\.value\)\s*horaDevolucion\.value/)
+    expect(clampWatcher()).toMatch(/horaDevolucion\.value\s*=\s*horaRecogida\.value\s*\?\?\s*['"]00:00['"]/)
+    expect(clampWatcher()).not.toMatch(/if\s*\(horaRecogida\.value\)\s*horaDevolucion\.value/)
   })
 
   it('el suelo del snap es pickup + 1 día: la devolución nunca colapsa sobre la recogida', () => {
     // Con floor = pickup, una sede cerrada toda la ventana devolvía la propia fecha de
     // recogida ⇒ 0 días facturables ⇒ doSearch moría en "Revisa las fechas".
-    expect(source).toMatch(/add\(\{\s*days:\s*1\s*\}\)/)
+    expect(clampWatcher()).toMatch(/add\(\{\s*days:\s*1\s*\}\)/)
   })
 })
 
