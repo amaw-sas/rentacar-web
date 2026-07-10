@@ -17,6 +17,7 @@ import {
   createTimeFromString,
   dayDifference,
   rentalDayCount,
+  MAX_RENTAL_DAYS,
   extraHourChipLabel,
   formatHumanDate,
   formatHumanDateShort,
@@ -247,7 +248,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
 
   const maxReturnDate = computed<DateObject | undefined>(() => {
     return selectedPickupDate.value
-      ? selectedPickupDate.value.add({ days: 30 })
+      ? selectedPickupDate.value.add({ days: MAX_RENTAL_DAYS })
       : undefined;
   });
 

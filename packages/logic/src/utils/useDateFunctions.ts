@@ -259,6 +259,14 @@ export function hourDifference(
 export const GRACE_HOURS = 4;
 
 /**
+ * Hard business cap: a rental may not exceed 30 BILLABLE days (rentalDayCount,
+ * which adds a day once the leftover passes GRACE_HOURS). Single source of truth:
+ * the Searcher's return-date ceiling (maxReturnDate), the return-hour restriction
+ * and useSearch's clamp watcher all read it, so a deep-link can't outrun the calendar.
+ */
+export const MAX_RENTAL_DAYS = 30;
+
+/**
  * Counts billable rental days between two datetimes.
  *
  * Bills each full 24h block, plus one extra day when the leftover beyond the

@@ -110,6 +110,29 @@ export function nearestOpenDay(
 }
 
 /**
+ * The latest open day at or before `target`, never earlier than `floor`.
+ *
+ * The backward-only twin of `nearestOpenDay`, which prefers moving FORWARD on a
+ * tie. Clamping a rental to its 30-day ceiling must never move the return date
+ * past that ceiling, so a closed ceiling day has to walk back, not forward.
+ * `null` when no open day exists in `[floor, target]` (degenerate all-closed
+ * schedule — the caller keeps the raw target and the server validates).
+ */
+export function latestOpenDayOnOrBefore(
+  schedule: LocationSchedule | null | undefined,
+  target: DateObject,
+  floor: DateObject,
+  maxRadius = 31,
+): DateObject | null {
+  for (let d = 0; d <= maxRadius; d++) {
+    const day = target.copy().add({ days: -d });
+    if (day.compare(floor) < 0) return null;
+    if (isDayOpen(schedule, day)) return day;
+  }
+  return null;
+}
+
+/**
  * The slot whose time is nearest `target` (absolute minute distance; ties break
  * toward the earlier slot) — issue #47 W6. `null` for an empty list. Used to snap
  * the inherited "return hour = pickup hour" default to the closest open hour
