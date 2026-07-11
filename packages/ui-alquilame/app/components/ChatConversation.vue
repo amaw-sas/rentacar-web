@@ -120,6 +120,7 @@
               <span v-if="m.actions" class="cc-actions">
                 <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
                 <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
+                <a v-if="m.actions.share" :href="m.actions.share" target="_blank" rel="noopener noreferrer" class="cc-link-btn cc-link-btn-share">Compartir cotización</a>
               </span>
             </template>
 
@@ -380,6 +381,7 @@ button { -webkit-tap-highlight-color: transparent; }
   font-size: 0.9rem;
 }
 .cc-link-btn-wa { background: #16a34a; } /* WhatsApp → verde */
+.cc-link-btn-share { background: #0d9488; } /* Compartir cotización → teal (paridad con /chat-test) */
 .cc-link-btn:hover { opacity: 0.92; }
 
 /* --- Tabla de cotización (data-quoteTable) --- */

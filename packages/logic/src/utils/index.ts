@@ -22,6 +22,8 @@ export { renderChatMarkdown } from './renderChatMarkdown';
 export { splitBubbles } from './splitBubbles';
 export { extractChatActions } from './extractChatActions';
 export type { ChatActions } from './extractChatActions';
+export { buildChatPayloadMessages, CHAT_PAYLOAD_TAIL } from './buildChatPayloadMessages';
+export type { ChatPayloadMessage } from './buildChatPayloadMessages';
 
 // ============================================================================
 // Pricing
