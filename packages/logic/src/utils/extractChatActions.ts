@@ -11,6 +11,11 @@
 export interface ChatActions {
   web?: string;
   whatsapp?: string;
+  // WhatsApp "share to anyone" link (wa.me/?text=…) the brain emits on the
+  // self-serve / "tómate tu tiempo" path via the `data-buttons` part. Never set by
+  // extractChatActions (a booking-failure tool output has no share link) — only by
+  // the composable's data-buttons handler. Rendered as a "Compartir cotización" button.
+  share?: string;
 }
 
 function httpUrl(v: unknown): string | undefined {

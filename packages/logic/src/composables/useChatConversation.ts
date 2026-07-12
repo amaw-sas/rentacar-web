@@ -22,11 +22,14 @@
 import { computed, ref } from 'vue';
 import { readStoredAttribution } from '@rentacar-main/logic/utils';
 import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
+import { buildChatPayloadMessages } from '../utils/buildChatPayloadMessages';
 
 // Code-owned data parts emitted by the hybrid orchestrator (dashboard /api/chat)
 // ALONGSIDE the streamed text. They arrive as `data-*` SSE events and are
-// rendered as rich UI (table / cards) — never as text. Shapes mirror the
-// reference renderer (rentacar-dashboard app/chat-test/page.tsx) 1:1.
+// rendered as rich UI (table / cards / buttons) — never as text. Shapes mirror the
+// reference renderer (rentacar-dashboard app/chat-test/chat-test-client.tsx): text,
+// data-quoteTable, data-gamaCards, and data-buttons {web, whatsapp, share}, plus the
+// crear_reserva tool-output fallback links. Keep them in sync when either side changes.
 export interface QuoteTablePart {
   sede: string;
   dias: number;
@@ -163,19 +166,39 @@ export function useChatConversation() {
       ...(reply ? { replyTo: reply } : {}),
     });
 
-    // Build the request history BEFORE adding the assistant placeholder, in the
-    // UIMessage shape the endpoint expects (parts[], not a content string). A
-    // replied-to message prepends its context line so the brain sees which gama /
-    // model the customer means without them typing it.
-    const payloadMessages = messages.value.map((m) => ({
-      id: m.id,
-      role: m.role,
-      parts: [{ type: 'text', text: m.replyTo ? `${m.replyTo.context}\n${m.text}` : m.text }],
-    }));
+    // Build the request payload BEFORE adding the assistant placeholder, in the
+    // UIMessage shape the endpoint expects (parts[], not a content string). We send
+    // only a BOUNDED TAIL (not the whole transcript): the brain reconstructs full
+    // history server-side from conversationId, so resending everything just grew each
+    // request until it tripped the server's input caps and bricked a long chat (C10).
+    // See buildChatPayloadMessages.
+    const payloadMessages = buildChatPayloadMessages(messages.value);
 
     // Placeholder assistant message; grab the reactive proxy to stream into it.
     messages.value.push({ id: genId(), role: 'assistant', text: '', createdAt: Date.now() });
     const assistant = messages.value[messages.value.length - 1]!;
+
+    // Accumulate the streamed reply + code-owned parts locally and reveal them ALL AT
+    // ONCE (WhatsApp-style: typing dots, then the full bubble) — no live typewriter.
+    // Hoisted OUT of the try so a mid-stream tear (network drop / `error` frame) can
+    // still flush what already arrived (e.g. the price table) onto the bubble instead
+    // of blanking it. See the catch below.
+    let assistantText = '';
+    // The brain emits each topic as a SEPARATE text block; honor that boundary so the
+    // bubbles split instead of gluing. On a new block insert the `\n---\n` separator
+    // splitBubbles understands. Cap at 3 bubbles — block 4+ folds into the 3rd spaced.
+    let textBlocks = 0;
+    let actions: ChatActions | null = null;
+    let quoteTable: QuoteTablePart | undefined;
+    let gamaCards: GamaCardsPart | undefined;
+    // Commit whatever has accumulated onto the reactive bubble. Called on success AND
+    // on a mid-stream error, so partial content survives a torn stream.
+    const flushToAssistant = () => {
+      assistant.text = assistantText;
+      if (actions) assistant.actions = actions;
+      if (quoteTable) assistant.quoteTable = quoteTable;
+      if (gamaCards) assistant.gamaCards = gamaCards;
+    };
 
     status.value = 'submitting';
     controller = new AbortController();
@@ -225,23 +248,6 @@ export function useChatConversation() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      // Accumulate the streamed reply and reveal it ALL AT ONCE when the turn
-      // finishes (WhatsApp-style: typing dots while it "writes", then the full
-      // bubble) — no live typewriter. The dots keep showing because the visible
-      // assistant.text stays empty until the stream ends.
-      let assistantText = '';
-      // The brain (hybrid orchestrator) emits each topic as a SEPARATE stream text
-      // block (its own text-start/text-delta/text-end). Honor that boundary so the
-      // bubbles split instead of gluing ("…por este medio.La que más eligen…"): on a
-      // new block insert the `\n---\n` separator splitBubbles understands. Cap at 3
-      // bubbles (the original design limit) — block 4+ folds into the 3rd as a spaced
-      // paragraph, never glued. Without this the blocks concatenate into one giant bubble.
-      let textBlocks = 0;
-      // Code-owned parts accumulate locally and reveal ALL AT ONCE with the text
-      // (below), so the table/cards land with the bubble — not mid-stream.
-      let actions: ChatActions | null = null;
-      let quoteTable: QuoteTablePart | undefined;
-      let gamaCards: GamaCardsPart | undefined;
 
       for (;;) {
         const { done, value } = await reader.read();
@@ -289,14 +295,19 @@ export function useChatConversation() {
             const d = event.data as GamaCardsPart | undefined;
             if (d && Array.isArray(d.modelos)) gamaCards = d;
           } else if (event.type === 'data-buttons') {
-            // Code-emitted CTAs feeding the SAME `actions` slot. Either button
-            // may arrive alone (e.g. hablar_asesor → whatsapp only); keep a URL
-            // only if it's a non-empty string.
-            const b = event.data as { web?: unknown; whatsapp?: unknown } | undefined;
+            // Code-emitted CTAs feeding the SAME `actions` slot. Any button may arrive
+            // alone (hablar_asesor → whatsapp only; self-serve → web + share); keep a
+            // URL only if it's a non-empty string. `share` is the wa.me/?text=… quote
+            // link the brain emits on the "tómate tu tiempo" path (rendered as
+            // "Compartir cotización") — previously dropped here.
+            const b = event.data as
+              | { web?: unknown; whatsapp?: unknown; share?: unknown }
+              | undefined;
             const web = typeof b?.web === 'string' && b.web ? b.web : undefined;
             const whatsapp =
               typeof b?.whatsapp === 'string' && b.whatsapp ? b.whatsapp : undefined;
-            if (web || whatsapp) actions = { web, whatsapp };
+            const share = typeof b?.share === 'string' && b.share ? b.share : undefined;
+            if (web || whatsapp || share) actions = { web, whatsapp, share };
           } else if (event.type === 'error') {
             throw new Error(event.errorText || 'stream error');
           }
@@ -304,10 +315,7 @@ export function useChatConversation() {
       }
 
       // Reveal the full reply at once now that the stream finished (WhatsApp-style).
-      assistant.text = assistantText;
-      if (actions) assistant.actions = actions;
-      if (quoteTable) assistant.quoteTable = quoteTable;
-      if (gamaCards) assistant.gamaCards = gamaCards;
+      flushToAssistant();
 
       // Defense-in-depth: a turn that streams no text deltas (e.g. the model ended
       // on a tool call, or the function was cut short) would otherwise leave an
@@ -330,7 +338,12 @@ export function useChatConversation() {
       if (err.name === 'AbortError') {
         status.value = 'ready';
       } else {
-        // error.message is what the bubble shows — always a customer-safe string:
+        // Preserve whatever already arrived before the stream tore (e.g. the price
+        // table or partial text): commit it onto the bubble so a mid-stream error
+        // doesn't blank the reply — the inline error banner shows below it. Empty
+        // accumulators leave the placeholder invisible (renders no bubble).
+        flushToAssistant();
+        // error.message is what the banner shows — always a customer-safe string:
         // the server's friendly text when we captured one, else the generic retry.
         error.value = new Error(err.userMessage ?? CHAT_GENERIC_ERROR);
         errorAction.value = err.whatsapp ? { whatsapp: err.whatsapp } : null;
