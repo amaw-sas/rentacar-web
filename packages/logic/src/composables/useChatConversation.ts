@@ -91,22 +91,57 @@ type ChatStatus = 'ready' | 'submitting' | 'streaming' | 'error';
 // without body / stream error). Known server errors override this with their text.
 const CHAT_GENERIC_ERROR = 'No pude responder ahora. Intenta de nuevo en un momento.';
 
-export function useChatConversation() {
-  const { franchise } = useAppConfig();
-  const { rentacarPublicApiBase } = useRuntimeConfig().public;
+// Analytics beacon reusing the site's existing GA4/gtag bridge (see the brand
+// nuxt.config head scripts that define window.gtag). No-op safe: never throws and
+// never gates the chat when analytics is absent (SSR, blockers, private mode).
+function emitChatEvent(name: string): void {
+  const w = typeof window !== 'undefined' ? (window as unknown as { gtag?: (...a: unknown[]) => void }) : undefined;
+  if (w && typeof w.gtag === 'function') {
+    try {
+      w.gtag('event', name);
+    } catch {
+      /* analytics must never break the chat */
+    }
+  }
+}
 
-  const brand = franchise.shortname as string;
-  const api = `${rentacarPublicApiBase}/api/chat`;
-  const messagesKey = `rentacar-chat:${brand}:messages`;
-  const conversationKey = `rentacar-chat:${brand}:conversationId`;
+// Per-instance config resolved once from the Nuxt context by the wrapper below,
+// so the factory itself is free of Nuxt auto-imports and unit-testable.
+export interface ChatConversationConfig {
+  brand: string;
+  api: string;
+  messagesKey: string;
+  conversationKey: string;
+  lastReadKey: string;
+}
+
+// The full conversation instance. Browser access is FEATURE-DETECTED
+// (typeof localStorage/document/window) rather than gated on import.meta.client:
+// that keeps it inert during SSR (no browser globals) AND drivable under vitest
+// with stubbed globals, while the wrapper's import.meta.client guard is what
+// prevents cross-request memo pollution on the server.
+export function createChatConversation(cfg: ChatConversationConfig) {
+  const { brand, api, messagesKey, conversationKey, lastReadKey } = cfg;
+  const hasStorage = typeof localStorage !== 'undefined';
+  const hasDocument = typeof document !== 'undefined';
+  const hasWindow = typeof window !== 'undefined';
 
   function restore(): ChatMessage[] {
-    if (!import.meta.client) return [];
+    if (!hasStorage) return [];
     try {
       const raw = localStorage.getItem(messagesKey);
       return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
     } catch {
       return [];
+    }
+  }
+
+  function restoreLastRead(): string | null {
+    if (!hasStorage) return null;
+    try {
+      return localStorage.getItem(lastReadKey);
+    } catch {
+      return null;
     }
   }
 
@@ -120,28 +155,207 @@ export function useChatConversation() {
   // to go instead of a dead end. Set from the server's error JSON (`{error, whatsapp}`).
   const errorAction = ref<{ whatsapp?: string } | null>(null);
   const conversationId = ref<string | null>(
-    import.meta.client ? localStorage.getItem(conversationKey) : null,
+    hasStorage ? localStorage.getItem(conversationKey) : null,
   );
   const isStreaming = computed(
     () => status.value === 'submitting' || status.value === 'streaming',
   );
 
   let controller: AbortController | null = null;
+  // Commits the in-flight streamed accumulator onto the reactive assistant bubble.
+  // Set by submit() while a turn streams, so persist() (pagehide / tab-hidden) can
+  // snapshot whatever has arrived so far instead of an empty bubble. Null when idle.
+  let flushInflight: (() => void) | null = null;
+
+  // --- Unread state machine ---------------------------------------------------
+  // Source of truth is lastReadMessageId (an id, NOT a raw counter) so the badge
+  // survives reloads and never drifts when the transcript is trimmed. Migration:
+  // legacy users with history but no stored marker start "all read" so restoring
+  // an old transcript never spuriously badges.
+  const initialMessages = messages.value;
+  const storedLastRead = restoreLastRead();
+  const lastReadMessageId = ref<string | null>(
+    storedLastRead ?? (initialMessages.length ? initialMessages[initialMessages.length - 1]!.id : null),
+  );
+  const surfaceMounted = ref(false);
+  const docVisible = ref(hasDocument ? document.visibilityState === 'visible' : true);
+  // The user is actually looking at the chat only when a surface is mounted AND
+  // the tab is in the foreground.
+  const isViewing = computed(() => surfaceMounted.value && docVisible.value);
+  // aria-live text injected when a reply lands while the user is NOT viewing.
+  const announce = ref('');
+
+  function startIndexAfterLastRead(): number {
+    const msgs = messages.value;
+    const lrid = lastReadMessageId.value;
+    if (!lrid) return 0;
+    const idx = msgs.findIndex((m) => m.id === lrid);
+    // Marker id absent from the transcript (trimmed / clobbered by another tab):
+    // fail toward all-read — a missed badge beats a spurious "9+" over history
+    // the user already saw.
+    return idx === -1 ? msgs.length : idx + 1;
+  }
+
+  // Count of assistant messages after lastReadMessageId — the badge number.
+  // Zero while the user is actively viewing (mounted + foreground): nothing is
+  // "unread" when you are looking at it, and this suppresses the transient badge
+  // that would otherwise flash on the FAB during an open, visible streaming turn.
+  const unread = computed(() => {
+    if (isViewing.value) return 0;
+    const msgs = messages.value;
+    let count = 0;
+    for (let i = startIndexAfterLastRead(); i < msgs.length; i++) {
+      if (msgs[i]!.role === 'assistant') count++;
+    }
+    return count;
+  });
+
+  // Id of the first unread assistant message — where the "Mensajes nuevos"
+  // separator renders. Read by the surface BEFORE markRead() advances the marker.
+  const firstUnreadAssistantId = computed(() => {
+    const msgs = messages.value;
+    for (let i = startIndexAfterLastRead(); i < msgs.length; i++) {
+      if (msgs[i]!.role === 'assistant') return msgs[i]!.id;
+    }
+    return null;
+  });
+
+  // Short preview of the latest assistant reply (for a11y / future surfaces).
+  const lastAssistantPreview = computed(() => {
+    for (let i = messages.value.length - 1; i >= 0; i--) {
+      const m = messages.value[i]!;
+      if (m.role === 'assistant') return m.text.slice(0, 80);
+    }
+    return '';
+  });
+
+  // A user turn whose reply was lost (hard close mid-turn) — the surface offers
+  // an inline retry. Two persisted shapes qualify when nothing is streaming:
+  //   - trailing user message (no assistant placeholder was persisted), or
+  //   - trailing EMPTY assistant right after a user message: submit() pushes the
+  //     placeholder synchronously, so a snapshot taken before any delta arrives
+  //     persists [..., user, assistant('')]. Empty = no text AND no code parts.
+  const danglingUserTurn = computed(() => {
+    if (isStreaming.value) return false;
+    const msgs = messages.value;
+    const last = msgs.at(-1);
+    if (!last) return false;
+    if (last.role === 'user') return true;
+    return (
+      last.text.trim() === '' &&
+      !last.actions &&
+      !last.quoteTable &&
+      !last.gamaCards &&
+      msgs.at(-2)?.role === 'user'
+    );
+  });
+
+  function persistLastRead() {
+    if (!hasStorage) return;
+    try {
+      if (lastReadMessageId.value) {
+        localStorage.setItem(lastReadKey, lastReadMessageId.value);
+      } else {
+        localStorage.removeItem(lastReadKey);
+      }
+    } catch {
+      /* quota / private mode — non-fatal */
+    }
+  }
+
+  // Mark everything currently in the transcript as read (badge → 0). Also clears
+  // the aria-live text so a stale announcement never lingers (and an identical
+  // future string re-announces instead of being deduped by the live region).
+  function markRead() {
+    const last = messages.value.at(-1);
+    lastReadMessageId.value = last ? last.id : null;
+    announce.value = '';
+    persistLastRead();
+  }
+
+  // Ref-count, not a boolean: a route transition can mount the incoming surface
+  // before the outgoing one unmounts; a bare boolean would flip to false while a
+  // surface is still on screen.
+  let mountCount = 0;
+
+  // Called by the surface on mount: it is now visible, so catch the marker up.
+  function onSurfaceMounted() {
+    mountCount++;
+    surfaceMounted.value = true;
+    if (docVisible.value) markRead();
+  }
+
+  // Called on unmount. CRITICAL: never abort the stream — the singleton keeps
+  // streaming into the SAME messages ref, so a reopen sees the reply continue.
+  function onSurfaceUnmounted() {
+    mountCount = Math.max(0, mountCount - 1);
+    surfaceMounted.value = mountCount > 0;
+  }
+
+  // Fires when an assistant turn finishes. When the user is viewing, just catch
+  // the read-marker up. When not, the reply is unread: announce it + beacon.
+  function completeAssistantTurn() {
+    if (isViewing.value) {
+      markRead();
+      return;
+    }
+    const n = unread.value;
+    // n can be 0 when a visible→hidden toggle straddled the stream (markRead ran
+    // on the placeholder): nothing new for the user → no announce, no beacons.
+    if (n === 0) return;
+    emitChatEvent('chat_reply_while_closed');
+    emitChatEvent('chat_unread_badge_shown');
+    announce.value = n === 1 ? '1 mensaje nuevo en el chat' : `${n} mensajes nuevos en el chat`;
+  }
+
+  // Called by the FAB when the chat is reopened from the badge (analytics only;
+  // markRead is invoked separately by openChat / onSurfaceMounted).
+  function emitReopenedFromBadge() {
+    emitChatEvent('chat_reopened_from_badge');
+  }
+
+  function onVisibilityChange() {
+    if (!hasDocument) return;
+    const visible = document.visibilityState === 'visible';
+    docVisible.value = visible;
+    if (visible) {
+      // Returning to a mounted surface clears unread with no further interaction.
+      if (surfaceMounted.value) markRead();
+    } else {
+      // Hardening: snapshot the transcript (incl. any partial reply) before the
+      // tab is backgrounded / frozen, so nothing streamed so far is lost.
+      persist();
+    }
+  }
+
+  if (hasDocument) {
+    document.addEventListener('visibilitychange', onVisibilityChange);
+  }
+  if (hasWindow) {
+    // Hardening: persist a full snapshot on the terminal page-hide event.
+    window.addEventListener('pagehide', () => persist());
+  }
 
   function genId(): string {
-    if (import.meta.client && typeof crypto?.randomUUID === 'function') {
+    if (typeof crypto?.randomUUID === 'function') {
       return crypto.randomUUID();
     }
     return `m-${messages.value.length}-${Date.now()}`;
   }
 
   function persist() {
-    if (!import.meta.client) return;
+    if (!hasStorage) return;
+    // Mid-stream snapshot (pagehide / tab-hidden): commit whatever has streamed
+    // so far onto the bubble FIRST, so we never persist an empty reply while a
+    // turn is in flight. Guarded on isStreaming so the terminal persist (which
+    // runs after the empty-bubble fallback text) is never clobbered.
+    if (isStreaming.value) flushInflight?.();
     try {
       localStorage.setItem(messagesKey, JSON.stringify(messages.value));
       if (conversationId.value) {
         localStorage.setItem(conversationKey, conversationId.value);
       }
+      persistLastRead();
     } catch {
       /* quota / private mode — non-fatal, chat still works in-memory */
     }
@@ -199,6 +413,9 @@ export function useChatConversation() {
       if (quoteTable) assistant.quoteTable = quoteTable;
       if (gamaCards) assistant.gamaCards = gamaCards;
     };
+    // Expose the flush to persist() while this turn is in flight, so a
+    // pagehide/tab-hidden snapshot captures the partial reply, not ''.
+    flushInflight = flushToAssistant;
 
     status.value = 'submitting';
     controller = new AbortController();
@@ -333,6 +550,9 @@ export function useChatConversation() {
 
       status.value = 'ready';
       persist();
+      // Unread bookkeeping for the finished turn: advance the marker if the user
+      // is watching, else surface the badge + announcement + analytics.
+      completeAssistantTurn();
     } catch (e) {
       const err = e as { name?: string; userMessage?: string; whatsapp?: string };
       if (err.name === 'AbortError') {
@@ -352,11 +572,28 @@ export function useChatConversation() {
       persist();
     } finally {
       controller = null;
+      flushInflight = null;
     }
   }
 
   function stop() {
     controller?.abort();
+  }
+
+  // Re-send the dangling (unanswered) user turn without duplicating the bubble:
+  // drop the empty assistant placeholder (if one was persisted) and the orphan
+  // user message, then re-submit its text (submit re-pushes both).
+  function retryDangling() {
+    if (!danglingUserTurn.value) return;
+    if (messages.value.at(-1)?.role === 'assistant') messages.value.pop();
+    const last = messages.value.at(-1);
+    if (!last || last.role !== 'user') return;
+    const text = last.text;
+    const reply = last.replyTo ?? null;
+    messages.value.pop();
+    input.value = text;
+    if (reply) replyTo.value = reply;
+    void submit();
   }
 
   function clear() {
@@ -367,9 +604,15 @@ export function useChatConversation() {
     error.value = null;
     errorAction.value = null;
     status.value = 'ready';
-    if (import.meta.client) {
-      localStorage.removeItem(messagesKey);
-      localStorage.removeItem(conversationKey);
+    lastReadMessageId.value = null;
+    if (hasStorage) {
+      try {
+        localStorage.removeItem(messagesKey);
+        localStorage.removeItem(conversationKey);
+        localStorage.removeItem(lastReadKey);
+      } catch {
+        /* private mode — non-fatal */
+      }
     }
   }
 
@@ -385,5 +628,63 @@ export function useChatConversation() {
     stop,
     clear,
     conversationId,
+    // Unread state machine + hardening surface.
+    unread,
+    announce,
+    lastAssistantPreview,
+    firstUnreadAssistantId,
+    danglingUserTurn,
+    surfaceMounted,
+    docVisible,
+    isViewing,
+    markRead,
+    onSurfaceMounted,
+    onSurfaceUnmounted,
+    completeAssistantTurn,
+    emitReopenedFromBadge,
+    retryDangling,
   };
+}
+
+export type ChatConversation = ReturnType<typeof createChatConversation>;
+
+// Client-only per-brand memo. On the client the FIRST caller (ChatWidget during
+// hydration, or ChatConversation on a /chat cold load) creates the instance;
+// every later caller for the same brand gets the SAME object — the same messages
+// ref and the single stream owner — which is what kills the reopen-mid-stream
+// data-loss race. Never populated on the server (see the wrapper's guard).
+const clientInstances = new Map<string, ChatConversation>();
+
+// Exported for unit tests: proves the client memo semantics (same brand → same
+// instance) independent of the SSR guard.
+export function getOrCreateInstance(
+  brand: string,
+  factory: () => ChatConversation,
+): ChatConversation {
+  let inst = clientInstances.get(brand);
+  if (!inst) {
+    inst = factory();
+    clientInstances.set(brand, inst);
+  }
+  return inst;
+}
+
+export function useChatConversation(): ChatConversation {
+  const { franchise } = useAppConfig();
+  const { rentacarPublicApiBase } = useRuntimeConfig().public;
+
+  const brand = franchise.shortname as string;
+  const cfg: ChatConversationConfig = {
+    brand,
+    api: `${rentacarPublicApiBase}/api/chat`,
+    messagesKey: `rentacar-chat:${brand}:messages`,
+    conversationKey: `rentacar-chat:${brand}:conversationId`,
+    lastReadKey: `rentacar-chat:${brand}:lastReadMessageId`,
+  };
+
+  // HARD SSR guard: on the server return a FRESH, never-memoized instance per
+  // call so two concurrent renders can never share chat state (cross-request
+  // pollution). The module memo is only ever touched on the client.
+  if (!import.meta.client) return createChatConversation(cfg);
+  return getOrCreateInstance(brand, () => createChatConversation(cfg));
 }

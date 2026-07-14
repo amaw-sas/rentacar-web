@@ -37,6 +37,11 @@
         ¡Hola! 👋 Pregúntame por ciudades, precios, requisitos o tu reserva.
       </p>
       <template v-for="m in messages" :key="m.id">
+        <!-- Separador "Mensajes nuevos": antes del primer mensaje no leído -->
+        <div v-if="newSeparatorBeforeId && m.id === newSeparatorBeforeId" class="cc-new-sep">
+          <span>Mensajes nuevos</span>
+        </div>
+
         <!-- Usuario: siempre una sola burbuja -->
         <div v-if="m.role === 'user'" class="cc-msg is-user">
           <span v-if="m.replyTo" class="cc-reply-quote">{{ m.replyTo.label }}</span>
@@ -138,6 +143,13 @@
           class="cc-link-btn cc-link-btn-wa"
         >Escríbenos por WhatsApp</a>
       </div>
+
+      <!-- Turno colgado: la respuesta se perdió (cierre en caliente). Reintentar
+           reenvía el último mensaje del cliente sin duplicar su burbuja. -->
+      <div v-if="danglingUserTurn" class="cc-retry" role="status">
+        <span class="cc-retry-text">No se completó la respuesta</span>
+        <button type="button" class="cc-retry-btn" @click="retryDangling">Reintentar</button>
+      </div>
     </div>
 
     <div v-if="replyTo" class="cc-reply-bar">
@@ -150,6 +162,7 @@
     </div>
     <form class="cc-input" @submit.prevent="submit">
       <input
+        ref="inputEl"
         v-model="input"
         type="text"
         autocomplete="off"
@@ -175,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { renderChatMarkdown, splitBubbles } from '@rentacar-main/logic/utils'
 
 // Hora por mensaje (estilo WhatsApp), hora de Colombia, 12h.
@@ -204,9 +217,26 @@ function bubblesFor(m: { text: string; actions?: unknown; quoteTable?: unknown; 
 withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
 const emit = defineEmits<{ dismiss: [] }>()
 
-const { messages, input, replyTo, isStreaming, error, errorAction, submit } = useChatConversation()
+const {
+  messages,
+  input,
+  replyTo,
+  isStreaming,
+  error,
+  errorAction,
+  submit,
+  firstUnreadAssistantId,
+  danglingUserTurn,
+  onSurfaceMounted,
+  onSurfaceUnmounted,
+  retryDangling,
+} = useChatConversation()
 
 const inputFocused = ref(false)
+const inputEl = ref<HTMLInputElement | null>(null)
+// Boundary for the "Mensajes nuevos" separator, snapshotted on mount BEFORE
+// onSurfaceMounted() advances the read-marker (which would zero it out).
+const newSeparatorBeforeId = ref<string | null>(null)
 
 // --- "Responder a" estilo WhatsApp: tocar/clic o deslizar a la derecha una gama
 // (fila de cotización) o un modelo lo cita arriba del área de escritura; el bot
@@ -265,6 +295,27 @@ watch(
     if (el) el.scrollTop = el.scrollHeight
   }),
 )
+
+// Reopen UX: the singleton keeps the transcript, so a reopened surface lands on
+// old messages (the scroll watch above is not immediate). On mount, position at
+// the "Mensajes nuevos" separator when there are unread replies, else at the
+// bottom. Focus stays on the composer — never moved into the message list.
+onMounted(() => {
+  newSeparatorBeforeId.value = firstUnreadAssistantId.value
+  onSurfaceMounted()
+  nextTick(() => {
+    const el = scrollEl.value
+    if (el) {
+      const sep = el.querySelector('.cc-new-sep') as HTMLElement | null
+      if (sep) sep.scrollIntoView({ block: 'start' })
+      else el.scrollTop = el.scrollHeight
+    }
+    inputEl.value?.focus()
+  })
+})
+// NEVER abort the stream on unmount — the singleton keeps streaming into the
+// same messages ref so a reopen sees the reply continue.
+onUnmounted(() => onSurfaceUnmounted())
 </script>
 
 <style scoped>
@@ -430,6 +481,50 @@ button { -webkit-tap-highlight-color: transparent; }
 .cc-card-name { font-size: 0.75rem; text-align: center; line-height: 1.3; color: #111827; }
 .cc-error { align-self: center; color: #b91c1c; font-size: 0.8rem; text-align: center; }
 .cc-typing-text { font-style: italic; color: #6b7280; font-size: 0.875rem; }
+
+/* --- Separador "Mensajes nuevos" (reapertura con no leídos) --- */
+.cc-new-sep {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+  color: var(--ui-primary, #cc022b);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cc-new-sep::before,
+.cc-new-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in oklab, var(--ui-primary, #cc022b) 45%, transparent);
+}
+
+/* --- Afordancia de reintento (turno colgado) --- */
+.cc-retry {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.cc-retry-text { font-size: 0.8rem; color: #6b7280; }
+.cc-retry-btn {
+  padding: 0.3rem 0.7rem;
+  background: var(--ui-primary, #cc022b);
+  color: #fff;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.cc-retry-btn:hover { opacity: 0.92; }
 
 /* --- "Responder a" estilo WhatsApp --- */
 .cc-replyable { cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; touch-action: pan-y; }
