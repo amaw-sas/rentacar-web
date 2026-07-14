@@ -14,6 +14,10 @@
   -->
   <ClientOnly>
     <div class="fixed inset-0 pointer-events-none z-[60]">
+      <!-- Región aria-live persistente (siempre en el DOM, nunca v-if): anuncia
+           un mensaje nuevo cuando llega con el chat cerrado. -->
+      <span class="sr-only" role="status" aria-live="polite">{{ announce }}</span>
+
       <!-- Backdrop -->
       <button
         v-if="menuOpen || panelOpen"
@@ -42,7 +46,13 @@
               <span class="fab-label">Chat 24 horas</span>
               <span class="fab-circle fab-chat">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /><path d="M8 12h.01" /><path d="M12 12h.01" /><path d="M16 12h.01" /></svg>
-                <span class="fab-chip fab-chip-glow" title="Disponible 24/7" />
+                <!-- Con no leídos: punto rojo (señala qué opción tiene novedades)
+                     y se apaga el brillo verde 24/7; sin no leídos: brillo 24/7. -->
+                <span
+                  class="fab-chip"
+                  :class="unread > 0 ? 'fab-chip-unread' : 'fab-chip-glow'"
+                  :title="unread > 0 ? 'Mensajes nuevos' : 'Disponible 24/7'"
+                />
               </span>
             </button>
           </li>
@@ -79,9 +89,9 @@
           type="button"
           :aria-expanded="menuOpen"
           aria-controls="contact-fab-menu"
-          :aria-label="menuOpen || panelOpen ? 'Cerrar' : 'Abrir opciones de contacto'"
+          :aria-label="menuOpen || panelOpen ? 'Cerrar' : unread > 0 ? `Abrir opciones de contacto (${unread} ${unread === 1 ? 'mensaje nuevo' : 'mensajes nuevos'})` : 'Abrir opciones de contacto'"
           class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 hover:scale-105 transition-all duration-200"
-          :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen }"
+          :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen && unread === 0 }"
           @click="toggle"
         >
           <svg v-if="!menuOpen && !panelOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -90,6 +100,10 @@
           <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
+
+          <!-- Insignia de no leídos: único FAB del sitio (restricción de usuario).
+               Abrir el menú NO la limpia; solo abrir el chat (markRead). -->
+          <span v-if="unread > 0" class="fab-badge" aria-hidden="true">{{ unread > 9 ? '9+' : unread }}</span>
         </button>
       </div>
     </div>
@@ -112,6 +126,13 @@ const menuOpen = ref(false)
 const panelOpen = ref(false)
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
+// Singleton compartido con ChatConversation: leemos el contador de no leídos para
+// la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
+// inerte en servidor). La insignia se limpia cuando la SUPERFICIE monta
+// (onSurfaceMounted → markRead), no aquí: marcar leído en openChat borraría el
+// separador "Mensajes nuevos" antes de que ChatConversation capture su ancla.
+const { unread, announce, emitReopenedFromBadge } = useChatConversation()
+
 function toggle() {
   if (panelOpen.value) panelOpen.value = false
   else menuOpen.value = !menuOpen.value
@@ -121,6 +142,9 @@ function closeAll() {
   panelOpen.value = false
 }
 function openChat() {
+  // Abrir el chat (no el menú) es lo único que limpia la insignia — lo hace la
+  // superficie al montar (onSurfaceMounted → markRead). Aquí solo el beacon.
+  if (unread.value > 0) emitReopenedFromBadge()
   menuOpen.value = false
   // Desktop: panel inline sobre la página (no navega). Móvil: /chat full-screen.
   if (isDesktop.value) panelOpen.value = true
@@ -179,6 +203,45 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 @media (prefers-reduced-motion: reduce) {
   .fab-chip-glow { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
+}
+/* Con no leídos: el chip pasa a rojo (sin animación) = "esta opción tiene novedades". */
+.fab-chip-unread {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* Insignia roja de no leídos sobre el FAB principal. */
+.fab-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Solo lector de pantalla (región aria-live). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* --- Panel inline (desktop) --- */
