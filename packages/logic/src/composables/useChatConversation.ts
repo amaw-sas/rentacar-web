@@ -91,6 +91,12 @@ type ChatStatus = 'ready' | 'submitting' | 'streaming' | 'error';
 // without body / stream error). Known server errors override this with their text.
 const CHAT_GENERIC_ERROR = 'No pude responder ahora. Intenta de nuevo en un momento.';
 
+// Local conversation TTL: after this much inactivity (measured from the NEWEST
+// message's createdAt) the browser copy is wiped on init and the chat starts
+// fresh — stale quotes from past seasons must not resurface. LOCAL ONLY: the
+// server-side Supabase conversation is the business record and is never touched.
+export const CHAT_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
+
 // Analytics beacon reusing the site's existing GA4/gtag bridge (see the brand
 // nuxt.config head scripts that define window.gtag). No-op safe: never throws and
 // never gates the chat when analytics is absent (SSR, blockers, private mode).
@@ -145,7 +151,38 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     }
   }
 
-  const messages = ref<ChatMessage[]>(restore());
+  // --- Local TTL (CHAT_TTL_MS) ------------------------------------------------
+  // Dated by the NEWEST message so an ongoing conversation with old history
+  // survives. A non-empty transcript with NO datable message predates the
+  // createdAt feature entirely — older than any window → expired ("cannot be
+  // dated" fails toward killing stale quotes, not toward unbounded history).
+  function isExpired(msgs: ChatMessage[]): boolean {
+    if (!msgs.length) return false;
+    let newest = 0;
+    for (const m of msgs) {
+      if (typeof m.createdAt === 'number' && m.createdAt > newest) newest = m.createdAt;
+    }
+    if (!newest) return true;
+    return Date.now() - newest > CHAT_TTL_MS;
+  }
+
+  let restoredMessages = restore();
+  if (isExpired(restoredMessages)) {
+    // Wipe the LOCAL copy only (messages, server-conversation pointer, unread
+    // marker) and start fresh. No network call: the Supabase record stays.
+    restoredMessages = [];
+    if (hasStorage) {
+      try {
+        localStorage.removeItem(messagesKey);
+        localStorage.removeItem(conversationKey);
+        localStorage.removeItem(lastReadKey);
+      } catch {
+        /* private mode — the in-memory state below is fresh regardless */
+      }
+    }
+  }
+
+  const messages = ref<ChatMessage[]>(restoredMessages);
   const input = ref('');
   const replyTo = ref<ReplyContext | null>(null);
   const status = ref<ChatStatus>('ready');
