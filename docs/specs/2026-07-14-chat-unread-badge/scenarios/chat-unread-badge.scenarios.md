@@ -67,7 +67,8 @@ pulse ring + chip glow gone
 **Given**: `unread > 0` (badge visible on the collapsed FAB)
 **When**: the user taps the FAB to open the 3-way contact menu (Chat / WhatsApp / Llamar)
 **Then**: the badge remains and a dot marks the "Chat" menu option; only tapping
-"Chat" (which calls `markRead()` in `openChat`) clears `unread` to 0
+"Chat" (the conversation surface's mount runs `markRead()`; `openChat` itself only
+emits the reopened-from-badge beacon) clears `unread` to 0
 **Evidence**: `[unit]` `markRead()` sets `unread` to 0; merely reading `unread` does not mutate it.
 `[manual]` menu open keeps badge, Chat option shows a dot, opening chat clears it
 

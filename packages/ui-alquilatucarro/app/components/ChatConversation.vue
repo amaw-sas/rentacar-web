@@ -145,8 +145,9 @@
       </div>
 
       <!-- Turno colgado: la respuesta se perdió (cierre en caliente). Reintentar
-           reenvía el último mensaje del cliente sin duplicar su burbuja. -->
-      <div v-if="danglingUserTurn" class="cc-retry" role="status">
+           reenvía el último mensaje del cliente sin duplicar su burbuja. Se
+           suprime mientras el banner de error está activo (una sola afordancia). -->
+      <div v-if="danglingUserTurn && !error" class="cc-retry" role="status">
         <span class="cc-retry-text">No se completó la respuesta</span>
         <button type="button" class="cc-retry-btn" @click="retryDangling">Reintentar</button>
       </div>
