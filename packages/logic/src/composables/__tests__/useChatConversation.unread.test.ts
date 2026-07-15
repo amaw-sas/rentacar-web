@@ -72,12 +72,13 @@ function cfg(): ChatConversationConfig {
 }
 
 // Push a completed turn (user + assistant with text) directly into messages,
-// as the SSE stream would have produced it.
+// as the SSE stream would have produced it. createdAt is stamped like submit()
+// does — persisted fixtures without it read as legacy → expired under the TTL.
 function pushTurn(inst: ReturnType<typeof createChatConversation>, userText: string, assistantText: string) {
   const uid = `u-${inst.messages.value.length}`;
-  inst.messages.value.push({ id: uid, role: 'user', text: userText });
+  inst.messages.value.push({ id: uid, role: 'user', text: userText, createdAt: Date.now() });
   const aid = `a-${inst.messages.value.length}`;
-  inst.messages.value.push({ id: aid, role: 'assistant', text: assistantText });
+  inst.messages.value.push({ id: aid, role: 'assistant', text: assistantText, createdAt: Date.now() });
   return { uid, aid };
 }
 
@@ -258,7 +259,7 @@ describe('SCEN-010 — dangling user turn shows the retry affordance', () => {
   it('restore with a trailing user message (status ready) → danglingUserTurn true', () => {
     const c = cfg();
     const inst = createChatConversation(c);
-    inst.messages.value.push({ id: 'u-only', role: 'user', text: 'reserva un auto' });
+    inst.messages.value.push({ id: 'u-only', role: 'user', text: 'reserva un auto', createdAt: Date.now() });
     win.fire('pagehide');
     const reloaded = createChatConversation(c);
     expect(reloaded.messages.value.at(-1)?.role).toBe('user');
