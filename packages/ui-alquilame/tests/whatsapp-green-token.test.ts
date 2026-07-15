@@ -27,7 +27,7 @@ describe('issue #284 — WhatsApp green token (alquilame)', () => {
     expect(theme).toMatch(/--color-whatsapp-hover:\s*#1EBE5A/i)
   })
 
-  it('primary WhatsApp CTA surfaces use bg-whatsapp + text-black', () => {
+  it('primary WhatsApp CTA surfaces use bg-whatsapp + text-black on the same class', () => {
     const surfaces = [
       'layouts/default.vue',
       'components/home/Hero.vue',
@@ -35,8 +35,11 @@ describe('issue #284 — WhatsApp green token (alquilame)', () => {
     ]
     for (const rel of surfaces) {
       const src = readFileSync(join(appRoot, rel), 'utf-8')
-      expect(src, rel).toMatch(/\bbg-whatsapp\b/)
-      expect(src, rel).toMatch(/\btext-black\b/)
+      const filled = (src.match(/class="[^"]*\bbg-whatsapp\b[^"]*"/g) ?? [])
+      expect(filled.length, rel).toBeGreaterThanOrEqual(1)
+      for (const cls of filled) {
+        expect(cls, rel).toMatch(/\btext-black\b/)
+      }
     }
   })
 

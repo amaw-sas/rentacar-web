@@ -267,7 +267,10 @@ const waHref = computed(
 .tt-opt:active { transform: scale(0.98); }
 .tt-opt-chat { background: #2563eb; }
 .tt-opt-call { background: #0ea5e9; }
-.tt-opt-wa { background: #22c55e; }
+.tt-opt-wa {
+  background: var(--color-whatsapp, #25D366);
+  color: #000;
+}
 
 /* Animación: las opciones suben y aparecen */
 .tt-rise-enter-active,
