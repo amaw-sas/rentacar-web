@@ -50,13 +50,15 @@ different object during the hydrate path
 
 ## SCEN-004: Empty/unavailable cities — count fallback is stable on both paints
 **Given**: rentacar-data state is null or `cities` is empty (sentinel / degraded)
+on **both** the server paint and the client first paint (same degraded snapshot)
 **When**: the footer count helper is evaluated on server and on first client paint
 **Then**: both paints return the same positive `FALLBACK_CITY_COUNT` (never 0);
 the city links `v-for` is empty on both paints (no SSR-full vs client-empty
 children mismatch from this degraded path alone)
-**Evidence**: existing `useCityCount` empty/undefined tests plus plugin test that
-an empty client state is not filled from a network response *during* hydration
-when no payload snapshot exists (stay empty/sentinel until after hydrate)
+**Evidence**: existing `useCityCount` empty/undefined tests. A missing payload
+must not permanently poison the asyncData cache with `null` (plugin
+`getCachedData` returns only real snapshots or `undefined` so a later fetch can
+recover); when useState already holds a snapshot it is never replaced.
 
 ## SCEN-005: Brands share the wiring (no brand-only escape hatch)
 **Given**: alquilame, alquicarros, and alquilatucarro layout footers

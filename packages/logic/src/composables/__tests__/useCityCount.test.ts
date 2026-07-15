@@ -30,6 +30,13 @@ describe('useCityCount', () => {
     expect(useCityCount().value).toBe(20)
   })
 
+  // SCEN-002 (issue #221): footer count N equals cities.length from the same snapshot
+  it('SCEN-002: equals cities.length when the list is non-empty', () => {
+    const list = Array.from({ length: 19 }, (_, i) => ({ id: String(i) }))
+    stubCities(list)
+    expect(useCityCount().value).toBe(list.length)
+  })
+
   it('self-updates when a city is added (21)', () => {
     stubCities(Array.from({ length: 21 }, (_, i) => ({ id: String(i) })))
     expect(useCityCount().value).toBe(21)

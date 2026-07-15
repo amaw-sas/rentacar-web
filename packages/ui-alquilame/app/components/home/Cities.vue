@@ -120,7 +120,7 @@ type FeaturedCity = City & { image: string }
 // cities. flatMap drops any photo whose city is not currently active.
 const featuredCities = computed<FeaturedCity[]>(() =>
   FEATURED.flatMap(({ id, image }) => {
-    const city = cities.find((c: City) => c.id === id)
+    const city = cities.value.find((c: City) => c.id === id)
     return city ? [{ ...city, image }] : []
   })
 )
