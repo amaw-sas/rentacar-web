@@ -57,7 +57,7 @@ useSeoMeta({
 useSchemaOrg([
   <FAQPage>{
     "@type": "FAQPage",
-    mainEntity: faqs.map((faq) =>
+    mainEntity: faqs.value.map((faq) =>
       defineQuestion({
         name: faq.label,
         acceptedAnswer: faq.content,
