@@ -6,7 +6,7 @@
        that white text invisible. -->
   <div class="min-h-screen bg-linear-to-b from-brand-900 to-brand-950 font-sans text-gray-800">
     <!-- Header — golden parity: fondo BLANCO sticky, logo rojo, nav oscuro,
-         CTA rojo "Reserva Ahora" + círculo WhatsApp verde (#090).
+         CTA rojo "Reserva Ahora" + círculo WhatsApp (token bg-whatsapp / #25D366).
          Toggle icon color is owned by base.css (.iconify background-color, scoped
          to header.bg-white → dark) so it stays legible on the white header
          (ISSUE-001); the toggle `class` below is the dark fallback + hover state. -->
@@ -49,13 +49,13 @@
           >
             Reserva Ahora
           </NuxtLink>
-          <!-- WhatsApp (único verde legítimo: #090) -->
+          <!-- WhatsApp — token bg-whatsapp (#25D366) + text-black (WCAG AA) -->
           <a
             :href="franchise.whatsapp"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Contactar por WhatsApp"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#090] text-white hover:brightness-110 transition-all duration-200"
+            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover transition-all duration-200"
           >
             <Icon name="lucide:message-circle" class="w-5 h-5" />
           </a>
@@ -97,7 +97,7 @@
             :href="franchise.whatsapp"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex w-full items-center justify-center gap-2 font-semibold rounded-full bg-[#090] text-white hover:brightness-110 px-8 py-3 text-base transition-all duration-200"
+            class="inline-flex w-full items-center justify-center gap-2 font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover px-8 py-3 text-base transition-all duration-200"
             @click="mobileMenuOpen = false"
           >
             <Icon name="lucide:message-circle" class="w-5 h-5" />

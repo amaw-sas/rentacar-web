@@ -79,4 +79,12 @@ describe('reskin — Contact.vue #contact doble-ruta', () => {
     expect(contact).not.toMatch(/\b(bg|text|border|from|to|via|ring|shadow|fill)-red-\d/)
     expect(contact).not.toMatch(/Alquilame/i)
   })
+
+  // issue #284 — WhatsApp CTA uses shared token + black text (WCAG AA).
+  it('uses the shared bg-whatsapp token with black text (no legacy #090 + white)', () => {
+    expect(contact).toMatch(/\bbg-whatsapp\b/)
+    expect(contact).toMatch(/text-black/)
+    expect(contact).not.toMatch(/bg-\[#090\]/)
+    expect(contact).not.toMatch(/bg-\[#090\].*text-white|text-white.*bg-\[#090\]/)
+  })
 })

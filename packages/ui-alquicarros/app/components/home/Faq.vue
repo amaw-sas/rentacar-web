@@ -28,9 +28,8 @@
 
           <!-- WhatsApp CTA card — brand gradient. Dark heading + WhatsApp-green
                pill: white text on this orange fails WCAG AA (theme.css caveat),
-               so the heading is gray-900 (~7.8:1). The button uses WhatsApp's
-               iconic institutional green (#25D366) with BLACK text = 10.6:1 (AA,
-               comfortable) — white text on this bright green would fail (~2:1). -->
+               so the heading is gray-900 (~7.8:1). Button uses token bg-whatsapp
+               (#25D366) + text-black = 10.6:1 (issue #284). -->
           <div class="mt-8 rounded-2xl bg-linear-to-br from-hero-from to-hero-to p-6 shadow-md">
             <p class="flex items-center gap-2 text-lg font-bold text-gray-900">
               <UIcon name="i-lucide-help-circle" class="size-6 shrink-0" aria-hidden="true" />
@@ -40,7 +39,7 @@
               :href="franchise.whatsapp"
               target="_blank"
               rel="noopener noreferrer"
-              class="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-semibold text-black shadow-sm transition hover:bg-[#1EBE5A]"
+              class="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-whatsapp px-5 py-2.5 text-sm font-semibold text-black shadow-sm transition hover:bg-whatsapp-hover"
             >
               <UIcon name="i-lucide-message-circle" class="size-4" aria-hidden="true" />
               Escríbenos por WhatsApp
