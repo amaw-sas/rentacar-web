@@ -232,7 +232,7 @@
             :to="franchise.whatsapp"
             target="_blank"
             rel="noopener"
-            class="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition-colors"
+            class="inline-flex items-center justify-center gap-2 bg-whatsapp hover:bg-whatsapp-hover text-black px-6 py-3 rounded-xl font-bold transition-colors"
           >
             <UIcon name="i-lucide-message-circle" class="size-5" />
             WhatsApp

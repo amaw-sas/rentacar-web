@@ -106,8 +106,10 @@ describe('Home hero — golden parity', () => {
     expect(hero).not.toMatch(/href="https:\/\/wa\.me/)
   })
 
-  it('uses the golden WhatsApp green token bg-[#090] (legitimate WhatsApp green, not an arbitrary hex)', () => {
-    expect(hero).toMatch(/bg-\[#090\]/)
+  it('uses the shared bg-whatsapp token with black text (WCAG AA; issue #284)', () => {
+    expect(hero).toMatch(/\bbg-whatsapp\b/)
+    expect(hero).toMatch(/\btext-black\b/)
+    expect(hero).not.toMatch(/bg-\[#090\]/)
   })
 
   it('reads franchise from useAppConfig (not a hardcoded brand contact)', () => {

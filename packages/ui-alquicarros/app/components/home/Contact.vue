@@ -10,8 +10,9 @@
         city landing: /reservas ruta / página reservas: #hero). Se bindea
         VERBATIM → funciona igual para ancla in-page y para ruta completa.
       - WhatsApp → franchise.whatsapp (URL completa, jamás re-envuelta).
-    Iconografía: UIcon lucide, alineada a ValueProps. Botón WhatsApp = bg-[#090]
-    (único verde legítimo de marca). El conteo de ciudades sale de useCityCount.
+    Iconografía: UIcon lucide, alineada a ValueProps. Botón WhatsApp = bg-whatsapp
+    + text-black (token #25D366, WCAG AA; issue #284). El conteo de ciudades sale
+    de useCityCount.
   -->
   <section
     id="contact"
@@ -56,7 +57,7 @@
         <div
           class="rounded-2xl p-7 md:p-8 text-center bg-white border border-[#f0e0cf] shadow-[0_16px_34px_rgba(124,45,18,0.10)] flex flex-col items-center"
         >
-          <div class="w-14 h-14 rounded-2xl bg-[#e9f9ec] text-[#090] flex items-center justify-center mb-4">
+          <div class="w-14 h-14 rounded-2xl bg-[#e9f9ec] text-whatsapp flex items-center justify-center mb-4">
             <UIcon name="i-lucide-message-circle" class="size-7" aria-hidden="true" />
           </div>
           <h3 class="font-heading text-lg font-bold text-gray-900">¿Prefieres hablar?</h3>
@@ -69,7 +70,7 @@
             rel="noopener noreferrer"
             aria-label="Habla con un asesor por WhatsApp"
             data-testid="contact-whatsapp-test"
-            class="mt-auto w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold rounded-full bg-[#090] text-white hover:brightness-110 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+            class="mt-auto w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
           >
             <WhatsappIcon cls="size-5" />
             Habla con un Asesor

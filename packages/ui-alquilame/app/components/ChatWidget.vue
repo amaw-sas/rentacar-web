@@ -181,7 +181,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .fab-item:hover .fab-circle { transform: scale(1.08); }
 /* Icono coloreado por canal sobre círculo blanco. */
 .fab-chat { color: var(--ui-primary, #cc022b); }
-.fab-whatsapp { color: #25d366; }
+.fab-whatsapp { color: var(--color-whatsapp, #25D366); }
 .fab-call { color: #2563eb; }
 /* Chip de disponibilidad (solo el Chat: verde con brillo pulsante = 24/7). */
 .fab-chip {

@@ -5,14 +5,14 @@
  * Golden contract (observable, static-source assertions; runtime/visual diff
  * deferred to the dogfood/screenshot pass):
  *   - header: WHITE sticky surface, RED (color-variant) logo, dark nav links,
- *             a brand-red "Reserva Ahora" pill + a green (#090) WhatsApp button.
+ *             a brand-red "Reserva Ahora" pill + a bg-whatsapp WhatsApp button.
  *   - footer: dark navy (#1A1A2E) 4-column grid + black bottom bar. The 19 city
  *             links stay INTERNAL via getCityReservationURL with :external +
  *             target=_blank; the #109 hydration guard (onMounted-only date calc,
  *             null-initial refs) is preserved untouched. Legal links still derive
  *             from franchise data.
  *   - SCEN-CHROME-NOBLUE: the chrome surfaces yield zero legacy blue.
- *   - SCEN-CHROME-NOGREEN: the only green in the chrome is the WhatsApp #090.
+ *   - SCEN-CHROME-NOGREEN: the only green in the chrome is the WhatsApp token.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -74,13 +74,15 @@ describe('chrome — CTA "Reserva Ahora" + WhatsApp (default.vue)', () => {
     }
   })
 
-  it('renders a WhatsApp button using the only legitimate green (#090)', () => {
+  it('renders a WhatsApp button using the shared bg-whatsapp token + black text', () => {
     const waButtons = (header.match(/<a[\s\S]*?<\/a>/g) ?? []).filter((a) =>
       /franchise\.whatsapp/.test(a),
     )
     expect(waButtons.length).toBeGreaterThanOrEqual(2) // desktop circle + mobile pill
     for (const wa of waButtons) {
-      expect(wa).toMatch(/bg-\[#090\]/)
+      expect(wa).toMatch(/\bbg-whatsapp\b/)
+      expect(wa).toMatch(/\btext-black\b/)
+      expect(wa).not.toMatch(/bg-\[#090\]/)
     }
   })
 })
@@ -186,7 +188,7 @@ describe('SCEN-CHROME-NOBLUE — chrome surfaces have zero blue', () => {
   }
 })
 
-describe('SCEN-CHROME-NOGREEN — the only green in default.vue is WhatsApp #090', () => {
+describe('SCEN-CHROME-NOGREEN — the only green in default.vue is WhatsApp token', () => {
   const layout = read('app/layouts/default.vue')
 
   it('uses no Tailwind green-N utility classes', () => {
@@ -194,7 +196,8 @@ describe('SCEN-CHROME-NOGREEN — the only green in default.vue is WhatsApp #090
     expect(layout).not.toMatch(/\btext-green-\d/)
   })
 
-  it('the WhatsApp surface is the literal brand-safe #090', () => {
-    expect(layout).toContain('bg-[#090]')
+  it('the WhatsApp surface is the shared bg-whatsapp token (not free-form hex)', () => {
+    expect(layout).toMatch(/\bbg-whatsapp\b/)
+    expect(layout).not.toMatch(/bg-\[#090\]/)
   })
 })
