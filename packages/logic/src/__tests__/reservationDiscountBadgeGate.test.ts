@@ -15,7 +15,9 @@ import { describe, expect, it } from 'vitest'
  * able to emit "NaN". See docs/specs/monthly-discount-badge/scenarios.
  */
 
-const BRANDS = ['ui-alquilatucarro', 'ui-alquilame', 'ui-alquicarros'] as const
+// alquicarros dropped the dead grid ReservationResume (issue 322 PR6); wizard
+// summary is the live surface there.
+const BRANDS = ['ui-alquilatucarro', 'ui-alquilame'] as const
 
 const readBrandFile = (brand: string, rel: string): string =>
   readFileSync(

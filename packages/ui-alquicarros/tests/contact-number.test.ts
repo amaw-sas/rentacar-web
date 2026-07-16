@@ -7,8 +7,7 @@
  * Regression context (same leak as alquilame): app.config `phone` carried
  * 301 672 9250 (ALQUILATUCARRO's line) and `whatsapp` a stale 314 682 6821
  * (no franchises row), with error.vue + the privacy policy hardcoding 301.
- * Only the in-page outage block (CategorySelectionSection's per-brand map) was
- * already correct.
+ * The wizard outage block (StepVehicle) carries the correct local number.
  *
  * Every alquicarros contact surface must resolve to 318 770 3670 and nothing
  * else. Static-source assertions; runtime hrefs/tel verified in the dogfood pass.
@@ -50,8 +49,8 @@ describe('alquicarros contact number — single SoT 318 770 3670', () => {
     expect(read('app/pages/politica-privacidad.vue')).not.toMatch(FOREIGN)
   })
 
-  it('the outage-block per-brand map keeps the correct alquicarros number', () => {
-    const section = read('app/components/CategorySelectionSection.vue')
-    expect(section).toMatch(/alquicarros:\s*\{\s*phone:\s*["']3187703670["']/)
+  it('the wizard outage contact keeps the correct alquicarros number', () => {
+    const step = read('app/components/wizard/steps/StepVehicle.vue')
+    expect(step).toMatch(/phone:\s*['"]3187703670['"]/)
   })
 })

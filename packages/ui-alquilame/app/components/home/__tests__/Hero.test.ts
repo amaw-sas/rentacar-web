@@ -81,15 +81,19 @@ describe('Home hero — golden parity', () => {
     expect(hero).toMatch(/style="[^"]*aspect-ratio:\s*16\s*\/\s*9/)
   })
 
-  it('renders the golden looping <video> with poster and webm + mp4 sources', () => {
+  it('defaults to poster image; defers video (mp4) off the critical path (issue 322 P01)', () => {
+    // First paint: NuxtImg poster, not multi-MB autoplay sources.
+    expect(hero).toMatch(/NuxtImg/)
+    expect(hero).toMatch(/hero-poster\.jpg/)
+    expect(hero).toMatch(/v-if="!videoActive"/)
+    // Deferred video branch (activated after idle/visible).
     expect(hero).toMatch(/<video\b/)
-    expect(hero).toMatch(/poster="\/videos\/hero-poster\.jpg"/)
     expect(hero).toMatch(/autoplay/)
     expect(hero).toMatch(/\bmuted\b/)
     expect(hero).toMatch(/\bloop\b/)
     expect(hero).toMatch(/\bplaysinline\b/)
-    expect(hero).toMatch(/<source\s+src="\/videos\/hero\.webm"\s+type="video\/webm"/)
-    expect(hero).toMatch(/<source\s+src="\/videos\/hero\.mp4"\s+type="video\/mp4"/)
+    expect(hero).toMatch(/hero\.mp4/)
+    expect(hero).not.toMatch(/hero\.webm/)
   })
 
   it('has the "Ver Precios" CTA anchoring to #fleet (no WhatsApp-to-reserve)', () => {

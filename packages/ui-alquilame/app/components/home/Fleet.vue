@@ -72,15 +72,19 @@
           :key="card.code"
           class="bg-[#F4F5F9] rounded-2xl overflow-hidden shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 border border-gray-200 group flex flex-col"
         >
-          <!-- Vehicle image (full-bleed top); aspect-ratio reserves space (CLS) -->
+          <!-- Vehicle image via @nuxt/image (issue 322 SCEN-322-P02 — no raw JPEG). -->
           <div class="aspect-[16/10] bg-linear-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden">
-            <img
+            <NuxtImg
               :src="card.image"
               :alt="card.alt"
+              width="640"
+              height="400"
+              format="webp"
+              sizes="sm:100vw md:50vw lg:33vw"
               loading="lazy"
               decoding="async"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            >
+            />
           </div>
 
           <!-- Content -->

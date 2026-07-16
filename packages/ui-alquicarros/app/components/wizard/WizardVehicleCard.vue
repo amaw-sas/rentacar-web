@@ -37,9 +37,9 @@
 
       <div class="mt-auto flex items-end justify-between gap-3 border-t border-gray-100 pt-3">
         <div>
-          <p class="body-xs text-gray-400">Precio total · {{ getFormattedDays }}</p>
+          <p class="body-xs text-gray-600">Precio total · {{ getFormattedDays }}</p>
           <p class="price-md font-heading text-brand-700">$ {{ currencyTotalPrice }}</p>
-          <p class="body-xs text-gray-400">$ {{ currencyDailyPrice }} / día</p>
+          <p class="body-xs text-gray-600">$ {{ currencyDailyPrice }} / día</p>
         </div>
         <UButton
           size="lg"

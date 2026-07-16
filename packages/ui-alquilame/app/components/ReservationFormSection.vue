@@ -69,22 +69,6 @@ const baseForm = {
 };
 
 const reservationFormState = reactive(baseForm);
-const reservationWithFlightFormState = reactive({
-  ...baseForm,
-  aerolinea,
-  numeroVueloIda,
-});
-
-const formState = ref(
-  haveFlight.value ? reservationWithFlightFormState : reservationFormState
-);
-const validationSchema = ref(
-  haveFlight.value
-    ? ReservationWithFlightFormValidationSchema
-    : ReservationFormValidationSchema
-);
-
-/** functions */
-const { submitForm } = storeForm;
+const onst { submitForm } = storeForm;
 </script>
 

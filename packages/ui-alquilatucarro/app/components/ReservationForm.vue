@@ -120,7 +120,6 @@
 <script setup lang="ts">
 import {
   ReservationFormValidationSchema,
-  ReservationWithFlightFormValidationSchema,
 } from '@rentacar-main/logic/utils';
 
 // Lazy load vue-tel-input (solo se carga cuando se renderiza el formulario)
@@ -142,10 +141,7 @@ const {
   telefono,
   email,
   politicaPrivacidad,
-  aerolinea,
-  numeroVueloIda,
   vehiculo,
-  haveFlight,
 } = storeToRefs(storeForm);
 
 /** vars */
@@ -175,20 +171,15 @@ const baseForm = {
   vehiculo,
 };
 
+// Flight schema branch removed (issue 322 SCEN-322-D02) — no template collects
+// aerolinea/numeroVueloIda; validating them was a dead trap.
 const reservationFormState = reactive(baseForm);
-const reservationWithFlightFormState = reactive({
-  ...baseForm,
-  aerolinea,
-  numeroVueloIda,
-});
 
 const formState = ref(
-  haveFlight.value ? reservationWithFlightFormState : reservationFormState
+  reservationFormState
 );
 const validationSchema = ref(
-  haveFlight.value
-    ? ReservationWithFlightFormValidationSchema
-    : ReservationFormValidationSchema
+  ReservationFormValidationSchema
 );
 
 const reservationForm = ref(null);
