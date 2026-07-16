@@ -82,6 +82,7 @@ Barra de anuncio (descartable, arriba) · `#hero` · `#fleet` · `#how-it-works`
 - **SCEN-F1-09 (engine + data-testid):** Given el flujo de entrada de reserva, when se ejercita, then `SelectBranch`/búsqueda se comportan igual, los `data-testid` siguen presentes y el E2E no regresiona vs baseline.
 - **SCEN-F1-10 (gradientes renderizan):** Given las secciones con gradiente, when se mide `background-image` computado, then renderizan (usan `bg-linear-to-*`, no `none`); grep de `bg-gradient-to-` en el chrome/home = 0.
 - **SCEN-F1-11 (SEO sin regresión):** Given el HTML renderizado, when se inspecciona, then og meta, `FAQPage`, breadcrumb y canonical siguen presentes y correctos, y `AggregateRating` no regresiona respecto al baseline pre-F1.
+  > **Tombstone (2026-07-16, #312):** el schema `AggregateRating` se eliminó site-wide — calificaciones fabricadas + markup self-serving inelegible para Google. La parte de `AggregateRating` de este escenario ya no aplica; el resto (og/FAQPage/breadcrumb/canonical) sigue vigente.
 - **SCEN-F1-12 (CLS no peor):** Given el home en el alias, when se mide CLS, then no es peor que el baseline pre-F1.
 - **SCEN-F1-13 (aislamiento):** Given el branch F1, when `git diff main --stat`, then solo cambia `packages/ui-alquilame/**` (+ `docs/specs`).
 

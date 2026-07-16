@@ -15,7 +15,6 @@ export * from './config'
 export * from './utils'
 
 // Composables (se auto-importan via Nuxt Layer, pero también exportados aquí)
-export * from './composables/useAggregateRating'
 export * from './composables/useBaseSEO'
 export * from './composables/useBreadcrumbs'
 export * from './composables/useLocalBusiness'

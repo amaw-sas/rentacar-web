@@ -272,9 +272,6 @@ const brandCode = useRuntimeConfig().public.rentacarFranchise as string;
 const { franchiseTestimonials } = useFetchRentacarData();
 const testimonios = computed<Testimonial[]>(() => franchiseTestimonials[brandCode] ?? []);
 
-// Add AggregateRating schema for testimonials (shows stars in Google SERPs)
-useHomeAggregateRating()
-
 // Add VideoObject schema for promotional video (enables video rich snippets)
 usePromoVideoSchema()
 

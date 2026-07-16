@@ -427,11 +427,6 @@ const hasExpandedContent = props.city?.name ? hasCityExpandedContent(props.city.
 // Get related cities for internal linking
 const relatedCities = props.city?.id ? useRelatedCities(props.city.id) : [];
 
-// Add AggregateRating schema for city-specific testimonials (shows stars in Google SERPs)
-if (props.city?.name && testimonios) {
-  useCityAggregateRating(props.city.name, testimonios)
-}
-
 // Add Product Schema for SEO (shows vehicle offers in Google SERPs)
 if (props.city?.name && props.city?.id) {
   useCityProductSchema(props.city.name, props.city.id)
