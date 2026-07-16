@@ -91,6 +91,16 @@ type ChatStatus = 'ready' | 'submitting' | 'streaming' | 'error';
 // without body / stream error). Known server errors override this with their text.
 const CHAT_GENERIC_ERROR = 'No pude responder ahora. Intenta de nuevo en un momento.';
 
+// Stream inactivity watchdog (issue #322 SCEN-322-X04): if NO chunk arrives for
+// this long (covers both the initial fetch await and mid-stream silence) the
+// turn is aborted into the existing error branch, so the conversation can never
+// hang in "escribiendo…" forever. This is CHUNK-INACTIVITY only — the stream is
+// NEVER aborted on surface unmount (singleton keeps streaming in background,
+// see onSurfaceUnmounted).
+export const CHAT_STREAM_IDLE_TIMEOUT_MS = 30_000;
+const CHAT_TIMEOUT_ERROR =
+  'La respuesta está tardando demasiado. Intenta de nuevo en un momento.';
+
 // Local conversation TTL: after this much inactivity (measured from the NEWEST
 // message's createdAt) the browser copy is wiped on init and the chat starts
 // fresh — stale quotes from past seasons must not resurface. LOCAL ONLY: the
@@ -457,6 +467,26 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     status.value = 'submitting';
     controller = new AbortController();
 
+    // Inactivity watchdog: re-armed on every received chunk. When it fires it
+    // aborts THIS turn's controller; the AbortError is routed to the error
+    // branch below (banner + retry), unlike a user stop() which stays quiet.
+    let watchdogTimedOut = false;
+    let watchdogTimer: ReturnType<typeof setTimeout> | null = null;
+    const disarmWatchdog = () => {
+      if (watchdogTimer) {
+        clearTimeout(watchdogTimer);
+        watchdogTimer = null;
+      }
+    };
+    const armWatchdog = () => {
+      disarmWatchdog();
+      watchdogTimer = setTimeout(() => {
+        watchdogTimedOut = true;
+        controller?.abort();
+      }, CHAT_STREAM_IDLE_TIMEOUT_MS);
+    };
+    armWatchdog();
+
     try {
       const response = await fetch(api, {
         method: 'POST',
@@ -505,6 +535,8 @@ export function createChatConversation(cfg: ChatConversationConfig) {
 
       for (;;) {
         const { done, value } = await reader.read();
+        // A chunk (or clean end) arrived — reset the inactivity window.
+        armWatchdog();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
@@ -592,7 +624,9 @@ export function createChatConversation(cfg: ChatConversationConfig) {
       completeAssistantTurn();
     } catch (e) {
       const err = e as { name?: string; userMessage?: string; whatsapp?: string };
-      if (err.name === 'AbortError') {
+      if (err.name === 'AbortError' && !watchdogTimedOut) {
+        // User-initiated stop(): keep whatever streamed so far, no error banner.
+        flushToAssistant();
         status.value = 'ready';
       } else {
         // Preserve whatever already arrived before the stream tore (e.g. the price
@@ -601,13 +635,17 @@ export function createChatConversation(cfg: ChatConversationConfig) {
         // accumulators leave the placeholder invisible (renders no bubble).
         flushToAssistant();
         // error.message is what the banner shows — always a customer-safe string:
-        // the server's friendly text when we captured one, else the generic retry.
-        error.value = new Error(err.userMessage ?? CHAT_GENERIC_ERROR);
+        // the watchdog's timeout text, the server's friendly text when we
+        // captured one, else the generic retry.
+        error.value = new Error(
+          watchdogTimedOut ? CHAT_TIMEOUT_ERROR : (err.userMessage ?? CHAT_GENERIC_ERROR),
+        );
         errorAction.value = err.whatsapp ? { whatsapp: err.whatsapp } : null;
         status.value = 'error';
       }
       persist();
     } finally {
+      disarmWatchdog();
       controller = null;
       flushInflight = null;
     }
