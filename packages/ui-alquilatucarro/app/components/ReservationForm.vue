@@ -95,6 +95,8 @@
               v-model="formState.politicaPrivacidad"
               color="success"
               class="mt-0.5"
+              aria-label="Acepto los términos y el tratamiento de datos personales"
+              data-testid="privacy-consent-checkbox-test"
             />
             <p class="text-sm text-black">
               He leído y estoy de acuerdo con los

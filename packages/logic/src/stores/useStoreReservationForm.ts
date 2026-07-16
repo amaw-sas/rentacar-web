@@ -106,7 +106,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   const fechaDevolucion = ref<string | null>(defaultFechaDevolucion);
   const horaRecogida = ref<string | null>(defaultHoraRecogida);
   const horaDevolucion = ref<string | null>(defaultHoraDevolucion);
-  const politicaPrivacidad = ref<boolean | undefined>(true);
+  // Ley 1581/2012 (habeas data): el consentimiento debe ser EXPRESO — la
+  // casilla nunca puede venir pre-marcada (issue #311). La validación valibot
+  // (userInformationForm) exige value(true) para poder enviar.
+  const politicaPrivacidad = ref<boolean | undefined>(false);
 
   // form states (currently unused, kept for future use)
   // const reservationFormState = reactive({
