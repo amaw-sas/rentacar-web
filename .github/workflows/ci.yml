@@ -58,3 +58,118 @@ jobs:
 
       - name: Unit tests - ui-alquicarros
         run: pnpm --filter ui-alquicarros test
+
+  # Issue 322 SCEN-322-N04 — reservation-payload e2e specs in CI.
+  #
+  # Runs the alquicarros wizard payload specs (deterministic page.route stubs
+  # for /api/reservations/availability and /record) against a real dev server.
+  # The server itself needs Supabase (NUXT_SUPABASE_URL / NUXT_SUPABASE_ANON_KEY)
+  # because /api/rentacar-data — category/branch metadata — is fetched
+  # server-side during SSR and CANNOT be stubbed with page.route. Without it
+  # every spec self-skips ("metadata de gamas no disponible") and a green run
+  # would be vacuous.
+  #
+  # Honesty contract:
+  # - If the repo secrets are missing, the job SKIPS the e2e steps with a
+  #   visible warning annotation instead of faking a meaningful green.
+  # - If the secrets exist, the run must produce at least one PASSED test —
+  #   an all-skipped result fails the job (no vacuous green).
+  # - No continue-on-error anywhere: a failing spec fails the pipeline.
+  e2e-reservation-payload:
+    name: E2E Reservation Payload (alquicarros)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Supabase secrets
+        id: gate
+        env:
+          SUPABASE_URL: ${{ secrets.NUXT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NUXT_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=E2E skipped::Repo secrets NUXT_SUPABASE_URL / NUXT_SUPABASE_ANON_KEY are not configured. The reservation-payload e2e specs need them for the dev server's /api/rentacar-data (SSR, not stubbable via page.route). Add both secrets to enable this job."
+          fi
+
+      - name: Setup Node.js
+        if: steps.gate.outputs.available == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        if: steps.gate.outputs.available == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        if: steps.gate.outputs.available == 'true'
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm
+        if: steps.gate.outputs.available == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        if: steps.gate.outputs.available == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        if: steps.gate.outputs.available == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      # The brand dev script reads ../../.env.local (pnpm --filter ui-alquicarros
+      # dev, spawned by Playwright's webServer). Materialize the secrets there.
+      - name: Write .env.local for the dev server
+        if: steps.gate.outputs.available == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.NUXT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NUXT_SUPABASE_ANON_KEY }}
+        run: |
+          {
+            echo "NUXT_SUPABASE_URL=$SUPABASE_URL"
+            echo "NUXT_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+          } > .env.local
+
+      - name: Run reservation payload e2e specs
+        if: steps.gate.outputs.available == 'true'
+        env:
+          BRAND: alquicarros
+          PLAYWRIGHT_JSON_OUTPUT_NAME: pw-report.json
+        run: >
+          pnpm exec playwright test --project=chromium --reporter=list,json
+          e2e/alquicarros-reserva-mensual.spec.ts
+          e2e/alquicarros-reservation-wizard.spec.ts
+
+      # Anti-vacuous guard: with Supabase reachable, at least one test must
+      # PASS. An all-skipped run means the metadata never loaded — that is a
+      # broken environment, not a green result.
+      - name: Fail if the run was vacuous (all specs skipped)
+        if: steps.gate.outputs.available == 'true'
+        run: |
+          passed=$(jq '.stats.expected' pw-report.json)
+          skipped=$(jq '.stats.skipped' pw-report.json)
+          echo "passed=$passed skipped=$skipped"
+          if [ "$passed" -lt 1 ]; then
+            echo "::error title=Vacuous e2e run::0 tests passed ($skipped skipped). The dev server could not load Supabase metadata — the run proves nothing."
+            exit 1
+          fi
+
+      - name: Upload Playwright report on failure
+        if: failure() && steps.gate.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-reservation-payload
+          path: e2e-results/
+          retention-days: 7
