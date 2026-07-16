@@ -23,7 +23,7 @@ import {
   rolloverWhenSameDayExhausted,
   bookableSlotsForDate,
   isDayOpen,
-  nearestOpenDay,
+  returnDateForPickupChange,
   latestOpenDayOnOrBefore,
   nearestSlotByTime,
   MAX_RENTAL_DAYS,
@@ -218,15 +218,32 @@ export default function useSearch() {
     { flush: 'sync' }
   );
 
-  // Default the return date to the day after pickup, but snap it off a closed day
-  // of the return branch to the nearest open one (#47 W6) — never earlier than
-  // the pickup date — so the inherited +1 default can't silently block the search
-  // button (e.g. pickup whose +1 lands on a holiday for ACKAL).
-  watch(fechaRecogida, (): void => {
+  // Move the return date WITH the pickup, preserving the duration already on
+  // screen (#322 PR7): pickup D → D+2 shifts a D+5 return to D+7, instead of
+  // collapsing every pickup change to the +1 default (which destroyed the
+  // return the user had chosen). Unknown/invalid previous range falls back to
+  // the 1-day minimum, and the result snaps to an open day of the return
+  // branch with a floor of pickup + 1 (#47 W6) — the old floor was the pickup
+  // itself, so the "default" could land the return ON the pickup day. The
+  // MAX_RENTAL_DAYS clamp watcher below still caps an over-shifted return.
+  watch(fechaRecogida, (_newPickup, previousPickup): void => {
     if (!selectedPickupDate.value) return;
-    const target = selectedPickupDate.value.copy().add({ days: 1 });
-    const open = nearestOpenDay(returnBranchSchedule.value, target, selectedPickupDate.value);
-    fechaDevolucion.value = (open ?? target).toString();
+    // Parse defensively: a deep-link can seed unparseable strings, and the
+    // selectedReturnDate getter throws on them (cf. returnDateObject).
+    let previous: DateObject | null = null;
+    let currentReturn: DateObject | null = null;
+    try {
+      previous = previousPickup ? createDateFromString(previousPickup) : null;
+    } catch { /* corrupt previous pickup → duration falls back to 1 */ }
+    try {
+      currentReturn = selectedReturnDate.value;
+    } catch { /* corrupt return → duration falls back to 1 */ }
+    fechaDevolucion.value = returnDateForPickupChange(
+      returnBranchSchedule.value,
+      selectedPickupDate.value,
+      previous,
+      currentReturn,
+    ).toString();
   }, { flush: 'sync' });
 
   // When the form lands the pickup on today but no same-day hour is still valid
