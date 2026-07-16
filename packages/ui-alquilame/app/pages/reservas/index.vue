@@ -62,11 +62,22 @@
             no shift, and no current-date call in the SSR/ISR markup. Desktop and
             mobile keep distinct heights matching the form layout.
           -->
+          <!--
+            SCEN-322-V05 (issue #322): only ONE <Searcher> instance may exist in
+            the DOM. The CSS-only hidden/lg:hidden pair kept BOTH mounted (double
+            hydration, duplicate watchers, duplicate data-testids), so the engine
+            inside each ClientOnly is now gated with useBreakpoints + v-if (the
+            repo's ghost-calendar pattern): the wrappers and their fixed heights
+            stay for the #109 CLS guard (both placeholders still render pre-
+            hydration, CSS picks the visible one), but after hydration only the
+            active breakpoint's Searcher mounts. Client-side v-if is safe here —
+            everything sits inside <ClientOnly>.
+          -->
           <div class="flex items-center justify-center">
             <div class="w-full max-w-lg mx-auto">
               <div class="hidden lg:block h-[410px]">
                 <ClientOnly>
-                  <Searcher />
+                  <Searcher v-if="isDesktop" />
                   <template #fallback>
                     <PlaceholdersSearcher />
                   </template>
@@ -74,7 +85,7 @@
               </div>
               <div class="lg:hidden h-[360px]">
                 <ClientOnly>
-                  <Searcher />
+                  <Searcher v-if="!isDesktop" />
                   <template #fallback>
                     <PlaceholdersSearcher />
                   </template>
@@ -120,9 +131,19 @@
 <script setup lang="ts">
 /** imports */
 import { defineAsyncComponent } from 'vue'
+import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'
 
 const { franchise } = useAppConfig()
 const route = useRoute()
+
+/**
+ * SCEN-322-V05 — breakpoint gate so exactly one <Searcher> mounts (desktop OR
+ * mobile), instead of hydrating both and hiding one with CSS. `lg` matches the
+ * Tailwind `lg:` classes on the wrappers (1024px), so the v-if and the CSS
+ * visibility never disagree. Evaluated client-side only (inside ClientOnly).
+ */
+const breakpoints = useBreakpoints(breakpointsTailwind)
+const isDesktop = breakpoints.greaterOrEqual('lg')
 
 /**
  * SCEN-003 — results query flag. SSR-stable (route.query is available at SSR), so
