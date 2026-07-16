@@ -33,6 +33,15 @@ export default function useMessages(){
         if (message.error == "no_available_categories_error")
             error.title = "No hay vehículos";
 
+        // Incomplete deep-link (issue #322 SCEN-322-V03): the search ran without
+        // all its parameters — e.g. a shared /reservas link missing the hours or
+        // carrying an unknown branch. The raw "Faltan parámetros requeridos"
+        // reads technical; tell the user what to fix instead of a bare "Error".
+        if (message.error == "missing_parameters") {
+            error.title = "Enlace de búsqueda incompleto";
+            error.message = "Al enlace le faltan datos de la búsqueda (sede, fechas u horas). Completa la búsqueda e intenta de nuevo.";
+        }
+
         // A pickup datetime in the past (e.g. an hour earlier today than now).
         // The backend's raw message talks about the "fecha" and reads harsh;
         // override title + message with a friendly, hour-focused notice so the

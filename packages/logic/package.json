@@ -13,6 +13,7 @@
     "./config": "./src/config/index.ts",
     "./composables/*": "./src/composables/*.ts",
     "./stores/*": "./src/stores/*.ts",
+    "./middleware/*": "./src/middleware/*.ts",
     "./utils": "./src/utils/index.ts",
     "./utils/*": "./src/utils/*.ts"
   },

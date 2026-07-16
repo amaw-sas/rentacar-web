@@ -73,12 +73,15 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     // Stale response: a newer search() started after us.
     if (gen !== searchGeneration) return;
 
-    // Handle missing parameters error silently (not a real error, just missing information)
+    // missing_parameters is NOT silent (issue #322 SCEN-322-V03): search() only
+    // runs on a real search intent (submit, deep-link/query hydration, retry),
+    // never on an idle mount — so missing params here mean an incomplete
+    // deep-link (e.g. a /reservas?… link without hours, or an unknown branch
+    // slug). Swallowing it left the page blank with no explanation. It now
+    // flows through the standard error path below: error.value renders the
+    // inline state and the branch-specific createErrorMessage raises the toast
+    // (useMessages maps the friendly copy).
     if(errorResponse.value) {
-      if(errorResponse.value.error === 'missing_parameters') {
-        pending.value = false;
-        return;
-      }
       error.value = errorResponse.value;
     }
 

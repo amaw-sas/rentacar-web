@@ -1,7 +1,7 @@
 // External dependencies
 import { ref, watch, computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { watchDebounced } from "@vueuse/core";
+import { watchDebounced, createSharedComposable } from "@vueuse/core";
 
 // Internal dependencies - stores
 import useStoreAdminData from '../stores/useStoreAdminData';
@@ -71,7 +71,7 @@ const getHourOptions = () => {
   return _cachedHourOptions;
 };
 
-export default function useSearch() {
+function useSearchInstance() {
 
   /** routes */
   const route = useRoute();
@@ -561,4 +561,27 @@ export default function useSearch() {
     // selectedPickupLocation,
     // selectedReturnLocation,
   };
+}
+
+// Issue #322 SCEN-322-V04: the results pages instantiate the search sync TWICE —
+// the Searcher component calls useSearch() in its setup AND
+// useSearchByRouteParams/useSearchByQueryParams created a second instance in
+// onMounted — registering the ~10 synchronization watchers in duplicate over the
+// SAME store refs. createSharedComposable makes every caller reuse ONE instance:
+// the first caller creates it (watchers registered once, inside a ref-counted
+// effect scope), later callers subscribe, and when the last consumer unmounts the
+// scope is disposed so the next page starts fresh (route/city re-captured).
+//
+// The MAX_RENTAL_DAYS clamp semantics survive both creation orders: when the
+// route-params driver creates the instance (refs already set), the clamp's
+// `immediate: true` fires on registration; when the Searcher created it first,
+// the live `flush: 'sync'` watcher clamps the write before doSearch runs.
+const useSearchShared = createSharedComposable(useSearchInstance);
+
+export default function useSearch(): ReturnType<typeof useSearchInstance> {
+  // SSR guard: a module-level shared scope would leak state across server
+  // requests. Today useSearch only runs client-side (ClientOnly / onMounted),
+  // but a fresh per-call instance keeps that safe by construction.
+  if (import.meta.server) return useSearchInstance();
+  return useSearchShared();
 }
