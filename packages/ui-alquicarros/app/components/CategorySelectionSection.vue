@@ -226,7 +226,49 @@ const {
   filteredCategories,
   error: searchError,
 } = storeToRefs(storeSearch);
-const { vehiculo, humanFormattedPickupDate, humanFormattedPickupDateShort, isSubmittingForm, selectedPickupLocation } = storeToRefs(storeForm);
+const {
+  vehiculo,
+  humanFormattedPickupDate,
+  humanFormattedPickupDateShort,
+  isSubmittingForm,
+  selectedPickupLocation,
+  haveTotalInsurance,
+  haveMonthlyReservation,
+  selectedMonthlyMileage,
+} = storeToRefs(storeForm);
+
+/**
+ * Paridad con alquilatucarro/alquilame (issue 322 PR1). Este grid no se monta
+ * en runtime (wizard lo reemplazó), pero si alguien lo reutiliza no debe
+ * reintroducir base-0 mensual ni pérdida de Seguro Total.
+ */
+watch(
+  () => [
+    haveMonthlyReservation.value,
+    selectedCategory.value?.withTotalCoverage,
+    selectedCategory.value?.withMileage,
+  ],
+  () => {
+    const sc = selectedCategory.value;
+    haveTotalInsurance.value = !!sc?.withTotalCoverage;
+    selectedMonthlyMileage.value =
+      haveMonthlyReservation.value && sc ? (sc.withMileage ?? null) : null;
+  },
+  { immediate: true, flush: 'sync' },
+);
+
+// Nueva búsqueda: limpiar selección (espejo del wizard / issue 322 PR1).
+watch(pendingSearch, (isPending, wasPending) => {
+  if (isPending && !wasPending) {
+    selectedCategory.value = null;
+    vehiculo.value = null;
+    if (slideoverOpen.value) {
+      urlSyncDepth.value++;
+      slideoverOpen.value = false;
+      nextTick(() => { urlSyncDepth.value--; });
+    }
+  }
+});
 
 const isServerError = computed(() => searchError.value?.error === 'server_error');
 // Inline "¡Oops! Nos quedamos sin carritos" is reserved for genuine empty
@@ -277,11 +319,13 @@ function getReservationShareUrl() {
   const route = useRoute();
 
   if (vehiculo.value) {
-    // Generar URL semántica con /categoria/[codigo]
+    // Generar URL semántica con /categoria/[codigo], incluyendo el seguro elegido
+    // (issue 322 SCEN-322-M04).
     const currentPath = route.path;
     const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^\/]+$/, '');
     const newPath = `${basePathWithoutCategoria}/categoria/${vehiculo.value.toLowerCase()}`;
-    return `${window.location.origin}${newPath}`;
+    const suffix = haveTotalInsurance.value ? '?seguro=total' : '';
+    return `${window.location.origin}${newPath}${suffix}`;
   }
 
   return window.location.href;
@@ -326,6 +370,14 @@ const categoriaParam = computed(() => {
 });
 const resumenParam = computed(() => route.query.resumen as string | undefined);
 const reservarParam = computed(() => route.query.reservar as string | undefined);
+// issue 322 SCEN-322-M05: cobertura en la URL (+ location.search por history.*State).
+function readSeguroTotalFromUrl(): boolean {
+  if (route.query.seguro === 'total') return true;
+  if (import.meta.client) {
+    return new URLSearchParams(window.location.search).get('seguro') === 'total';
+  }
+  return false;
+}
 const codigoCategoria = computed(() => categoriaParam.value || resumenParam.value || reservarParam.value);
 const abrirFormularioDirecto = computed(() => !!reservarParam.value);
 
@@ -366,8 +418,11 @@ function updateCategoriaUrl(codigoCategoria?: string, reservar?: boolean, mode: 
 
   if (codigoCategoria) {
     const newPath = `${basePathWithoutCategoria}/categoria/${codigoCategoria.toLowerCase()}`;
-    const newUrl = reservar ? `${newPath}?reservar=${codigoCategoria}` : newPath;
-    write(newUrl);
+    const params = new URLSearchParams();
+    if (reservar) params.set('reservar', codigoCategoria);
+    if (haveTotalInsurance.value) params.set('seguro', 'total');
+    const qs = params.toString();
+    write(qs ? `${newPath}?${qs}` : newPath);
   } else {
     pushedEntries = 0; // cierre/limpieza: ya no poseemos entradas
     write(basePathWithoutCategoria);
@@ -424,14 +479,43 @@ watch(
       return;
     }
 
-    const categoryData = categories.find(c => c.categoryCode === codigo);
-    if (!categoryData || !vehicleCategories[codigo]) return;
+    // Excluir el centinela "unable" (999999999) — issue 322 SCEN-322-M01.
+    const categoryData = categories.find(
+      (c) => c.categoryCode === codigo && c.estimatedTotalAmount !== 999999999,
+    );
+    if (!categoryData || !vehicleCategories[codigo]) {
+      if (vehiculo.value === codigo) {
+        selectedCategory.value = null;
+        vehiculo.value = null;
+        if (slideoverOpen.value) {
+          urlSyncDepth.value++;
+          slideoverOpen.value = false;
+          nextTick(() => { urlSyncDepth.value--; });
+        }
+      }
+      return;
+    }
+
+    const currentCode = selectedCategory.value?.categoryCode as string | undefined;
+    if (currentCode === codigo && selectedCategory.value) {
+      if (!slideoverOpen.value) {
+        urlSyncDepth.value++;
+        nextTick(() => {
+          slideoverStep.value = abrirFormularioDirecto.value ? 'datos' : 'resumen';
+          slideoverOpen.value = true;
+          nextTick(() => { urlSyncDepth.value--; });
+        });
+      }
+      return;
+    }
 
     // Marcar que estamos actualizando desde la URL (contador reentrante)
     urlSyncDepth.value++;
 
-    // Seleccionar categoría
     const category = useCategory(categoryData, vehicleCategories[codigo]);
+    if (readSeguroTotalFromUrl()) {
+      category.withTotalCoverage.value = true;
+    }
     vehiculo.value = category.categoryCode.value;
     selectedCategory.value = category;
 

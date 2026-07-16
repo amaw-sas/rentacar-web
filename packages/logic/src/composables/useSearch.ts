@@ -96,7 +96,6 @@ export default function useSearch() {
     selectedDays,
     selectedPickupDate,
     selectedReturnDate,
-    haveTotalInsurance,
     selectedPickupHour
   } = storeToRefs(storeForm);
 
@@ -185,7 +184,9 @@ export default function useSearch() {
     }
 
     haveMonthlyReservation.value = selectedDays.value == 30;
-    haveTotalInsurance.value = false;
+    // No resetear haveTotalInsurance aquí: lo deriva el watcher de
+    // selectedCategory (grid/wizard). Un write a false con instancia viva
+    // dejaba total_insurance=false y precio con Total (issue 322 PR1).
 
     firstSearch.value = false;
     stopWatching.value = true;

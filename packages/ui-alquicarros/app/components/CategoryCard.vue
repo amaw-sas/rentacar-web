@@ -649,9 +649,8 @@ const emit = defineEmits<{
   selectedCategory: [category: ReturnType<typeof useCategory>];
 }>();
 
-/** stores */
-const { haveTotalInsurance, haveMonthlyReservation, selectedMonthlyMileage } =
-  storeToRefs(useStoreReservationForm());
+/** stores — haveMonthlyReservation only for UI (mostrar bloque km) */
+const { haveMonthlyReservation } = storeToRefs(useStoreReservationForm());
 
 /** category composable */
 const category: ReturnType<typeof useCategory> = useCategory(props.category);
@@ -721,11 +720,36 @@ useProductSchema({
   vehicleCategory: props.vehicleCategory
 });
 
+// issue 322 paridad grid (runtime real = wizard; card solo si se re-monta).
+const route = useRoute();
+const urlCategoryCode = computed(() => {
+  const param = route.params.categoria;
+  const fromParam = (typeof param === 'string' ? param : param?.[0])?.toUpperCase();
+  const fromQuery = (
+    (route.query.resumen as string | undefined) ||
+    (route.query.reservar as string | undefined)
+  )?.toUpperCase();
+  return fromParam || fromQuery;
+});
+function readSeguroTotalFromUrl(): boolean {
+  if (route.query.seguro === 'total') return true;
+  if (import.meta.client) {
+    return new URLSearchParams(window.location.search).get('seguro') === 'total';
+  }
+  return false;
+}
+watch(
+  () => [urlCategoryCode.value, categoryCode.value] as const,
+  ([urlCode, code]) => {
+    if (urlCode && urlCode === code && readSeguroTotalFromUrl()) {
+      withTotalCoverage.value = true;
+    }
+  },
+  { immediate: true },
+);
+
 /** functions */
 function goNextStep() {
-  haveTotalInsurance.value = withTotalCoverage.value;
-  if (haveMonthlyReservation.value)
-    selectedMonthlyMileage.value = withMileage.value;
   emit("selectedCategory", category);
 }
 

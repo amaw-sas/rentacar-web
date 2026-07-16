@@ -38,8 +38,8 @@ describe('SCEN-322-M02/M03 — flags del form se DERIVAN de la instancia', () =>
 })
 
 describe('SCEN-322-M04/M05 — Seguro Total en la URL (paridad grid)', () => {
-  it('lee seguroParam y escribe seguro=total', () => {
-    expect(source).toMatch(/seguroParam/)
+  it('lee seguro (route + location) y escribe seguro=total', () => {
+    expect(source).toMatch(/readSeguroTotalFromUrl/)
     expect(source).toMatch(/params\.set\(['"]seguro['"],\s*['"]total['"]\)/)
   })
 })

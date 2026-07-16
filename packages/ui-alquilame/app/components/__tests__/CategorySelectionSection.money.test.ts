@@ -40,10 +40,11 @@ describe('SCEN-322-M02/M03 — flags del form se DERIVAN de la instancia', () =>
   })
 })
 
-describe('SCEN-322-M04/M05/M06 — Seguro Total en la URL (hoy solo en alquilatucarro)', () => {
-  it('lee seguroParam de la query', () => {
-    expect(source).toMatch(/seguroParam/)
+describe('SCEN-322-M04/M05/M06 — Seguro Total en la URL', () => {
+  it('lee seguro desde route.query y location.search (history.*State)', () => {
+    expect(source).toMatch(/readSeguroTotalFromUrl/)
     expect(source).toMatch(/route\.query\.seguro/)
+    expect(source).toMatch(/URLSearchParams\(window\.location\.search\)/)
   })
 
   it('updateCategoriaUrl escribe seguro=total cuando hay Seguro Total', () => {
@@ -55,7 +56,7 @@ describe('SCEN-322-M04/M05/M06 — Seguro Total en la URL (hoy solo en alquilatu
   })
 
   it('al preseleccionar restaura withTotalCoverage desde seguro=total', () => {
-    expect(source).toMatch(/seguroParam\.value\s*===\s*['"]total['"]/)
+    expect(source).toMatch(/readSeguroTotalFromUrl\(\)/)
     expect(source).toMatch(/withTotalCoverage\.value\s*=\s*true/)
   })
 })

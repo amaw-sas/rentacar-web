@@ -226,7 +226,51 @@ const {
   filteredCategories,
   error: searchError,
 } = storeToRefs(storeSearch);
-const { vehiculo, humanFormattedPickupDate, humanFormattedPickupDateShort, isSubmittingForm, selectedPickupLocation, haveTotalInsurance } = storeToRefs(storeForm);
+const {
+  vehiculo,
+  humanFormattedPickupDate,
+  humanFormattedPickupDateShort,
+  isSubmittingForm,
+  selectedPickupLocation,
+  haveTotalInsurance,
+  haveMonthlyReservation,
+  selectedMonthlyMileage,
+} = storeToRefs(storeForm);
+
+/**
+ * Fuente única de los flags del payload (useRecordReservationForm), espejo del
+ * watcher de ReservationWizard (#308 / issue 322 PR1). selectedCategory manda;
+ * el store solo refleja. Sin esto, un deep-link /categoria/X en mensual deja
+ * selectedMonthlyMileage=null → total_price 0 y sin monthly_mileage.
+ */
+watch(
+  () => [
+    haveMonthlyReservation.value,
+    selectedCategory.value?.withTotalCoverage,
+    selectedCategory.value?.withMileage,
+  ],
+  () => {
+    const sc = selectedCategory.value;
+    haveTotalInsurance.value = !!sc?.withTotalCoverage;
+    selectedMonthlyMileage.value =
+      haveMonthlyReservation.value && sc ? (sc.withMileage ?? null) : null;
+  },
+  { immediate: true, flush: 'sync' },
+);
+
+// Nueva búsqueda: limpiar selección (espejo del wizard). Sin esto, doSearch deja
+// selectedCategory viejo y los flags del form desincronizados del catálogo nuevo.
+watch(pendingSearch, (isPending, wasPending) => {
+  if (isPending && !wasPending) {
+    selectedCategory.value = null;
+    vehiculo.value = null;
+    if (slideoverOpen.value) {
+      urlSyncDepth.value++;
+      slideoverOpen.value = false;
+      nextTick(() => { urlSyncDepth.value--; });
+    }
+  }
+});
 
 const isServerError = computed(() => searchError.value?.error === 'server_error');
 // Inline "¡Oops! Nos quedamos sin carritos" is reserved for genuine empty
@@ -331,7 +375,15 @@ const reservarParam = computed(() => route.query.reservar as string | undefined)
 // #1 (seguro en la URL): la cobertura se guarda en la dirección como la fuente
 // de verdad que sobrevive a recarga/atrás/enlace compartido/directo. Presente
 // `seguro=total` = Seguro Total; ausente = Básico (el default).
-const seguroParam = computed(() => route.query.seguro as string | undefined);
+// También leemos window.location: updateCategoriaUrl usa history.*State y no
+// actualiza route.query de Vue Router.
+function readSeguroTotalFromUrl(): boolean {
+  if (route.query.seguro === 'total') return true;
+  if (import.meta.client) {
+    return new URLSearchParams(window.location.search).get('seguro') === 'total';
+  }
+  return false;
+}
 const codigoCategoria = computed(() => categoriaParam.value || resumenParam.value || reservarParam.value);
 const abrirFormularioDirecto = computed(() => !!reservarParam.value);
 
@@ -435,24 +487,52 @@ watch(
       return;
     }
 
-    const categoryData = categories.find(c => c.categoryCode === codigo);
-    if (!categoryData || !vehicleCategories[codigo]) return;
+    // Excluir el centinela "unable" (999999999): filteredCategories incluye gamas
+    // sin stock; sin este filtro un deep-link a gama agotada abre el slideover con
+    // cotización basura y reference_token vacío (issue 322 SCEN-322-M01).
+    const categoryData = categories.find(
+      (c) => c.categoryCode === codigo && c.estimatedTotalAmount !== 999999999,
+    );
+    if (!categoryData || !vehicleCategories[codigo]) {
+      // Gama en URL sin fila disponible: no dejar selección previa desincronizada.
+      if (vehiculo.value === codigo) {
+        selectedCategory.value = null;
+        vehiculo.value = null;
+        if (slideoverOpen.value) {
+          urlSyncDepth.value++;
+          slideoverOpen.value = false;
+          nextTick(() => { urlSyncDepth.value--; });
+        }
+      }
+      return;
+    }
+
+    // Ya tenemos esta gama (p.ej. re-emisión de filteredCategories): no recrear
+    // la instancia — destruiría extras/seguro elegidos a mano.
+    const currentCode = selectedCategory.value?.categoryCode as string | undefined;
+    if (currentCode === codigo && selectedCategory.value) {
+      if (!slideoverOpen.value) {
+        urlSyncDepth.value++;
+        nextTick(() => {
+          slideoverStep.value = abrirFormularioDirecto.value ? 'datos' : 'resumen';
+          slideoverOpen.value = true;
+          nextTick(() => { urlSyncDepth.value--; });
+        });
+      }
+      return;
+    }
 
     // Marcar que estamos actualizando desde la URL (contador reentrante)
     urlSyncDepth.value++;
 
-    // Seleccionar categoría
+    // Seleccionar categoría. Restaurar Seguro Total ANTES de asignar al store
+    // para que el watcher de derivación vea withTotalCoverage=true en el primer tick.
     const category = useCategory(categoryData, vehicleCategories[codigo]);
+    if (readSeguroTotalFromUrl()) {
+      category.withTotalCoverage.value = true;
+    }
     vehiculo.value = category.categoryCode.value;
     selectedCategory.value = category;
-
-    // #1: restaurar el Seguro Total desde la URL. Sin esto, al entrar por
-    // recarga/atrás/enlace compartido/directo la cobertura caía en Básico en
-    // silencio (no se cobraba el recargo y el contrato no coincidía con lo pedido).
-    if (seguroParam.value === 'total') {
-      category.withTotalCoverage.value = true; // precio/guardado correctos
-      haveTotalInsurance.value = true;         // el resumen muestra "Con Seguro total"
-    }
 
     // Abrir el slideover en el paso correcto (issue #65): ?reservar=X → "datos";
     // /categoria/X o ?resumen=X → "resumen". `abrirFormularioDirecto` deriva
