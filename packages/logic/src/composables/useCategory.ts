@@ -39,7 +39,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    // category attributes refs
    const vehicleDayCharge = ref<number>(categoryAvailableData.vehicleDayCharge);
    const estimatedTotalAmount = ref<number>(categoryAvailableData.estimatedTotalAmount);
-   const totalCoverageUnitCharge = ref<number>(categoryAvailableData.totalCoverageUnitCharge);
+   // null = no active pricing row applies to the pickup date (issue #322 PR10):
+   // the Seguro Total upgrade cannot be quoted and the UI must omit the option.
+   const totalCoverageUnitCharge = ref<number | null>(categoryAvailableData.totalCoverageUnitCharge ?? null);
    const totalAmount = ref<number>(categoryAvailableData.totalAmount);
    const extraHoursQuantity = ref<number | undefined>(categoryAvailableData.extraHoursQuantity);
    const extraHoursTotalAmount = ref<number | undefined>(categoryAvailableData.extraHoursTotalAmount);
@@ -103,12 +105,25 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const hasExtraHours = (): boolean => extraHoursQuantity.value ? true : false;
 
    /**
+    * Whether the "Seguro Total" upgrade can be quoted for the searched pickup
+    * date (issue #322 PR10). `false` when no active pricing row applies —
+    * the UI hides the Seguro Total option (visible omission) instead of
+    * quoting a retired legacy rate or a fabricated $0 upgrade.
+    * Monthly reservations are unaffected: their coverage price comes from
+    * `total_insurance_price` of the selected month row.
+    */
+   const canQuoteTotalCoverage = computed<boolean>(() => totalCoverageUnitCharge.value != null);
+
+   /**
     * Floors the total coverage charge at the basic charge. Keeps "Seguro
     * Total" from ever rendering cheaper than "Seguro Básico" when Supabase
     * data is inverted. See pickEffectiveTotalCoverageUnitCharge.
+    * With an unquotable charge (null) this degrades to the basic charge so
+    * downstream math stays finite — the option itself is hidden via
+    * canQuoteTotalCoverage, so the value is never shown as a Total price.
     */
    const effectiveTotalCoverageUnitCharge = computed<number>(() =>
-      pickEffectiveTotalCoverageUnitCharge(totalCoverageUnitCharge.value, coverageUnitCharge.value)
+      pickEffectiveTotalCoverageUnitCharge(totalCoverageUnitCharge.value ?? 0, coverageUnitCharge.value)
    );
 
    //TODO change the following when there's total coverage and/or monthly price
@@ -423,6 +438,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       rateQualifier,
       
       // category optional refs
+      canQuoteTotalCoverage,
       withTotalCoverage,
       withMileage,
       withExtraDriver,

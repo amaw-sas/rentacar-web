@@ -32,6 +32,7 @@ export { pickPriceForDate } from './pickPriceForDate';
 export { pickRepresentativeDailyPrice } from './pickRepresentativeDailyPrice';
 export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
+export { pickTotalCoverageChargeForDate } from './pickTotalCoverageCharge';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
 export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';

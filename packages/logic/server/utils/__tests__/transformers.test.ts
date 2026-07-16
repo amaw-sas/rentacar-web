@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transformCategories, transformBranches, transformExtras, transformCities, transformFAQs, transformFranchiseTestimonials, transformVehicleCategories } from '../transformers'
+import { transformCategories, transformBranches, transformExtras, transformCities, transformFAQs, transformFranchiseTestimonials, transformVehicleCategories, parseTestimonials } from '../transformers'
 
 describe('transformCategories', () => {
   it('maps Supabase category to CategoryData interface', () => {
@@ -34,7 +34,7 @@ describe('transformCategories', () => {
       ],
     }]
 
-    const result = transformCategories(input)
+    const result = transformCategories(input, '2025-06-01')
 
     expect(result).toHaveLength(1)
     const cat = result[0]
@@ -45,7 +45,9 @@ describe('transformCategories', () => {
     expect(cat.description).toBe('5 pasajeros, 2 equipajes, mecánico')
     expect(cat.image).toBe('https://example.com/c.webp')
     expect(cat.ad).toBe('')
-    expect(cat.total_coverage_unit_charge).toBe(27500)
+    // Issue #322 PR10: the coverage charge is per pricing row, never a scalar
+    // picked in undefined Postgres order.
+    expect('total_coverage_unit_charge' in cat).toBe(false)
 
     expect(cat.models).toHaveLength(2)
     expect(cat.models[0]).toEqual({
@@ -65,6 +67,7 @@ describe('transformCategories', () => {
       total_insurance_price: 476000,
       one_day_price: 220000,
       status: 'active',
+      total_coverage_unit_charge: 27500,
     })
   })
 
@@ -95,7 +98,7 @@ describe('transformCategories', () => {
       }],
     }]
 
-    const result = transformCategories(input)
+    const result = transformCategories(input, '2025-06-01')
     const prices = result[0].month_prices[0]
     expect(prices['1k_kms']).toBe(0)
     expect(prices['2k_kms']).toBe(0)
@@ -103,6 +106,7 @@ describe('transformCategories', () => {
     expect(prices.total_insurance_price).toBe(0)
     expect(prices.one_day_price).toBe(340000)
     expect(prices.status).toBe('active')
+    expect(prices.total_coverage_unit_charge).toBe(34000)
   })
 
   it('passes through inactive pricing rows so the client can use them as fallback', () => {
@@ -125,11 +129,13 @@ describe('transformCategories', () => {
       ],
     }]
 
-    const result = transformCategories(input)
+    const result = transformCategories(input, '2025-06-01')
     expect(result[0].month_prices).toHaveLength(2)
     expect(result[0].month_prices.find(p => p.status === 'inactive')).toBeDefined()
-    // total_coverage_unit_charge prefers active rows
-    expect(result[0].total_coverage_unit_charge).toBe(40000)
+    // Issue #322 PR10: each row carries its own coverage charge; no scalar.
+    expect(result[0].month_prices.find(p => p.status === 'active')?.total_coverage_unit_charge).toBe(40000)
+    expect(result[0].month_prices.find(p => p.status === 'inactive')?.total_coverage_unit_charge).toBe(35000)
+    expect('total_coverage_unit_charge' in result[0]).toBe(false)
   })
 
   // Inactive models must NOT reach the public site. Reservation history still
@@ -347,35 +353,11 @@ describe('transformCities', () => {
     expect(city.id).toBe('bogota')
     expect(city.name).toBe('Bogotá')
     expect(city.description).toBe('capital de Colombia')
-    expect(city.testimonials).toHaveLength(1)
-    expect(city.testimonials[0].quote).toBe('Excelente servicio')
-    expect(city.testimonials[0].user.name).toBe('Ana')
+    // Issue #322 PR10: testimonials no longer travel in the master catalog —
+    // they are served per city by /api/city-testimonials.
+    expect('testimonials' in city).toBe(false)
     // Regression guard contra dead code re-introducido
     expect('link' in city).toBe(false)
-  })
-
-  // SCEN-006: testimonios mal-formados se filtran silenciosamente
-  it('filters malformed testimonials silently without throwing (SCEN-006)', () => {
-    const input = [{
-      slug: 'cali',
-      name: 'Cali',
-      description: 'capital salsera',
-      testimonials: [
-        { user: { name: 'X' } }, // falta avatar+description+quote
-        {
-          user: { name: 'OK', description: 'C', avatar: { src: 'a', alt: 'b' } },
-          quote: 'valid',
-        },
-        null,
-        'string-no-objeto',
-        { quote: 'sin user' },
-      ],
-    }]
-
-    expect(() => transformCities(input)).not.toThrow()
-    const result = transformCities(input)
-    expect(result[0].testimonials).toHaveLength(1)
-    expect(result[0].testimonials[0].quote).toBe('valid')
   })
 
   // SCEN-007: description null → ''
@@ -393,19 +375,35 @@ describe('transformCities', () => {
     expect(result[0].description).not.toBeNull()
     expect(result[0].description).not.toBeUndefined()
   })
+})
+
+// The JSONB shape-validation contract (SCEN-006/SCEN-008) now lives on
+// parseTestimonials, shared by transformFranchiseTestimonials and the
+// /api/city-testimonials endpoint (issue #322 PR10).
+describe('parseTestimonials', () => {
+  // SCEN-006: testimonios mal-formados se filtran silenciosamente
+  it('filters malformed testimonials silently without throwing (SCEN-006)', () => {
+    const raw = [
+      { user: { name: 'X' } }, // falta avatar+description+quote
+      {
+        user: { name: 'OK', description: 'C', avatar: { src: 'a', alt: 'b' } },
+        quote: 'valid',
+      },
+      null,
+      'string-no-objeto',
+      { quote: 'sin user' },
+    ]
+
+    expect(() => parseTestimonials(raw)).not.toThrow()
+    const result = parseTestimonials(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.quote).toBe('valid')
+  })
 
   // SCEN-008: testimonials no-array → [] sin throw
   it('handles non-array testimonials by returning empty array (SCEN-008)', () => {
-    const input = [{
-      slug: 'medellin',
-      name: 'Medellín',
-      description: 'eterna primavera',
-      testimonials: { not: 'an array' } as unknown,
-    }]
-
-    expect(() => transformCities(input)).not.toThrow()
-    const result = transformCities(input)
-    expect(result[0].testimonials).toEqual([])
+    expect(() => parseTestimonials({ not: 'an array' })).not.toThrow()
+    expect(parseTestimonials({ not: 'an array' })).toEqual([])
   })
 })
 

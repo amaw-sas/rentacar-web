@@ -21,8 +21,17 @@ export class RentacarDataTimeoutError extends Error {
  * stop consuming the connection pool — Promise.race alone would leave them
  * running. Returns the raw PostgREST results in fixed order; per-result
  * `.error` interpretation stays in the caller (no behavior change there).
+ *
+ * `franchiseCode` (issue #322 PR10): each deploy serves exactly one brand, so
+ * the franchises query is scoped to it — shipping all 3 brands' testimonials
+ * on every page was pure cross-brand payload bloat. Omitted/empty = no filter
+ * (standalone logic-layer runs without brand runtimeConfig).
  */
-export async function fetchRentacarData(supabase: SupabaseClient, timeoutMs: number = DEFAULT_TIMEOUT_MS) {
+export async function fetchRentacarData(
+  supabase: SupabaseClient,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  franchiseCode?: string,
+) {
   const controller = new AbortController()
   const signal = controller.signal
   const timer = setTimeout(() => controller.abort(), timeoutMs)
@@ -57,12 +66,14 @@ export async function fetchRentacarData(supabase: SupabaseClient, timeoutMs: num
         .order('name')
         .abortSignal(signal),
 
-      supabase
-        .from('franchises')
-        .select('code, testimonials')
-        .eq('status', 'active')
-        .order('code')
-        .abortSignal(signal),
+      (() => {
+        let query = supabase
+          .from('franchises')
+          .select('code, testimonials')
+          .eq('status', 'active')
+        if (franchiseCode) query = query.eq('code', franchiseCode)
+        return query.order('code').abortSignal(signal)
+      })(),
 
       supabase
         .from('faqs')

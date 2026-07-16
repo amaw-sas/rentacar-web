@@ -38,8 +38,12 @@
         </ul>
       </button>
 
-      <!-- Total -->
+      <!-- Total. Sin fila de pricing activa aplicable a la fecha no hay tarifa
+           diaria de Seguro Total: se omite la card (fallo visible) en vez de
+           cotizar una tarifa retirada o un upgrade $0. En mensual el precio es
+           `total_insurance_price` de la fila del mes, no aplica. #322 PR10. -->
       <button
+        v-if="canQuoteTotal"
         type="button"
         class="relative rounded-2xl border p-5 text-left transition-colors"
         :class="isTotal ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-600' : 'border-gray-200 bg-white hover:border-brand-300'"
@@ -124,6 +128,28 @@ const { moneyFormat } = useMoneyFormat()
 // (Pinia envuelve en reactive) — sin `.value` anidado (ese trap da undefined/NaN).
 const isTotal = computed(() => selectedCategory.value?.withTotalCoverage === true)
 const mileage = computed(() => selectedCategory.value?.withMileage ?? null)
+
+/**
+ * En reserva regular el upgrade a Total se cotiza con `totalCoverageUnitCharge`
+ * (cargo diario de la fila de pricing activa aplicable a la fecha — #322 PR10);
+ * si es null no hay tarifa aplicable y la card se omite. En mensual el cobro
+ * real es `total_insurance_price` de la fila del mes, así que no depende del
+ * cargo diario.
+ */
+const canQuoteTotal = computed(() => {
+  if (haveMonthlyReservation.value) return true
+  return selectedCategory.value?.canQuoteTotalCoverage === true
+})
+
+/** Si la opción deja de ser cotizable, ninguna reserva puede quedar en Total. */
+watch(
+  canQuoteTotal,
+  (can) => {
+    const sc = selectedCategory.value
+    if (!can && sc?.withTotalCoverage) sc.withTotalCoverage = false
+  },
+  { immediate: true },
+)
 
 /**
  * Fila de precios mensuales que aplica a la fecha de recogida. Debe ser la MISMA que

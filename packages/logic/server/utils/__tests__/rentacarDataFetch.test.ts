@@ -14,9 +14,13 @@ function abortError() {
  *   (mirrors real supabase-js: an aborted fetch rejects with AbortError)
  */
 function makeQuery(resolveWith?: { data: unknown; error: unknown }) {
-  const state: { signal?: AbortSignal } = {}
+  const state: { signal?: AbortSignal; eqCalls: unknown[][] } = { eqCalls: [] }
   const q: Record<string, unknown> = {}
-  for (const m of ['select', 'eq', 'order', 'single']) q[m] = () => q
+  for (const m of ['select', 'order', 'single']) q[m] = () => q
+  q.eq = (...args: unknown[]) => {
+    state.eqCalls.push(args)
+    return q
+  }
   q.abortSignal = (s: AbortSignal) => {
     state.signal = s
     return q
@@ -100,5 +104,32 @@ describe('fetchRentacarData', () => {
 
     expect(results[0]).toEqual(dbError)
     expect(vi.getTimerCount()).toBe(0)
+  })
+
+  // Issue #322 PR10 (SCEN-322-K03): each deploy serves one brand — the
+  // franchises query must be scoped to it so the payload stops shipping the
+  // other brands' testimonials.
+  it('scopes the franchises query to the deploy brand when franchiseCode is provided', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({
+      vehicle_categories: OK, locations: OK, rental_companies: OK, cities: OK, franchises: OK, faqs: OK,
+    })
+
+    await fetchRentacarData(supabase, 8000, 'alquilame')
+
+    expect(builders.franchises.__state.eqCalls).toContainEqual(['code', 'alquilame'])
+    // Other queries keep only their status filter.
+    expect(builders.cities.__state.eqCalls).toEqual([['status', 'active']])
+  })
+
+  it('keeps the franchises query unfiltered when franchiseCode is absent (standalone logic layer)', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({
+      vehicle_categories: OK, locations: OK, rental_companies: OK, cities: OK, franchises: OK, faqs: OK,
+    })
+
+    await fetchRentacarData(supabase, 8000)
+
+    expect(builders.franchises.__state.eqCalls).toEqual([['status', 'active']])
   })
 })

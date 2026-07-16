@@ -173,7 +173,10 @@
                   </template>
                 </UModal>
               </div>
-              <div class="opcion-seleccionable">
+              <!-- Sin fila de pricing activa aplicable a la fecha no hay tarifa
+                   de Seguro Total: se omite la opción (fallo visible) en vez de
+                   cotizar una tarifa retirada o un upgrade $0. Issue #322 PR10. -->
+              <div v-if="canQuoteTotalCoverage" class="opcion-seleccionable">
                 <input
                   :id="totalCoverageCheckboxID"
                   v-model="withTotalCoverage"
@@ -660,6 +663,7 @@ const {
   oneKmMileageCheckboxID,
   twoKmsMileageCheckboxID,
   threeKmsMileageCheckboxID,
+  canQuoteTotalCoverage,
   withTotalCoverage,
   withMileage,
   withExtraDriver,

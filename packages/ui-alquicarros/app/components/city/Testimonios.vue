@@ -1,7 +1,7 @@
 <template>
   <!--
     F2 city testimonials — restyle of the design's #google-reviews IN-PLACE,
-    keeping the CITY-SPECIFIC data. The cards render `props.city.testimonials`
+    keeping the CITY-SPECIFIC data. The cards render `useCityTestimonials(city.id)`
     (the same source that feeds the city aggregate-rating schema in CityPage)
     with a CITY-TARGETED heading ("…en {city.name}") — NOT the brand-level
     testimonial list that HomeReviews renders. Reusing HomeReviews here would
@@ -84,7 +84,6 @@
 <script setup lang="ts">
 /** types */
 import type { City } from "@rentacar-main/logic/utils";
-import type Testimonial from "@rentacar-main/logic/utils/types/type/Testimonial";
 
 /** components */
 import { IconsStarIcon as StarIcon } from "#components";
@@ -94,12 +93,10 @@ const props = defineProps<{
   city: City;
 }>();
 
-// City-specific testimonials — the SAME array that feeds the city
-// aggregate-rating schema in CityPage, so the displayed reviews stay consistent
-// with that schema. NEVER the brand-level testimonial list.
-const testimonios = computed<Testimonial[]>(
-  () => props.city?.testimonials ?? []
-);
+// City-specific testimonials, fetched per city via /api/city-testimonials
+// (#322 PR10 — they no longer travel inside the master catalog payload).
+// Still keyed by props.city, NEVER the brand-level testimonial list.
+const testimonios = useCityTestimonials(props.city?.id);
 
 const userUIConfig = {
   name: "text-gray-900 font-bold",
