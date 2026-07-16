@@ -1,5 +1,5 @@
 // External dependencies
-import type { Product, Offer, AggregateOffer, Car } from 'schema-dts'
+import type { Product, Offer, UnitPriceSpecification } from 'schema-dts'
 
 // Types
 import type { CategoryAvailabilityData, CategoryModelData, VehicleCategory } from '@rentacar-main/logic/utils';
@@ -10,8 +10,18 @@ interface ProductSchemaOptions {
     cityName?: string
 }
 
+/**
+ * Product schema for a category card in availability results.
+ *
+ * The brand label comes from `organization.brand` (per-brand), never a
+ * hardcoded name, and the offer is the REAL quoted daily price (vehicle +
+ * coverage) emitted as a per-day `UnitPriceSpecification` — mirroring
+ * useCityProductSchema. Issue #312 removed the fabricated `AggregateOffer`
+ * (its `highPrice` was dailyPrice × 30, the price of no real offer) and the
+ * invented fixed `priceValidUntil`.
+ */
 export const useProductSchema = (options: ProductSchemaOptions): void => {
-    const { franchise } = useAppConfig()
+    const { franchise, organization } = useAppConfig()
     const route = useRoute()
 
     const { category, vehicleCategory, cityName } = options
@@ -20,6 +30,8 @@ export const useProductSchema = (options: ProductSchemaOptions): void => {
 
     const citySlug = route.params.city as string || ''
     const cityLabel = cityName || citySlug
+
+    const brandName = organization.brand
 
     const categoryName = vehicleCategory.grupo
     const categoryCode = category.categoryCode
@@ -38,20 +50,23 @@ export const useProductSchema = (options: ProductSchemaOptions): void => {
         category: 'Alquiler de Vehículos',
         brand: {
             '@type': 'Brand',
-            name: 'Alquilatucarro'
+            name: brandName
         },
         image: models[0]?.image || franchise.logo,
-        offers: <AggregateOffer>{
-            '@type': 'AggregateOffer',
+        offers: <Offer>{
+            '@type': 'Offer',
             priceCurrency: 'COP',
-            lowPrice: dailyPrice,
-            highPrice: dailyPrice * 30,
-            offerCount: models.length || 1,
+            price: dailyPrice,
+            priceSpecification: <UnitPriceSpecification>{
+                '@type': 'UnitPriceSpecification',
+                priceCurrency: 'COP',
+                price: dailyPrice,
+                unitCode: 'DAY' // UN/CEFACT: per-day rate, not a rental total
+            },
             availability: 'https://schema.org/InStock',
-            priceValidUntil: getNextMonthDate(),
             seller: {
                 '@type': 'Organization',
-                name: 'Alquilatucarro',
+                name: brandName,
                 url: franchise.website
             },
             areaServed: {
@@ -83,48 +98,4 @@ export const useProductSchema = (options: ProductSchemaOptions): void => {
     }
 
     useSchemaOrg([productSchema])
-}
-
-function getNextMonthDate(): string {
-    // Use fixed date to avoid hydration mismatch between server/client
-    // For Schema.org, only server-rendered value matters (for crawlers)
-    return '2026-12-31'
-}
-
-export const useCarSchema = (options: ProductSchemaOptions): void => {
-    const { franchise } = useAppConfig()
-    const route = useRoute()
-
-    const { category, vehicleCategory, cityName } = options
-
-    if (!vehicleCategory || !category.categoryModels?.length) return
-
-    const citySlug = route.params.city as string || ''
-    const cityLabel = cityName || citySlug
-
-    const models = category.categoryModels
-
-    const carSchemas = models.slice(0, 3).map((model: CategoryModelData, index: number) => {
-        return <Car>{
-            '@type': 'Car',
-            '@id': `${franchise.website}/${citySlug}#car-${category.categoryCode}-${index}`,
-            name: model.name,
-            image: model.image,
-            vehicleConfiguration: vehicleCategory.grupo,
-            description: `${model.name} disponible para alquiler en ${cityLabel}`,
-            offers: <Offer>{
-                '@type': 'Offer',
-                priceCurrency: 'COP',
-                price: category.vehicleDayCharge + category.coverageUnitCharge,
-                priceValidUntil: getNextMonthDate(),
-                availability: 'https://schema.org/InStock',
-                seller: {
-                    '@type': 'Organization',
-                    name: 'Alquilatucarro'
-                }
-            }
-        }
-    })
-
-    useSchemaOrg(carSchemas)
 }

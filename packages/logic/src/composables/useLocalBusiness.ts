@@ -9,7 +9,7 @@ interface Branch {
 }
 
 export const useLocalBusiness = (cityId: string, cityName: string) => {
-    const { franchise } = useAppConfig()
+    const { franchise, organization } = useAppConfig()
     const { branches } = useFetchRentacarData()
 
     const cityBranches = (branches as Branch[]).filter(
@@ -24,7 +24,8 @@ export const useLocalBusiness = (cityId: string, cityName: string) => {
         return <LocalBusiness>{
             '@type': 'AutoRental',
             '@id': `${franchise.website}/${cityId}#${branch.code}`,
-            name: `Alquilatucarro ${branch.name}`,
+            // Per-brand label (#312): never a hardcoded brand name.
+            name: `${organization.brand} ${branch.name}`,
             description: `Alquiler de carros en ${branch.name}, ${cityName}. Reserva sin anticipos, recoge tu vehículo y paga al final.`,
             url: `${franchise.website}/${cityId}`,
             telephone: franchise.phone,

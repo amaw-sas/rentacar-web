@@ -64,6 +64,7 @@ Todo bajo `packages/ui-alquilame/` (aislamiento F2 — `logic/`, rutas y otras m
 
 5. **FAQ + Testimonios city restyle (in-place)** | M | deps: 1
    - Escenario (SCEN-F2-02): `city/Faq.vue` restila `#faqs` **manteniendo `useCityFAQs(city.name)`** (NO HomeFaq; el schema `useCityFAQSchema` en `useCityPageSEO` no se toca); `city/Testimonios.vue` restila `#testimonios` **manteniendo `props.city.testimonials`** + heading city-targeted (`useCityAggregateRating` consistente).
+     > **Tombstone (2026-07-16, #312):** `useCityAggregateRating` fue eliminado site-wide (calificaciones fabricadas, self-serving markup inelegible para Google); la parte de testimonios visibles de este escenario sigue vigente.
    - AC: ambos cableados en CityPage (drop-in); FAQ usa `useCityFAQs` (no `useData().faqs`); Testimonios usa `city.testimonials` (no `franchiseTestimonials`); test: fuentes correctas, heading city, `.heading-*`, bg-linear.
 
 6. **Mount F1 marketing (nuevas) + orquestación** | M | deps: 1,2,3,4,5
