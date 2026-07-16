@@ -63,6 +63,7 @@
                         v-for="item in filteredItems"
                         :key="String(item[valueKey])"
                         type="button"
+                        :aria-pressed="item[valueKey] === modelValue"
                         class="relative flex w-full items-center justify-center rounded-xl border px-4 py-3.5 text-center text-lg font-semibold transition-colors hover:border-[#000073] hover:bg-blue-50 active:bg-blue-100"
                         :class="item[valueKey] === modelValue
                             ? 'border-[#000073] bg-blue-50 text-[#000073]'

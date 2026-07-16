@@ -62,6 +62,7 @@
                         v-for="item in filteredItems"
                         :key="String(item[valueKey])"
                         type="button"
+                        :aria-pressed="item[valueKey] === modelValue"
                         class="relative flex w-full items-center justify-center px-12 py-4 text-center text-lg text-gray-900 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50"
                         :class="{ 'bg-green-50 font-semibold': item[valueKey] === modelValue }"
                         @click="select(item)"
