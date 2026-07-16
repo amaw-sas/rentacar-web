@@ -6,8 +6,6 @@ export default interface FormFields {
   identificacion: string | null;
   telefono: string | null;
   email: string | null;
-  aerolinea?: string | null;
-  numeroVueloIda?: string | null;
   vehiculo: CategoryType | null;
   lugarRecogida: string | null;
   fechaRecogida: string | null;

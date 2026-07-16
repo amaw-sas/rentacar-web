@@ -33,9 +33,9 @@ export default interface FormFields {
   extra_driver?: number | undefined;
   baby_seat?: number | undefined;
   wash?: number | undefined;
+  // Always 0 — the flight branch was removed (issue #322 SCEN-322-X07); the
+  // flag stays for wire compatibility with the dashboard record endpoint.
   flight?: number | undefined;
-  aeroline?: string | null;
-  flight_number?: string | null;
   monthly_mileage?: MonthlyMileage | null;
   attribution?: AttributionInput;
 }

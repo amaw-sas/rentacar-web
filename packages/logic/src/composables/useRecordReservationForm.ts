@@ -38,8 +38,6 @@ export default async function useRecordReservationForm() {
     fechaDevolucion,
     horaRecogida,
     horaDevolucion,
-    aerolinea,
-    numeroVueloIda,
     referido,
     selectedDays,
     haveTotalInsurance,
@@ -76,9 +74,10 @@ export default async function useRecordReservationForm() {
     extra_driver: selectedCategory.value?.withExtraDriver ? 1 : 0,
     baby_seat: selectedCategory.value?.withBabySeat ? 1 : 0,
     wash: selectedCategory.value?.withWash ? 1 : 0,
-    flight: aerolinea.value ? 1 : 0,
-    aeroline: aerolinea.value,
-    flight_number: numeroVueloIda.value,
+    // Flight branch removed (issue #322 SCEN-322-X07): no form ever collected
+    // aerolinea/numeroVueloIda, so this was ALWAYS 0/null on the wire. Keep the
+    // explicit "no flight" flag; aeroline/flight_number (always null) dropped.
+    flight: 0,
   };
 
   if (referido.value) partialData["user"] = referido.value;

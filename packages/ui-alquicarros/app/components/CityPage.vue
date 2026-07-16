@@ -2,32 +2,22 @@
   <!--
     F2 city landing — orquestador. Las secciones city viven en app/components/city/*
     (hero/intro/seo/delivery/faq/testimonios, datos city-specific) y el marketing
-    puro se reusa de F1 (home/*). El bloque de resultados (#seleccion-categorias)
-    se preserva INTACTO: esta misma página la renderiza la ruta buscar-vehiculos,
-    y muestra resultados cuando hay params de búsqueda. Engine (Searcher, #41, #109)
-    y SEO (useCityProductSchema #68, useCityFAQSchema vía useCityPageSEO) sin
-    cambios de comportamiento. El schema de aggregate-rating se eliminó (#312):
-    calificaciones fabricadas + markup self-serving inelegible para Google.
+    puro se reusa de F1 (home/*). SEO (useCityProductSchema #68, useCityFAQSchema
+    vía useCityPageSEO) sin cambios de comportamiento. El schema de
+    aggregate-rating se eliminó (#312): calificaciones fabricadas + markup
+    self-serving inelegible para Google.
+
+    SCEN-322-X06: el bloque de resultados (la sección que montaba el wizard de
+    reserva) era código muerto — buscar-vehiculos ya no existe en alquicarros
+    (routing independence: la superficie de reserva es /reservas) y el único
+    consumidor de CityPage es pages/[city]/index.vue con mode="landing".
+    Eliminado (import estático incluido) para que las landings de ciudad no
+    descarguen el motor de reservas. NO reintroducir imports estáticos del
+    wizard aquí.
   -->
   <UPage>
     <!-- Hero — mode-aware (F3): landing = marketing-only CTA, results = Searcher engine -->
     <CityHero :city="city" :mode="mode" />
-
-    <!--
-      Result Section (F3 wizard, Paso 10): en mode="results" monta el wizard guiado
-      arrancando en Paso 2 (external-search: el Searcher es el de CityHero, no un
-      hero interno). Reemplaza el grid CategorySelectionSection. Gate por `mode`
-      (prop SSR-estable) — NO aparece en landing y no se pinta/desaparece al hidratar.
-      El SEO de la ruta buscar-vehiculos no cambia: lo fija useSearchPageSEO en la
-      página (canonical a /[city], sin robots noindex).
-    -->
-    <UPageSection
-      id="seleccion-categorias"
-      v-if="mode === 'results'"
-      :ui="{ container: 'pt-0' }"
-    >
-      <ReservationWizard external-search />
-    </UPageSection>
 
     <!-- Intro city (descripcion + introduccion) -->
     <CityIntro :city="city" :expanded-content="expandedContent" />
@@ -72,20 +62,15 @@
 </template>
 
 <script setup lang="ts">
-/** components */
-import ReservationWizard from '~/components/wizard/ReservationWizard.vue';
-
 /** types */
 import type { City } from '@rentacar-main/logic/utils';
 
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 
-// Nota (F3 Paso 10): el bloque de resultados ahora es el wizard, gateado por
-// `mode === 'results'` (prop SSR-estable). Ya NO hace falta el gate reactivo
-// resultsActive (pending/filteredCategories/error vía onMounted) que sostenía el
-// grid CategorySelectionSection: el wizard maneja sus estados pending/vacío/error
-// internamente (StepVehicle), y el gate por `mode` evita el leak del store
-// singleton al landing igual que antes (landing = mode 'landing').
+// SCEN-322-X06: el wizard de reserva (y su import estático) se eliminó junto
+// con el bloque de resultados — ningún caller pasa mode="results" (grep: solo
+// pages/[city]/index.vue con mode="landing"). El prop `mode` se conserva porque
+// CityHero y los gates de marketing/HomeContact lo consumen.
 
 /** props */
 const props = withDefaults(
