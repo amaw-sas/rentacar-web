@@ -11,8 +11,18 @@ const mockCreateError = vi.fn((options) => {
 })
 const mockDefineEventHandler = vi.fn((handler) => handler)
 
-// Mock getRequestIP (H3 auto-import not available in test environment)
-const mockGetRequestIP = vi.fn((event: any) => event?.node?.req?.socket?.remoteAddress || null)
+// Mock getRequestIP (H3 auto-import not available in test environment).
+// Mirrors H3 behavior with xForwardedFor: true — prefer first XFF hop when requested.
+const mockGetRequestIP = vi.fn((event: any, opts?: { xForwardedFor?: boolean }) => {
+  if (opts?.xForwardedFor) {
+    const xff = event?.node?.req?.headers?.['x-forwarded-for']
+    if (typeof xff === 'string' && xff.trim()) {
+      // H3 uses the leftmost client address when trusting XFF (Vercel appends).
+      return xff.split(',')[0]!.trim()
+    }
+  }
+  return event?.node?.req?.socket?.remoteAddress || null
+})
 
 // Mock checkBlogRateLimit (Nitro auto-import from logic layer not available in test environment)
 const mockCheckBlogRateLimit = vi.fn(async (_ip: string, limit = 100, windowSeconds = 3600) => ({
@@ -153,9 +163,9 @@ describe('blog-api-auth middleware', () => {
       expect(logger.error).not.toHaveBeenCalled()
     })
 
-    it('should extract IP from x-forwarded-for header when behind trusted proxy', async () => {
+    it('should extract IP from x-forwarded-for (Vercel / edge) via getRequestIP xForwardedFor', async () => {
       mockEvent.node!.req.headers['x-forwarded-for'] = '203.0.113.42'
-      mockEvent.node!.req.socket.remoteAddress = '10.1.2.3' // Trusted proxy (private network)
+      mockEvent.node!.req.socket.remoteAddress = '10.1.2.3'
 
       const result = await middleware(mockEvent as H3Event)
 
@@ -163,15 +173,16 @@ describe('blog-api-auth middleware', () => {
       expect(logger.info).toHaveBeenCalledWith(
         'blog-api-auth',
         expect.objectContaining({
-          ip: '203.0.113.42'
-        })
+          ip: '203.0.113.42',
+        }),
       )
     })
 
-    it('should handle multiple IPs in x-forwarded-for (use last/rightmost)', async () => {
-      // GCP LB appends the real client IP at the rightmost position; leftmost is attacker-controlled
-      mockEvent.node!.req.headers['x-forwarded-for'] = '10.0.0.2, 127.0.0.1, 203.0.113.42'
-      mockEvent.node!.req.socket.remoteAddress = '172.16.0.1' // Trusted proxy
+    it('should use leftmost client IP when x-forwarded-for has multiple hops', async () => {
+      // With H3 xForwardedFor:true the client address is the leftmost hop
+      // (platform appends proxies to the right).
+      mockEvent.node!.req.headers['x-forwarded-for'] = '203.0.113.42, 10.0.0.2, 127.0.0.1'
+      mockEvent.node!.req.socket.remoteAddress = '172.16.0.1'
 
       const result = await middleware(mockEvent as H3Event)
 
@@ -179,24 +190,23 @@ describe('blog-api-auth middleware', () => {
       expect(logger.info).toHaveBeenCalledWith(
         'blog-api-auth',
         expect.objectContaining({
-          ip: '203.0.113.42'  // rightmost = real client IP as appended by GCP load balancer
-        })
+          ip: '203.0.113.42',
+        }),
       )
     })
 
-    it('should NOT trust x-forwarded-for from untrusted IP', async () => {
-      mockEvent.node!.req.headers['x-forwarded-for'] = '203.0.113.99'
-      mockEvent.node!.req.socket.remoteAddress = '5.6.7.8' // Untrusted public IP
+    it('falls back to socket IP when x-forwarded-for is absent', async () => {
+      delete mockEvent.node!.req.headers['x-forwarded-for']
+      mockEvent.node!.req.socket.remoteAddress = '5.6.7.8'
 
       const result = await middleware(mockEvent as H3Event)
 
-      // Still passes (no whitelist), but uses socket IP for logging
       expect(result).toBeUndefined()
       expect(logger.info).toHaveBeenCalledWith(
         'blog-api-auth',
         expect.objectContaining({
-          ip: '5.6.7.8', // Should use socket IP, not x-forwarded-for
-        })
+          ip: '5.6.7.8',
+        }),
       )
     })
   })

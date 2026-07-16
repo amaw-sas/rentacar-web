@@ -20,8 +20,11 @@ function isActive(href: string) {
 }
 
 async function handleLogout() {
-  const authCookie = useCookie('seo-auth')
-  authCookie.value = null
+  try {
+    await $fetch('/api/seo/logout', { method: 'POST' })
+  } catch {
+    // still leave the panel even if the network call fails
+  }
   await navigateTo('/seo/login')
 }
 </script>

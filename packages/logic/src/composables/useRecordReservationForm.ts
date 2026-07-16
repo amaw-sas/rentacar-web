@@ -10,6 +10,7 @@ import useStoreSearchData from '../stores/useStoreSearchData';
 
 // Internal dependencies - utils
 import { readStoredAttribution, normalizePhoneNumber } from '@rentacar-main/logic/utils';
+import { RECORD_FETCH_TIMEOUT_MS } from '../utils/fetchTimeouts';
 
 // Types
 import type { FormRecordFields, RecordReservationApiData } from '@rentacar-main/logic/utils';
@@ -135,6 +136,7 @@ export default async function useRecordReservationForm() {
     // that proxies to the admin and injects the API key server-side.
     const response = await $fetch<RecordReservationApiData>(endpoint, {
       method: "POST",
+      timeout: RECORD_FETCH_TIMEOUT_MS,
       body: formData,
     });
 

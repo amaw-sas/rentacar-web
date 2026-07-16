@@ -17,9 +17,9 @@
     "./utils/*": "./src/utils/*.ts"
   },
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@internationalized/date": "^3.10.0",

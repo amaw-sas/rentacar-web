@@ -8,7 +8,9 @@ import useStoreAdminData from './useStoreAdminData';
 
 // Internal dependencies - composables
 import useRecordReservationForm from '../composables/useRecordReservationForm';
+import useMessages from '../composables/useMessages';
 import { routeForReservationStatus } from '../utils/reservationStatusRoute';
+import { isBusinessUnavailabilityRecordError } from '../utils/helpers/isBusinessUnavailabilityRecordError';
 
 // Internal dependencies - utils
 import {
@@ -132,6 +134,9 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   // other vars ref
   const selectedMonthlyMileage = ref<MonthlyMileage | null>(null); // either 2_kms or 3_kms
   const isSubmittingForm = ref<boolean>(false);
+  // Issue 322 SCEN-322-E03: respuesta 200 con status desconocido — la reserva
+  // pudo crearse; bloquear reenvío para no duplicar.
+  const formSubmitLocked = ref<boolean>(false);
   // Tras enviar, el código del vehículo cuya entrada `/categoria/X` puede quedar
   // en el historial (el slideover empuja entradas; ver CategorySelectionSection).
   // El watcher de auto-apertura lo consulta para NO reabrir el slideover si el
@@ -289,30 +294,59 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   };
 
   const submitForm = async (_event: FormSubmitEvent<ReservationFormValidationSchemaType | ReservationWithFlightFormValidationSchemaType>) => {
+    // Anti double-submit: in-flight or consumido tras status desconocido.
+    if (isSubmittingForm.value || formSubmitLocked.value) return;
+
     isSubmittingForm.value = true;
+    // false = keep spinner/disabled through SPA navigation (success / sin stock).
+    let releaseSubmit = true;
 
-    const { data: dataRecord, error: errorRecord } =
-      await useRecordReservationForm();
+    const {
+      createReservationTechnicalErrorMessage,
+      createReservationUnknownStatusMessage,
+    } = useMessages();
 
-    if (dataRecord.value) {
-      isSubmittingForm.value = false;
+    try {
+      const { data: dataRecord, error: errorRecord } =
+        await useRecordReservationForm();
 
-      const route = routeForReservationStatus(
-        dataRecord.value.reservationStatus,
-        dataRecord.value.reserveCode,
-      );
-      if (route) {
-        stripReservarParam();
-        navigateTo({ path: route });
+      if (dataRecord.value) {
+        const route = routeForReservationStatus(
+          dataRecord.value.reservationStatus,
+          dataRecord.value.reserveCode,
+        );
+        if (route) {
+          stripReservarParam();
+          navigateTo({ path: route });
+          // Keep isSubmitting through navigation so a second click can't POST.
+          releaseSubmit = false;
+          return;
+        }
+
+        // SCEN-322-E03: status desconocido — no navegar; toast + lock reenvío.
+        // Clear loading spinner (releaseSubmit) but formSubmitLocked blocks retry.
+        formSubmitLocked.value = true;
+        createReservationUnknownStatusMessage(dataRecord.value.reserveCode);
+        return;
       }
 
-      return;
-    } else if (errorRecord.value) {
-      stripReservarParam();
-      navigateTo({path: "/sindisponibilidad"});
-    }
+      if (errorRecord.value) {
+        // SCEN-322-E02: solo sin stock de negocio → /sindisponibilidad.
+        if (isBusinessUnavailabilityRecordError(errorRecord.value)) {
+          stripReservarParam();
+          navigateTo({ path: '/sindisponibilidad' });
+          releaseSubmit = false;
+          return;
+        }
 
-    isSubmittingForm.value = false;
+        // SCEN-322-E01 / E05: 5xx, red, timeout, 429… toast y quedarse en el form.
+        createReservationTechnicalErrorMessage();
+      }
+    } finally {
+      if (releaseSubmit) {
+        isSubmittingForm.value = false;
+      }
+    }
   };
 
   return {
@@ -342,6 +376,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     extraHoursLabel,
     selectedMonthlyMileage,
     isSubmittingForm,
+    formSubmitLocked,
     haveTotalInsurance,
     haveMonthlyReservation,
     haveFlight,

@@ -623,6 +623,19 @@ export default defineNuxtConfig({
       }
     },
     routeRules: {
+      // Issue 322 SCEN-322-S04 — baseline security headers (all responses).
+      // CSP is limited to frame-ancestors so we don't break Nuxt inline assets;
+      // full script-src CSP would need a separate hardening pass.
+      '/**': {
+        headers: {
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'SAMEORIGIN',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+          'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+          'Content-Security-Policy': "frame-ancestors 'self'",
+          'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        },
+      },
       '/_nuxt/**': {
         headers: {
           'Cache-Control': 'public, max-age=31536000, immutable'

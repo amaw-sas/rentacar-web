@@ -32,7 +32,7 @@
       </span>
     </span>
     <span class="shrink-0 text-right">
-      <span class="block body-xs text-gray-400">desde</span>
+      <span class="block body-xs text-gray-600">desde</span>
       <span class="block price-md font-heading text-brand-700">$ {{ fromPrice }}</span>
     </span>
   </button>

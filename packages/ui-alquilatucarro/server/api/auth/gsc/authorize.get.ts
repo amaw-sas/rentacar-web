@@ -1,19 +1,30 @@
+import { requireSeoAuth, setGscOAuthStateCookie } from '../../../utils/seoAuth'
+import { createOAuthState } from '../../../utils/seoAuthToken'
+
 const SCOPES = [
-  'https://www.googleapis.com/auth/webmasters.readonly'
+  'https://www.googleapis.com/auth/webmasters.readonly',
 ]
 
 export default defineEventHandler((event) => {
+  // Only the SEO panel operator may start OAuth (SCEN-322-S03).
+  requireSeoAuth(event)
+
   const config = useRuntimeConfig()
 
   const clientId = String(config.gscClientId || '').trim()
-  const redirectUri = String(config.gscRedirectUri || '').trim() || `${getRequestURL(event).origin}/api/auth/gsc/callback`
+  const redirectUri =
+    String(config.gscRedirectUri || '').trim() ||
+    `${getRequestURL(event).origin}/api/auth/gsc/callback`
 
   if (!clientId) {
     throw createError({
       statusCode: 500,
-      message: 'GSC_CLIENT_ID no configurado en variables de entorno'
+      message: 'GSC_CLIENT_ID no configurado en variables de entorno',
     })
   }
+
+  const state = createOAuthState()
+  setGscOAuthStateCookie(event, state)
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -21,7 +32,8 @@ export default defineEventHandler((event) => {
     response_type: 'code',
     scope: SCOPES.join(' '),
     access_type: 'offline',
-    prompt: 'consent'
+    prompt: 'consent',
+    state,
   })
 
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
