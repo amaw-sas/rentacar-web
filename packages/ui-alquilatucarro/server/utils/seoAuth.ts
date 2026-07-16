@@ -4,14 +4,10 @@ import { createError, getCookie, setCookie, deleteCookie } from 'h3'
 import {
   createSeoSessionToken,
   verifySeoSessionToken,
-  createOAuthState,
 } from './seoAuthToken'
 
-export {
-  createSeoSessionToken,
-  verifySeoSessionToken,
-  createOAuthState,
-} from './seoAuthToken'
+// Do NOT re-export token helpers from this file: Nitro auto-imports both
+// server/utils/seoAuth.ts and seoAuthToken.ts and warns on duplicate names.
 
 /** Cookie name for the SEO panel session (issue 322 PR4). */
 export const SEO_AUTH_COOKIE = 'seo-auth'

@@ -1,9 +1,6 @@
 import { getCookie } from 'h3'
-import {
-  SEO_AUTH_COOKIE,
-  getSeoSecret,
-  verifySeoSessionToken,
-} from '../../utils/seoAuth'
+import { SEO_AUTH_COOKIE, getSeoSecret } from '../../utils/seoAuth'
+import { verifySeoSessionToken } from '../../utils/seoAuthToken'
 
 /**
  * Lightweight probe for the client route middleware (cookie is httpOnly).

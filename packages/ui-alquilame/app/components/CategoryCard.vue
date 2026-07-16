@@ -267,9 +267,8 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    aria-label="Más información"
-                    class="cursor-pointer"
                     aria-label="informacion sobre kilometraje"
+                    class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
                     <template #leading>
@@ -315,9 +314,8 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    aria-label="Más información"
-                    class="cursor-pointer"
                     aria-label="informacion sobre kilometraje"
+                    class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
                     <template #leading>
@@ -363,9 +361,8 @@
                     color="neutral"
                     variant="ghost"
                     size="xs"
-                    aria-label="Más información"
-                    class="cursor-pointer"
                     aria-label="informacion sobre kilometraje"
+                    class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
                     <template #leading>

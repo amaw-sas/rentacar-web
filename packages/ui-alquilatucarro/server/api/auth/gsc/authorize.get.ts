@@ -1,8 +1,5 @@
-import {
-  createOAuthState,
-  requireSeoAuth,
-  setGscOAuthStateCookie,
-} from '../../../utils/seoAuth'
+import { requireSeoAuth, setGscOAuthStateCookie } from '../../../utils/seoAuth'
+import { createOAuthState } from '../../../utils/seoAuthToken'
 
 const SCOPES = [
   'https://www.googleapis.com/auth/webmasters.readonly',
