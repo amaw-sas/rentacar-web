@@ -17,12 +17,21 @@ import { test, expect, type Page } from '@playwright/test';
  * (ver e2e/reservation-a11y-single-dialog.spec.ts, misma convención).
  */
 
+// Fechas SIEMPRE futuras: las fijas (2026-07-10) rotaron — el server corrige
+// fechas pasadas con un 302 que pierde `?reservar=<code>` y el formulario
+// nunca abre (spec rojo desde 2026-07-10, destapado por #311).
+const futureDate = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
 const searchPath =
   '/bogota/buscar-vehiculos' +
   '/lugar-recogida/bogota-aeropuerto' +
   '/lugar-devolucion/bogota-aeropuerto' +
-  '/fecha-recogida/2026-07-10' +
-  '/fecha-devolucion/2026-07-12' +
+  `/fecha-recogida/${futureDate(20)}` +
+  `/fecha-devolucion/${futureDate(22)}` +
   '/hora-recogida/10:00am' +
   '/hora-devolucion/10:00am';
 

@@ -86,7 +86,8 @@ test.describe('Reservation Back button — recorre pasos, no salta al index', ()
 
     await page.getByTestId('reservation-form-back-test').click();
     await expect(page.locator('[role="dialog"]').first()).toBeVisible();
-    await expect(page.getByText('Resumen de la selección')).toBeVisible();
+    // Título recortado a "Resumen" en #268 (era "Resumen de la selección").
+    await expect(page.getByRole('dialog').getByText('Resumen', { exact: false })).toBeVisible();
   });
 
   test('Cerrar (X) desde Datos cierra del todo y deja el body interactivo', async ({ page }) => {

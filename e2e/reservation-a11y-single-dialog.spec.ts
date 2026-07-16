@@ -17,12 +17,20 @@ import { test, expect, type Page } from '@playwright/test';
  * disponibilidad real.
  */
 
+// Fechas SIEMPRE futuras: las fijas (2026-07-10) rotaron — el server corrige
+// fechas pasadas con un 302 que pierde `?reservar=<code>` (destapado por #311).
+const futureDate = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
 const searchPath =
   '/bogota/buscar-vehiculos' +
   '/lugar-recogida/bogota-aeropuerto' +
   '/lugar-devolucion/bogota-aeropuerto' +
-  '/fecha-recogida/2026-07-10' +
-  '/fecha-devolucion/2026-07-12' +
+  `/fecha-recogida/${futureDate(20)}` +
+  `/fecha-devolucion/${futureDate(22)}` +
   '/hora-recogida/10:00am' +
   '/hora-devolucion/10:00am';
 
@@ -119,11 +127,11 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 15_000 });
     await expect(visibleModalDialogs(page)).toHaveCount(1);
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Datos para reservas' }),
+      page.getByRole('dialog').filter({ hasText: 'Datos para reservar' }),
     ).toBeVisible();
     // El de "Resumen" NO debe estar visible.
     await expect(
-      page.locator('[role="dialog"]:visible', { hasText: 'Resumen de la selección' }),
+      page.locator('[role="dialog"]:visible', { hasText: 'Resumen' }),
     ).toHaveCount(0);
   });
 
@@ -139,7 +147,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 15_000 });
     await expect(visibleModalDialogs(page)).toHaveCount(1);
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen' }),
     ).toBeVisible();
   });
 
@@ -155,7 +163,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await page.getByRole('button', { name: 'Solicitar este vehículo' }).first().click();
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 10_000 });
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen' }),
     ).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/categoria/${code.toLowerCase()}$`));
 
@@ -164,7 +172,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     // accesible "Siguiente"/"Volver" en la página (convención del proyecto).
     await page.getByTestId('reservation-next-test').click();
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 10_000 });
-    const formDialog = page.getByRole('dialog').filter({ hasText: 'Datos para reservas' });
+    const formDialog = page.getByRole('dialog').filter({ hasText: 'Datos para reservar' });
     await expect(formDialog).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`reservar=${code}`));
 
@@ -172,7 +180,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await page.getByTestId('reservation-form-back-test').click();
     await expect(visibleDialogs(page)).toHaveCount(1, { timeout: 10_000 });
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen' }),
     ).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/categoria/${code.toLowerCase()}$`));
     await expect(page).not.toHaveURL(/reservar=/);
@@ -193,10 +201,10 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await page.goto(`${searchPath}/categoria/${code}?reservar=${code}`);
     await page.waitForLoadState('domcontentloaded');
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Datos para reservas' }),
+      page.getByRole('dialog').filter({ hasText: 'Datos para reservar' }),
     ).toBeVisible({ timeout: 15_000 });
 
-    const dialog = page.getByRole('dialog').filter({ hasText: 'Datos para reservas' });
+    const dialog = page.getByRole('dialog').filter({ hasText: 'Datos para reservar' });
     await expect(dialog.locator('input[autocomplete="given-name"]')).toHaveCount(1);
     await expect(dialog.locator('input[autocomplete="family-name"]')).toHaveCount(1);
     await expect(dialog.locator('input[autocomplete="email"]')).toHaveCount(1);
@@ -225,7 +233,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     // lock de puntero. El guard de #25 que importa es post-Back, abajo.
     await page.goto(`${searchPath}/categoria/${code}?reservar=${code}`);
     await page.waitForLoadState('domcontentloaded');
-    const datosDialog = page.getByRole('dialog').filter({ hasText: 'Datos para reservas' });
+    const datosDialog = page.getByRole('dialog').filter({ hasText: 'Datos para reservar' });
     await expect(datosDialog).toBeVisible({ timeout: 15_000 });
     expect(await datosDialog.getAttribute('aria-modal')).toBe('true');
 
@@ -264,7 +272,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     await page.goto(`${searchPath}/categoria/${code}?reservar=${code}`);
     await page.waitForLoadState('domcontentloaded');
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Datos para reservas' }),
+      page.getByRole('dialog').filter({ hasText: 'Datos para reservar' }),
     ).toBeVisible({ timeout: 15_000 });
     await expect(page).toHaveURL(new RegExp(`reservar=${code}`));
 
@@ -285,17 +293,17 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     // Flujo completo en la MISMA página (sin cambio de ruta): Resumen → Datos.
     await page.getByRole('button', { name: 'Solicitar este vehículo' }).first().click();
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen' }),
     ).toBeVisible({ timeout: 10_000 });
     await page.getByTestId('reservation-next-test').click();
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Datos para reservas' }),
+      page.getByRole('dialog').filter({ hasText: 'Datos para reservar' }),
     ).toBeVisible({ timeout: 10_000 });
 
     // Cerrar "Datos" con el botón X (ruta de cierre primaria, sin navegar).
     await page
       .getByRole('dialog')
-      .filter({ hasText: 'Datos para reservas' })
+      .filter({ hasText: 'Datos para reservar' })
       .getByRole('button', { name: /close|cerrar/i })
       .first()
       .click();
@@ -314,7 +322,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
     // "Resumen". Antes del fix el click no llegaba (puntero interceptado).
     await page.getByRole('button', { name: 'Solicitar este vehículo' }).first().click();
     await expect(
-      page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' }),
+      page.getByRole('dialog').filter({ hasText: 'Resumen' }),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -326,7 +334,7 @@ test.describe('Reserva a11y — un solo slideover modal activo (issue #65) — d
 
     await page.goto(`${searchPath}/categoria/${code}?reservar=${code}`);
     await page.waitForLoadState('domcontentloaded');
-    const dialog = page.getByRole('dialog').filter({ hasText: 'Datos para reservas' });
+    const dialog = page.getByRole('dialog').filter({ hasText: 'Datos para reservar' });
     await expect(dialog).toBeVisible({ timeout: 15_000 });
 
     // Nombre accesible computado == "Teléfono" (vía <label for="telefono">).
