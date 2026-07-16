@@ -141,6 +141,10 @@ async function submitFrom(page: Page) {
   await phone.blur();
   await expect(phone).toHaveValue(/\+57/, { timeout: 5_000 });
 
+  // #311: la casilla de consentimiento ya no viene pre-marcada — marcarla es
+  // parte del flujo real del usuario y habilita el CTA de confirmación.
+  await page.locator('[data-testid="privacy-consent-checkbox-test"]').check();
+
   await page.locator('[data-testid="wizard-continue-desktop-test"]').click();
   await page.waitForURL(/\/reservado\/E2EMES|\/pendiente|\/sindisponibilidad/, { timeout: 15_000 });
 }

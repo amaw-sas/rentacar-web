@@ -43,6 +43,7 @@ const BUSCAR_VEHICULOS_FLOW_SPECS = [
   '**/reservation-back-returns-to-listing.spec.ts',
   '**/reservation-back-url-cleanup.spec.ts',
   '**/reservation-phone-revalidation.spec.ts',
+  '**/reservation-privacy-consent.spec.ts',
   '**/reservation-submit-back-unlocks-searcher.spec.ts',
   '**/time-format-12h.spec.ts',
   '**/tooltip-price-close-delay.spec.ts',
