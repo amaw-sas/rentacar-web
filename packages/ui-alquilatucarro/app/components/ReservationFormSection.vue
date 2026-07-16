@@ -20,7 +20,7 @@
       <u-button
         type="submit"
         :loading="isSubmittingForm"
-        :disabled="isSubmittingForm"
+        :disabled="isSubmittingForm || formSubmitLocked"
         >Solicitar reserva
         <template #trailing>
           <ChevronRightIcon v-if="!isSubmittingForm" cls="size-5" />
@@ -54,6 +54,7 @@ const {
   vehiculo,
   haveFlight,
   isSubmittingForm,
+  formSubmitLocked,
 } = storeToRefs(storeForm);
 
 const baseForm = {

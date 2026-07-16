@@ -173,8 +173,12 @@ describe('Robustez — hallazgos de edge-case (regresión)', () => {
   })
 
   it('el CTA de confirmar no permite doble-submit (guarda isSubmittingForm en onNext + deshabilita)', () => {
-    expect(shell()).toMatch(/if \(isSubmittingForm\.value\) return/)
+    // issue 322 PR2: also blocks when formSubmitLocked (unknown status).
+    expect(shell()).toMatch(
+      /if \(isSubmittingForm\.value \|\| formSubmitLocked\.value\) return/,
+    )
     expect(read(`${C}/WizardSummary.vue`)).toMatch(/isSubmittingForm/)
+    expect(read(`${C}/WizardSummary.vue`)).toMatch(/formSubmitLocked/)
   })
 
   it('el "desde $X" usa la familia getTotalPrice (Básico), no estimatedTotalAmount con IVA+tasa', () => {

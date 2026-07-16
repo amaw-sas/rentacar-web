@@ -38,6 +38,10 @@ describe('routeForReservationStatus', () => {
     expect(routeForReservationStatus('SinDisponibilidad', null)).toBe('/sindisponibilidad')
   })
 
+  it('routes typed legacy "Sin disponibilidad" (with space) to /sindisponibilidad', () => {
+    expect(routeForReservationStatus('Sin disponibilidad', null)).toBe('/sindisponibilidad')
+  })
+
   it('returns null for unknown statuses so the caller stays put', () => {
     expect(routeForReservationStatus('indeterminado', 'X')).toBeNull()
     expect(routeForReservationStatus('', 'X')).toBeNull()

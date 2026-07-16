@@ -136,13 +136,14 @@ const {
   selectedDays,
   humanFormattedPickupDateShort,
   isSubmittingForm,
+  formSubmitLocked,
   haveMonthlyReservation,
 } = storeToRefs(form)
 const { selectedCategory } = storeToRefs(search)
 
 // El CTA se deshabilita mientras la reserva está en vuelo (evita el doble-submit
 // que registraría reservas duplicadas — el CTA de datos dispara el envío).
-const ctaDisabled = computed(() => !props.canAdvance || isSubmittingForm.value)
+const ctaDisabled = computed(() => !props.canAdvance || isSubmittingForm.value || formSubmitLocked.value)
 
 /** Nombre humano del segmento de la gama elegida (Económicos, Sedanes…). */
 function segmentLabel(code: string): string {

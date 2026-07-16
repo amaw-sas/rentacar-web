@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError, setResponseStatus, getRequestIP } from 'h3'
-import { extractStructuredError } from '@rentacar-main/logic/utils'
+import { extractStructuredError, AVAILABILITY_FETCH_TIMEOUT_MS } from '@rentacar-main/logic/utils'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
     // route union (which overflows TS recursion: TS2321 "excessive stack depth").
     return await $fetch<unknown>(`${adminUrl}/api/reservations/availability`, {
       method: 'POST',
+      timeout: AVAILABILITY_FETCH_TIMEOUT_MS,
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,

@@ -110,6 +110,53 @@ export default function useMessages(){
         })
     }
 
+    /**
+     * Technical failure while recording a reservation (5xx, timeout, network).
+     * Must NEVER send the user to /sindisponibilidad — the booking may already
+     * exist (issue 322 SCEN-322-E01).
+     */
+    const createReservationTechnicalErrorMessage = () => {
+        toast.add({
+            title: 'No pudimos confirmar tu reserva',
+            description:
+                'Revisa tu correo o escríbenos por WhatsApp antes de reintentar. Si no te llegó confirmación, puedes intentar de nuevo.',
+            duration: 20000,
+            progress: false,
+            color: 'error',
+            icon: 'lucide:alert-triangle',
+            ui: {
+                root: 'bg-white text-gray-900',
+                icon: 'text-red-500',
+                title: 'text-gray-900 text-base font-semibold',
+                description: 'text-gray-600',
+            },
+        })
+    }
+
+    /**
+     * Successful HTTP response with an unknown reservationStatus — reservation
+     * may have been created; block re-submit (issue 322 SCEN-322-E03).
+     */
+    const createReservationUnknownStatusMessage = (reserveCode?: string | null) => {
+        const codeHint = reserveCode
+            ? ` Si tienes un código (${reserveCode}), consérvalo y contáctanos.`
+            : ' Revisa tu correo o escríbenos por WhatsApp antes de volver a enviar.';
+        toast.add({
+            title: 'Recibimos tu solicitud, pero no pudimos confirmar el estado',
+            description: `No reenvíes el formulario para evitar una reserva duplicada.${codeHint}`,
+            duration: 25000,
+            progress: false,
+            color: 'warning',
+            icon: 'lucide:alert-triangle',
+            ui: {
+                root: 'bg-white text-gray-900',
+                icon: 'text-amber-500',
+                title: 'text-gray-900 text-base font-semibold',
+                description: 'text-gray-600',
+            },
+        })
+    }
+
     const flushMessages = () => {
         toast.clear();
     }
@@ -118,6 +165,8 @@ export default function useMessages(){
         toast,
         createMessage,
         createErrorMessage,
+        createReservationTechnicalErrorMessage,
+        createReservationUnknownStatusMessage,
         flushMessages,
     }
 }

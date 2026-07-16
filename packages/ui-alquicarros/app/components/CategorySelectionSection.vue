@@ -179,7 +179,7 @@
             size="xl"
             class="flex-1 py-4 justify-center whitespace-nowrap bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
             :loading="isSubmittingForm"
-            :disabled="isSubmittingForm"
+            :disabled="isSubmittingForm || formSubmitLocked"
             @click="reservationFormComponent?.submit()"
             >{{ isSubmittingForm ? 'Solicitando' : 'Solicitar reserva' }}
             <template #trailing>
@@ -231,6 +231,7 @@ const {
   humanFormattedPickupDate,
   humanFormattedPickupDateShort,
   isSubmittingForm,
+  formSubmitLocked,
   selectedPickupLocation,
   haveTotalInsurance,
   haveMonthlyReservation,

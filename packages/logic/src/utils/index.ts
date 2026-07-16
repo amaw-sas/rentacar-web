@@ -57,6 +57,12 @@ export {
 export { extractStructuredError } from './helpers/extractStructuredError';
 export type { StructuredErrorForward } from './helpers/extractStructuredError';
 export { mapAvailabilityFetchError } from './helpers/mapAvailabilityFetchError';
+export { isBusinessUnavailabilityRecordError } from './helpers/isBusinessUnavailabilityRecordError';
+export { isTimeoutFetchError } from './helpers/isTimeoutFetchError';
+export {
+  AVAILABILITY_FETCH_TIMEOUT_MS,
+  RECORD_FETCH_TIMEOUT_MS,
+} from './fetchTimeouts';
 export { isBlockingSearchError } from './helpers/isBlockingSearchError';
 export { pickupTimingIssue } from './helpers/pickupTimingIssue';
 export type { PickupTimingIssue } from './helpers/pickupTimingIssue';
