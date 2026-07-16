@@ -36,6 +36,8 @@ import {
   IconsChevronLeftIcon as ChevronLeftIcon,
   IconsChevronRightIcon as ChevronRightIcon,
 } from '#components'
+import { ReservationFormValidationSchema } from '@rentacar-main/logic/utils'
+
 const storeSearch = useStoreSearchData();
 const storeForm = useStoreReservationForm();
 
@@ -49,10 +51,7 @@ const {
   telefono,
   email,
   politicaPrivacidad,
-  aerolinea,
-  numeroVueloIda,
   vehiculo,
-  haveFlight,
   isSubmittingForm,
   formSubmitLocked,
 } = storeToRefs(storeForm);
@@ -68,7 +67,12 @@ const baseForm = {
   vehiculo,
 };
 
+// Flight schema branch removed (issue 322 SCEN-322-D02) — no template collects
+// aerolinea/numeroVueloIda; validating them was a dead trap.
 const reservationFormState = reactive(baseForm);
-const onst { submitForm } = storeForm;
-</script>
+const formState = ref(reservationFormState);
+const validationSchema = ref(ReservationFormValidationSchema);
 
+/** functions */
+const { submitForm } = storeForm;
+</script>
