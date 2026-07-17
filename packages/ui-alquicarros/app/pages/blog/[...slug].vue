@@ -477,7 +477,7 @@ if (post.value) {
       author: {
         '@type': 'Person',
         name: post.value.author.name,
-        image: post.value.author.avatar
+        image: `${franchise.website}${post.value.author.avatar}`
       },
       publisher: {
         '@type': 'Organization',

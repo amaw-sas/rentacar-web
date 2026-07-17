@@ -136,15 +136,19 @@ describe('SEO audit P0 — BlogPosting author is a Person, not an Organization',
   const authorStart = scriptBlock.indexOf('author: {')
   // Slice only the author object (up to its closing brace) so the following
   // publisher block — legitimately an Organization — never bleeds in.
+  // End at '},' (not '}') — the avatar template literal contains '}' chars.
   const authorBlock = scriptBlock.slice(
     authorStart,
-    scriptBlock.indexOf('}', authorStart),
+    scriptBlock.indexOf('},', authorStart),
   )
 
   it('the BlogPosting author uses @type Person with the post author name + image', () => {
     expect(authorBlock).toMatch(/'@type':\s*'Person'/)
     expect(authorBlock).toMatch(/name:\s*post\.value\.author\.name/)
-    expect(authorBlock).toMatch(/image:\s*post\.value\.author\.avatar/)
+    // Avatar must be an absolute URL — schema.org consumers ignore relative paths.
+    expect(authorBlock).toMatch(
+      /image:\s*`\$\{franchise\.website\}\$\{post\.value\.author\.avatar\}`/,
+    )
     expect(authorBlock).not.toMatch(/'@type':\s*'Organization'/)
   })
 })
