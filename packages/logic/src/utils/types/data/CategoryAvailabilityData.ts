@@ -17,6 +17,11 @@ export default interface CategoryAvailabilityData {
   taxFeeAmount: number;
   taxFeePercentage: number;
   IVAFeeAmount: number;
+  // Issue #314: IVA rate as a percentage, sourced from the dashboard (symmetric
+  // to taxFeePercentage). Optional — the dashboard may not emit it yet; when
+  // absent the web falls back to IVA_PERCENTAGE. This is the source of truth for
+  // the Seguro Total local recompute; see useCategory.getIVAFeePrice.
+  IVAFeePercentage?: number;
   coverageUnitCharge: number;
   coverageQuantity: number;
   coverageTotalAmount: number;

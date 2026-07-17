@@ -9,7 +9,7 @@ import useMoneyFormat from './useMoneyFormat';
 import useStoreReservationForm from '../stores/useStoreReservationForm';
 
 // Internal dependencies - utils
-import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge, resolvePicoyPlacaExempt } from '@rentacar-main/logic/utils';
+import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge, resolvePicoyPlacaExempt, IVA_PERCENTAGE } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -49,6 +49,11 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const coverageQuantity = ref<number>(categoryAvailableData.coverageQuantity);
    const coverageUnitCharge = ref<number>(categoryAvailableData.coverageUnitCharge);
    const ivaFeeAmount = ref<number>(categoryAvailableData.IVAFeeAmount);
+   // Issue #314: IVA rate from the dashboard (source of truth). Falls back to
+   // IVA_PERCENTAGE only while the dashboard hasn't shipped the field. `??`
+   // preserves a legitimate 0 (nullish, not falsy). Consumed by getIVAFeePrice
+   // and re-exported so the record builder derives the same rate.
+   const ivaFeePercentage = ref<number>(categoryAvailableData.IVAFeePercentage ?? IVA_PERCENTAGE);
    const taxFeeAmount = ref<number>(categoryAvailableData.taxFeeAmount);
    const taxFeePercentage = ref<number>(categoryAvailableData.taxFeePercentage);
    const discountAmount = ref<number | undefined>(categoryAvailableData.discountAmount);
@@ -213,9 +218,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const getIVAFeePrice = computed<number>(() => {
       if(withTotalCoverage.value){
          const sum = getSubtotal.value + getTaxFeePrice.value;
-         const ivaPercentage = 19; // TODO pending to get from admin data
-         
-         return Math.round((sum * ivaPercentage) / 100);
+
+         return Math.round((sum * ivaFeePercentage.value) / 100);
       }
       else return ivaFeeAmount.value ?? 0;
    })
@@ -450,6 +454,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       coverageQuantity,
       coverageUnitCharge,
       taxFeeAmount,
+      ivaFeePercentage,
       discountAmount,
       discountPercentage,
       returnFeeAmount,
