@@ -418,7 +418,9 @@ const cityBranches = computed(() =>
   (branches.value || []).filter((branch: { city: string }) => branch.city === props.city?.id)
 );
 
-const testimonios: Testimonial[] | undefined = props.city?.testimonials;
+// City-specific reviews, fetched per city (#322 PR10 — no longer inside the
+// master catalog payload). Still keyed by props.city, never brand-level.
+const testimonios = useCityTestimonials(props.city?.id);
 
 // Get expanded content for major cities (Bogotá, Medellín)
 const expandedContent = props.city?.name ? useCityExpandedContent(props.city.name) : null;

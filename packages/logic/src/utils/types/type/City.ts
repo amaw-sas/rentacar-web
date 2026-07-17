@@ -4,5 +4,11 @@ export default interface City {
     id: string;
     name: string;
     description: string;
-    testimonials: Testimonial[];
+    /**
+     * @deprecated Issue #322 PR10 — testimonials no longer travel in the
+     * master catalog payload (they were ~35KB shipped on every page). City
+     * pages fetch them per city via useCityTestimonials → /api/city-testimonials.
+     * Kept optional so old fixtures typecheck.
+     */
+    testimonials?: Testimonial[];
 }

@@ -12,7 +12,14 @@ export default interface CategoryData {
   ad: string;
   models: CategoryModelData[];
   month_prices: CategoryMonthPriceData[];
-  total_coverage_unit_charge: number;
+  /**
+   * @deprecated Issue #322 PR10 — the server no longer emits this scalar: it
+   * came from `activePricing[0] ?? allPricing[0]` (undefined Postgres order,
+   * inactive-legacy fallback). The charge now travels per pricing row in
+   * `month_prices[].total_coverage_unit_charge` and is selected by pickup date
+   * via pickTotalCoverageChargeForDate. Kept optional so old fixtures typecheck.
+   */
+  total_coverage_unit_charge?: number;
   extra_km_charge: number;
   // Issue #28: pico y placa exemption from the dashboard column (sole source of
   // truth). null/absent → not exempt. See resolvePicoyPlacaExempt.

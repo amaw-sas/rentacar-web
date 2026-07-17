@@ -55,7 +55,7 @@
     <HomeHowItWorks v-if="mode !== 'results'" />
     <HomeRequirements v-if="mode !== 'results'" />
 
-    <!-- Reseñas city (city.testimonials) -->
+    <!-- Reseñas city (useCityTestimonials, #322 PR10) -->
     <CityTestimonios :city="city" />
 
     <!-- FAQ city (useCityFAQs) -->

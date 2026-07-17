@@ -68,7 +68,78 @@ interface SupabaseLocation {
   cities: { slug: string } | null
 }
 
-export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
+const dayMs = 24 * 60 * 60 * 1000
+const toUtcMs = (iso: string): number => Date.parse(`${iso}T00:00:00Z`)
+
+function todayIsoUtc(): string {
+  const d = new Date()
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+}
+
+/**
+ * Drops pricing rows that no client-side selector can ever pick for a pickup
+ * date on/after `today`, while keeping the exact representative rows each
+ * selector's fallback rules need (issue #322 PR10 — the full history was ~85
+ * rows shipped on every page).
+ *
+ * Kept per category:
+ *  1. Every row still valid at the cutoff (open-ended or `end_date >= today-1d`;
+ *     the 1-day grace absorbs the UTC vs America/Bogota date offset).
+ *  2. The latest-ending expired INACTIVE row — `pickPriceForDate` rule 2 falls
+ *     back to the inactive row closest to the pickup date, which for any
+ *     today-or-future pickup is exactly the one with the max `end_date`.
+ *  3. When the category has NO inactive rows at all: the active row with the
+ *     lowest `1k_kms` (tie: latest `init_date`) — `pickPriceForDate` rule 3
+ *     (season-low) selects it when no active range contains the pickup.
+ *  4. The active row with the lowest positive `one_day_price` (tie: latest
+ *     `init_date`) — `pickRepresentativeDailyPrice` is date-free by design and
+ *     must keep returning the same row.
+ *  5. One active row with a positive 1k/2k monthly price (latest `init_date`)
+ *     — preserves `categoryOffersMonthly`'s any-active-row fallback.
+ */
+function prunePricingRows(prices: CategoryMonthPriceData[], todayIso: string): CategoryMonthPriceData[] {
+  if (prices.length === 0) return prices
+
+  const cutoffMs = toUtcMs(todayIso) - dayMs
+  const isCurrent = (p: CategoryMonthPriceData): boolean =>
+    !p.end_date || toUtcMs(p.end_date) >= cutoffMs
+
+  const byInitDesc = (a: CategoryMonthPriceData, b: CategoryMonthPriceData) =>
+    b.init_date.localeCompare(a.init_date)
+
+  const keep = new Set<CategoryMonthPriceData>(prices.filter(isCurrent))
+
+  const inactives = prices.filter((p) => p.status === 'inactive')
+  const actives = prices.filter((p) => p.status === 'active')
+
+  // (2) latest-ending expired inactive row.
+  const expiredInactives = inactives
+    .filter((p) => !isCurrent(p))
+    .sort((a, b) => b.end_date.localeCompare(a.end_date) || byInitDesc(a, b))
+  if (expiredInactives[0]) keep.add(expiredInactives[0])
+
+  // (3) season-low candidate — only reachable when no inactive rows exist.
+  if (inactives.length === 0) {
+    const seasonLow = [...actives].sort((a, b) => a['1k_kms'] - b['1k_kms'] || byInitDesc(a, b))
+    if (seasonLow[0]) keep.add(seasonLow[0])
+  }
+
+  // (4) representative daily price candidate.
+  const cheapestDaily = actives
+    .filter((p) => p.one_day_price > 0)
+    .sort((a, b) => a.one_day_price - b.one_day_price || byInitDesc(a, b))
+  if (cheapestDaily[0]) keep.add(cheapestDaily[0])
+
+  // (5) offers-monthly existence witness.
+  const monthlyWitness = actives
+    .filter((p) => p['1k_kms'] > 0 || p['2k_kms'] > 0)
+    .sort(byInitDesc)
+  if (monthlyWitness[0]) keep.add(monthlyWitness[0])
+
+  return prices.filter((p) => keep.has(p))
+}
+
+export function transformCategories(rows: SupabaseCategory[], todayIso: string = todayIsoUtc()): CategoryData[] {
   return rows.map((row) => {
     const models: CategoryModelData[] = (row.category_models || [])
       .filter((m) => m.status === 'active')
@@ -80,24 +151,33 @@ export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
       }))
 
     const allPricing = row.category_pricing || []
-    const activePricing = allPricing.filter((p) => p.status === 'active')
 
     // Pass through both active and inactive rows so the client can use
     // inactive (legacy) rows as fallback when pickup date is outside any
     // active validity range. Selection logic lives in pickPriceForDate.
-    const monthPrices: CategoryMonthPriceData[] = allPricing.map((p) => ({
-      '1k_kms': p.monthly_1k_price ?? 0,
-      '2k_kms': p.monthly_2k_price ?? 0,
-      '3k_kms': p.monthly_3k_price ?? 0,
-      init_date: p.valid_from,
-      end_date: p.valid_until || '',
-      total_insurance_price: p.monthly_insurance_price ?? 0,
-      one_day_price: p.monthly_one_day_price ?? 0,
-      status: p.status === 'inactive' ? 'inactive' : 'active',
-    }))
-
-    const coverageSource = activePricing[0] ?? allPricing[0]
-    const coverageCharge = coverageSource ? Number(coverageSource.total_coverage_unit_charge) : 0
+    //
+    // The "Seguro Total" charge travels per row (issue #322 PR10): selecting a
+    // scalar here would need a pickup date the server does not have, and the
+    // old `activePricing[0] ?? allPricing[0]` selection depended on undefined
+    // Postgres order and could quote a retired (inactive) rate. Clients select
+    // by pickup date via pickTotalCoverageChargeForDate — active rows only.
+    const monthPrices: CategoryMonthPriceData[] = prunePricingRows(
+      allPricing.map((p) => ({
+        '1k_kms': p.monthly_1k_price ?? 0,
+        '2k_kms': p.monthly_2k_price ?? 0,
+        '3k_kms': p.monthly_3k_price ?? 0,
+        init_date: p.valid_from,
+        end_date: p.valid_until || '',
+        total_insurance_price: p.monthly_insurance_price ?? 0,
+        one_day_price: p.monthly_one_day_price ?? 0,
+        status: p.status === 'inactive' ? 'inactive' : 'active',
+        total_coverage_unit_charge:
+          p.total_coverage_unit_charge == null || Number.isNaN(Number(p.total_coverage_unit_charge))
+            ? null
+            : Number(p.total_coverage_unit_charge),
+      })),
+      todayIso,
+    )
 
     return {
       id: row.code as CategoryData['id'],
@@ -109,7 +189,6 @@ export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
       ad: '',
       models,
       month_prices: monthPrices,
-      total_coverage_unit_charge: coverageCharge,
       extra_km_charge: Number(row.extra_km_charge ?? 0),
       // null (not false) when the column is absent, so the client can tell
       // "unset → fall back to the hardcoded list" from an explicit false.
@@ -187,19 +266,24 @@ const testimonialSchema = v.object({
   quote: v.pipe(v.string(), v.maxLength(1000)),
 })
 
-function parseTestimonials(raw: unknown): Testimonial[] {
+export function parseTestimonials(raw: unknown): Testimonial[] {
   if (!Array.isArray(raw)) return []
   return raw
     .slice(0, 12)
     .filter((t): t is Testimonial => v.safeParse(testimonialSchema, t).success)
 }
 
+// Issue #322 PR10: testimonials no longer travel in the master catalog — they
+// were ~35KB of the ~110KB payload shipped on EVERY page while only the city
+// pages render them. They are served per city by /api/city-testimonials
+// (useCityTestimonials client-side). `description` still ships: it feeds the
+// synchronous SEO composables (useCityPageSEO/useSearchPageSEO meta) across
+// many routes, so moving it is a separate refactor.
 export function transformCities(rows: SupabaseCity[]): City[] {
   return rows.map((row) => ({
     id: row.slug,                               // app id == DB slug
     name: row.name,
     description: row.description ?? '',
-    testimonials: parseTestimonials(row.testimonials),
   }))
 }
 

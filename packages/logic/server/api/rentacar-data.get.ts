@@ -3,15 +3,17 @@ import { fetchRentacarData, RentacarDataTimeoutError } from '../utils/rentacarDa
 import { rentacarDataCacheKey } from '../utils/rentacarDataCacheKey'
 import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials, transformFAQs } from '../utils/transformers'
 
-export default defineCachedEventHandler(async () => {
+export default defineCachedEventHandler(async (event) => {
   const supabase = useSupabaseClient()
 
-  // NOTE(perf #11): each brand's SSR payload still includes all 3 brands'
-  // testimonials (~14KB cross-brand bloat per render) via the franchises
-  // query inside fetchRentacarData. Acceptable while testimonials are static
-  // and small; revisit before the Google Maps Reviews integration.
+  // Issue #322 PR10: scope the franchises query to this deploy's brand — each
+  // deployment serves exactly one brand, so cross-brand testimonials were pure
+  // payload bloat (perf #11). Empty/absent config (standalone logic layer)
+  // falls back to unfiltered, preserving the old behavior.
+  const franchiseCode = useRuntimeConfig(event).public?.rentacarFranchise as string | undefined
+
   const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult, faqsResult] =
-    await fetchRentacarData(supabase).catch((err) => {
+    await fetchRentacarData(supabase, undefined, franchiseCode).catch((err) => {
       if (err instanceof RentacarDataTimeoutError) {
         throw createError({ statusCode: 504, statusMessage: 'rentacar-data upstream timeout' })
       }
