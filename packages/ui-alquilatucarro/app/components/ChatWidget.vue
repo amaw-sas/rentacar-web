@@ -47,9 +47,12 @@
         <ChatConversation :active="panelOpen" variant="panel" @dismiss="panelOpen = false" />
       </div>
 
+      <!-- data-shift-left (no el :class, que E8 congela) mueve el stack a la
+           izquierda con el resumen de reserva abierto en escritorio; ver CSS. -->
       <div
         class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4 pointer-events-none"
         :class="{ 'contact-fab-stack--reservation': isReservationRoute }"
+        :data-shift-left="shiftLeft"
       >
         <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
              con transform/opacity sin cambiar la geometría del contenedor ni
@@ -195,6 +198,19 @@ const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
+
+// Resumen de reserva abierto → el FAB salta a la izquierda para no tapar
+// Volver/Siguiente/Solicitar reserva (el u-slideover ancla a la derecha, z<60).
+// Puente SSR-safe (useState) desde CategorySelectionSection, que vive en otro
+// subárbol y escribe esta misma clave. Este widget es byte-idéntico entre las
+// tres marcas: donde no hay slideover que escriba la clave (p.ej. alquicarros),
+// queda en false → shiftLeft nunca se activa (dormante, sin regresión).
+const reservationSummaryOpen = useState<boolean>('reservation-slideover-open', () => false)
+// Gate a ≥1024px A PROPÓSITO (no el isDesktop de 768): el lift móvil de main
+// (`.contact-fab-stack--reservation`, @media max-width:1023.98px) ya cubre
+// ≤1023.98px. Partición exacta en 1024 → ni doble-tratamiento ni hueco.
+const isWideViewport = useMediaQuery('(min-width: 1024px)')
+const shiftLeft = computed(() => isWideViewport.value && reservationSummaryOpen.value)
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
 // la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
@@ -363,6 +379,14 @@ button { -webkit-tap-highlight-color: transparent; }
 
 /* --- Items del menú FAB --- */
 .fab-item { display: flex; align-items: center; gap: 0.75rem; border-radius: 9999px; }
+/* Salto a la izquierda (resumen de reserva abierto en escritorio, ≥1024px).
+   Se activa por data-shift-left, NO por clase, para no tocar el `:class` que el
+   invariante E8 congela. Override del ancla right-6/items-end del stack y de las
+   filas del menú: [círculo][etiqueta] (row-reverse) alinea los círculos (ancho
+   fijo) al borde izquierdo, sin escalonarse por el ancho variable de etiquetas. */
+.contact-fab-stack[data-shift-left='true'] { right: auto; left: 1.5rem; align-items: flex-start; }
+.contact-fab-stack[data-shift-left='true'] #contact-fab-menu { align-items: flex-start; }
+.contact-fab-stack[data-shift-left='true'] .fab-item { flex-direction: row-reverse; }
 .fab-label {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
