@@ -182,12 +182,15 @@ const extrasLabel = computed(() => {
   return items.length ? items.join(' · ') : null
 })
 
-const totalLabel = computed(
-  () =>
-    selectedCategory.value?.currencyTotalWithAdditionals ??
-    selectedCategory.value?.currencyTotalPrice ??
-    null,
-)
+const totalLabel = computed(() => {
+  const sc = selectedCategory.value
+  // Issue #313: más allá del horizonte de tarifas getTotalPrice = 0, y
+  // moneyFormat(0) = "0" (no nulish) burlaría el `?? '—'` → mostraría "Total 0"
+  // (precio fabricado). Fail-closed: sin total que mostrar (el CTA ya está
+  // bloqueado y la card/tile explican por qué).
+  if (!sc || sc.isMonthlyPriceUnavailable) return null
+  return sc.currencyTotalWithAdditionals ?? sc.currencyTotalPrice ?? null
+})
 
 interface SummaryRow {
   label: string

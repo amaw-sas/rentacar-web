@@ -84,6 +84,18 @@ Acepta: paridad verificada; test de componente espejo si aplica.
 - Al cerrar: abrir issue en `rentacar-dashboard` para alerta proactiva de operación (fuera de alcance de este repo).
 - Rollback: cambios aditivos y fail-closed; revertir el PR restaura el fallback previo sin migración de datos.
 
+## Follow-ups diferidos (de la revisión de calidad, no bloquean)
+
+Cubiertos en esta implementación (hallazgos de code-reviewer + edge-case-detector):
+- Fuga de "$ 0" en superficies no auditadas (CategoryCard líneas diarias, WizardSummary total): **corregido** — toda la columna de precio se reemplaza por el estado inline; `totalLabel` fail-closed. E2E asertan ausencia de `.precio-diario` y de "$ 0".
+- Deep-link `/categoria/X` beyond-horizon aterrizaba en Paso 3 (Seguro) saltándose el guard: **corregido** — rebote a Paso 2 cuando la gama seleccionada no es usable (SCEN-5b).
+- `isBeyondPricingHorizon`: fila INACTIVE open-ended ya NO concede horizonte infinito; datos todos corruptos → fail-closed. Warning consistente (active-only open-ended).
+
+Diferidos (no bloquean; observabilidad o data inexistente hoy):
+- **warn per-categoría**: `warnIfPricingHorizonNear` usa max global (decisión de §4). Una categoría por expirar puede quedar enmascarada por otra lejana. Solo log; mejora futura → warn por categoría.
+- **empty-prices (0 filas)**: card muestra "no disponible" pero el banner de flujo no aparece (predicados divergen en `[]`). Solo mensajería, no fuga de precio.
+- **whatsappContact fallback**: la cola `?? { phone:"", display:"" }` es inalcanzable (existe por `noUncheckedIndexedAccess`); tidy menor.
+
 ## Riesgos y mitigación
 
 - `getTotalPrice`→0 filtrándose a superficie no auditada: bloqueo por flag (`isMonthlyPriceUnavailable`), no por precio; grep de consumidores en Paso 3.

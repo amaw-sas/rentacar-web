@@ -93,7 +93,18 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       if (!categoryMonthPrices.value) return undefined;
       return pickPriceForDate(categoryMonthPrices.value, fechaRecogida.value ?? '');
    };
-   
+
+   /**
+    * Issue #313: reserva mensual cuyo pickup cae MÁS ALLÁ del horizonte de datos
+    * de tarifas — `pickPriceForDate` devuelve undefined (regla 0) porque no hay
+    * fila legítima que cubra la fecha (el caso 2027 del audit). La UI bloquea la
+    * reserva por este flag, no por precio; los computeds de precio devuelven 0
+    * explícito para que ningún número fabricado se cobre.
+    */
+   const isMonthlyPriceUnavailable = computed<boolean>(() =>
+      haveMonthlyReservation.value && !!withMileage.value && !getCategoryMonthPrice()
+   );
+
    // Issue #28: pico y placa exemption comes solely from the dashboard column.
    const isPicoyPlacaExempt = (): boolean =>
       resolvePicoyPlacaExempt(picoyplacaExempt.value);
@@ -114,7 +125,10 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    //TODO change the following when there's total coverage and/or monthly price
    
    const getDailyPrice = computed<number>(() => {
-      
+      // Issue #313: fail-closed más allá del horizonte — nunca caer a la
+      // matemática diaria ni a la de Seguro Total con un precio fabricado.
+      if(isMonthlyPriceUnavailable.value) return 0;
+
       if(withTotalCoverage.value){
          if(haveMonthlyReservation.value && withMileage.value){
             const mileage = withMileage.value;
@@ -152,6 +166,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
     * it's shown as crossed out
     */
    const getDailyBasePrice = computed<number>(() => {
+      // Issue #313: fail-closed más allá del horizonte.
+      if(isMonthlyPriceUnavailable.value) return 0;
+
       const monthPrice = getCategoryMonthPrice();
       
       if(haveMonthlyReservation.value && monthPrice)
@@ -192,8 +209,12 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
     * Get the total price of the reservation, this is shown to client
     */
    const getTotalPrice = computed<number>(() => {
+      // Issue #313: fail-closed más allá del horizonte — sin esto, con Seguro
+      // Total esta rama caía a getSubtotal (precio fabricado que se cobraba).
+      if(isMonthlyPriceUnavailable.value) return 0;
+
       const returnFee = returnFeeAmount.value ?? 0;
-      
+
       // if has total coverage
       if(withTotalCoverage.value){
          
@@ -243,8 +264,11 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
     * Get the actual total price of the reservation, this is shown in tooltip
     */
    const getActualTotalPrice = computed<number>(() => {
-      const returnFee = returnFeeAmount.value ?? 0; 
-      
+      // Issue #313: fail-closed más allá del horizonte.
+      if(isMonthlyPriceUnavailable.value) return 0;
+
+      const returnFee = returnFeeAmount.value ?? 0;
+
       if(withTotalCoverage.value){
          if(haveMonthlyReservation.value && withMileage.value){
             const mileage = withMileage.value;
@@ -449,6 +473,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       actualTotalPriceTooltip,
       
       // computed functions
+      isMonthlyPriceUnavailable,
       getTotalPrice,
       getActualTotalPrice,
       getSubtotal,

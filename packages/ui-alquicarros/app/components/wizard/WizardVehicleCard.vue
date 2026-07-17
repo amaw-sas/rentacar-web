@@ -7,10 +7,13 @@
     step fije `selectedCategory` y avance.
   -->
   <div
-    class="flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white transition-colors"
-    :class="selected ? 'border-brand-600 ring-2 ring-brand-600' : 'border-gray-200'"
+    class="flex flex-col overflow-hidden rounded-2xl border bg-white transition-colors"
+    :class="[
+      selected ? 'border-brand-600 ring-2 ring-brand-600' : 'border-gray-200',
+      isMonthlyPriceUnavailable ? 'cursor-not-allowed opacity-75' : 'cursor-pointer',
+    ]"
     :data-testid="`wizard-vehicle-${categoryCode}-test`"
-    @click="$emit('select', category)"
+    @click="!isMonthlyPriceUnavailable && $emit('select', category)"
   >
     <!-- El carrusel aísla sus clics (@click.stop): usar las flechas o arrastrar
          entre modelos NO selecciona la gama; solo navega imágenes. El botón
@@ -35,7 +38,22 @@
         </p>
       </div>
 
-      <div class="mt-auto flex items-end justify-between gap-3 border-t border-gray-100 pt-3">
+      <!-- Issue #313: más allá del horizonte de tarifas la reserva mensual no se
+           cotiza (getTotalPrice = 0). Se bloquea por flag, no por precio: estado
+           inline en vez de "$ 0" y CTA deshabilitado. -->
+      <div
+        v-if="isMonthlyPriceUnavailable"
+        class="mt-auto border-t border-gray-100 pt-3"
+      >
+        <p
+          class="body-sm font-semibold text-gray-700"
+          data-testid="wizard-vehicle-unavailable-test"
+        >
+          Tarifa no disponible para tu fecha
+        </p>
+        <p class="mt-1 body-xs text-gray-500">Escríbenos y te cotizamos.</p>
+      </div>
+      <div v-else class="mt-auto flex items-end justify-between gap-3 border-t border-gray-100 pt-3">
         <div>
           <p class="body-xs text-gray-600">Precio total · {{ getFormattedDays }}</p>
           <p class="price-md font-heading text-brand-700">$ {{ currencyTotalPrice }}</p>
@@ -94,8 +112,14 @@ defineEmits<{
 // Instancia useCategory para los precios de ESTA gama. Se emite tal cual al
 // elegir; el step la fija como selectedCategory (mismo contrato que CategoryCard).
 const category: ReturnType<typeof useCategory> = useCategory(props.category)
-const { categoryCode, categoryModels, currencyTotalPrice, currencyDailyPrice, getFormattedDays } =
-  category
+const {
+  categoryCode,
+  categoryModels,
+  currencyTotalPrice,
+  currencyDailyPrice,
+  getFormattedDays,
+  isMonthlyPriceUnavailable,
+} = category
 
 const modelos = computed(() => props.vehicleCategory?.modelos ?? [])
 const grupo = computed(() => props.vehicleCategory?.grupo ?? '')

@@ -32,6 +32,30 @@
     </div>
   </div>
   <template v-if="!pendingSearch">
+    <!-- Issue #313 — nivel flujo: TODAS las gamas caen más allá del horizonte de
+         tarifas (caso 2027). Fail-closed: no se cotiza, se ofrece contacto. -->
+    <div
+      v-if="allBeyondHorizon"
+      class="text-center mb-6"
+      data-testid="pricing-horizon-unavailable-test"
+    >
+      <div class="text-white text-center rounded-2xl bg-black/30 px-6 py-6 max-w-2xl mx-auto">
+        <div class="text-xl md:text-2xl font-bold">
+          Las tarifas para tu fecha aún no están disponibles
+        </div>
+        <p class="text-base mt-2">Escríbenos y te cotizamos.</p>
+        <p class="text-lg mt-2">
+          <a
+            :href="`https://wa.me/57${whatsappContact.phone}`"
+            target="_blank"
+            rel="noopener"
+            class="text-yellow-400 underline"
+          >
+            WhatsApp {{ whatsappContact.display }}
+          </a>
+        </p>
+      </div>
+    </div>
     <div v-if="hasRenderableAvailable" class="text-white text-center">
       <div class="text-lg md:text-xl font-bold">¡Vehículos Disponibles!</div>
       <div class="text-sm md:text-base">
@@ -213,6 +237,9 @@ import {
   IconsXIcon as XIcon
 } from "#components";
 
+/** utils */
+import { allRenderableBeyondHorizon } from "@rentacar-main/logic/utils";
+
 // Note: composables and functions are auto-imported by Nuxt
 
 /** stores */
@@ -228,6 +255,7 @@ const {
 } = storeToRefs(storeSearch);
 const {
   vehiculo,
+  fechaRecogida,
   humanFormattedPickupDate,
   humanFormattedPickupDateShort,
   isSubmittingForm,
@@ -286,7 +314,11 @@ const whatsappContacts: Record<string, { phone: string; display: string }> = {
   alquilame: { phone: "3002436677", display: "300 243 6677" },
   alquicarros: { phone: "3187703670", display: "318 770 3670" },
 };
-const whatsappContact = whatsappContacts[config.public.rentacarFranchise as string] ?? whatsappContacts.alquilatucarro;
+// Fallback explícito final para que el tipo sea `{ phone, display }` y no
+// `| undefined` (noUncheckedIndexedAccess en el acceso por índice del Record).
+const whatsappContact: { phone: string; display: string } =
+  whatsappContacts[config.public.rentacarFranchise as string] ??
+  whatsappContacts.alquilatucarro ?? { phone: "", display: "" };
 const { vehicleCategories } = useFetchRentacarData();
 // Categories the grid can actually render (those with presentation metadata in
 // vehicleCategories). The grid AND the availability banner both derive from
@@ -298,6 +330,13 @@ const renderableCategories = computed(() =>
 );
 const hasRenderableAvailable = computed(() =>
   renderableCategories.value.some((c: { estimatedTotalAmount: number }) => c.estimatedTotalAmount !== 999999999),
+);
+// Issue #313 — nivel flujo: en reserva mensual, TODAS las gamas renderizables
+// caen más allá del horizonte de tarifas (caso 2027). Fail-closed: banner de
+// contacto. Por-card el estado inline lo gobierna isMonthlyPriceUnavailable.
+const allBeyondHorizon = computed<boolean>(() =>
+  haveMonthlyReservation.value &&
+  allRenderableBeyondHorizon(renderableCategories.value, fechaRecogida.value ?? ''),
 );
 // Un solo slideover modal con dos pasos (issue #65). `slideoverStep` decide
 // título/descripción/body/footer; `slideoverOpen` gobierna la única capa modal.

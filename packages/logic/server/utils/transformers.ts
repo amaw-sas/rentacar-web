@@ -68,7 +68,51 @@ interface SupabaseLocation {
   cities: { slug: string } | null
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Issue #313: señal proactiva para operación. Si el `valid_until` máximo global
+ * de las tarifas mensuales está a menos de `horizonDays` días, emite un warning
+ * en logs (Vercel) para que se carguen nuevas tarifas ANTES de que el horizonte
+ * se agote y la web empiece a fallar-cerrado (no cotizar) las reservas mensuales.
+ *
+ * Una fila con `valid_until` NULL/vacío significa horizonte infinito → nunca
+ * avisa. `now` es inyectable para tests deterministas.
+ */
+export function warnIfPricingHorizonNear(
+  rows: SupabaseCategory[],
+  now: Date = new Date(),
+  horizonDays = 60,
+): void {
+  const allPricing = rows.flatMap((r) => r.category_pricing || [])
+  if (allPricing.length === 0) return
+
+  // Solo una fila ACTIVE open-ended = tarifa vigente sin expiración = horizonte
+  // infinito → no avisar. Una inactive open-ended (legacy) no debe silenciar la
+  // alerta de otras categorías por expirar (consistente con isBeyondPricingHorizon).
+  if (allPricing.some((p) => p.status === 'active' && !p.valid_until)) return
+
+  let maxEndMs = Number.NEGATIVE_INFINITY
+  for (const p of allPricing) {
+    const endMs = Date.parse(`${p.valid_until}T00:00:00Z`)
+    if (!Number.isNaN(endMs) && endMs > maxEndMs) maxEndMs = endMs
+  }
+  if (maxEndMs === Number.NEGATIVE_INFINITY) return
+
+  const nowMs = now.getTime()
+  if (maxEndMs >= nowMs + horizonDays * DAY_MS) return
+
+  const maxDate = new Date(maxEndMs).toISOString().slice(0, 10)
+  const daysAway = Math.round((maxEndMs - nowMs) / DAY_MS)
+  console.warn(
+    `[pricing-horizon] monthly pricing data ends ${maxDate} (${daysAway} days away) — load new rates in the dashboard`,
+  )
+}
+
 export function transformCategories(rows: SupabaseCategory[]): CategoryData[] {
+  // Issue #313: avisa una vez por rebuild si el horizonte de tarifas está cerca.
+  warnIfPricingHorizonNear(rows)
+
   return rows.map((row) => {
     const models: CategoryModelData[] = (row.category_models || [])
       .filter((m) => m.status === 'active')

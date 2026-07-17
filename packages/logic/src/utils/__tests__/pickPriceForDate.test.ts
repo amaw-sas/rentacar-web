@@ -90,39 +90,57 @@ describe('pickPriceForDate', () => {
   })
 
   it('chooses the legacy row with smallest temporal distance to pickup', () => {
+    // Pickup 2023-12-15 cae en el HUECO entre dos filas legacy y DENTRO del
+    // horizonte (max end = 2025-12-30). El fallback legacy (regla 2) elige la
+    // fila más cercana en el tiempo: newerLegacy empieza 2024-01-15 (~1 mes),
+    // olderLegacy termina 2022-12-31 (~12 meses).
     const olderLegacy = inactive('2022-01-01', '2022-12-31', 3_000_000)
     const newerLegacy = inactive('2024-01-15', '2025-12-30', 3_865_990)
-    const result = pickPriceForDate([olderLegacy, newerLegacy], '2026-02-15')
+    const result = pickPriceForDate([olderLegacy, newerLegacy], '2023-12-15')
     expect(result?.init_date).toBe('2024-01-15')
   })
 
-  it('falls back to season-low active row when no legacy is available', () => {
-    // Scenario: category has seasonal 2026 rows but no legacy inactive row.
-    // Pickup far in the future (2028) falls outside every active range.
-    // Instead of returning undefined (which renders as $0 in the UI), the
-    // selector should return the cheapest active row — i.e. a low-season
-    // month — so the user sees a plausible reference price.
-    const result = pickPriceForDate(SEASONAL_2026, '2028-03-15')
+  it('falls back to season-low active row when no legacy is available (gap within horizon)', () => {
+    // Category con filas activas 2026 (abr-dic) pero sin fila legacy. Pickup
+    // 2026-02-15 cae DENTRO del horizonte (max end = 2026-12-31) pero en un
+    // hueco sin fila activa que lo cubra. Regla 3 (season-low) devuelve la fila
+    // activa más barata para no renderizar $0 — el fix de PR #308, preservado
+    // para huecos DENTRO del horizonte (issue #313 solo cambia el caso BEYOND).
+    const result = pickPriceForDate(SEASONAL_2026, '2026-02-15')
     expect(result?.status).toBe('active')
     expect(result?.['1k_kms']).toBe(3_806_000)
   })
 
-  it('prefers legacy over season-low fallback when both are available', () => {
-    // Regression guard: the original "fall back to inactive legacy" behaviour
-    // must keep winning over the new season-low fallback.
+  it('prefers legacy over season-low fallback when both are available (gap within horizon)', () => {
+    // Regression guard: legacy (regla 2) gana sobre season-low (regla 3) para
+    // huecos DENTRO del horizonte.
     const prices = [...SEASONAL_2026, LEGACY_2024_2025]
-    const result = pickPriceForDate(prices, '2028-03-15')
+    const result = pickPriceForDate(prices, '2026-02-15')
     expect(result?.status).toBe('inactive')
     expect(result?.init_date).toBe('2024-01-15')
   })
 
-  it('breaks ties in season-low fallback by most recent init_date', () => {
-    // Multiple active rows share the minimum price. Pick the one with the
-    // latest init_date (consistent with how the primary active branch
-    // resolves overlap).
-    const result = pickPriceForDate(SEASONAL_2026, '2028-03-15')
-    // Among the five 3_806_000 rows (may, aug, sep, nov), november is the
-    // most recent.
+  it('breaks ties in season-low fallback by most recent init_date (gap within horizon)', () => {
+    // Varias filas activas comparten el precio mínimo. Elige la de init_date
+    // más reciente (consistente con la rama activa primaria). Pickup dentro del
+    // horizonte.
+    const result = pickPriceForDate(SEASONAL_2026, '2026-02-15')
+    // Entre las filas 3_806_000 (may, ago, sep, nov), noviembre es la más reciente.
     expect(result?.init_date).toBe('2026-11-01')
+  })
+
+  describe('regla 0 — fail-closed más allá del horizonte (issue #313)', () => {
+    it('devuelve undefined cuando pickup excede el max end_date, sin legacy', () => {
+      // Pickup 2028-03-15 está MÁS ALLÁ de todo el dato (max end 2026-12-31).
+      // No hay respaldo legítimo: fail-closed en vez de fabricar season-low.
+      const result = pickPriceForDate(SEASONAL_2026, '2028-03-15')
+      expect(result).toBeUndefined()
+    })
+
+    it('devuelve undefined más allá del horizonte incluso con fila legacy presente', () => {
+      const prices = [...SEASONAL_2026, LEGACY_2024_2025]
+      const result = pickPriceForDate(prices, '2028-03-15')
+      expect(result).toBeUndefined()
+    })
   })
 })

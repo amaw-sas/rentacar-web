@@ -327,10 +327,18 @@ if (categoriaParam.value) {
 // maxReachedStep a 2 para que el stepper no deje re-saltar adelante sin elegir.
 // Lee selectedCategory.value fresco (no del arg): el watch de preselección se crea
 // antes, así que si hubo match ya lo fijó en este mismo flush y esto no-opea.
+// Issue #313: una gama SELECCIONADA pero más allá del horizonte de tarifas
+// (deep-link /categoria/X con fecha 2027) cuenta como "sin gama usable" — sin
+// esto, deriveStepFromRoute la deja en Paso 3 (Seguro) y canAdvance('seguro')
+// es true, así que el usuario avanzaría hasta Confirmar con getTotalPrice = 0.
+// Rebotar a Paso 2 la lleva al banner de horizonte + guard de avance.
+const hasUsableCategory = computed(
+  () => !!selectedCategory.value && !selectedCategory.value.isMonthlyPriceUnavailable,
+)
 watch(
   [searchSettled, () => wizard.currentStepNumber.value],
   ([settled, stepNum]) => {
-    if (!settled || selectedCategory.value) return
+    if (!settled || hasUsableCategory.value) return
     if (stepNum >= stepNumber('seguro')) {
       wizard.goTo('vehiculo')
       wizard.maxReachedStep.value = 2
@@ -345,7 +353,11 @@ const stepDataRef = ref<{ submit: () => void } | null>(null)
 /** Estado de dominio que gobierna el avance de cada paso (SCEN-W-05/07). */
 const advanceState = computed(() => ({
   searchExecuted: searchSettled.value,
-  hasSelectedCategory: !!selectedCategory.value,
+  // Issue #313: una gama mensual seleccionada cuyo pickup cae más allá del
+  // horizonte de tarifas (getTotalPrice = 0) NO habilita avanzar — se bloquea
+  // por flag, no por precio. Cubre el deep-link a /categoria/X con fecha 2027.
+  hasSelectedCategory:
+    !!selectedCategory.value && !selectedCategory.value.isMonthlyPriceUnavailable,
   formValid: Boolean(politicaPrivacidad.value),
 }))
 
