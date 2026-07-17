@@ -9,7 +9,7 @@ import useStoreReservationForm from '../stores/useStoreReservationForm';
 import useStoreSearchData from '../stores/useStoreSearchData';
 
 // Internal dependencies - utils
-import { readStoredAttribution, normalizePhoneNumber } from '@rentacar-main/logic/utils';
+import { readStoredAttribution, normalizePhoneNumber, IVA_PERCENTAGE } from '@rentacar-main/logic/utils';
 import { RECORD_FETCH_TIMEOUT_MS } from '../utils/fetchTimeouts';
 
 // Types
@@ -93,8 +93,18 @@ export default async function useRecordReservationForm() {
   // reserva de mensualidad
   if (haveMonthlyReservation.value && selectedMonthlyMileage.value) {
     total_price_to_pay = selectedCategory.value?.getActualTotalPrice ?? 0;
+    // Issue #314: back out the pre-IVA base using the category's IVA rate
+    // instead of a magic 1.19, so the rate has a single named source shared with
+    // getIVAFeePrice. Today the number is unchanged: monthly cards are built by
+    // createCategoryAvailability (catalog), which does not set IVAFeePercentage,
+    // so ivaPct resolves to the IVA_PERCENTAGE fallback (1 + 19/100 = 1.19).
+    // Intentional invariant: the IVA embedded in the monthly catalog price and
+    // this rate are assumed equal (IVA is fixed by law at 19%). If the dashboard
+    // ever emits a per-category rate that reaches monthly and diverges from the
+    // price's embedded IVA, this back-out drifts — revisit then.
+    const ivaPct = selectedCategory.value?.ivaFeePercentage ?? IVA_PERCENTAGE;
     total_price = total_price_to_pay
-      ? Math.round(total_price_to_pay / 1.19)
+      ? Math.round(total_price_to_pay / (1 + ivaPct / 100))
       : 0;
 
     formData = {
