@@ -5,8 +5,8 @@
     puro se reusa de F1 (home/*). El bloque de resultados (#seleccion-categorias)
     se preserva INTACTO: esta misma página la renderiza la ruta buscar-vehiculos,
     y muestra resultados cuando hay params de búsqueda. Engine (Searcher, #41, #109)
-    y SEO (useCityProductSchema #68, useCityFAQSchema vía useCityPageSEO,
-    useCityAggregateRating) sin cambios de comportamiento.
+    y SEO (useCityProductSchema #68, useCityFAQSchema vía useCityPageSEO)
+    sin cambios de comportamiento.
   -->
   <UPage>
     <!-- Hero — mode-aware (F3): landing = marketing-only CTA, results = Searcher engine -->
@@ -119,11 +119,8 @@ const cityBranches = computed(() =>
 const expandedContent = props.city?.name ? useCityExpandedContent(props.city.name) : null;
 const relatedCities = props.city?.id ? useRelatedCities(props.city.id) : [];
 
-// SEO schema (sin cambios): AggregateRating con los testimonios city + Product (#68).
-const testimonios = props.city?.testimonials;
-if (props.city?.name && testimonios) {
-  useCityAggregateRating(props.city.name, testimonios);
-}
+// SEO schema: Product (#68). The fabricated AggregateRating (hardcoded 4.9★) was
+// removed — the visible city testimonials (city.testimonials) stay untouched.
 if (props.city?.name && props.city?.id) {
   useCityProductSchema(props.city.name, props.city.id);
 }

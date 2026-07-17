@@ -12,7 +12,9 @@
  *     (franchiseTestimonials[brandCode] via useFetchRentacarData), never a
  *     hardcoded testimonial array.
  *   - The section background is the golden's flat gray-100 (no gradient).
- *   - No-regression: index.vue keeps calling useHomeAggregateRating() unchanged.
+ *   - Honesty: index.vue no longer emits the fabricated AggregateRating schema
+ *     (hardcoded 4.9★). The visible Google rating block above stays — it is REAL
+ *     Google Business data — but the JSON-LD aggregateRating was removed.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -80,10 +82,11 @@ describe('Reviews.vue — golden #google-reviews parity', () => {
   })
 })
 
-describe('Reviews — index.vue keeps AggregateRating without regression', () => {
+describe('Reviews — index.vue no longer emits the fabricated AggregateRating', () => {
   const index = read('app/pages/index.vue')
 
-  it('still calls useHomeAggregateRating() (pre-existing debt, untouched)', () => {
-    expect(index).toMatch(/useHomeAggregateRating\(\)/)
+  it('does NOT call useHomeAggregateRating() (hardcoded 4.9★ schema removed)', () => {
+    expect(index).not.toMatch(/useHomeAggregateRating/)
+    expect(index).not.toMatch(/AggregateRating/)
   })
 })
