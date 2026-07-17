@@ -17,7 +17,6 @@ export * from './utils'
 // Composables (se auto-importan via Nuxt Layer, pero también exportados aquí)
 export * from './composables/useBaseSEO'
 export * from './composables/useBreadcrumbs'
-export * from './composables/useLocalBusiness'
 export * from './composables/useProductSchema'
 export * from './composables/usePromotionSchema'
 export * from './composables/useVideoSchema'

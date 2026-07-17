@@ -1,5 +1,5 @@
 // External dependencies
-import type { AutoRental, Brand, OpeningHoursSpecification, EntryPoint, ReserveAction, RentalCarReservation, SoftwareApplication } from 'schema-dts';
+import type { AutoRental, Brand, EntryPoint, ReserveAction, RentalCarReservation, SoftwareApplication } from 'schema-dts';
 
 export const useBaseSEO = () => {
 
@@ -66,20 +66,12 @@ export const useBaseSEO = () => {
             telephone: franchise.phone,
             email: franchise.email,
             priceRange: "$$",
-            openingHoursSpecification: [
-                <OpeningHoursSpecification>{
-                    '@type': "OpeningHoursSpecification",
-                    dayOfWeek: 'Saturday',
-                    opens: '07:00',
-                    closes: '12:00',
-                },
-                <OpeningHoursSpecification>{
-                    '@type': "OpeningHoursSpecification",
-                    dayOfWeek: ['Monday', 'Tuesday','Wednesday','Thursday','Friday'],
-                    opens: '07:00',
-                    closes: '17:00',
-                },
-            ],
+            // Issue #315: no org-level openingHoursSpecification. A single global
+            // hours block can't be true for a multi-branch operation (airports
+            // 06:00–22:00 + Sundays, 24h branches, branches closed some days), so
+            // it was publishing wrong hours to Google. Per-branch hours live in
+            // Supabase `locations.schedule` (contract v2, issue #47) and are not
+            // modeled at this org level.
             keywords: [
                 franchise.name,
                 "renta de carros",
