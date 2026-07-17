@@ -11,6 +11,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
+    "test": "vitest run",
     "lint": "eslint .",
     "clean": "rm -rf .nuxt .output node_modules"
   },

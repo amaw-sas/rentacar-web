@@ -216,7 +216,17 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     await phone.blur();
     await expect(phone).toHaveValue(/\+57/, { timeout: 5_000 });
 
-    await page.locator('[data-testid="wizard-continue-desktop-test"]').click();
+    // #311 (SCEN-311-01/03/04): la casilla de tratamiento de datos llega SIN
+    // marcar (Ley 1581: consentimiento expreso) y mantiene el CTA deshabilitado;
+    // marcarla — como haría el usuario real — lo habilita y permite confirmar.
+    const consent = page.locator('[data-testid="privacy-consent-checkbox-test"]');
+    const confirmCta = page.locator('[data-testid="wizard-continue-desktop-test"]');
+    await expect(consent).not.toBeChecked();
+    await expect(confirmCta).toBeDisabled();
+    await consent.check();
+    await expect(confirmCta).toBeEnabled();
+
+    await confirmCta.click();
     await page.waitForURL(/\/reservado\/E2ECODE|\/pendiente|\/sindisponibilidad/, { timeout: 15_000 });
     expect(page.url()).toContain('/reservado/E2ECODE');
   });

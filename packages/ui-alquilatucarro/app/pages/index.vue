@@ -92,7 +92,8 @@
             </div>
             <h3 class="font-bold text-black text-lg mt-0">COMPACTO</h3>
             <p class="text-black mt-2">Practicidad urbana con estilo. La agilidad que necesitas en la ciudad</p>
-            <LazyUModal hydrate-on-interaction class="mt-4" :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }">
+            <!-- hydrate-on-visible: avoid first-tap steal (issue 322 SCEN-322-P03). -->
+            <LazyUModal hydrate-on-visible class="mt-4" :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }">
               <template #body>
                 <div class="mb-4 text-black text-lg">
                   ¿En que ciudad<br>deseas recoger tu carro?
@@ -112,7 +113,7 @@
             </div>
             <h3 class="font-bold text-black text-lg mt-0">SEDAN</h3>
             <p class="text-black mt-2">Confort y espacio. Disfruta cada viaje con la máxima comodidad</p>
-            <LazyUModal hydrate-on-interaction class="mt-4" :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }">
+            <LazyUModal hydrate-on-visible class="mt-4" :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }">
               <template #body>
                 <div class="mb-4 text-black text-lg">
                   ¿En que ciudad<br>deseas recoger tu carro?
@@ -132,7 +133,7 @@
             </div>
             <h3 class="font-bold text-black text-lg mt-0">CAMIONETA</h3>
             <p class="text-black mt-2">Robustez y tamaño. Capacidad para dominar cualquier camino</p>
-            <LazyUModal hydrate-on-interaction class="mt-4" :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }">
+            <LazyUModal hydrate-on-visible class="mt-4" :ui="{ content: 'bg-white', close: 'bg-black text-white rounded-full' }">
               <template #body>
                 <div class="mb-4 text-black text-lg">
                   ¿En que ciudad<br>deseas recoger tu carro?
@@ -191,7 +192,7 @@
         <p class="text-base text-center mb-4">
           Encuentra respuestas a las consultas más comunes sobre nuestro servicio de alquiler. Si tienes otra pregunta, contáctanos directamente.
         </p>
-        <LazyUAccordion hydrate-on-interaction :items="faqs" :ui="faqAccordionUIConfig" class="max-w-4xl mx-auto">
+        <LazyUAccordion hydrate-on-visible :items="faqs" :ui="faqAccordionUIConfig" class="max-w-4xl mx-auto">
           <template #default="{ item }">
             <span class="block text-base font-medium text-gray-800 px-4" v-text="item.label"></span>
           </template>
@@ -243,7 +244,7 @@ useSeoMeta({
 useSchemaOrg([
   <FAQPage>{
     "@type": "FAQPage",
-    mainEntity: faqs.map((faq) =>
+    mainEntity: faqs.value.map((faq) =>
       defineQuestion({
         name: faq.label,
         acceptedAnswer: faq.content,

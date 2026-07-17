@@ -133,6 +133,39 @@ export function latestOpenDayOnOrBefore(
 }
 
 /**
+ * The return date after the PICKUP date changes — issue #322 PR7.
+ *
+ * Preserves the rental DURATION already on screen: moving the pickup from D to
+ * D+2 shifts a D+5 return to D+7 (still 5 days) instead of collapsing every
+ * change to the +1 default, which destroyed the return the user had chosen.
+ * Preserving the duration unconditionally is equivalent to the old behaviour
+ * whenever the duration was 1, so no "chosen vs default" detection is needed.
+ *
+ * When the previous range is unknown or invalid (no previous pickup/return, or
+ * return ≤ previous pickup — a corrupt deep-link), the duration clamps to the
+ * 1-day minimum. The result snaps to an open day of the return branch
+ * (nearestOpenDay) with a FLOOR of pickup + 1: the old floor was the pickup
+ * itself, so a closed D+1 could land the "default" return ON the pickup day →
+ * 0 billable days → doSearch dies in "Revisa las fechas". A degenerate
+ * all-closed schedule keeps the raw target — the server validates as backstop.
+ */
+export function returnDateForPickupChange(
+  schedule: LocationSchedule | null | undefined,
+  newPickup: DateObject,
+  previousPickup: DateObject | null,
+  currentReturn: DateObject | null,
+): DateObject {
+  // CalendarDate#compare is the signed difference in days (Julian-day subtraction).
+  const previousDuration =
+    previousPickup && currentReturn ? currentReturn.compare(previousPickup) : 0;
+  const duration = Math.max(1, previousDuration);
+
+  const target = newPickup.copy().add({ days: duration });
+  const floor = newPickup.copy().add({ days: 1 });
+  return nearestOpenDay(schedule, target, floor) ?? target;
+}
+
+/**
  * The slot whose time is nearest `target` (absolute minute distance; ties break
  * toward the earlier slot) — issue #47 W6. `null` for an empty list. Used to snap
  * the inherited "return hour = pickup hour" default to the closest open hour

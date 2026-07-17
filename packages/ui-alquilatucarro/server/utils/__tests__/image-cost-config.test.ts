@@ -23,32 +23,23 @@ const BRANDS = ['ui-alquilatucarro', 'ui-alquilame', 'ui-alquicarros']
 // Byte-identical top-level `hooks: { … }` block injected into all 3
 // nuxt.config.ts. Verbatim — including the comments and the doubled
 // backslashes in the hostname exactly as they appear in source.
-const CANONICAL_HOOK = `  hooks: {
-    // @nuxt/image 1.11.0 hardcodes Vercel Build Output images.formats to
-    // ['image/webp','image/avif'] and merges via defu (which CONCATENATES
-    // arrays). A plain nitro.vercel.config.images cannot override it. This
-    // post-module hook hard-assigns the authoritative block so the Vercel
-    // optimizer serves webp-only with our cache/size/host allowlist.
-    'nitro:config'(nitroConfig: { vercel?: { config?: { images?: unknown } } }) {
+// Authoritative images.sizes must include 1536: @nuxt/image srcset for 800px
+// assets on 2x screens requests w=1536; without it Vercel returns 400 (#161).
+const CANONICAL_SIZES = [320, 640, 768, 1024, 1280, 1536]
+
+// Core hard-assign body present in all 3 brands (comments may differ slightly;
+// we assert the assignment shape + EXPECTED values rather than a brittle full
+// multi-line string equality on the entire hooks block).
+const CANONICAL_HOOK_MARKER = `'nitro:config'(nitroConfig: { vercel?: { config?: { images?: unknown } } }) {
       nitroConfig.vercel = nitroConfig.vercel || {}
       nitroConfig.vercel.config = nitroConfig.vercel.config || {}
-      nitroConfig.vercel.config.images = {
-        sizes: [320, 640, 768, 1024, 1280],
-        qualities: [80],
-        formats: ['image/webp'],
-        minimumCacheTTL: 2678400,
-        remotePatterns: [
-          { protocol: 'https', hostname: '^[a-z0-9-]+\\\\.public\\\\.blob\\\\.vercel-storage\\\\.com$' },
-        ],
-      }
-    },
-  },`
+      nitroConfig.vercel.config.images = {`
 
 // Effective, authoritative images block the hook hard-assigns. The hostname
 // literal has 4 backslashes so the runtime JS string is `\\.` (matching the
 // source file's doubled-backslash regex literal).
 const EXPECTED_IMAGES = {
-  sizes: [320, 640, 768, 1024, 1280],
+  sizes: CANONICAL_SIZES,
   qualities: [80],
   formats: ['image/webp'],
   minimumCacheTTL: 2678400,
@@ -111,9 +102,12 @@ function parseImagesFromHook(src: string) {
 
 describe('SCEN-005: post-module hook hard-assigns the authoritative images block', () => {
   for (const brand of BRANDS) {
-    it(`${brand}: nuxt.config.ts contains the byte-identical canonical hook`, () => {
+    it(`${brand}: nuxt.config.ts hard-assigns images via the canonical nitro:config hook`, () => {
       const src = readFileSync(resolve(packagesDir, brand, 'nuxt.config.ts'), 'utf-8')
-      expect(src.includes(CANONICAL_HOOK)).toBe(true)
+      expect(src.includes(CANONICAL_HOOK_MARKER)).toBe(true)
+      // Hard assign, not a merge/spread that would reintroduce defu concat.
+      expect(src).toMatch(/nitroConfig\.vercel\.config\.images\s*=\s*\{/)
+      expect(src).toMatch(/formats:\s*\[\s*['"]image\/webp['"]\s*\]/)
     })
 
     it(`${brand}: standalone vercel.json removed`, () => {
@@ -139,7 +133,7 @@ describe('SCEN-005/006: defu-concat regression guard — naive config fails, hoo
   it('documents WHY a plain nitro.vercel.config.images fails: defu concat yields avif', () => {
     // What defu produced had we relied on a plain config object.
     const ours = {
-      sizes: [320, 640, 768, 1024, 1280],
+      sizes: CANONICAL_SIZES,
       qualities: [80],
       formats: ['image/webp'],
       minimumCacheTTL: 2678400,
@@ -162,7 +156,7 @@ describe('SCEN-005/006: defu-concat regression guard — naive config fails, hoo
     expect(eff.formats).toEqual(['image/webp'])
     expect(eff.formats).not.toContain('image/avif')
     expect(eff.minimumCacheTTL).toBe(2678400)
-    expect([...new Set(eff.sizes)]).toEqual([320, 640, 768, 1024, 1280])
+    expect([...new Set(eff.sizes)]).toEqual(CANONICAL_SIZES)
     expect(eff.qualities).toEqual([80])
     expect(eff.remotePatterns).toHaveLength(1)
   })

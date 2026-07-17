@@ -1,18 +1,11 @@
 <template>
   <!--
     Hero — golden parity (astro-alquilame #hero). Red gradient bg via the v4
-    bg-linear-to-* utility (custom @theme tokens render background-image:none
-    with the v3 alias — F0 lesson). Headline left / visual card right.
+    bg-linear-to-* utility.
 
-    Golden's visual column is a looping <video> (autoplay/muted/loop/playsinline
-    + poster). We reproduce the exact golden card (max-w-lg, aspect-[16/9],
-    rounded + shadow + ring) — the aspect box reserves space so the poster→video
-    swap never shifts layout (no CLS). Assets live in public/videos/.
-
-    CTAs match the golden exactly: "Ver Precios" (#fleet) + WhatsApp. WhatsApp
-    is a CONTACT CTA pointing at franchise.whatsapp (already a full
-    https://wa.me/... URL — never re-wrapped); the golden's hardcoded number is
-    the same brand line.
+    Perf (issue 322 SCEN-322-P01): first paint is the poster image only (NuxtImg).
+    Multi-MB video is NOT autoplay on the critical path — it activates after the
+    hero is visible + browser idle (skipped when prefers-reduced-motion).
   -->
   <section
     id="hero"
@@ -20,7 +13,6 @@
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
       <div class="grid lg:grid-cols-2 gap-10 items-center">
-        <!-- Text + CTA column -->
         <div class="text-center lg:text-left">
           <h1
             class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-white leading-[1.1]"
@@ -32,7 +24,6 @@
             Reserva por WhatsApp en {{ cityCount }} ciudades.
           </p>
 
-          <!-- CTA row: "Ver Precios" (jumps to #fleet) + contact WhatsApp -->
           <div class="mt-6 flex flex-row items-stretch gap-3 justify-center lg:justify-start">
             <a
               href="#fleet"
@@ -45,7 +36,7 @@
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Contáctanos por WhatsApp"
-              class="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-[#090] text-white hover:brightness-110 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+              class="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -62,21 +53,27 @@
           </div>
         </div>
 
-        <!-- Visual column (golden card, aspect-[16/9] reserves space → no CLS) -->
         <div class="flex items-center justify-center">
-          <!--
-            CLS guard: the aspect-[16/9] utility rule ships in Nuxt's JS-injected
-            stylesheet (not the inlined critical CSS), and the <video> below has
-            no width/height attrs, so pre-CSS the card falls back to the 300×150
-            video default and shifts when the real ratio applies (home CLS 0.129).
-            The INLINE aspect-ratio reserves the box in the SSR HTML from the
-            first paint, independent of stylesheet timing.
-          -->
           <div
+            ref="visualBox"
             class="w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
             style="aspect-ratio: 16 / 9"
           >
+            <!-- Default paint: poster only (no multi-MB video on critical path). -->
+            <NuxtImg
+              v-if="!videoActive"
+              src="/videos/hero-poster.jpg"
+              alt="Flota Alquilame Colombia"
+              width="960"
+              height="540"
+              format="webp"
+              loading="eager"
+              fetchpriority="high"
+              class="w-full h-full object-cover"
+            />
+            <!-- Prefer mp4 (audit: webm was heavier). Activated post-idle when visible. -->
             <video
+              v-else
               class="w-full h-full object-cover"
               poster="/videos/hero-poster.jpg"
               autoplay
@@ -86,7 +83,6 @@
               preload="metadata"
               aria-label="Video promocional de Alquilame Colombia"
             >
-              <source src="/videos/hero.webm" type="video/webm" />
               <source src="/videos/hero.mp4" type="video/mp4" />
             </video>
           </div>
@@ -97,8 +93,50 @@
 </template>
 
 <script setup lang="ts">
-const { franchise } = useAppConfig()
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 
-// Live active-city count (Supabase) for the subheading — tracks the dashboard.
+const { franchise } = useAppConfig()
 const cityCount = useCityCount()
+
+const visualBox = ref<HTMLElement | null>(null)
+const videoActive = ref(false)
+let idleId: number | undefined
+let io: IntersectionObserver | undefined
+
+onMounted(() => {
+  if (typeof window === 'undefined') return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const el = visualBox.value
+  if (!el) return
+
+  const activate = () => {
+    videoActive.value = true
+  }
+
+  io = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return
+      io?.disconnect()
+      const ric = (window as Window & {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+      }).requestIdleCallback
+      if (ric) {
+        idleId = ric(activate, { timeout: 2500 })
+      } else {
+        idleId = window.setTimeout(activate, 1200) as unknown as number
+      }
+    },
+    { rootMargin: '80px' },
+  )
+  io.observe(el)
+})
+
+onBeforeUnmount(() => {
+  io?.disconnect()
+  if (idleId !== undefined) {
+    const cic = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback
+    if (cic) cic(idleId)
+    else clearTimeout(idleId)
+  }
+})
 </script>

@@ -30,7 +30,8 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   // "¡Oops!" block never rendered when admin data arrived late. Issue
   // #10 SCEN-004.
   const { categories: categoriesAdminData } = storeToRefs(storeAdminData);
-  const { haveMonthlyReservation, selectedPickupLocation, fechaRecogida } = storeToRefs(useStoreReservationForm());
+  const storeForm = useStoreReservationForm();
+  const { haveMonthlyReservation, selectedPickupLocation, fechaRecogida } = storeToRefs(storeForm);
   const { createErrorMessage } = useMessages();
   const categoriesAvailabilityData = ref<CategoryAvailabilityData[] | null>(
     null
@@ -50,10 +51,17 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   const offersMonthly = (category: CategoryData): boolean =>
     categoryOffersMonthly(category.month_prices, fechaRecogida.value ?? '');
 
+  // Issue 322 SCEN-322-E06: discard out-of-order availability responses so a
+  // slow first search cannot overwrite a newer one or clear `pending` early.
+  let searchGeneration = 0;
+
   const search = async () => {
+    const gen = ++searchGeneration;
     error.value = null;
     pending.value = true;
     categoriesAvailabilityData.value = null;
+    // Nueva búsqueda = nueva reserva potencial: desbloquear submit consumido (E03).
+    storeForm.formSubmitLocked = false;
     // Reset alongside the other per-search state: only the LLNRAG009 and
     // empty-result paths re-assign this, so without resetting here a stale
     // `true` from a prior LLNRAG009 search leaks into a later search that
@@ -62,12 +70,18 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
 
     const { data, error: errorResponse } = await useFetchCategoriesAvailabilityData();
 
-    // Handle missing parameters error silently (not a real error, just missing information)
+    // Stale response: a newer search() started after us.
+    if (gen !== searchGeneration) return;
+
+    // missing_parameters is NOT silent (issue #322 SCEN-322-V03): search() only
+    // runs on a real search intent (submit, deep-link/query hydration, retry),
+    // never on an idle mount — so missing params here mean an incomplete
+    // deep-link (e.g. a /reservas?… link without hours, or an unknown branch
+    // slug). Swallowing it left the page blank with no explanation. It now
+    // flows through the standard error path below: error.value renders the
+    // inline state and the branch-specific createErrorMessage raises the toast
+    // (useMessages maps the friendly copy).
     if(errorResponse.value) {
-      if(errorResponse.value.error === 'missing_parameters') {
-        pending.value = false;
-        return;
-      }
       error.value = errorResponse.value;
     }
 
@@ -136,7 +150,10 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
         categoriesAvailabilityData.value = [];
       }
     }
-    
+
+    // Re-check before clearing pending: a concurrent search may have started
+    // during toast/UI work above.
+    if (gen !== searchGeneration) return;
     pending.value = false;
   };
 

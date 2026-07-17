@@ -12,9 +12,10 @@
  *     (franchiseTestimonials[brandCode] via useFetchRentacarData), never a
  *     hardcoded testimonial array.
  *   - The section background is the golden's flat gray-100 (no gradient).
- *   - Honesty: index.vue no longer emits the fabricated AggregateRating schema
- *     (hardcoded 4.9★). The visible Google rating block above stays — it is REAL
- *     Google Business data — but the JSON-LD aggregateRating was removed.
+ *   - Issue #312: the AggregateRating SCHEMA (fabricated 4,9★/5★ markup) was
+ *     removed site-wide — self-serving review markup is ineligible per Google's
+ *     review-snippet guidelines even with real reviews. The VISUAL Google block
+ *     above stays: the prohibition covers structured data, not on-page display.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -63,7 +64,7 @@ describe('Reviews.vue — golden #google-reviews parity', () => {
     expect(reviews).toContain('#34A853') // green
   })
 
-  it('surfaces no aggregate-rating SCHEMA composable here (debt stays in index.vue)', () => {
+  it('surfaces no aggregate-rating SCHEMA composable here (removed site-wide, #312)', () => {
     expect(reviews).not.toMatch(/useHomeAggregateRating/)
     expect(reviews).not.toMatch(/AggregateRating/)
   })
@@ -82,10 +83,10 @@ describe('Reviews.vue — golden #google-reviews parity', () => {
   })
 })
 
-describe('Reviews — index.vue no longer emits the fabricated AggregateRating', () => {
+describe('Reviews — index.vue no longer emits AggregateRating (issue #312)', () => {
   const index = read('app/pages/index.vue')
 
-  it('does NOT call useHomeAggregateRating() (hardcoded 4.9★ schema removed)', () => {
+  it('does NOT call useHomeAggregateRating() (fabricated-rating schema removed)', () => {
     expect(index).not.toMatch(/useHomeAggregateRating/)
     expect(index).not.toMatch(/AggregateRating/)
   })

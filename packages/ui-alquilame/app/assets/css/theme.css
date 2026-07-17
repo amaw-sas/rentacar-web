@@ -38,6 +38,11 @@
   --color-surface-softer:  #f4f5f9;
   --color-surface-softest: #f8f9fc;
 
+  /* WhatsApp institutional green (issue #284). Pair ALWAYS with text-black on
+     labeled CTAs — white on #25D366 fails WCAG AA (~2:1); black is ~10.6:1. */
+  --color-whatsapp: #25D366;
+  --color-whatsapp-hover: #1EBE5A;
+
   /* Fuentes de marca (self-hosted vía @nuxt/fonts; ver nuxt.config.ts) */
   --font-heading: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-sans:    'DM Sans', ui-sans-serif, system-ui, sans-serif;

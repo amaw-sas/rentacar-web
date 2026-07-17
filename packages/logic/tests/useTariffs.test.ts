@@ -178,3 +178,40 @@ describe('buildTariffs', () => {
     expect(result.gamas[0].plan1k.monthly).toBe(3806000)
   })
 })
+
+// SCEN-322-T02 — docs/specs/issue-322-pr7-dates-tz/scenarios/dates-tz.scenarios.md
+//
+// The default "today" (no todayDate argument) must be the AMERICA/BOGOTA
+// calendar day, not the UTC one. The old todayIsoUtc() flipped to tomorrow at
+// 19:00 Bogota (00:00 UTC): a pricing row whose end_date is "today" in Bogota
+// stopped matching five hours early, blanking the tariffs page every evening.
+describe('buildTariffs — default today is America/Bogota (SCEN-322-T02)', () => {
+  // 04:30 UTC on May 3 = 23:30 on May 2 in Bogota (UTC-5, no DST).
+  const UTC_CLOCK = new Date('2026-05-03T04:30:00Z')
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(UTC_CLOCK)
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('keeps a row that is still active on the Bogota day D (UTC already at D+1)', () => {
+    const cats = [makeCategory('C', {
+      prices: [{ init_date: '2026-05-01', end_date: '2026-05-02', '1k_kms': 3806000, '2k_kms': 4252000 }],
+    })]
+    // No todayDate: the composable's own clock decides. Bogota is still May 2 —
+    // the row matches. The UTC date (May 3) would have skipped it.
+    const result = buildTariffs(cats)
+    expect(result.gamas.map((g) => g.code)).toEqual(['C'])
+    expect(result.period?.end).toBe('2026-05-02')
+  })
+
+  it('does not resurrect a row that already ended on the Bogota day', () => {
+    const cats = [makeCategory('C', {
+      prices: [{ init_date: '2026-04-01', end_date: '2026-05-01', '1k_kms': 3806000 }],
+    })]
+    expect(buildTariffs(cats).gamas).toEqual([])
+  })
+})

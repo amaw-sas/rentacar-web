@@ -13,13 +13,14 @@
     "./config": "./src/config/index.ts",
     "./composables/*": "./src/composables/*.ts",
     "./stores/*": "./src/stores/*.ts",
+    "./middleware/*": "./src/middleware/*.ts",
     "./utils": "./src/utils/index.ts",
     "./utils/*": "./src/utils/*.ts"
   },
   "scripts": {
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@internationalized/date": "^3.10.0",

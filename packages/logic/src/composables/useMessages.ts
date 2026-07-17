@@ -33,6 +33,15 @@ export default function useMessages(){
         if (message.error == "no_available_categories_error")
             error.title = "No hay vehículos";
 
+        // Incomplete deep-link (issue #322 SCEN-322-V03): the search ran without
+        // all its parameters — e.g. a shared /reservas link missing the hours or
+        // carrying an unknown branch. The raw "Faltan parámetros requeridos"
+        // reads technical; tell the user what to fix instead of a bare "Error".
+        if (message.error == "missing_parameters") {
+            error.title = "Enlace de búsqueda incompleto";
+            error.message = "Al enlace le faltan datos de la búsqueda (sede, fechas u horas). Completa la búsqueda e intenta de nuevo.";
+        }
+
         // A pickup datetime in the past (e.g. an hour earlier today than now).
         // The backend's raw message talks about the "fecha" and reads harsh;
         // override title + message with a friendly, hour-focused notice so the
@@ -110,6 +119,53 @@ export default function useMessages(){
         })
     }
 
+    /**
+     * Technical failure while recording a reservation (5xx, timeout, network).
+     * Must NEVER send the user to /sindisponibilidad — the booking may already
+     * exist (issue 322 SCEN-322-E01).
+     */
+    const createReservationTechnicalErrorMessage = () => {
+        toast.add({
+            title: 'No pudimos confirmar tu reserva',
+            description:
+                'Revisa tu correo o escríbenos por WhatsApp antes de reintentar. Si no te llegó confirmación, puedes intentar de nuevo.',
+            duration: 20000,
+            progress: false,
+            color: 'error',
+            icon: 'lucide:alert-triangle',
+            ui: {
+                root: 'bg-white text-gray-900',
+                icon: 'text-red-500',
+                title: 'text-gray-900 text-base font-semibold',
+                description: 'text-gray-600',
+            },
+        })
+    }
+
+    /**
+     * Successful HTTP response with an unknown reservationStatus — reservation
+     * may have been created; block re-submit (issue 322 SCEN-322-E03).
+     */
+    const createReservationUnknownStatusMessage = (reserveCode?: string | null) => {
+        const codeHint = reserveCode
+            ? ` Si tienes un código (${reserveCode}), consérvalo y contáctanos.`
+            : ' Revisa tu correo o escríbenos por WhatsApp antes de volver a enviar.';
+        toast.add({
+            title: 'Recibimos tu solicitud, pero no pudimos confirmar el estado',
+            description: `No reenvíes el formulario para evitar una reserva duplicada.${codeHint}`,
+            duration: 25000,
+            progress: false,
+            color: 'warning',
+            icon: 'lucide:alert-triangle',
+            ui: {
+                root: 'bg-white text-gray-900',
+                icon: 'text-amber-500',
+                title: 'text-gray-900 text-base font-semibold',
+                description: 'text-gray-600',
+            },
+        })
+    }
+
     const flushMessages = () => {
         toast.clear();
     }
@@ -118,6 +174,8 @@ export default function useMessages(){
         toast,
         createMessage,
         createErrorMessage,
+        createReservationTechnicalErrorMessage,
+        createReservationUnknownStatusMessage,
         flushMessages,
     }
 }

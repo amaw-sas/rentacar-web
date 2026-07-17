@@ -54,7 +54,7 @@ useSeoMeta({
 useSchemaOrg([
   <FAQPage>{
     "@type": "FAQPage",
-    mainEntity: faqs.map((faq) =>
+    mainEntity: faqs.value.map((faq) =>
       defineQuestion({
         name: faq.label,
         acceptedAnswer: faq.content,
@@ -74,7 +74,10 @@ definePageMeta({
   colorMode: "light",
 });
 
-// The #video section + its VideoObject/Promotion schemas were removed (F1 step 8):
-// the new design surfaces neither a video nor the 60% offer, so those schemas
-// would be orphaned/dishonest.
+// The aggregate-rating schema was removed site-wide (#312): the ratings were
+// fabricated (hardcoded 4,9★ + 5/5 per review) and self-serving review markup
+// is ineligible per Google's review-snippet guidelines even with real reviews.
+// The #video section + its VideoObject/Promotion schemas were removed earlier
+// (F1 step 8): the new design surfaces neither a video nor the 60% offer, so
+// those schemas would be orphaned/dishonest.
 </script>

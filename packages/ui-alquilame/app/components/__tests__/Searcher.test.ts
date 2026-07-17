@@ -105,10 +105,11 @@ describe('Searcher — derives results-URL city from pickup branch when route ha
     expect(source).toMatch(/const\s+route\s*=\s*useRoute\(\)/)
   })
 
-  it('derives the effective city from the pickup branch via the store method when route.params.city is falsy', () => {
-    // route.params.city ?? storeAdminData.searchBranchByCode(lugarRecogida ...)?.city
+  it('derives the effective city from the pickup branch via the store method (alquilame /reservas has no city segment)', () => {
+    // Current order: branch city first, then route.params.city as fallback.
+    // Alquilame results live on /reservas (no route.params.city), so branch wins.
     expect(source).toMatch(
-      /route\.params\.city\s*\?\?\s*storeAdminData\.searchBranchByCode\(\s*lugarRecogida\.value\s*\?\?\s*''\s*\)\?\.city/,
+      /storeAdminData\.searchBranchByCode\(\s*lugarRecogida\.value\s*\?\?\s*''\s*\)\?\.city\s*\?\?\s*route\.params\.city/,
     )
   })
 
@@ -116,10 +117,8 @@ describe('Searcher — derives results-URL city from pickup branch when route ha
     expect(source).toMatch(/searchLinkParams\.value\s*=\s*\{\s*\.\.\.params\s*,\s*city:\s*effectiveCity\s*\}/)
   })
 
-  it('on city pages keeps route.params.city, so behavior is unchanged (no regression)', () => {
-    // The nullish-coalescing left operand is route.params.city, so a present
-    // route city always wins over the derived branch city.
-    expect(source).toMatch(/effectiveCity\s*=\s*[\s\S]*?route\.params\.city\s*\?\?/)
+  it('still consults route.params.city as fallback when branch has no city', () => {
+    expect(source).toMatch(/effectiveCity\s*=\s*[\s\S]*?route\.params\.city/)
   })
 
   it('recomputes the derived city when lugarRecogida changes (reactivity guard)', () => {

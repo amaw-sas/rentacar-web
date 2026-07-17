@@ -69,7 +69,7 @@ describe('Cities — SCEN-CITIES-05: sin marquesina ni auto-scroll', () => {
 describe('Cities — SCEN-CITIES-06: sin ciudades inventadas', () => {
   it('featuredCities es la intersección de FEATURED con las ciudades activas', () => {
     expect(cities).toMatch(/FEATURED\.flatMap/)
-    expect(cities).toMatch(/cities\.find/)
+    expect(cities).toMatch(/cities\.value\.find/)
   })
 })
 

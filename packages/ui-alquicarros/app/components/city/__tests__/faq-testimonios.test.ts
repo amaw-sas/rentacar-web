@@ -9,10 +9,10 @@
  *     regress the city's indexable SEO content.
  *   - The FAQPage schema is NOT inlined here: it stays in useCityFAQSchema /
  *     useCityPageSEO (in [city]/index.vue), untouched.
- *   - The testimonials cards keep the CITY-SPECIFIC data (props.city.testimonials
- *     — the same array that feeds useCityAggregateRating in CityPage), NOT the
- *     brand-level franchiseTestimonials that HomeReviews renders. The heading is
- *     city-targeted ("…en {city.name}").
+ *   - The testimonials cards keep the CITY-SPECIFIC data (props.city.testimonials),
+ *     NOT the brand-level franchiseTestimonials that HomeReviews renders. The
+ *     heading is city-targeted ("…en {city.name}"). The AggregateRating schema
+ *     those testimonials once fed was removed site-wide (#312 — fabricated data).
  *   - Gradient guard (F0 lesson): both sections MUST use the v4 `bg-linear-to-*`
  *     utility, NEVER the broken v3 `bg-gradient-to-*` alias.
  *   - Headings adopt the `.heading-*` utilities (Plus Jakarta).
@@ -88,7 +88,7 @@ describe('F2 step05 — city/Testimonios.vue', () => {
     expect(testimonios).not.toMatch(/google\.com\/maps/)
   })
 
-  it('does NOT inline the AggregateRating schema (stays in CityPage, untouched)', () => {
+  it('does NOT inline the AggregateRating schema (removed site-wide, #312)', () => {
     expect(testimonios).not.toMatch(/useCityAggregateRating/)
     expect(testimonios).not.toMatch(/AggregateRating/)
   })

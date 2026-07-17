@@ -11,7 +11,7 @@
  *     left rail sticky.
  *   - Reskin language: brand-gradient CTA card (bg-linear-to-br + hero tokens),
  *     lucide icons, rounded-2xl accordion cards.
- *   - a11y: the WhatsApp action is a WhatsApp-green pill (#25D366) with black
+ *   - a11y: the WhatsApp action is token bg-whatsapp (#25D366) with black
  *     text (10.6:1, AA), not white text on orange or on the bright green.
  *   - Data/SEO untouched: accordion still sources useData().faqs; NO FAQPage
  *     schema inlined here (stays in index.vue).
@@ -50,13 +50,14 @@ describe('FAQ redesign — home/Faq.vue', () => {
     expect(faq).toMatch(/bg-linear-to-br\s+from-hero-from\s+to-hero-to/)
   })
 
-  it('keeps the WhatsApp action AA-legible (iconic green pill + black text)', () => {
-    // WhatsApp's iconic institutional green (#25D366) + BLACK text = 10.6:1 (AA);
+  it('keeps the WhatsApp action AA-legible (token bg-whatsapp + black text)', () => {
+    // Token --color-whatsapp (#25D366) + BLACK text = 10.6:1 (AA; issue #284).
     // white text on this bright green would fail (~2:1). Heading stays gray-900
     // because white on the orange gradient fails AA (theme.css caveat).
-    expect(faq).toMatch(/bg-\[#25D366\]/i)
+    expect(faq).toMatch(/\bbg-whatsapp\b/)
     expect(faq).toMatch(/text-black/)
     expect(faq).toMatch(/text-gray-900/)
+    expect(faq).not.toMatch(/bg-\[#090\]/)
     expect(faq).toMatch(/:href="franchise\.whatsapp"/)
   })
 

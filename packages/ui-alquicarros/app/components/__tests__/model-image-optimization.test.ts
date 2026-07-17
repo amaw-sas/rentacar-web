@@ -24,14 +24,16 @@ const carrusel = readFileSync(
 )
 
 describe('model-image-optimization — nuxt.config image.domains (SCEN-004)', () => {
-  it('declares an image.domains array', () => {
-    expect(nuxtConfig).toMatch(/image:\s*\{[\s\S]*?domains:\s*\[/)
+  // #73: domains is env-driven (NUXT_IMAGE_DOMAINS) with Blob host fallback —
+  // not a hardcoded array literal. Keep the guarantee that the host is still
+  // the effective default when the env is unset.
+  it('declares an image.domains entry', () => {
+    expect(nuxtConfig).toMatch(/image:\s*\{[\s\S]*?domains:/)
   })
 
   it('whitelists the shared Blob host so external model images route through the optimizer', () => {
-    // domains entry, not just the comment / remotePatterns hook
     expect(nuxtConfig).toMatch(
-      new RegExp(`domains:\\s*\\[[^\\]]*['"]${BLOB_HOST.replace(/\./g, '\\.')}['"]`),
+      new RegExp(`NUXT_IMAGE_DOMAINS\\s*\\|\\|\\s*['"]${BLOB_HOST.replace(/\./g, '\\.')}['"]`),
     )
   })
 })

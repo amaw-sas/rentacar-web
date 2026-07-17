@@ -218,7 +218,7 @@ const waHref = computed(
   padding: 0.5rem 1.25rem calc(env(safe-area-inset-bottom) + 1rem);
 }
 
-/* Botón principal "Contáctanos" (verde) */
+/* Botón principal "Contáctanos" — WhatsApp green token + black text (issue #284) */
 .tt-contact-btn {
   display: flex;
   align-items: center;
@@ -227,8 +227,8 @@ const waHref = computed(
   width: 100%;
   max-width: 21rem;
   margin: 0 auto;
-  background: #16a34a;
-  color: #fff;
+  background: var(--color-whatsapp, #25D366);
+  color: #000;
   border-radius: 0.875rem;
   padding: 0.85rem 1rem;
   font-weight: 800;
@@ -267,7 +267,10 @@ const waHref = computed(
 .tt-opt:active { transform: scale(0.98); }
 .tt-opt-chat { background: #2563eb; }
 .tt-opt-call { background: #0ea5e9; }
-.tt-opt-wa { background: #22c55e; }
+.tt-opt-wa {
+  background: var(--color-whatsapp, #25D366);
+  color: #000;
+}
 
 /* Animación: las opciones suben y aparecen */
 .tt-rise-enter-active,

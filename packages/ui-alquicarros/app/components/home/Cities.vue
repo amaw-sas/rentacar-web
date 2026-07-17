@@ -106,7 +106,7 @@ type FeaturedCity = { id: string; name: string; image: string }
 // cualquier foto cuya ciudad no esté activa — nunca se inventan ciudades.
 const featuredCities = computed<FeaturedCity[]>(() =>
   FEATURED.flatMap(({ id, image }) => {
-    const city = cities.find((c: City) => c.id === id)
+    const city = cities.value.find((c: City) => c.id === id)
     return city ? [{ id: city.id, name: city.name, image }] : []
   }),
 )

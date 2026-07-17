@@ -66,7 +66,9 @@ export default function useSearchByRouteParams() {
       ? formatTime(toDatetime(createCurrentDateObject(), returnTime))
       : null;
 
-    // functions
+    // functions — useSearch is a shared composable (issue #322 SCEN-322-V04):
+    // when the page's Searcher already instantiated it, this call reuses that
+    // instance instead of registering a duplicate set of sync watchers.
     const { doSearch } = useSearch();
 
     // Perform search after setting params

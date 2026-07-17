@@ -20,33 +20,23 @@ const RATE_LIMIT_MAX_REQUESTS = 100
  * Only trusts x-forwarded-for when behind trusted proxy (Firebase/GCP)
  */
 function getClientIp(event: any): string {
-  // Use H3's getRequestIP as primary source (handles Nitro/Node environments correctly)
-  let ip = getRequestIP(event) || event.node.req.socket?.remoteAddress || 'unknown'
+  // Vercel (and most edge hosts) set x-forwarded-for; without it, rate limits
+  // collapse to a single shared socket IP (issue 322 SCEN-322-S05). Prefer H3's
+  // trusted XFF parsing — same pattern as reservations proxies.
+  let ip =
+    getRequestIP(event, { xForwardedFor: true }) ||
+    getRequestIP(event) ||
+    event.node?.req?.socket?.remoteAddress ||
+    'unknown'
 
   // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1 → 127.0.0.1)
-  if (ip.startsWith('::ffff:')) {
+  if (typeof ip === 'string' && ip.startsWith('::ffff:')) {
     ip = ip.slice(7)
   }
 
   // Normalize IPv6 loopback to IPv4 (::1 → 127.0.0.1)
   if (ip === '::1') {
     ip = '127.0.0.1'
-  }
-
-  // Only trust X-Forwarded-For from Firebase/GCP proxy ranges (RFC1918 private networks)
-  const isBehindTrustedProxy =
-    ip.startsWith('10.') ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ||
-    ip.startsWith('192.168.')
-
-  if (isBehindTrustedProxy) {
-    const forwardedFor = event.node.req.headers['x-forwarded-for']
-    if (forwardedFor) {
-      // Use rightmost IP: GCP load balancer appends the real client IP at the end.
-      // Leftmost is attacker-controlled and must not be trusted.
-      const ips = forwardedFor.split(',').map((s: string) => s.trim())
-      return ips[ips.length - 1]
-    }
   }
 
   return ip

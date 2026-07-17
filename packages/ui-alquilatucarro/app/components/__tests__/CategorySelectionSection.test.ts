@@ -8,7 +8,9 @@ const source = readFileSync(
 )
 
 const submitButtonBlock = (() => {
-  const start = source.indexOf('>Solicitar reserva')
+  // Label is a ternary (`Solicitando` / `Solicitar reserva`) — never `>Solicitar`.
+  // Anchor on stable text so the block is never empty (issue 322 SCEN-322-CI03).
+  const start = source.indexOf('Solicitar reserva')
   const before = source.lastIndexOf('<u-button', start)
   const after = source.indexOf('</u-button>', start) + '</u-button>'.length
   return source.slice(before, after)
@@ -16,6 +18,7 @@ const submitButtonBlock = (() => {
 
 describe('CategorySelectionSection — Solicitar reserva button loading state', () => {
   beforeAll(() => {
+    expect(submitButtonBlock.length).toBeGreaterThan(20)
     expect(submitButtonBlock).toContain('Solicitar reserva')
   })
 

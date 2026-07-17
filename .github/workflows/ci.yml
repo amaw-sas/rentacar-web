@@ -45,5 +45,16 @@ jobs:
         run: pnpm lint
         continue-on-error: true
 
-      - name: Unit tests - Logic layer
+      # Issue 322 PR3 — run unit suites for all packages, not only logic.
+      # A failure in any package fails the job (no continue-on-error).
+      - name: Unit tests - Logic
         run: pnpm --filter @rentacar-main/logic test
+
+      - name: Unit tests - ui-alquilatucarro
+        run: pnpm --filter ui-alquilatucarro test
+
+      - name: Unit tests - ui-alquilame
+        run: pnpm --filter ui-alquilame test
+
+      - name: Unit tests - ui-alquicarros
+        run: pnpm --filter ui-alquicarros test

@@ -432,7 +432,11 @@ button { -webkit-tap-highlight-color: transparent; }
   font-weight: 600;
   font-size: 0.9rem;
 }
-.cc-link-btn-wa { background: #16a34a; } /* WhatsApp → verde */
+/* WhatsApp CTA: institutional green + black text (WCAG AA; issue #284) */
+.cc-link-btn-wa {
+  background: var(--color-whatsapp, #25D366);
+  color: #000 !important;
+}
 .cc-link-btn-share { background: #0d9488; } /* Compartir cotización → teal (paridad con /chat-test) */
 .cc-link-btn:hover { opacity: 0.92; }
 

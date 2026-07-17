@@ -29,7 +29,15 @@
       />
 
       <!-- Panel de chat inline (solo desktop) -->
-      <div v-if="panelOpen" class="chat-panel pointer-events-auto">
+      <div
+        v-if="panelOpen"
+        ref="panelEl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Chat de asistencia"
+        tabindex="-1"
+        class="chat-panel pointer-events-auto"
+      >
         <ChatConversation variant="panel" @dismiss="panelOpen = false" />
       </div>
 
@@ -111,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 
 const { franchise } = useAppConfig()
@@ -124,7 +132,25 @@ const { enabled: chatEnabled } = useChatStatus(franchise.shortname as string)
 // Estado client-only: arranca colapsado (lección #109).
 const menuOpen = ref(false)
 const panelOpen = ref(false)
+const panelEl = ref<HTMLElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
+
+// SCEN-322-A02: Escape cierra menú/panel; foco al panel al abrir.
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') closeAll()
+}
+watch(panelOpen, async (open) => {
+  if (open) {
+    await nextTick()
+    panelEl.value?.focus()
+  }
+})
+onMounted(() => {
+  if (import.meta.client) window.addEventListener('keydown', onKeydown)
+})
+onBeforeUnmount(() => {
+  if (import.meta.client) window.removeEventListener('keydown', onKeydown)
+})
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
 // la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
@@ -181,7 +207,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .fab-item:hover .fab-circle { transform: scale(1.08); }
 /* Icono coloreado por canal sobre círculo blanco. */
 .fab-chat { color: var(--ui-primary, #cc022b); }
-.fab-whatsapp { color: #25d366; }
+.fab-whatsapp { color: var(--color-whatsapp, #25D366); }
 .fab-call { color: #2563eb; }
 /* Chip de disponibilidad (solo el Chat: verde con brillo pulsante = 24/7). */
 .fab-chip {

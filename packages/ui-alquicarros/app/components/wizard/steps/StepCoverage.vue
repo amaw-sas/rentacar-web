@@ -34,7 +34,7 @@
         <ul class="mt-3 space-y-1.5 body-sm text-gray-600">
           <li class="flex gap-2"><span>✓</span> Daños y lesiones a terceros</li>
           <li class="flex gap-2"><span>✓</span> Cubre la mayor parte del vehículo</li>
-          <li class="flex gap-2 text-gray-400"><span>—</span> Con participación obligatoria (deducible)</li>
+          <li class="flex gap-2 text-gray-600"><span>—</span> Con participación obligatoria (deducible)</li>
         </ul>
       </button>
 
@@ -96,7 +96,7 @@
       </div>
     </section>
 
-    <p class="mt-4 body-xs text-gray-400">
+    <p class="mt-4 body-xs text-gray-600">
       Ningún seguro cubre accesorios removibles, documentos, placas, llaves ni multas
       de tránsito generadas durante el alquiler.
     </p>

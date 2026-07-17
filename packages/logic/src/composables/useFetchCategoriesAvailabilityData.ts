@@ -9,6 +9,7 @@ import useStoreReservationForm from '../stores/useStoreReservationForm';
 // Helpers
 import { mapAvailabilityFetchError } from '../utils/helpers/mapAvailabilityFetchError';
 import { classifyOneWayDistanceError } from '../utils/helpers/classifyOneWayDistanceError';
+import { AVAILABILITY_FETCH_TIMEOUT_MS } from '../utils/fetchTimeouts';
 
 // Types
 import type { CategoryAvailabilityData, LocalizaErrorResponse } from '@rentacar-main/logic/utils';
@@ -36,6 +37,7 @@ export default async function useFetchCategoriesAvailabilityData() {
     // that proxies to the admin and injects the API key server-side.
     const response = await $fetch<CategoryAvailabilityData[]>(endpoint, {
       method: "POST",
+      timeout: AVAILABILITY_FETCH_TIMEOUT_MS,
       body: {
         franchise: config.public.rentacarFranchise,
         pickupLocation: lugarRecogida.value,

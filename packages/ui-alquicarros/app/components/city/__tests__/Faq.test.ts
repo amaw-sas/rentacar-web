@@ -42,13 +42,14 @@ describe('FAQ redesign — city/Faq.vue', () => {
   })
 
   it('renders the WhatsApp CTA as a brand-gradient card with an AA green pill (black text)', () => {
-    // WhatsApp's iconic institutional green (#25D366) + BLACK text = 10.6:1 (AA);
+    // Token --color-whatsapp (#25D366) + BLACK text = 10.6:1 (AA; issue #284).
     // white text on this bright green would fail (~2:1). Heading stays gray-900
     // because white on the orange gradient fails AA (theme.css caveat).
     expect(faq).toMatch(/bg-linear-to-br\s+from-hero-from\s+to-hero-to/)
-    expect(faq).toMatch(/bg-\[#25D366\]/i)
+    expect(faq).toMatch(/\bbg-whatsapp\b/)
     expect(faq).toMatch(/text-black/)
     expect(faq).toMatch(/text-gray-900/)
+    expect(faq).not.toMatch(/bg-\[#090\]/)
     expect(faq).toMatch(/:href="franchise\.whatsapp"/)
   })
 

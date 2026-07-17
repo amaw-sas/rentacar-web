@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import { isRef } from 'vue'
 
 import { useData } from '../useData'
 
@@ -7,10 +8,8 @@ import { useData } from '../useData'
 // useAppConfig — viene de useFetchRentacarData (que a su vez lee del
 // state poblado por el plugin rentacar-data o del sentinel post-#3).
 //
-// El test mock-ea useFetchRentacarData con cities pobladas y useAppConfig
-// con faqs. Si useData siguiera leyendo cities de useAppConfig
-// (pre-refactor), las cities estarían undefined → TypeError en
-// cities.find → test fail.
+// Issue #221: cities/faqs are ComputedRefs that re-read useFetchRentacarData
+// so a late-populated useState is visible (same pattern as useStoreAdminData).
 
 const mockCities = [
   { id: 'armenia', name: 'Armenia', description: 'capital del Quindío', testimonials: [] },
@@ -77,7 +76,7 @@ describe('useData', () => {
     })
   })
 
-  describe('cities source — refactor lock', () => {
+  describe('cities source — refactor lock + issue #221 reactivity', () => {
     it('reads cities from useFetchRentacarData (not useAppConfig)', () => {
       const fetchSpy = vi.fn(() => mockFetchData)
       const appConfigSpy = vi.fn(() => ({ faqs: ['ignored-from-appconfig'] }))
@@ -86,23 +85,61 @@ describe('useData', () => {
 
       const { cities, faqs } = useData()
 
+      expect(isRef(cities)).toBe(true)
+      expect(isRef(faqs)).toBe(true)
+      // computed is lazy — read .value to evaluate
+      expect(cities.value).toBe(mockCities) // identity, not just shape
+      expect(cities.value[0]?.id).toBe('armenia')
       expect(fetchSpy).toHaveBeenCalled()
-      expect(cities).toBe(mockCities) // identity, not just shape
-      expect(cities[0]?.id).toBe('armenia')
-      // useAppConfig is no longer called by useData (faqs migrated to
-      // useFetchRentacarData in #12 step 5). Cities never came from it.
       expect(appConfigSpy).not.toHaveBeenCalled()
-      // Strengthens the contract: faqs comes from useFetchRentacarData,
-      // never from the appConfig stub.
-      expect(faqs).toBe(mockFetchData.faqs)
-      expect(faqs).not.toContain('ignored-from-appconfig')
+      expect(faqs.value).toBe(mockFetchData.faqs)
+      expect(faqs.value).not.toContain('ignored-from-appconfig')
+    })
+
+    // SCEN-001: same snapshot on successive reads (SSR setup then client setup)
+    it('SCEN-001: successive reads against the same useFetch source keep the same city set', () => {
+      const snapshot = Array.from({ length: 3 }, (_, i) => ({
+        id: `city-${i}`,
+        name: `City ${i}`,
+        description: '',
+        testimonials: [],
+      }))
+      vi.stubGlobal('useFetchRentacarData', () => ({
+        ...mockFetchData,
+        cities: snapshot,
+      }))
+
+      const first = useData()
+      const second = useData()
+
+      expect(first.cities.value).toHaveLength(3)
+      expect(second.cities.value).toHaveLength(3)
+      expect(first.cities.value.map((c) => c.id)).toEqual(snapshot.map((c) => c.id))
+      expect(second.cities.value.map((c) => c.id)).toEqual(first.cities.value.map((c) => c.id))
+    })
+
+    // SCEN-001: cities is a ComputedRef that re-invokes useFetchRentacarData on
+    // each invalidation — so a late-populated useState is not frozen as [].
+    // (Tracking itself comes from real useState inside useFetchRentacarData;
+    // here we only pin that each evaluation re-calls the source.)
+    it('SCEN-001: cities computed re-invokes useFetchRentacarData on each read after invalidate', () => {
+      const fetchSpy = vi.fn(() => mockFetchData)
+      vi.stubGlobal('useFetchRentacarData', fetchSpy)
+
+      const { cities } = useData()
+      expect(cities.value).toHaveLength(2)
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+
+      // Fresh useData() instance evaluates a new computed (mirrors a second
+      // setup pass against the same source — SSR then client).
+      const again = useData()
+      expect(again.cities.value).toBe(mockCities)
+      expect(fetchSpy.mock.calls.length).toBeGreaterThanOrEqual(2)
     })
   })
 
   // FAQs holdout SCEN-009: useFetchRentacarData sentinel returns faqs: []
-  // and consumers must not TypeError when calling .map on it. This pins
-  // both that faqs source is useFetchRentacarData (not useAppConfig) AND
-  // that the sentinel shape is consumable safely.
+  // and consumers must not TypeError when calling .map on it.
   describe('FAQs SCEN-009: sentinel safety — faqs:[] does not TypeError', () => {
     it('returns frozen empty array from sentinel without throwing on .map', () => {
       const sentinel = {
@@ -114,13 +151,12 @@ describe('useData', () => {
         faqs: Object.freeze([]),
       }
       vi.stubGlobal('useFetchRentacarData', () => sentinel)
-      // Do NOT mock useAppConfig — post-refactor, useData should not depend on it.
 
       const { faqs } = useData()
 
-      expect(() => faqs.map((f: { label: string }) => f.label)).not.toThrow()
-      expect(faqs.map((f: { label: string }) => f.label)).toEqual([])
-      expect(faqs.length).toBe(0)
+      expect(() => faqs.value.map((f: { label: string }) => f.label)).not.toThrow()
+      expect(faqs.value.map((f: { label: string }) => f.label)).toEqual([])
+      expect(faqs.value.length).toBe(0)
     })
 
     it('reads faqs from useFetchRentacarData (not useAppConfig) — refactor lock', () => {
@@ -140,8 +176,8 @@ describe('useData', () => {
 
       const { faqs } = useData()
 
-      expect(faqs).toBe(fetchData.faqs) // identity, not just shape
-      expect(faqs[0].label).toBe('from-fetch')
+      expect(faqs.value).toBe(fetchData.faqs) // identity, not just shape
+      expect(faqs.value[0]!.label).toBe('from-fetch')
       expect(appConfigSpy).not.toHaveBeenCalled()
     })
   })

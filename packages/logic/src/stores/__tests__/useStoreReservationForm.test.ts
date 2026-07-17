@@ -54,8 +54,8 @@ describe('useStoreReservationForm — submitForm URL cleanup before navigate', (
     // branch. Otherwise the URL keeps `?reservar=X` and Back re-opens the
     // slideover, blocking the Searcher.
     const successBranch = submitFormBlock.slice(
-      submitFormBlock.indexOf('if (dataRecord.value)'),
-      submitFormBlock.indexOf('return;'),
+      submitFormBlock.indexOf('if (route)'),
+      submitFormBlock.indexOf('// SCEN-322-E03'),
     )
     const stripIndex = successBranch.indexOf('stripReservarParam()')
     const navigateIndex = successBranch.indexOf('navigateTo(')
@@ -64,12 +64,15 @@ describe('useStoreReservationForm — submitForm URL cleanup before navigate', (
     expect(stripIndex).toBeLessThan(navigateIndex)
   })
 
-  it('strips reservar param before navigating on the error path', () => {
-    const errorBranch = submitFormBlock.slice(
-      submitFormBlock.indexOf('else if (errorRecord.value)'),
+  it('strips reservar param before navigating on the business-unavailability error path only', () => {
+    // Issue 322 PR2: technical errors no longer navigate; only the business
+    // branch strip+navigate. Guard must wrap navigateTo('/sindisponibilidad').
+    expect(submitFormBlock).toMatch(/isBusinessUnavailabilityRecordError/)
+    const businessBranch = submitFormBlock.slice(
+      submitFormBlock.indexOf('isBusinessUnavailabilityRecordError'),
     )
-    const stripIndex = errorBranch.indexOf('stripReservarParam()')
-    const navigateIndex = errorBranch.indexOf('navigateTo(')
+    const stripIndex = businessBranch.indexOf('stripReservarParam()')
+    const navigateIndex = businessBranch.indexOf("navigateTo({ path: '/sindisponibilidad' })")
     expect(stripIndex).toBeGreaterThan(-1)
     expect(navigateIndex).toBeGreaterThan(-1)
     expect(stripIndex).toBeLessThan(navigateIndex)

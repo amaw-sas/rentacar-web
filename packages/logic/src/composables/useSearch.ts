@@ -1,7 +1,7 @@
 // External dependencies
 import { ref, watch, computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { watchDebounced } from "@vueuse/core";
+import { watchDebounced, createSharedComposable } from "@vueuse/core";
 
 // Internal dependencies - stores
 import useStoreAdminData from '../stores/useStoreAdminData';
@@ -23,7 +23,7 @@ import {
   rolloverWhenSameDayExhausted,
   bookableSlotsForDate,
   isDayOpen,
-  nearestOpenDay,
+  returnDateForPickupChange,
   latestOpenDayOnOrBefore,
   nearestSlotByTime,
   MAX_RENTAL_DAYS,
@@ -71,7 +71,7 @@ const getHourOptions = () => {
   return _cachedHourOptions;
 };
 
-export default function useSearch() {
+function useSearchInstance() {
 
   /** routes */
   const route = useRoute();
@@ -96,7 +96,6 @@ export default function useSearch() {
     selectedDays,
     selectedPickupDate,
     selectedReturnDate,
-    haveTotalInsurance,
     selectedPickupHour
   } = storeToRefs(storeForm);
 
@@ -185,7 +184,9 @@ export default function useSearch() {
     }
 
     haveMonthlyReservation.value = selectedDays.value == 30;
-    haveTotalInsurance.value = false;
+    // No resetear haveTotalInsurance aquí: lo deriva el watcher de
+    // selectedCategory (grid/wizard). Un write a false con instancia viva
+    // dejaba total_insurance=false y precio con Total (issue 322 PR1).
 
     firstSearch.value = false;
     stopWatching.value = true;
@@ -217,15 +218,32 @@ export default function useSearch() {
     { flush: 'sync' }
   );
 
-  // Default the return date to the day after pickup, but snap it off a closed day
-  // of the return branch to the nearest open one (#47 W6) — never earlier than
-  // the pickup date — so the inherited +1 default can't silently block the search
-  // button (e.g. pickup whose +1 lands on a holiday for ACKAL).
-  watch(fechaRecogida, (): void => {
+  // Move the return date WITH the pickup, preserving the duration already on
+  // screen (#322 PR7): pickup D → D+2 shifts a D+5 return to D+7, instead of
+  // collapsing every pickup change to the +1 default (which destroyed the
+  // return the user had chosen). Unknown/invalid previous range falls back to
+  // the 1-day minimum, and the result snaps to an open day of the return
+  // branch with a floor of pickup + 1 (#47 W6) — the old floor was the pickup
+  // itself, so the "default" could land the return ON the pickup day. The
+  // MAX_RENTAL_DAYS clamp watcher below still caps an over-shifted return.
+  watch(fechaRecogida, (_newPickup, previousPickup): void => {
     if (!selectedPickupDate.value) return;
-    const target = selectedPickupDate.value.copy().add({ days: 1 });
-    const open = nearestOpenDay(returnBranchSchedule.value, target, selectedPickupDate.value);
-    fechaDevolucion.value = (open ?? target).toString();
+    // Parse defensively: a deep-link can seed unparseable strings, and the
+    // selectedReturnDate getter throws on them (cf. returnDateObject).
+    let previous: DateObject | null = null;
+    let currentReturn: DateObject | null = null;
+    try {
+      previous = previousPickup ? createDateFromString(previousPickup) : null;
+    } catch { /* corrupt previous pickup → duration falls back to 1 */ }
+    try {
+      currentReturn = selectedReturnDate.value;
+    } catch { /* corrupt return → duration falls back to 1 */ }
+    fechaDevolucion.value = returnDateForPickupChange(
+      returnBranchSchedule.value,
+      selectedPickupDate.value,
+      previous,
+      currentReturn,
+    ).toString();
   }, { flush: 'sync' });
 
   // When the form lands the pickup on today but no same-day hour is still valid
@@ -543,4 +561,27 @@ export default function useSearch() {
     // selectedPickupLocation,
     // selectedReturnLocation,
   };
+}
+
+// Issue #322 SCEN-322-V04: the results pages instantiate the search sync TWICE —
+// the Searcher component calls useSearch() in its setup AND
+// useSearchByRouteParams/useSearchByQueryParams created a second instance in
+// onMounted — registering the ~10 synchronization watchers in duplicate over the
+// SAME store refs. createSharedComposable makes every caller reuse ONE instance:
+// the first caller creates it (watchers registered once, inside a ref-counted
+// effect scope), later callers subscribe, and when the last consumer unmounts the
+// scope is disposed so the next page starts fresh (route/city re-captured).
+//
+// The MAX_RENTAL_DAYS clamp semantics survive both creation orders: when the
+// route-params driver creates the instance (refs already set), the clamp's
+// `immediate: true` fires on registration; when the Searcher created it first,
+// the live `flush: 'sync'` watcher clamps the write before doSearch runs.
+const useSearchShared = createSharedComposable(useSearchInstance);
+
+export default function useSearch(): ReturnType<typeof useSearchInstance> {
+  // SSR guard: a module-level shared scope would leak state across server
+  // requests. Today useSearch only runs client-side (ClientOnly / onMounted),
+  // but a fresh per-call instance keeps that safe by construction.
+  if (import.meta.server) return useSearchInstance();
+  return useSearchShared();
 }

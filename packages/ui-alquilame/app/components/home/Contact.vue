@@ -10,8 +10,8 @@
 
     Background: réplica exacta del gradiente del golden (radiales naranjas +
     linear rojo) como inline style — los radiales no son expresables con
-    utilidades Tailwind. Botón WhatsApp = bg-[#090] (único verde legítimo de
-    marca; el golden usa el alias `bg-whatsapp` que mapea al mismo #090).
+    utilidades Tailwind. Botón WhatsApp = bg-whatsapp + text-black (token
+    #25D366, WCAG AA; issue #284).
     SUV transparente flota sobre el rojo (desktop alineado al contenedor, móvil
     full-width debajo), igual al golden.
   -->
@@ -77,13 +77,13 @@
           </a>
 
           <!-- Contact via WhatsApp → franchise.whatsapp (full URL, not re-wrapped).
-               bg-[#090] = único verde legítimo de marca (golden `bg-whatsapp`). -->
+               bg-whatsapp + text-black (#25D366 token, WCAG AA; issue #284). -->
           <a
             :href="franchise.whatsapp"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Habla con un asesor por WhatsApp"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 text-lg font-semibold rounded-full bg-[#090] text-white hover:brightness-110 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 text-lg font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
           >
             <WhatsappIcon cls="size-5" />
             Habla con un Asesor

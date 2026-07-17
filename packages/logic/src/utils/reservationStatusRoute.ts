@@ -13,7 +13,12 @@ export function routeForReservationStatus(
   status: string | null | undefined,
   reserveCode: string | null | undefined,
 ): string | null {
-  const normalized = String(status ?? "").toLowerCase();
+  // Collapse spaces so legacy "Sin disponibilidad" matches sin_disponibilidad
+  // (issue 322 PR2 — otherwise E03 locks the form forever for real no-stock).
+  const normalized = String(status ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "_");
   switch (normalized) {
     case "reservado":
     case "confirmado":

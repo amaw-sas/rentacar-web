@@ -190,15 +190,16 @@ export function formatHumanTime(datetime: DateTimeObject){
 
 /**
  * format a datetime object to (HH:mm)
- * @param datetime 
- * @returns 
+ *
+ * Formats the WALL-CLOCK fields directly (same criterion as formatTime12h).
+ * The previous DateFormatter had no `timeZone`, so it converted the Bogota
+ * instant into the RUNTIME's zone: under TZ=UTC a 00:00 slot rendered as
+ * "05:00", corrupting stored hours and diverging SSR vs client (#322 PR7).
+ * @param datetime
+ * @returns
  */
 export function formatTime(datetime: DateTimeObject){
-    return new DateFormatter('es-CO', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).format(datetime.toDate(defaultTimezone))
+    return `${String(datetime.hour).padStart(2, '0')}:${String(datetime.minute).padStart(2, '0')}`;
 }
 
 /**

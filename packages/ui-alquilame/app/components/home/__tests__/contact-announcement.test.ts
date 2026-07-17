@@ -10,7 +10,7 @@
  *     (franchise.whatsapp full URL, never re-wrapped); the FAB additionally drives
  *     franchise.phone. Neither hardcodes the mockup's number.
  *   - WhatsApp green guard (brand hard rule): the contact WhatsApp surface is the
- *     only legitimate brand green, the literal #090 — no other green is allowed.
+ *     shared bg-whatsapp token (#25D366) + black text — no free-form green-N.
  *   - The announcement bar dismiss state is CLIENT-ONLY (onMounted + v-if guard /
  *     ClientOnly) so SSR/ISR never bakes the closed state (#109 hydration lesson).
  *   - Background guard: contact replicates the golden's radial+linear gradient as
@@ -46,14 +46,14 @@ describe('F1 step07a — Contact.vue', () => {
     expect(contact).toMatch(/target="_blank"/)
   })
 
-  it('uses the only legitimate brand green (#090) for the WhatsApp CTA, no other green', () => {
-    // golden 10-contact.html: the WhatsApp button is the sole green surface
-    // (golden alias `bg-whatsapp` === #090). Any green-N utility is a bug.
-    expect(contact).toMatch(/bg-\[#090\]/)
+  it('uses the shared bg-whatsapp token + black text for the WhatsApp CTA', () => {
+    // issue #284: institutional WhatsApp green via theme token; black text for AA.
+    // Free-form green-N utilities remain forbidden.
+    expect(contact).toMatch(/\bbg-whatsapp\b/)
+    expect(contact).toMatch(/\btext-black\b/)
+    expect(contact).not.toMatch(/bg-\[#090\]/)
     expect(contact).not.toMatch(/\bbg-green-\d/)
     expect(contact).not.toMatch(/\btext-green-\d/)
-    // The superseded #25D366 surface must not reappear.
-    expect(contact).not.toMatch(/#25D366/i)
   })
 
   it('hardcodes NO contact number (no raw wa.me/<digits> or tel:<digits>)', () => {
@@ -155,9 +155,12 @@ describe('F1 step07a — ChatWidget.vue (FAB restyle in place)', () => {
     expect(fab).not.toMatch(/https:\/\/wa\.me/)
   })
 
-  it('keeps the open state client-only (starts false, inside ClientOnly)', () => {
-    expect(fab).toMatch(/const open = ref\(false\)/)
+  it('mounts the FAB tree only on the client (ClientOnly wrapper)', () => {
+    // Widget opens the chat panel via openChat() + useChatConversation; there is
+    // no local open ref. ClientOnly still gates SSR so the FAB never hydrates
+    // with a mismatched shell.
     expect(fab).toMatch(/<ClientOnly>/)
+    expect(fab).toMatch(/function openChat\s*\(/)
   })
 
   it('introduces no broken v3 gradient alias', () => {

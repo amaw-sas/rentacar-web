@@ -32,8 +32,9 @@
         </p>
       </div>
 
+      <!-- hydrate-on-visible: first-tap safe on mobile (issue 322 SCEN-322-P03). -->
       <LazyUAccordion
-        hydrate-on-interaction
+        hydrate-on-visible
         :items="cityFAQs"
         :ui="faqAccordionUIConfig"
         class="max-w-3xl mx-auto"

@@ -5,8 +5,8 @@ import { test, expect, type Page } from '@playwright/test';
  *                  clic-foto-abre-reserva.scenarios.md
  *
  * El clic/tap en la foto del vehículo debe abrir el flujo de reserva (slideover
- * "Resumen de la selección"), el mismo destino que el botón "Solicitar este
- * vehículo". El PR #199 lo cableó pero solo lo "probó" con coincidencias de
+ * "Resumen" — título recortado en #268; era "Resumen de la selección"), el
+ * mismo destino que el botón "Solicitar este vehículo". El PR #199 lo cableó pero solo lo "probó" con coincidencias de
  * strings del source; en navegador no abre. Este spec ejecuta el comportamiento.
  *
  * Backend stub: misma convención que e2e/reservation-a11y-single-dialog.spec.ts
@@ -14,12 +14,21 @@ import { test, expect, type Page } from '@playwright/test';
  * vehicleCategories o renderableCategories lo descarta).
  */
 
+// Fechas SIEMPRE futuras: las fijas (2026-07-10) rotaron — el server corrige
+// fechas pasadas con un 302 que pierde `?reservar=<code>` y el formulario
+// nunca abre (spec rojo desde 2026-07-10, destapado por #311).
+const futureDate = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
 const searchPath =
   '/bogota/buscar-vehiculos' +
   '/lugar-recogida/bogota-aeropuerto' +
   '/lugar-devolucion/bogota-aeropuerto' +
-  '/fecha-recogida/2026-07-10' +
-  '/fecha-devolucion/2026-07-12' +
+  `/fecha-recogida/${futureDate(20)}` +
+  `/fecha-devolucion/${futureDate(22)}` +
   '/hora-recogida/10:00am' +
   '/hora-devolucion/10:00am';
 
@@ -74,7 +83,7 @@ async function gotoSearchWithGrid(page: Page): Promise<boolean> {
 const firstPhoto = (page: Page) =>
   page.getByRole('button', { name: /^Reservar / }).first();
 const resumeDialog = (page: Page) =>
-  page.getByRole('dialog').filter({ hasText: 'Resumen de la selección' });
+  page.getByRole('dialog').filter({ hasText: 'Resumen' });
 
 test.describe('clic-foto-abre-reserva — desktop', () => {
   test.use({ viewport: { width: 1280, height: 800 } });

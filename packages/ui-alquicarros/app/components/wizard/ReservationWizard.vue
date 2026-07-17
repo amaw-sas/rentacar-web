@@ -105,6 +105,7 @@ const {
 const {
   politicaPrivacidad,
   isSubmittingForm,
+  formSubmitLocked,
   vehiculo,
   haveTotalInsurance,
   haveMonthlyReservation,
@@ -365,7 +366,7 @@ function onNext(): void {
   if (wizard.currentStep.value === 'datos') {
     // Guard re-entrante: sin esto un doble-clic durante el round-trip de
     // useRecordReservationForm dispara dos POST → reservas duplicadas.
-    if (isSubmittingForm.value) return
+    if (isSubmittingForm.value || formSubmitLocked.value) return
     stepDataRef.value?.submit()
     return
   }

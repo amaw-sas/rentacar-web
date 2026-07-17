@@ -22,7 +22,7 @@
             <dt class="body-sm text-gray-500 shrink-0">{{ row.label }}</dt>
             <dd
               class="body-sm text-right font-medium"
-              :class="row.muted ? 'text-gray-400' : 'text-gray-900'"
+              :class="row.muted ? 'text-gray-600' : 'text-gray-900'"
             >
               {{ row.value }}
             </dd>
@@ -43,7 +43,7 @@
           >
             {{ ctaLabel }}
           </UButton>
-          <p class="mt-2 body-xs text-center text-gray-400">
+          <p class="mt-2 body-xs text-center text-gray-600">
             Puedes editar cualquier paso completado desde la barra superior.
           </p>
         </div>
@@ -68,7 +68,7 @@
               class="flex items-baseline justify-between gap-3"
             >
               <dt class="body-sm text-gray-500">{{ row.label }}</dt>
-              <dd class="body-sm text-right font-medium" :class="row.muted ? 'text-gray-400' : 'text-gray-900'">
+              <dd class="body-sm text-right font-medium" :class="row.muted ? 'text-gray-600' : 'text-gray-900'">
                 {{ row.value }}
               </dd>
             </div>
@@ -136,13 +136,14 @@ const {
   selectedDays,
   humanFormattedPickupDateShort,
   isSubmittingForm,
+  formSubmitLocked,
   haveMonthlyReservation,
 } = storeToRefs(form)
 const { selectedCategory } = storeToRefs(search)
 
 // El CTA se deshabilita mientras la reserva está en vuelo (evita el doble-submit
 // que registraría reservas duplicadas — el CTA de datos dispara el envío).
-const ctaDisabled = computed(() => !props.canAdvance || isSubmittingForm.value)
+const ctaDisabled = computed(() => !props.canAdvance || isSubmittingForm.value || formSubmitLocked.value)
 
 /** Nombre humano del segmento de la gama elegida (Económicos, Sedanes…). */
 function segmentLabel(code: string): string {

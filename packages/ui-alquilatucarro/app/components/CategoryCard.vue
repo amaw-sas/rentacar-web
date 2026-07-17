@@ -127,7 +127,7 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    alt="info"
+                    aria-label="Más información"
                     class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
@@ -194,7 +194,7 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    alt="info"
+                    aria-label="Más información"
                     class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
@@ -265,9 +265,8 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    alt="info"
-                    class="cursor-pointer"
                     aria-label="informacion sobre kilometraje"
+                    class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
                     <template #leading>
@@ -313,9 +312,8 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    alt="info"
-                    class="cursor-pointer"
                     aria-label="informacion sobre kilometraje"
+                    class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
                     <template #leading>
@@ -361,9 +359,8 @@
                     color="neutral"
                     variant="ghost"
                     size="xs"
-                    alt="info"
-                    class="cursor-pointer"
                     aria-label="informacion sobre kilometraje"
+                    class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
                     <template #leading>
@@ -439,7 +436,7 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    alt="info"
+                    aria-label="Más información"
                     class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
@@ -483,7 +480,7 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    alt="info"
+                    aria-label="Más información"
                     class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
@@ -533,7 +530,7 @@
                     variant="ghost"
                     color="neutral"
                     size="xs"
-                    alt="info"
+                    aria-label="Más información"
                     class="cursor-pointer"
                     :ui="questionButtonUIConfig"
                   >
@@ -650,9 +647,8 @@ const emit = defineEmits<{
   selectedCategory: [category: ReturnType<typeof useCategory>];
 }>();
 
-/** stores */
-const { haveTotalInsurance, haveMonthlyReservation, selectedMonthlyMileage } =
-  storeToRefs(useStoreReservationForm());
+/** stores — haveMonthlyReservation only for UI (mostrar bloque km) */
+const { haveMonthlyReservation } = storeToRefs(useStoreReservationForm());
 
 /** category composable */
 const category: ReturnType<typeof useCategory> = useCategory(props.category);
@@ -722,11 +718,39 @@ useProductSchema({
   vehicleCategory: props.vehicleCategory
 });
 
+// issue 322: si la URL pide Seguro Total para ESTA gama, la card arranca en Total
+// (misma instancia que el usuario ve y emite al solicitar).
+const route = useRoute();
+const urlCategoryCode = computed(() => {
+  const param = route.params.categoria;
+  const fromParam = (typeof param === 'string' ? param : param?.[0])?.toUpperCase();
+  const fromQuery = (
+    (route.query.resumen as string | undefined) ||
+    (route.query.reservar as string | undefined)
+  )?.toUpperCase();
+  return fromParam || fromQuery;
+});
+function readSeguroTotalFromUrl(): boolean {
+  if (route.query.seguro === 'total') return true;
+  if (import.meta.client) {
+    return new URLSearchParams(window.location.search).get('seguro') === 'total';
+  }
+  return false;
+}
+watch(
+  () => [urlCategoryCode.value, categoryCode.value] as const,
+  ([urlCode, code]) => {
+    if (urlCode && urlCode === code && readSeguroTotalFromUrl()) {
+      withTotalCoverage.value = true;
+    }
+  },
+  { immediate: true },
+);
+
 /** functions */
 function goNextStep() {
-  haveTotalInsurance.value = withTotalCoverage.value;
-  if (haveMonthlyReservation.value)
-    selectedMonthlyMileage.value = withMileage.value;
+  // Flags del form: el watcher de CategorySelectionSection los deriva de la
+  // instancia emitida (single source, issue 322 / #308).
   emit("selectedCategory", category);
 }
 
