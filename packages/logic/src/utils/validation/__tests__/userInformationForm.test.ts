@@ -5,7 +5,8 @@ import {
   UserInformationFormValidationSchema,
 } from '../userInformationForm'
 import { ReservationFormValidationSchema } from '../reservationForm'
-import { ReservationWithFlightFormValidationSchema } from '../reservationWithFlightForm'
+// ReservationWithFlightFormValidationSchema removed (issue #322 SCEN-322-X07):
+// the flight branch was dead code — no template ever collected flight fields.
 
 // Scenarios: docs/specs/issue-44-identification-validation/scenarios/identification-validation.scenarios.md
 //
@@ -144,7 +145,6 @@ describe('UserInformationFormValidationSchema — full form integration', () => 
 // same hardening, with no per-brand code.
 describe('Reservation schemas inherit identification hardening', () => {
   const reservationBase = { ...validBase, vehiculo: 'C' }
-  const flightBase = { ...reservationBase, aerolinea: 'AVA', numeroVueloIda: '123' }
 
   it('ReservationFormValidationSchema passes a valid CC and blocks a sentinel', () => {
     expect(
@@ -159,15 +159,17 @@ describe('Reservation schemas inherit identification hardening', () => {
     ).toBe(false)
   })
 
-  it('ReservationWithFlightFormValidationSchema passes a valid passport and blocks a sentinel', () => {
+  // Passport hardening previously asserted through the with-flight schema; the
+  // flight branch is gone (SCEN-322-X07), so pin it on the surviving schema.
+  it('ReservationFormValidationSchema passes a valid passport and blocks a sentinel', () => {
     expect(
-      v.safeParse(ReservationWithFlightFormValidationSchema, {
-        ...flightBase, tipoIdentificacion: PP, identificacion: 'a13676498',
+      v.safeParse(ReservationFormValidationSchema, {
+        ...reservationBase, tipoIdentificacion: PP, identificacion: 'a13676498',
       }).success
     ).toBe(true)
     expect(
-      v.safeParse(ReservationWithFlightFormValidationSchema, {
-        ...flightBase, tipoIdentificacion: PP, identificacion: '000000',
+      v.safeParse(ReservationFormValidationSchema, {
+        ...reservationBase, tipoIdentificacion: PP, identificacion: '000000',
       }).success
     ).toBe(false)
   })

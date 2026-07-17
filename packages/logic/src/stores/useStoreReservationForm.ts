@@ -38,7 +38,6 @@ import type {
   IdentificationType,
   DateObject,
   TimeObject,
-  ReservationWithFlightFormValidationSchemaType,
   ReservationFormValidationSchemaType,
   AttributionInput,
 } from '@rentacar-main/logic/utils';
@@ -67,8 +66,6 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   const telefono = ref<string | null>(null);
   const email = ref<string | null>(null);
 
-  const aerolinea = ref<string | null>(null);
-
   // Marketing attribution (click-id + utm + external referrer). Captured by the
   // per-brand client plugin on load; the record composable reads it at submit.
   const attribution = ref<AttributionInput | null>(null);
@@ -96,7 +93,6 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
       /* never block the flow on attribution capture */
     }
   }
-  const numeroVueloIda = ref<string | null>(null);
   const referido = ref<string | null>(null);
 
   const vehiculo = ref<CategoryType | null>(null);
@@ -129,11 +125,6 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   //   politicaPrivacidad,
   // })
 
-  // let flightFormState = {
-  //   aerolinea,
-  //   numeroVueloIda
-  // }
-
   // other vars ref
   const selectedMonthlyMileage = ref<MonthlyMileage | null>(null); // either 2_kms or 3_kms
   const isSubmittingForm = ref<boolean>(false);
@@ -147,7 +138,8 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   const lastSubmittedCode = ref<string | null>(null);
   const haveTotalInsurance = ref<boolean>(false);
   const haveMonthlyReservation = ref<boolean>(false);
-  const haveFlight = ref<boolean>(false);
+  // haveFlight / aerolinea / numeroVueloIda removed (issue #322 SCEN-322-X07):
+  // no template ever collected flight data — the branch was a dead trap.
 
   // computed
   const selectedPickupLocation = computed<BranchData | undefined | null>(
@@ -296,7 +288,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     window.history.replaceState(window.history.state, '', cleanPath);
   };
 
-  const submitForm = async (_event: FormSubmitEvent<ReservationFormValidationSchemaType | ReservationWithFlightFormValidationSchemaType>) => {
+  const submitForm = async (_event: FormSubmitEvent<ReservationFormValidationSchemaType>) => {
     // Anti double-submit: in-flight or consumido tras status desconocido.
     if (isSubmittingForm.value || formSubmitLocked.value) return;
 
@@ -368,8 +360,6 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     lugarDevolucion,
     fechaDevolucion,
     horaDevolucion,
-    aerolinea,
-    numeroVueloIda,
     politicaPrivacidad,
     referido,
     attribution,
@@ -382,7 +372,6 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     formSubmitLocked,
     haveTotalInsurance,
     haveMonthlyReservation,
-    haveFlight,
     // functions
     captureAttribution,
     registerConvertion,

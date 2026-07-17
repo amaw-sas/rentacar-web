@@ -65,6 +65,9 @@ describe('server/api/rentacar-data.get — missing localiza fallback (#16)', () 
   beforeEach(async () => {
     vi.clearAllMocks()
     vi.stubGlobal('defineCachedEventHandler', (fn: unknown) => fn)
+    // Issue #322 PR10: the handler scopes the franchises query to the deploy's
+    // brand via runtimeConfig.
+    vi.stubGlobal('useRuntimeConfig', () => ({ public: { rentacarFranchise: 'alquilame' } }))
     vi.stubGlobal('createError', (opts: { message?: string; statusMessage?: string }) =>
       Object.assign(new Error(opts?.message ?? opts?.statusMessage ?? 'error'), opts),
     )
@@ -115,6 +118,17 @@ describe('server/api/rentacar-data.get — missing localiza fallback (#16)', () 
       tuple({ [idx]: errResult({ message: 'boom' }) }) as never,
     )
     await expect(handler()).rejects.toMatchObject({ statusCode: 500 })
+  })
+
+  // Issue #322 PR10 (SCEN-322-K03 support): the deploy's brand code reaches
+  // fetchRentacarData so the franchises query is scoped to one brand.
+  it('passes the deploy brand (rentacarFranchise) to fetchRentacarData', async () => {
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+
+    await handler()
+
+    expect(vi.mocked(fetchRentacarData)).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[2]).toBe('alquilame')
   })
 
   it('SCEN-16-3: present localiza row → extras = transformExtras(row), called once', async () => {

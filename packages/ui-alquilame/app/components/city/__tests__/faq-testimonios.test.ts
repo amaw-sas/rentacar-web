@@ -67,8 +67,11 @@ describe('F2 step05 — city/Faq.vue', () => {
 describe('F2 step05 — city/Testimonios.vue', () => {
   const testimonios = read('app/components/city/Testimonios.vue')
 
-  it('sources the cards from props.city.testimonials — city-specific', () => {
-    expect(testimonios).toMatch(/props\.city\?\.testimonials/)
+  // Issue #322 PR10: the cards stay CITY-scoped but the data now arrives via
+  // useCityTestimonials(props.city.id) → /api/city-testimonials instead of
+  // traveling inside the master catalog payload.
+  it('sources the cards from useCityTestimonials(props.city.id) — city-specific', () => {
+    expect(testimonios).toMatch(/useCityTestimonials\(\s*props\.city\?\.id\s*\)/)
     expect(testimonios).toMatch(/v-for="testimonio in testimonios"/)
     expect(testimonios).toMatch(/testimonio\.quote/)
   })

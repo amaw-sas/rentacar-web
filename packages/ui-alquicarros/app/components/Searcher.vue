@@ -363,11 +363,25 @@
                 @click="onSearchClick"
                 :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied || !isSelectionWithinSchedule"
                 :loading="pendingSearching"
+                :aria-describedby="!isSelectionWithinSchedule ? 'schedule-gate-message' : undefined"
                 :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
                 size="xl"
             >
                 BUSCAR VEHÍCULOS
             </u-button>
+            <!-- SCEN-322-X03: the schedule gate can disable BUSCAR already at
+                 mount (deep-link with an out-of-schedule selection), where the
+                 useSearch transition toast never fires. Persistent inline
+                 message (same copy as the toast) wired to the button via
+                 aria-describedby so the reason is on screen and announced. -->
+            <p
+                v-if="!isSelectionWithinSchedule"
+                id="schedule-gate-message"
+                data-testid="schedule-gate-message-test"
+                class="mt-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-red-700 shadow-sm"
+            >
+                La fecha u hora elegida está fuera del horario de atención de la sucursal. Ajústala para continuar.
+            </p>
         </div>
     </u-form>
 </template>

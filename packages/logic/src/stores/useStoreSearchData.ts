@@ -13,7 +13,7 @@ import useCategory from '../composables/useCategory';
 import useMessages from '../composables/useMessages';
 
 // utils
-import { categoryOffersMonthly, isCategoryVisibleInCity, isBlockingSearchError, categoryReadingRank } from '@rentacar-main/logic/utils';
+import { categoryOffersMonthly, isCategoryVisibleInCity, isBlockingSearchError, categoryReadingRank, pickTotalCoverageChargeForDate } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -51,6 +51,14 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   const offersMonthly = (category: CategoryData): boolean =>
     categoryOffersMonthly(category.month_prices, fechaRecogida.value ?? '');
 
+  // Issue #322 PR10: the "Seguro Total" charge is selected from the pricing
+  // row that applies to the searched pickup date (same criterion as the
+  // monthly prices — pickPriceForDate rule 1), never from a scalar picked in
+  // undefined Postgres order. `null` = no active row applies → the UI omits
+  // the Seguro Total option instead of quoting a retired rate.
+  const coverageChargeFor = (category: CategoryData): number | null =>
+    pickTotalCoverageChargeForDate(category.month_prices, fechaRecogida.value ?? '');
+
   // Issue 322 SCEN-322-E06: discard out-of-order availability responses so a
   // slow first search cannot overwrite a newer one or clear `pending` early.
   let searchGeneration = 0;
@@ -73,12 +81,15 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     // Stale response: a newer search() started after us.
     if (gen !== searchGeneration) return;
 
-    // Handle missing parameters error silently (not a real error, just missing information)
+    // missing_parameters is NOT silent (issue #322 SCEN-322-V03): search() only
+    // runs on a real search intent (submit, deep-link/query hydration, retry),
+    // never on an idle mount — so missing params here mean an incomplete
+    // deep-link (e.g. a /reservas?… link without hours, or an unknown branch
+    // slug). Swallowing it left the page blank with no explanation. It now
+    // flows through the standard error path below: error.value renders the
+    // inline state and the branch-specific createErrorMessage raises the toast
+    // (useMessages maps the friendly copy).
     if(errorResponse.value) {
-      if(errorResponse.value.error === 'missing_parameters') {
-        pending.value = false;
-        return;
-      }
       error.value = errorResponse.value;
     }
 
@@ -115,7 +126,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
         ) // keep only categories that actually offer monthly pricing
         .map((categoryAdmin: CategoryData) =>
           // create a category availability object for each category
-          createCategoryAvailability(categoryAdmin)
+          createCategoryAvailability(categoryAdmin, false, coverageChargeFor(categoryAdmin))
         )
         .map((category: CategoryAvailabilityData) => {
           // add return fee amount to each category
@@ -179,7 +190,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
           )
         : categoriesAdminData.value;
       return adminCategories.map((categoryAdmin: CategoryData) =>
-        createCategoryAvailability(categoryAdmin, true)
+        createCategoryAvailability(categoryAdmin, true, coverageChargeFor(categoryAdmin))
       );
     }
 
@@ -196,14 +207,14 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
           categoryAvailability['categoryModels'] = categoryAdmin.models;
           categoryAvailability["categoryMonthPrices"] = categoryAdmin.month_prices;
           categoryAvailability["categoryDescription"] = categoryAdmin.category.replace(categoryAdmin.name, "");
-          categoryAvailability["totalCoverageUnitCharge"] = categoryAdmin.total_coverage_unit_charge;
+          categoryAvailability["totalCoverageUnitCharge"] = coverageChargeFor(categoryAdmin);
           categoryAvailability["picoyplacaExempt"] = categoryAdmin.picoyplaca_exempt;
           categoryAvailability["visibilityMode"] = categoryAdmin.visibility_mode;
           categoryAvailability["allowedCities"] = categoryAdmin.allowed_cities;
 
           return categoryAvailability
         }
-        else return createCategoryAvailability(categoryAdmin, true);
+        else return createCategoryAvailability(categoryAdmin, true, coverageChargeFor(categoryAdmin));
       })
       // Reading order (matches the chat): available cards first, then by class
       // (compacto → sedán → camioneta), then transmission (mecánico → híbrido →
@@ -279,7 +290,11 @@ const indexByCode = (
   return byCode;
 };
 
-const createCategoryAvailability = (category: CategoryData, unable: boolean = false) : CategoryAvailabilityData => ({
+const createCategoryAvailability = (
+  category: CategoryData,
+  unable: boolean = false,
+  totalCoverageUnitCharge: number | null = null,
+) : CategoryAvailabilityData => ({
     categoryCode: category.id,
     categoryDescription: category.description,
     categoryModels: category.models,
@@ -289,7 +304,7 @@ const createCategoryAvailability = (category: CategoryData, unable: boolean = fa
     allowedCities: category.allowed_cities,
     totalAmount: 0,
     estimatedTotalAmount: (unable) ? 999999999 : 1,
-    totalCoverageUnitCharge: category.total_coverage_unit_charge,
+    totalCoverageUnitCharge,
     returnFeeAmount: 0,
     vehicleDayCharge: 0,
     numberDays: 0,

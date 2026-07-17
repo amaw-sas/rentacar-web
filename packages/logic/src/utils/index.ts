@@ -33,10 +33,11 @@ export { isBeyondPricingHorizon, allRenderableBeyondHorizon } from './pricingHor
 export { pickRepresentativeDailyPrice } from './pickRepresentativeDailyPrice';
 export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
+export { pickTotalCoverageChargeForDate } from './pickTotalCoverageCharge';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
 export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';
-export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, latestOpenDayOnOrBefore, nearestSlotByTime } from './scheduleAvailability';
+export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, latestOpenDayOnOrBefore, nearestSlotByTime, returnDateForPickupChange } from './scheduleAvailability';
 export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
 export type { CityReservationDates } from './buildCityReservationURL';
@@ -125,12 +126,11 @@ export type { default as VueTelInputPhoneObject } from './types/vue-tel-input/Vu
 // ============================================================================
 // Validation Schemas
 // ============================================================================
+// Flight schemas removed (issue #322 SCEN-322-X07): no template ever collected
+// aerolinea/numeroVueloIda, so the *WithFlight* branch was a dead validation trap.
 export * from './validation/categoryForm';
-export * from './validation/flightForm';
 export * from './validation/reservationForm';
-export * from './validation/reservationWithFlightForm';
 export * from './validation/searcherForm';
 export * from './validation/normalizePhoneNumber';
 export * from './validation/userInformationForm';
-export * from './validation/userInformationWithFlightForm';
 export * from './categoryReadingOrder';

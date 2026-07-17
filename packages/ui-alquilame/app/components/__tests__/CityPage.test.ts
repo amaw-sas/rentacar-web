@@ -47,15 +47,13 @@ describe('CityPage — copy-to-WhatsApp pin is an inert, customer-invisible oper
 })
 
 // SCEN-001 (docs/specs/alquilame-reserva-ux/scenarios/reserva-results-consistency.scenarios.md)
-// On a RESULTS page with an active search the generic home marketing
-// ("Nuestra Flota" = HomeFleet, plus HowItWorks/Requirements) must NOT render;
-// the results block (#seleccion-categorias) must render; the city-specific SEO
-// sections (Intro/SeoContent/DeliveryPoints/Testimonios/FAQ) + HomeContact stay.
-// On a LANDING page (no active search) HomeFleet MUST still appear.
-//
-// Static-source contract (mirrors the rest of this suite): the gate is a single
-// computed `resultsActive` reused by the engine block AND the marketing v-if, so
-// "results active in results mode" hides marketing and "landing" never hides it.
+// updated by SCEN-322-X06: the results block (#seleccion-categorias +
+// CategorySelectionSection + the resultsActive gate) was DEAD CODE in alquilame —
+// buscar-vehiculos no longer exists here (routing independence) and the only
+// CityPage consumer is pages/[city]/index.vue with mode="landing". The engine
+// block is gone (city landings must not download the reservation engine); the
+// SSR-stable marketing gates on `mode` remain because CityHero and HomeContact
+// still consume the prop.
 describe('CityPage — generic home marketing is gated off on active results (SCEN-001)', () => {
   // helper: capture the v-if expression on a tag (handles attrs before/after)
   const vIfOn = (src: string, tag: string): string | null => {
@@ -65,17 +63,11 @@ describe('CityPage — generic home marketing is gated off on active results (SC
     return m ? m[1] : null
   }
 
-  it('defines a single resultsActive gate (pending || filteredCategories.length || error)', () => {
-    expect(source).toMatch(
-      /const resultsActive\s*=\s*computed\([\s\S]*?pendingSearch[\s\S]*?filteredCategories\.value\.length[\s\S]*?searchError[\s\S]*?\)/,
-    )
-  })
-
-  it('keeps the engine result block (#seleccion-categorias) gated by resultsActive', () => {
-    const block = /<UPageSection[^>]*id="seleccion-categorias"[\s\S]*?v-if="resultsActive"/.test(source)
-      || /id="seleccion-categorias"[^>]*v-if="resultsActive"/.test(source)
-      || /v-if="resultsActive"[^>]*id="seleccion-categorias"/.test(source)
-    expect(block).toBe(true)
+  // SCEN-322-X06: the dead results engine must stay out of the landing chunk.
+  it('does not render nor statically import the reservation engine (dead results branch removed)', () => {
+    expect(source).not.toMatch(/CategorySelectionSection/)
+    expect(source).not.toMatch(/id="seleccion-categorias"/)
+    expect(source).not.toMatch(/resultsActive/)
   })
 
   it('hides HomeFleet ("Nuestra Flota") when on a results page with an active search', () => {
@@ -115,15 +107,14 @@ describe('CityPage — generic home marketing is gated off on active results (SC
     expect(expr).toMatch(/mode\s*!==\s*['"]results['"]/)
   })
 
-  // BUG (stale-results leak): resultsActive was store-only (pending || results ||
-  // error). The Pinia store is a SPA singleton, so after a search WITH results an
-  // SPA navigation to a landing /[city] left the store populated and the results
-  // block (#seleccion-categorias) rendered UNDER the marketing hero. The gate must
-  // AND-in mode === 'results' — symmetric with the marketing gate — so a landing
-  // page never shows results regardless of leftover store state.
-  it('only activates results in results mode — landing never leaks stale search state', () => {
-    expect(source).toMatch(
-      /const resultsActive\s*=\s*computed\([\s\S]*?mode\s*===\s*['"]results['"]/,
-    )
+  // BUG (stale-results leak, historical): resultsActive was store-only and a
+  // populated Pinia singleton leaked the results block onto a landing /[city].
+  // SCEN-322-X06 removed the whole results block, which closes that leak for
+  // good: with no engine block in the source there is nothing a stale store can
+  // reveal. Guarded by the dead-code assertion above (no resultsActive, no
+  // #seleccion-categorias, no CategorySelectionSection).
+  it('landing cannot leak stale search state: no store-driven results wiring remains', () => {
+    expect(source).not.toMatch(/useStoreSearchData/)
+    expect(source).not.toMatch(/filteredCategories/)
   })
 })

@@ -2,25 +2,21 @@
   <!--
     F2 city landing — orquestador. Las secciones city viven en app/components/city/*
     (hero/intro/seo/delivery/faq/testimonios, datos city-specific) y el marketing
-    puro se reusa de F1 (home/*). El bloque de resultados (#seleccion-categorias)
-    se preserva INTACTO: esta misma página la renderiza la ruta buscar-vehiculos,
-    y muestra resultados cuando hay params de búsqueda. Engine (Searcher, #41, #109)
-    y SEO (useCityProductSchema #68, useCityFAQSchema vía useCityPageSEO) sin
-    cambios de comportamiento. El schema de aggregate-rating se eliminó (#312):
-    calificaciones fabricadas + markup self-serving inelegible para Google.
+    puro se reusa de F1 (home/*). SEO (useCityProductSchema #68, useCityFAQSchema
+    vía useCityPageSEO) sin cambios de comportamiento. El schema de
+    aggregate-rating se eliminó (#312): calificaciones fabricadas + markup
+    self-serving inelegible para Google.
+
+    SCEN-322-X06: el bloque de resultados (la sección del grid de categorías)
+    era código muerto — buscar-vehiculos ya no existe en alquilame (routing
+    independence) y el único consumidor de CityPage es pages/[city]/index.vue
+    con mode="landing". Eliminado para que las 19 landings de ciudad no
+    descarguen el motor de reservas (el grid vive en /reservas). NO
+    reintroducir imports estáticos del motor aquí.
   -->
   <UPage>
     <!-- Hero — mode-aware (F3): landing = marketing-only CTA, results = Searcher engine -->
     <CityHero :city="city" :mode="mode" />
-
-    <!-- Result Section — condicional, PRESERVADO intacto (engine) -->
-    <UPageSection
-      id="seleccion-categorias"
-      v-if="resultsActive"
-      :ui="{ container: 'pt-0' }"
-    >
-      <CategorySelectionSection />
-    </UPageSection>
 
     <!-- Intro city (descripcion + introduccion) -->
     <CityIntro :city="city" :expanded-content="expandedContent" />
@@ -48,7 +44,7 @@
     <HomeHowItWorks v-if="mode !== 'results'" />
     <HomeRequirements v-if="mode !== 'results'" />
 
-    <!-- Reseñas city (city.testimonials) -->
+    <!-- Reseñas city (useCityTestimonials, #322 PR10) -->
     <CityTestimonios :city="city" />
 
     <!-- FAQ city (useCityFAQs) -->
@@ -70,32 +66,11 @@ import type { City } from '@rentacar-main/logic/utils';
 
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 
-/** Result-section gating — lazy store init to avoid SSR Pinia error.
-    searchError keeps the result-section mounted when filteredCategories is empty
-    (plugin-empty admin data) so error UX still surfaces — issue #10. */
-const pendingSearch = ref(false);
-const filteredCategories = ref<unknown[]>([]);
-const searchError = ref<unknown>(null);
-
-onMounted(() => {
-  const storeSearch = useStoreSearchData();
-  const refs = storeToRefs(storeSearch);
-  watch(() => refs.pending.value, (val) => (pendingSearch.value = val), { immediate: true });
-  watch(() => refs.filteredCategories.value, (val) => (filteredCategories.value = val), { immediate: true });
-  watch(() => refs.error.value, (val) => (searchError.value = val), { immediate: true });
-});
-
-/** A search is "active" only on a RESULTS page (mode === 'results') AND when
-    results are pending, present, or errored. The Pinia store is a SPA singleton,
-    so WITHOUT the mode guard a store still populated from a prior search leaks the
-    results block (#seleccion-categorias) onto a landing /[city] after client-side
-    navigation. The gate is symmetric with the marketing v-if below (SCEN-001):
-    landing never shows results; results mode never shows generic marketing. */
-const resultsActive = computed(
-  () =>
-    props.mode === 'results' &&
-    (pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value),
-);
+// SCEN-322-X06: el gate reactivo de resultados y su cableado de store
+// (pending / categorías filtradas / error) se eliminaron junto con el bloque de
+// resultados — ningún caller pasa mode="results" (grep: solo
+// pages/[city]/index.vue con mode="landing"). El prop `mode` se conserva porque
+// CityHero y los gates de marketing/HomeContact lo consumen.
 
 /** props */
 const props = withDefaults(

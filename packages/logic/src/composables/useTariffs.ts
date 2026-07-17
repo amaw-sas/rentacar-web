@@ -1,6 +1,7 @@
 import type ReservasApiData from '../utils/types/data/ReservasApiData'
 import type CategoryData from '../utils/types/data/CategoryData'
 import type CategoryMonthPriceData from '../utils/types/data/CategoryMonthPriceData'
+import { createCurrentDateObject } from '../utils/useDateFunctions'
 
 export interface TariffPlan {
   daily: number
@@ -33,13 +34,18 @@ export interface TariffsView {
 
 const MONTH_ABBR_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
+// Anchors ISO dates to UTC midnight for RANGE COMPARISONS only (init/end vs the
+// chosen day) — every operand gets the same anchor, so the zone cancels out.
 function parseIsoUtc(iso: string): number {
   return Date.parse(`${iso}T00:00:00Z`)
 }
 
-function todayIsoUtc(): string {
-  const d = new Date()
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+// The default "today" is the AMERICA/BOGOTA calendar day. The previous
+// todayIsoUtc() flipped to tomorrow at 19:00 Bogota (00:00 UTC): a pricing row
+// ending "today" stopped matching five hours early and the tariffs page
+// blanked every evening (#322 PR7).
+function todayIsoBogota(): string {
+  return createCurrentDateObject().toString()
 }
 
 function findActivePricingForDay(prices: CategoryMonthPriceData[], dayIso: string): CategoryMonthPriceData | null {
@@ -108,7 +114,7 @@ export function buildTariffs(categories: CategoryData[], todayDate?: string): Ta
     return { period: null, gamas: [] }
   }
 
-  const today = todayDate ?? todayIsoUtc()
+  const today = todayDate ?? todayIsoBogota()
   const sortedCategories = [...categories].sort((a, b) => String(a.id).localeCompare(String(b.id)))
 
   const gamas: TariffGama[] = []

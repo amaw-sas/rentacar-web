@@ -20,7 +20,11 @@ export default interface CategoryAvailabilityData {
   coverageUnitCharge: number;
   coverageQuantity: number;
   coverageTotalAmount: number;
-  totalCoverageUnitCharge: number;
+  // Per-day "Seguro Total" charge for the searched pickup date, selected via
+  // pickTotalCoverageChargeForDate (issue #322 PR10). `null` = no active
+  // pricing row applies to the date → coverage cannot be quoted and the UI
+  // must omit the Seguro Total option instead of showing a wrong price.
+  totalCoverageUnitCharge: number | null;
   extraHoursQuantity?: number;
   extraHoursUnityAmount?: number;
   extraHoursTotalAmount?: number;

@@ -55,15 +55,22 @@ describe('Paso 9 — handshake búsqueda→avance en /reservas (SCEN-W-02)', () 
   })
 })
 
-describe('Paso 10 — CityPage results-mode monta el wizard (SCEN-W-09)', () => {
-  it('CityPage en mode="results" renderiza el wizard, no CategorySelectionSection', () => {
+// SCEN-W-09 histórico: CityPage en mode="results" montaba el wizard. Ese modo
+// quedó inalcanzable con routing independence (buscar-vehiculos eliminado de
+// alquicarros; el único caller de CityPage es pages/[city]/index.vue con
+// mode="landing") y SCEN-322-X06 eliminó el bloque y su import estático para
+// que las landings de ciudad no descarguen el motor. La única superficie del
+// wizard es /reservas.
+describe('Paso 10 — el wizard vive en /reservas; CityPage ya no lo monta (SCEN-W-09 → SCEN-322-X06)', () => {
+  it('CityPage no renderiza ni importa el wizard (ni el grid legacy)', () => {
     const src = cityPage()
-    expect(src).toMatch(/<ReservationWizard\b/)
+    expect(src).not.toMatch(/<ReservationWizard\b/)
+    expect(src).not.toMatch(/components\/wizard/)
     expect(src).not.toMatch(/<CategorySelectionSection\b/)
   })
 
-  it('el wizard en city usa external-search (Paso 1 lo provee CityHero, no el hero interno)', () => {
-    expect(cityPage()).toMatch(/<ReservationWizard\b[^>]*external-search/)
+  it('/reservas sigue montando el wizard (única superficie de reserva)', () => {
+    expect(read('app/pages/reservas/index.vue')).toMatch(/<ReservationWizard\b/)
   })
 
   it('el wizard acepta la prop externalSearch y NO monta StepSearch cuando es externa', () => {

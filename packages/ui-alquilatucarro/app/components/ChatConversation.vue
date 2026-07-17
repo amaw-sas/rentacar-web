@@ -173,11 +173,27 @@
         @focus="inputFocused = true"
         @blur="inputFocused = false"
       >
+      <!-- SCEN-322-X04: while a reply streams the send slot becomes a visible
+           "detener" control that aborts the in-flight turn on demand (stop()
+           keeps whatever already streamed; no error banner). -->
       <button
+        v-if="isStreaming"
+        type="button"
+        class="cc-send cc-send-active"
+        aria-label="Detener respuesta"
+        data-testid="chat-stop-test"
+        @click="stop"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="5" y="5" width="14" height="14" rx="2" />
+        </svg>
+      </button>
+      <button
+        v-else
         type="submit"
         class="cc-send"
         :class="{ 'cc-send-active': inputFocused || input.trim() }"
-        :disabled="isStreaming || !input.trim()"
+        :disabled="!input.trim()"
         aria-label="Enviar mensaje"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -226,6 +242,7 @@ const {
   error,
   errorAction,
   submit,
+  stop,
   firstUnreadAssistantId,
   danglingUserTurn,
   onSurfaceMounted,
