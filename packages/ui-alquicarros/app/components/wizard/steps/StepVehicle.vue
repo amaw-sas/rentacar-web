@@ -88,6 +88,27 @@
     </div>
 
     <template v-else>
+      <!-- Issue #313 — nivel flujo: TODAS las gamas caen más allá del horizonte
+           de tarifas (caso 2027). Fail-closed: no se cotiza, se ofrece contacto. -->
+      <div
+        v-if="allBeyondHorizon"
+        class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-center"
+        data-testid="wizard-horizon-unavailable-test"
+      >
+        <p class="heading-sub text-gray-900">
+          Las tarifas para tu fecha aún no están disponibles
+        </p>
+        <p class="mt-1 body-base text-gray-600">Escríbenos y te cotizamos.</p>
+        <a
+          :href="`https://wa.me/57${whatsappContact.phone}`"
+          target="_blank"
+          rel="noopener"
+          class="mt-3 inline-block body-sm font-semibold text-brand-700 underline"
+        >
+          Escríbenos por WhatsApp {{ whatsappContact.display }}
+        </a>
+      </div>
+
       <!-- Nivel 1 — tiles de segmento -->
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <WizardVehicleSegmentTile
@@ -96,6 +117,7 @@
           :segment="group.segment"
           :count="group.codes.length"
           :from-price="fromPrice(group)"
+          :unavailable="segmentBeyondHorizon(group)"
           :active="openSegment === group.segment.id"
           @select="toggleSegment(group.segment.id)"
         />
@@ -131,7 +153,7 @@ import { storeToRefs } from 'pinia'
 import { groupBySegment, segmentForCode, type SegmentGroup, type SegmentId } from '~/config/vehicleSegments'
 
 // utils
-import { pickPriceForDate } from '@rentacar-main/logic/utils'
+import { pickPriceForDate, isBeyondPricingHorizon } from '@rentacar-main/logic/utils'
 
 // Types
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
@@ -241,6 +263,40 @@ function fromPrice(group: SegmentGroup): string {
   )
   return Number.isFinite(cheapest) ? moneyFormat(cheapest) : ''
 }
+
+// ── Issue #313: fail-closed más allá del horizonte de tarifas ─────────────────
+// Solo aplica en reserva mensual (la diaria no usa month_prices). Distingue el
+// Infinity "por horizonte excedido" del Infinity "sin plan vendible" para no
+// confundir causas — misma selección de fila que useCategory usa para cobrar.
+
+/** ¿La fila cae más allá del horizonte de tarifas mensuales para el pickup? */
+function rowBeyondHorizon(row: CategoryAvailabilityData): boolean {
+  return (
+    haveMonthlyReservation.value &&
+    isBeyondPricingHorizon(row.categoryMonthPrices ?? [], fechaRecogida.value ?? '')
+  )
+}
+
+/** Un segmento no tiene tarifa cuando TODOS sus códigos caen más allá del horizonte. */
+function segmentBeyondHorizon(group: SegmentGroup): boolean {
+  if (!haveMonthlyReservation.value) return false
+  return group.codes.every((code) => {
+    const row = rowByCode.value.get(code)
+    return row ? rowBeyondHorizon(row) : false
+  })
+}
+
+/**
+ * Nivel flujo (banner): TODAS las gamas renderizables caen más allá del horizonte
+ * (el caso 2027 del audit). Distinto de "sin disponibilidad": aquí sí hay gamas,
+ * pero ninguna tiene tarifa cargada para la fecha.
+ */
+const allBeyondHorizon = computed<boolean>(
+  () =>
+    haveMonthlyReservation.value &&
+    renderable.value.length > 0 &&
+    renderable.value.every((row) => rowBeyondHorizon(row)),
+)
 
 const openSegment = ref<SegmentId | null>(null)
 const level2Ref = ref<HTMLElement | null>(null)

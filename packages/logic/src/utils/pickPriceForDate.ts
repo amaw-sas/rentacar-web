@@ -1,4 +1,5 @@
 import type CategoryMonthPriceData from './types/data/CategoryMonthPriceData'
+import { isBeyondPricingHorizon } from './pricingHorizon'
 
 const toMs = (iso: string): number => Date.parse(`${iso}T00:00:00Z`)
 
@@ -14,6 +15,12 @@ const distanceToRange = (pickupMs: number, initIso: string, endIso: string): num
  * Picks the monthly pricing row that applies to a given pickup date.
  *
  * Rules (per business spec):
+ *   0. If pickup falls BEYOND the whole pricing horizon (later than the max
+ *      `end_date` across every row), return undefined — fail closed. There is
+ *      no legitimate row to price against, so fabricating one (legacy or
+ *      season-low) would silently quote a wrong price (issue #313, the 2027
+ *      case). A gap WITHIN the horizon is a different case, still handled by
+ *      rules 2/3 below.
  *   1. Prefer an `active` row whose validity range contains pickup date.
  *      If multiple match, the one with the most recent `init_date` wins
  *      (treated as "more specific / newer").
@@ -33,6 +40,9 @@ export function pickPriceForDate(
 
   const pickupMs = toMs(pickupDate)
   if (Number.isNaN(pickupMs)) return undefined
+
+  // Rule 0: fail closed beyond the data horizon (issue #313).
+  if (isBeyondPricingHorizon(prices, pickupDate)) return undefined
 
   const actives = prices.filter((p) => p.status === 'active')
 

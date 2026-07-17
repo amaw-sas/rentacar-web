@@ -65,41 +65,53 @@
       <div class="contenedor-tarifas sutil-fondo">
         <!--==== columna izq t1====-->
         <div class="contenedor-precios-tarifa con-borde-difuminado">
-          <p class="text-sm">Tarifa Diaria</p>
-          <p class="precio-base-diario">$ {{ currencyDailyBasePrice }}</p>
-          <div class="porcentaje-descuento" v-if="hasDiscount()">
-            Dto hoy {{ getDiscount }}%
-          </div>
-          <p class="precio-diario">$ {{ currencyDailyPrice }}</p>
-          <p v-if="hasExtraHours()" class="text-sm">
-            + {{ extraHoursQuantity }}
-            {{ extraHoursQuantity > 1 ? "Horas" : "Hora" }} extra
-          </p>
-          <p v-if="hasExtraHours()" class="text-sm">
-            $ {{ currencyExtraHoursPrice }}
-          </p>
-          <p v-if="hasReturnFee()" class="text-sm">+ Retorno otra sede</p>
-          <p v-if="hasReturnFee()" class="text-sm">$ {{ currencyReturnFee }}</p>
-          <p class="dias-reservados">
-            Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
-          </p>
+          <!-- Issue #313: reserva mensual más allá del horizonte de tarifas no se
+               cotiza (todas las cifras de precio son 0). Fail-closed: se reemplaza
+               TODA la columna de precio por el estado inline — nunca un "$ 0"
+               diario/total fabricado en una superficie visible. -->
+          <template v-if="isMonthlyPriceUnavailable">
+            <p class="precio-total" data-testid="category-unavailable-test">
+              Tarifa no disponible para tu fecha
+            </p>
+            <p class="texto-no-incluye">Escríbenos y te cotizamos.</p>
+          </template>
+          <template v-else>
+            <p class="text-sm">Tarifa Diaria</p>
+            <p class="precio-base-diario">$ {{ currencyDailyBasePrice }}</p>
+            <div class="porcentaje-descuento" v-if="hasDiscount()">
+              Dto hoy {{ getDiscount }}%
+            </div>
+            <p class="precio-diario">$ {{ currencyDailyPrice }}</p>
+            <p v-if="hasExtraHours()" class="text-sm">
+              + {{ extraHoursQuantity }}
+              {{ extraHoursQuantity > 1 ? "Horas" : "Hora" }} extra
+            </p>
+            <p v-if="hasExtraHours()" class="text-sm">
+              $ {{ currencyExtraHoursPrice }}
+            </p>
+            <p v-if="hasReturnFee()" class="text-sm">+ Retorno otra sede</p>
+            <p v-if="hasReturnFee()" class="text-sm">$ {{ currencyReturnFee }}</p>
+            <p class="dias-reservados">
+              Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
+            </p>
 
-          <UTooltip :open="totalPriceTooltipOpen" :delay-duration="tooltipOpenDelayMs" :content="{ onEscapeKeyDown: forceTotalPriceTooltipClose, onPointerDownOutside: forceTotalPriceTooltipClose }" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
-            <template #content>
-              Día: $ {{ dayPriceTooltip }} <br />
-              Seguro día: $ {{ coverageDayPriceTooltip }} <br />
-              Tasa: $ {{ taxFeePriceTooltip }} <br />
-              IVA: $ {{ ivaFeePriceTooltip }} <br />
-              Total: $ {{ actualTotalPriceTooltip }} <br />
-            </template>
-            <ULink raw class="precio-total"> $ <span>{{currencyTotalPrice}}</span></ULink>
-          </UTooltip>
+            <UTooltip :open="totalPriceTooltipOpen" :delay-duration="tooltipOpenDelayMs" :content="{ onEscapeKeyDown: forceTotalPriceTooltipClose, onPointerDownOutside: forceTotalPriceTooltipClose }" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
+              <template #content>
+                Día: $ {{ dayPriceTooltip }} <br />
+                Seguro día: $ {{ coverageDayPriceTooltip }} <br />
+                Tasa: $ {{ taxFeePriceTooltip }} <br />
+                IVA: $ {{ ivaFeePriceTooltip }} <br />
+                Total: $ {{ actualTotalPriceTooltip }} <br />
+              </template>
+              <ULink raw class="precio-total"> $ <span>{{currencyTotalPrice}}</span></ULink>
+            </UTooltip>
 
-          <!-- <div class="font-bold text-xl" style="white-space: nowrap;" v-text="currencyTotalPrice"></div> -->
-          <p class="texto-no-incluye" v-if="haveMonthlyReservation">
-            Incluye IVA y tasa admin
-          </p>
-          <p class="texto-no-incluye" v-else>No incluye IVA ni tasa admin</p>
+            <!-- <div class="font-bold text-xl" style="white-space: nowrap;" v-text="currencyTotalPrice"></div> -->
+            <p class="texto-no-incluye" v-if="haveMonthlyReservation">
+              Incluye IVA y tasa admin
+            </p>
+            <p class="texto-no-incluye" v-else>No incluye IVA ni tasa admin</p>
+          </template>
         </div>
 
         <!--==== columna der t1 ====-->
@@ -614,12 +626,14 @@
         <UButton
           class="boton-seleccion"
           size="xl"
+          :disabled="isMonthlyPriceUnavailable"
+          data-testid="category-solicitar-test"
           @click.prevent="goNextStep()"
           >
-          <template #trailing>
+          <template v-if="!isMonthlyPriceUnavailable" #trailing>
             <ChevronRightIcon cls="size-5" />
           </template>
-          Solicitar este vehículo
+          {{ isMonthlyPriceUnavailable ? 'Tarifa no disponible para tu fecha' : 'Solicitar este vehículo' }}
         </UButton>
       </div>
     </div>
@@ -676,6 +690,7 @@ const {
   categoryCode,
   categoryDescription,
   categoryModels,
+  isMonthlyPriceUnavailable,
   currencyTotalPrice,
   currencyDailyPrice,
   currencyDailyBasePrice,
@@ -758,6 +773,9 @@ watch(
 
 /** functions */
 function goNextStep() {
+  // Issue #313: fail-closed — más allá del horizonte de tarifas no se cotiza,
+  // así que no se puede solicitar (defensa; el botón ya viene deshabilitado).
+  if (isMonthlyPriceUnavailable.value) return;
   // Flags del form: el watcher de CategorySelectionSection los deriva de la
   // instancia emitida (single source, issue 322 / #308). No escribir el store aquí.
   emit("selectedCategory", category);

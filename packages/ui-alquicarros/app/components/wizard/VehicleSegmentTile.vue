@@ -32,8 +32,19 @@
       </span>
     </span>
     <span class="shrink-0 text-right">
-      <span class="block body-xs text-gray-600">desde</span>
-      <span class="block price-md font-heading text-brand-700">$ {{ fromPrice }}</span>
+      <!-- Issue #313: más allá del horizonte de tarifas no hay "desde $X" que
+           mostrar; la etiqueta evita el "$ " vacío silencioso. -->
+      <span
+        v-if="unavailable"
+        class="block body-xs font-semibold text-gray-600"
+        data-testid="wizard-segment-unavailable-test"
+      >
+        Tarifa no disponible<br >para tu fecha
+      </span>
+      <template v-else>
+        <span class="block body-xs text-gray-600">desde</span>
+        <span class="block price-md font-heading text-brand-700">$ {{ fromPrice }}</span>
+      </template>
     </span>
   </button>
 </template>
@@ -49,6 +60,8 @@ defineProps<{
   count: number
   /** Precio "desde" ya formateado (más barato del segmento). */
   fromPrice: string
+  /** Issue #313: el segmento no tiene tarifa para la fecha (horizonte excedido). */
+  unavailable?: boolean
   /** ¿Es el segmento abierto/seleccionado ahora? */
   active?: boolean
 }>()

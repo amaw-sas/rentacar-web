@@ -29,6 +29,7 @@ export type { ChatPayloadMessage } from './buildChatPayloadMessages';
 // Pricing
 // ============================================================================
 export { pickPriceForDate } from './pickPriceForDate';
+export { isBeyondPricingHorizon, allRenderableBeyondHorizon } from './pricingHorizon';
 export { pickRepresentativeDailyPrice } from './pickRepresentativeDailyPrice';
 export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';

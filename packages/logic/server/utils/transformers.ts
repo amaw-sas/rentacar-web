@@ -77,6 +77,47 @@ function todayIsoUtc(): string {
 }
 
 /**
+ * Issue #313: señal proactiva para operación. Si el `valid_until` máximo global
+ * de las tarifas mensuales está a menos de `horizonDays` días, emite un warning
+ * en logs (Vercel) para que se carguen nuevas tarifas ANTES de que el horizonte
+ * se agote y la web empiece a fallar-cerrado (no cotizar) las reservas mensuales.
+ *
+ * Corre sobre las filas CRUDAS (antes de `prunePricingRows`), así que ve el
+ * `valid_until` real de todo el histórico. Una fila ACTIVE con `valid_until`
+ * NULL/vacío = horizonte infinito → nunca avisa. `now` es inyectable para tests.
+ */
+export function warnIfPricingHorizonNear(
+  rows: SupabaseCategory[],
+  now: Date = new Date(),
+  horizonDays = 60,
+): void {
+  const allPricing = rows.flatMap((r) => r.category_pricing || [])
+  if (allPricing.length === 0) return
+
+  // Solo una fila ACTIVE open-ended = tarifa vigente sin expiración = horizonte
+  // infinito → no avisar. Una inactive open-ended (legacy) no debe silenciar la
+  // alerta de otras categorías por expirar (consistente con isBeyondPricingHorizon).
+  if (allPricing.some((p) => p.status === 'active' && !p.valid_until)) return
+
+  let maxEndMs = Number.NEGATIVE_INFINITY
+  for (const p of allPricing) {
+    if (!p.valid_until) continue
+    const endMs = toUtcMs(p.valid_until)
+    if (!Number.isNaN(endMs) && endMs > maxEndMs) maxEndMs = endMs
+  }
+  if (maxEndMs === Number.NEGATIVE_INFINITY) return
+
+  const nowMs = now.getTime()
+  if (maxEndMs >= nowMs + horizonDays * dayMs) return
+
+  const maxDate = new Date(maxEndMs).toISOString().slice(0, 10)
+  const daysAway = Math.round((maxEndMs - nowMs) / dayMs)
+  console.warn(
+    `[pricing-horizon] monthly pricing data ends ${maxDate} (${daysAway} days away) — load new rates in the dashboard`,
+  )
+}
+
+/**
  * Drops pricing rows that no client-side selector can ever pick for a pickup
  * date on/after `today`, while keeping the exact representative rows each
  * selector's fallback rules need (issue #322 PR10 — the full history was ~85
@@ -140,6 +181,10 @@ function prunePricingRows(prices: CategoryMonthPriceData[], todayIso: string): C
 }
 
 export function transformCategories(rows: SupabaseCategory[], todayIso: string = todayIsoUtc()): CategoryData[] {
+  // Issue #313: avisa una vez por rebuild si el horizonte de tarifas está cerca.
+  // Sobre las filas crudas, antes del pruning.
+  warnIfPricingHorizonNear(rows)
+
   return rows.map((row) => {
     const models: CategoryModelData[] = (row.category_models || [])
       .filter((m) => m.status === 'active')
