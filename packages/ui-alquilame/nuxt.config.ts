@@ -523,7 +523,7 @@ export default defineNuxtConfig({
   site: {
     url: 'https://alquilame.co',
     name: 'Alquilame',
-    description: 'Alquila carros en Bogotá, Medellín, Cali y 14 ciudades más.',
+    description: 'Alquila carros en Bogotá, Medellín, Cali y 16 ciudades más.',
     defaultLocale: 'es',
     currentLocale: 'es',
   },

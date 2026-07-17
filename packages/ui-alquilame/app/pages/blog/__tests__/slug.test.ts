@@ -128,3 +128,27 @@ describe('SCEN-F4-11 — SEO / schema preserved in <script setup>', () => {
     expect(scriptBlock).toMatch(/function copyLink/)
   })
 })
+
+describe('SEO audit P0 — BlogPosting author is a Person, not an Organization', () => {
+  // The page renders a human author (avatar + name + bio), so the JSON-LD author
+  // must be a Person carrying that name and avatar — an Organization author on a
+  // by-lined post is a structured-data mismatch.
+  const authorStart = scriptBlock.indexOf('author: {')
+  // Slice only the author object (up to its closing brace) so the following
+  // publisher block — legitimately an Organization — never bleeds in.
+  // End at '},' (not '}') — the avatar template literal contains '}' chars.
+  const authorBlock = scriptBlock.slice(
+    authorStart,
+    scriptBlock.indexOf('},', authorStart),
+  )
+
+  it('the BlogPosting author uses @type Person with the post author name + image', () => {
+    expect(authorBlock).toMatch(/'@type':\s*'Person'/)
+    expect(authorBlock).toMatch(/name:\s*post\.value\.author\.name/)
+    // Avatar must be an absolute URL — schema.org consumers ignore relative paths.
+    expect(authorBlock).toMatch(
+      /image:\s*`\$\{franchise\.website\}\$\{post\.value\.author\.avatar\}`/,
+    )
+    expect(authorBlock).not.toMatch(/'@type':\s*'Organization'/)
+  })
+})

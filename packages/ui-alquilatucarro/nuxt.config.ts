@@ -515,7 +515,7 @@ export default defineNuxtConfig({
   site: {
     url: 'https://alquilatucarro.com',
     name: 'Alquilatucarro',
-    description: 'Alquila carros en Bogotá, Medellín, Cali y 14 ciudades más.',
+    description: 'Alquila carros en Bogotá, Medellín, Cali y 16 ciudades más.',
     defaultLocale: 'es',
     currentLocale: 'es',
   },
