@@ -256,8 +256,16 @@ const {
 } = useChatConversation()
 
 // Primera burbuja de una racha del mismo remitente → lleva el "piquito" (WhatsApp).
+// Salta placeholders del asistente que no renderizan burbuja (turnos fallidos que
+// quedan vacíos para "Reintentar"): no deben partir una racha visible.
 function isGroupStart(idx: number): boolean {
-  return messages.value[idx - 1]?.role !== messages.value[idx]?.role
+  const role = messages.value[idx]?.role
+  for (let p = idx - 1; p >= 0; p--) {
+    const m = messages.value[p]
+    if (m && m.role === 'assistant' && !m.text && !m.quoteTable && !m.gamaCards && !m.actions) continue
+    return m?.role !== role
+  }
+  return true
 }
 
 const inputFocused = ref(false)
@@ -489,13 +497,25 @@ button { -webkit-tap-highlight-color: transparent; }
 .cc-msg.is-assistant.has-time .cc-text::after {
   content: '';
   display: inline-block;
-  width: 4.25em; /* ~ ancho de "10:45 p. m." a 0.6875rem */
+  width: 4.5em; /* reserva ~72px ("10:45 p. m."); em resuelve sobre el 1rem heredado */
   height: 0;
 }
 /* Burbujas que terminan en partes estructuradas (tabla, tarjetas, CTAs):
-   contenido de ancho completo hasta el borde inferior → hora en fila propia. */
-.cc-msg.has-parts .cc-time { position: static; display: block; margin-top: 0.25rem; text-align: right; }
-.cc-msg.has-parts .cc-text::after { content: none; }
+   contenido de ancho completo hasta el borde inferior → hora en fila propia.
+   OJO especificidad: debe empatar (0,4,1)/(0,4,0) con las reglas de arriba y
+   ganar por orden — con menos clases el espaciador seguiría aplicando. */
+.cc-msg.is-assistant.has-parts .cc-time { position: static; display: block; margin-top: 0.25rem; text-align: right; }
+.cc-msg.is-assistant.has-parts .cc-text::after { content: none; }
+/* Chunk que termina en un CTA de markdown (bloque cc-link-btn): el espaciador
+   caería en línea propia bajo el botón → mismo trato que has-parts. Navegadores
+   sin :has() solo conservan la franja vacía (degradación sin solape). */
+.cc-msg.is-assistant.has-time .cc-text:has(> .cc-link-btn:last-child)::after { content: none; }
+.cc-msg.is-assistant:has(.cc-text > .cc-link-btn:last-child) .cc-time {
+  position: static;
+  display: block;
+  margin-top: 0.25rem;
+  text-align: right;
+}
 .cc-link-btn {
   display: block;
   margin-top: 0.5rem;
