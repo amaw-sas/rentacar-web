@@ -50,12 +50,12 @@ export default defineAppConfig({
     whatsapp: "https://wa.me/573187703670",
     email: "alquicarros@gmail.com",
     socialmedia: [
-      "https://www.facebook.com/alquilerdecarroscolombia",
-      "https://www.instagram.com/alquilatucarro",
-      "https://twitter.com/Alquilercarrosc",
-      "https://www.youtube.com/@alquilatucarro",
-      "https://www.tiktok.com/@alquilatucarro",
-      "https://co.pinterest.com/alquilatucarro/",
+      "https://www.facebook.com/alquicarroscolombia",
+      "https://www.instagram.com/alquicarroscolombia",
+      "https://x.com/alquicarroscol",
+      "https://www.youtube.com/@alquilacarros",
+      "https://www.tiktok.com/@alquicarroscol",
+      "https://co.pinterest.com/alquicarroscol/",
     ],
     footerLinks: [
       {
