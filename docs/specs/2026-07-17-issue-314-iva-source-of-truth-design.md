@@ -62,7 +62,8 @@ release al dashboard, y opera igual antes y después de que el campo exista.
 
 ### 2. Constante de fallback
 
-Nuevo `packages/logic/src/utils/constants/ivaRate.ts`:
+Nuevo `packages/logic/src/utils/ivaRate.ts` (plano en `utils/`, misma
+convención que `fetchTimeouts.ts`):
 
 ```ts
 // Tarifa general de IVA en Colombia, fija por ley (Estatuto Tributario).
@@ -156,3 +157,7 @@ fallback. Sin acople de release.
   actual pero derivado de la constante nombrada, sin literal mágico.
 - **SCEN-314-05** — Sin Seguro Total: el IVA mostrado sigue siendo `IVAFeeAmount`
   del dashboard, sin recálculo local (rama intacta).
+- **SCEN-314-06** — Persistencia end-to-end: reserva regular con Seguro Total y
+  `IVAFeePercentage: 21`, el `iva_fee` del payload de registro honra el 21% (el
+  valor persistido, no solo el mostrado, sale de la fuente correcta). Es el
+  corazón del issue: el número que entra al registro de reserva.
