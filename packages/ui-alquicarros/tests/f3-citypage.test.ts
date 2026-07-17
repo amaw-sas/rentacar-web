@@ -101,24 +101,19 @@ describe('F3 — CityPage orquestador (reemplaza el monolito rojo viejo)', () =>
   it('ya NO contiene las secciones rojas inline del monolito viejo', () => {
     expect(cp()).not.toMatch(RED_CLASS)
   })
-  // BUG (fuga de resultados): resultsActive era solo-store (pending||results||error).
-  // El store Pinia es singleton de la SPA, así que tras una búsqueda CON resultados
-  // una navegación SPA a un landing /[city] dejaba el store poblado y el bloque de
-  // resultados se renderizaba BAJO el hero de marketing. El gate debe depender de
-  // mode === 'results' (simétrico al gate de marketing).
-  //
-  // F3 Paso 10 (wizard): el bloque de resultados ahora es <ReservationWizard>
-  // gateado por `v-if="mode === 'results'"` — un gate PURO por prop SSR-estable
-  // (ya no un computed store-dependiente). Reapuntado del resultsActive computed
-  // al gate del template (SCEN-F3-15, sin debilitar): el observable es idéntico y
-  // más fuerte — sin dependencia de store, un singleton poblado NO puede filtrar
-  // resultados al landing.
-  it('SCEN-F3-01b: resultados solo en mode results — landing no filtra estado viejo', () => {
+  // BUG (fuga de resultados, histórico): resultsActive era solo-store y un
+  // singleton poblado filtraba el bloque de resultados al landing. El gate pasó
+  // a `mode === 'results'` (F3 Paso 10) y quedó como dead-code inalcanzable
+  // cuando routing independence eliminó buscar-vehiculos de alquicarros — la
+  // "limpieza diferida" anotada abajo. SCEN-322-X06 la ejecutó: el bloque de
+  // resultados (y el import estático del wizard) ya no existe en CityPage, así
+  // que un landing no puede filtrar estado viejo NI descargar el motor de
+  // reservas. El wizard vive solo en /reservas.
+  it('SCEN-F3-01b/SCEN-322-X06: el landing no monta ni importa el motor de reservas', () => {
     const src = cp()
-    // El bloque de resultados (#seleccion-categorias) se gatea por mode === 'results'
-    expect(src).toMatch(/id="seleccion-categorias"[\s\S]{0,80}v-if="mode === 'results'"/)
-    // …monta el wizard guiado
-    expect(src).toMatch(/<ReservationWizard\b/)
+    expect(src).not.toMatch(/id="seleccion-categorias"/)
+    expect(src).not.toMatch(/<ReservationWizard\b/)
+    expect(src).not.toMatch(/components\/wizard/)
     // …y el marketing genérico sigue gateado simétricamente (oculto en results)
     expect(src).toMatch(/mode !== 'results'/)
   })

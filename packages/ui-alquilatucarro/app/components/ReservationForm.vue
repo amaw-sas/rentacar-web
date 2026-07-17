@@ -85,6 +85,12 @@
             :preferred-countries="phonePreferredCountries"
             @blur="validatePhoneField"
           />
+          <!-- SCEN-322-X01: deterministic id for the error message so the input's
+               aria-describedby (set via phoneInputOptions while invalid) points
+               here. UFormField wraps this slot in its own error container. -->
+          <template #error="{ error }">
+            <span id="telefono-error">{{ error }}</span>
+          </template>
         </u-form-field>
         <u-form-field class="col-span-2" name="politicaPrivacidad">
           <!-- Checkbox y texto como hermanos (no usar el slot label): así clic en
@@ -173,8 +179,8 @@ const baseForm = {
   vehiculo,
 };
 
-// Flight schema branch removed (issue 322 SCEN-322-D02) — no template collects
-// aerolinea/numeroVueloIda; validating them was a dead trap.
+// Flight schema branch removed (issue 322 SCEN-322-D02/X07) — no template
+// collects flight fields; validating them was a dead trap.
 const reservationFormState = reactive(baseForm);
 
 const formState = ref(

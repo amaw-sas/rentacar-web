@@ -13,6 +13,10 @@
     en cada app), compartido con la página /chat.
   -->
   <ClientOnly>
+    <!-- SCEN-322-X05: teleported to <body> so the overlay lives OUTSIDE the app
+         root (#__nuxt) — that lets the whole page behind the backdrop be marked
+         inert while the panel is open without inerting the chat itself. -->
+    <Teleport to="body">
     <div class="fixed inset-0 pointer-events-none z-[60]">
       <!-- Región aria-live persistente (siempre en el DOM, nunca v-if): anuncia
            un mensaje nuevo cuando llega con el chat cerrado. -->
@@ -115,6 +119,7 @@
         </button>
       </div>
     </div>
+    </Teleport>
   </ClientOnly>
 </template>
 
@@ -145,6 +150,20 @@ watch(panelOpen, async (open) => {
     panelEl.value?.focus()
   }
 })
+
+// SCEN-322-X05: while the inline panel is open the page behind the backdrop is
+// inert (not tabbable, hidden from AT). The overlay is teleported to <body>, so
+// inerting the app root (#__nuxt) never touches the chat itself. The unmount
+// hook prevents an orphaned inert if the widget unmounts with the panel open.
+function setBackgroundInert(on: boolean) {
+  if (typeof document === 'undefined') return
+  const appRoot = document.getElementById('__nuxt')
+  if (!appRoot) return
+  if (on) appRoot.setAttribute('inert', '')
+  else appRoot.removeAttribute('inert')
+}
+watch(panelOpen, (open) => setBackgroundInert(open))
+onBeforeUnmount(() => setBackgroundInert(false))
 onMounted(() => {
   if (import.meta.client) window.addEventListener('keydown', onKeydown)
 })
