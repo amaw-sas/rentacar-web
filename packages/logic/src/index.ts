@@ -41,6 +41,7 @@ export * from './composables/useMoneyFormat'
 export * from './composables/usePhoneField'
 export * from './composables/useRecordReservationForm'
 export * from './composables/useChatConversation'
+export * from './composables/useContactTeaser'
 
 // Stores (se auto-importan via Nuxt Layer, pero también exportados aquí)
 export { default as useStoreAdminData } from './stores/useStoreAdminData'
