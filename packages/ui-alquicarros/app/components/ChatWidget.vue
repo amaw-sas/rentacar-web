@@ -17,6 +17,8 @@
       <!-- Región aria-live persistente (siempre en el DOM, nunca v-if): anuncia
            un mensaje nuevo cuando llega con el chat cerrado. -->
       <span class="sr-only" role="status" aria-live="polite">{{ announce }}</span>
+      <!-- Región aria-live del teaser proactivo (texto sin emoji, nunca v-if). -->
+      <span class="sr-only" role="status" aria-live="polite">{{ teaserAnnounce }}</span>
 
       <!-- Backdrop -->
       <button
@@ -42,6 +44,23 @@
       </div>
 
       <div class="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
+        <!-- Burbuja de saludo proactiva (teaser). Anclada al FAB, cero CLS: es
+             un hijo flex más, apilado sobre el menú/botón. Clic en la tarjeta
+             abre el menú (toggle, no limpia el sintético); la X descarta. No
+             roba foco (sin autofocus). -->
+        <div v-if="teaserOpen" class="teaser-bubble" @click="toggle">
+          <button
+            type="button"
+            class="teaser-close"
+            aria-label="Cerrar mensaje"
+            @click.stop="teaser.dismiss()"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+          <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
+          <p v-if="teaserStep === 2" class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+        </div>
+
         <!-- Menú de 3 vías (orden: Chat, WhatsApp, Llamar) -->
         <ul
           v-show="menuOpen"
@@ -71,6 +90,7 @@
               rel="noopener noreferrer"
               class="fab-item"
               aria-label="Abrir WhatsApp"
+              @click="teaser.engage('whatsapp')"
             >
               <span class="fab-label">WhatsApp</span>
               <span class="fab-circle fab-whatsapp">
@@ -83,6 +103,7 @@
               :href="`tel:${franchise.phone}`"
               class="fab-item"
               :aria-label="`Llamar al ${franchise.phone}`"
+              @click="teaser.engage('llamada')"
             >
               <span class="fab-label">Llámanos</span>
               <span class="fab-circle fab-call">
@@ -97,9 +118,9 @@
           type="button"
           :aria-expanded="menuOpen"
           aria-controls="contact-fab-menu"
-          :aria-label="menuOpen || panelOpen ? 'Cerrar' : unread > 0 ? `Abrir opciones de contacto (${unread} ${unread === 1 ? 'mensaje nuevo' : 'mensajes nuevos'})` : 'Abrir opciones de contacto'"
+          :aria-label="menuOpen || panelOpen ? 'Cerrar' : badgeCount > 0 ? `Abrir opciones de contacto (${badgeCount} ${badgeCount === 1 ? 'mensaje nuevo' : 'mensajes nuevos'})` : 'Abrir opciones de contacto'"
           class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 hover:scale-105 transition-all duration-200"
-          :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen && unread === 0 }"
+          :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen && badgeCount === 0 }"
           @click="toggle"
         >
           <svg v-if="!menuOpen && !panelOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -109,9 +130,10 @@
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
           </svg>
 
-          <!-- Insignia de no leídos: único FAB del sitio (restricción de usuario).
-               Abrir el menú NO la limpia; solo abrir el chat (markRead). -->
-          <span v-if="unread > 0" class="fab-badge" aria-hidden="true">{{ unread > 9 ? '9+' : unread }}</span>
+          <!-- Insignia del FAB: no leídos REALES mandan; si no hay, el contador
+               sintético del teaser. Abrir el menú NO limpia el real (solo abrir
+               el chat → markRead); el sintético se limpia con engage/dismiss. -->
+          <span v-if="badgeCount > 0" class="fab-badge" aria-hidden="true">{{ badgeCount > 9 ? '9+' : badgeCount }}</span>
         </button>
       </div>
     </div>
@@ -119,8 +141,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
+import { TEASER_LINE_1, TEASER_LINE_2 } from '@rentacar-main/logic/composables/useContactTeaser'
 
 const { franchise } = useAppConfig()
 // Visibilidad del chat = el switch por marca del dashboard manda (auto-import
@@ -135,6 +158,34 @@ const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
+// Singleton compartido con ChatConversation: leemos el contador de no leídos para
+// la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
+// inerte en servidor). La insignia se limpia cuando la SUPERFICIE monta
+// (onSurfaceMounted → markRead), no aquí: marcar leído en openChat borraría el
+// separador "Mensajes nuevos" antes de que ChatConversation capture su ancla.
+const { unread, announce, emitReopenedFromBadge } = useChatConversation()
+
+// Teaser proactivo (saludo + badge sintético). Singleton por marca, SSR-safe
+// (instancia inerte en servidor). El texto/keys viven en el composable.
+const teaser = useContactTeaser()
+const { syntheticCount, teaserVisible, teaserStep, teaserAnnounce } = teaser
+
+// El badge del FAB fusiona no leídos REALES (mandan) con el contador sintético
+// del teaser; el chip del ítem Chat del menú sigue en unread real (novedad del
+// chat, no del teaser).
+const badgeCount = computed(() => (unread.value > 0 ? unread.value : syntheticCount.value))
+
+// La burbuja de saludo solo cuando NO hay no leídos reales y el FAB está
+// colapsado (ni menú ni panel abiertos).
+const teaserOpen = computed(
+  () => teaserVisible.value && unread.value === 0 && !menuOpen.value && !panelOpen.value,
+)
+
+// Cuando aparece un no leído REAL, el teaser sintético queda cancelado para toda
+// la sesión (no resucita al leerlo). immediate: cubre tanto el no leído que llega
+// en vivo como uno restaurado al montar.
+watch(unread, (v) => { if (v > 0) teaser.suppressForSession() }, { immediate: true })
+
 // SCEN-322-A02: Escape cierra menú/panel; foco al panel al abrir.
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') closeAll()
@@ -147,17 +198,14 @@ watch(panelOpen, async (open) => {
 })
 onMounted(() => {
   if (import.meta.client) window.addEventListener('keydown', onKeydown)
+  // Teaser proactivo: arranca los timers 5s/20s. El único FAB del sitio, así
+  // que el badge sintético comparte el chip rojo con los no leídos reales.
+  teaser.start({ realUnread: () => unread.value })
 })
 onBeforeUnmount(() => {
   if (import.meta.client) window.removeEventListener('keydown', onKeydown)
+  teaser.stop()
 })
-
-// Singleton compartido con ChatConversation: leemos el contador de no leídos para
-// la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
-// inerte en servidor). La insignia se limpia cuando la SUPERFICIE monta
-// (onSurfaceMounted → markRead), no aquí: marcar leído en openChat borraría el
-// separador "Mensajes nuevos" antes de que ChatConversation capture su ancla.
-const { unread, announce, emitReopenedFromBadge } = useChatConversation()
 
 function toggle() {
   if (panelOpen.value) panelOpen.value = false
@@ -168,6 +216,8 @@ function closeAll() {
   panelOpen.value = false
 }
 function openChat() {
+  // Cualquier acción de contacto limpia el teaser sintético y marca supresión 15d.
+  teaser.engage('chat')
   // Abrir el chat (no el menú) es lo único que limpia la insignia — lo hace la
   // superficie al montar (onSurfaceMounted → markRead). Aquí solo el beacon.
   if (unread.value > 0) emitReopenedFromBadge()
@@ -256,6 +306,42 @@ button { -webkit-tap-highlight-color: transparent; }
   border: 2px solid #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
+
+/* --- Burbuja de saludo proactiva (teaser) --- */
+.teaser-bubble {
+  position: relative;
+  max-width: min(16rem, calc(100vw - 6rem));
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(4px);
+  color: #111827;
+  padding: 0.75rem 2rem 0.75rem 0.9rem; /* margen derecho para la X */
+  border-radius: 1rem 1rem 0.25rem 1rem; /* esquina hacia el FAB */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transform-origin: bottom right;
+  animation: teaser-pop 0.2s ease-out;
+}
+.teaser-line { font-size: 0.875rem; font-weight: 500; line-height: 1.35; }
+.teaser-line-2 { margin-top: 0.4rem; color: #374151; font-weight: 400; }
+.teaser-close {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  width: 2rem;
+  height: 2rem; /* hit area ≥ 2rem */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: #6b7280;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.teaser-close:hover { background: rgba(0, 0, 0, 0.06); color: #111827; }
+@keyframes teaser-pop {
+  from { opacity: 0; transform: scale(0.9) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .teaser-bubble { animation: none; } }
 
 /* Solo lector de pantalla (región aria-live). */
 .sr-only {
