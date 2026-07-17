@@ -14,7 +14,7 @@ const source = readFileSync(
 // scroll) are covered by browser QA.
 describe('SCEN-101 — piquito on first bubble of a same-sender run', () => {
   it('binds is-group-start on user, typing and assistant bubbles', () => {
-    expect(source).toMatch(/is-user" :class="\{ 'has-time': !!m\.createdAt, 'is-group-start': isGroupStart\(msgIdx\) \}"/)
+    expect(source).toMatch(/is-user"[^>]{0,60}:class="\{ 'has-time': !!m\.createdAt, 'is-group-start': isGroupStart\(msgIdx\) \}"/)
     expect(source).toMatch(/!m\.text && isStreaming" class="cc-msg is-assistant" :class="\{ 'is-group-start': isGroupStart\(msgIdx\) \}"/)
     expect(source).toMatch(/'is-group-start': i === 0 && isGroupStart\(msgIdx\),/)
   })

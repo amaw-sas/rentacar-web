@@ -43,8 +43,18 @@
         </div>
 
         <!-- Usuario: siempre una sola burbuja -->
-        <div v-if="m.role === 'user'" class="cc-msg is-user" :class="{ 'has-time': !!m.createdAt, 'is-group-start': isGroupStart(msgIdx) }">
-          <span v-if="m.replyTo" class="cc-reply-quote">{{ m.replyTo.label }}</span>
+        <div v-if="m.role === 'user'" class="cc-msg is-user" :data-mid="m.id" :class="{ 'has-time': !!m.createdAt, 'is-group-start': isGroupStart(msgIdx) }">
+          <span
+            v-if="m.replyTo"
+            class="cc-reply-quote"
+            role="button"
+            tabindex="0"
+            @click="scrollToQuoted(m.replyTo)"
+            @keydown.enter="scrollToQuoted(m.replyTo)"
+          >
+            <span class="cc-reply-author">{{ m.replyTo.author || 'Referencia' }}</span>
+            <span class="cc-reply-preview">{{ m.replyTo.preview || m.replyTo.label }}</span>
+          </span>
           {{ m.text }}
           <span v-if="m.createdAt" class="cc-time">{{ fmtTime(m.createdAt) }}</span>
         </div>
@@ -60,12 +70,22 @@
             v-for="(chunk, i) in bubblesFor(m)"
             :key="`${m.id}-${i}`"
             class="cc-msg is-assistant"
+            :data-mid="i === 0 ? m.id : undefined"
             :class="{
               'has-time': !!m.createdAt,
               'has-parts': i === bubblesFor(m).length - 1 && !!(m.quoteTable || m.gamaCards || m.actions),
               'is-group-start': i === 0 && isGroupStart(msgIdx),
             }"
+            @touchstart.passive="onSwipeStart"
+            @touchmove.passive="onSwipeMove"
+            @touchend="onSwipeEnd($event, () => replyToBubble(m, chunk))"
           >
+            <span class="cc-swipe-hint" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11" /></svg>
+            </span>
+            <button type="button" class="cc-bubble-reply-btn" aria-label="Responder a este mensaje" @click="replyToBubble(m, chunk)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11" /></svg>
+            </button>
             <span v-if="chunk" class="cc-text" v-html="renderChatMarkdown(chunk)" />
 
             <!-- Partes "code-owned": solo en la última burbuja del mensaje -->
@@ -80,11 +100,11 @@
                   role="button"
                   tabindex="0"
                   :aria-label="`Responder sobre la Gama ${f.categoria}`"
-                  @click="replyToGama(f)"
-                  @keydown.enter="replyToGama(f)"
-                  @touchstart.passive="onSwipeStart"
-                  @touchmove.passive="onSwipeMove"
-                  @touchend="onSwipeEnd($event, () => replyToGama(f))"
+                  @click="replyToGama(f, m.id)"
+                  @keydown.enter="replyToGama(f, m.id)"
+                  @touchstart.stop.passive="onSwipeStart"
+                  @touchmove.stop.passive="onSwipeMove"
+                  @touchend.stop="onSwipeEnd($event, () => replyToGama(f, m.id))"
                 >
                   <span class="cc-quote-gama">{{ f.descripcion }} <span class="cc-quote-desc">(Gama {{ f.categoria }})</span></span>
                   <strong class="cc-quote-price">${{ cop(f.precioTotal) }}</strong>
@@ -107,11 +127,11 @@
                     role="button"
                     tabindex="0"
                     :aria-label="`Responder sobre el modelo ${mod.nombre}`"
-                    @click="replyToModelo(mod, m.gamaCards)"
-                    @keydown.enter="replyToModelo(mod, m.gamaCards)"
-                    @touchstart.passive="onSwipeStart"
-                    @touchmove.passive="onSwipeMove"
-                    @touchend="onSwipeEnd($event, () => replyToModelo(mod, m.gamaCards))"
+                    @click="replyToModelo(mod, m.gamaCards, m.id)"
+                    @keydown.enter="replyToModelo(mod, m.gamaCards, m.id)"
+                    @touchstart.stop.passive="onSwipeStart"
+                    @touchmove.stop.passive="onSwipeMove"
+                    @touchend.stop="onSwipeEnd($event, () => replyToModelo(mod, m.gamaCards, m.id))"
                   >
                     <img
                       v-if="mod.imagen"
@@ -159,12 +179,18 @@
     </div>
 
     <div v-if="replyTo" class="cc-reply-bar">
-      <span class="cc-reply-bar-label">Respondiendo a: {{ replyTo.label }}</span>
-      <button type="button" class="cc-reply-bar-x" aria-label="Quitar referencia" @click="replyTo = null">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
+      <div class="cc-reply-card">
+        <button type="button" class="cc-reply-card-body" @click="scrollToQuoted(replyTo)">
+          <span class="cc-reply-author">{{ replyTo.author || 'Referencia' }}</span>
+          <span class="cc-reply-preview">{{ replyTo.preview || replyTo.label }}</span>
+        </button>
+        <img v-if="replyTo.image" class="cc-reply-thumb" :src="replyTo.image" alt="">
+        <button type="button" class="cc-reply-bar-x" aria-label="Quitar referencia" @click="replyTo = null">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
     </div>
     <form class="cc-input" @submit.prevent="submit">
       <input
@@ -274,20 +300,54 @@ const inputEl = ref<HTMLInputElement | null>(null)
 // onSurfaceMounted() advances the read-marker (which would zero it out).
 const newSeparatorBeforeId = ref<string | null>(null)
 
-// --- "Responder a" estilo WhatsApp: tocar/clic o deslizar a la derecha una gama
-// (fila de cotización) o un modelo lo cita arriba del área de escritura; el bot
-// recibe el contexto sin que el cliente lo escriba (ver useChatConversation). ---
-function replyToGama(f: { categoria: string; descripcion: string; precioTotal: number }) {
+// --- "Responder a" estilo WhatsApp: tocar/clic o deslizar a la derecha una gama,
+// un modelo o cualquier burbuja del bot la cita arriba del área de escritura; el
+// bot recibe solo `context` (los demás campos son de UI, ver useChatConversation). ---
+function replyToGama(f: { categoria: string; descripcion: string; precioTotal: number }, targetId?: string) {
   replyTo.value = {
     label: `Gama ${f.categoria} · ${f.descripcion}`,
     context: `[El cliente responde sobre la Gama ${f.categoria} (${f.descripcion}), total cotizado $${f.precioTotal}.]`,
+    author: 'Asesora',
+    preview: `Gama ${f.categoria} · ${f.descripcion}`,
+    targetId,
   }
 }
-function replyToModelo(mod: { nombre: string }, cards: { gama: string; descripcion?: string }) {
+function replyToModelo(mod: { nombre: string; imagen?: string }, cards: { gama: string; descripcion?: string }, targetId?: string) {
   replyTo.value = {
     label: `${mod.nombre} · Gama ${cards.gama}`,
     context: `[El cliente responde sobre el modelo ${mod.nombre} de la Gama ${cards.gama}.]`,
+    author: 'Asesora',
+    preview: `${mod.nombre} · Gama ${cards.gama}`,
+    image: mod.imagen || undefined,
+    targetId,
   }
+}
+// Cita de una burbuja de texto libre: preview sin tokens de markdown, recortada.
+function stripMd(s: string): string {
+  return s.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim()
+}
+function replyToBubble(m: { id: string }, chunk: string) {
+  const preview = (stripMd(chunk) || 'Cotización').slice(0, 80)
+  replyTo.value = {
+    label: preview,
+    context: `[El cliente responde a este mensaje de la asesora: "${preview}"]`,
+    author: 'Asesora',
+    preview,
+    targetId: m.id,
+  }
+}
+// Tocar una cita salta al mensaje original y lo destella (no-op si el mensaje ya
+// no existe o el transcript es viejo y no trae targetId).
+function scrollToQuoted(r: { targetId?: string } | null) {
+  const target = r?.targetId
+  if (!target || !scrollEl.value) return
+  const el = scrollEl.value.querySelector(`[data-mid="${CSS.escape(target)}"]`) as HTMLElement | null
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  el.classList.remove('cc-flash')
+  void el.offsetWidth
+  el.classList.add('cc-flash')
+  window.setTimeout(() => el.classList.remove('cc-flash'), 1300)
 }
 
 // Swipe-to-reply: sigue el dedo a la derecha y dispara al soltar pasado el umbral.
@@ -314,12 +374,16 @@ function onSwipeMove(e: TouchEvent) {
     return
   }
   const el = e.currentTarget as HTMLElement
-  el.style.transform = `translateX(${Math.max(0, Math.min(dx, 72))}px)`
+  const px = Math.max(0, Math.min(dx, 72))
+  el.style.transform = `translateX(${px}px)`
+  // Alimenta el hint ↩ (opacidad/escala proporcionales al arrastre, tope en el umbral).
+  el.style.setProperty('--cc-sdx', String(Math.min(px / SWIPE_TRIGGER, 1)))
 }
 function onSwipeEnd(e: TouchEvent, fire: () => void) {
   const el = e.currentTarget as HTMLElement
   const endX = e.changedTouches[0]?.clientX ?? swipeX
   el.style.transform = ''
+  el.style.removeProperty('--cc-sdx')
   if (swiping && endX - swipeX >= SWIPE_TRIGGER) fire()
   swiping = false
 }
@@ -407,6 +471,7 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cc-avatar-dot { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
+  .cc-flash { animation: none; }
 }
 .cc-titlewrap { flex: 1; min-width: 0; }
 .cc-title { font-weight: 700; color: #111827; font-size: 0.95rem; line-height: 1.15; margin: 0; }
@@ -628,34 +693,124 @@ button { -webkit-tap-highlight-color: transparent; }
 .cc-retry-btn:hover { opacity: 0.92; }
 
 /* --- "Responder a" estilo WhatsApp --- */
-.cc-replyable { cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; touch-action: pan-y; }
+.cc-replyable { position: relative; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; touch-action: pan-y; }
 .cc-replyable:hover { background: rgba(0, 0, 0, 0.04); }
+/* Las burbujas del bot también son deslizables (touch-action deja pasar el scroll). */
+.cc-msg.is-assistant { touch-action: pan-y; }
+/* Hint ↩ al deslizar: opacidad/escala siguen a --cc-sdx (0→1 hasta el umbral). */
+.cc-swipe-hint {
+  position: absolute;
+  left: -2.5rem;
+  top: 50%;
+  width: 2rem;
+  height: 2rem;
+  margin-top: -1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(11, 20, 26, 0.18);
+  color: #fff;
+  opacity: var(--cc-sdx, 0);
+  transform: scale(calc(0.6 + 0.4 * var(--cc-sdx, 0)));
+  pointer-events: none;
+}
+/* Responder desde desktop: botón ↩ que aparece al pasar el mouse por la burbuja. */
+.cc-bubble-reply-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #fff;
+  color: #54656f;
+  box-shadow: 0 1px 2px rgba(11, 20, 26, 0.2);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+.cc-msg.is-assistant:hover .cc-bubble-reply-btn { opacity: 1; pointer-events: auto; }
+@media (hover: none) { .cc-bubble-reply-btn { display: none; } }
+/* Destello al saltar a la cita (WhatsApp): oscurece la burbuja un instante. */
+@keyframes cc-flash {
+  0%, 100% { filter: none; }
+  30% { filter: brightness(0.82); }
+}
+.cc-flash { animation: cc-flash 1.2s ease; }
+/* Cita dentro de la burbuja enviada: bloque entintado con barra y autor en color. */
 .cc-reply-quote {
   display: block;
-  border-left: 3px solid rgba(0, 0, 0, 0.3);
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 0.25rem;
-  padding: 0.2rem 0.5rem;
-  margin-bottom: 0.25rem;
-  font-size: 0.75rem;
+  width: 100%;
+  border-left: 4px solid var(--ui-primary, #cc022b);
+  background: rgba(11, 20, 26, 0.06);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  margin-bottom: 0.3rem;
+  cursor: pointer;
+  text-align: left;
   color: #111b21;
-  opacity: 0.85;
 }
+.cc-reply-author {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ui-primary, #cc022b);
+}
+.cc-reply-preview {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #667781;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+/* Tarjeta de respuesta sobre el input (composer), calcada de WhatsApp. */
 .cc-reply-bar {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.5rem 0.75rem 0;
   background: #ece5dd;
   border-top: 1px solid #d8cfc4;
   flex-shrink: 0;
 }
-.cc-reply-bar-label {
-  flex: 1; min-width: 0;
-  border-left: 3px solid var(--ui-primary, #cc022b);
-  padding-left: 0.5rem;
-  font-size: 0.8rem; color: #111827;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.cc-reply-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  border-left: 4px solid var(--ui-primary, #cc022b);
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+}
+.cc-reply-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  cursor: pointer;
+}
+.cc-reply-card-body .cc-reply-author { font-size: 0.8rem; }
+.cc-reply-card-body .cc-reply-preview {
+  font-size: 0.8rem;
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: unset;
+}
+.cc-reply-thumb {
+  width: 3.25rem;
+  height: 3.25rem;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 .cc-reply-bar-x {
+  margin: 0 0.25rem;
   display: flex; align-items: center; justify-content: center;
   width: 1.75rem; height: 1.75rem; flex-shrink: 0;
   border-radius: 9999px; color: #6b7280;
