@@ -129,8 +129,8 @@ es opcional, así que los fixtures de test siguen compilando.
 
 ### 5. Cross-repo
 
-Issue companion en `rentacar-dashboard`: agregar `IVAFeePercentage` al payload de
-`/api/reservations/availability`. Hasta ese despliegue, la web opera con el
+Issue companion `rentacar-dashboard#280`: agregar `IVAFeePercentage` al payload
+de `/api/reservations/availability`. Hasta ese despliegue, la web opera con el
 fallback. Sin acople de release.
 
 ## Blast radius

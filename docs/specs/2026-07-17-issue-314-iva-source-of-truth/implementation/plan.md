@@ -49,8 +49,8 @@ Luego el código: reemplazar `/ 1.19` en `useRecordReservationForm.ts`.
 **Criterio de aceptación:** SCEN-04 pasa (`total_price` numéricamente igual al comportamiento previo para 19%); SCEN-06 pasa (`iva_fee` persistido = recálculo con 21%).
 
 ### Paso 5 — Issue companion en el dashboard | Size: S | Deps: none (paralelo)
-Abrir issue en `rentacar-dashboard`: agregar `IVAFeePercentage` al payload de `/api/reservations/availability` (simétrico a `taxFeePercentage`). Referenciar #314.
-**Criterio de aceptación:** issue creada y enlazada; el spec la menciona como dependencia cross-repo.
+Abrir issue en `rentacar-dashboard`: agregar `IVAFeePercentage` al payload de `/api/reservations/availability` (simétrico a `taxFeePercentage`). Referenciar #314. → **Creada: rentacar-dashboard#280.**
+**Criterio de aceptación:** issue creada y enlazada; el spec la menciona como dependencia cross-repo. ✅
 
 ## Estrategia de testing
 
