@@ -6,7 +6,7 @@ import useFetchRentacarData from '../useFetchRentacarData'
 // case e.g. dev HMR or hydration mismatch), useFetchRentacarData() must
 // return a frozen empty sentinel instead of throwing. The throw used to
 // corrupt the Pinia factory of useStoreAdminData (issue #3) and crash
-// every direct consumer (useCategory, useLocalBusiness, useCityProductSchema,
+// every direct consumer (useCategory, useCityProductSchema,
 // ReservationResume.vue, CategorySelectionSection.vue).
 
 describe('useFetchRentacarData', () => {
