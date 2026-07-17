@@ -36,21 +36,21 @@
       <p v-if="!messages.length" class="cc-empty">
         ¡Hola! 👋 Pregúntame por ciudades, precios, requisitos o tu reserva.
       </p>
-      <template v-for="m in messages" :key="m.id">
+      <template v-for="(m, msgIdx) in messages" :key="m.id">
         <!-- Separador "Mensajes nuevos": antes del primer mensaje no leído -->
         <div v-if="newSeparatorBeforeId && m.id === newSeparatorBeforeId" class="cc-new-sep">
           <span>Mensajes nuevos</span>
         </div>
 
         <!-- Usuario: siempre una sola burbuja -->
-        <div v-if="m.role === 'user'" class="cc-msg is-user">
+        <div v-if="m.role === 'user'" class="cc-msg is-user" :class="{ 'has-time': !!m.createdAt, 'is-group-start': isGroupStart(msgIdx) }">
           <span v-if="m.replyTo" class="cc-reply-quote">{{ m.replyTo.label }}</span>
           {{ m.text }}
           <span v-if="m.createdAt" class="cc-time">{{ fmtTime(m.createdAt) }}</span>
         </div>
 
         <!-- Asistente "escribiendo": texto estático mientras llega la respuesta -->
-        <div v-else-if="!m.text && isStreaming" class="cc-msg is-assistant">
+        <div v-else-if="!m.text && isStreaming" class="cc-msg is-assistant" :class="{ 'is-group-start': isGroupStart(msgIdx) }">
           <span class="cc-typing-text" aria-live="polite">escribiendo…</span>
         </div>
 
@@ -60,6 +60,11 @@
             v-for="(chunk, i) in bubblesFor(m)"
             :key="`${m.id}-${i}`"
             class="cc-msg is-assistant"
+            :class="{
+              'has-time': !!m.createdAt,
+              'has-parts': i === bubblesFor(m).length - 1 && !!(m.quoteTable || m.gamaCards || m.actions),
+              'is-group-start': i === 0 && isGroupStart(msgIdx),
+            }"
           >
             <span v-if="chunk" class="cc-text" v-html="renderChatMarkdown(chunk)" />
 
@@ -250,6 +255,11 @@ const {
   retryDangling,
 } = useChatConversation()
 
+// Primera burbuja de una racha del mismo remitente → lleva el "piquito" (WhatsApp).
+function isGroupStart(idx: number): boolean {
+  return messages.value[idx - 1]?.role !== messages.value[idx]?.role
+}
+
 const inputFocused = ref(false)
 const inputEl = ref<HTMLInputElement | null>(null)
 // Boundary for the "Mensajes nuevos" separator, snapshotted on mount BEFORE
@@ -414,29 +424,78 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .cc-empty { color: #6b7280; font-size: 0.875rem; text-align: center; margin: auto 0; padding: 1rem; }
 .cc-msg {
+  position: relative;
   max-width: 85%;
   padding: 0.5rem 0.75rem;
-  border-radius: 0.875rem;
+  border-radius: 7.5px;
   font-size: 1rem;
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
 }
 .cc-msg.is-user {
   align-self: flex-end;
   background: #d9fdd3;
   color: #111b21;
-  border-bottom-right-radius: 0.25rem;
 }
 .cc-msg.is-assistant {
   align-self: flex-start;
   background: #fff;
   color: #111827;
-  border-bottom-left-radius: 0.25rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+/* Piquito WhatsApp: solo en la primera burbuja de una racha del mismo
+   remitente; sobresale 8px dentro del padding de 1rem de .cc-messages,
+   así que no crea overflow-x. */
+.cc-msg.is-user.is-group-start { border-top-right-radius: 0; }
+.cc-msg.is-user.is-group-start::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-top: 10px solid #d9fdd3;
+  border-right: 8px solid transparent;
+  filter: drop-shadow(0 1px 0.5px rgba(11, 20, 26, 0.13));
+}
+.cc-msg.is-assistant.is-group-start { border-top-left-radius: 0; }
+.cc-msg.is-assistant.is-group-start::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 10px solid #fff;
+  border-left: 8px solid transparent;
+  filter: drop-shadow(0 1px 0.5px rgba(11, 20, 26, 0.13));
 }
 .cc-text, .cc-actions { display: block; }
-.cc-time { display: block; font-size: 0.65rem; line-height: 1; opacity: 0.55; text-align: right; margin-top: 0.25rem; }
+/* Hora dentro de la burbuja, pegada a la esquina inferior derecha (WhatsApp):
+   posición absoluta + espaciador ::after que reserva su ancho al final de la
+   última línea de texto, para que nunca queden superpuestos. */
+.cc-time {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.3125rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  color: rgba(17, 27, 33, 0.5);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.cc-msg.is-user.has-time::after,
+.cc-msg.is-assistant.has-time .cc-text::after {
+  content: '';
+  display: inline-block;
+  width: 4.25em; /* ~ ancho de "10:45 p. m." a 0.6875rem */
+  height: 0;
+}
+/* Burbujas que terminan en partes estructuradas (tabla, tarjetas, CTAs):
+   contenido de ancho completo hasta el borde inferior → hora en fila propia. */
+.cc-msg.has-parts .cc-time { position: static; display: block; margin-top: 0.25rem; text-align: right; }
+.cc-msg.has-parts .cc-text::after { content: none; }
 .cc-link-btn {
   display: block;
   margin-top: 0.5rem;
