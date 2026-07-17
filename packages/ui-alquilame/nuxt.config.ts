@@ -655,6 +655,12 @@ export default defineNuxtConfig({
       // (reescribe path→path preservando el resto — categoria/referido incluidos —,
       // solo descarta el segmento de ciudad). Un routeRule `**` de Nitro NO sirve:
       // con el `:city` intermedio reenvía el path completo (/reservas/{city}/buscar-…).
+      // Issue #322 SCEN-322-N01 — ONE render strategy per route. Home + the 19
+      // city landings used to be BOTH in prerender.routes and here with
+      // `isr: 3600`; the prerendered snapshot won and ISR was dead letter, so
+      // prices/schedules stayed frozen at build time. Decision: drop them from
+      // prerender.routes and keep only `isr: 3600` (hourly revalidation — same
+      // pattern as /blog, which already works this way in prod).
       '/': { isr: 3600 },
       '/armenia': { isr: 3600 },
       '/barranquilla': { isr: 3600 },
@@ -681,26 +687,11 @@ export default defineNuxtConfig({
     },
     prerender: {
       routes: [
-        '/',
-        '/armenia',
-        '/barranquilla',
-        '/bogota',
-        '/bucaramanga',
-        '/cali',
-        '/cartagena',
-        '/cucuta',
-        '/ibague',
-        '/manizales',
-        '/medellin',
-        '/monteria',
-        '/neiva',
-        '/pereira',
-        '/santa-marta',
-        '/valledupar',
-        '/villavicencio',
-        '/floridablanca',
-        '/palmira',
-        '/soledad',
+        // Issue #322 SCEN-322-N01 — home + the 19 city landings were removed
+        // from this list on purpose: they carry live prices/schedules and are
+        // served via `isr: 3600` (routeRules above). Prerendering them here
+        // made the build-time snapshot win over ISR, freezing that data.
+        // Only truly static pages stay prerendered.
         '/gana',
         '/gana/terminos-condiciones',
         '/gana/politicas-privacidad',
