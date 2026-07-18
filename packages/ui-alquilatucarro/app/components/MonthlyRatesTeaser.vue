@@ -50,8 +50,8 @@ import monthlyTeaserSrc from '~/assets/images/monthly/teaser-suv-bogota.webp';
 const tariffs = useTariffs();
 
 const minDaily = computed(() => {
-  if (tariffs.gamas.length === 0) return null;
-  return Math.min(...tariffs.gamas.map((g) => g.plan1k.daily));
+  if (tariffs.value.gamas.length === 0) return null;
+  return Math.min(...tariffs.value.gamas.map((g) => g.plan1k.daily));
 });
 
 function formatCOP(value: number): string {
