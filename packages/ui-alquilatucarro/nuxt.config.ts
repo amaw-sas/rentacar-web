@@ -101,6 +101,27 @@ export default defineNuxtConfig({
             .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
             .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
             .px-4 { padding-left: 1rem; padding-right: 1rem; }
+            .max-w-2xl { max-width: 42rem; }
+            .mb-12 { margin-bottom: 3rem; }
+            .aspect-video { aspect-ratio: 16 / 9; }
+            .h-full { height: 100%; }
+            .object-cover { object-fit: cover; }
+            @media (min-width: 640px) {
+              .sm\\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+              .sm\\:py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+            }
+            @media (min-width: 768px) {
+              .md\\:flex { display: flex; }
+              .md\\:w-1\\/2 { width: 50%; }
+              .md\\:aspect-auto { aspect-ratio: auto; }
+              .md\\:px-8 { padding-left: 2rem; padding-right: 2rem; }
+              .md\\:py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+              .md\\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+            }
+            @media (min-width: 1024px) {
+              .lg\\:px-8 { padding-left: 2rem; padding-right: 2rem; }
+              .lg\\:py-24 { padding-top: 6rem; padding-bottom: 6rem; }
+            }
             /* SEO Dashboard Critical CSS */
             .bg-gray-900 { background-color: #111827; }
             .bg-gray-800 { background-color: #1f2937; }
@@ -667,6 +688,8 @@ export default defineNuxtConfig({
       '/floridablanca': { isr: 3600 },
       '/palmira': { isr: 3600 },
       '/soledad': { isr: 3600 },
+      // Tariffs use the same hourly catalog data as the city pages.
+      '/tarifas': { isr: 3600 },
       // Blog — ISR como las city pages (issue #52)
       '/blog': { isr: 3600 },
       '/blog/**': { isr: 3600 },

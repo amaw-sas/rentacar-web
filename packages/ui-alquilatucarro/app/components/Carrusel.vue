@@ -9,7 +9,7 @@
       :ui="{
         viewport: 'rounded-t-lg',
         dots: 'bottom-5 gap-1',
-        dot: 'size-2 bg-gray-400/70 rounded-full transition-all duration-300 data-[state=active]:w-6 data-[state=active]:bg-white'
+        dot: 'category-carousel-dot'
       }"
     >
       <div
@@ -68,3 +68,42 @@ function onActivate() {
   emit('select');
 }
 </script>
+
+<style scoped>
+/* Keep every pagination slot the same width. The old active `w-6` changed the
+   dots row's layout mid-session; the visual pill now grows on the compositor. */
+:deep(.category-carousel-dot) {
+  position: relative;
+  width: 0.75rem;
+  height: 0.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+}
+
+:deep(.category-carousel-dot)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0.125rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: rgb(156 163 175 / 0.7);
+  transform: scaleX(1);
+  transition: transform 300ms ease, background-color 300ms ease;
+  will-change: transform;
+}
+
+:deep(.category-carousel-dot[data-state='active'])::after {
+  background: #fff;
+  transform: scaleX(3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :deep(.category-carousel-dot)::after {
+    transition: none;
+  }
+}
+</style>

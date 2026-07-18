@@ -30,13 +30,17 @@
           >
             <article class="bg-white rounded-xl shadow-md overflow-hidden md:flex hover:shadow-xl transition-shadow duration-300">
               <div class="md:w-1/2 aspect-video md:aspect-auto overflow-hidden">
-                <img
+                <NuxtImg
                   :src="featuredPost.image"
                   :alt="featuredPost.alt"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  width="640"
-                  height="360"
+                  width="1280"
+                  height="720"
+                  sizes="xs:100vw md:50vw xl:640px"
+                  format="webp"
                   loading="eager"
+                  decoding="async"
+                  fetchpriority="high"
                 />
               </div>
               <div class="p-6 md:w-1/2 flex flex-col justify-center">
@@ -119,13 +123,16 @@
           >
             <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-200 h-full flex flex-col">
               <div class="relative overflow-hidden aspect-video">
-                <img
+                <NuxtImg
                   :src="post.image"
                   :alt="post.alt"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   width="400"
                   height="225"
+                  sizes="xs:100vw md:50vw lg:33vw xl:400px"
+                  format="webp"
                   loading="lazy"
+                  decoding="async"
                 />
                 <span class="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-red-700 rounded-full">
                   <UIcon :name="getCategoryIcon(post.category)" class="size-3.5" />

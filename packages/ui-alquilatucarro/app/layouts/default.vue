@@ -4,7 +4,7 @@
     <div>
       <UHeader
         v-model:open="mobileMenuOpen"
-        class="bg-[#000073] z-40 py-4 md:py-6 px-4 lg:px-6 border-none relative"
+        class="h-16 bg-[#000073] z-40 py-4 md:py-6 px-4 lg:px-6 border-none relative"
         mode="slideover"
         :toggle="false"
         :ui="{

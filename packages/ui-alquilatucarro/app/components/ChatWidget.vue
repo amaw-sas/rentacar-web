@@ -47,22 +47,34 @@
         <ChatConversation variant="panel" @dismiss="panelOpen = false" />
       </div>
 
-      <div class="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
-        <!-- Burbuja de saludo proactiva (teaser). Anclada al FAB, cero CLS: es
-             un hijo flex más, apilado sobre el menú/botón. Clic en la tarjeta
-             abre el menú (toggle, no limpia el sintético); la X descarta. No
-             roba foco (sin autofocus). -->
-        <div v-if="teaserOpen" class="teaser-bubble" @click="toggle">
-          <button
-            type="button"
-            class="teaser-close"
-            aria-label="Cerrar mensaje"
-            @click.stop="teaser.dismiss()"
+      <div class="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-none">
+        <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
+             con transform/opacity sin cambiar la geometría del contenedor ni
+             mover el FAB a mitad de sesión. -->
+        <div class="teaser-slot">
+          <div class="teaser-bubble teaser-sizer" aria-hidden="true">
+            <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
+            <p class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+          </div>
+          <div
+            v-if="teaserOpen"
+            :key="teaserStep"
+            class="teaser-bubble pointer-events-auto"
+            :class="{ 'teaser-bubble-entering': teaserStep === 1 }"
+            @click="toggle"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
-          <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
-          <p v-if="teaserStep === 2" class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+            <button
+              ref="teaserCloseEl"
+              type="button"
+              class="teaser-close"
+              aria-label="Cerrar mensaje"
+              @click.stop="teaser.dismiss()"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+            <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
+            <p v-if="teaserStep === 2" class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+          </div>
         </div>
 
         <!-- Menú de 3 vías (orden: Chat, WhatsApp, Llamar) -->
@@ -70,7 +82,7 @@
           v-show="menuOpen"
           id="contact-fab-menu"
           aria-label="Opciones de contacto"
-          class="flex flex-col items-end gap-3"
+          class="flex flex-col items-end gap-3 pointer-events-auto"
         >
           <li v-if="chatEnabled" class="flex">
             <button type="button" class="fab-item" @click="openChat">
@@ -130,7 +142,7 @@
           :aria-expanded="menuOpen"
           aria-controls="contact-fab-menu"
           :aria-label="menuOpen || panelOpen ? 'Cerrar' : badgeCount > 0 ? `Abrir opciones de contacto (${badgeCount} ${badgeCount === 1 ? 'mensaje nuevo' : 'mensajes nuevos'})` : 'Abrir opciones de contacto'"
-          class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 hover:scale-105 transition-all duration-200"
+          class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 hover:scale-105 transition-all duration-200 pointer-events-auto"
           :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen && badgeCount === 0 }"
           @click="toggle"
         >
@@ -171,6 +183,7 @@ const { enabled: chatEnabled } = useChatStatus(franchise.shortname as string)
 const menuOpen = ref(false)
 const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
+const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
@@ -195,6 +208,15 @@ const badgeCount = computed(() => (unread.value > 0 ? unread.value : syntheticCo
 const teaserOpen = computed(
   () => teaserVisible.value && unread.value === 0 && !menuOpen.value && !panelOpen.value,
 )
+
+// Step 2 replaces the compact bubble inside its reserved slot so no existing
+// layout box moves. If a keyboard user was on Close, carry focus to the new
+// button instead of dropping it when that keyed subtree is replaced.
+watch(teaserStep, async () => {
+  if (typeof document === 'undefined' || document.activeElement !== teaserCloseEl.value) return
+  await nextTick()
+  teaserCloseEl.value?.focus({ preventScroll: true })
+})
 
 // Cuando aparece un no leído REAL, el teaser sintético queda cancelado para toda
 // la sesión (no resucita al leerlo). immediate: cubre tanto el no leído que llega
@@ -300,14 +322,24 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .fab-chip-glow {
   background: #22c55e;
+  box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.6);
+}
+.fab-chip-glow::after {
+  content: '';
+  position: absolute;
+  inset: -0.35rem;
+  border-radius: inherit;
+  background: rgba(34, 197, 94, 0.45);
+  pointer-events: none;
   animation: chip-glow 1.6s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 @keyframes chip-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-  50% { box-shadow: 0 0 7px 2px rgba(34, 197, 94, 0.95); }
+  0%, 100% { opacity: 0.55; transform: scale(0.55); }
+  50% { opacity: 0; transform: scale(1.25); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fab-chip-glow { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
+  .fab-chip-glow::after { animation: none; opacity: 0; }
 }
 /* Insignia roja de no leídos sobre el FAB principal. */
 .fab-badge {
@@ -338,9 +370,17 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* --- Burbuja de saludo proactiva (teaser) --- */
-.teaser-bubble {
+.teaser-slot {
   position: relative;
-  max-width: min(16rem, calc(100vw - 6rem));
+  width: min(16rem, calc(100vw - 6rem));
+  pointer-events: none;
+}
+.teaser-bubble {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 100%;
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(4px);
   color: #111827;
@@ -349,7 +389,13 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transform-origin: bottom right;
-  animation: teaser-pop 0.2s ease-out;
+  will-change: transform, opacity;
+}
+.teaser-bubble-entering { animation: teaser-pop 0.2s ease-out; }
+.teaser-sizer {
+  position: relative;
+  visibility: hidden;
+  pointer-events: none;
 }
 .teaser-line { font-size: 0.875rem; font-weight: 500; line-height: 1.35; }
 .teaser-line-2 { margin-top: 0.4rem; color: #374151; font-weight: 400; }
@@ -371,7 +417,7 @@ button { -webkit-tap-highlight-color: transparent; }
   from { opacity: 0; transform: scale(0.9) translateY(6px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
-@media (prefers-reduced-motion: reduce) { .teaser-bubble { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .teaser-bubble-entering { animation: none; } }
 
 /* Solo lector de pantalla (región aria-live). */
 .sr-only {
@@ -400,11 +446,22 @@ button { -webkit-tap-highlight-color: transparent; }
   overflow: hidden;
 }
 
-/* Pulso de atención del FAB (respeta reduce-motion) */
-@keyframes pulse-attention {
-  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(204, 2, 43, 0.4); }
-  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px rgba(204, 2, 43, 0); }
+/* Pulso de atención del FAB: transform/opacity only, so it stays composited. */
+.animate-pulse-attention::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(204, 2, 43, 0.45);
+  border-radius: inherit;
+  pointer-events: none;
+  animation: pulse-attention 2.4s ease-in-out infinite;
+  will-change: transform, opacity;
 }
-.animate-pulse-attention { animation: pulse-attention 2.4s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .animate-pulse-attention { animation: none; } }
+@keyframes pulse-attention {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0; transform: scale(1.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-attention::after { animation: none; opacity: 0; }
+}
 </style>
