@@ -203,7 +203,7 @@ const { franchise } = useAppConfig()
 const currentYear = new Date().getFullYear()
 
 useHead({
-  title: `Programa de Referidos - Gana Comisiones | ${franchise.shortname}`,
+  title: 'Programa de referidos',
   meta: [
     {
       name: 'description',

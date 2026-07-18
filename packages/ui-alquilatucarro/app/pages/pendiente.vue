@@ -48,7 +48,7 @@ const { franchise } = useAppConfig()
 useResultPageView('Reserva en Proceso');
 
 useHead({
-  title: `Reserva en Proceso | ${franchise.shortname}`,
+  title: 'Reserva en proceso',
   meta: [
     { name: 'robots', content: 'noindex, nofollow' }
   ]

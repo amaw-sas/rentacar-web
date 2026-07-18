@@ -357,7 +357,7 @@ const getCityReservationURL = (city: CityData): string =>
     endDay: reservationEndDay.value,
     initHour: "12:00",
     endHour: "12:00",
-  });
+  }, "reservas");
 
 // Footer (golden) — reparte franchise.footerLinks en dos zonas, conservando
 // los enlaces reales:

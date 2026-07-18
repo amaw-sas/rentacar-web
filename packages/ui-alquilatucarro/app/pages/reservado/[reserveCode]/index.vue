@@ -56,7 +56,7 @@ const route = useRoute();
 const reserveCode = route.params.reserveCode;
 
 useHead({
-  title: `Reserva Confirmada | ${franchise.shortname}`,
+  title: 'Reserva confirmada',
   meta: [
     { name: 'robots', content: 'noindex, nofollow' }
   ]

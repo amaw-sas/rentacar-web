@@ -7,6 +7,14 @@ export interface FAQ {
 }
 
 /**
+ * Numeric city prices are intentionally omitted until the application has a
+ * city/date-valid availability price. The visible FAQ and FAQPage schema both
+ * consume this same answer, so they cannot drift into contradictory claims.
+ */
+export const getCityPriceAnswer = (cityName: string): string =>
+    `Las tarifas de alquiler en ${cityName} dependen de las fechas, la duración, la categoría y la disponibilidad. Busca tus fechas para comparar las opciones disponibles.`
+
+/**
  * City-specific FAQs for major cities with local details
  */
 const citySpecificFAQs: Record<string, FAQ[]> = {
@@ -25,7 +33,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Bogotá?',
-            content: 'Los precios en Bogotá inician desde $110.000 COP/día para compactos. Reservando con 15+ días de anticipación puedes obtener hasta 60% de descuento. Los fines de semana y festivos tienen tarifas especiales.'
+            content: getCityPriceAnswer('Bogotá')
         },
         {
             label: '¿Puedo viajar a otras ciudades con el carro alquilado en Bogotá?',
@@ -51,7 +59,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Medellín?',
-            content: 'Los precios en Medellín inician desde $115.000 COP/día para compactos. Reservando con anticipación puedes obtener hasta 60% de descuento. Ofrecemos tarifas semanales y mensuales con mejores precios.'
+            content: getCityPriceAnswer('Medellín')
         },
         {
             label: '¿Puedo devolver el carro en otra ciudad diferente a Medellín?',
@@ -77,7 +85,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Cali?',
-            content: 'Los precios en Cali inician desde $105.000 COP/día para compactos. Con reserva anticipada puedes obtener hasta 60% de descuento. Ofrecemos tarifas especiales para alquileres de una semana o más.'
+            content: getCityPriceAnswer('Cali')
         },
         {
             label: '¿Qué lugares puedo visitar con carro desde Cali?',
@@ -103,7 +111,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Cartagena?',
-            content: 'Los precios en Cartagena inician desde $120.000 COP/día. En temporada alta (diciembre-enero, Semana Santa) los precios pueden variar. Reserva con anticipación para mejores tarifas.'
+            content: getCityPriceAnswer('Cartagena')
         },
         {
             label: '¿Puedo viajar a Santa Marta con el carro de Cartagena?',
@@ -125,7 +133,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Barranquilla?',
-            content: 'Los precios en Barranquilla inician desde $100.000 COP/día para compactos. Durante el Carnaval de Barranquilla los precios pueden variar. Reserva con anticipación.'
+            content: getCityPriceAnswer('Barranquilla')
         },
         {
             label: '¿Puedo viajar a Cartagena o Santa Marta desde Barranquilla?',
@@ -151,7 +159,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Santa Marta?',
-            content: 'Los precios en Santa Marta inician desde $110.000 COP/día para compactos. En temporada alta (diciembre-enero, Semana Santa) los precios pueden variar. Reserva con anticipación para mejores tarifas.'
+            content: getCityPriceAnswer('Santa Marta')
         },
         {
             label: '¿Puedo entrar al Parque Tayrona con carro?',
@@ -177,7 +185,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Pereira?',
-            content: 'Los precios en Pereira inician desde $105.000 COP/día para compactos. Reservando con anticipación puedes obtener hasta 60% de descuento. Ofrecemos tarifas especiales para recorrer el Eje Cafetero.'
+            content: getCityPriceAnswer('Pereira')
         },
         {
             label: '¿Aplica pico y placa en Pereira?',
@@ -203,7 +211,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Bucaramanga?',
-            content: 'Los precios en Bucaramanga inician desde $100.000 COP/día para compactos. Reservando con anticipación puedes obtener hasta 60% de descuento. Ideal para recorrer Santander.'
+            content: getCityPriceAnswer('Bucaramanga')
         },
         {
             label: '¿Aplica pico y placa en Bucaramanga?',
@@ -229,7 +237,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Armenia?',
-            content: 'Los precios en Armenia inician desde $100.000 COP/día para compactos. Con reserva anticipada puedes obtener hasta 60% de descuento. Perfecta base para explorar el Eje Cafetero.'
+            content: getCityPriceAnswer('Armenia')
         },
         {
             label: '¿Hay pico y placa en Armenia?',
@@ -255,7 +263,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Manizales?',
-            content: 'Los precios en Manizales inician desde $105.000 COP/día para compactos. Reservando con anticipación obtienes hasta 60% de descuento. Ideal para explorar Caldas y el Eje Cafetero.'
+            content: getCityPriceAnswer('Manizales')
         },
         {
             label: '¿Aplica pico y placa en Manizales?',
@@ -281,7 +289,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Villavicencio?',
-            content: 'Los precios en Villavicencio inician desde $95.000 COP/día para compactos. Con reserva anticipada puedes obtener hasta 60% de descuento. Puerta de entrada a los Llanos Orientales.'
+            content: getCityPriceAnswer('Villavicencio')
         },
         {
             label: '¿Hay pico y placa en Villavicencio?',
@@ -307,7 +315,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Valledupar?',
-            content: 'Los precios en Valledupar inician desde $95.000 COP/día para compactos. Reservando con anticipación obtienes hasta 60% de descuento. Durante el Festival Vallenato los precios pueden variar.'
+            content: getCityPriceAnswer('Valledupar')
         },
         {
             label: '¿Hay pico y placa en Valledupar?',
@@ -333,7 +341,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Ibagué?',
-            content: 'Los precios en Ibagué inician desde $95.000 COP/día para compactos. Reservando con anticipación puedes obtener hasta 60% de descuento. Punto estratégico entre Bogotá y el Eje Cafetero.'
+            content: getCityPriceAnswer('Ibagué')
         },
         {
             label: '¿Aplica pico y placa en Ibagué?',
@@ -359,7 +367,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Neiva?',
-            content: 'Los precios en Neiva inician desde $90.000 COP/día para compactos. Con reserva anticipada obtienes hasta 60% de descuento. Base perfecta para explorar las maravillas del Huila.'
+            content: getCityPriceAnswer('Neiva')
         },
         {
             label: '¿Hay pico y placa en Neiva?',
@@ -385,7 +393,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Cúcuta?',
-            content: 'Los precios en Cúcuta inician desde $90.000 COP/día para compactos. Reservando con anticipación puedes obtener hasta 60% de descuento. Ciudad estratégica del nororiente colombiano.'
+            content: getCityPriceAnswer('Cúcuta')
         },
         {
             label: '¿Aplica pico y placa en Cúcuta?',
@@ -411,7 +419,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Montería?',
-            content: 'Los precios en Montería inician desde $95.000 COP/día para compactos. Con reserva anticipada obtienes hasta 60% de descuento. Ideal para explorar el Sinú y la sabana cordobesa.'
+            content: getCityPriceAnswer('Montería')
         },
         {
             label: '¿Hay pico y placa en Montería?',
@@ -437,7 +445,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Floridablanca?',
-            content: 'Los precios en Floridablanca inician desde $95.000 COP/día para compactos. Reservando con anticipación obtienes hasta 60% de descuento. Mismas tarifas que nuestra sede de Bucaramanga.'
+            content: getCityPriceAnswer('Floridablanca')
         },
         {
             label: '¿Aplica pico y placa en Floridablanca?',
@@ -463,7 +471,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Palmira?',
-            content: 'Los precios en Palmira inician desde $100.000 COP/día para compactos. Con reserva anticipada obtienes hasta 60% de descuento. Ubicación estratégica en el corazón del Valle.'
+            content: getCityPriceAnswer('Palmira')
         },
         {
             label: '¿Hay pico y placa en Palmira?',
@@ -489,7 +497,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Cuánto cuesta alquilar un carro en Soledad?',
-            content: 'Los precios en Soledad inician desde $95.000 COP/día para compactos. Con reserva anticipada obtienes hasta 60% de descuento. Durante el Carnaval de Barranquilla los precios pueden variar.'
+            content: getCityPriceAnswer('Soledad')
         },
         {
             label: '¿Hay pico y placa en Soledad?',
@@ -526,7 +534,7 @@ const generateTemplateFAQs = (cityName: string): FAQ[] => {
         },
         {
             label: `¿Cuánto cuesta alquilar un carro en ${cityName}?`,
-            content: `Los precios de alquiler en ${cityName} varían según el tipo de vehículo y temporada. Los compactos inician desde $120.000 COP por día. Reservando con anticipación puedes obtener hasta 60% de descuento.`
+            content: getCityPriceAnswer(cityName)
         },
         {
             label: `¿Puedo devolver el carro en otra ciudad diferente a ${cityName}?`,
@@ -542,7 +550,7 @@ const generateTemplateFAQs = (cityName: string): FAQ[] => {
 /**
  * Returns FAQs for a city - uses specific FAQs if available, otherwise template
  */
-const getCityFAQs = (cityName: string): FAQ[] => {
+export const getCityFAQs = (cityName: string): FAQ[] => {
     return citySpecificFAQs[cityName] || generateTemplateFAQs(cityName)
 }
 

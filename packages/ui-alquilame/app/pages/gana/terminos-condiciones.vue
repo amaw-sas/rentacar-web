@@ -216,7 +216,7 @@
 const { franchise } = useAppConfig()
 
 useHead({
-  title: `Términos y Condiciones - Programa de Referidos | ${franchise.shortname}`,
+  title: 'Términos del programa de referidos',
   meta: [
     {
       name: 'description',
