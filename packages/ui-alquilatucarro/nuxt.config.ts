@@ -34,7 +34,9 @@ export default defineNuxtConfig({
           innerHTML: `@layer theme, base, components, utilities;
             @layer base {
             *, *::before, *::after { box-sizing: border-box; }
-            body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+            html { line-height: 1.5; }
+            body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: inherit; }
+            h1, h2, h3, p { margin: 0; }
             img { max-width: 100%; height: auto; display: block; }
             picture { display: block; }
             svg { max-width: 100%; height: auto; }
@@ -72,6 +74,7 @@ export default defineNuxtConfig({
             .isolate { isolation: isolate; }
             /* Header mobile positioning - CRÍTICO para CLS */
             .left-0 { left: 0; }
+            .inset-x-0 { left: 0; right: 0; }
             .top-0 { top: 0; }
             .right-4 { right: 1rem; }
             .top-4 { top: 1rem; }

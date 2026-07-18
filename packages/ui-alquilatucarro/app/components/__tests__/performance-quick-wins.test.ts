@@ -57,6 +57,9 @@ describe('CLS safeguards', () => {
   })
 
   it('matches the blog hero breakpoint geometry in the critical CSS', () => {
+    expect(nuxtConfig).toContain('html { line-height: 1.5; }')
+    expect(nuxtConfig).toContain('h1, h2, h3, p { margin: 0; }')
+    expect(nuxtConfig).toContain('.inset-x-0 { left: 0; right: 0; }')
     expect(nuxtConfig).toContain('.max-w-2xl { max-width: 42rem; }')
     expect(nuxtConfig).toContain('.sm\\\\:py-16')
     expect(nuxtConfig).toContain('.md\\\\:text-4xl')
