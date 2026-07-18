@@ -71,11 +71,13 @@ export default defineNuxtConfig({
             .absolute { position: absolute; }
             .isolate { isolation: isolate; }
             /* Header mobile positioning - CRÍTICO para CLS */
+            .inset-x-0 { left: 0; right: 0; }
             .left-0 { left: 0; }
             .top-0 { top: 0; }
             .right-4 { right: 1rem; }
             .top-4 { top: 1rem; }
             .left-1\\/2 { left: 50%; }
+            .ml-auto { margin-left: auto; }
             /* Icon colors - CRÍTICO para CLS (evita iconos negros) */
             .text-red-600 { color: #dc2626; }
             .text-gray-600 { color: #4b5563; }
@@ -174,6 +176,8 @@ export default defineNuxtConfig({
               .sm\\:text-7xl { font-size: 4.5rem; line-height: 1; }
             }
             @media (min-width: 1024px) {
+              .lg\\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+              .lg\\:px-8 { padding-left: 2rem; padding-right: 2rem; }
               /* CityPage Searcher visibility - CRÍTICO para CLS */
               .lg\\:hidden { display: none; }
               .lg\\:flex { display: flex; }

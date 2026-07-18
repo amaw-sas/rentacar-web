@@ -31,7 +31,7 @@ describe('C5b payload and bundle contracts', () => {
       expect(layout).not.toContain('useStoreAdminData')
     })
 
-    it(`${brand}: catalog fetch is attached only to booking pages`, () => {
+    it(`${brand}: catalog fetch is attached only to pages that render catalog data`, () => {
       const brandRoot = join(ROOT, `ui-${brand}`)
       const middleware = brandFile(brand, 'app/middleware/rentacar-data.ts')
       expect(middleware).toContain('await useRentacarData()')
@@ -45,6 +45,7 @@ describe('C5b payload and bundle contracts', () => {
       ]
       if (brand === 'alquilatucarro') {
         bookingPages.push(join(brandRoot, 'app/pages/tarifas.vue'))
+        bookingPages.push(join(brandRoot, 'app/pages/tiktok.vue'))
       }
       for (const page of bookingPages) {
         expect(readFileSync(page, 'utf8'), page).toContain('rentacar-data')
