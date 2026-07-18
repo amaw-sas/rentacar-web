@@ -7,10 +7,9 @@
  *   - header: WHITE sticky surface, RED (color-variant) logo, dark nav links,
  *             a brand-red "Reserva Ahora" pill + a bg-whatsapp WhatsApp button.
  *   - footer: dark navy (#1A1A2E) 4-column grid + black bottom bar. The 19 city
- *             links stay INTERNAL via getCityReservationURL with :external +
- *             target=_blank; the #109 hydration guard (onMounted-only date calc,
- *             null-initial refs) is preserved untouched. Legal links still derive
- *             from franchise data.
+ *             links stay internal and use the compact public-city list, keeping
+ *             reservation dates and the full catalog out of global chrome.
+ *             Legal links still derive from franchise data.
  *   - SCEN-CHROME-NOBLUE: the chrome surfaces yield zero legacy blue.
  *   - SCEN-CHROME-NOGREEN: the only green in the chrome is the WhatsApp token.
  */
@@ -120,25 +119,26 @@ describe('chrome — footer navy golden (default.vue)', () => {
   })
 })
 
-describe('chrome — city links + #109 hydration guard (default.vue)', () => {
+describe('chrome — compact internal city links (default.vue)', () => {
   const layout = read('app/layouts/default.vue')
 
-  it('keeps the city links INTERNAL via getCityReservationURL (not wa.me)', () => {
-    expect(layout).toMatch(/:to="getCityReservationURL\(city\)"/)
+  it('keeps city links internal without reservation URL construction', () => {
+    expect(layout).toContain(':to="`/${city.id}`"')
     expect(layout).not.toContain('wa.me')
+    expect(layout).not.toContain('getCityReservationURL')
   })
 
-  it('preserves the v-for over cities with :external + target=_blank', () => {
+  it('preserves the v-for over all public cities in the same tab', () => {
     expect(layout).toMatch(/v-for="city in cities"/)
-    expect(layout).toMatch(/:external="true"/)
-    expect(layout).toMatch(/target="_blank"/)
+    expect(layout).toContain('usePublicCities()')
+    expect(layout).not.toMatch(/:external="true"/)
+    expect(layout).not.toMatch(/target="_blank"/)
   })
 
-  it('#109 guard: dates are computed ONLY in onMounted from null-initial refs', () => {
-    expect(layout).toMatch(/const reservationInitDay = ref<string \| null>\(null\)/)
-    expect(layout).toMatch(/const reservationEndDay = ref<string \| null>\(null\)/)
-    expect(layout).toMatch(/onMounted\(\(\) => {[\s\S]*reservationInitDay\.value =/)
-    expect(layout).toMatch(/onMounted\(\(\) => {[\s\S]*reservationEndDay\.value =/)
+  it('does not pull reservation dates into the global layout', () => {
+    expect(layout).not.toContain('reservationInitDay')
+    expect(layout).not.toContain('reservationEndDay')
+    expect(layout).not.toContain('@internationalized/date')
   })
 })
 
