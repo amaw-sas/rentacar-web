@@ -63,6 +63,13 @@ export interface GamaCardsPart {
 export interface ReplyContext {
   label: string;
   context: string;
+  // UI-only optionals (WhatsApp-style quote card). NEVER sent to the server —
+  // buildChatPayloadMessages reads only `context`. Optional so transcripts
+  // persisted before these fields existed keep restoring (label fallback).
+  author?: string;
+  preview?: string;
+  image?: string;
+  targetId?: string;
 }
 
 export interface ChatMessage {
