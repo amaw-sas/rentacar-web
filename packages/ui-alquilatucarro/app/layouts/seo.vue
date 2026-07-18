@@ -1,4 +1,31 @@
 <script setup lang="ts">
+// Only the private dashboard needs these first-paint primitives. The full
+// Tailwind stylesheet supplies the remaining utilities after hydration.
+useHead({
+  style: [{
+    key: 'critical-seo-layout',
+    innerHTML: `
+      .grid { display: grid; }
+      .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+      .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .gap-4 { gap: 1rem; }
+      .gap-6 { gap: 1.5rem; }
+      .bg-gray-900 { background-color: #111827; }
+      .bg-gray-800 { background-color: #1f2937; }
+      .text-gray-300 { color: #d1d5db; }
+      .text-gray-400 { color: #9ca3af; }
+      .rounded-lg { border-radius: 0.5rem; }
+      .p-4 { padding: 1rem; }
+      .p-6 { padding: 1.5rem; }
+      @media (min-width: 768px) {
+        .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .md\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .md\\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      }
+    `,
+  }],
+})
+
 const route = useRoute()
 
 const navigation = [

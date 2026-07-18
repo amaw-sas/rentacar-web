@@ -136,7 +136,7 @@
           <UButton
             v-for="city in cities"
             :key="city.id"
-            :to="getCityReservationURL(city)"
+            :to="`/${city.id}`"
             class="text-white justify-center bg-blue-600 hover:bg-blue-800 rounded-lg py-3 w-full md:w-fit font-normal transition-colors"
           >
             Alquiler de carros en <span class="font-bold">{{ city.name }}</span>
@@ -176,11 +176,6 @@
 
 <script lang="ts" setup>
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { buildCityReservationURL } from '@rentacar-main/logic/utils'
-import type { City as CityData } from '@rentacar-main/logic/utils'
-import { today } from '@internationalized/date'
-import { storeToRefs } from 'pinia'
-
 const route = useRoute();
 
 // Estado del menú móvil slideover
@@ -275,31 +270,9 @@ function onMobileNavClick(item: NavigationMenuItem, e: MouseEvent) {
   }
 }
 
-const { cities } = useData();
-// Live active-city count (Supabase) for the footer "presentes en N ciudades".
-const cityCount = useCityCount();
-const { franchise, reservation, defaultTimezone } = useAppConfig();
-const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
-
-// Fechas del deep-link: se calculan SOLO en cliente tras montar para evitar
-// hydration attribute mismatch (Issue #109). En servidor y primera hidratación
-// son null → buildCityReservationURL devuelve el href estable /${city.id},
-// idéntico en ambos pases. Tras onMounted se aplica el deep-link con fecha
-// fresca (today+1), nunca una fecha pasada de una página ISR cacheada.
-const reservationInitDay = ref<string | null>(null);
-const reservationEndDay = ref<string | null>(null);
-
-onMounted(() => {
-  reservationInitDay.value = today(defaultTimezone).add({ days: 1 }).toString();
-  reservationEndDay.value = today(defaultTimezone).add({ days: 8 }).toString();
-});
-
-const getCityReservationURL = (city: CityData): string =>
-  buildCityReservationURL(city, branches.value || [], {
-    initDay: reservationInitDay.value,
-    endDay: reservationEndDay.value,
-    initHour: "12:00",
-    endHour: "12:00",
-  });
+// Compact build-time navigation: static/content routes never hydrate the
+// reservation catalog merely to render the footer.
+const { cities, cityCount } = usePublicCities();
+const { franchise } = useAppConfig();
 
 </script>

@@ -19,10 +19,11 @@
  * the transcript persist in localStorage (per brand) so the chat survives
  * reloads and SSR/ISR navigation. Reasoning parts are ignored.
  */
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { readStoredAttribution } from '@rentacar-main/logic/utils';
 import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
 import { buildChatPayloadMessages } from '../utils/buildChatPayloadMessages';
+import { publishChatUnread } from './useChatUnreadBadge';
 
 // Code-owned data parts emitted by the hybrid orchestrator (dashboard /api/chat)
 // ALONGSIDE the streamed text. They arrive as `data-*` SSE events and are
@@ -263,6 +264,10 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     }
     return count;
   });
+
+  watch([unread, announce], ([unreadCount, announcement]) => {
+    publishChatUnread({ brand, unread: unreadCount, announce: announcement })
+  })
 
   // Id of the first unread assistant message — where the "Mensajes nuevos"
   // separator renders. Read by the surface BEFORE markRead() advances the marker.

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { ref, computed } from 'vue';
 import SearcherSelectDrawer from '../SearcherSelectDrawer.vue';
 
@@ -84,6 +84,7 @@ describe('SearcherSelectDrawer', () => {
         const w = factory();
         expect(w.find('.drawer').exists()).toBe(false);
         await w.find('.trigger').trigger('click');
+        await flushPromises();
         expect(w.find('.drawer').exists()).toBe(true);
         expect(optionButtons(w)).toHaveLength(branches.length);
     });
@@ -91,6 +92,7 @@ describe('SearcherSelectDrawer', () => {
     it('filters the options by the search query (case-insensitive)', async () => {
         const w = factory();
         await w.find('.trigger').trigger('click');
+        await flushPromises();
         await w.find('input.search').setValue('medell');
         const opts = optionButtons(w);
         expect(opts).toHaveLength(1);
@@ -100,6 +102,7 @@ describe('SearcherSelectDrawer', () => {
     it('emits update:modelValue with the valueKey and closes on selection', async () => {
         const w = factory();
         await w.find('.trigger').trigger('click');
+        await flushPromises();
         await optionButtons(w)[1]!.trigger('click');
         expect(w.emitted('update:modelValue')?.[0]).toEqual(['MED-P']);
         // drawer closes after selecting
@@ -109,11 +112,13 @@ describe('SearcherSelectDrawer', () => {
     it('resets the query when the drawer closes', async () => {
         const w = factory();
         await w.find('.trigger').trigger('click');
+        await flushPromises();
         await w.find('input.search').setValue('cali');
         expect(optionButtons(w)).toHaveLength(1);
         // reopen → query cleared → all items again
         await optionButtons(w)[0]!.trigger('click'); // selects + closes
         await w.find('.trigger').trigger('click'); // reopen
+        await flushPromises();
         expect(optionButtons(w)).toHaveLength(branches.length);
     });
 });
