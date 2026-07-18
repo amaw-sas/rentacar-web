@@ -47,7 +47,10 @@
         <ChatConversation variant="panel" @dismiss="panelOpen = false" />
       </div>
 
-      <div class="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
+      <div
+        class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4 pointer-events-auto"
+        :class="{ 'contact-fab-stack--reservation': isReservationRoute }"
+      >
         <!-- Burbuja de saludo proactiva (teaser). Anclada al FAB, cero CLS: es
              un hijo flex más, apilado sobre el menú/botón. Clic en la tarjeta
              abre el menú (toggle, no limpia el sintético); la X descarta. No
@@ -73,7 +76,7 @@
           class="flex flex-col items-end gap-3"
         >
           <li v-if="chatEnabled" class="flex">
-            <button type="button" class="fab-item" @click="openChat">
+            <button type="button" class="fab-item" aria-label="Abrir Chat 24 horas" @click="openChat">
               <span class="fab-label">Chat 24 horas</span>
               <span class="fab-circle fab-chat">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /><path d="M8 12h.01" /><path d="M12 12h.01" /><path d="M16 12h.01" /></svg>
@@ -189,8 +192,11 @@ const { syntheticCount, teaserVisible, teaserStep, teaserAnnounce } = teaser
 // The dashboard switch gates every chat-derived surface. Reservation URLs keep
 // WhatsApp/phone available but suppress the proactive invitation throughout the
 // funnel, including deep links to summary and the following step.
+const isReservationRoute = computed(() =>
+  isContactTeaserRouteExcluded(route.path),
+)
 const teaserAllowed = computed(
-  () => chatEnabled.value && !isContactTeaserRouteExcluded(route.path),
+  () => chatEnabled.value && !isReservationRoute.value,
 )
 const displayedSyntheticCount = computed(() =>
   teaserAllowed.value ? syntheticCount.value : 0,
@@ -302,6 +308,24 @@ function openChat() {
 <style scoped>
 a,
 button { -webkit-tap-highlight-color: transparent; }
+
+/* Keep the default position byte-for-byte equivalent to bottom-6. On the
+   reservation funnel only, the mobile summary bar is lg:hidden and measures
+   roughly 4.5rem including its py-3 shell; add a tap-safe clearance plus the
+   device safe area so the FAB never covers its CTA. */
+.contact-fab-stack { bottom: 1.5rem; }
+@media (max-width: 1023.98px) {
+  .contact-fab-stack--reservation {
+    --reservation-mobile-cta-height: 4.5rem;
+    --reservation-fab-clearance: 0.75rem;
+    bottom: calc(
+      var(--reservation-mobile-cta-height) +
+      var(--reservation-fab-clearance) +
+      env(safe-area-inset-bottom, 0px)
+    );
+  }
+  .contact-fab-stack--reservation .fab-label { display: none; }
+}
 
 /* --- Items del menú FAB --- */
 .fab-item { display: flex; align-items: center; gap: 0.75rem; border-radius: 9999px; }

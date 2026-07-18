@@ -49,7 +49,10 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
     )
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toMatch(
-        /!isContactTeaserRouteExcluded\(route\.path\)/,
+        /const isReservationRoute = computed\([\s\S]*isContactTeaserRouteExcluded\(route\.path\)/,
+      )
+      expect(source, brand).toMatch(
+        /chatEnabled\.value && !isReservationRoute\.value/,
       )
       expect(source, brand).toMatch(
         /teaserAllowed\.value\s*&&\s*teaserVisible\.value/,
