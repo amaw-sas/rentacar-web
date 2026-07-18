@@ -10,9 +10,12 @@ query.select.mockReturnValue(query)
 query.eq.mockReturnValue(query)
 
 const from = vi.fn(() => query)
+const useSupabaseAdminClient = vi.fn(() => ({ from }))
+const setResponseHeader = vi.fn()
+let consoleErrorSpy: ReturnType<typeof vi.spyOn>
 
 vi.mock('../../../utils/supabase', () => ({
-  useSupabaseAdminClient: () => ({ from }),
+  useSupabaseAdminClient,
 }))
 
 beforeEach(() => {
@@ -20,9 +23,12 @@ beforeEach(() => {
   vi.clearAllMocks()
   query.select.mockReturnValue(query)
   query.eq.mockReturnValue(query)
+  useSupabaseAdminClient.mockImplementation(() => ({ from }))
+  consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   vi.stubGlobal('defineEventHandler', (handler: unknown) => handler)
   vi.stubGlobal('getRouterParam', () => 'AV78')
-  vi.stubGlobal('setResponseHeader', vi.fn())
+  vi.stubGlobal('getRequestIP', () => '203.0.113.10')
+  vi.stubGlobal('setResponseHeader', setResponseHeader)
   vi.stubGlobal('useRuntimeConfig', () => ({
     public: { rentacarFranchise: 'alquilatucarro' },
   }))
@@ -32,6 +38,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  consoleErrorSpy.mockRestore()
   vi.unstubAllGlobals()
 })
 
@@ -71,5 +78,46 @@ describe('GET /api/reservations/:reserveCode/exists', () => {
     const handler = await loadHandler()
 
     await expect(handler({} as never)).rejects.toMatchObject({ statusCode: 503 })
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Supabase lookup unavailable'),
+      expect.any(Object),
+    )
+  })
+
+  it('maps missing server configuration to 503 and logs it without querying', async () => {
+    useSupabaseAdminClient.mockImplementationOnce(() => {
+      throw new Error('missing service role configuration')
+    })
+    const handler = await loadHandler()
+
+    await expect(handler({} as never)).rejects.toMatchObject({ statusCode: 503 })
+    expect(from).not.toHaveBeenCalled()
+    expect(consoleErrorSpy).toHaveBeenCalled()
+  })
+
+  it('rate-limits repeated lookups per IP and returns retry metadata', async () => {
+    maybeSingle.mockResolvedValue({ data: null, error: null })
+    const handler = await loadHandler()
+
+    for (let request = 0; request < 30; request += 1) {
+      await expect(handler({} as never)).resolves.toEqual({ exists: false })
+    }
+
+    await expect(handler({} as never)).rejects.toMatchObject({ statusCode: 429 })
+    expect(from).toHaveBeenCalledTimes(30)
+    expect(setResponseHeader).toHaveBeenCalledWith(
+      expect.anything(),
+      'X-RateLimit-Remaining',
+      '0',
+    )
+    expect(setResponseHeader).toHaveBeenCalledWith(
+      expect.anything(),
+      'Retry-After',
+      expect.any(Number),
+    )
+
+    vi.stubGlobal('getRequestIP', () => '203.0.113.11')
+    await expect(handler({} as never)).resolves.toEqual({ exists: false })
+    expect(from).toHaveBeenCalledTimes(31)
   })
 })
