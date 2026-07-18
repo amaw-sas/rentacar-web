@@ -4,18 +4,19 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
  * Asks the dashboard whether the chat is enabled for a brand:
  * `GET {apiBase}/api/chat/status?brand=` → `{ enabled }`. Awaitable, works on SSR
  * and client. `apiBase` is passed in so `useRuntimeConfig()` is read in the caller's
- * synchronous setup scope (never after an await). Fail-closed: any error → `false`.
+ * synchronous setup scope (never after an await). `null` means the request failed,
+ * allowing callers to distinguish a transient error from an authoritative OFF.
  */
-export async function fetchChatEnabled(apiBase: string, brand: string): Promise<boolean> {
-  if (!brand) return false
+export async function fetchChatEnabled(apiBase: string, brand: string): Promise<boolean | null> {
+  if (!brand) return null
   try {
     const res = await $fetch<{ brand: string; enabled: boolean }>(
       `${apiBase}/api/chat/status`,
       { query: { brand } },
     )
-    return res?.enabled === true
+    return typeof res?.enabled === 'boolean' ? res.enabled : null
   } catch {
-    return false
+    return null
   }
 }
 
@@ -36,6 +37,10 @@ export function useChatStatus(brand: string) {
     const nextEnabled = await fetchChatEnabled(rentacarPublicApiBase as string, brand)
     // A slow earlier request must never overwrite a newer focus revalidation.
     if (generation !== refreshGeneration) return
+    // Before the first successful response, enabled stays at its fail-closed
+    // default. Afterwards a transient error preserves the last authoritative
+    // ON/OFF value instead of tearing down a live chat surface.
+    if (nextEnabled === null) return
     enabled.value = nextEnabled
     resolved.value = true
   }
@@ -48,10 +53,10 @@ export function useChatStatus(brand: string) {
 
   onMounted(() => {
     void refresh()
-    if (import.meta.client) window.addEventListener('focus', onFocus)
+    if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
   })
   onBeforeUnmount(() => {
-    if (import.meta.client) window.removeEventListener('focus', onFocus)
+    if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
   })
 
   return { enabled, resolved, refresh }
