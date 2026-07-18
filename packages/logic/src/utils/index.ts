@@ -41,7 +41,7 @@ export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';
 export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, latestOpenDayOnOrBefore, nearestSlotByTime, returnDateForPickupChange } from './scheduleAvailability';
 export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
-export type { CityReservationDates } from './buildCityReservationURL';
+export type { CityReservationDates, CityReservationSurface } from './buildCityReservationURL';
 
 // ============================================================================
 // Analytics (typed GA4 event contract)

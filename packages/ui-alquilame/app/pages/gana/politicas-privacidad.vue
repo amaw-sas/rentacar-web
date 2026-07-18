@@ -169,7 +169,7 @@
 const { franchise } = useAppConfig()
 
 useHead({
-  title: `Políticas de Privacidad - Programa de Referidos | ${franchise.shortname}`,
+  title: 'Privacidad del programa de referidos',
   meta: [
     {
       name: 'description',

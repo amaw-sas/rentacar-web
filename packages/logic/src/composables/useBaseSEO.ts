@@ -1,7 +1,13 @@
 // External dependencies
 import type { AutoRental, Brand, EntryPoint, ReserveAction, RentalCarReservation, SoftwareApplication } from 'schema-dts';
+import type { MaybeRefOrGetter } from 'vue';
 
-export const useBaseSEO = () => {
+interface BaseSEOOptions {
+    title?: MaybeRefOrGetter<string>;
+    description?: MaybeRefOrGetter<string>;
+}
+
+export const useBaseSEO = (options: BaseSEOOptions = {}) => {
 
     const { franchise, organization } = useAppConfig();
     const route = useRoute();
@@ -12,12 +18,12 @@ export const useBaseSEO = () => {
     const apiBase = (useRuntimeConfig().public.rentacarPublicApiBase ?? '').replace(/\/+$/, '');
 
     useSeoMeta({
-        title: franchise.name,
-        description: franchise.description,
+        title: options.title ?? franchise.name,
+        description: options.description ?? franchise.description,
     });
 
     useHead({
-        title: franchise.title,
+        title: options.title ?? franchise.title,
         templateParams: {
             schemaOrg: {
             host: franchise.website,

@@ -101,7 +101,7 @@ definePageMeta({
   middleware: ['rentacar-data'],
 })
 useSeoMeta({
-  title: 'Alquila tu carro en tu ciudad | Alquilatucarro',
+  title: 'Alquila tu carro en tu ciudad',
   description: 'Renta un carro en la ciudad que quieras, directo y en segundos.',
   robots: 'noindex, nofollow',
 })
@@ -133,7 +133,7 @@ const getCityReservationURL = (city: CityData): string =>
     endDay: reservationEndDay.value,
     initHour: '12:00',
     endHour: '12:00',
-  })
+  }, 'city-search')
 
 // Menú "Contáctanos": Chat 24h (chatbot web), Llamada y WhatsApp.
 const contactOpen = ref(false)

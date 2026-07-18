@@ -71,7 +71,7 @@ const searchUrl = computed(() => {
 })
 
 useHead({
-  title: `Sin Disponibilidad | ${franchise.shortname}`,
+  title: 'Sin disponibilidad',
   meta: [
     { name: 'robots', content: 'noindex, nofollow' }
   ]

@@ -375,6 +375,53 @@ describe('transformCities', () => {
     expect(result[0].description).not.toBeNull()
     expect(result[0].description).not.toBeUndefined()
   })
+
+  it('removes stale airport-pickup promises when the active city inventory has no airport branch', () => {
+    const input = [
+      { slug: 'floridablanca', name: 'Floridablanca', description: 'Puedes recoger tu carro en Palonegro.', testimonials: [] },
+      { slug: 'manizales', name: 'Manizales', description: 'Retira tu carro en el Aeropuerto La Nubia.', testimonials: [] },
+      { slug: 'palmira', name: 'Palmira', description: 'Recoges el carro apenas aterrizas.', testimonials: [] },
+      { slug: 'villavicencio', name: 'Villavicencio', description: 'Desde el Aeropuerto Vanguardia recoge tu carro.', testimonials: [] },
+    ]
+    const locations = input.map((city, index) => ({
+      id: `location-${index}`,
+      code: `AC-${index}`,
+      name: city.name,
+      city: city.slug,
+      slug: city.slug,
+      schedule: null,
+      status: 'active',
+      cities: { slug: city.slug },
+    }))
+
+    const result = transformCities(input, locations)
+
+    expect(result).toHaveLength(4)
+    expect(result.map((city) => city.description).join(' ')).not.toMatch(
+      /recoger tu carro en Palonegro|Retira tu carro en el Aeropuerto La Nubia|recoges el carro apenas aterrizas|Aeropuerto Vanguardia recoge tu carro/i,
+    )
+    expect(result.find((city) => city.id === 'manizales')?.description).toContain('Parque Nacional Los Nevados')
+    expect(result.find((city) => city.id === 'palmira')?.description).toContain('haciendas azucareras')
+  })
+
+  it('keeps the Supabase city description when an active AA airport branch backs the claim', () => {
+    const description = 'Retira tu carro en el Aeropuerto La Nubia.'
+    const result = transformCities(
+      [{ slug: 'manizales', name: 'Manizales', description, testimonials: [] }],
+      [{
+        id: 'location-airport',
+        code: 'AAMNZ',
+        name: 'Manizales Aeropuerto',
+        city: 'manizales',
+        slug: 'manizales-aeropuerto',
+        schedule: null,
+        status: 'active',
+        cities: { slug: 'manizales' },
+      }],
+    )
+
+    expect(result[0].description).toBe(description)
+  })
 })
 
 // The JSONB shape-validation contract (SCEN-006/SCEN-008) now lives on
