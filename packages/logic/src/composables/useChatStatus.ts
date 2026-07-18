@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 /**
  * Asks the dashboard whether the chat is enabled for a brand:
@@ -27,11 +27,32 @@ export async function fetchChatEnabled(apiBase: string, brand: string): Promise<
  */
 export function useChatStatus(brand: string) {
   const enabled = ref(false)
+  const resolved = ref(false)
   const { rentacarPublicApiBase } = useRuntimeConfig().public
+  let refreshGeneration = 0
 
-  onMounted(async () => {
-    enabled.value = await fetchChatEnabled(rentacarPublicApiBase as string, brand)
+  async function refresh() {
+    const generation = ++refreshGeneration
+    const nextEnabled = await fetchChatEnabled(rentacarPublicApiBase as string, brand)
+    // A slow earlier request must never overwrite a newer focus revalidation.
+    if (generation !== refreshGeneration) return
+    enabled.value = nextEnabled
+    resolved.value = true
+  }
+
+  // Revalidate when a visitor returns to an already-open tab. This makes an OFF
+  // toggle close an open surface instead of leaving stale chat UI alive forever.
+  function onFocus() {
+    void refresh()
+  }
+
+  onMounted(() => {
+    void refresh()
+    if (import.meta.client) window.addEventListener('focus', onFocus)
+  })
+  onBeforeUnmount(() => {
+    if (import.meta.client) window.removeEventListener('focus', onFocus)
   })
 
-  return { enabled }
+  return { enabled, resolved, refresh }
 }

@@ -33,6 +33,11 @@ const TEASER_LINE_1_PLAIN = '¡Hola! ¿Buscas carro? Escríbenos, respondemos ya
 
 export type TeaserTarget = 'whatsapp' | 'llamada' | 'chat';
 
+/** Reservation pages keep the contact FAB, but never show its proactive nudge. */
+export function isContactTeaserRouteExcluded(path: string): boolean {
+  return path === '/reservas' || path.startsWith('/reservas/');
+}
+
 // Analytics beacon reusing the site's existing GA4/gtag bridge. Duplicated from
 // useChatConversation.emitChatEvent (module-private there) rather than shared —
 // the teaser carries a params object ({step}/{target}) the chat helper doesn't.
@@ -74,6 +79,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
   const teaserAnnounce = ref('');
 
   let realUnread: () => number = () => 0;
+  let allowed: () => boolean = () => true;
   // Terminal latch (suppressed | dismissed | engaged). Once set, start() is a
   // no-op for the rest of this instance's life — the teaser is DONE for the
   // session. NOT a "started" flag: an unshown/mid-progression teaser stays
@@ -139,6 +145,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
   // (stop → clear timers) leaves an unshown/mid-progression teaser resumable. --
   function showStep1() {
     timer1 = null;
+    if (!allowed()) return;
     // Re-check the REAL unread at fire time (closes the race with a chat reply
     // that landed during the 5s wait). A real reply means the teaser is DONE for
     // the session (full reset, terminal) — never resurrects. markSessionShown
@@ -156,6 +163,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
 
   function showStep2() {
     timer2 = null;
+    if (!allowed()) return;
     if (realUnread() > 0) return suppressForSession();
     teaserStep.value = 2;
     syntheticCount.value = 2; // capped at 2
@@ -169,10 +177,12 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
   // off — schedule step 1 if unshown, re-arm step 2 if mid-progression. Terminal
   // → done. "unless already pending" keeps it idempotent within a mounted
   // lifetime (double start never double-schedules).
-  function start(deps: { realUnread: () => number }) {
+  function start(deps: { realUnread: () => number; allowed?: () => boolean }) {
     realUnread = deps.realUnread;
+    allowed = deps.allowed ?? (() => true);
     if (terminal) return;
     if (!hasWindow) return;
+    if (!allowed()) return;
     if (teaserStep.value === 0) {
       if (timer1 !== null) return; // already pending
       // Guards only gate the first scheduling: session cap, 15d suppression, and

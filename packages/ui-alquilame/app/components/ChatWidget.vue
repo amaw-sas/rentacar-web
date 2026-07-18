@@ -20,13 +20,13 @@
     <div class="fixed inset-0 pointer-events-none z-[60]">
       <!-- Región aria-live persistente (siempre en el DOM, nunca v-if): anuncia
            un mensaje nuevo cuando llega con el chat cerrado. -->
-      <span class="sr-only" role="status" aria-live="polite">{{ announce }}</span>
+      <span class="sr-only" role="status" aria-live="polite">{{ chatEnabled ? announce : '' }}</span>
       <!-- Región aria-live del teaser proactivo (texto sin emoji, nunca v-if). -->
-      <span class="sr-only" role="status" aria-live="polite">{{ teaserAnnounce }}</span>
+      <span class="sr-only" role="status" aria-live="polite">{{ teaserAllowed ? teaserAnnounce : '' }}</span>
 
       <!-- Backdrop -->
       <button
-        v-if="menuOpen || panelOpen"
+        v-if="menuOpen || (chatEnabled && panelOpen)"
         type="button"
         aria-hidden="true"
         tabindex="-1"
@@ -36,7 +36,7 @@
 
       <!-- Panel de chat inline (solo desktop) -->
       <div
-        v-if="panelOpen"
+        v-if="chatEnabled && panelOpen"
         ref="panelEl"
         role="dialog"
         aria-modal="true"
@@ -82,11 +82,11 @@
                      Sin ningún conteo: punto verde 24/7. Nunca dos indicadores a la
                      vez — el brillo se oculta si hay chip. -->
                 <span
-                  v-if="unread === 0 && syntheticCount === 0"
+                  v-if="unread === 0 && displayedSyntheticCount === 0"
                   class="fab-chip fab-chip-glow"
                   title="Disponible 24/7"
                 />
-                <span v-if="unread > 0 || syntheticCount > 0" class="fab-badge fab-badge-option" aria-hidden="true">{{ unread > 0 ? (unread > 9 ? '9+' : unread) : syntheticCount }}</span>
+                <span v-if="unread > 0 || displayedSyntheticCount > 0" class="fab-badge fab-badge-option" aria-hidden="true">{{ unread > 0 ? (unread > 9 ? '9+' : unread) : displayedSyntheticCount }}</span>
               </span>
             </button>
           </li>
@@ -102,10 +102,6 @@
               <span class="fab-label">WhatsApp</span>
               <span class="fab-circle fab-whatsapp">
                 <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.69 8.24-8.23 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07s.89 2.4 1.01 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29" /></svg>
-                <!-- Fallback: solo si el Chat NO está disponible (dashboard-gated,
-                     chatEnabled false) el conteo sintético cae aquí para no quedar
-                     huérfano. Con el Chat activo, el sintético vive en Chat. -->
-                <span v-if="!chatEnabled && unread === 0 && syntheticCount > 0" class="fab-badge fab-badge-option" aria-hidden="true">{{ syntheticCount }}</span>
               </span>
             </a>
           </li>
@@ -158,14 +154,19 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
-import { TEASER_LINE_1, TEASER_LINE_2 } from '@rentacar-main/logic/composables/useContactTeaser'
+import {
+  isContactTeaserRouteExcluded,
+  TEASER_LINE_1,
+  TEASER_LINE_2,
+} from '@rentacar-main/logic/composables/useContactTeaser'
 
 const { franchise } = useAppConfig()
+const route = useRoute()
 // Visibilidad del chat = el switch por marca del dashboard manda (auto-import
 // useChatStatus). Fetch client-only, fail-closed. Reemplaza al viejo flag de
 // entorno NUXT_PUBLIC_CHAT_ENABLED (runtimeConfig.public.chatEnabled ya no gobierna
 // la visibilidad; el operador prende/apaga cada marca desde /chat-knowledge).
-const { enabled: chatEnabled } = useChatStatus(franchise.shortname as string)
+const { enabled: chatEnabled, resolved: chatStatusResolved } = useChatStatus(franchise.shortname as string)
 
 // Estado client-only: arranca colapsado (lección #109).
 const menuOpen = ref(false)
@@ -185,16 +186,59 @@ const { unread, announce, emitReopenedFromBadge } = useChatConversation()
 const teaser = useContactTeaser()
 const { syntheticCount, teaserVisible, teaserStep, teaserAnnounce } = teaser
 
+// The dashboard switch gates every chat-derived surface. Reservation URLs keep
+// WhatsApp/phone available but suppress the proactive invitation throughout the
+// funnel, including deep links to summary and the following step.
+const teaserAllowed = computed(
+  () => chatEnabled.value && !isContactTeaserRouteExcluded(route.path),
+)
+const displayedSyntheticCount = computed(() =>
+  teaserAllowed.value ? syntheticCount.value : 0,
+)
+
 // El badge del FAB fusiona no leídos REALES (mandan) con el contador sintético
 // del teaser; el chip del ítem Chat del menú sigue en unread real (novedad del
 // chat, no del teaser).
-const badgeCount = computed(() => (unread.value > 0 ? unread.value : syntheticCount.value))
+const badgeCount = computed(() => {
+  if (chatEnabled.value && unread.value > 0) return unread.value
+  return displayedSyntheticCount.value
+})
 
 // La burbuja de saludo solo cuando NO hay no leídos reales y el FAB está
 // colapsado (ni menú ni panel abiertos).
 const teaserOpen = computed(
-  () => teaserVisible.value && unread.value === 0 && !menuOpen.value && !panelOpen.value,
+  () =>
+    teaserAllowed.value &&
+    teaserVisible.value &&
+    unread.value === 0 &&
+    !menuOpen.value &&
+    !panelOpen.value,
 )
+
+// Wait for the status request to settle before scheduling anything: enabled is
+// fail-closed and initially false, but that loading value must not terminally
+// suppress teasers for brands whose API response is ON.
+watch(
+  [chatStatusResolved, teaserAllowed],
+  ([resolved, allowed]) => {
+    if (!resolved) return
+    if (allowed) {
+      teaser.start({
+        realUnread: () => unread.value,
+        allowed: () => teaserAllowed.value,
+      })
+    } else {
+      teaser.stop()
+    }
+  },
+  { immediate: true },
+)
+
+// A focus revalidation can turn the switch OFF while the panel is open. Close
+// it locally so ChatConversation (and its typing indicator) immediately unmounts.
+watch(chatEnabled, (enabled) => {
+  if (!enabled) panelOpen.value = false
+})
 
 // Cuando aparece un no leído REAL, el teaser sintético queda cancelado para toda
 // la sesión (no resucita al leerlo). immediate: cubre tanto el no leído que llega
@@ -227,9 +271,6 @@ watch(panelOpen, (open) => setBackgroundInert(open))
 onBeforeUnmount(() => setBackgroundInert(false))
 onMounted(() => {
   if (import.meta.client) window.addEventListener('keydown', onKeydown)
-  // Teaser proactivo: arranca los timers 5s/20s. El único FAB del sitio, así
-  // que el badge sintético comparte el chip rojo con los no leídos reales.
-  teaser.start({ realUnread: () => unread.value })
 })
 onBeforeUnmount(() => {
   if (import.meta.client) window.removeEventListener('keydown', onKeydown)
@@ -245,6 +286,7 @@ function closeAll() {
   panelOpen.value = false
 }
 function openChat() {
+  if (!chatEnabled.value) return
   // Cualquier acción de contacto limpia el teaser sintético y marca supresión 15d.
   teaser.engage('chat')
   // Abrir el chat (no el menú) es lo único que limpia la insignia — lo hace la
