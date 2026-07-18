@@ -2,6 +2,7 @@ import { computed } from 'vue'
 
 import { createCurrentDateObject, pickPriceForDate } from '../utils'
 import type CategoryData from '../utils/types/data/CategoryData'
+import type ReservasApiData from '../utils/types/data/ReservasApiData'
 
 export interface HomeSEOContent {
   title: string
@@ -48,7 +49,11 @@ export const useHomeSEO = () => {
   // Capture the Colombia calendar date once per setup so every metadata field
   // in this render uses the same tariff applicability date.
   const onDate = createCurrentDateObject().toString()
-  const content = computed(() => buildHomeSEO(useFetchRentacarData().categories, onDate))
+  // Capture useState while the Nuxt instance is available. Head refs can be
+  // unwrapped later during SSR rendering, outside component setup; invoking a
+  // Nuxt composable from that computed getter would throw "instance unavailable".
+  const data = useState<ReservasApiData | null>('rentacar-data')
+  const content = computed(() => buildHomeSEO(data.value?.categories ?? [], onDate))
 
   return {
     title: computed(() => content.value.title),

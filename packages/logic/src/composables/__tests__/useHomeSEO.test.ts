@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
-import { buildHomeSEO } from '../useHomeSEO'
+import { buildHomeSEO, useHomeSEO } from '../useHomeSEO'
 import type CategoryData from '../../utils/types/data/CategoryData'
 import type CategoryMonthPriceData from '../../utils/types/data/CategoryMonthPriceData'
 
@@ -65,5 +65,22 @@ describe('buildHomeSEO', () => {
     expect(content.dailyFloor).toBeUndefined()
     expect(content.title).toBe('Alquiler de Carros en Colombia')
     expect(content.description).not.toMatch(/\$|COP\/día/)
+  })
+
+  it('captures the Nuxt state during setup before head refs are unwrapped', () => {
+    vi.stubGlobal('useState', () => ({
+      value: {
+        categories: [category('C', [price(205_000, {
+          init_date: '2020-01-01',
+          end_date: '',
+        })])],
+      },
+    }))
+
+    const homeSEO = useHomeSEO()
+    vi.unstubAllGlobals()
+
+    expect(homeSEO.title.value).toContain('$205.000 COP/día')
+    expect(homeSEO.description.value).toContain('$205.000 COP/día')
   })
 })
