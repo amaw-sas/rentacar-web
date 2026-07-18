@@ -48,22 +48,34 @@
         <ChatConversation :active="panelOpen" variant="panel" @dismiss="panelOpen = false" />
       </div>
 
-      <div class="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
-        <!-- Burbuja de saludo proactiva (teaser). Anclada al FAB, cero CLS: es
-             un hijo flex más, apilado sobre el menú/botón. Clic en la tarjeta
-             abre el menú (toggle, no limpia el sintético); la X descarta. No
-             roba foco (sin autofocus). -->
-        <div v-if="teaserOpen" class="teaser-bubble" @click="toggle">
-          <button
-            type="button"
-            class="teaser-close"
-            aria-label="Cerrar mensaje"
-            @click.stop="teaser.dismiss()"
+      <div class="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-none">
+        <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
+             con transform/opacity sin cambiar la geometría del contenedor ni
+             mover el FAB a mitad de sesión. -->
+        <div class="teaser-slot">
+          <div class="teaser-bubble teaser-sizer" aria-hidden="true">
+            <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
+            <p class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+          </div>
+          <div
+            v-if="teaserOpen"
+            :key="teaserStep"
+            class="teaser-bubble pointer-events-auto"
+            :class="{ 'teaser-bubble-entering': teaserStep === 1 }"
+            @click="toggle"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
-          <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
-          <p v-if="teaserStep === 2" class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+            <button
+              ref="teaserCloseEl"
+              type="button"
+              class="teaser-close"
+              aria-label="Cerrar mensaje"
+              @click.stop="teaser.dismiss()"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+            <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
+            <p v-if="teaserStep === 2" class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+          </div>
         </div>
 
         <!-- Menú de 3 vías (orden: Chat, WhatsApp, Llamar) -->
@@ -71,7 +83,7 @@
           v-show="menuOpen"
           id="contact-fab-menu"
           aria-label="Opciones de contacto"
-          class="flex flex-col items-end gap-3"
+          class="flex flex-col items-end gap-3 pointer-events-auto"
         >
           <li v-if="chatEnabled" class="flex">
             <button type="button" class="fab-item" @click="openChat">
@@ -131,7 +143,7 @@
           :aria-expanded="menuOpen"
           aria-controls="contact-fab-menu"
           :aria-label="menuOpen || panelOpen ? 'Cerrar' : badgeCount > 0 ? `Abrir opciones de contacto (${badgeCount} ${badgeCount === 1 ? 'mensaje nuevo' : 'mensajes nuevos'})` : 'Abrir opciones de contacto'"
-          class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 hover:scale-105 transition-all duration-200"
+          class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 hover:scale-105 transition-all duration-200 pointer-events-auto"
           :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen && badgeCount === 0 }"
           @click="toggle"
         >
@@ -178,6 +190,7 @@ const menuOpen = ref(false)
 const panelOpen = ref(false)
 const chatActivated = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
+const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
@@ -202,6 +215,15 @@ const badgeCount = computed(() => (unread.value > 0 ? unread.value : syntheticCo
 const teaserOpen = computed(
   () => teaserVisible.value && unread.value === 0 && !menuOpen.value && !panelOpen.value,
 )
+
+// Step 2 replaces the compact bubble inside its reserved slot so no existing
+// layout box moves. If a keyboard user was on Close, carry focus to the new
+// button instead of dropping it when that keyed subtree is replaced.
+watch(teaserStep, async () => {
+  if (typeof document === 'undefined' || document.activeElement !== teaserCloseEl.value) return
+  await nextTick()
+  teaserCloseEl.value?.focus({ preventScroll: true })
+})
 
 // Cuando aparece un no leído REAL, el teaser sintético queda cancelado para toda
 // la sesión (no resucita al leerlo). immediate: cubre tanto el no leído que llega
@@ -351,9 +373,17 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* --- Burbuja de saludo proactiva (teaser) --- */
-.teaser-bubble {
+.teaser-slot {
   position: relative;
-  max-width: min(16rem, calc(100vw - 6rem));
+  width: min(16rem, calc(100vw - 6rem));
+  pointer-events: none;
+}
+.teaser-bubble {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 100%;
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(4px);
   color: #111827;
@@ -362,7 +392,13 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transform-origin: bottom right;
-  animation: teaser-pop 0.2s ease-out;
+  will-change: transform, opacity;
+}
+.teaser-bubble-entering { animation: teaser-pop 0.2s ease-out; }
+.teaser-sizer {
+  position: relative;
+  visibility: hidden;
+  pointer-events: none;
 }
 .teaser-line { font-size: 0.875rem; font-weight: 500; line-height: 1.35; }
 .teaser-line-2 { margin-top: 0.4rem; color: #374151; font-weight: 400; }
@@ -384,7 +420,7 @@ button { -webkit-tap-highlight-color: transparent; }
   from { opacity: 0; transform: scale(0.9) translateY(6px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
-@media (prefers-reduced-motion: reduce) { .teaser-bubble { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .teaser-bubble-entering { animation: none; } }
 
 /* Solo lector de pantalla (región aria-live). */
 .sr-only {

@@ -15,7 +15,8 @@
     </div>
 
     <!-- Carrusel del modelo (dimmed via CSS .categoria-no-disponible img) -->
-    <div class="carrusel">
+    <!-- Same reservation as the available card: Carrusel is async. -->
+    <div class="carrusel aspect-[5/3]">
       <Carrusel
         :models="categoryModels"
         :vehicleModels="vehicleCategory?.modelos"

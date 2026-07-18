@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
+import { imageScreens } from './image-screens';
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -34,7 +35,9 @@ export default defineNuxtConfig({
           innerHTML: `@layer theme, base, components, utilities;
             @layer base {
             *, *::before, *::after { box-sizing: border-box; }
-            body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+            html { line-height: 1.5; }
+            body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: inherit; }
+            h1, h2, h3, p { margin: 0; }
             img { max-width: 100%; height: auto; display: block; }
             picture { display: block; }
             svg { max-width: 100%; height: auto; }
@@ -73,6 +76,7 @@ export default defineNuxtConfig({
             /* Header mobile positioning - CRÍTICO para CLS */
             .inset-x-0 { left: 0; right: 0; }
             .left-0 { left: 0; }
+            .inset-x-0 { left: 0; right: 0; }
             .top-0 { top: 0; }
             .right-4 { right: 1rem; }
             .top-4 { top: 1rem; }
@@ -103,6 +107,27 @@ export default defineNuxtConfig({
             .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
             .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
             .px-4 { padding-left: 1rem; padding-right: 1rem; }
+            .max-w-2xl { max-width: 42rem; }
+            .mb-12 { margin-bottom: 3rem; }
+            .aspect-video { aspect-ratio: 16 / 9; }
+            .h-full { height: 100%; }
+            .object-cover { object-fit: cover; }
+            @media (min-width: 640px) {
+              .sm\\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+              .sm\\:py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+            }
+            @media (min-width: 768px) {
+              .md\\:flex { display: flex; }
+              .md\\:w-1\\/2 { width: 50%; }
+              .md\\:aspect-auto { aspect-ratio: auto; }
+              .md\\:px-8 { padding-left: 2rem; padding-right: 2rem; }
+              .md\\:py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+              .md\\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+            }
+            @media (min-width: 1024px) {
+              .lg\\:px-8 { padding-left: 2rem; padding-right: 2rem; }
+              .lg\\:py-24 { padding-top: 6rem; padding-bottom: 6rem; }
+            }
             /* SEO Dashboard Critical CSS */
             .bg-gray-900 { background-color: #111827; }
             .bg-gray-800 { background-color: #1f2937; }
@@ -329,20 +354,10 @@ export default defineNuxtConfig({
     // silencioso → las imágenes nunca vuelven a salir crudas). La env solo habilita rotar el host.
     domains: (process.env.NUXT_IMAGE_DOMAINS || '9grznib0czdjtk77.public.blob.vercel-storage.com')
       .split(',').map((d) => d.trim()).filter(Boolean),
-    screens: {
-      xs: 320,
-      sm: 640,
-      md: 768,
-      lg: 1024,
-      xl: 1280,
-      // The Vercel image optimizer only accepts widths present in images.sizes,
-      // which @nuxt/image derives from these screen values at build time. The
-      // runtime srcset for our 800px images on 2x screens requests w=1536, so
-      // 1536 must be a screen value here — otherwise /_vercel/image returns 400
-      // and the image breaks (#161). Keep this in sync with the widths the
-      // generated srcset can actually request.
-      xxl: 1536,
-    },
+    // The Vercel provider rounds every request to this allowlist. It includes
+    // both viewport breakpoints and the exact fixed-image candidates used by
+    // avatars, blog cards, and the city hero.
+    screens: imageScreens,
   },
 
   // Optimización Core Web Vitals
@@ -448,7 +463,7 @@ export default defineNuxtConfig({
         // Vercel optimizer returns 400 and the image breaks. Our 800px images on
         // 2x screens request w=1536, so 1536 must be here. Keep in sync with
         // `image.screens` above (#161).
-        sizes: [320, 640, 768, 1024, 1280, 1536],
+        sizes: [32, 64, 80, 160, 320, 400, 480, 560, 600, 626, 640, 768, 800, 960, 1024, 1120, 1125, 1200, 1280, 1536],
         qualities: [80],
         formats: ['image/webp'],
         minimumCacheTTL: 2678400,
@@ -510,6 +525,10 @@ export default defineNuxtConfig({
       '/floridablanca': { isr: 3600 },
       '/palmira': { isr: 3600 },
       '/soledad': { isr: 3600 },
+      // Single freshness clock for tariffs: ISR may retain one catalog
+      // snapshot for at most one hour. /api/rentacar-data is intentionally not
+      // cached, so regeneration cannot stack a second TTL onto this window.
+      '/tarifas': { isr: 3600 },
       // Blog — ISR como las city pages (issue #52)
       '/blog': { isr: 3600 },
       '/blog/**': { isr: 3600 },

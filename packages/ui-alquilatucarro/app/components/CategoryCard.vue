@@ -1,7 +1,9 @@
 <template>
   <div class="categoria flex flex-col">
     <!-- Carrusel -->
-    <div class="carrusel">
+    <!-- Carrusel is async; reserve its final 5:3 paint box before the chunk
+         resolves so the description/pricing block cannot jump downward. -->
+    <div class="carrusel aspect-[5/3]">
         <Carrusel
           :models="categoryModels"
           :vehicleModels="modelos"

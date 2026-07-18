@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isServerError && !pendingSearch" class="text-center">
+  <div v-if="isServerError && !showLoadingResults" class="text-center">
     <div class="text-white text-center">
       <div class="text-3xl">Servicio temporalmente no disponible</div>
       <p class="text-lg mt-2">
@@ -19,7 +19,7 @@
       </p>
     </div>
   </div>
-  <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center">
+  <div v-else-if="!hasRenderableAvailable && !showLoadingResults && isInventoryEmpty" class="text-center">
     <div class="text-white text-center">
       <div class="text-3xl">¡Oops!</div>
       <div class="text-lg">
@@ -31,7 +31,7 @@
       </p>
     </div>
   </div>
-  <template v-if="!pendingSearch">
+  <template v-if="!showLoadingResults">
     <!-- Issue #313 — nivel flujo: TODAS las gamas caen más allá del horizonte de
          tarifas (caso 2027). Fail-closed: no se cotiza, se ofrece contacto. -->
     <div
@@ -57,19 +57,50 @@
         </p>
       </div>
     </div>
-    <div v-if="hasRenderableAvailable" class="text-white text-center">
+  </template>
+  <!-- UPageSection lays sibling roots out with a 32px gap. Keep this 52px
+       status root present during SSR so the loaded availability copy cannot
+       push the entire incoming grid down by 52 + 32 = 84px. Inline geometry is
+       intentional: it must exist on first paint, before Tailwind is fetched. -->
+  <div
+    v-if="showLoadingResults || hasRenderableAvailable"
+    class="text-white text-center"
+    style="min-height: 52px"
+    :aria-hidden="showLoadingResults || undefined"
+  >
+    <template v-if="!showLoadingResults">
       <div class="text-lg md:text-xl font-bold">¡Vehículos Disponibles!</div>
       <div class="text-sm md:text-base">
         <span>En <span class="text-yellow-400 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    </template>
+  </div>
+  <!-- Keep the same indexed wrappers from SSR loading through loaded cards.
+       Replacing a separate skeleton tree made Chromium report the removed
+       descendants as layout-shift sources despite the reserved list height. -->
+  <div
+    v-if="showLoadingResults || resultSlots.length"
+    data-testid="vehicle-results-list"
+    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+    :aria-hidden="showLoadingResults || undefined"
+  >
+    <div
+      v-for="(category, index) in resultSlots"
+      :key="`vehicle-result-slot-${index}`"
+      class="vehicle-result-slot"
+      :class="[
+        index < 6 ? 'min-h-[690px]' : 'min-h-[724px]',
+        showLoadingResults ? 'vehicle-result-slot-loading' : '',
+      ]"
+      :style="{ minHeight: index < 6 ? '690px' : '724px' }"
+      :data-testid="showLoadingResults ? 'vehicle-result-placeholder' : 'vehicle-result-card-slot'"
+    >
       <!-- Iterate renderableCategories so iteration === render and the
            availability banner (hasRenderableAvailable) can't disagree with the
            grid. A category missing from vehicleCategories has no card to show
            and is excluded at the source rather than dropped mid-loop. #22. -->
-      <template v-for="(category, index) in renderableCategories" :key="`cat-${category.categoryCode}`">
+      <template v-if="!showLoadingResults && category">
         <placeholders-unable-category-card
           v-if="category.estimatedTotalAmount == 999999999"
           :category
@@ -84,6 +115,8 @@
         />
       </template>
     </div>
+  </div>
+  <template v-if="!showLoadingResults">
     <!-- UN SOLO slideover con `slideoverStep` interno (issue #65). El diálogo se
          abre y cierra UNA vez por flujo; "Resumen" y "Datos" son pasos que
          intercambian su contenido dentro del mismo [role=dialog]. Antes eran dos
@@ -215,19 +248,11 @@
       </template>
     </u-slideover>
   </template>
-  <template v-else>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <placeholders-category-card />
-      <placeholders-category-card class="hidden md:block" />
-      <placeholders-category-card class="hidden lg:block" />
-    </div>
-  </template>
 </template>
 
 <script setup lang="ts">
 /** components */
 import {
-  PlaceholdersCategoryCard,
   PlaceholdersUnableCategoryCard,
   CategoryCard,
   ReservationResume,
@@ -237,6 +262,14 @@ import {
   IconsFacebookIcon as FacebookIcon,
   IconsXIcon as XIcon
 } from "#components";
+
+const props = withDefaults(defineProps<{
+  placeholderCount?: number;
+  reserveInitialResults?: boolean;
+}>(), {
+  placeholderCount: 3,
+  reserveInitialResults: false,
+});
 
 /** utils */
 import { allRenderableBeyondHorizon } from "@rentacar-main/logic/utils";
@@ -266,6 +299,24 @@ const {
   haveMonthlyReservation,
   selectedMonthlyMileage,
 } = storeToRefs(storeForm);
+
+// A deep results route starts its search from onMounted. Keep the SSR-sized
+// placeholder through that first client render and request, then reveal the
+// loaded cards. This prevents a brief empty section between hydration and the
+// pending=true transition.
+const initialSearchObserved = ref(!props.reserveInitialResults);
+const initialSearchSettled = ref(!props.reserveInitialResults);
+watch(
+  pendingSearch,
+  (isPending) => {
+    if (isPending) initialSearchObserved.value = true;
+    else if (initialSearchObserved.value) initialSearchSettled.value = true;
+  },
+  { immediate: true, flush: 'sync' },
+);
+const showLoadingResults = computed(() =>
+  pendingSearch.value || !initialSearchSettled.value
+);
 
 /**
  * Fuente única de los flags del payload (useRecordReservationForm), espejo del
@@ -328,6 +379,14 @@ const { vehicleCategories } = useFetchRentacarData();
 // the grid renders nothing. Issue #22.
 const renderableCategories = computed(() =>
   filteredCategories.value.filter((c: { categoryCode: string }) => vehicleCategories[c.categoryCode]),
+);
+const safePlaceholderCount = computed(() =>
+  Math.min(24, Math.max(3, Math.trunc(props.placeholderCount))),
+);
+const resultSlots = computed(() =>
+  showLoadingResults.value
+    ? Array.from({ length: safePlaceholderCount.value }, () => null)
+    : renderableCategories.value,
 );
 const hasRenderableAvailable = computed(() =>
   renderableCategories.value.some((c: { estimatedTotalAmount: number }) => c.estimatedTotalAmount !== 999999999),
@@ -698,3 +757,32 @@ const pickupBranchName = computed(
   () => selectedPickupLocation.value?.name ?? pickupCityName.value,
 );
 </script>
+
+<style scoped>
+/* A DOM-free skeleton keeps every reserved slot stable during hydration. The
+   slot itself persists; loading-to-card becomes a paint/content update. */
+.vehicle-result-slot-loading {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: #fff;
+  background-image:
+    linear-gradient(#e5e7eb 0 0),
+    linear-gradient(#e5e7eb 0 0),
+    linear-gradient(#f3f4f6 0 0),
+    linear-gradient(#f3f4f6 0 0),
+    linear-gradient(#f3f4f6 0 0);
+  background-position:
+    0 0,
+    1rem calc(66.667% + 1.25rem),
+    1rem calc(66.667% + 4.25rem),
+    1rem calc(66.667% + 6.5rem),
+    1rem calc(66.667% + 8.75rem);
+  background-repeat: no-repeat;
+  background-size:
+    100% 66.667%,
+    55% 1.5rem,
+    calc(100% - 2rem) 1rem,
+    72% 1rem,
+    45% 1rem;
+}
+</style>
