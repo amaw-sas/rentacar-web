@@ -8,6 +8,6 @@
 // closed. Mirrors the buscar-vehiculos referido+categoria variant under /reservas.
 definePageMeta({
   colorMode: 'light',
-  middleware: ['validate-search-params'],
+  middleware: ['rentacar-data', 'validate-search-params'],
 })
 </script>

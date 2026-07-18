@@ -1,15 +1,5 @@
 import { watch } from 'vue'
 import type { ReservasApiData } from '@rentacar-main/logic/utils'
-import { PUBLIC_CITIES } from './usePublicCities'
-
-const PUBLIC_CITY_PATHS = new Set(PUBLIC_CITIES.map(city => `/${city.id}`))
-
-export function routeNeedsRentacarData(path: string): boolean {
-  if (path === '/' || path === '/tarifas') return true
-  if (path === '/reservas' || path.startsWith('/reservas/')) return true
-  if (path.includes('/buscar-vehiculos')) return true
-  return PUBLIC_CITY_PATHS.has(path)
-}
 
 function copyCatalog(target: ReservasApiData, source: ReservasApiData): void {
   target.categories.splice(0, target.categories.length, ...source.categories)

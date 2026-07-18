@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = join(__dirname, '..', '..')
@@ -7,6 +7,13 @@ const BRANDS = ['alquilatucarro', 'alquilame', 'alquicarros']
 
 function brandFile(brand: string, path: string): string {
   return readFileSync(join(ROOT, `ui-${brand}`, path), 'utf8')
+}
+
+function vueFilesBelow(path: string): string[] {
+  if (!existsSync(path)) return []
+  return readdirSync(path, { recursive: true, withFileTypes: true })
+    .filter(entry => entry.isFile() && entry.name.endsWith('.vue'))
+    .map(entry => join(entry.parentPath, entry.name))
 }
 
 describe('C5b payload and bundle contracts', () => {
@@ -24,10 +31,28 @@ describe('C5b payload and bundle contracts', () => {
       expect(layout).not.toContain('useStoreAdminData')
     })
 
-    it(`${brand}: catalog fetch is route-gated`, () => {
-      const middleware = brandFile(brand, 'app/middleware/rentacar-data.global.ts')
-      expect(middleware).toContain('routeNeedsRentacarData(to.path)')
+    it(`${brand}: catalog fetch is attached only to booking pages`, () => {
+      const brandRoot = join(ROOT, `ui-${brand}`)
+      const middleware = brandFile(brand, 'app/middleware/rentacar-data.ts')
       expect(middleware).toContain('await useRentacarData()')
+      expect(existsSync(join(brandRoot, 'app/middleware/rentacar-data.global.ts'))).toBe(false)
+
+      const bookingPages = [
+        join(brandRoot, 'app/pages/index.vue'),
+        join(brandRoot, 'app/pages/[city]/index.vue'),
+        ...vueFilesBelow(join(brandRoot, 'app/pages/reservas')),
+        ...vueFilesBelow(join(brandRoot, 'app/pages/[city]/buscar-vehiculos')),
+      ]
+      if (brand === 'alquilatucarro') {
+        bookingPages.push(join(brandRoot, 'app/pages/tarifas.vue'))
+      }
+      for (const page of bookingPages) {
+        expect(readFileSync(page, 'utf8'), page).toContain('rentacar-data')
+      }
+
+      for (const staticPage of ['app/pages/blog/index.vue', 'app/pages/gana/index.vue']) {
+        expect(brandFile(brand, staticPage), staticPage).not.toContain('rentacar-data')
+      }
     })
 
     it(`${brand}: chat engine and drawer panel are interaction imports`, () => {

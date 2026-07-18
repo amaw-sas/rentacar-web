@@ -7,6 +7,6 @@
 // Mirrors the buscar-vehiculos referido variant, moved under /reservas.
 definePageMeta({
   colorMode: 'light',
-  middleware: ['validate-search-params'],
+  middleware: ['rentacar-data', 'validate-search-params'],
 })
 </script>

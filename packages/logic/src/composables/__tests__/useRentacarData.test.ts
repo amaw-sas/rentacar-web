@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
-import { routeNeedsRentacarData, useRentacarData } from '../useRentacarData'
+import { useRentacarData } from '../useRentacarData'
 
 const catalogPayload = {
   categories: [{ id: 'B' }],
@@ -11,31 +11,6 @@ const catalogPayload = {
   franchiseTestimonials: { atc: [] },
   faqs: [{ label: 'Pregunta', content: 'Respuesta' }],
 }
-
-describe('routeNeedsRentacarData', () => {
-  it.each([
-    '/',
-    '/bogota',
-    '/tarifas',
-    '/reservas',
-    '/reservas/lugar-recogida/bogota-aeropuerto',
-    '/bogota/buscar-vehiculos/lugar-recogida/bogota-aeropuerto',
-  ])('loads the catalog for booking surface %s', (path) => {
-    expect(routeNeedsRentacarData(path)).toBe(true)
-  })
-
-  it.each([
-    '/blog',
-    '/blog/alquilar-carro-bogota-guia',
-    '/politica-privacidad',
-    '/gana',
-    '/gana/terminos-condiciones',
-    '/chat',
-    '/reservado/ABC123',
-  ])('keeps catalog data off content/static route %s', (path) => {
-    expect(routeNeedsRentacarData(path)).toBe(false)
-  })
-})
 
 describe('useRentacarData', () => {
   const states = new Map<string, ReturnType<typeof ref>>()

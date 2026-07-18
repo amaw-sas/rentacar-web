@@ -6,7 +6,7 @@
 
 
 definePageMeta({
-  middleware: ['validate-search-params', 'validate-city-params']
+  middleware: ['rentacar-data', 'validate-search-params', 'validate-city-params']
 });
 
 const { city } = useSearchPageSEO();

@@ -10,6 +10,6 @@
 // re-navigates via `to.name` so it targets these /reservas routes (no city).
 definePageMeta({
   colorMode: 'light',
-  middleware: ['validate-search-params'],
+  middleware: ['rentacar-data', 'validate-search-params'],
 })
 </script>
