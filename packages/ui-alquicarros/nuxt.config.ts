@@ -652,6 +652,11 @@ export default defineNuxtConfig({
           'Cache-Control': 'public, max-age=31536000, immutable'
         }
       },
+      // Keep HTTP crawl directives aligned with these pages' HTML robots meta.
+      '/chat': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      '/pendiente': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      '/sindisponibilidad': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      '/reservado/**': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       // Independencia de enrutamiento (directiva): `/{city}/buscar-vehiculos/...` es
       // exclusiva de alquilatucarro. En alquicarros la superficie de reserva es el
       // wizard en `/reservas` (PATH). El 301 lo emite ahora
@@ -732,9 +737,11 @@ export default defineNuxtConfig({
       { loc: '/soledad', changefreq: 'monthly', priority: 0.8 },
       // Blog index — individual /blog/* posts come from sitemap.sources (dynamic, Supabase)
       { loc: '/blog', changefreq: 'weekly', priority: 0.8 },
+      // Indexable referral acquisition landing
+      { loc: '/gana', changefreq: 'monthly', priority: 0.7 },
     ],
     sources: ['/api/__sitemap__/blog'],
-    exclude: ['/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**'],
+    exclude: ['/chat', '/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**'],
   },
 
   robots: {
