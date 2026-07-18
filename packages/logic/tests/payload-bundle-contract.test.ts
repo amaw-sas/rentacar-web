@@ -73,7 +73,16 @@ describe('C5b payload and bundle contracts', () => {
     const end = config.indexOf('link: []', start)
     const publicCritical = config.slice(start, end)
     expect(publicCritical).not.toContain('SEO Dashboard Critical CSS - Grid Layout')
-    expect(Buffer.byteLength(publicCritical)).toBeLessThan(12_000)
+    expect(publicCritical).toContain(".replace(/\\/\\*[\\s\\S]*?\\*\\//g, '')")
+
+    const criticalCss = publicCritical.match(/innerHTML: `([\s\S]*?)`\s*\.replace/)?.[1]
+    expect(criticalCss).toBeDefined()
+    const deliveredCriticalCss = criticalCss!
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/\s*([{}:;,])\s*/g, '$1')
+      .trim()
+    expect(Buffer.byteLength(deliveredCriticalCss)).toBeLessThan(10_000)
 
     const seoLayout = brandFile('alquilatucarro', 'app/layouts/seo.vue')
     expect(seoLayout).toContain("key: 'critical-seo-layout'")

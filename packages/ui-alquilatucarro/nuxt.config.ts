@@ -230,6 +230,39 @@ export default defineNuxtConfig({
                 padding-bottom: 1.5rem !important;
               }
             }
+            /* Public first-paint utilities discovered by home/city coverage.
+               Keep these late in the cascade: .py-8 intentionally wins over
+               the responsive hero padding until the deferred CSS arrives. */
+            .grid { display: grid; }
+            .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+            .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .gap-2 { gap: 0.5rem; }
+            .gap-3 { gap: 0.75rem; }
+            .gap-4 { gap: 1rem; }
+            .items-baseline { align-items: baseline; }
+            .justify-between { justify-content: space-between; }
+            .h-2 { height: 0.5rem; }
+            .overflow-hidden { overflow: hidden; }
+            .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .transition-colors { transition-property: color, background-color, border-color; transition-duration: 150ms; }
+            .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+            .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+            .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+            .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+            .py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+            .mt-0\\.5 { margin-top: 0.125rem; }
+            .mb-1 { margin-bottom: 0.25rem; }
+            .mb-2 { margin-bottom: 0.5rem; }
+            .border-b { border-bottom-width: 1px; }
+            .font-normal { font-weight: 400; }
+            .font-medium { font-weight: 500; }
+            .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+            .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+            .inline-flex { display: inline-flex; }
+            @media (min-width: 768px) {
+              .md\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            }
             /* Dashboard-only utilities live in layouts/seo.vue. Public ISR
                responses should not repeat the private dashboard CSS. */
             /* Responsive overrides — MUST come after base utilities (.flex-col, .w-full) to win cascade */
@@ -243,7 +276,11 @@ export default defineNuxtConfig({
               .md\\:gap-3 { gap: 0.75rem; }
             }
             }
-          `,
+          `
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/\s+/g, ' ')
+            .replace(/\s*([{}:;,])\s*/g, '$1')
+            .trim(),
         },
       ],
       link: [],
