@@ -49,13 +49,14 @@
 </template>
 
 <script setup lang="ts">
+import useReservationConfirmation from '@rentacar-main/logic/composables/useReservationConfirmation'
+
 const { franchise } = useAppConfig()
+const { reserveCode } = await useReservationConfirmation()
+
 // GA4: registra esta pagina de resultado en navegacion interna (el page_view
 // automatico no dispara para el navigateTo post-reserva). Ver useResultPageView.
 useResultPageView('Reserva Confirmada');
-
-const route = useRoute();
-const reserveCode = route.params.reserveCode;
 
 useHead({
   title: `Reserva Confirmada | ${franchise.shortname}`,
