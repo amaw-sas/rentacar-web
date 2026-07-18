@@ -4,6 +4,13 @@ import { join } from 'node:path'
 
 const BRANDS = ['alquilatucarro', 'alquilame', 'alquicarros'] as const
 
+interface EdgeRoute {
+  src: string
+  methods: string[]
+  headers: { Location: string }
+  status: number
+}
+
 function readBrandFile(brand: string, relativePath: string): string {
   return readFileSync(join(__dirname, '..', '..', `ui-${brand}`, relativePath), 'utf-8')
 }
@@ -40,6 +47,44 @@ describe('brand index signals', () => {
       expect(middleware).toContain(`event.method, '${brand}'`)
       expect(middleware).toContain('sendRedirect(event, target, 301)')
     })
+
+    it(`${brand}: enforces the content redirects as 301s at the Vercel edge`, () => {
+      const config = JSON.parse(readBrandFile(brand, 'vercel.json')) as {
+        routes: EdgeRoute[]
+      }
+      const [contentRedirect] = config.routes
+
+      expect(contentRedirect).toMatchObject({
+        methods: ['GET', 'HEAD'],
+        headers: { Location: '/$1' },
+        status: 301,
+      })
+      expect(contentRedirect.src).toContain('bogota')
+      expect(contentRedirect.src).toContain('blog(?:/.*)?')
+      expect(contentRedirect.src).toContain('gana(?:/.*)?')
+      expect(contentRedirect.src).not.toMatch(/reservas|api|_nuxt/)
+
+      const edgePattern = new RegExp(contentRedirect.src)
+      for (const path of ['/bogota/', '/blog/', '/blog/como-alquilar/', '/gana/', '/gana/legal/']) {
+        expect(edgePattern.test(path)).toBe(true)
+      }
+      for (const path of [
+        '/bogota',
+        '/reservas/',
+        '/api/reservations/',
+        '/_nuxt/app.js/',
+        '/reservado/ABC123/',
+        '/bogota/buscar-vehiculos/',
+      ]) {
+        expect(edgePattern.test(path)).toBe(false)
+      }
+
+      if (brand === 'alquilatucarro') {
+        expect(contentRedirect.src).toMatch(/tarifas|tiktok/)
+      } else {
+        expect(contentRedirect.src).not.toMatch(/tarifas|tiktok/)
+      }
+    })
   }
 
   it('alquilatucarro excludes /tiktok and sends its noindex header', () => {
@@ -50,5 +95,11 @@ describe('brand index signals', () => {
     expect(config).toContain(
       "'/tiktok': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } }",
     )
+
+    const edgeConfig = JSON.parse(readBrandFile('alquilatucarro', 'vercel.json')) as {
+      routes: EdgeRoute[]
+    }
+    expect(edgeConfig.routes[0].src).toContain('tarifas')
+    expect(edgeConfig.routes[0].src).toContain('tiktok')
   })
 })
