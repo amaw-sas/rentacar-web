@@ -463,24 +463,14 @@ button { -webkit-tap-highlight-color: transparent; }
   border-radius: 9999px;
   background: #22c55e;
   border: 2px solid #fff;
-  box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.6);
-}
-.cc-avatar-dot::after {
-  content: '';
-  position: absolute;
-  inset: -0.35rem;
-  border-radius: inherit;
-  background: rgba(34, 197, 94, 0.45);
-  pointer-events: none;
   animation: cc-chip-glow 1.6s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 @keyframes cc-chip-glow {
-  0%, 100% { opacity: 0.55; transform: scale(0.55); }
-  50% { opacity: 0; transform: scale(1.25); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  50% { box-shadow: 0 0 7px 2px rgba(34, 197, 94, 0.95); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cc-avatar-dot::after { animation: none; opacity: 0; }
+  .cc-avatar-dot { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
   .cc-flash { animation: none; }
 }
 .cc-titlewrap { flex: 1; min-width: 0; }

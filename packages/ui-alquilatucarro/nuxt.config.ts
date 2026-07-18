@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
+import { imageScreens } from './image-screens';
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -510,20 +511,10 @@ export default defineNuxtConfig({
     // silencioso → las imágenes nunca vuelven a salir crudas). La env solo habilita rotar el host.
     domains: (process.env.NUXT_IMAGE_DOMAINS || '9grznib0czdjtk77.public.blob.vercel-storage.com')
       .split(',').map((d) => d.trim()).filter(Boolean),
-    screens: {
-      xs: 320,
-      sm: 640,
-      md: 768,
-      lg: 1024,
-      xl: 1280,
-      // The Vercel image optimizer only accepts widths present in images.sizes,
-      // which @nuxt/image derives from these screen values at build time. The
-      // runtime srcset for our 800px images on 2x screens requests w=1536, so
-      // 1536 must be a screen value here — otherwise /_vercel/image returns 400
-      // and the image breaks (#161). Keep this in sync with the widths the
-      // generated srcset can actually request.
-      xxl: 1536,
-    },
+    // The Vercel provider rounds every request to this allowlist. It includes
+    // both viewport breakpoints and the exact fixed-image candidates used by
+    // avatars, blog cards, and the city hero.
+    screens: imageScreens,
   },
 
   // Optimización Core Web Vitals
@@ -629,7 +620,7 @@ export default defineNuxtConfig({
         // Vercel optimizer returns 400 and the image breaks. Our 800px images on
         // 2x screens request w=1536, so 1536 must be here. Keep in sync with
         // `image.screens` above (#161).
-        sizes: [320, 640, 768, 1024, 1280, 1536],
+        sizes: [32, 64, 80, 160, 320, 400, 480, 560, 600, 626, 640, 768, 800, 960, 1024, 1120, 1125, 1200, 1280, 1536],
         qualities: [80],
         formats: ['image/webp'],
         minimumCacheTTL: 2678400,
@@ -691,7 +682,9 @@ export default defineNuxtConfig({
       '/floridablanca': { isr: 3600 },
       '/palmira': { isr: 3600 },
       '/soledad': { isr: 3600 },
-      // Tariffs use the same hourly catalog data as the city pages.
+      // Single freshness clock for tariffs: ISR may retain one catalog
+      // snapshot for at most one hour. /api/rentacar-data is intentionally not
+      // cached, so regeneration cannot stack a second TTL onto this window.
       '/tarifas': { isr: 3600 },
       // Blog — ISR como las city pages (issue #52)
       '/blog': { isr: 3600 },

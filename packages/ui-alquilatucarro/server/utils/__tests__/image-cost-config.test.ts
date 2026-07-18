@@ -20,12 +20,18 @@ import { dirname, resolve } from 'node:path'
 const packagesDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 const BRANDS = ['ui-alquilatucarro', 'ui-alquilame', 'ui-alquicarros']
 
-// Byte-identical top-level `hooks: { … }` block injected into all 3
-// nuxt.config.ts. Verbatim — including the comments and the doubled
-// backslashes in the hostname exactly as they appear in source.
-// Authoritative images.sizes must include 1536: @nuxt/image srcset for 800px
-// assets on 2x screens requests w=1536; without it Vercel returns 400 (#161).
+// Every brand must retain the canonical candidates, including 1536 for 800px
+// assets on 2x screens (#161). Alquilatucarro additionally allows the exact
+// fixed widths used by its responsive blog/hero images; keeping those widths
+// explicit prevents the Vercel provider from rounding a URL away from the
+// descriptor emitted in srcset.
 const CANONICAL_SIZES = [320, 640, 768, 1024, 1280, 1536]
+const ALQUILATUCARRO_SIZES = [32, 64, 80, 160, 320, 400, 480, 560, 600, 626, 640, 768, 800, 960, 1024, 1120, 1125, 1200, 1280, 1536]
+const EXPECTED_SIZES_BY_BRAND: Record<string, number[]> = {
+  'ui-alquilatucarro': ALQUILATUCARRO_SIZES,
+  'ui-alquilame': CANONICAL_SIZES,
+  'ui-alquicarros': CANONICAL_SIZES,
+}
 
 // Core hard-assign body present in all 3 brands (comments may differ slightly;
 // we assert the assignment shape + EXPECTED values rather than a brittle full
@@ -167,7 +173,7 @@ describe('SCEN-005/006: defu-concat regression guard — naive config fails, hoo
       const parsed = parseImagesFromHook(src)
       expect(parsed.formats).toEqual(EXPECTED_IMAGES.formats)
       expect(parsed.minimumCacheTTL).toBe(EXPECTED_IMAGES.minimumCacheTTL)
-      expect(parsed.sizes).toEqual(EXPECTED_IMAGES.sizes)
+      expect(parsed.sizes).toEqual(EXPECTED_SIZES_BY_BRAND[brand])
       expect(parsed.qualities).toEqual(EXPECTED_IMAGES.qualities)
       expect(parsed.remotePatternsCount).toBe(EXPECTED_IMAGES.remotePatterns.length)
     })

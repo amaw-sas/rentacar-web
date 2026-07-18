@@ -1,6 +1,14 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { imageScreens } from '../../../image-screens'
+import {
+  getBlogCardDensities,
+  getBlogFeaturedDensities,
+  getBlogFeaturedSizes,
+  getBlogHeroSizes,
+  getBlogImageWidth,
+} from '../../utils/blogResponsiveImages'
 
 function source(relativePath: string): string {
   return readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), 'utf8')
@@ -24,24 +32,68 @@ describe('PERF-5 — responsive blog images', () => {
       expect(page).toMatch(/width="\d+"/)
       expect(page).toMatch(/height="\d+"/)
     }
-    expect(detailPage).toContain('sizes="xs:100vw xxl:1280px"')
+    expect(detailPage).toContain(':sizes="getBlogHeroSizes(post.image)"')
     expect(detailPage).not.toContain('sizes="100vw"')
-    expect(detailPage).toContain('aspect-[5/2]')
+    expect(detailPage).toContain('class="relative h-40 overflow-hidden"')
+  })
+
+  const screens = imageScreens as Record<string, number>
+
+  function candidateWidths(sizes: string, densities: string): number[] {
+    const widths = new Set<number>()
+    for (const entry of sizes.split(/\s+/)) {
+      const [key, size] = entry.split(':')
+      const screen = screens[key!] ?? Number.parseInt(key!, 10)
+      const cssWidth = size!.endsWith('vw')
+        ? Math.round(Number.parseInt(size!, 10) / 100 * screen)
+        : Number.parseInt(size!, 10)
+      for (const density of densities.split(/\s+/).map(value => Number.parseInt(value, 10))) {
+        widths.add(cssWidth * density)
+      }
+    }
+    return [...widths].sort((a, b) => a - b)
+  }
+
+  it.each([
+    '/img/blog/guatape-piedra.webp',
+    '/img/blog/precios-alquiler-carros.jpg',
+    '/img/blog/viajar-carretera.jpg',
+  ])('keeps every %s candidate truthful and unique', (src) => {
+    const intrinsicWidth = getBlogImageWidth(src)
+    const candidates = [
+      ...candidateWidths(getBlogHeroSizes(src), '1x'),
+      ...candidateWidths(getBlogFeaturedSizes(src), getBlogFeaturedDensities(src)),
+      ...candidateWidths('xs:320px md:400px', getBlogCardDensities(src)),
+    ]
+
+    expect(candidates.every(width => width <= intrinsicWidth)).toBe(true)
+    expect(candidates.every(width => Object.values(imageScreens).includes(width as never))).toBe(true)
+
+    const uniqueCandidates = [...new Set(candidates)]
+    const providerUrls = uniqueCandidates.map(width => `/_vercel/image?url=${encodeURIComponent(src)}&w=${width}`)
+    expect(new Set(providerUrls).size).toBe(uniqueCandidates.length)
   })
 })
 
-describe('PERF-6 — versioned responsive decorative images', () => {
+describe('PERF-6 — responsive decorative images', () => {
   const heroCar = source('../Images/HeroCar.vue')
   const monthlyTeaser = source('../MonthlyRatesTeaser.vue')
 
-  it('uses versioned Vite imports with NuxtImg instead of CSS URLs', () => {
-    for (const component of [heroCar, monthlyTeaser]) {
-      expect(component).toContain('<NuxtImg')
-      expect(component).toContain('~/assets/images/')
-      expect(component).not.toMatch(/background-image\s*:/)
-      expect(component).not.toMatch(/url\(['"]?\/images\//)
-    }
+  it('keeps the city hero at 480x239 with real 480w/960w optimizer candidates', () => {
+    expect(heroCar).toContain('<NuxtImg')
+    expect(heroCar).toContain('src="/images/hero/car.webp"')
     expect(heroCar).toContain('v-if="isMounted && isDesktop"')
+    expect(heroCar).toContain('sizes="480px"')
+    expect(heroCar).toContain('densities="1x 2x"')
+    expect(heroCar).toMatch(/\.hero-car \{[\s\S]*?aspect-ratio: 1203 \/ 600;/)
+    expect(heroCar).toMatch(/\.hero-car-image \{[\s\S]*?width: 100%;[\s\S]*?height: 100%;/)
+    expect(Object.values(imageScreens)).toEqual(expect.arrayContaining([480, 960]))
+  })
+
+  it('keeps the confirmed-safe monthly teaser on its versioned NuxtImg path', () => {
+    expect(monthlyTeaser).toContain('<NuxtImg')
+    expect(monthlyTeaser).toContain('~/assets/images/monthly/')
+    expect(monthlyTeaser).not.toMatch(/background-image\s*:/)
   })
 })
 
@@ -73,16 +125,12 @@ describe('CLS safeguards', () => {
     expect(carousel).toMatch(/transition: transform 300ms ease, background-color 300ms ease;/)
   })
 
-  it('uses transform/opacity keyframes for FAB and teaser entrances', () => {
-    expect(chatWidget).toMatch(/@keyframes chip-glow \{[\s\S]*?transform: scale/)
-    expect(chatWidget).toMatch(/@keyframes pulse-attention \{[\s\S]*?transform: scale/)
+  it('preserves the established glow visuals while keeping the teaser entrance composited', () => {
+    expect(chatWidget).toMatch(/@keyframes chip-glow \{[\s\S]*?box-shadow: 0 0 7px 2px/)
+    expect(chatWidget).toMatch(/@keyframes pulse-attention \{[\s\S]*?0 0 0 14px/)
     expect(chatWidget).toMatch(/@keyframes teaser-pop \{[\s\S]*?transform: scale/)
-
-    for (const animation of ['chip-glow', 'pulse-attention', 'teaser-pop']) {
-      const keyframes = chatWidget.match(new RegExp(`@keyframes ${animation} \\{([\\s\\S]*?)\\n\\}`))?.[1] ?? ''
-      expect(keyframes).not.toContain('box-shadow')
-      expect(keyframes).not.toMatch(/\b(top|right|bottom|left|width|height|margin|padding):/)
-    }
+    expect(chatWidget).not.toContain('.fab-chip-glow::after')
+    expect(chatWidget).not.toContain('.animate-pulse-attention::after')
   })
 
   it('reserves the proactive teaser geometry before either message appears', () => {
@@ -94,10 +142,9 @@ describe('CLS safeguards', () => {
     expect(chatWidget).toMatch(/\.teaser-sizer \{[\s\S]*?visibility: hidden;/)
   })
 
-  it('keeps the inline chat availability pulse on the compositor', () => {
+  it('preserves the inline chat availability glow', () => {
     const keyframes = chatConversation.match(/@keyframes cc-chip-glow \{([\s\S]*?)\n\}/)?.[1] ?? ''
-    expect(keyframes).toContain('transform: scale')
-    expect(keyframes).toContain('opacity:')
-    expect(keyframes).not.toContain('box-shadow')
+    expect(keyframes).toContain('box-shadow: 0 0 7px 2px rgba(34, 197, 94, 0.95)')
+    expect(chatConversation).not.toContain('.cc-avatar-dot::after')
   })
 })

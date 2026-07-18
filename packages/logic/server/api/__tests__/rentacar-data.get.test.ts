@@ -64,7 +64,9 @@ describe('server/api/rentacar-data.get — missing localiza fallback (#16)', () 
 
   beforeEach(async () => {
     vi.clearAllMocks()
-    vi.stubGlobal('defineCachedEventHandler', (fn: unknown) => fn)
+    // Price freshness is owned by page ISR. Deliberately stub only the plain
+    // event handler so reintroducing a second handler-cache clock fails import.
+    vi.stubGlobal('defineEventHandler', (fn: unknown) => fn)
     // Issue #322 PR10: the handler scopes the franchises query to the deploy's
     // brand via runtimeConfig.
     vi.stubGlobal('useRuntimeConfig', () => ({ public: { rentacarFranchise: 'alquilame' } }))
@@ -129,6 +131,17 @@ describe('server/api/rentacar-data.get — missing localiza fallback (#16)', () 
 
     expect(vi.mocked(fetchRentacarData)).toHaveBeenCalledTimes(1)
     expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[2]).toBe('alquilame')
+  })
+
+  it('does not retain catalog data between requests', async () => {
+    vi.mocked(fetchRentacarData)
+      .mockResolvedValueOnce(tuple({ 0: ok([{ id: 'FIRST' }]) }) as never)
+      .mockResolvedValueOnce(tuple({ 0: ok([{ id: 'SECOND' }]) }) as never)
+
+    await handler()
+    await handler()
+
+    expect(vi.mocked(fetchRentacarData)).toHaveBeenCalledTimes(2)
   })
 
   it('SCEN-16-3: present localiza row → extras = transformExtras(row), called once', async () => {

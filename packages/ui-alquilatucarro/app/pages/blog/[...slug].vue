@@ -14,9 +14,10 @@
         :src="post.image"
         :alt="post.alt"
         class="w-full h-full object-cover"
-        width="1280"
+        :width="getBlogImageWidth(post.image)"
         height="800"
-        sizes="xs:100vw xxl:1280px"
+        :sizes="getBlogHeroSizes(post.image)"
+        densities="1x"
         format="webp"
         loading="eager"
         decoding="async"
@@ -42,6 +43,7 @@
                 width="32"
                 height="32"
                 sizes="32px"
+                densities="1x 2x"
                 format="webp"
                 loading="lazy"
                 decoding="async"
@@ -193,6 +195,7 @@
               width="80"
               height="80"
               sizes="80px"
+              densities="1x 2x"
               format="webp"
               loading="lazy"
               decoding="async"
@@ -242,14 +245,15 @@
             class="group"
           >
             <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
-              <div class="relative aspect-[5/2] overflow-hidden">
+              <div class="relative h-40 overflow-hidden">
                 <NuxtImg
                   :src="related.image"
                   :alt="related.alt"
                   class="w-full h-full object-cover"
                   width="400"
                   height="160"
-                  sizes="xs:100vw md:33vw xl:400px"
+                  sizes="xs:320px md:400px"
+                  :densities="getBlogCardDensities(related.image)"
                   format="webp"
                   loading="lazy"
                   decoding="async"

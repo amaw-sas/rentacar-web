@@ -322,24 +322,14 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .fab-chip-glow {
   background: #22c55e;
-  box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.6);
-}
-.fab-chip-glow::after {
-  content: '';
-  position: absolute;
-  inset: -0.35rem;
-  border-radius: inherit;
-  background: rgba(34, 197, 94, 0.45);
-  pointer-events: none;
   animation: chip-glow 1.6s ease-in-out infinite;
-  will-change: transform, opacity;
 }
 @keyframes chip-glow {
-  0%, 100% { opacity: 0.55; transform: scale(0.55); }
-  50% { opacity: 0; transform: scale(1.25); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  50% { box-shadow: 0 0 7px 2px rgba(34, 197, 94, 0.95); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fab-chip-glow::after { animation: none; opacity: 0; }
+  .fab-chip-glow { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
 }
 /* Insignia roja de no leídos sobre el FAB principal. */
 .fab-badge {
@@ -446,22 +436,11 @@ button { -webkit-tap-highlight-color: transparent; }
   overflow: hidden;
 }
 
-/* Pulso de atención del FAB: transform/opacity only, so it stays composited. */
-.animate-pulse-attention::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 2px solid rgba(204, 2, 43, 0.45);
-  border-radius: inherit;
-  pointer-events: none;
-  animation: pulse-attention 2.4s ease-in-out infinite;
-  will-change: transform, opacity;
-}
+/* Pulso de atención del FAB (respeta reduce-motion) */
 @keyframes pulse-attention {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50% { opacity: 0; transform: scale(1.5); }
+  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(204, 2, 43, 0.4); }
+  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px rgba(204, 2, 43, 0); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .animate-pulse-attention::after { animation: none; opacity: 0; }
-}
+.animate-pulse-attention { animation: pulse-attention 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .animate-pulse-attention { animation: none; } }
 </style>
