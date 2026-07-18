@@ -1,6 +1,6 @@
 // External dependencies
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, unref } from 'vue';
 import { storeToRefs } from 'pinia';
 
 // Internal dependencies - stores
@@ -13,7 +13,15 @@ import useCategory from '../composables/useCategory';
 import useMessages from '../composables/useMessages';
 
 // utils
-import { categoryOffersMonthly, isCategoryVisibleInCity, isBlockingSearchError, categoryReadingRank, pickTotalCoverageChargeForDate } from '@rentacar-main/logic/utils';
+import {
+  categoryOffersMonthly,
+  isCategoryVisibleInCity,
+  isBlockingSearchError,
+  categoryReadingRank,
+  normalizeAnalyticsErrorReason,
+  pickTotalCoverageChargeForDate,
+  trackAnalyticsEvent,
+} from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -62,6 +70,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   // Issue 322 SCEN-322-E06: discard out-of-order availability responses so a
   // slow first search cannot overwrite a newer one or clear `pending` early.
   let searchGeneration = 0;
+  let checkoutTrackedForCategory: string | null = null;
 
   const search = async () => {
     const gen = ++searchGeneration;
@@ -75,6 +84,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     // `true` from a prior LLNRAG009 search leaks into a later search that
     // ends in a different terminal error. Issue #20.
     noAvailableCategories.value = false;
+    checkoutTrackedForCategory = null;
 
     const { data, error: errorResponse } = await useFetchCategoriesAvailabilityData();
 
@@ -163,6 +173,26 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     // during toast/UI work above.
     if (gen !== searchGeneration) return;
     pending.value = false;
+
+    if (isBlockingSearchError(errorResponse.value)) {
+      trackAnalyticsEvent('rental_search_error', {
+        brand: analyticsBrand(),
+        reason: normalizeAnalyticsErrorReason(errorResponse.value),
+      });
+    } else {
+      const items = filteredCategories.value
+        .filter((category) => category.estimatedTotalAmount !== 999999999)
+        .map((category) => analyticsItemFromAvailability(
+          category,
+          !haveMonthlyReservation.value,
+        ));
+      trackAnalyticsEvent('view_item_list', {
+        brand: analyticsBrand(),
+        result_count: items.length,
+        items,
+        ...(items.some((item) => item.price !== undefined) ? { currency: 'COP' as const } : {}),
+      });
+    }
   };
 
   const categories = computed<CategoryAvailabilityData[] | []>(() => {
@@ -264,6 +294,29 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     );
   });
 
+  function trackVehicleSelection(category: ReturnType<typeof useCategory>): void {
+    const item = analyticsItemFromSelection(category);
+    checkoutTrackedForCategory = null;
+    trackAnalyticsEvent('select_item', {
+      brand: analyticsBrand(),
+      items: [item],
+      ...(item.price !== undefined ? { currency: 'COP' as const, value: item.price } : {}),
+    });
+  }
+
+  function trackCheckoutStarted(): void {
+    if (!selectedCategory.value) return;
+    const item = analyticsItemFromSelection(selectedCategory.value);
+    if (checkoutTrackedForCategory === item.item_id) return;
+    const sent = trackAnalyticsEvent('begin_checkout', {
+      brand: analyticsBrand(),
+      items: [item],
+      ...(item.price !== undefined ? { currency: 'COP' as const, value: item.price } : {}),
+    });
+    // Deduplicate only a real GA send. Brands without gtag stay cleanly inert.
+    if (sent) checkoutTrackedForCategory = item.item_id;
+  }
+
   return {
     categoriesAvailabilityData,
     categories,
@@ -274,6 +327,8 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     error,
     selectedCategory,
     noAvailableCategories,
+    trackVehicleSelection,
+    trackCheckoutStarted,
   };
 });
 
@@ -316,6 +371,49 @@ const createCategoryAvailability = (
     coverageTotalAmount: 0,
     referenceToken: "",
     rateQualifier: "",
-  } as CategoryAvailabilityData)
+} as CategoryAvailabilityData)
+
+const finitePrice = (value: unknown): number | undefined => {
+  const numberValue = Number(unref(value));
+  return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : undefined;
+};
+
+const analyticsItemFromAvailability = (
+  category: CategoryAvailabilityData,
+  includePrice: boolean,
+) => ({
+  item_id: String(category.categoryCode),
+  item_name: category.categoryDescription || String(category.categoryCode),
+  ...(includePrice && finitePrice(category.estimatedTotalAmount) !== undefined
+    ? { price: finitePrice(category.estimatedTotalAmount) }
+    : {}),
+  quantity: 1,
+});
+
+type AnalyticsCategorySelection = {
+  categoryCode: unknown;
+  categoryDescription: unknown;
+  getActualTotalPrice: unknown;
+};
+
+const analyticsItemFromSelection = (category: AnalyticsCategorySelection) => {
+  const itemId = String(unref(category.categoryCode));
+  const itemName = String(unref(category.categoryDescription) || itemId);
+  const price = finitePrice(category.getActualTotalPrice);
+  return {
+    item_id: itemId,
+    item_name: itemName,
+    ...(price !== undefined ? { price } : {}),
+    quantity: 1,
+  };
+};
+
+function analyticsBrand(): string {
+  try {
+    return String(useRuntimeConfig().public.rentacarFranchise || 'unknown');
+  } catch {
+    return 'unknown';
+  }
+}
 
 export default useStoreSearchData;

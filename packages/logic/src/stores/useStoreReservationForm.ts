@@ -28,6 +28,8 @@ import {
   buildAttributionTouch,
   persistAttribution,
   readStoredAttribution,
+  trackAnalyticsEvent,
+  trackReservationOutcome,
 } from '@rentacar-main/logic/utils';
 
 // Types
@@ -82,6 +84,11 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
         window.location.search,
         document.referrer,
         window.location.hostname,
+        {
+          landingUrl: window.location.pathname,
+          capturedAt: new Date().toISOString(),
+          brand: analyticsBrand(),
+        },
       );
       if (isTouch) {
         attribution.value = touch;
@@ -302,8 +309,12 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     } = useMessages();
 
     try {
-      const { data: dataRecord, error: errorRecord } =
+      const { data: dataRecord, error: errorRecord, analyticsValue } =
         await useRecordReservationForm();
+
+      const outcomeValue = analyticsValue > 0
+        ? { currency: 'COP' as const, value: analyticsValue }
+        : {};
 
       if (dataRecord.value) {
         const route = routeForReservationStatus(
@@ -311,6 +322,23 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
           dataRecord.value.reserveCode,
         );
         if (route) {
+          if (route.startsWith('/reservado/')) {
+            trackReservationOutcome(
+              'reservation_confirmed',
+              { brand: analyticsBrand(), ...outcomeValue },
+              dataRecord.value.reserveCode,
+            );
+          } else if (route === '/pendiente') {
+            trackReservationOutcome('reservation_pending', {
+              brand: analyticsBrand(),
+              ...outcomeValue,
+            });
+          } else {
+            trackReservationOutcome('reservation_unavailable', {
+              brand: analyticsBrand(),
+              ...outcomeValue,
+            });
+          }
           stripReservarParam();
           navigateTo({ path: route });
           // Keep isSubmitting through navigation so a second click can't POST.
@@ -321,6 +349,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
         // SCEN-322-E03: status desconocido — no navegar; toast + lock reenvío.
         // Clear loading spinner (releaseSubmit) but formSubmitLocked blocks retry.
         formSubmitLocked.value = true;
+        trackAnalyticsEvent('reservation_error', {
+          brand: analyticsBrand(),
+          reason: 'unknown_status',
+        });
         createReservationUnknownStatusMessage(dataRecord.value.reserveCode);
         return;
       }
@@ -330,12 +362,25 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
         if (isBusinessUnavailabilityRecordError(errorRecord.value)) {
           stripReservarParam();
           navigateTo({ path: '/sindisponibilidad' });
+          trackReservationOutcome('reservation_unavailable', {
+            brand: analyticsBrand(),
+            ...outcomeValue,
+          });
           releaseSubmit = false;
           return;
         }
 
         // SCEN-322-E01 / E05: 5xx, red, timeout, 429… toast y quedarse en el form.
+        trackAnalyticsEvent('reservation_error', {
+          brand: analyticsBrand(),
+          reason: 'technical_error',
+        });
         createReservationTechnicalErrorMessage();
+      } else {
+        trackAnalyticsEvent('reservation_error', {
+          brand: analyticsBrand(),
+          reason: 'empty_response',
+        });
       }
     } finally {
       if (releaseSubmit) {
@@ -395,5 +440,13 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     humanFormattedReturnHour,
   };
 });
+
+function analyticsBrand(): string {
+  try {
+    return String(useRuntimeConfig().public.rentacarFranchise || 'unknown');
+  } catch {
+    return 'unknown';
+  }
+}
 
 export default useStoreReservationForm;
