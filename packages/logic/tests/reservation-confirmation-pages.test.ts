@@ -11,14 +11,25 @@ describe.each(brands)('%s reservation confirmation page', (brand) => {
 
   it('awaits the shared existence guard before recording a confirmed page view', () => {
     const guardPosition = source.indexOf('await useReservationConfirmation()')
+    const foundGuardPosition = source.indexOf("if (validation.status === 'found')")
     const analyticsPosition = source.indexOf("useResultPageView('Reserva Confirmada')")
 
     expect(guardPosition).toBeGreaterThan(-1)
-    expect(analyticsPosition).toBeGreaterThan(guardPosition)
+    expect(foundGuardPosition).toBeGreaterThan(guardPosition)
+    expect(analyticsPosition).toBeGreaterThan(foundGuardPosition)
     expect(source).not.toContain('route.params.reserveCode')
   })
 
-  it('keeps the existing noindex directive', () => {
+  it('renders a neutral unavailable state instead of confirmation content', () => {
+    expect(source).toContain("v-if=\"validation.status === 'unavailable'\"")
+    expect(source).toContain('data-reservation-state="unavailable"')
+    expect(source).toContain('Estamos verificando tu reserva')
+    expect(source).toContain('Intenta en unos minutos.')
+    expect(source).toContain('data-reservation-state="confirmed"')
+    expect(source).toContain('if (validation.status !== \'found\') return')
+  })
+
+  it('keeps the unavailable and confirmation states noindexed', () => {
     expect(source).toContain("content: 'noindex, nofollow'")
   })
 })
