@@ -92,7 +92,7 @@ describe('PERF-6 — responsive decorative images', () => {
 
   it('keeps the confirmed-safe monthly teaser on its versioned NuxtImg path', () => {
     expect(monthlyTeaser).toContain('<NuxtImg')
-    expect(monthlyTeaser).toContain('~/assets/images/monthly/')
+    expect(monthlyTeaser).toContain('src="/images/monthly/teaser-suv-bogota-c5a.webp"')
     expect(monthlyTeaser).not.toMatch(/background-image\s*:/)
   })
 })
