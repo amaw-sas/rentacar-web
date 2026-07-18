@@ -81,7 +81,6 @@ interface StaticCityContent {
 }
 
 const AIRPORT_PICKUP_CLAIM = /(?:recog\w*|retir\w*|entreg\w*|alquil\w*)[^.!?]{0,120}aeropuerto|aeropuerto[^.!?]{0,120}(?:recog\w*|retir\w*|entreg\w*|alquil\w*)/i
-const CANONICAL_DAILY_FLOOR = '$220.000 COP/día'
 const LEGACY_DAILY_PRICE = '$' + '32'
 
 describe('SEO content hygiene across brands (F5/F9)', () => {
@@ -132,18 +131,19 @@ describe('SEO content hygiene across brands (F5/F9)', () => {
   })
 
   for (const brand of BRANDS) {
-    it(`${brand} uses the verified COP 220.000 daily floor across home and social metadata`, () => {
+    it(`${brand} derives home and social price metadata instead of storing a numeric claim`, () => {
       const configSource = readBrandFile(brand, 'app/app.config.ts')
       const homeSource = readBrandFile(brand, 'app/pages/index.vue')
 
-      expect(configSource).toContain(`Alquiler de Carros en Colombia desde ${CANONICAL_DAILY_FLOOR}`)
-      expect(configSource).toContain(`Alquila carros desde ${CANONICAL_DAILY_FLOOR}`)
+      expect(configSource).not.toMatch(/\$\d[\d.,]*\s*COP\/día/)
       expect(configSource).not.toContain(LEGACY_DAILY_PRICE)
 
-      expect(homeSource).toMatch(/ogTitle:\s*franchise\.title/)
-      expect(homeSource).toMatch(/twitterTitle:\s*franchise\.title/)
-      expect(homeSource).toMatch(/ogDescription:\s*franchise\.description/)
-      expect(homeSource).toMatch(/twitterDescription:\s*franchise\.description/)
+      expect(homeSource).toContain('const homeSEO = useHomeSEO()')
+      expect(homeSource).toMatch(/useBaseSEO\(\{\s*title:\s*homeSEO\.title,\s*description:\s*homeSEO\.description/s)
+      expect(homeSource).toMatch(/ogTitle:\s*homeSEO\.title/)
+      expect(homeSource).toMatch(/twitterTitle:\s*homeSEO\.title/)
+      expect(homeSource).toMatch(/ogDescription:\s*homeSEO\.description/)
+      expect(homeSource).toMatch(/twitterDescription:\s*homeSEO\.description/)
     })
   }
 
