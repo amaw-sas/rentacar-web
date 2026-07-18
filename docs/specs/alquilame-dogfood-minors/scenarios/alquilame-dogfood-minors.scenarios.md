@@ -21,7 +21,7 @@ Lower-severity findings from the dogfood pass that are genuine code fixes.
   crowd the link.
 
 Out of scope (escalated, NOT code fixes — see delivery notes):
-- ISSUE-004 "desde $32/día" SEO/marketing claim vs $220.000/día daily minimum —
+- ISSUE-004 legacy USD-based SEO/marketing claim vs `$220.000 COP/día` daily minimum —
   a copy/SEO decision owned by the directiva, not changed unilaterally.
 - ISSUE-005 hero video with burned-in subtitles + watermark — needs a re-encoded
   video asset, not a code change.

@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import { getCityFAQs, getCityPickupAnswer, getCityPriceAnswer } from '../composables/useCityFAQs'
+import { slugify } from '../utils/slugify'
 import type BranchData from '../utils/types/data/BranchData'
 
 const BRANDS = ['ui-alquilatucarro', 'ui-alquilame', 'ui-alquicarros'] as const
@@ -22,6 +23,12 @@ const TITLE_PAGES = [
 const readBrandFile = (brand: string, relativePath: string): string =>
   readFileSync(
     fileURLToPath(new URL(`../../../${brand}/${relativePath}`, import.meta.url)),
+    'utf8',
+  )
+
+const readRootFile = (relativePath: string): string =>
+  readFileSync(
+    fileURLToPath(new URL(`../../../../${relativePath}`, import.meta.url)),
     'utf8',
   )
 
@@ -66,6 +73,16 @@ const ACTIVE_BRANCHES: BranchData[] = Object.entries(ACTIVE_BRANCH_NAMES).flatMa
     city: cityName,
   })),
 )
+
+interface StaticCityContent {
+  id: string
+  description: string
+  testimonials: Array<{ quote: string }>
+}
+
+const AIRPORT_PICKUP_CLAIM = /(?:recog\w*|retir\w*|entreg\w*|alquil\w*)[^.!?]{0,120}aeropuerto|aeropuerto[^.!?]{0,120}(?:recog\w*|retir\w*|entreg\w*|alquil\w*)/i
+const CANONICAL_DAILY_FLOOR = '$220.000 COP/día'
+const LEGACY_DAILY_PRICE = '$' + '32'
 
 describe('SEO content hygiene across brands (F5/F9)', () => {
   it('uses one factual city price answer without a numeric from-price', () => {
@@ -115,10 +132,18 @@ describe('SEO content hygiene across brands (F5/F9)', () => {
   })
 
   for (const brand of BRANDS) {
-    it(`${brand} uses the verified COP 220.000 daily floor in the base title`, () => {
-      const source = readBrandFile(brand, 'app/app.config.ts')
-      expect(source).toContain('Alquiler de Carros en Colombia desde $220.000 COP/día')
-      expect(source).not.toContain('desde $32/día')
+    it(`${brand} uses the verified COP 220.000 daily floor across home and social metadata`, () => {
+      const configSource = readBrandFile(brand, 'app/app.config.ts')
+      const homeSource = readBrandFile(brand, 'app/pages/index.vue')
+
+      expect(configSource).toContain(`Alquiler de Carros en Colombia desde ${CANONICAL_DAILY_FLOOR}`)
+      expect(configSource).toContain(`Alquila carros desde ${CANONICAL_DAILY_FLOOR}`)
+      expect(configSource).not.toContain(LEGACY_DAILY_PRICE)
+
+      expect(homeSource).toMatch(/ogTitle:\s*franchise\.title/)
+      expect(homeSource).toMatch(/twitterTitle:\s*franchise\.title/)
+      expect(homeSource).toMatch(/ogDescription:\s*franchise\.description/)
+      expect(homeSource).toMatch(/twitterDescription:\s*franchise\.description/)
     })
   }
 
@@ -136,21 +161,38 @@ describe('SEO content hygiene across brands (F5/F9)', () => {
     }
   })
 
-  it('does not advertise unsupported airport pickup in build-time city descriptions', () => {
-    const unsupportedClaims = [
-      ['Ibagué', 'Perales'],
-      ['Manizales', 'La Nubia'],
-      ['Villavicencio', 'Vanguardia'],
-      ['Floridablanca', 'Palonegro'],
-      ['Palmira', 'Alfonso Bonilla Aragón'],
-    ] as const
-
+  it('checks build-time pickup claims for all 19 cities against active airport inventory', () => {
     for (const brand of BRANDS) {
       const source = readBrandFile(brand, 'nuxt.config.ts')
-      for (const [cityName, airport] of unsupportedClaims) {
-        expect(source, `${brand}: ${cityName}/${airport}`).not.toMatch(
-          new RegExp(`${cityName}[^\\n]{0,200}recoger directamente en el Aeropuerto ${airport}`),
+      for (const [cityName, branchNames] of Object.entries(ACTIVE_BRANCH_NAMES)) {
+        const escapedCityName = cityName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const entry = source.match(
+          new RegExp(`title: '${escapedCityName}',\\s+description: '([^']+)'`),
         )
+
+        expect(entry, `${brand}: missing ${cityName} build-time description`).not.toBeNull()
+        if (!branchNames.some((name) => /aeropuerto/i.test(name))) {
+          expect(entry?.[1], `${brand}: unsupported airport pickup in ${cityName}`).not.toMatch(
+            AIRPORT_PICKUP_CLAIM,
+          )
+        }
+      }
+    }
+  })
+
+  it('checks descriptions and testimonials for all 19 cities against active airport inventory', () => {
+    const cities = JSON.parse(readRootFile('scripts/cities-data.json')) as StaticCityContent[]
+
+    expect(cities).toHaveLength(Object.keys(ACTIVE_BRANCH_NAMES).length)
+    for (const [cityName, branchNames] of Object.entries(ACTIVE_BRANCH_NAMES)) {
+      const city = cities.find((candidate) => candidate.id === slugify(cityName))
+      expect(city, `missing static content for ${cityName}`).toBeDefined()
+
+      if (!branchNames.some((name) => /aeropuerto/i.test(name))) {
+        const publicCopy = [city?.description, ...(city?.testimonials.map(({ quote }) => quote) ?? [])]
+        for (const copy of publicCopy) {
+          expect(copy, `unsupported airport pickup in ${cityName}`).not.toMatch(AIRPORT_PICKUP_CLAIM)
+        }
       }
     }
   })
