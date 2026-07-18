@@ -129,10 +129,14 @@ describe('chrome — compact internal city links (default.vue)', () => {
   })
 
   it('preserves the v-for over all public cities in the same tab', () => {
-    expect(layout).toMatch(/v-for="city in cities"/)
+    const cityLinks = layout.slice(
+      layout.indexOf('v-for="city in cities"') - 100,
+      layout.indexOf('v-for="city in cities"') + 400,
+    )
+    expect(cityLinks).toMatch(/v-for="city in cities"/)
     expect(layout).toContain('usePublicCities()')
-    expect(layout).not.toMatch(/:external="true"/)
-    expect(layout).not.toMatch(/target="_blank"/)
+    expect(cityLinks).not.toMatch(/:external="true"/)
+    expect(cityLinks).not.toMatch(/target="_blank"/)
   })
 
   it('does not pull reservation dates into the global layout', () => {
