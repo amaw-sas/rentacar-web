@@ -39,6 +39,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue';
+
 const props = defineProps<{ open: boolean; modelValue: string | null; items: any[]; valueKey: string; labelKey: string; title: string; searchPlaceholder: string; testid?: string }>();
 const emit = defineEmits<{ 'update:open': [value: boolean]; 'update:modelValue': [value: string | null] }>();
 const query = ref('');
