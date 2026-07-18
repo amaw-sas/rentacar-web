@@ -103,7 +103,7 @@ describe('SCEN-001/002 — greeting at 5s, second line at +20s (badge capped at 
     expect(inst.teaserAnnounce.value.length).toBeGreaterThan(0);
     expect(inst.teaserAnnounce.value).not.toContain('👋');
     const shown = win.events.find((e) => e.name === 'contact_teaser_shown');
-    expect(shown?.params).toEqual({ step: 1 });
+    expect(shown?.params).toEqual({ brand: c.brand, step: 1 });
     expect(session.getItem(c.shownKey)).toBe('1');
   });
 
@@ -163,7 +163,7 @@ describe('SCEN-004 — engage clears, stamps 15d, emits only when a teaser was a
     expect(inst.syntheticCount.value).toBe(0);
     expect(local.getItem(c.engagedKey)).not.toBeNull();
     const engaged = win.events.find((e) => e.name === 'contact_teaser_engaged');
-    expect(engaged?.params).toEqual({ target: 'whatsapp' });
+    expect(engaged?.params).toEqual({ brand: c.brand, target: 'whatsapp' });
   });
 
   it('engage with NO active teaser still stamps engagedAt but emits no event', () => {

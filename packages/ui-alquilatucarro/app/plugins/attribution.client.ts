@@ -1,5 +1,5 @@
 // Capture marketing attribution (click-ids + utm + external referrer) on each
-// client load and persist it last-touch (~90 days) in localStorage, so the
+// client load and persist it last-touch for exactly 30 days in localStorage, so the
 // reservation payload can forward it to the dashboard as the `attribution`
 // object. See issue #121 and the receiver contract (Apéndice A de
 // rentacar-dashboard#113). The capture itself lives in `packages/logic`

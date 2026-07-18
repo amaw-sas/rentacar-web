@@ -1,6 +1,8 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { trackAnalyticsEvent, type ChatOpenSource } from '@rentacar-main/logic/utils'
 
 const CHAT_UNREAD_EVENT = 'rentacar-chat:unread'
+const pendingOpenSources = new Map<string, ChatOpenSource>()
 
 export interface StoredChatMessage {
   id?: string
@@ -27,6 +29,13 @@ export function publishChatUnread(detail: ChatUnreadDetail): void {
     typeof CustomEvent === 'undefined'
   ) return
   window.dispatchEvent(new CustomEvent<ChatUnreadDetail>(CHAT_UNREAD_EVENT, { detail }))
+}
+
+/** Carries the open source across the lazy ChatConversation chunk boundary. */
+export function takePreparedChatOpen(brand: string): ChatOpenSource | null {
+  const source = pendingOpenSources.get(brand) ?? null
+  pendingOpenSources.delete(brand)
+  return source
 }
 
 /** Lightweight persisted badge state for the always-visible contact FAB. */
@@ -62,5 +71,7 @@ export function useChatUnreadBadge(brand: string) {
     unread,
     announce,
     clearUnread: () => { unread.value = 0 },
+    prepareChatOpen: (source: ChatOpenSource) => pendingOpenSources.set(brand, source),
+    emitReopenedFromBadge: () => trackAnalyticsEvent('chat_reopened_from_badge', { brand }),
   }
 }

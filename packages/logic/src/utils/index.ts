@@ -44,14 +44,43 @@ export { buildCityReservationURL } from './buildCityReservationURL';
 export type { CityReservationDates } from './buildCityReservationURL';
 
 // ============================================================================
+// Analytics (typed GA4 event contract)
+// ============================================================================
+export {
+  analyticsPageType,
+  createContactClickHandler,
+  createSpaPageViewTracker,
+  normalizeAnalyticsErrorReason,
+  trackAnalyticsEvent,
+  trackGenerateLead,
+  trackReservationOutcome,
+} from './analytics';
+export type {
+  AnalyticsErrorReason,
+  AnalyticsEventMap,
+  AnalyticsEventName,
+  AnalyticsItem,
+  AnalyticsPageType,
+  ChatOpenSource,
+  ContactClickContext,
+  ContactPlacement,
+  PageViewSnapshot,
+  ReservationErrorReason,
+} from './analytics';
+
+// ============================================================================
 // Attribution (marketing origin capture)
 // ============================================================================
-export { default as buildAttributionTouch } from './attribution/buildAttributionTouch';
-export type { AttributionTouch } from './attribution/buildAttributionTouch';
+export {
+  default as buildAttributionTouch,
+  ATTRIBUTION_SIGNAL_KEYS,
+} from './attribution/buildAttributionTouch';
+export type { AttributionCaptureContext, AttributionTouch } from './attribution/buildAttributionTouch';
 export {
   persistAttribution,
   readStoredAttribution,
   ATTRIBUTION_STORAGE_KEY,
+  ATTRIBUTION_TTL_MS,
 } from './attribution/attributionStorage';
 
 // ============================================================================

@@ -4,8 +4,8 @@
       - Chat  → desktop abre el panel inline (overlay, sin navegar, patrón
                 Intercom/Crisp); móvil navega a /chat (pantalla completa). Lleva
                 un chip verde con brillo: el chat IA está disponible 24/7.
-      - WhatsApp / Llamar → enlaces wa.me / tel: (los listeners de conversión
-                de nuxt.config siguen disparando), sin indicador de horario.
+      - WhatsApp / Llamar → enlaces wa.me / tel: (el plugin compartido de
+                contacto registra ambos), sin indicador de horario.
 
     HTML/CSS plano (sin Reka UI Dialog, sin role="menu" — los hacks !important
     de base.css romperían colores). Todo bajo <ClientOnly>: SSR/ISR nunca
@@ -185,7 +185,7 @@ const isDesktop = useMediaQuery('(min-width: 768px)')
 // inerte en servidor). La insignia se limpia cuando la SUPERFICIE monta
 // (onSurfaceMounted → markRead), no aquí: marcar leído en openChat borraría el
 // separador "Mensajes nuevos" antes de que ChatConversation capture su ancla.
-const { unread, announce, clearUnread } = useChatUnreadBadge(franchise.shortname as string)
+const { unread, announce, emitReopenedFromBadge, prepareChatOpen } = useChatUnreadBadge(franchise.shortname as string)
 
 // Teaser proactivo (saludo + badge sintético). Singleton por marca, SSR-safe
 // (instancia inerte en servidor). El texto/keys viven en el composable.
@@ -252,15 +252,14 @@ function closeAll() {
   panelOpen.value = false
 }
 function openChat() {
+  prepareChatOpen(
+    unread.value > 0 ? 'unread_badge' : teaserVisible.value ? 'teaser' : 'fab',
+  )
   // Cualquier acción de contacto limpia el teaser sintético y marca supresión 15d.
   teaser.engage('chat')
   // Abrir el chat (no el menú) es lo único que limpia la insignia — lo hace la
   // superficie al montar (onSurfaceMounted → markRead). Aquí solo el beacon.
-  if (unread.value > 0) {
-    const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag
-    try { gtag?.('event', 'chat_reopened_from_badge') } catch { /* analytics is non-blocking */ }
-    clearUnread()
-  }
+  if (unread.value > 0) emitReopenedFromBadge()
   menuOpen.value = false
   // Desktop: panel inline sobre la página (no navega). Móvil: /chat full-screen.
   if (isDesktop.value) {
