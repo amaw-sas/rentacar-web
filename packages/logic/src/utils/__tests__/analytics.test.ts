@@ -99,6 +99,73 @@ describe('createSpaPageViewTracker', () => {
       page_title: 'Bogotá',
     });
   });
+
+  it('redacts reservation codes from page_location and the next page_referrer', () => {
+    const reserveCode = 'RES-PII-123';
+    const dataLayer: CapturedEvent[] = [];
+    const gtag = vi.fn((
+      _command: string,
+      name: AnalyticsEventName,
+      params: AnalyticsEventMap[AnalyticsEventName],
+    ) => dataLayer.push({ name, params }));
+    vi.stubGlobal('window', { gtag, dataLayer });
+    const tracker = createSpaPageViewTracker(
+      'alquilatucarro',
+      'https://google.com/',
+    );
+
+    expect(tracker.track({
+      routeKey: `/reservado/${reserveCode}?email=customer@example.com`,
+      pageLocation: `https://alquilatucarro.com/reservado/${reserveCode}?reserveCode=${reserveCode}#${reserveCode}`,
+      pageTitle: 'Reserva confirmada',
+    })).toBe(true);
+    expect(tracker.track({
+      routeKey: '/bogota',
+      pageLocation: 'https://alquilatucarro.com/bogota',
+      pageTitle: 'Bogotá',
+    })).toBe(true);
+
+    expect(gtag).toHaveBeenCalledTimes(2);
+    expect(gtag).toHaveBeenNthCalledWith(1, 'event', 'page_view', expect.objectContaining({
+      page_location: 'https://alquilatucarro.com/reservado/[code]',
+      page_referrer: 'https://google.com/',
+    }));
+    expect(gtag).toHaveBeenNthCalledWith(2, 'event', 'page_view', expect.objectContaining({
+      page_location: 'https://alquilatucarro.com/bogota',
+      page_referrer: 'https://alquilatucarro.com/reservado/[code]',
+    }));
+    expect(dataLayer[0]?.params).toMatchObject({
+      page_location: 'https://alquilatucarro.com/reservado/[code]',
+    });
+    expect(dataLayer[1]?.params).toMatchObject({
+      page_referrer: 'https://alquilatucarro.com/reservado/[code]',
+    });
+    expect(JSON.stringify(dataLayer)).not.toContain(reserveCode);
+  });
+
+  it('redacts a reservation URL supplied as the initial browser referrer', () => {
+    const events: CapturedEvent[] = [];
+    const emit = ((name: AnalyticsEventName, params: AnalyticsEventMap[AnalyticsEventName]) => {
+      events.push({ name, params });
+      return true;
+    }) as typeof trackAnalyticsEvent;
+    const tracker = createSpaPageViewTracker(
+      'alquilatucarro',
+      'https://alquilatucarro.com/reservado/REFERRER-SECRET?code=REFERRER-SECRET',
+      emit,
+    );
+
+    tracker.track({
+      routeKey: '/bogota',
+      pageLocation: 'https://alquilatucarro.com/bogota',
+      pageTitle: 'Bogotá',
+    });
+
+    expect(events[0]?.params).toMatchObject({
+      page_referrer: 'https://alquilatucarro.com/reservado/[code]',
+    });
+    expect(JSON.stringify(events)).not.toContain('REFERRER-SECRET');
+  });
 });
 
 describe('reservation outcome dedupe', () => {

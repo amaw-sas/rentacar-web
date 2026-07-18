@@ -211,9 +211,39 @@ export interface PageViewSnapshot {
   pageTitle: string;
 }
 
+const ANALYTICS_URL_BASE = 'https://analytics.invalid';
+
+/** Keep reservation identifiers out of both current and carried page-view URLs. */
+function sanitizePageViewUrl(value: string): string {
+  if (!value) return value;
+
+  try {
+    const isAbsolute = /^[a-z][a-z\d+.-]*:/i.test(value);
+    const url = new URL(value, ANALYTICS_URL_BASE);
+    const pathSegments = url.pathname.split('/');
+    const reservationIndex = pathSegments.indexOf('reservado');
+    if (reservationIndex < 0 || !pathSegments[reservationIndex + 1]) return value;
+
+    pathSegments[reservationIndex + 1] = '[code]';
+    url.pathname = pathSegments.join('/');
+    // Result-route query/hash values are not part of the analytics route and
+    // may contain the same identifier or other customer-provided values.
+    url.search = '';
+    url.hash = '';
+
+    return isAbsolute
+      ? url.href
+      : `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    // window.location.href and document.referrer are valid URLs in browsers.
+    // This fallback still redacts a reservation segment from synthetic input.
+    return value.replace(/(\/reservado\/)[^/?#]+(?:[?#].*)?/i, '$1[code]');
+  }
+}
+
 /**
  * Explicit SPA page-view tracker. It deduplicates finalized Nuxt routes and
- * carries the previous virtual URL as the next view's referrer.
+ * carries the previous sanitized virtual URL as the next view's referrer.
  */
 export function createSpaPageViewTracker(
   brand: string,
@@ -221,19 +251,20 @@ export function createSpaPageViewTracker(
   emit: typeof trackAnalyticsEvent = trackAnalyticsEvent,
 ) {
   let lastRouteKey: string | null = null;
-  let previousLocation = initialReferrer;
+  let previousLocation = sanitizePageViewUrl(initialReferrer);
 
   return {
     track(snapshot: PageViewSnapshot): boolean {
       if (snapshot.routeKey === lastRouteKey) return false;
+      const pageLocation = sanitizePageViewUrl(snapshot.pageLocation);
       const sent = emit('page_view', {
         brand,
-        page_location: snapshot.pageLocation,
+        page_location: pageLocation,
         page_title: snapshot.pageTitle,
         page_referrer: previousLocation,
       });
       lastRouteKey = snapshot.routeKey;
-      previousLocation = snapshot.pageLocation;
+      previousLocation = pageLocation;
       return sent;
     },
   };
