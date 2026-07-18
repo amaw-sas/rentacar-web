@@ -99,6 +99,10 @@ describe('PERF-6 — responsive decorative images', () => {
 
 describe('CLS safeguards', () => {
   const carousel = source('../Carrusel.vue')
+  const categoryCard = source('../CategoryCard.vue')
+  const categorySelection = source('../CategorySelectionSection.vue')
+  const unableCategoryCard = source('../Placeholders/UnableCategoryCard.vue')
+  const cityPage = source('../CityPage.vue')
   const chatWidget = source('../ChatWidget.vue')
   const chatConversation = source('../ChatConversation.vue')
   const defaultLayout = source('../../layouts/default.vue')
@@ -123,6 +127,25 @@ describe('CLS safeguards', () => {
     expect(carousel).not.toContain('data-[state=active]:w-6')
     expect(carousel).toMatch(/category-carousel-dot\) \{[\s\S]*?width: 0\.75rem;/)
     expect(carousel).toMatch(/transition: transform 300ms ease, background-color 300ms ease;/)
+  })
+
+  it('server-renders a full results-grid reservation on deep search routes', () => {
+    expect(cityPage).toContain('data-testid="vehicle-results-shell"')
+    expect(cityPage).toContain(':reserve-initial-results="isVehicleResultsRoute"')
+    expect(cityPage).toMatch(/data-testid="vehicle-results-shell"[\s\S]*?<CategorySelectionSection/)
+    expect(cityPage).toContain("route.path.includes('/buscar-vehiculos/')")
+    expect(cityPage).toContain('isCategoryVisibleInCity(')
+    expect(categorySelection).toContain("'vehicle-result-slot-loading'")
+    expect(categorySelection).toContain("'min-h-[690px]' : 'min-h-[724px]'")
+    expect(categorySelection).toContain(":style=\"{ minHeight: index < 6 ? '690px' : '724px' }\"")
+    expect(categorySelection).toContain('style="min-height: 52px"')
+    expect(categorySelection).toContain("'vehicle-result-placeholder' : 'vehicle-result-card-slot'")
+    expect(categorySelection).toContain(':key="`vehicle-result-slot-${index}`"')
+  })
+
+  it('reserves the async carousel paint box before vehicle cards insert it', () => {
+    expect(categoryCard).toContain('class="carrusel aspect-[5/3]"')
+    expect(unableCategoryCard).toContain('class="carrusel aspect-[5/3]"')
   })
 
   it('preserves the established glow visuals while keeping the teaser entrance composited', () => {

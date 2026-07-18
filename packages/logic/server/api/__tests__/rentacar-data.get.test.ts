@@ -144,6 +144,17 @@ describe('server/api/rentacar-data.get — missing localiza fallback (#16)', () 
     expect(vi.mocked(fetchRentacarData)).toHaveBeenCalledTimes(2)
   })
 
+  it('timestamps each returned catalog snapshot at the server fetch time', async () => {
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+    const before = Date.now()
+
+    const result = await handler()
+
+    expect(result.catalogFetchedAt).toEqual(expect.any(Number))
+    expect(result.catalogFetchedAt as number).toBeGreaterThanOrEqual(before)
+    expect(result.catalogFetchedAt as number).toBeLessThanOrEqual(Date.now())
+  })
+
   it('SCEN-16-3: present localiza row → extras = transformExtras(row), called once', async () => {
     const companyRow = {
       extra_driver_day_price: 15000,

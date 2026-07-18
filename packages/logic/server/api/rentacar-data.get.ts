@@ -47,6 +47,9 @@ export default defineEventHandler(async (event) => {
   }
 
   return {
+    // Coupled to the body (rather than client receipt time) so an ISR-restored
+    // snapshot retains its real age throughout an open SPA session.
+    catalogFetchedAt: Date.now(),
     categories: transformCategories(categoriesResult.data),
     // Supabase infers the to-one `cities(slug)` embed as an array (the explicit-
     // column select yields a structured type, unlike the `*` selects), but the
