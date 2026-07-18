@@ -9,7 +9,7 @@ const { useProductSchema } = productSchemaModule
 // hardcoded "Alquilatucarro", and a plain per-day Offer instead of the
 // fabricated AggregateOffer (highPrice = dailyPrice × 30 was not the price of
 // any real offer). priceValidUntil (hardcoded '2026-12-31') is gone too.
-// Mirrors the stub harness of useCityProductSchema.runtime.test.ts.
+// Mirrors the harness used by the city structured-data runtime test.
 
 const category = (overrides: Partial<CategoryAvailabilityData> = {}): CategoryAvailabilityData =>
   ({

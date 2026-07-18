@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useBaseSEO } from '../useBaseSEO'
 
-// Issue #315 — the org-level AutoRental must NOT publish a hardcoded
+// Issue #315 — the site-wide intermediary Service must NOT publish a hardcoded
 // openingHoursSpecification. A single global business hours block (Mon–Fri
 // 07:00–17:00, Sat 07:00–12:00) contradicts the real per-branch schedules
 // (airports 06:00–22:00 + Sundays, 24h branches, branches closed some days),
@@ -43,25 +43,27 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllGlobals())
 
-const autoRentalOf = (schemas: any[]) => schemas.find((s) => s?.['@type'] === 'AutoRental')
+const serviceOf = (schemas: any[]) => schemas.find((s) => s?.['@type'] === 'Service')
 
 describe('useBaseSEO opening hours (issue #315)', () => {
-  // SCEN-315-001: the AutoRental carries no hardcoded opening hours.
-  it('emits an AutoRental with no openingHoursSpecification', () => {
+  // SCEN-315-001: the Service carries no hardcoded opening hours.
+  it('emits a Service with no openingHoursSpecification', () => {
     useBaseSEO()
-    const autoRental = autoRentalOf(captured)
-    expect(autoRental).toBeTruthy()
-    expect('openingHoursSpecification' in autoRental).toBe(false)
+    const service = serviceOf(captured)
+    expect(service).toBeTruthy()
+    expect('openingHoursSpecification' in service).toBe(false)
+    expect('hoursAvailable' in service).toBe(false)
   })
 
-  // SCEN-315-001 (guard): the rest of the AutoRental — identity + the #116
+  // SCEN-315-001 (guard): the rest of the Service — identity + the #116
   // reserve action — must survive the hours removal untouched.
-  it('keeps the AutoRental identity and ReserveAction intact', () => {
+  it('keeps the Service identity and ReserveAction intact', () => {
     useBaseSEO()
-    const autoRental = autoRentalOf(captured)
-    expect(autoRental.url).toBe(FRANCHISE.website)
-    expect(autoRental.name).toBe(FRANCHISE.name)
-    expect(autoRental.telephone).toBe(FRANCHISE.phone)
-    expect(autoRental.potentialAction?.['@type']).toBe('ReserveAction')
+    const service = serviceOf(captured)
+    expect(service.url).toBe(FRANCHISE.website)
+    expect(service.serviceType).toContain('Intermediación digital')
+    expect(service.availableChannel.servicePhone.telephone).toBe(FRANCHISE.phone)
+    expect(service.potentialAction?.['@type']).toBe('ReserveAction')
+    expect(captured.some((node) => node?.['@type'] === 'AutoRental')).toBe(false)
   })
 })
