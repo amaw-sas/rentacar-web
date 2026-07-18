@@ -8,10 +8,10 @@
     (Plus Jakarta) and the light card chrome
     (bg-[#F8F9FC] rounded-[22px] border-[7px] border-white shadow-...).
 
-    PRESERVATION RULE: all indexable city copy is kept VERBATIM — headings,
-    benefit blurbs, destination names/times/descriptions, driving tips
+    PRESERVATION RULE: destination names/times/descriptions, driving tips
     (pico y placa / peajes / parqueaderos), best-season paragraph and the
-    related-cities internal links. Only styling changes; zero content dropped.
+    related-cities internal links stay intact. The pickup benefit is deliberately
+    inventory-based so it never invents an airport or city-centre branch.
 
     The #destinos / #consejos / #mejor-temporada blocks render only for cities
     with curated expandedContent (same guard as the original CityPage). All
@@ -184,9 +184,8 @@ const props = defineProps<{
 }>()
 
 /**
- * Benefits copy — preserved VERBATIM from the original #ventajas section.
- * Moved to data so the four cards share one styled template (DRY) without
- * altering a single indexable word; {{ city?.name }} interpolation is kept.
+ * Benefits copy. Pickup wording is availability-based because not every city
+ * has an airport or city-centre branch; {{ city?.name }} interpolation is kept.
  */
 const benefits = computed(() => [
   {
@@ -201,8 +200,8 @@ const benefits = computed(() => [
   },
   {
     emoji: '📍',
-    title: 'Entrega flexible',
-    body: `Recoge y devuelve tu carro en diferentes puntos de ${props.city?.name}. Aeropuerto, centro de la ciudad o donde te resulte más cómodo.`,
+    title: 'Puntos de recogida',
+    body: `Consulta en el buscador los puntos de recogida activos en ${props.city?.name}. Las opciones disponibles se actualizan con el inventario de sedes.`,
   },
   {
     emoji: '⭐',

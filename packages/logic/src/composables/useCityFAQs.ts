@@ -1,6 +1,11 @@
 // External dependencies
 import type { FAQPage } from 'schema-dts';
 
+// Internal dependencies
+import { slugify } from '../utils/slugify'
+import type BranchData from '../utils/types/data/BranchData'
+import type ReservasApiData from '../utils/types/data/ReservasApiData'
+
 export interface FAQ {
     label: string
     content: string
@@ -15,13 +20,42 @@ export const getCityPriceAnswer = (cityName: string): string =>
     `Las tarifas de alquiler en ${cityName} dependen de las fechas, la duración, la categoría y la disponibilidad. Busca tus fechas para comparar las opciones disponibles.`
 
 /**
+ * Builds pickup copy from the same active branch inventory used by search.
+ * Without inventory (for example in a pure unit call), it fails soft to an
+ * availability prompt and never invents an airport or city-centre location.
+ */
+export const getCityPickupAnswer = (
+    cityName: string,
+    branches: BranchData[] = [],
+): string => {
+    const citySlug = slugify(cityName)
+    const names = [...new Set(
+        branches
+            .filter((branch) => slugify(branch.city) === citySlug)
+            .map((branch) => branch.name.trim())
+            .filter(Boolean),
+    )]
+
+    if (names.length === 0) {
+        return `Consulta en el buscador los puntos de recogida activos para ${cityName}. Las opciones disponibles se muestran al seleccionar la ciudad.`
+    }
+
+    if (names.length === 1) {
+        return `El punto de recogida activo en ${cityName} es ${names[0]}. Confirma la disponibilidad para tus fechas en el buscador.`
+    }
+
+    const formattedNames = `${names.slice(0, -1).join(', ')} y ${names.at(-1)}`
+    return `Los puntos de recogida activos en ${cityName} son ${formattedNames}. Confirma la disponibilidad para tus fechas en el buscador.`
+}
+
+/**
  * City-specific FAQs for major cities with local details
  */
 const citySpecificFAQs: Record<string, FAQ[]> = {
     'Bogotá': [
         {
             label: '¿Dónde puedo recoger mi carro en Bogotá?',
-            content: 'Contamos con entrega en el Aeropuerto El Dorado (llegadas nacionales e internacionales) y en nuestra sede del centro. Coordinamos la hora exacta para esperarte a tu llegada.'
+            content: getCityPickupAnswer('Bogotá')
         },
         {
             label: '¿Qué vehículo recomiendan para moverse en Bogotá?',
@@ -47,7 +81,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Medellín': [
         {
             label: '¿Dónde puedo recoger mi carro en Medellín?',
-            content: 'Ofrecemos entrega en el Aeropuerto José María Córdova (Rionegro) y en nuestra sede de El Poblado. El aeropuerto está a 45 minutos del centro, ideal para iniciar tu viaje directamente.'
+            content: getCityPickupAnswer('Medellín')
         },
         {
             label: '¿Qué vehículo recomiendan para Medellín y alrededores?',
@@ -73,7 +107,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Cali': [
         {
             label: '¿Dónde puedo recoger mi carro en Cali?',
-            content: 'Contamos con entrega en el Aeropuerto Alfonso Bonilla Aragón y en nuestra sede del norte de Cali. Coordinamos la hora para esperarte a tu llegada.'
+            content: getCityPickupAnswer('Cali')
         },
         {
             label: '¿Qué vehículo recomiendan para Cali?',
@@ -99,7 +133,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Cartagena': [
         {
             label: '¿Dónde puedo recoger mi carro en Cartagena?',
-            content: 'Ofrecemos entrega en el Aeropuerto Rafael Núñez y en el centro histórico. El aeropuerto está a 15 minutos de la ciudad amurallada, ideal para comenzar tu aventura caribeña.'
+            content: getCityPickupAnswer('Cartagena')
         },
         {
             label: '¿Necesito carro para moverme en Cartagena?',
@@ -125,7 +159,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Barranquilla': [
         {
             label: '¿Dónde puedo recoger mi carro en Barranquilla?',
-            content: 'Contamos con entrega en el Aeropuerto Ernesto Cortissoz y en nuestra sede del norte. Coordinamos la hora exacta para recibirte a tu llegada.'
+            content: getCityPickupAnswer('Barranquilla')
         },
         {
             label: '¿Qué vehículo recomiendan para Barranquilla?',
@@ -151,7 +185,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Santa Marta': [
         {
             label: '¿Dónde puedo recoger mi carro en Santa Marta?',
-            content: 'Ofrecemos entrega en el Aeropuerto Simón Bolívar y en nuestra sede del centro. El aeropuerto está a 20 minutos del centro histórico y las playas.'
+            content: getCityPickupAnswer('Santa Marta')
         },
         {
             label: '¿Qué vehículo recomiendan para Santa Marta?',
@@ -177,7 +211,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Pereira': [
         {
             label: '¿Dónde puedo recoger mi carro en Pereira?',
-            content: 'Contamos con entrega en el Aeropuerto Internacional Matecaña y en nuestra sede del centro. El aeropuerto está a 15 minutos del centro de la ciudad.'
+            content: getCityPickupAnswer('Pereira')
         },
         {
             label: '¿Qué vehículo recomiendan para el Eje Cafetero?',
@@ -203,7 +237,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Bucaramanga': [
         {
             label: '¿Dónde puedo recoger mi carro en Bucaramanga?',
-            content: 'Ofrecemos entrega en el Aeropuerto Palonegro y en nuestra sede de Floridablanca. El aeropuerto está a 30 minutos del centro de Bucaramanga por autopista.'
+            content: getCityPickupAnswer('Bucaramanga')
         },
         {
             label: '¿Qué vehículo recomiendan para Bucaramanga y alrededores?',
@@ -229,7 +263,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Armenia': [
         {
             label: '¿Dónde puedo recoger mi carro en Armenia?',
-            content: 'Contamos con entrega en el Aeropuerto El Edén y en nuestra sede del centro. El aeropuerto está a 15 minutos del centro de Armenia.'
+            content: getCityPickupAnswer('Armenia')
         },
         {
             label: '¿Qué vehículo recomiendan para recorrer el Eje Cafetero?',
@@ -255,7 +289,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Manizales': [
         {
             label: '¿Dónde puedo recoger mi carro en Manizales?',
-            content: 'Ofrecemos entrega en el Aeropuerto La Nubia y en nuestra sede del centro. El aeropuerto está a 15 minutos del centro de la ciudad.'
+            content: getCityPickupAnswer('Manizales')
         },
         {
             label: '¿Qué vehículo recomiendan para Manizales?',
@@ -281,7 +315,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Villavicencio': [
         {
             label: '¿Dónde puedo recoger mi carro en Villavicencio?',
-            content: 'Contamos con entrega en el Aeropuerto Vanguardia y en nuestra sede del centro. El aeropuerto está a 10 minutos del centro de la ciudad.'
+            content: getCityPickupAnswer('Villavicencio')
         },
         {
             label: '¿Qué vehículo recomiendan para los Llanos?',
@@ -307,7 +341,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Valledupar': [
         {
             label: '¿Dónde puedo recoger mi carro en Valledupar?',
-            content: 'Ofrecemos entrega en el Aeropuerto Alfonso López Pumarejo y en nuestra sede del centro. El aeropuerto está a 5 minutos del centro de la ciudad.'
+            content: getCityPickupAnswer('Valledupar')
         },
         {
             label: '¿Qué vehículo recomiendan para Valledupar?',
@@ -333,7 +367,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Ibagué': [
         {
             label: '¿Dónde puedo recoger mi carro en Ibagué?',
-            content: 'Contamos con entrega en el Aeropuerto Perales y en nuestra sede del centro. El aeropuerto está a 10 minutos del centro de Ibagué, la Capital Musical de Colombia.'
+            content: getCityPickupAnswer('Ibagué')
         },
         {
             label: '¿Qué vehículo recomiendan para Ibagué y el Tolima?',
@@ -359,7 +393,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Neiva': [
         {
             label: '¿Dónde puedo recoger mi carro en Neiva?',
-            content: 'Ofrecemos entrega en el Aeropuerto Benito Salas y en nuestra sede del centro. El aeropuerto está a 10 minutos del centro de Neiva, puerta al Desierto de la Tatacoa.'
+            content: getCityPickupAnswer('Neiva')
         },
         {
             label: '¿Qué vehículo recomiendan para Neiva y el Huila?',
@@ -385,7 +419,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Cúcuta': [
         {
             label: '¿Dónde puedo recoger mi carro en Cúcuta?',
-            content: 'Contamos con entrega en el Aeropuerto Camilo Daza y en nuestra sede del centro. El aeropuerto está a 10 minutos del centro de Cúcuta, ciudad fronteriza con Venezuela.'
+            content: getCityPickupAnswer('Cúcuta')
         },
         {
             label: '¿Qué vehículo recomiendan para Cúcuta?',
@@ -411,7 +445,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Montería': [
         {
             label: '¿Dónde puedo recoger mi carro en Montería?',
-            content: 'Ofrecemos entrega en el Aeropuerto Los Garzones y en nuestra sede del centro. El aeropuerto está a 15 minutos del centro de Montería, capital ganadera de Colombia.'
+            content: getCityPickupAnswer('Montería')
         },
         {
             label: '¿Qué vehículo recomiendan para Montería y Córdoba?',
@@ -437,7 +471,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Floridablanca': [
         {
             label: '¿Dónde puedo recoger mi carro en Floridablanca?',
-            content: 'Contamos con sede en Floridablanca y también ofrecemos entrega en el Aeropuerto Palonegro de Bucaramanga. Floridablanca es parte del área metropolitana, a 15 minutos del centro de Bucaramanga.'
+            content: getCityPickupAnswer('Floridablanca')
         },
         {
             label: '¿Qué vehículo recomiendan para Floridablanca?',
@@ -463,7 +497,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Palmira': [
         {
             label: '¿Dónde puedo recoger mi carro en Palmira?',
-            content: 'Contamos con sede en Palmira y también servicio en el Aeropuerto Alfonso Bonilla Aragón de Cali. Palmira está a 25 minutos del aeropuerto, ideal si tu destino es el Valle del Cauca.'
+            content: getCityPickupAnswer('Palmira')
         },
         {
             label: '¿Qué vehículo recomiendan para Palmira?',
@@ -489,7 +523,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     'Soledad': [
         {
             label: '¿Dónde puedo recoger mi carro en Soledad?',
-            content: 'Contamos con sede en Soledad y servicio en el Aeropuerto Ernesto Cortissoz de Barranquilla. Soledad es parte del área metropolitana, el aeropuerto está dentro del municipio.'
+            content: getCityPickupAnswer('Soledad')
         },
         {
             label: '¿Qué vehículo recomiendan para Soledad?',
@@ -525,8 +559,8 @@ const generateTemplateFAQs = (cityName: string): FAQ[] => {
             content: `Para alquilar un carro en ${cityName} necesitas: ser mayor de 21 años, presentar licencia de conducción vigente (nacional o extranjera), documento de identidad (cédula o pasaporte) y una tarjeta de crédito con cupo disponible a nombre del conductor principal.`
         },
         {
-            label: `¿Puedo recoger el carro en el aeropuerto de ${cityName}?`,
-            content: `Sí, contamos con servicio de entrega y recogida en el aeropuerto de ${cityName}. Puedes coordinar la hora exacta al momento de hacer tu reserva para que te esperemos a tu llegada.`
+            label: `¿Dónde puedo recoger mi carro en ${cityName}?`,
+            content: getCityPickupAnswer(cityName)
         },
         {
             label: `¿Qué tipos de vehículos están disponibles en ${cityName}?`,
@@ -550,8 +584,13 @@ const generateTemplateFAQs = (cityName: string): FAQ[] => {
 /**
  * Returns FAQs for a city - uses specific FAQs if available, otherwise template
  */
-export const getCityFAQs = (cityName: string): FAQ[] => {
-    return citySpecificFAQs[cityName] || generateTemplateFAQs(cityName)
+export const getCityFAQs = (cityName: string, branches: BranchData[] = []): FAQ[] => {
+    const faqs = citySpecificFAQs[cityName] || generateTemplateFAQs(cityName)
+    return faqs.map((faq) =>
+        faq.label.startsWith('¿Dónde puedo recoger')
+            ? { ...faq, content: getCityPickupAnswer(cityName, branches) }
+            : faq
+    )
 }
 
 /**
@@ -559,7 +598,8 @@ export const getCityFAQs = (cityName: string): FAQ[] => {
  * Enables FAQ rich snippets in Google SERPs
  */
 export const useCityFAQSchema = (cityName: string) => {
-    const cityFAQs = getCityFAQs(cityName)
+    const data = useState<ReservasApiData | null>('rentacar-data')
+    const cityFAQs = getCityFAQs(cityName, data.value?.branches ?? [])
 
     useSchemaOrg([
         <FAQPage>{
@@ -583,5 +623,6 @@ export const useCityFAQSchema = (cityName: string) => {
  * Uses specific FAQs for major cities, template for others
  */
 export const useCityFAQs = (cityName: string): FAQ[] => {
-    return getCityFAQs(cityName)
+    const data = useState<ReservasApiData | null>('rentacar-data')
+    return getCityFAQs(cityName, data.value?.branches ?? [])
 }

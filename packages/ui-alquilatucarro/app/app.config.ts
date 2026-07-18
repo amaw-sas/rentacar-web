@@ -35,7 +35,7 @@ export default defineAppConfig({
     name: "alquilatucarro.com",
     shortname: "alquilatucarro",
     website: "https://alquilatucarro.com",
-    title: "Alquiler de Carros en Colombia desde $32/día",
+    title: "Alquiler de Carros en Colombia desde $220.000 COP/día",
     description:
       "Alquila carros en Bogotá, Medellín, Cali y 16 ciudades más. Hasta 60% descuento por reserva anticipada. Sin pago previo. Flota renovada cada 2 años.",
     logo: "/images/brand/logo.svg",
