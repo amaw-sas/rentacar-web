@@ -734,6 +734,9 @@ export default defineNuxtConfig({
       { loc: '/blog', changefreq: 'weekly', priority: 0.8 },
       // Indexable referral acquisition landing
       { loc: '/gana', changefreq: 'monthly', priority: 0.7 },
+      // Indexable referral-program legal pages
+      { loc: '/gana/terminos-condiciones', changefreq: 'yearly', priority: 0.3 },
+      { loc: '/gana/politicas-privacidad', changefreq: 'yearly', priority: 0.3 },
     ],
     sources: ['/api/__sitemap__/blog'],
     exclude: ['/chat', '/tiktok', '/pendiente', '/sindisponibilidad', '/reservado/**', '/*/buscar-vehiculos/**', '/seo/**'],

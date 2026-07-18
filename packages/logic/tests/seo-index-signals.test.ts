@@ -27,6 +27,12 @@ describe('brand index signals', () => {
       const sitemap = sitemapConfig(readBrandFile(brand, 'nuxt.config.ts'))
 
       expect(sitemap).toContain("{ loc: '/gana', changefreq: 'monthly', priority: 0.7 }")
+      expect(sitemap).toContain(
+        "{ loc: '/gana/terminos-condiciones', changefreq: 'yearly', priority: 0.3 }",
+      )
+      expect(sitemap).toContain(
+        "{ loc: '/gana/politicas-privacidad', changefreq: 'yearly', priority: 0.3 }",
+      )
       expect(sitemap).toMatch(/exclude: \[[^\]]*'\/chat'/)
     })
 
@@ -102,4 +108,16 @@ describe('brand index signals', () => {
     expect(edgeConfig.routes[0].src).toContain('tarifas')
     expect(edgeConfig.routes[0].src).toContain('tiktok')
   })
+
+  for (const brand of ['alquilame', 'alquicarros']) {
+    it(`${brand}: aligns noindex headers on reservation result paths`, () => {
+      const config = readBrandFile(brand, 'nuxt.config.ts')
+
+      for (const route of ['/reservas/lugar-recogida/**', '/reservas/referido/**']) {
+        expect(config).toContain(
+          `'${route}': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } }`,
+        )
+      }
+    })
+  }
 })

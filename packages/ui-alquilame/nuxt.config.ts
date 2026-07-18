@@ -654,6 +654,8 @@ export default defineNuxtConfig({
       '/pendiente': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/sindisponibilidad': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/reservado/**': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      '/reservas/lugar-recogida/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } },
+      '/reservas/referido/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } },
       // Independencia de enrutamiento (directiva): `/{city}/buscar-vehiculos/...` es
       // EXCLUSIVA de alquilatucarro. En alquilame la superficie de reserva es
       // `/reservas` (PATH). El 301 lo emite server/middleware/redirect-buscar-vehiculos.ts
@@ -736,6 +738,9 @@ export default defineNuxtConfig({
       { loc: '/blog', changefreq: 'weekly', priority: 0.8 },
       // Indexable referral acquisition landing
       { loc: '/gana', changefreq: 'monthly', priority: 0.7 },
+      // Indexable referral-program legal pages
+      { loc: '/gana/terminos-condiciones', changefreq: 'yearly', priority: 0.3 },
+      { loc: '/gana/politicas-privacidad', changefreq: 'yearly', priority: 0.3 },
     ],
     sources: ['/api/__sitemap__/blog'],
     exclude: ['/chat', '/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**'],

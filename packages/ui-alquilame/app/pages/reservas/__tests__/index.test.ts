@@ -153,7 +153,13 @@ describe('SCEN-003 — robots noindex,follow only on a results query', () => {
 
   it('makes the robots value conditional on the query presence (computed/ternary on route.query)', () => {
     // The noindex must NOT be unconditional — clean /reservas stays indexable.
-    expect(page).toMatch(/route\.query\.lugar_recogida[\s\S]{0,80}?noindex|noindex[\s\S]{0,80}?route\.query\.lugar_recogida/)
+    expect(page).toMatch(/hasResultsQuery\.value\s*\?\s*['"]noindex, follow['"]\s*:\s*undefined/)
+  })
+
+  it('sets a matching HTTP robots header only for the SSR results state', () => {
+    expect(page).toMatch(/useResponseHeader\(['"]X-Robots-Tag['"]\)/)
+    expect(page).toMatch(/import\.meta\.server\s*&&\s*hasResultsQuery\.value/)
+    expect(page).toMatch(/robotsResponseHeader\.value\s*=\s*['"]noindex, follow['"]/)
   })
 })
 

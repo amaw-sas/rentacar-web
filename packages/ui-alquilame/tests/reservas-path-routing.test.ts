@@ -73,7 +73,8 @@ describe('SCEN-AL-04 — SEO: Results noindex + canonical /reservas; /reservas l
   })
   it('la /reservas limpia sigue con robots condicional (indexable sin query)', () => {
     const clean = tryRead('app/pages/reservas/index.vue')
-    expect(clean).toMatch(/route\.query\.lugar_recogida\s*\?\s*'noindex, follow'\s*:\s*undefined/)
+    expect(clean).toMatch(/hasResultsQuery\.value\s*\?\s*'noindex, follow'\s*:\s*undefined/)
+    expect(clean).toMatch(/hasResultsQuery\s*=\s*computed\(\(\)\s*=>\s*Boolean\(route\.query\.lugar_recogida\)\)/)
   })
 })
 
@@ -86,6 +87,14 @@ describe('SCEN-AL-04 — sitemap: excluye paths de resultados /reservas, sin bus
   })
   it('el sitemap excluye los estados de resultados de /reservas', () => {
     expect(cfg()).toMatch(/\/reservas\/lugar-recogida\/\*\*/)
+  })
+  it('los estados PATH noindex envían el mismo X-Robots-Tag', () => {
+    expect(cfg()).toContain(
+      "'/reservas/lugar-recogida/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } }",
+    )
+    expect(cfg()).toContain(
+      "'/reservas/referido/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } }",
+    )
   })
 })
 
