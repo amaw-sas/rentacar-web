@@ -342,5 +342,6 @@ function onSelect(cat: ReturnType<typeof useCategory>): void {
   if (cat.categoryCode.value === selectedCode.value) return
   selectedCategory.value = cat
   vehiculo.value = cat.categoryCode.value
+  search.trackVehicleSelection(cat)
 }
 </script>

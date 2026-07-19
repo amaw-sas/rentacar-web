@@ -14,7 +14,7 @@ const source = readFileSync(
 
 describe('useChatConversation — attribution in the POST body', () => {
   it('imports readStoredAttribution from the logic utils', () => {
-    expect(source).toContain("import { readStoredAttribution } from '@rentacar-main/logic/utils'");
+    expect(source).toMatch(/readStoredAttribution,[\s\S]*from '@rentacar-main\/logic\/utils'/);
   });
 
   it('sends attribution in the request body: stored value, else {} (Directo)', () => {

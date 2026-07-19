@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createContactTeaser,
   getOrCreateTeaser,
+  isContactTeaserRouteExcluded,
   useContactTeaser,
   TEASER_FIRST_DELAY_MS,
   TEASER_SECOND_DELAY_MS,
@@ -103,7 +104,7 @@ describe('SCEN-001/002 — greeting at 5s, second line at +20s (badge capped at 
     expect(inst.teaserAnnounce.value.length).toBeGreaterThan(0);
     expect(inst.teaserAnnounce.value).not.toContain('👋');
     const shown = win.events.find((e) => e.name === 'contact_teaser_shown');
-    expect(shown?.params).toEqual({ step: 1 });
+    expect(shown?.params).toEqual({ brand: c.brand, step: 1 });
     expect(session.getItem(c.shownKey)).toBe('1');
   });
 
@@ -163,7 +164,7 @@ describe('SCEN-004 — engage clears, stamps 15d, emits only when a teaser was a
     expect(inst.syntheticCount.value).toBe(0);
     expect(local.getItem(c.engagedKey)).not.toBeNull();
     const engaged = win.events.find((e) => e.name === 'contact_teaser_engaged');
-    expect(engaged?.params).toEqual({ target: 'whatsapp' });
+    expect(engaged?.params).toEqual({ brand: c.brand, target: 'whatsapp' });
   });
 
   it('engage with NO active teaser still stamps engagedAt but emits no event', () => {
@@ -392,5 +393,64 @@ describe('SCEN-006 permanent suppression — real unread ends the teaser for the
     expect(inst.teaserStep.value).toBe(0);
     // No dedicated analytics event for suppression.
     expect(firedEvents()).not.toContain('contact_teaser_suppressed');
+  });
+});
+
+describe('Burbuja chat mission E1–E4', () => {
+  beforeEach(() => {
+    setupBrowser();
+    vi.useFakeTimers();
+  });
+
+  it('E1 — an OFF gate schedules no invitation, badge or announcement', () => {
+    let chatEnabled = false;
+    const inst = createContactTeaser(cfg());
+    inst.start({ realUnread: () => 0, allowed: () => chatEnabled });
+
+    vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS + TEASER_SECOND_DELAY_MS);
+    expect(inst.teaserVisible.value).toBe(false);
+    expect(inst.syntheticCount.value).toBe(0);
+    expect(inst.teaserAnnounce.value).toBe('');
+
+    // The initial fail-closed value is not terminal: a later confirmed ON can
+    // start the normal behavior for enabled brands.
+    chatEnabled = true;
+    inst.start({ realUnread: () => 0, allowed: () => chatEnabled });
+    vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS);
+    expect(inst.teaserVisible.value).toBe(true);
+  });
+
+  it('E2 — summary and every following /reservas funnel URL are excluded', () => {
+    expect(isContactTeaserRouteExcluded('/reservas')).toBe(true);
+    expect(isContactTeaserRouteExcluded('/reservas/')).toBe(true);
+    expect(
+      isContactTeaserRouteExcluded(
+        '/reservas/lugar-recogida/bogota/categoria/CCAR',
+      ),
+    ).toBe(true);
+    expect(isContactTeaserRouteExcluded('/')).toBe(false);
+    expect(isContactTeaserRouteExcluded('/carros')).toBe(false);
+  });
+
+  it('E3 — dismiss is local state only and leaves the current URL untouched', () => {
+    const location = { href: 'https://alquicarros.com/reservas?paso=seguro' };
+    vi.stubGlobal('window', { ...makeWindow(), location });
+    const inst = createContactTeaser(cfg());
+    inst.start({ realUnread: () => 0 });
+    vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS);
+
+    inst.dismiss();
+
+    expect(location.href).toBe('https://alquicarros.com/reservas?paso=seguro');
+    expect(inst.teaserVisible.value).toBe(false);
+  });
+
+  it('E4 — an ON gate preserves the existing two-step teaser behavior', () => {
+    const inst = createContactTeaser(cfg());
+    inst.start({ realUnread: () => 0, allowed: () => true });
+    vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS);
+    expect(inst.syntheticCount.value).toBe(1);
+    vi.advanceTimersByTime(TEASER_SECOND_DELAY_MS);
+    expect(inst.syntheticCount.value).toBe(2);
   });
 });
