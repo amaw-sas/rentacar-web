@@ -16,11 +16,11 @@ export const useSearchPageSEO = () => {
     const city = cityParam ? getCityById(cityParam as string) : undefined
 
     const searchDescription = city
-        ? `Busca y compara vehículos disponibles en ${city.name}. Sedanes, compactos, SUVs y camionetas con precios desde $32 USD/día.`
-        : 'Busca y compara vehículos disponibles para alquiler. Diferentes categorías y precios competitivos.';
+        ? `Busca y compara vehículos disponibles en ${city.name}. Revisa las categorías y tarifas disponibles para las fechas de tu viaje.`
+        : 'Busca y compara vehículos disponibles para alquiler según las fechas de tu viaje.';
 
     useHead({
-        title: `Buscar Vehículos en ${city?.name} | ${franchise.title}`,
+        title: city ? `Buscar vehículos en ${city.name}` : 'Buscar vehículos',
         htmlAttrs: {
             lang: "es",
         },

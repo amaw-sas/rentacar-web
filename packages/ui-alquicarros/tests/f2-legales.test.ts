@@ -45,8 +45,12 @@ describe('F2 legales — diseño nuevo, sin marca ajena, sin rojo', () => {
       expect(src).toContain('AMAW S.A.S')
       expect(src).toContain('900.665.917-7')
     })
-    it(`${name}: SEO config-driven (title + canonical con franchise.*)`, () => {
-      expect(src).toMatch(/title:\s*`[^`]*\$\{franchise\.shortname\}/)
+    it(`${name}: SEO con título bare y canonical config-driven`, () => {
+      const expectedTitle = name === 'terminos-condiciones.vue'
+        ? 'Términos y condiciones'
+        : 'Política de privacidad'
+      expect(src).toContain(`title: '${expectedTitle}'`)
+      expect(src).not.toMatch(/title:\s*`[^`]*\$\{franchise\.(?:shortname|title)\}/)
       expect(src).toMatch(/canonical[\s\S]{0,40}franchise\.website/)
     })
   }

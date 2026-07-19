@@ -149,8 +149,8 @@
 
               <span v-if="m.actions" class="cc-actions">
                 <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
-                <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
-                <a v-if="m.actions.share" :href="m.actions.share" target="_blank" rel="noopener noreferrer" class="cc-link-btn cc-link-btn-share">Compartir cotización</a>
+                <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
+                <a v-if="m.actions.share" :href="m.actions.share" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" data-analytics-lead="false" class="cc-link-btn cc-link-btn-share">Compartir cotización</a>
               </span>
             </template>
 
@@ -165,6 +165,7 @@
           :href="errorAction.whatsapp"
           target="_blank"
           rel="noopener noreferrer"
+          data-analytics-placement="chat"
           class="cc-link-btn cc-link-btn-wa"
         >Escríbenos por WhatsApp</a>
       </div>
@@ -262,7 +263,7 @@ function bubblesFor(m: { text: string; actions?: unknown; quoteTable?: unknown; 
   return m.actions || m.quoteTable || m.gamaCards ? [''] : []
 }
 
-withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
+const props = withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
 const emit = defineEmits<{ dismiss: [] }>()
 
 const {
@@ -402,7 +403,7 @@ watch(
 // bottom. Focus stays on the composer — never moved into the message list.
 onMounted(() => {
   newSeparatorBeforeId.value = firstUnreadAssistantId.value
-  onSurfaceMounted()
+  onSurfaceMounted(props.variant === 'page' ? 'chat_page' : 'fab')
   nextTick(() => {
     const el = scrollEl.value
     if (el) {

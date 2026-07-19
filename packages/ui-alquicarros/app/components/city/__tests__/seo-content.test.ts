@@ -62,14 +62,15 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
     }
   })
 
-  it('keeps the #ventajas heading + all four benefit blurbs verbatim', () => {
+  it('keeps the #ventajas heading + factual inventory-backed benefit blurbs', () => {
     expect(SEO).toContain('Ventajas de alquilar carro')
     expect(SEO).toContain('Precios transparentes')
     expect(SEO).toContain('Sin cargos ocultos ni sorpresas.')
     expect(SEO).toContain('Flota variada')
     expect(SEO).toContain('Desde económicos hasta SUVs y camionetas.')
-    expect(SEO).toContain('Entrega flexible')
-    expect(SEO).toContain('Recoge y devuelve tu carro en diferentes puntos de')
+    expect(SEO).toContain('Puntos de recogida')
+    expect(SEO).toContain('puntos de recogida activos en')
+    expect(SEO).not.toContain('Aeropuerto, centro de la ciudad o donde te resulte más cómodo')
     expect(SEO).toContain('Atención personalizada')
     expect(SEO).toContain('Soporte en español las 24 horas.')
   })

@@ -31,6 +31,29 @@ function firstQueryValue(v: unknown): string | undefined {
   return raw == null ? undefined : String(raw);
 }
 
+type ReservationSearchSignatureInput = {
+  pickup: string | null | undefined;
+  dropoff: string | null | undefined;
+  pickupDate: string | null | undefined;
+  dropoffDate: string | null | undefined;
+  pickupTime: string | null | undefined;
+  dropoffTime: string | null | undefined;
+};
+
+/** Search identity used to distinguish a real new quote from a same-URL remount. */
+export function reservationSearchSignature(input: ReservationSearchSignatureInput): string {
+  return [
+    input.pickup,
+    input.dropoff,
+    input.pickupDate,
+    input.dropoffDate,
+    input.pickupTime,
+    input.dropoffTime,
+  ]
+    .map((value) => value ?? '')
+    .join('|');
+}
+
 export default function useSearchByQueryParams() {
   const route = useRoute();
 
@@ -38,6 +61,7 @@ export default function useSearchByQueryParams() {
     // stores (client-only — SSR-safe, mirrors useSearchByRouteParams)
     const storeForm = useStoreReservationForm();
     const storeAdminData = useStoreAdminData();
+    const storeSearch = useStoreSearchData();
     const { doSearch } = useSearch();
 
     const {
@@ -49,6 +73,7 @@ export default function useSearchByQueryParams() {
       horaDevolucion,
       referido,
     } = storeToRefs(storeForm);
+    const { hasAvailableCategories, selectedCategory } = storeToRefs(storeSearch);
 
     const runSearchFromQuery = () => {
       // Guard: a clean /reservas (no results query) must NOT trigger a search, so
@@ -74,23 +99,52 @@ export default function useSearchByQueryParams() {
       const branchRecogida = storeAdminData.searchBranchBySlug(slugRecogida ?? '');
       const branchDevolucion = storeAdminData.searchBranchBySlug(slugDevolucion ?? '');
 
-      lugarRecogida.value = branchRecogida?.code ?? null;
-      lugarDevolucion.value = branchDevolucion?.code ?? null;
-      fechaRecogida.value = fecha_recogida ?? null;
-      fechaDevolucion.value = fecha_devolucion ?? null;
-      referido.value = firstQueryValue(route.query.referido) ?? null;
-
       // Parse times (12h from the URL or 24h), normalize to the store's 24h format.
       const pickupTime = parseTime12hOr24h(hora_recogida ?? '');
       const returnTime = parseTime12hOr24h(hora_devolucion ?? '');
 
-      horaRecogida.value = pickupTime
+      const normalizedPickupTime = pickupTime
         ? formatTime(toDatetime(createCurrentDateObject(), pickupTime))
         : null;
-      horaDevolucion.value = returnTime
+      const normalizedReturnTime = returnTime
         ? formatTime(toDatetime(createCurrentDateObject(), returnTime))
         : null;
 
+      // Returning from the mobile /chat page remounts the reservation route. If
+      // this exact quote is still live in Pinia, re-fetching would toggle pending
+      // and ReservationWizard would correctly treat it as a new search—clearing
+      // the user's category and rewinding the funnel. Reuse only when both the
+      // normalized six-field signature and usable results/selection are present;
+      // any changed date, branch or time still performs the normal fresh search.
+      const canReuseExistingSearch =
+        hasAvailableCategories.value &&
+        selectedCategory.value !== null &&
+        reservationSearchSignature({
+          pickup: branchRecogida?.code,
+          dropoff: branchDevolucion?.code,
+          pickupDate: fecha_recogida,
+          dropoffDate: fecha_devolucion,
+          pickupTime: normalizedPickupTime,
+          dropoffTime: normalizedReturnTime,
+        }) ===
+          reservationSearchSignature({
+            pickup: lugarRecogida.value,
+            dropoff: lugarDevolucion.value,
+            pickupDate: fechaRecogida.value,
+            dropoffDate: fechaDevolucion.value,
+            pickupTime: horaRecogida.value,
+            dropoffTime: horaDevolucion.value,
+          });
+
+      lugarRecogida.value = branchRecogida?.code ?? null;
+      lugarDevolucion.value = branchDevolucion?.code ?? null;
+      fechaRecogida.value = fecha_recogida ?? null;
+      fechaDevolucion.value = fecha_devolucion ?? null;
+      horaRecogida.value = normalizedPickupTime;
+      horaDevolucion.value = normalizedReturnTime;
+      referido.value = firstQueryValue(route.query.referido) ?? null;
+
+      if (canReuseExistingSearch) return;
       doSearch();
     };
 

@@ -7,6 +7,7 @@ import type {
   ServiceChannel,
   SoftwareApplication,
 } from 'schema-dts'
+import type { MaybeRefOrGetter } from 'vue'
 
 import {
   AMAW_ORGANIZATION_ID,
@@ -15,7 +16,12 @@ import {
   getOrganizationBrandIdentities,
 } from '../utils/structuredDataIdentity'
 
-export const useBaseSEO = () => {
+interface BaseSEOOptions {
+  title?: MaybeRefOrGetter<string>
+  description?: MaybeRefOrGetter<string>
+}
+
+export const useBaseSEO = (options: BaseSEOOptions = {}) => {
   const { franchise, organization } = useAppConfig()
   const route = useRoute()
   const website = franchise.website.replace(/\/+$/, '')
@@ -62,12 +68,12 @@ export const useBaseSEO = () => {
   }
 
   useSeoMeta({
-    title: franchise.name,
-    description: franchise.description,
+    title: options.title ?? franchise.name,
+    description: options.description ?? franchise.description,
   })
 
   useHead({
-    title: franchise.title,
+    title: options.title ?? franchise.title,
     templateParams: {
       schemaOrg: {
         host: website,

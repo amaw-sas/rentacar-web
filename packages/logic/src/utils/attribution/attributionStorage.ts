@@ -10,7 +10,7 @@
 import type AttributionInput from '../types/type/AttributionInput';
 
 export const ATTRIBUTION_STORAGE_KEY = 'rentacar_attribution';
-const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+export const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // exactly 30 days
 
 interface StoredAttribution {
   data: AttributionInput;
@@ -47,15 +47,30 @@ export function readStoredAttribution(now: number = Date.now()): AttributionInpu
     if (!raw) return null;
 
     const parsed = JSON.parse(raw) as StoredAttribution;
-    if (!parsed || typeof parsed.ts !== 'number' || typeof parsed.data !== 'object') {
+    if (
+      !parsed ||
+      typeof parsed.ts !== 'number' ||
+      !Number.isFinite(parsed.ts) ||
+      parsed.ts < 0 ||
+      parsed.ts > now ||
+      !parsed.data ||
+      typeof parsed.data !== 'object' ||
+      Array.isArray(parsed.data)
+    ) {
+      store.removeItem(ATTRIBUTION_STORAGE_KEY);
       return null;
     }
-    if (now - parsed.ts > TTL_MS) {
+    if (now - parsed.ts > ATTRIBUTION_TTL_MS) {
       store.removeItem(ATTRIBUTION_STORAGE_KEY); // expired → drop it
       return null;
     }
     return parsed.data;
   } catch {
+    try {
+      store.removeItem(ATTRIBUTION_STORAGE_KEY);
+    } catch {
+      /* storage access failed too */
+    }
     return null; // corrupt JSON / access error
   }
 }

@@ -292,6 +292,18 @@ interface SupabaseCity {
   testimonials: unknown
 }
 
+// The Supabase descriptions predate the active-branch inventory and four of
+// them promise airport pickup where the city only has a non-airport branch.
+// Keep the unique destination content, but replace those pickup promises while
+// no AA-coded airport branch exists. If operations adds an airport branch, the
+// database description becomes eligible again without another code change.
+const cityDescriptionsWithoutUnsupportedAirportPickup: Record<string, string> = {
+  floridablanca: 'Floridablanca, la Ciudad Jardín de Santander, forma parte del área metropolitana de Bucaramanga y es un punto estratégico para recorrer la región. El Aeropuerto Palonegro conecta el área metropolitana con las principales ciudades del país. Desde Floridablanca puedes visitar el Jardín Botánico Eloy Valenzuela, subir al Cerro del Santísimo, cruzar a Girón o lanzarte al Cañón del Chicamocha y Mesa de los Santos. Sin anticipos y con descuentos de hasta el 60%, Floridablanca ofrece la tranquilidad de una ciudad residencial con toda la aventura santandereana a menos de una hora.',
+  manizales: 'Entre volcanes nevados y fincas cafeteras, Manizales ofrece una experiencia única en el Eje Cafetero. Recorre la ciudad en carro y aventúrate hacia el Parque Nacional Los Nevados, sube al mirador de Chipre, visita el Recinto del Pensamiento o baja a los termales de Santa Rosa de Cabal. Reserva en línea sin anticipos y con descuentos de hasta el 60%. La Ciudad de las Puertas Abiertas tiene carreteras de montaña que premian a quien se anima a recorrerlas con calma y libertad.',
+  palmira: 'Palmira, la Capital Agrícola de Colombia, tiene una ubicación clave junto al Aeropuerto Alfonso Bonilla Aragón. Desde la ciudad puedes recorrer las haciendas azucareras del Valle del Cauca, visitar la Basílica del Señor de los Milagros en Buga, explorar Cali a 30 minutos o subir al Lago Calima. Reserva sin anticipos y con descuentos de hasta el 60%. Palmira es un punto de partida práctico para descubrir todo el Valle con la comodidad de un vehículo propio.',
+  villavicencio: 'Villavicencio es la puerta a los Llanos Orientales, donde Colombia se vuelve horizonte infinito, atardeceres rojos y cultura llanera auténtica. Desde la ciudad explora el Bioparque Los Ocarros, el Mirador de Buenavista y las rutas hacia Acacías, Restrepo y Puerto López — el ombligo de Colombia. Reserva sin anticipos y con hasta 60% de descuento. Los Llanos son extensión pura: hatos ganaderos, ríos y sabana que se recorren con la libertad de un vehículo propio.',
+}
+
 // Valibot schema para validar shape de testimonios JSONB. Postgres garantiza
 // JSON válido, no shape — esto filtra entries malformados al boundary de
 // aplicación (issue #6 design decision).
@@ -324,11 +336,16 @@ export function parseTestimonials(raw: unknown): Testimonial[] {
 // (useCityTestimonials client-side). `description` still ships: it feeds the
 // synchronous SEO composables (useCityPageSEO/useSearchPageSEO meta) across
 // many routes, so moving it is a separate refactor.
-export function transformCities(rows: SupabaseCity[]): City[] {
+export function transformCities(rows: SupabaseCity[], locations: SupabaseLocation[] = []): City[] {
   return rows.map((row) => ({
     id: row.slug,                               // app id == DB slug
     name: row.name,
-    description: row.description ?? '',
+    description:
+      !locations.some((location) =>
+        (location.cities?.slug ?? location.city) === row.slug && location.code.startsWith('AA')
+      ) && cityDescriptionsWithoutUnsupportedAirportPickup[row.slug]
+        ? cityDescriptionsWithoutUnsupportedAirportPickup[row.slug]
+        : row.description ?? '',
   }))
 }
 
