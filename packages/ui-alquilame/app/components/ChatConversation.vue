@@ -149,8 +149,8 @@
 
               <span v-if="m.actions" class="cc-actions">
                 <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
-                <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
-                <a v-if="m.actions.share" :href="m.actions.share" target="_blank" rel="noopener noreferrer" class="cc-link-btn cc-link-btn-share">Compartir cotización</a>
+                <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
+                <a v-if="m.actions.share" :href="m.actions.share" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" data-analytics-lead="false" class="cc-link-btn cc-link-btn-share">Compartir cotización</a>
               </span>
             </template>
 
@@ -165,6 +165,7 @@
           :href="errorAction.whatsapp"
           target="_blank"
           rel="noopener noreferrer"
+          data-analytics-placement="chat"
           class="cc-link-btn cc-link-btn-wa"
         >Escríbenos por WhatsApp</a>
       </div>
@@ -262,7 +263,10 @@ function bubblesFor(m: { text: string; actions?: unknown; quoteTable?: unknown; 
   return m.actions || m.quoteTable || m.gamaCards ? [''] : []
 }
 
-withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
+const props = withDefaults(
+  defineProps<{ variant?: 'panel' | 'page'; active?: boolean }>(),
+  { variant: 'panel', active: true },
+)
 const emit = defineEmits<{ dismiss: [] }>()
 
 const {
@@ -400,9 +404,9 @@ watch(
 // old messages (the scroll watch above is not immediate). On mount, position at
 // the "Mensajes nuevos" separator when there are unread replies, else at the
 // bottom. Focus stays on the composer — never moved into the message list.
-onMounted(() => {
+function activateSurface() {
   newSeparatorBeforeId.value = firstUnreadAssistantId.value
-  onSurfaceMounted()
+  onSurfaceMounted(props.variant === 'page' ? 'chat_page' : 'fab')
   nextTick(() => {
     const el = scrollEl.value
     if (el) {
@@ -412,10 +416,18 @@ onMounted(() => {
     }
     inputEl.value?.focus()
   })
+}
+
+onMounted(() => {
+  if (props.active) activateSurface()
+})
+watch(() => props.active, (active, previous) => {
+  if (active && !previous) activateSurface()
+  else if (!active && previous) onSurfaceUnmounted()
 })
 // NEVER abort the stream on unmount — the singleton keeps streaming into the
 // same messages ref so a reopen sees the reply continue.
-onUnmounted(() => onSurfaceUnmounted())
+onUnmounted(() => { if (props.active) onSurfaceUnmounted() })
 </script>
 
 <style scoped>

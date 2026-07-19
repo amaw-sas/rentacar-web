@@ -389,7 +389,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
         ],
         drivingTips: {
             picoPlaca: 'Ibagué tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 8:00 AM y de 6:00 a 7:30 PM. Solo una hora en la mañana.',
-            tolls: 'Hacia Bogotá por la Línea hay peajes (~$32.000 COP total). Hacia el Cañón del Combeima no hay peajes. Hacia Armenia hay un peaje (~$15.500 COP).',
+            tolls: 'Hacia Bogotá por la Línea hay peajes (~COP 32.000 total). Hacia el Cañón del Combeima no hay peajes. Hacia Armenia hay un peaje (~$15.500 COP).',
             parking: 'En el centro y zonas comerciales los parqueaderos cuestan entre $2.000-4.000 COP/hora. En La Estación y centros comerciales hay tarifas con consumo.'
         },
         bestSeason: 'Ibagué tiene clima cálido (22-32°C) pero el Cañón del Combeima es más fresco. La temporada seca de junio a agosto es ideal para el Nevado del Tolima (aunque requiere guía y equipo especializado). El Festival Folclórico en junio es la época más festiva. Para el Cañón, cualquier época funciona.'

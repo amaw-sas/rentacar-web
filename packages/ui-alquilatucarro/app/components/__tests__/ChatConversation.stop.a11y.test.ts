@@ -23,8 +23,8 @@ describe('SCEN-322-X04 — visible stop control while streaming', () => {
   })
 
   it('preserves the unmount invariant: never aborts the stream on unmount', () => {
-    // The singleton keeps streaming in background; only onSurfaceUnmounted runs.
-    expect(source).toMatch(/onUnmounted\(\(\) => onSurfaceUnmounted\(\)\)/)
+    // The singleton keeps streaming in background; only the active surface unmounts.
+    expect(source).toMatch(/onUnmounted\(\(\) => \{ if \(props\.active\) onSurfaceUnmounted\(\) \}\)/)
     expect(source).not.toMatch(/onUnmounted\([\s\S]{0,120}stop\(\)/)
   })
 })

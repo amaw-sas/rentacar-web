@@ -1,9 +1,12 @@
 import { useSupabaseClient } from '../utils/supabase'
 import { fetchRentacarData, RentacarDataTimeoutError } from '../utils/rentacarDataFetch'
-import { rentacarDataCacheKey } from '../utils/rentacarDataCacheKey'
 import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials, transformFAQs } from '../utils/transformers'
 
-export default defineCachedEventHandler(async (event) => {
+// Catalog freshness has one cache clock: the one-hour ISR window declared by
+// each price-bearing page. Do not add a handler cache here. Stacking another
+// TTL would let a document regenerate from an older catalog snapshot and push
+// tariff staleness beyond the documented one-hour SLA.
+export default defineEventHandler(async (event) => {
   const supabase = useSupabaseClient()
 
   // Issue #322 PR10: scope the franchises query to this deploy's brand — each
@@ -44,6 +47,9 @@ export default defineCachedEventHandler(async (event) => {
   }
 
   return {
+    // Coupled to the body (rather than client receipt time) so an ISR-restored
+    // snapshot retains its real age throughout an open SPA session.
+    catalogFetchedAt: Date.now(),
     categories: transformCategories(categoriesResult.data),
     // Supabase infers the to-one `cities(slug)` embed as an array (the explicit-
     // column select yields a structured type, unlike the `*` selects), but the
@@ -55,22 +61,11 @@ export default defineCachedEventHandler(async (event) => {
       ? undefined
       : transformExtras(companyResult.data),
     vehicleCategories: transformVehicleCategories(categoriesResult.data),
-    cities: transformCities(citiesResult.data),
+    cities: transformCities(
+      citiesResult.data,
+      locationsResult.data as unknown as Parameters<typeof transformCities>[1],
+    ),
     franchiseTestimonials: transformFranchiseTestimonials(franchisesResult.data),
     faqs: transformFAQs(faqsResult.data),
   }
-}, {
-  maxAge: 3600,
-  name: 'rentacar-data',
-  // Scope the cache to a single deployment. Vercel restores Nitro's persisted
-  // handler cache across builds, so without a per-build key a new deploy can be
-  // served the previous deploy's response — whose schema may predate the current
-  // code (e.g. a body without `faqs`), which crashes the `/` prerender. Keying on
-  // app.buildId (unique per prod build, stable within a build) makes a restored
-  // entry sit under the old key and be ignored, while the cache is still reused
-  // within a deploy. See docs/specs/2026-05-26-rentacar-data-cache-deploy-scope-design.md.
-  getKey: (event) => rentacarDataCacheKey(useRuntimeConfig(event).app.buildId),
-  // TODO(perf+seo): broader cache strategy still open (#7 / #16-F2) — pricing
-  // edits in admin take up to 1h (maxAge) to surface; options are a shorter
-  // maxAge, swr, or tag-based invalidation from the admin write path.
 })

@@ -9,6 +9,12 @@ import type FAQ from '../type/FAQ';
 export type { ExtrasData };
 
 export default interface ReservasApiData {
+  /**
+   * Server epoch (milliseconds) when this catalog snapshot finished loading.
+   * Optional only for backwards-compatible fixtures/old payloads; the client
+   * treats a missing or invalid value as expired and refreshes after mount.
+   */
+  catalogFetchedAt?: number;
   categories: CategoryData[];
   branches: BranchData[];
   extras: ExtrasData | undefined;

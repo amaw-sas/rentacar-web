@@ -166,9 +166,7 @@
               <NuxtLink
                 v-for="city in cities"
                 :key="city.id"
-                :to="getCityReservationURL(city)"
-                :external="true"
-                target="_blank"
+                :to="`/${city.id}`"
                 class="text-gray-400 hover:text-white text-sm transition-colors"
               >
                 {{ city.name }}
@@ -281,11 +279,6 @@
 
 <script lang="ts" setup>
 import type { NavigationMenuItem } from '@nuxt/ui'
-import { buildCityReservationURL } from '@rentacar-main/logic/utils'
-import type { City as CityData } from '@rentacar-main/logic/utils'
-import { today } from '@internationalized/date'
-import { storeToRefs } from 'pinia'
-
 const route = useRoute();
 
 // Estado del menú móvil slideover
@@ -332,32 +325,10 @@ const items = computed<NavigationMenuItem[]>(() => {
   ];
 })
 
-const { cities } = useData();
-// Live active-city count (Supabase) for the footer "presencia en N ciudades".
-const cityCount = useCityCount();
-const { franchise, defaultTimezone } = useAppConfig();
-const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
-
-// Fechas del deep-link: se calculan SOLO en cliente tras montar para evitar
-// hydration attribute mismatch (Issue #109). En servidor y primera hidratación
-// son null → buildCityReservationURL devuelve el href estable /${city.id},
-// idéntico en ambos pases. Tras onMounted se aplica el deep-link con fecha
-// fresca (today+1), nunca una fecha pasada de una página ISR cacheada.
-const reservationInitDay = ref<string | null>(null);
-const reservationEndDay = ref<string | null>(null);
-
-onMounted(() => {
-  reservationInitDay.value = today(defaultTimezone).add({ days: 1 }).toString();
-  reservationEndDay.value = today(defaultTimezone).add({ days: 8 }).toString();
-});
-
-const getCityReservationURL = (city: CityData): string =>
-  buildCityReservationURL(city, branches.value || [], {
-    initDay: reservationInitDay.value,
-    endDay: reservationEndDay.value,
-    initHour: "12:00",
-    endHour: "12:00",
-  });
+// Compact build-time navigation: static/content routes never hydrate the
+// reservation catalog merely to render the footer.
+const { cities, cityCount } = usePublicCities();
+const { franchise } = useAppConfig();
 
 // Footer (golden) — reparte franchise.footerLinks en dos zonas, conservando
 // los enlaces reales:

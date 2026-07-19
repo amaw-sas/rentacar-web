@@ -251,14 +251,14 @@ function getCategoryIcon(category: string): string {
 
 // SEO
 useHead({
-  title: `Blog | ${franchise.shortname}`,
+  title: 'Blog',
   link: [
     { rel: 'canonical', href: `${franchise.website}/blog` }
   ]
 })
 
 useSeoMeta({
-  title: `Blog - Guías y Tips de Alquiler de Carros | ${franchise.shortname}`,
+  title: 'Blog de alquiler de carros',
   description: 'Descubre guías, tips y consejos para alquilar carros en Colombia. Requisitos, mejores rutas, destinos y recomendaciones para tu viaje.',
   ogTitle: `Blog | ${franchise.shortname}`,
   ogDescription: 'Guías, tips y consejos para alquilar carros en Colombia.',

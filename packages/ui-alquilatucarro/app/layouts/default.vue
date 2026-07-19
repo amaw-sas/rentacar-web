@@ -1,97 +1,93 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-[#000073] via-blue-800 to-blue-900 font-sans text-gray-800">
-    <!-- Header -->
-    <div>
-      <UHeader
-        v-model:open="mobileMenuOpen"
-        class="bg-[#000073] z-40 py-4 md:py-6 px-4 lg:px-6 border-none relative"
-        mode="slideover"
-        :toggle="false"
-        :ui="{
-          root: 'gap-4',
-          container: 'w-full max-w-(--ui-container) mx-auto sm:px-6 lg:px-8 flex items-center justify-between gap-3 h-full',
-          content: 'bg-gradient-to-b from-[#000073] via-blue-800 to-blue-900',
-          header: 'hidden',
-          body: 'p-0!'
-        }"
-      >
-        <template #right>
-          <!-- Menú desktop -->
-          <div class="hidden lg:block">
-            <UNavigationMenu color="neutral" :items="items" />
-          </div>
-          <!-- Toggle móvil dentro del slot para alineación natural por flex -->
-          <button
-            type="button"
-            class="lg:hidden flex items-center justify-center w-9 h-9 rounded-md hover:bg-white/10 transition-colors"
-            aria-label="Abrir menú de navegación"
-            @click="mobileMenuOpen = true"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </template>
-      <template #left>
-        <!-- Móvil: logo centrado. Va en #left (que sí renderiza en móvil; el slot
-             default de UHeader queda envuelto en `hidden lg:flex` y nunca se ve).
-             El wrapper se estira a todo el ancho de la barra (`absolute inset-x-0`
-             sobre el header `relative`) y centra el logo con `flex justify-center`
-             — sin números mágicos, robusto a cambios de tamaño del logo.
-             `pointer-events-none` en el wrapper + `pointer-events-auto` en el link:
-             solo el logo es clickable, la hamburguesa sigue recibiendo el tap.
-             Centro exacto verificado en 360/390/414px. -->
+    <!-- Header semántico: evita hidratar UHeader/UNavigationMenu/Slideover en
+         cada ruta pública. El panel móvil solo existe después del clic. -->
+    <header class="h-16 bg-[#000073] z-40 py-4 px-4 lg:px-6 relative">
+      <div class="h-full w-full max-w-7xl mx-auto flex items-center justify-between gap-3 sm:px-6 lg:px-8">
         <div class="md:hidden absolute inset-x-0 flex justify-center pointer-events-none">
           <NuxtLink to="/" aria-label="alquilatucarro" class="pointer-events-auto">
             <Logo cls="h-8 w-auto" />
           </NuxtLink>
         </div>
-        <!-- Desktop: Bandera + Logo juntos como unidad (oculto en móvil) -->
+
         <NuxtLink to="/" aria-label="alquilatucarro" class="hidden md:flex items-center gap-3">
           <IconsColombiaFlag cls="h-6 w-auto" />
           <Logo cls="h-10 w-auto" />
         </NuxtLink>
-      </template>
-      <template #body>
-        <div class="flex flex-col min-h-full bg-gradient-to-b from-[#000073] via-blue-800 to-blue-900">
-          <!-- Botón cerrar (círculo azul oscuro) -->
-          <button
-            type="button"
-            class="absolute top-3.5 right-3.5 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-[#00004d] text-white ring-1 ring-white/25 hover:bg-[#000073] transition-colors"
-            aria-label="Cerrar menú"
-            @click="mobileMenuOpen = false"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
 
-          <!-- Logo sobre el fondo azul (el SVG es blanco, se ve directo) -->
+        <nav class="hidden lg:flex items-center gap-1" aria-label="Navegación principal">
+          <NuxtLink
+            v-for="item in items"
+            :key="item.label"
+            :to="item.to"
+            class="rounded-md px-3 py-2 text-sm font-semibold transition-colors"
+            :class="item.active ? 'bg-white text-blue-900' : 'text-white hover:bg-white/10'"
+          >
+            {{ item.label }}
+          </NuxtLink>
+        </nav>
+
+        <button
+          type="button"
+          class="ml-auto lg:hidden flex items-center justify-center w-9 h-9 rounded-md hover:bg-white/10 transition-colors"
+          aria-label="Abrir menú de navegación"
+          :aria-expanded="mobileMenuOpen"
+          aria-controls="mobile-navigation-panel"
+          @click="openMobileMenu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <Teleport to="body">
+      <div
+        v-if="mobileMenuOpen"
+        id="mobile-navigation-panel"
+        class="fixed inset-0 z-50 bg-gradient-to-b from-[#000073] via-blue-800 to-blue-900"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú de navegación"
+        @keydown.esc="closeMobileMenu"
+      >
+        <button
+          ref="mobileCloseButton"
+          type="button"
+          class="absolute top-3.5 right-3.5 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-[#00004d] text-white ring-1 ring-white/25 hover:bg-[#000073] transition-colors"
+          aria-label="Cerrar menú"
+          @click="closeMobileMenu"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        <div class="flex min-h-full flex-col overflow-y-auto px-5">
           <NuxtLink
             to="/"
             aria-label="alquilatucarro"
-            class="flex items-center justify-center pt-8 pb-6 px-5"
-            @click="mobileMenuOpen = false"
+            class="flex items-center justify-center pt-8 pb-6"
+            @click="closeMobileMenu"
           >
             <Logo cls="h-9 w-auto" />
           </NuxtLink>
 
-          <!-- Botones apilados y centrados (estilo /tiktok) -->
-          <div class="flex-1 flex flex-col gap-2.5 w-full max-w-[21rem] mx-auto pb-8">
-            <!-- Navegación como botones blancos -->
+          <div class="flex flex-col gap-2.5 w-full max-w-[21rem] mx-auto pb-8">
             <NuxtLink
               v-for="item in mobileItems"
               :key="item.label"
               :to="item.to"
               class="flex items-center gap-3 w-full bg-white rounded-xl px-4 py-3.5 shadow-sm text-gray-900 font-semibold hover:bg-gray-50 transition-colors"
-              @click="(e: MouseEvent) => onMobileNavClick(item, e)"
+              @click="(event: MouseEvent) => onMobileNavClick(item, event)"
             >
-              <UIcon :name="(item.icon as string)" class="size-5 text-[#000073] shrink-0" />
               <span class="flex-1 text-left">{{ item.label }}</span>
-              <UIcon name="lucide:chevron-right" class="size-4 text-gray-400 shrink-0" />
+              <svg class="size-4 text-gray-400 shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
             </NuxtLink>
 
-            <!-- Contacto: WhatsApp (verde) y Llamar (celeste), cada uno en su línea -->
             <a
               :href="franchise.whatsapp"
               target="_blank"
@@ -107,14 +103,15 @@
               :href="telHref"
               class="flex items-center justify-center gap-2 w-full rounded-xl py-3.5 bg-[#0ea5e9] text-white font-semibold shadow-sm hover:brightness-110 transition"
             >
-              <UIcon name="lucide:phone" class="size-5" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z" />
+              </svg>
               Llamar
             </a>
           </div>
         </div>
-      </template>
-    </UHeader>
-    </div>
+      </div>
+    </Teleport>
 
     <main>
       <slot></slot>
@@ -136,7 +133,7 @@
           <UButton
             v-for="city in cities"
             :key="city.id"
-            :to="getCityReservationURL(city)"
+            :to="`/${city.id}`"
             class="text-white justify-center bg-blue-600 hover:bg-blue-800 rounded-lg py-3 w-full md:w-fit font-normal transition-colors"
           >
             Alquiler de carros en <span class="font-bold">{{ city.name }}</span>
@@ -175,16 +172,37 @@
 </template>
 
 <script lang="ts" setup>
-import type { NavigationMenuItem } from '@nuxt/ui'
-import { buildCityReservationURL } from '@rentacar-main/logic/utils'
-import type { City as CityData } from '@rentacar-main/logic/utils'
-import { today } from '@internationalized/date'
-import { storeToRefs } from 'pinia'
+interface SiteNavigationItem {
+  label: string
+  to: string
+  active: boolean
+}
 
 const route = useRoute();
 
-// Estado del menú móvil slideover
+// El menú móvil se crea únicamente tras interacción. Además de ahorrar el
+// grafo UHeader/Slideover inicial, conserva bloqueo de scroll, Escape y foco.
 const mobileMenuOpen = ref(false);
+const mobileCloseButton = ref<HTMLButtonElement | null>(null)
+
+function closeMobileMenu() {
+  mobileMenuOpen.value = false
+}
+
+async function openMobileMenu() {
+  mobileMenuOpen.value = true
+  await nextTick()
+  mobileCloseButton.value?.focus({ preventScroll: true })
+}
+
+watch(mobileMenuOpen, (open) => {
+  if (!import.meta.client) return
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+
+onBeforeUnmount(() => {
+  if (import.meta.client) document.body.style.overflow = ''
+})
 
 // La home (/) y todas las páginas de ciudad ([city] param) renderizan las
 // secciones #requisitos y #faqs. En esas páginas enlazamos con ancla relativa
@@ -199,55 +217,45 @@ const faqsTo = computed(() => hasInPageSections.value ? '#faqs' : '/#faqs');
 // El item activo recibe un fondo claro del UNavigationMenu; sin un color de
 // texto que contraste quedaba blanco-sobre-blanco e ilegible. linkClass pasa el
 // texto a azul oscuro cuando el item está activo.
-const linkClass = (active: boolean) =>
-  active
-    ? "text-blue-900 hover:text-blue-900"
-    : "text-white hover:text-white hover:bg-white/10";
-
-const items = computed<NavigationMenuItem[]>(() => {
+const items = computed<SiteNavigationItem[]>(() => {
   const requisitosActive = route.hash === '#requisitos';
   const sedesActive = route.hash === '#sedes';
   const mensualidadesActive = route.path.startsWith('/tarifas');
   const blogActive = route.path.startsWith('/blog');
   const faqsActive = route.hash === '#faqs';
   return [
-    { label: 'Requisitos', to: requisitosTo.value, active: requisitosActive, class: linkClass(requisitosActive) },
-    { label: 'Sedes', to: '#sedes', active: sedesActive, class: linkClass(sedesActive) },
-    { label: 'Mensualidades', to: '/tarifas', active: mensualidadesActive, class: linkClass(mensualidadesActive) },
-    { label: 'Blog', to: '/blog', active: blogActive, class: linkClass(blogActive) },
-    { label: 'Preguntas frecuentes', to: faqsTo.value, active: faqsActive, class: linkClass(faqsActive) },
+    { label: 'Requisitos', to: requisitosTo.value, active: requisitosActive },
+    { label: 'Sedes', to: '#sedes', active: sedesActive },
+    { label: 'Mensualidades', to: '/tarifas', active: mensualidadesActive },
+    { label: 'Blog', to: '/blog', active: blogActive },
+    { label: 'Preguntas frecuentes', to: faqsTo.value, active: faqsActive },
   ];
 })
 
 // Items para menú móvil (texto oscuro sobre fondo blanco)
-const mobileItems = computed<NavigationMenuItem[]>(() => [
+const mobileItems = computed<SiteNavigationItem[]>(() => [
   {
     label: 'Requisitos',
-    icon: 'lucide:clipboard-check',
     to: requisitosTo.value,
     active: route.hash === '#requisitos',
   },
   {
     label: 'Sedes',
-    icon: 'lucide:map-pin',
     to: '#sedes',
     active: route.hash === '#sedes',
   },
   {
     label: 'Mensualidades',
-    icon: 'lucide:calendar-days',
     to: '/tarifas',
     active: route.path.startsWith('/tarifas'),
   },
   {
     label: 'Blog',
-    icon: 'lucide:newspaper',
     to: '/blog',
     active: route.path.startsWith('/blog'),
   },
   {
     label: 'Preguntas frecuentes',
-    icon: 'lucide:circle-help',
     to: faqsTo.value,
     active: route.hash === '#faqs',
   },
@@ -261,9 +269,9 @@ const telHref = computed(() => `tel:${(franchise.phone ?? '').replace(/[^\d+]/g,
 // del body (scroll-lock del overlay). Cerramos primero y diferimos el scroll
 // hasta que termine la animación de cierre y se libere el lock. Rutas reales
 // (/blog, /tarifas) y ancla-a-home (/#faqs fuera de home) navegan normal.
-function onMobileNavClick(item: NavigationMenuItem, e: MouseEvent) {
-  mobileMenuOpen.value = false
-  const to = typeof item.to === 'string' ? item.to : ''
+function onMobileNavClick(item: SiteNavigationItem, e: MouseEvent) {
+  closeMobileMenu()
+  const to = item.to
   if (to.startsWith('#')) {
     e.preventDefault()
     const id = to.slice(1)
@@ -275,31 +283,9 @@ function onMobileNavClick(item: NavigationMenuItem, e: MouseEvent) {
   }
 }
 
-const { cities } = useData();
-// Live active-city count (Supabase) for the footer "presentes en N ciudades".
-const cityCount = useCityCount();
-const { franchise, reservation, defaultTimezone } = useAppConfig();
-const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
-
-// Fechas del deep-link: se calculan SOLO en cliente tras montar para evitar
-// hydration attribute mismatch (Issue #109). En servidor y primera hidratación
-// son null → buildCityReservationURL devuelve el href estable /${city.id},
-// idéntico en ambos pases. Tras onMounted se aplica el deep-link con fecha
-// fresca (today+1), nunca una fecha pasada de una página ISR cacheada.
-const reservationInitDay = ref<string | null>(null);
-const reservationEndDay = ref<string | null>(null);
-
-onMounted(() => {
-  reservationInitDay.value = today(defaultTimezone).add({ days: 1 }).toString();
-  reservationEndDay.value = today(defaultTimezone).add({ days: 8 }).toString();
-});
-
-const getCityReservationURL = (city: CityData): string =>
-  buildCityReservationURL(city, branches.value || [], {
-    initDay: reservationInitDay.value,
-    endDay: reservationEndDay.value,
-    initHour: "12:00",
-    endHour: "12:00",
-  });
+// Compact build-time navigation: static/content routes never hydrate the
+// reservation catalog merely to render the footer.
+const { cities, cityCount } = usePublicCities();
+const { franchise } = useAppConfig();
 
 </script>

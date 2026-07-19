@@ -153,6 +153,13 @@ const isDesktop = breakpoints.greaterOrEqual('lg')
  */
 const hasResultsQuery = computed(() => Boolean(route.query.lugar_recogida))
 
+// Keep the HTTP robots directive coherent with the query-aware HTML meta.
+// A static routeRule would incorrectly noindex the clean /reservas landing.
+const robotsResponseHeader = useResponseHeader('X-Robots-Tag')
+if (import.meta.server && hasResultsQuery.value) {
+  robotsResponseHeader.value = 'noindex, follow'
+}
+
 /**
  * SCEN-003 — drive the in-place search from the query string. Runs doSearch only
  * when the required query keys are present; a clean /reservas does nothing. Mirrors
@@ -208,7 +215,7 @@ useSeoMeta({
   // noindex,follow — it duplicates the richer crawlable city pages and would
   // cannibalize them; clean /reservas (no query) stays indexable. SSR-stable
   // (route.query is available at SSR). Provisional, pending directiva sign-off.
-  robots: () => (route.query.lugar_recogida ? 'noindex, follow' : undefined),
+  robots: () => (hasResultsQuery.value ? 'noindex, follow' : undefined),
   title,
   description,
   ogType: 'website',
@@ -234,5 +241,6 @@ useHead({
 
 definePageMeta({
   colorMode: 'light',
+  middleware: ['rentacar-data'],
 })
 </script>

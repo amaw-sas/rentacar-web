@@ -19,10 +19,16 @@
  * the transcript persist in localStorage (per brand) so the chat survives
  * reloads and SSR/ISR navigation. Reasoning parts are ignored.
  */
-import { computed, ref } from 'vue';
-import { readStoredAttribution } from '@rentacar-main/logic/utils';
+import { computed, ref, watch } from 'vue';
+import {
+  readStoredAttribution,
+  trackAnalyticsEvent,
+  trackGenerateLead,
+  type ChatOpenSource,
+} from '@rentacar-main/logic/utils';
 import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
 import { buildChatPayloadMessages } from '../utils/buildChatPayloadMessages';
+import { publishChatUnread, takePreparedChatOpen } from './useChatUnreadBadge';
 
 // Code-owned data parts emitted by the hybrid orchestrator (dashboard /api/chat)
 // ALONGSIDE the streamed text. They arrive as `data-*` SSE events and are
@@ -114,20 +120,6 @@ const CHAT_TIMEOUT_ERROR =
 // server-side Supabase conversation is the business record and is never touched.
 export const CHAT_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
 
-// Analytics beacon reusing the site's existing GA4/gtag bridge (see the brand
-// nuxt.config head scripts that define window.gtag). No-op safe: never throws and
-// never gates the chat when analytics is absent (SSR, blockers, private mode).
-function emitChatEvent(name: string): void {
-  const w = typeof window !== 'undefined' ? (window as unknown as { gtag?: (...a: unknown[]) => void }) : undefined;
-  if (w && typeof w.gtag === 'function') {
-    try {
-      w.gtag('event', name);
-    } catch {
-      /* analytics must never break the chat */
-    }
-  }
-}
-
 // Per-instance config resolved once from the Nuxt context by the wrapper below,
 // so the factory itself is free of Nuxt auto-imports and unit-testable.
 export interface ChatConversationConfig {
@@ -200,6 +192,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
   }
 
   const messages = ref<ChatMessage[]>(restoredMessages);
+  let firstCustomerMessageTracked = restoredMessages.some((message) => message.role === 'user');
   const input = ref('');
   const replyTo = ref<ReplyContext | null>(null);
   const status = ref<ChatStatus>('ready');
@@ -263,6 +256,10 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     }
     return count;
   });
+
+  watch([unread, announce], ([unreadCount, announcement]) => {
+    publishChatUnread({ brand, unread: unreadCount, announce: announcement })
+  })
 
   // Id of the first unread assistant message — where the "Mensajes nuevos"
   // separator renders. Read by the surface BEFORE markRead() advances the marker.
@@ -331,11 +328,17 @@ export function createChatConversation(cfg: ChatConversationConfig) {
   // before the outgoing one unmounts; a bare boolean would flip to false while a
   // surface is still on screen.
   let mountCount = 0;
-
   // Called by the surface on mount: it is now visible, so catch the marker up.
-  function onSurfaceMounted() {
+  function onSurfaceMounted(fallbackSource: ChatOpenSource = 'chat_page') {
+    const wasAlreadyMounted = mountCount > 0;
     mountCount++;
     surfaceMounted.value = true;
+    if (!wasAlreadyMounted) {
+      trackAnalyticsEvent('chat_open', {
+        brand,
+        source: takePreparedChatOpen(brand) ?? fallbackSource,
+      });
+    }
     if (docVisible.value) markRead();
   }
 
@@ -357,15 +360,15 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     // n can be 0 when a visible→hidden toggle straddled the stream (markRead ran
     // on the placeholder): nothing new for the user → no announce, no beacons.
     if (n === 0) return;
-    emitChatEvent('chat_reply_while_closed');
-    emitChatEvent('chat_unread_badge_shown');
+    trackAnalyticsEvent('chat_reply_while_closed', { brand });
+    trackAnalyticsEvent('chat_unread_badge_shown', { brand });
     announce.value = n === 1 ? '1 mensaje nuevo en el chat' : `${n} mensajes nuevos en el chat`;
   }
 
-  // Called by the FAB when the chat is reopened from the badge (analytics only;
-  // markRead is invoked separately by openChat / onSurfaceMounted).
+  // Kept on the full conversation API for callers/tests that already own the
+  // lazy engine. The always-visible FAB uses the lightweight badge equivalent.
   function emitReopenedFromBadge() {
-    emitChatEvent('chat_reopened_from_badge');
+    trackAnalyticsEvent('chat_reopened_from_badge', { brand });
   }
 
   function onVisibilityChange() {
@@ -426,6 +429,12 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     const reply = replyTo.value;
     replyTo.value = null;
 
+    if (!firstCustomerMessageTracked) {
+      trackAnalyticsEvent('chat_message_sent', { brand, message_number: 1 });
+      trackGenerateLead(brand, 'chat');
+      firstCustomerMessageTracked = true;
+    }
+
     messages.value.push({
       id: genId(),
       role: 'user',
@@ -459,6 +468,29 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     let actions: ChatActions | null = null;
     let quoteTable: QuoteTablePart | undefined;
     let gamaCards: GamaCardsPart | undefined;
+    let quoteAnalyticsSent = false;
+    const emitQuoteAnalytics = () => {
+      if (!quoteTable || quoteAnalyticsSent) return;
+      const items = quoteTable.filas.map((row) => ({
+        item_id: row.categoria,
+        item_name: row.descripcion || row.categoria,
+        ...(Number.isFinite(row.precioTotal) && row.precioTotal > 0
+          ? { price: row.precioTotal }
+          : {}),
+        quantity: 1,
+      }));
+      const prices = items
+        .map((item) => item.price)
+        .filter((price): price is number => price !== undefined);
+      quoteAnalyticsSent = trackAnalyticsEvent('chat_quote_received', {
+        brand,
+        result_count: items.length,
+        items,
+        ...(prices.length
+          ? { currency: 'COP' as const, value: Math.min(...prices) }
+          : {}),
+      });
+    };
     // Commit whatever has accumulated onto the reactive bubble. Called on success AND
     // on a mid-stream error, so partial content survives a torn stream.
     const flushToAssistant = () => {
@@ -609,6 +641,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
 
       // Reveal the full reply at once now that the stream finished (WhatsApp-style).
       flushToAssistant();
+      emitQuoteAnalytics();
 
       // Defense-in-depth: a turn that streams no text deltas (e.g. the model ended
       // on a tool call, or the function was cut short) would otherwise leave an
@@ -650,6 +683,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
         errorAction.value = err.whatsapp ? { whatsapp: err.whatsapp } : null;
         status.value = 'error';
       }
+      emitQuoteAnalytics();
       persist();
     } finally {
       disarmWatchdog();
@@ -686,6 +720,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     error.value = null;
     errorAction.value = null;
     status.value = 'ready';
+    firstCustomerMessageTracked = false;
     lastReadMessageId.value = null;
     if (hasStorage) {
       try {

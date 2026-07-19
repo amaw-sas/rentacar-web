@@ -5,8 +5,8 @@ import { join } from 'node:path'
 describe('SEO schema composables — no Firebase URLs', () => {
   const composablesDir = join(__dirname, '..', 'src', 'composables')
 
-  it('useCityProductSchema has no Firebase Storage URLs', () => {
-    const content = readFileSync(join(composablesDir, 'useCityProductSchema.ts'), 'utf-8')
+  it('useCityServiceSchema has no Firebase Storage URLs', () => {
+    const content = readFileSync(join(composablesDir, 'useCityServiceSchema.ts'), 'utf-8')
     expect(content).not.toContain('firebasestorage.googleapis.com')
   })
 

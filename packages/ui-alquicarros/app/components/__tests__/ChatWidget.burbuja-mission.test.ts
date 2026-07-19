@@ -24,6 +24,11 @@ const searchHydratorSource = readFileSync(
 )
 
 describe('Burbuja chat mission E1–E4 — widget integration', () => {
+  it('E10 — all three widget copies remain byte-identical', () => {
+    expect(brandWidgets[1]?.source).toBe(brandWidgets[0]?.source)
+    expect(brandWidgets[2]?.source).toBe(brandWidgets[0]?.source)
+  })
+
   it('E1 — OFF gates timers, announcements, badges, panel and typing surface', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toMatch(

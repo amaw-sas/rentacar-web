@@ -69,6 +69,15 @@ const factory = (props = {}) =>
 const optionButtons = (wrapper: ReturnType<typeof factory>) =>
     wrapper.findAll('button.relative');
 
+// The panel is a real async component now. Its dynamic import can resolve a
+// tick after Vite transforms the SFC, so wait on the observable drawer.
+const openDrawer = async (wrapper: ReturnType<typeof factory>) => {
+    await wrapper.find('.trigger').trigger('click');
+    await vi.waitFor(() => {
+        expect(wrapper.find('.drawer').exists()).toBe(true);
+    });
+};
+
 describe('SearcherSelectDrawer', () => {
     it('shows the placeholder when no value is selected', () => {
         const w = factory();
@@ -83,14 +92,14 @@ describe('SearcherSelectDrawer', () => {
     it('opens the drawer and lists every item', async () => {
         const w = factory();
         expect(w.find('.drawer').exists()).toBe(false);
-        await w.find('.trigger').trigger('click');
+        await openDrawer(w);
         expect(w.find('.drawer').exists()).toBe(true);
         expect(optionButtons(w)).toHaveLength(branches.length);
     });
 
     it('filters the options by the search query (case-insensitive)', async () => {
         const w = factory();
-        await w.find('.trigger').trigger('click');
+        await openDrawer(w);
         await w.find('input.search').setValue('medell');
         const opts = optionButtons(w);
         expect(opts).toHaveLength(1);
@@ -99,7 +108,7 @@ describe('SearcherSelectDrawer', () => {
 
     it('emits update:modelValue with the valueKey and closes on selection', async () => {
         const w = factory();
-        await w.find('.trigger').trigger('click');
+        await openDrawer(w);
         await optionButtons(w)[1]!.trigger('click');
         expect(w.emitted('update:modelValue')?.[0]).toEqual(['MED-P']);
         // drawer closes after selecting
@@ -108,12 +117,12 @@ describe('SearcherSelectDrawer', () => {
 
     it('resets the query when the drawer closes', async () => {
         const w = factory();
-        await w.find('.trigger').trigger('click');
+        await openDrawer(w);
         await w.find('input.search').setValue('cali');
         expect(optionButtons(w)).toHaveLength(1);
         // reopen → query cleared → all items again
         await optionButtons(w)[0]!.trigger('click'); // selects + closes
-        await w.find('.trigger').trigger('click'); // reopen
+        await openDrawer(w); // reopen
         expect(optionButtons(w)).toHaveLength(branches.length);
     });
 });

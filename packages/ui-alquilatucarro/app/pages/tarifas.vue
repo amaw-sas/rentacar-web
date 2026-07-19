@@ -168,6 +168,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: ['rentacar-data'] })
+
 import useTariffs, { type TariffGama } from '@rentacar-main/logic/composables/useTariffs';
 
 const { franchise } = useAppConfig();
@@ -200,7 +202,7 @@ const KM_EXTRA_LABELS: Record<number, string> = {
 };
 const kmExtraGroups = computed(() => {
   const byKm = new Map<number, Set<string>>();
-  for (const gama of tariffs.gamas) {
+  for (const gama of tariffs.value.gamas) {
     if (gama.kmExtra === null) continue;
     const type = gama.name.split(' ')[0] || gama.name;
     if (!byKm.has(gama.kmExtra)) byKm.set(gama.kmExtra, new Set());
@@ -212,9 +214,9 @@ const kmExtraGroups = computed(() => {
 });
 
 const minMonthly = computed(() => {
-  if (tariffs.gamas.length === 0) return null;
+  if (tariffs.value.gamas.length === 0) return null;
   // "desde" = the lowest possible = temporada baja, plan 1.000 kms.
-  return Math.min(...tariffs.gamas.map((g) => g.seasons.baja.plan1k.monthly));
+  return Math.min(...tariffs.value.gamas.map((g) => g.seasons.baja.plan1k.monthly));
 });
 
 const faqs = [
@@ -260,7 +262,7 @@ useHead({
 const minMonthlyText = computed(() =>
   minMonthly.value !== null ? `$${minMonthly.value.toLocaleString('es-CO')}` : 'precios competitivos'
 );
-const categoryCount = computed(() => tariffs.gamas.length);
+const categoryCount = computed(() => tariffs.value.gamas.length);
 
 useSeoMeta({
   description: () => `Tarifas mensuales para alquiler de carros en Colombia desde ${minMonthlyText.value}/mes. Planes de 1.000 y 2.000 kms con IVA y seguro incluidos.`,

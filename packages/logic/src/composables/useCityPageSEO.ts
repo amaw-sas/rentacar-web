@@ -6,6 +6,23 @@ import { useData } from './useData';
 import { useCityBreadcrumbs } from './useBreadcrumbs';
 import { useCityFAQSchema } from './useCityFAQs';
 
+export function truncateForSEO(text: string, maxLength: number): string {
+    if (text.length <= maxLength) return text;
+    if (maxLength <= 3) return '.'.repeat(Math.max(0, maxLength));
+
+    const contentBudget = maxLength - 3;
+    const candidate = text.substring(0, contentBudget + 1);
+    const lastSpace = candidate.lastIndexOf(' ');
+    const truncated = lastSpace > 0
+        ? candidate.substring(0, lastSpace)
+        : candidate.substring(0, contentBudget);
+
+    return `${truncated.trimEnd()}...`;
+}
+
+export const getCityPageTitle = (cityName: string): string =>
+    `Alquiler de carros en ${cityName}`;
+
 export const useCityPageSEO = () => {
     useBaseSEO()
 
@@ -16,22 +33,16 @@ export const useCityPageSEO = () => {
     const cityParam = route.params.city;
     const city = cityParam ? getCityById(cityParam as string) : undefined
 
-    // Descripción SEO: usa la descripción única de la ciudad, truncada a ~155 chars
+    // Descripción SEO: conserva el texto factual y único de la ciudad dentro del
+    // presupuesto completo, incluida la elipsis.
     const cityDescription = city?.description
         ? truncateForSEO(city.description, 155)
         : franchise.description;
 
-    function truncateForSEO(text: string, maxLength: number): string {
-        if (text.length <= maxLength) return text;
-        // Corta en el último espacio antes del límite para no cortar palabras
-        const truncated = text.substring(0, maxLength);
-        const lastSpace = truncated.lastIndexOf(' ');
-        return truncated.substring(0, lastSpace) + '...';
-    }
-
-    // Title optimizado: ciudad primero para SEO, validación para evitar "undefined"
+    // Título bare: el template global agrega la marca una sola vez. No publica un
+    // precio hasta tener una tarifa válida para ciudad y fechas concretas.
     const cityTitle = city
-        ? `Alquiler de Carros en ${city.name} desde $32/día`
+        ? getCityPageTitle(city.name)
         : franchise.title
 
     // Social share image: the per-brand static asset (franchise.ogImage,

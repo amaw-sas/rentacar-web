@@ -33,6 +33,7 @@ import {
   formatTime12h,
   isBlockingSearchError,
   pickupTimingIssue,
+  trackAnalyticsEvent,
 } from '@rentacar-main/logic/utils';
 
 // Types
@@ -96,7 +97,9 @@ function useSearchInstance() {
     selectedDays,
     selectedPickupDate,
     selectedReturnDate,
-    selectedPickupHour
+    selectedPickupHour,
+    selectedPickupLocation,
+    selectedReturnLocation,
   } = storeToRefs(storeForm);
 
   const { error: errorSearchResponse, categoriesAvailabilityData } = storeToRefs(storeSearchData);
@@ -193,7 +196,20 @@ function useSearchInstance() {
     // noAvailableCategories.value = false;
     errorSearchResponse.value = null;
 
-
+    trackAnalyticsEvent('rental_search', {
+      brand: analyticsBrand(),
+      ...(selectedPickupLocation.value?.code
+        ? { pickup_branch: selectedPickupLocation.value.code }
+        : {}),
+      ...(selectedReturnLocation.value?.code
+        ? { return_branch: selectedReturnLocation.value.code }
+        : {}),
+      ...(selectedPickupLocation.value?.city
+        ? { pickup_city: selectedPickupLocation.value.city }
+        : {}),
+      rental_days: selectedDays.value,
+      rental_type: haveMonthlyReservation.value ? 'monthly' : 'daily',
+    });
     search();
   }
 
@@ -561,6 +577,14 @@ function useSearchInstance() {
     // selectedPickupLocation,
     // selectedReturnLocation,
   };
+}
+
+function analyticsBrand(): string {
+  try {
+    return String(useRuntimeConfig().public.rentacarFranchise || 'unknown');
+  } catch {
+    return 'unknown';
+  }
 }
 
 // Issue #322 SCEN-322-V04: the results pages instantiate the search sync TWICE —

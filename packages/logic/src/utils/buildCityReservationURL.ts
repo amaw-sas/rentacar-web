@@ -1,5 +1,7 @@
-// Builds the deep-link URL for a city footer button (the "Ciudades donde
-// ofrecemos alquiler de carros" section in every brand layout).
+// Builds the final deep-link URL for a city CTA (the "Ciudades donde ofrecemos
+// alquiler de carros" section in every brand layout and the TikTok linktree).
+// Alquilatucarro uses its city-search route; Alquilame and Alquicarros use their
+// direct /reservas route. Legacy redirects remain only for historical links.
 //
 // Branch selection priority: airport branch (code starts with "AA") → any
 // branch in the city → fallback to the plain city page `/${city.id}`.
@@ -23,10 +25,30 @@ export interface CityReservationDates {
   endHour: string;
 }
 
+export type CityReservationSurface = "city-search" | "reservas";
+
+function normalizeRouteHour(value: string): string {
+  const hour = value.trim().toLowerCase();
+
+  const twelveHour = hour.match(/^(0?[1-9]|1[0-2]):([0-5]\d)(am|pm)$/);
+  if (twelveHour) {
+    return `${twelveHour[1]!.padStart(2, "0")}:${twelveHour[2]!}${twelveHour[3]!}`;
+  }
+
+  const twentyFourHour = hour.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (!twentyFourHour) return hour;
+
+  const numericHour = Number(twentyFourHour[1]!);
+  const period = numericHour >= 12 ? "pm" : "am";
+  const routeHour = numericHour % 12 || 12;
+  return `${routeHour.toString().padStart(2, "0")}:${twentyFourHour[2]!}${period}`;
+}
+
 export function buildCityReservationURL(
   city: City,
   branches: BranchData[],
   dates: CityReservationDates,
+  surface: CityReservationSurface = "city-search",
 ): string {
   const list = branches ?? [];
 
@@ -44,6 +66,12 @@ export function buildCityReservationURL(
     return `/${city.id}`;
   }
 
-  const code = branch.code.toLowerCase();
-  return `/${city.id}/buscar-vehiculos/lugar-recogida/${code}/lugar-devolucion/${code}/fecha-recogida/${dates.initDay}/fecha-devolucion/${dates.endDay}/hora-recogida/${dates.initHour}/hora-devolucion/${dates.endHour}`;
+  const branchSlug = branch.slug || branch.code.toLowerCase();
+  const routePrefix = surface === "reservas"
+    ? "/reservas"
+    : `/${city.id}/buscar-vehiculos`;
+  const initHour = normalizeRouteHour(dates.initHour);
+  const endHour = normalizeRouteHour(dates.endHour);
+
+  return `${routePrefix}/lugar-recogida/${branchSlug}/lugar-devolucion/${branchSlug}/fecha-recogida/${dates.initDay}/fecha-devolucion/${dates.endDay}/hora-recogida/${initHour}/hora-devolucion/${endHour}`;
 }

@@ -85,10 +85,14 @@
     <!-- Result Section -->
     <UPageSection
       id="seleccion-categorias"
-      v-if="pendingSearch || filteredCategories.length > 0 || searchError"
+      v-if="showResultsSection"
+      data-testid="vehicle-results-shell"
       :ui="{ container: 'pt-0' }"
     >
-      <CategorySelectionSection />
+      <CategorySelectionSection
+        :placeholder-count="resultsPlaceholderCount"
+        :reserve-initial-results="isVehicleResultsRoute"
+      />
     </UPageSection>
 
     <!-- Description Section -->
@@ -154,8 +158,8 @@
               <span class="text-2xl">📍</span>
             </div>
             <div>
-              <h3 class="font-bold text-gray-900 mb-1">Entrega flexible</h3>
-              <p class="text-gray-600 text-sm">Recoge y devuelve tu carro en diferentes puntos de {{ city?.name }}. Aeropuerto, centro de la ciudad o donde te resulte más cómodo.</p>
+              <h3 class="font-bold text-gray-900 mb-1">Puntos de recogida</h3>
+              <p class="text-gray-600 text-sm">Consulta en el buscador los puntos de recogida activos en {{ city?.name }}. Las opciones disponibles se actualizan con el inventario de sedes.</p>
             </div>
           </div>
           <div class="flex items-start gap-4 bg-white p-5 rounded-lg shadow-sm">
@@ -378,7 +382,8 @@
 
 <script setup lang="ts">
 /** types */
-import type { City } from '@rentacar-main/logic/utils';
+import type { CategoryData, City } from '@rentacar-main/logic/utils';
+import { isCategoryVisibleInCity } from '@rentacar-main/logic/utils';
 
 /** imports */
 import { defineAsyncComponent } from "vue";
@@ -388,14 +393,41 @@ import {
   IconsClockIcon as ClockIcon,
 } from "#components";
 
+/** props */
+const props = defineProps<{
+  city: City;
+}>();
+
 /** refs */
 const { franchise } = useAppConfig();
-const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
+const { categories: adminCategories, sortedBranches: branches } = storeToRefs(useStoreAdminData());
+const route = useRoute();
+const isVehicleResultsRoute = computed(() => route.path.includes('/buscar-vehiculos/'));
 
 /** stores - lazy initialization to avoid SSR Pinia error */
 const pendingSearch = ref(false);
 const filteredCategories = ref<any[]>([]);
 const searchError = ref<unknown>(null);
+const showResultsSection = computed(() =>
+  isVehicleResultsRoute.value ||
+  pendingSearch.value ||
+  filteredCategories.value.length > 0 ||
+  Boolean(searchError.value)
+);
+
+// A completed search maps every city-visible admin category to either an
+// available or unavailable card. Render that same number of skeleton slots in
+// the server HTML so the incoming grid already owns its final page space.
+const resultsPlaceholderCount = computed(() => {
+  const visibleCount = (adminCategories.value ?? []).filter((category: CategoryData) =>
+    isCategoryVisibleInCity(
+      category.visibility_mode,
+      category.allowed_cities,
+      props.city?.id,
+    )
+  ).length;
+  return Math.max(3, visibleCount);
+});
 
 // Initialize store only on client side after mount
 onMounted(() => {
@@ -408,11 +440,6 @@ onMounted(() => {
   watch(() => refs.filteredCategories.value, (val) => filteredCategories.value = val, { immediate: true });
   watch(() => refs.error.value, (val) => searchError.value = val, { immediate: true });
 });
-
-/** props */
-const props = defineProps<{
-  city: City;
-}>();
 
 const cityBranches = computed(() =>
   (branches.value || []).filter((branch: { city: string }) => branch.city === props.city?.id)
@@ -459,4 +486,3 @@ const LazyImagesCiudadesChica = defineAsyncComponent(
 );
 
 </script>
-

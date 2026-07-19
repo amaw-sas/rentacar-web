@@ -10,14 +10,19 @@
 
     <!-- Hero Image -->
     <div class="relative w-full h-64 md:h-96 overflow-hidden">
-      <img
+      <NuxtImg
         :src="post.image"
         :alt="post.alt"
         class="w-full h-full object-cover"
-        width="1280"
-        height="384"
+        :width="getBlogImageWidth(post.image)"
+        height="800"
+        :sizes="getBlogHeroSizes(post.image)"
+        densities="1x"
+        format="webp"
+        loading="eager"
+        decoding="async"
         fetchpriority="high"
-      >
+      />
       <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
       <div class="absolute bottom-0 left-0 right-0 p-6 md:p-12">
         <div class="max-w-4xl mx-auto">
@@ -30,14 +35,20 @@
           </h1>
           <div class="flex flex-wrap items-center gap-4 text-sm text-gray-300">
             <div class="flex items-center gap-2">
-              <img
+              <NuxtImg
                 v-if="!avatarError"
                 :src="post.author.avatar"
                 :alt="post.author.name"
                 class="w-8 h-8 rounded-full"
+                width="32"
+                height="32"
+                sizes="32px"
+                densities="1x 2x"
+                format="webp"
                 loading="lazy"
+                decoding="async"
                 @error="avatarError = true"
-              >
+              />
               <div v-else class="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {{ post.author.name.charAt(0) }}
               </div>
@@ -176,14 +187,20 @@
       <div class="max-w-4xl mx-auto">
         <div class="bg-gray-50 rounded-2xl p-6 md:p-8">
           <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <img
+            <NuxtImg
               v-if="!avatarError"
               :src="post.author.avatar"
               :alt="post.author.name"
               class="w-20 h-20 rounded-full object-cover ring-2 ring-red-100"
+              width="80"
+              height="80"
+              sizes="80px"
+              densities="1x 2x"
+              format="webp"
               loading="lazy"
+              decoding="async"
               @error="avatarError = true"
-            >
+            />
             <div v-else class="w-20 h-20 rounded-full bg-blue-700 flex items-center justify-center text-white text-2xl font-bold ring-2 ring-blue-100 shrink-0">
               {{ post.author.name.charAt(0) }}
             </div>
@@ -228,14 +245,20 @@
             class="group"
           >
             <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
-              <img
-                :src="related.image"
-                :alt="related.alt"
-                class="w-full h-40 object-cover"
-                width="400"
-                height="160"
-                loading="lazy"
-              >
+              <div class="relative h-40 overflow-hidden">
+                <NuxtImg
+                  :src="related.image"
+                  :alt="related.alt"
+                  class="w-full h-full object-cover"
+                  width="400"
+                  height="160"
+                  sizes="xs:320px md:400px"
+                  :densities="getBlogCardDensities(related.image)"
+                  format="webp"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
               <div class="p-4">
                 <h3 class="font-bold text-gray-900 group-hover:text-red-700 transition-colors line-clamp-2">
                   {{ related.title }}
@@ -502,7 +525,7 @@ if (post.value) {
   const canonicalUrl = `${franchise.website}/blog/${slug.value}`
 
   useHead({
-    title: `${post.value.metaTitle ?? post.value.title} | ${franchise.shortname}`,
+    title: post.value.metaTitle ?? post.value.title,
     link: [
       { rel: 'canonical', href: canonicalUrl }
     ]

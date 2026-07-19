@@ -94,9 +94,14 @@ import { today } from '@internationalized/date'
 import { storeToRefs } from 'pinia'
 
 // Página de campaña: full-screen sin header/footer del sitio y fuera del índice.
-definePageMeta({ layout: false })
+definePageMeta({
+  layout: false,
+  // /tiktok is the only non-booking landing that needs the live catalog: its
+  // 16 city links and branch-aware deep links are the campaign itself.
+  middleware: ['rentacar-data'],
+})
 useSeoMeta({
-  title: 'Alquila tu carro en tu ciudad | Alquilatucarro',
+  title: 'Alquila tu carro en tu ciudad',
   description: 'Renta un carro en la ciudad que quieras, directo y en segundos.',
   robots: 'noindex, nofollow',
 })
@@ -128,7 +133,7 @@ const getCityReservationURL = (city: CityData): string =>
     endDay: reservationEndDay.value,
     initHour: '12:00',
     endHour: '12:00',
-  })
+  }, 'city-search')
 
 // Menú "Contáctanos": Chat 24h (chatbot web), Llamada y WhatsApp.
 const contactOpen = ref(false)

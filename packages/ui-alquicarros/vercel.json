@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "routes": [
+    {
+      "src": "^/(armenia|barranquilla|bogota|bucaramanga|cali|cartagena|chat|cucuta|floridablanca|ibague|manizales|medellin|monteria|neiva|palmira|pereira|politica-privacidad|santa-marta|soledad|terminos-condiciones|valledupar|villavicencio|blog(?:/.*)?|gana(?:/.*)?)/$",
+      "methods": ["GET", "HEAD"],
+      "headers": { "Location": "/$1" },
+      "status": 301
+    }
+  ]
+}

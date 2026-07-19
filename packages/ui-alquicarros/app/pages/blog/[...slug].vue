@@ -439,7 +439,7 @@ if (post.value) {
   const canonicalUrl = `${franchise.website}/blog/${slug.value}`
 
   useHead({
-    title: `${post.value.title} | ${franchise.shortname}`,
+    title: post.value.title,
     link: [
       { rel: 'canonical', href: canonicalUrl }
     ]

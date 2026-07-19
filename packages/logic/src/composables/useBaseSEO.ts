@@ -1,124 +1,135 @@
-// External dependencies
-import type { AutoRental, Brand, EntryPoint, ReserveAction, RentalCarReservation, SoftwareApplication } from 'schema-dts';
+import type {
+  ContactPoint,
+  EntryPoint,
+  RentalCarReservation,
+  ReserveAction,
+  Service,
+  ServiceChannel,
+  SoftwareApplication,
+} from 'schema-dts'
+import type { MaybeRefOrGetter } from 'vue'
 
-export const useBaseSEO = () => {
+import {
+  AMAW_ORGANIZATION_ID,
+  AMAW_ORGANIZATION_URL,
+  getCurrentBrandIdentity,
+  getOrganizationBrandIdentities,
+} from '../utils/structuredDataIdentity'
 
-    const { franchise, organization } = useAppConfig();
-    const route = useRoute();
-    // Issue #116: public base of the dashboard's documented API (D2), shared by
-    // the 3 brands. Default + NUXT_PUBLIC_* override declared in logic nuxt.config.
-    // Trailing slashes are trimmed so `${apiBase}/api/...` never doubles up; an
-    // empty/missing value disables the programmatic EntryPoint (fail-soft below).
-    const apiBase = (useRuntimeConfig().public.rentacarPublicApiBase ?? '').replace(/\/+$/, '');
+interface BaseSEOOptions {
+  title?: MaybeRefOrGetter<string>
+  description?: MaybeRefOrGetter<string>
+}
 
-    useSeoMeta({
-        title: franchise.name,
-        description: franchise.description,
-    });
+export const useBaseSEO = (options: BaseSEOOptions = {}) => {
+  const { franchise, organization } = useAppConfig()
+  const route = useRoute()
+  const website = franchise.website.replace(/\/+$/, '')
+  const brand = getCurrentBrandIdentity(organization.brand, website)
+  const organizationBrands = getOrganizationBrandIdentities(
+    organization.brand,
+    organization.otherbrands,
+    website,
+  )
 
-    useHead({
-        title: franchise.title,
-        templateParams: {
-            schemaOrg: {
-            host: franchise.website,
-            path: route.path,
-            inLanguage: 'es',
-            }
+  // Issue #116: public base of the dashboard's documented API (D2), shared by
+  // the 3 brands. An empty/missing value disables the programmatic EntryPoint.
+  const apiBase = (useRuntimeConfig().public.rentacarPublicApiBase ?? '').replace(/\/+$/, '')
+
+  const reserveAction = <ReserveAction>{
+    '@type': 'ReserveAction',
+    name: `Reservar vehículo en ${franchise.name}`,
+    target: [
+      <EntryPoint>{
+        '@type': 'EntryPoint',
+        urlTemplate: website,
+        actionPlatform: [
+          'https://schema.org/DesktopWebPlatform',
+          'https://schema.org/MobileWebPlatform',
+        ],
+      },
+      ...(apiBase ? [<EntryPoint>{
+        '@type': 'EntryPoint',
+        urlTemplate: `${apiBase}/api/reservations`,
+        httpMethod: 'POST',
+        contentType: 'application/json',
+        encodingType: 'application/json',
+        actionApplication: <SoftwareApplication>{
+          '@type': 'SoftwareApplication',
+          name: 'Rentacar Reservations API',
+          applicationCategory: 'BusinessApplication',
+          url: `${apiBase}/api/openapi`,
         },
-        htmlAttrs: {
-            lang: "es",
-        },
-    });
+      }] : []),
+    ],
+    result: <RentalCarReservation>{
+      '@type': 'RentalCarReservation',
+    },
+  }
 
-    useSchemaOrg([
-        defineWebSite({
-            inLanguage: "es",
-        }),
-        defineWebPage({
-            title: organization.name,
-        }),
-        defineOrganization({
-            name: "AMAW SAS",
-            logo: organization.logo,
-            brand: <Brand>{
-                name: organization.brand
-            },
-            subOrganization: organization.otherbrands.map((brand: string) => (<Brand>{
-                name: brand
-            }))
-        }),
-        <AutoRental>{
-            '@type': "AutoRental",
-            url: franchise.website,
-            name: franchise.name,
-            alternateName: franchise.shortname,
-            description: franchise.description,
-            logo: franchise.logo,
-            paymentAccepted: [
-                'Credit Card',
-            ],
-            currenciesAccepted: 'COP',
-            areaServed: {
-                '@type': 'Country',
-                name: 'Colombia'
-            },
-            image: franchise.logo,
-            telephone: franchise.phone,
-            email: franchise.email,
-            priceRange: "$$",
-            // Issue #315: no org-level openingHoursSpecification. A single global
-            // hours block can't be true for a multi-branch operation (airports
-            // 06:00–22:00 + Sundays, 24h branches, branches closed some days), so
-            // it was publishing wrong hours to Google. Per-branch hours live in
-            // Supabase `locations.schedule` (contract v2, issue #47) and are not
-            // modeled at this org level.
-            keywords: [
-                franchise.name,
-                "renta de carros",
-                "alquiler de carros", 
-                "renta de vehiculos",
-                "alquiler de vehiculos",
-                "renta de autos",
-                "alquiler de autos"
-            ],
-            sameAs: franchise.socialmedia,
-            // Acción de reserva descubrible por agentes (épico #63, W1 + #116).
-            // Dos EntryPoints: (1) web humano resoluble hoy; (2) programático hacia
-            // la API pública documentada del dashboard (D2). El actionApplication
-            // apunta al OpenAPI fetchable; el endpoint de creación exige x-api-key
-            // (documentado en ese OpenAPI).
-            potentialAction: <ReserveAction>{
-                '@type': 'ReserveAction',
-                name: `Reservar vehículo en ${franchise.name}`,
-                target: [
-                    <EntryPoint>{
-                        '@type': 'EntryPoint',
-                        urlTemplate: franchise.website,
-                        actionPlatform: [
-                            'https://schema.org/DesktopWebPlatform',
-                            'https://schema.org/MobileWebPlatform',
-                        ],
-                    },
-                    // Programmatic route emitted only when the API base resolves —
-                    // otherwise we degrade to the web-only EntryPoint of #64.
-                    ...(apiBase ? [<EntryPoint>{
-                        '@type': 'EntryPoint',
-                        urlTemplate: `${apiBase}/api/reservations`,
-                        httpMethod: 'POST',
-                        contentType: 'application/json',
-                        encodingType: 'application/json',
-                        actionApplication: <SoftwareApplication>{
-                            '@type': 'SoftwareApplication',
-                            name: 'Rentacar Reservations API',
-                            applicationCategory: 'BusinessApplication',
-                            url: `${apiBase}/api/openapi`,
-                        },
-                    }] : []),
-                ],
-                result: <RentalCarReservation>{
-                    '@type': 'RentalCarReservation',
-                },
-            },
-        }
-    ])
+  useSeoMeta({
+    title: options.title ?? franchise.name,
+    description: options.description ?? franchise.description,
+  })
+
+  useHead({
+    title: options.title ?? franchise.title,
+    templateParams: {
+      schemaOrg: {
+        host: website,
+        path: route.path,
+        inLanguage: 'es',
+      },
+    },
+    htmlAttrs: {
+      lang: 'es',
+    },
+  })
+
+  useSchemaOrg([
+    defineWebSite({
+      '@id': `${website}/#website`,
+      url: website,
+      name: franchise.name,
+      inLanguage: 'es',
+      publisher: { '@id': AMAW_ORGANIZATION_ID },
+    }),
+    // The page-specific useHead/useSeoMeta call supplies the actual page name.
+    // Injecting the parent company name here produced WebPage.title="AMAW SAS".
+    defineWebPage({}),
+    defineOrganization({
+      '@id': AMAW_ORGANIZATION_ID,
+      name: organization.name,
+      url: AMAW_ORGANIZATION_URL,
+      brand: organizationBrands,
+    }),
+    <Service>{
+      '@type': 'Service',
+      '@id': `${website}/#vehicle-rental-booking-service`,
+      url: website,
+      name: `Servicio de intermediación para alquiler de vehículos de ${organization.brand}`,
+      description: franchise.description,
+      serviceType: 'Intermediación digital para reservas de alquiler de vehículos',
+      provider: { '@id': AMAW_ORGANIZATION_ID },
+      broker: { '@id': AMAW_ORGANIZATION_ID },
+      brand: { '@id': brand['@id'] },
+      areaServed: {
+        '@type': 'Country',
+        name: 'Colombia',
+      },
+      availableChannel: <ServiceChannel>{
+        '@type': 'ServiceChannel',
+        serviceUrl: website,
+        servicePhone: <ContactPoint>{
+          '@type': 'ContactPoint',
+          telephone: franchise.phone,
+          email: franchise.email,
+          contactType: 'customer service',
+          availableLanguage: 'es',
+        },
+      },
+      termsOfService: `${website}/terminos-condiciones`,
+      potentialAction: reserveAction,
+    },
+  ])
 }

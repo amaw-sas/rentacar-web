@@ -4,14 +4,19 @@
     id="arriendos-mensuales"
     class="relative w-full overflow-hidden bg-[#0B1A2E]"
   >
-    <!-- Background photo (AI-generated scene, no baked-in text).
-         Mobile: cover. Desktop: pulled back & anchored right; navy fills the left (text area). -->
-    <div
-      role="img"
-      aria-label="Arriendo mensual de carros en Bogotá"
-      style="background-image: url('/images/monthly/teaser-suv-bogota.webp')"
-      class="absolute inset-0 bg-no-repeat bg-cover bg-[position:72%_center] md:bg-[length:85%_auto] md:bg-[position:right_35%]"
-    ></div>
+    <!-- Versioned, responsive image. CSS preserves the former background's
+         cover/position treatment without bypassing @nuxt/image. -->
+    <NuxtImg
+      src="/images/monthly/teaser-suv-bogota-c5a.webp"
+      alt="Carro de alquiler frente al paisaje urbano de Bogotá"
+      width="1024"
+      height="1024"
+      sizes="xs:100vw md:85vw"
+      format="webp"
+      loading="lazy"
+      decoding="async"
+      class="monthly-teaser-image"
+    />
     <!-- Navy gradient for text legibility. Desktop: solid navy stays opaque until 20%
          (covers the photo's left edge → seamless join), then fades to reveal the car. -->
     <div class="absolute inset-0 bg-gradient-to-r from-[#0B1A2E] via-[#0B1A2E]/85 to-[#0B1A2E]/10 md:from-20% md:via-[#0B1A2E]/45 md:via-60% md:to-transparent"></div>
@@ -44,11 +49,34 @@ import useTariffs from '@rentacar-main/logic/composables/useTariffs';
 const tariffs = useTariffs();
 
 const minDaily = computed(() => {
-  if (tariffs.gamas.length === 0) return null;
-  return Math.min(...tariffs.gamas.map((g) => g.plan1k.daily));
+  if (tariffs.value.gamas.length === 0) return null;
+  return Math.min(...tariffs.value.gamas.map((g) => g.plan1k.daily));
 });
 
 function formatCOP(value: number): string {
   return '$' + value.toLocaleString('es-CO');
 }
 </script>
+
+<style scoped>
+.monthly-teaser-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 72% center;
+}
+
+@media (min-width: 768px) {
+  .monthly-teaser-image {
+    inset: auto 0 auto auto;
+    top: 35%;
+    width: 85%;
+    height: auto;
+    max-width: none;
+    object-fit: contain;
+    transform: translateY(-35%);
+  }
+}
+</style>

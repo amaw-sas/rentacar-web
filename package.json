@@ -21,6 +21,7 @@
     "clean": "rm -rf .nuxt .output node_modules/.cache && echo cleaned",
     "blog:upload-local": "npx tsx --env-file=.env.local scripts/upload-local-blog-to-storage.ts",
     "blog:upload-local:dry-run": "npx tsx --env-file=.env.local scripts/upload-local-blog-to-storage.ts --dry-run",
+    "perf:vehicle-results-cls": "node scripts/measure-vehicle-results-cls.mjs",
     "scrape:google-docs": "npx tsx scripts/docs-scraper/run.ts",
     "scrape:google-docs:resume": "npx tsx scripts/docs-scraper/run.ts --resume",
     "scrape:google-docs:dry-run": "npx tsx scripts/docs-scraper/run.ts --dry-run",
@@ -104,6 +105,7 @@
     ]
   },
   "devDependencies": {
+    "@nuxt/test-utils": "^4.0.3",
     "@playwright/test": "^1.57.0",
     "@supabase/supabase-js": "^2.100.1",
     "@types/turndown": "^5.0.5",

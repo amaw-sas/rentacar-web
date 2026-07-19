@@ -27,14 +27,18 @@ import type { FAQPage } from "schema-dts";
 
 const { franchise } = useAppConfig();
 const { faqs } = useData();
+const homeSEO = useHomeSEO();
 
-useBaseSEO();
+useBaseSEO({
+  title: homeSEO.title,
+  description: homeSEO.description,
+});
 useHomeBreadcrumb();
 
 useSeoMeta({
   ogType: "website",
-  ogTitle: franchise.title,
-  ogDescription: franchise.description,
+  ogTitle: homeSEO.title,
+  ogDescription: homeSEO.description,
   ogImage: franchise.ogImage,
   ogImageAlt: `Familia colombiana disfrutando viaje en carro alquilado - ${franchise.name}`,
   ogImageType: "image/jpeg",
@@ -45,8 +49,8 @@ useSeoMeta({
   ogLocale: "es_CO",
   ogSiteName: franchise.shortname,
   twitterCard: "summary_large_image",
-  twitterTitle: franchise.title,
-  twitterDescription: franchise.description,
+  twitterTitle: homeSEO.title,
+  twitterDescription: homeSEO.description,
   twitterImage: franchise.ogImage,
   twitterImageAlt: `Familia colombiana disfrutando viaje en carro alquilado - ${franchise.name}`,
 });
@@ -72,6 +76,7 @@ useHead({
 
 definePageMeta({
   colorMode: "light",
+  middleware: ["rentacar-data"],
 });
 
 // The aggregate-rating schema was removed site-wide (#312): the ratings were
