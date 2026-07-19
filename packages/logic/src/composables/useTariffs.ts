@@ -2,6 +2,7 @@ import type ReservasApiData from '../utils/types/data/ReservasApiData'
 import type CategoryData from '../utils/types/data/CategoryData'
 import type CategoryMonthPriceData from '../utils/types/data/CategoryMonthPriceData'
 import { createCurrentDateObject } from '../utils/useDateFunctions'
+import { computed, type ComputedRef } from 'vue'
 
 export interface TariffPlan {
   daily: number
@@ -170,10 +171,20 @@ export function buildTariffs(categories: CategoryData[], todayDate?: string): Ta
   }
 }
 
-export default function useTariffs(): TariffsView {
+/**
+ * Reactive tariff projection of the shared catalog.
+ *
+ * The catalog plugin replaces `rentacar-data` when its one-hour snapshot
+ * expires. Keep the state read inside a computed getter so already-mounted
+ * tariff surfaces render the empty fail-closed state and then the fresh
+ * prices, instead of retaining a one-time `buildTariffs` snapshot.
+ */
+export default function useTariffs(): ComputedRef<TariffsView> {
   const data = useState<ReservasApiData | null>('rentacar-data')
-  if (!data.value || !data.value.categories) {
-    return { period: null, gamas: [] }
-  }
-  return buildTariffs(data.value.categories)
+  return computed(() => {
+    if (!data.value?.categories) {
+      return { period: null, gamas: [] }
+    }
+    return buildTariffs(data.value.categories)
+  })
 }

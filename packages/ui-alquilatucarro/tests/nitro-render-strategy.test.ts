@@ -132,3 +132,14 @@ describe('SCEN-322-N02 — legacy redirects use the 301 object form Nitro reads'
     }
   })
 })
+
+describe('PERF-8 — tariffs use the catalog ISR freshness window', () => {
+  it('ui-alquilatucarro: /tarifas is ISR-cached for one hour', () => {
+    const nitro = configs['ui-alquilatucarro'].nitro
+    const rules = nitro?.routeRules ?? {}
+    const prerendered = nitro?.prerender?.routes ?? []
+
+    expect(rules['/tarifas']?.isr).toBe(3600)
+    expect(prerendered).not.toContain('/tarifas')
+  })
+})

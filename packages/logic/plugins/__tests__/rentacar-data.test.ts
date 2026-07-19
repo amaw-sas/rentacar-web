@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 type StubFetched = { value: unknown }
 type StubError = { value: Error | null }
+type NuxtHook = () => void
 
 describe('plugins/rentacar-data', () => {
   let consoleSpy: ReturnType<typeof vi.spyOn>
@@ -21,6 +22,8 @@ describe('plugins/rentacar-data', () => {
   })
 
   afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
     vi.unstubAllGlobals()
     consoleSpy.mockRestore()
   })
@@ -253,6 +256,185 @@ describe('plugins/rentacar-data', () => {
       expect(poisonedNull).toBeUndefined()
 
       expect(stateRef.value).toBe(snapshot)
+    })
+  })
+
+  describe('open-session catalog freshness', () => {
+    function installClientGlobals() {
+      const windowListeners = new Map<string, EventListener>()
+      const documentListeners = new Map<string, EventListener>()
+      vi.stubGlobal('window', {
+        addEventListener: vi.fn((name: string, listener: EventListener) => {
+          windowListeners.set(name, listener)
+        }),
+        removeEventListener: vi.fn((name: string) => windowListeners.delete(name)),
+      })
+      vi.stubGlobal('document', {
+        visibilityState: 'visible',
+        addEventListener: vi.fn((name: string, listener: EventListener) => {
+          documentListeners.set(name, listener)
+        }),
+        removeEventListener: vi.fn((name: string) => documentListeners.delete(name)),
+      })
+      return { windowListeners, documentListeners }
+    }
+
+    function nuxtAppWithMountedHook() {
+      let mounted: NuxtHook | undefined
+      return {
+        app: {
+          hook: vi.fn((name: string, callback: NuxtHook) => {
+            if (name === 'app:mounted') mounted = callback
+          }),
+        },
+        mounted: () => mounted?.(),
+      }
+    }
+
+    it('keeps the SSR object through hydration, then refreshes an expired timestamp after mount', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-07-18T20:00:00Z'))
+      installClientGlobals()
+      const hooks = nuxtAppWithMountedHook()
+      const existing = {
+        catalogFetchedAt: Date.now() - 60 * 60 * 1000,
+        categories: [{ id: 'PRICE-A' }],
+        branches: [],
+        extras: undefined,
+        vehicleCategories: {},
+        cities: [],
+      }
+      const fresh = {
+        ...existing,
+        catalogFetchedAt: Date.now(),
+        categories: [{ id: 'PRICE-B' }],
+      }
+      const stateRef = { value: existing as unknown }
+      const fetchSpy = vi.fn(async () => fresh)
+      const useAsyncDataSpy = vi.fn()
+      vi.stubGlobal('useState', () => stateRef)
+      vi.stubGlobal('useAsyncData', useAsyncDataSpy)
+      vi.stubGlobal('$fetch', fetchSpy)
+
+      const plugin = (await import('../rentacar-data')).default as unknown as (app: unknown) => Promise<void>
+      await plugin(hooks.app)
+
+      expect(stateRef.value).toBe(existing)
+      expect(fetchSpy).not.toHaveBeenCalled()
+      expect(useAsyncDataSpy).not.toHaveBeenCalled()
+
+      hooks.mounted()
+      await Promise.resolve()
+      await Promise.resolve()
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(stateRef.value).toBe(fresh)
+    })
+
+    it('refreshes a fresh mounted snapshot at its exact one-hour expiry', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-07-18T20:00:00Z'))
+      installClientGlobals()
+      const hooks = nuxtAppWithMountedHook()
+      const existing = {
+        catalogFetchedAt: Date.now() - 15 * 60 * 1000,
+        categories: [{ id: 'PRICE-A' }],
+        branches: [],
+        extras: undefined,
+        vehicleCategories: {},
+        cities: [],
+      }
+      const fresh = {
+        ...existing,
+        catalogFetchedAt: Date.now() + 45 * 60 * 1000,
+        categories: [{ id: 'PRICE-B' }],
+      }
+      const stateRef = { value: existing as unknown }
+      const fetchSpy = vi.fn(async () => fresh)
+      vi.stubGlobal('useState', () => stateRef)
+      vi.stubGlobal('useAsyncData', vi.fn())
+      vi.stubGlobal('$fetch', fetchSpy)
+
+      const plugin = (await import('../rentacar-data')).default as unknown as (app: unknown) => Promise<void>
+      await plugin(hooks.app)
+      hooks.mounted()
+
+      await vi.advanceTimersByTimeAsync(45 * 60 * 1000 - 1)
+      expect(fetchSpy).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(1)
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(stateRef.value).toBe(fresh)
+    })
+
+    it('uses focus to catch an expired snapshot after a throttled/backgrounded timer', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-07-18T20:00:00Z'))
+      const { windowListeners } = installClientGlobals()
+      const hooks = nuxtAppWithMountedHook()
+      const existing = {
+        catalogFetchedAt: Date.now(),
+        categories: [{ id: 'PRICE-A' }],
+        branches: [],
+        extras: undefined,
+        vehicleCategories: {},
+        cities: [],
+      }
+      const fresh = {
+        ...existing,
+        catalogFetchedAt: Date.now() + 61 * 60 * 1000,
+        categories: [{ id: 'PRICE-B' }],
+      }
+      const stateRef = { value: existing as unknown }
+      const fetchSpy = vi.fn(async () => fresh)
+      vi.stubGlobal('useState', () => stateRef)
+      vi.stubGlobal('useAsyncData', vi.fn())
+      vi.stubGlobal('$fetch', fetchSpy)
+
+      const plugin = (await import('../rentacar-data')).default as unknown as (app: unknown) => Promise<void>
+      await plugin(hooks.app)
+      hooks.mounted()
+      expect(fetchSpy).not.toHaveBeenCalled()
+
+      vi.setSystemTime(new Date('2026-07-18T21:01:00Z'))
+      windowListeners.get('focus')?.(new Event('focus'))
+      await Promise.resolve()
+      await Promise.resolve()
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(stateRef.value).toBe(fresh)
+    })
+
+    it('fails closed instead of displaying an expired catalog when refresh fails', async () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-07-18T20:00:00Z'))
+      installClientGlobals()
+      const hooks = nuxtAppWithMountedHook()
+      const expired = {
+        catalogFetchedAt: Date.now() - 60 * 60 * 1000,
+        categories: [{ id: 'PRICE-A' }],
+        branches: [],
+        extras: undefined,
+        vehicleCategories: {},
+        cities: [],
+      }
+      const stateRef = { value: expired as unknown }
+      const fetchError = new Error('offline')
+      vi.stubGlobal('useState', () => stateRef)
+      vi.stubGlobal('useAsyncData', vi.fn())
+      vi.stubGlobal('$fetch', vi.fn(async () => { throw fetchError }))
+
+      const plugin = (await import('../rentacar-data')).default as unknown as (app: unknown) => Promise<void>
+      await plugin(hooks.app)
+      expect(stateRef.value).toBe(expired)
+
+      hooks.mounted()
+      expect(stateRef.value).toBeNull()
+      await Promise.resolve()
+      await Promise.resolve()
+
+      expect(stateRef.value).toBeNull()
+      expect(consoleSpy).toHaveBeenCalledWith('[rentacar-data] stale refresh failed:', fetchError)
     })
   })
 })
