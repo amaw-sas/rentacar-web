@@ -1,5 +1,19 @@
 <template>
-  <div class="text-white max-w-2xl mx-auto text-center py-12 px-4">
+  <div
+    v-if="validation.status === 'unavailable'"
+    data-reservation-state="unavailable"
+    class="text-white max-w-2xl mx-auto text-center py-12 px-4"
+    role="status"
+  >
+    <h1 class="text-3xl font-bold mb-4">Estamos verificando tu reserva</h1>
+    <p class="text-lg text-gray-200">Intenta en unos minutos.</p>
+  </div>
+
+  <div
+    v-else
+    data-reservation-state="confirmed"
+    class="text-white max-w-2xl mx-auto text-center py-12 px-4"
+  >
     <!-- Icono checkmark -->
     <div class="pb-4 flex justify-center">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="64px" height="64px" fill="#15803d" aria-hidden="true">
@@ -47,24 +61,30 @@
 </template>
 
 <script setup lang="ts">
-const { franchise } = useAppConfig()
+import useReservationConfirmation from '@rentacar-main/logic/composables/useReservationConfirmation'
 
-const route = useRoute();
-const reserveCode = route.params.reserveCode;
+const validation = await useReservationConfirmation()
+const reserveCode = validation.reserveCode
 
 useHead({
-  title: 'Reserva confirmada',
+  title: validation.status === 'found'
+    ? 'Reserva confirmada'
+    : 'Verificando reserva',
   meta: [
     { name: 'robots', content: 'noindex, nofollow' }
   ]
 })
 
 useSeoMeta({
-  description: 'Tu reserva de alquiler de carro ha sido confirmada. Revisa tu correo para los detalles.',
+  description: validation.status === 'found'
+    ? 'Tu reserva de alquiler de carro ha sido confirmada. Revisa tu correo para los detalles.'
+    : 'Estamos verificando tu reserva. Intenta en unos minutos.',
 })
 
 // Lazy load js-confetti (solo se carga en esta página de confirmación)
 onMounted(async () => {
+  if (validation.status !== 'found') return
+
   const JSConfetti = (await import('js-confetti')).default
   const confetti = new JSConfetti()
   confetti.addConfetti()

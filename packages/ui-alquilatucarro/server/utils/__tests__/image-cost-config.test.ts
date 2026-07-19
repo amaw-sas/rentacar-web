@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -116,8 +116,13 @@ describe('SCEN-005: post-module hook hard-assigns the authoritative images block
       expect(src).toMatch(/formats:\s*\[\s*['"]image\/webp['"]\s*\]/)
     })
 
-    it(`${brand}: standalone vercel.json removed`, () => {
-      expect(existsSync(resolve(packagesDir, brand, 'vercel.json'))).toBe(false)
+    it(`${brand}: standalone vercel.json does not duplicate image config`, () => {
+      const config = JSON.parse(
+        readFileSync(resolve(packagesDir, brand, 'vercel.json'), 'utf-8'),
+      ) as Record<string, unknown>
+
+      expect(config).not.toHaveProperty('images')
+      expect(JSON.stringify(config)).not.toContain('image/avif')
     })
   }
 

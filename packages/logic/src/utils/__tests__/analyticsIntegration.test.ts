@@ -13,13 +13,26 @@ function read(relativePath: string): string {
 }
 
 describe('GA4 integration wiring', () => {
-  it('uses one manual page-view path on Alquilatucarro only', () => {
-    const config = read('packages/ui-alquilatucarro/nuxt.config.ts');
-    const plugin = read('packages/ui-alquilatucarro/app/plugins/page-view.client.ts');
-    expect(config).toContain("gtag('config','G-1G7MWTDK71',{send_page_view:false})");
-    expect(config.match(/googletagmanager\.com\/gtag\/js\?id=/g)).toHaveLength(1);
-    expect(plugin).toContain("nuxtApp.hook('page:finish', trackFinalRoute)");
-    expect(existsSync(repoFile('packages/ui-alquilame/app/plugins/page-view.client.ts'))).toBe(false);
+  it('uses the shared manual page-view tracker on every GA4-enabled brand', () => {
+    const integrations = [
+      ['ui-alquilatucarro', 'G-1G7MWTDK71'],
+      ['ui-alquilame', 'G-ZPZC1TP9T0'],
+    ] as const;
+
+    for (const [brand, measurementId] of integrations) {
+      const config = read(`packages/${brand}/nuxt.config.ts`);
+      const plugin = read(`packages/${brand}/app/plugins/page-view.client.ts`);
+      expect(config).toContain(
+        `gtag('config','${measurementId}',{send_page_view:false})`,
+      );
+      expect(config.match(/googletagmanager\.com\/gtag\/js\?id=/g)).toHaveLength(1);
+      expect(plugin).toContain(
+        "import { createSpaPageViewTracker } from '@rentacar-main/logic/utils'",
+      );
+      expect(plugin).toContain("nuxtApp.hook('page:finish', trackFinalRoute)");
+      expect(plugin).not.toContain('sanitizePageViewUrl');
+    }
+
     expect(existsSync(repoFile('packages/ui-alquicarros/app/plugins/page-view.client.ts'))).toBe(false);
   });
 

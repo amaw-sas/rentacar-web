@@ -44,6 +44,13 @@ function hasPickup(v: unknown): boolean {
 }
 const hasResultsQuery = computed(() => hasPickup(route.query.lugar_recogida))
 
+// Keep the HTTP robots directive coherent with the query-aware HTML meta.
+// A static routeRule would incorrectly noindex the clean /reservas landing.
+const robotsResponseHeader = useResponseHeader('X-Robots-Tag')
+if (import.meta.server && hasResultsQuery.value) {
+  robotsResponseHeader.value = 'noindex, follow'
+}
+
 const title = 'Reserva tu carro | Alquiler de vehículos'
 const description =
   'Reserva tu carro de alquiler en Colombia: elige sucursal, fechas y horarios y consulta disponibilidad y precios al instante, paso a paso. Sin anticipos.'
@@ -64,7 +71,7 @@ useSeoMeta({
   // El estado con params de resultados (/reservas?lugar_recogida=…) es
   // noindex,follow — duplicaría las páginas de ciudad crawlables; la /reservas
   // limpia (sin query) queda indexable. SSR-estable.
-  robots: () => (hasPickup(route.query.lugar_recogida) ? 'noindex, follow' : undefined),
+  robots: () => (hasResultsQuery.value ? 'noindex, follow' : undefined),
   title,
   description,
   ogType: 'website',

@@ -80,10 +80,11 @@ describe('#64 useBaseSEO — ReserveAction reemplaza SearchAction falso', () => 
     expect(action.result['@type']).toBe('RentalCarReservation')
   })
 
-  it('SCEN-002b: el ReserveAction cuelga del nodo AutoRental', () => {
+  it('SCEN-002b: el ReserveAction cuelga del Service de intermediación', () => {
     useBaseSEO()
-    const autoRental = findByType(captured, 'AutoRental')[0]
-    expect(autoRental).toBeDefined()
-    expect(autoRental.potentialAction['@type']).toBe('ReserveAction')
+    const service = findByType(captured, 'Service')[0]
+    expect(service).toBeDefined()
+    expect(service.potentialAction['@type']).toBe('ReserveAction')
+    expect(findByType(captured, 'AutoRental')).toHaveLength(0)
   })
 })
