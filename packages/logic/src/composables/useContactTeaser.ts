@@ -17,6 +17,7 @@
  * client-only per-brand singleton wrapper with a hard SSR guard.
  */
 import { ref } from 'vue';
+import { trackAnalyticsEvent } from '@rentacar-main/logic/utils';
 // Suppress-after-engagement window is aligned with the chat's local TTL (15d):
 // after a contact action, no teaser for the same span the chat history lives.
 import { CHAT_TTL_MS } from './useChatConversation';
@@ -38,21 +39,6 @@ export function isContactTeaserRouteExcluded(path: string): boolean {
   return path === '/reservas' || path.startsWith('/reservas/');
 }
 
-// Analytics beacon reusing the site's existing GA4/gtag bridge. Duplicated from
-// useChatConversation.emitChatEvent (module-private there) rather than shared —
-// the teaser carries a params object ({step}/{target}) the chat helper doesn't.
-// No-op safe: never throws, never gates the teaser when analytics is absent.
-function emitTeaserEvent(name: string, params?: Record<string, unknown>): void {
-  const w = typeof window !== 'undefined' ? (window as unknown as { gtag?: (...a: unknown[]) => void }) : undefined;
-  if (w && typeof w.gtag === 'function') {
-    try {
-      w.gtag('event', name, params ?? {});
-    } catch {
-      /* analytics must never break the site */
-    }
-  }
-}
-
 // Per-instance config resolved once from the Nuxt context by the wrapper below,
 // so the factory itself is free of Nuxt auto-imports and unit-testable.
 export interface ContactTeaserConfig {
@@ -68,7 +54,7 @@ export interface ContactTeaserConfig {
 // drivable under vitest with stubbed globals; the wrapper's import.meta.client
 // guard is what prevents cross-request memo pollution on the server.
 export function createContactTeaser(cfg: ContactTeaserConfig) {
-  const { shownKey, engagedKey } = cfg;
+  const { brand, shownKey, engagedKey } = cfg;
   const hasWindow = typeof window !== 'undefined';
   const hasSession = typeof sessionStorage !== 'undefined';
   const hasLocal = typeof localStorage !== 'undefined';
@@ -157,7 +143,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     syntheticCount.value = 1;
     teaserVisible.value = true;
     teaserAnnounce.value = TEASER_LINE_1_PLAIN;
-    emitTeaserEvent('contact_teaser_shown', { step: 1 });
+    trackAnalyticsEvent('contact_teaser_shown', { brand, step: 1 });
     timer2 = setTimeout(showStep2, TEASER_SECOND_DELAY_MS);
   }
 
@@ -169,7 +155,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     syntheticCount.value = 2; // capped at 2
     teaserVisible.value = true;
     teaserAnnounce.value = `${TEASER_LINE_1_PLAIN} ${TEASER_LINE_2}`;
-    emitTeaserEvent('contact_teaser_shown', { step: 2 });
+    trackAnalyticsEvent('contact_teaser_shown', { brand, step: 2 });
   }
 
   // Resumable scheduling: NOT a one-shot. A remount (stop cleared the pending
@@ -226,7 +212,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     const wasActive = teaserVisible.value || syntheticCount.value > 0;
     clearVisual();
     terminal = true;
-    if (wasActive) emitTeaserEvent('contact_teaser_dismissed');
+    if (wasActive) trackAnalyticsEvent('contact_teaser_dismissed', { brand });
   }
 
   // Any contact action (WhatsApp / Llamar / open Chat). Stamps the 15d
@@ -238,7 +224,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     stampEngaged();
     clearVisual();
     terminal = true;
-    if (wasActive) emitTeaserEvent('contact_teaser_engaged', { target });
+    if (wasActive) trackAnalyticsEvent('contact_teaser_engaged', { brand, target });
   }
 
   return {

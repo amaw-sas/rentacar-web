@@ -425,36 +425,15 @@ export default defineNuxtConfig({
       ],
       link: [],
       script: [
-        // Google Analytics 4 — base gtag.js. `async` so it never blocks render
-        // (keeps the CLS / vitalizer budget intact). The inline config below
-        // defines window.gtag synchronously so the WhatsApp click beacon can read
-        // the GA4 client_id immediately on click.
+        // Google Analytics 4 — manual SPA page views are emitted by the client
+        // page-view plugin, so config must not auto-send an initial duplicate.
         {
           src: 'https://www.googletagmanager.com/gtag/js?id=G-1G7MWTDK71',
           async: true,
         },
         {
           innerHTML:
-            "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1G7MWTDK71');",
-        },
-        // Google Ads conversion — fires the GA4 event `clic_boton_whatsapp` on
-        // every WhatsApp click via event delegation (same pattern as the beacon).
-        // No per-button onclick and no delayed navigation: all WA buttons are
-        // target=_blank (current tab never unloads) and gtag uses sendBeacon
-        // transport, so the event always reaches GA4 before any navigation.
-        // Capture phase, never preventDefault → native nav + the beacon both run.
-        {
-          innerHTML:
-            "(function(){document.addEventListener('click',function(e){try{var t=e.target;if(!t||typeof t.closest!=='function')return;var a=t.closest('a[href*=\"wa.me\"],a[href*=\"api.whatsapp.com\"],a[href*=\"web.whatsapp.com\"]');if(!a||typeof window.gtag!=='function')return;window.gtag('event','clic_boton_whatsapp');}catch(_e){}},true);})();",
-        },
-        // Google Ads conversion — fires the GA4 event `clic_boton_llamada` on
-        // every call-button click via event delegation (mirror of the WhatsApp
-        // event above). `tel:` links open the dialer without unloading the page,
-        // so gtag's sendBeacon transport always reaches GA4. Capture phase,
-        // never preventDefault → native dialer + the beacon both run.
-        {
-          innerHTML:
-            "(function(){document.addEventListener('click',function(e){try{var t=e.target;if(!t||typeof t.closest!=='function')return;var a=t.closest('a[href^=\"tel:\"]');if(!a||typeof window.gtag!=='function')return;window.gtag('event','clic_boton_llamada');}catch(_e){}},true);})();",
+            "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1G7MWTDK71',{send_page_view:false});",
         },
         // WhatsApp attribution click beacon (shared connector). Event delegation
         // over wa.me anchors — fires a ping on every WhatsApp click without

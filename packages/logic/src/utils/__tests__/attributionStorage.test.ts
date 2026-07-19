@@ -3,6 +3,7 @@ import {
   persistAttribution,
   readStoredAttribution,
   ATTRIBUTION_STORAGE_KEY,
+  ATTRIBUTION_TTL_MS,
 } from '@rentacar-main/logic/utils';
 
 // Minimal in-memory localStorage stub (node vitest env has no DOM storage).
@@ -35,6 +36,32 @@ describe('attributionStorage', () => {
     expect(readStoredAttribution(1_000)).toEqual({ gclid: 'ABC' });
   });
 
+  it('roundtrips the complete v2 attribution contract unchanged', () => {
+    const fixture = {
+      attribution_version: 2 as const,
+      utm_source: 'google',
+      utm_medium: 'cpc',
+      utm_campaign: 'cars',
+      utm_term: 'rental',
+      utm_content: 'creative-a',
+      gclid: 'g',
+      gad_source: '1',
+      gbraid: 'gb',
+      wbraid: 'wb',
+      dclid: 'dc',
+      fbclid: 'fb',
+      ttclid: 'tt',
+      twclid: 'tw',
+      msclkid: 'ms',
+      referrer: 'https://google.com/',
+      landing_url: '/bogota',
+      captured_at: '2026-07-18T17:00:00.000Z',
+      brand: 'alquilatucarro',
+    };
+    persistAttribution(fixture, 1_000);
+    expect(readStoredAttribution(1_000)).toEqual(fixture);
+  });
+
   it('returns null when nothing is stored', () => {
     expect(readStoredAttribution(1_000)).toBeNull();
   });
@@ -52,6 +79,35 @@ describe('attributionStorage', () => {
     expect(localStorage.getItem(ATTRIBUTION_STORAGE_KEY)).toBeNull();
   });
 
+  it('keeps an entry at exactly 30 days and expires it just after the boundary', () => {
+    persistAttribution({ gbraid: 'boundary' }, 0);
+    expect(readStoredAttribution(ATTRIBUTION_TTL_MS)).toEqual({ gbraid: 'boundary' });
+    expect(readStoredAttribution(ATTRIBUTION_TTL_MS + 1)).toBeNull();
+  });
+
+  it('rejects and removes future or corrupt timestamps', () => {
+    localStorage.setItem(
+      ATTRIBUTION_STORAGE_KEY,
+      JSON.stringify({ data: { gclid: 'future' }, ts: 1_001 }),
+    );
+    expect(readStoredAttribution(1_000)).toBeNull();
+    expect(localStorage.getItem(ATTRIBUTION_STORAGE_KEY)).toBeNull();
+
+    localStorage.setItem(
+      ATTRIBUTION_STORAGE_KEY,
+      JSON.stringify({ data: { gclid: 'bad' }, ts: 'yesterday' }),
+    );
+    expect(readStoredAttribution(1_000)).toBeNull();
+    expect(localStorage.getItem(ATTRIBUTION_STORAGE_KEY)).toBeNull();
+
+    localStorage.setItem(
+      ATTRIBUTION_STORAGE_KEY,
+      JSON.stringify({ data: { gclid: 'negative' }, ts: -1 }),
+    );
+    expect(readStoredAttribution(1_000)).toBeNull();
+    expect(localStorage.getItem(ATTRIBUTION_STORAGE_KEY)).toBeNull();
+  });
+
   it('SCEN-W4: last-touch — a newer persisted touch overwrites the previous one', () => {
     persistAttribution({ gclid: 'first' }, 0);
     persistAttribution({ fbclid: 'second' }, 10 * DAY);
@@ -61,6 +117,7 @@ describe('attributionStorage', () => {
   it('returns null on corrupt stored JSON', () => {
     localStorage.setItem(ATTRIBUTION_STORAGE_KEY, '{not valid json');
     expect(readStoredAttribution(1_000)).toBeNull();
+    expect(localStorage.getItem(ATTRIBUTION_STORAGE_KEY)).toBeNull();
   });
 
   it('degrades to no-op / null when localStorage is unavailable', () => {

@@ -9,15 +9,16 @@ describe.each(brands)('%s reservation confirmation page', (brand) => {
   const pagePath = `${repoRoot}/packages/${brand}/app/pages/reservado/[reserveCode]/index.vue`
   const source = readFileSync(pagePath, 'utf8')
 
-  it('awaits the shared existence guard before recording a confirmed page view', () => {
+  it('awaits the shared existence guard without restoring the obsolete result-page sender', () => {
     const guardPosition = source.indexOf('await useReservationConfirmation()')
-    const foundGuardPosition = source.indexOf("if (validation.status === 'found')")
-    const analyticsPosition = source.indexOf("useResultPageView('Reserva Confirmada')")
+    const reserveCodePosition = source.indexOf('const reserveCode = validation.reserveCode')
+    const statusPosition = source.indexOf("title: validation.status === 'found'")
 
     expect(guardPosition).toBeGreaterThan(-1)
-    expect(foundGuardPosition).toBeGreaterThan(guardPosition)
-    expect(analyticsPosition).toBeGreaterThan(foundGuardPosition)
+    expect(reserveCodePosition).toBeGreaterThan(guardPosition)
+    expect(statusPosition).toBeGreaterThan(reserveCodePosition)
     expect(source).not.toContain('route.params.reserveCode')
+    expect(source).not.toContain('useResultPageView')
   })
 
   it('renders a neutral unavailable state instead of confirmation content', () => {

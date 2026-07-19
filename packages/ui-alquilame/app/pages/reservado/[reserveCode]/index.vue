@@ -69,12 +69,6 @@ const { franchise } = useAppConfig()
 const validation = await useReservationConfirmation()
 const reserveCode = validation.reserveCode
 
-// GA4: registra esta pagina de resultado en navegacion interna (el page_view
-// automatico no dispara para el navigateTo post-reserva). Ver useResultPageView.
-if (validation.status === 'found') {
-  useResultPageView('Reserva Confirmada')
-}
-
 useHead({
   title: validation.status === 'found'
     ? `Reserva Confirmada | ${franchise.shortname}`

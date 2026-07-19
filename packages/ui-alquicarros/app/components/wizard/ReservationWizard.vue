@@ -222,7 +222,8 @@ function onGoTo(step: WizardStep | number): void {
 // scroll a #searcher en city NO cambia currentStep, así que no colisiona.
 watch(
   () => wizard.currentStep.value,
-  () => {
+  (step) => {
+    if (step === 'datos') search.trackCheckoutStarted()
     if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
   },
 )

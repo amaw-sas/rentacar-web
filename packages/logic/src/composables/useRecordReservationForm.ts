@@ -9,7 +9,12 @@ import useStoreReservationForm from '../stores/useStoreReservationForm';
 import useStoreSearchData from '../stores/useStoreSearchData';
 
 // Internal dependencies - utils
-import { readStoredAttribution, normalizePhoneNumber, IVA_PERCENTAGE } from '@rentacar-main/logic/utils';
+import {
+  readStoredAttribution,
+  normalizePhoneNumber,
+  IVA_PERCENTAGE,
+  trackAnalyticsEvent,
+} from '@rentacar-main/logic/utils';
 import { RECORD_FETCH_TIMEOUT_MS } from '../utils/fetchTimeouts';
 
 // Types
@@ -141,6 +146,12 @@ export default async function useRecordReservationForm() {
   }
 
   try {
+    trackAnalyticsEvent('reservation_submit', {
+      brand: String(franchise || 'unknown'),
+      ...(total_price_to_pay > 0
+        ? { currency: 'COP' as const, value: total_price_to_pay }
+        : {}),
+    });
     // Endpoint is a same-origin Nuxt server route (/api/reservations/record)
     // that proxies to the admin and injects the API key server-side.
     const response = await $fetch<RecordReservationApiData>(endpoint, {
@@ -154,5 +165,5 @@ export default async function useRecordReservationForm() {
     error.value = e as FetchError;
   }
 
-  return { data, error };
+  return { data, error, analyticsValue: total_price_to_pay };
 }
