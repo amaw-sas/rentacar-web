@@ -641,6 +641,12 @@ export default defineNuxtConfig({
           'Cache-Control': 'public, max-age=31536000, immutable'
         }
       },
+      // Keep HTTP crawl directives aligned with these pages' HTML robots meta.
+      '/chat': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      '/tiktok': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      '/pendiente': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      '/sindisponibilidad': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      '/reservado/**': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       // Issue #322 SCEN-322-N01 — ONE render strategy per route. Home + the 19
       // city landings used to be BOTH in prerender.routes and here with
       // `isr: 3600`; the prerendered snapshot won and ISR was dead letter, so
@@ -726,9 +732,14 @@ export default defineNuxtConfig({
       { loc: '/soledad', changefreq: 'monthly', priority: 0.8 },
       // Blog index — individual /blog/* posts come from sitemap.sources (dynamic, Supabase)
       { loc: '/blog', changefreq: 'weekly', priority: 0.8 },
+      // Indexable referral acquisition landing
+      { loc: '/gana', changefreq: 'monthly', priority: 0.7 },
+      // Indexable referral-program legal pages
+      { loc: '/gana/terminos-condiciones', changefreq: 'yearly', priority: 0.3 },
+      { loc: '/gana/politicas-privacidad', changefreq: 'yearly', priority: 0.3 },
     ],
     sources: ['/api/__sitemap__/blog'],
-    exclude: ['/pendiente', '/sindisponibilidad', '/reservado/**', '/*/buscar-vehiculos/**', '/seo/**'],
+    exclude: ['/chat', '/tiktok', '/pendiente', '/sindisponibilidad', '/reservado/**', '/*/buscar-vehiculos/**', '/seo/**'],
   },
 
   robots: {
