@@ -279,9 +279,6 @@ const testimonios = computed<Testimonial[]>(() => franchiseTestimonials[brandCod
 // Add VideoObject schema for promotional video (enables video rich snippets)
 usePromoVideoSchema()
 
-// Add Promotion schema for 60% discount offer (promotional rich snippets)
-useEarlyBookingPromotion()
-
 const testimonioUserUIConfig = {
   name: "text-black",
   description: "text-gray-600",

@@ -15,8 +15,8 @@ interface ProductSchemaOptions {
  *
  * The brand label comes from `organization.brand` (per-brand), never a
  * hardcoded name, and the offer is the REAL quoted daily price (vehicle +
- * coverage) emitted as a per-day `UnitPriceSpecification` — mirroring
- * useCityProductSchema. Issue #312 removed the fabricated `AggregateOffer`
+ * coverage) emitted as a per-day `UnitPriceSpecification`. City landings emit
+ * a price-free intermediary Service. Issue #312 removed the fabricated `AggregateOffer`
  * (its `highPrice` was dailyPrice × 30, the price of no real offer) and the
  * invented fixed `priceValidUntil`.
  */
