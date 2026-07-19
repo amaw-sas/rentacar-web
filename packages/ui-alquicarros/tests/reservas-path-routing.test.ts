@@ -77,6 +77,14 @@ describe('SCEN-ACP-04 — sitemap: excluye paths de resultados /reservas, sin bu
   it('el sitemap excluye los estados de resultados de /reservas', () => {
     expect(cfg()).toMatch(/\/reservas\/lugar-recogida\/\*\*/)
   })
+  it('los estados PATH noindex envían el mismo X-Robots-Tag', () => {
+    expect(cfg()).toContain(
+      "'/reservas/lugar-recogida/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } }",
+    )
+    expect(cfg()).toContain(
+      "'/reservas/referido/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } }",
+    )
+  })
 })
 
 describe('SCEN-ACP-01 — 301 buscar-vehiculos → /reservas (server middleware path→path)', () => {

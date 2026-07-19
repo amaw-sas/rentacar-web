@@ -24,6 +24,7 @@ export { extractChatActions } from './extractChatActions';
 export type { ChatActions } from './extractChatActions';
 export { buildChatPayloadMessages, CHAT_PAYLOAD_TAIL } from './buildChatPayloadMessages';
 export type { ChatPayloadMessage } from './buildChatPayloadMessages';
+export { normalizeReservationCode } from './reservationCode';
 
 // ============================================================================
 // Pricing
@@ -71,12 +72,16 @@ export type {
 // ============================================================================
 // Attribution (marketing origin capture)
 // ============================================================================
-export { default as buildAttributionTouch } from './attribution/buildAttributionTouch';
-export type { AttributionTouch } from './attribution/buildAttributionTouch';
+export {
+  default as buildAttributionTouch,
+  ATTRIBUTION_SIGNAL_KEYS,
+} from './attribution/buildAttributionTouch';
+export type { AttributionCaptureContext, AttributionTouch } from './attribution/buildAttributionTouch';
 export {
   persistAttribution,
   readStoredAttribution,
   ATTRIBUTION_STORAGE_KEY,
+  ATTRIBUTION_TTL_MS,
 } from './attribution/attributionStorage';
 
 // ============================================================================

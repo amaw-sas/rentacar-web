@@ -47,9 +47,10 @@ export default defineNuxtConfig({
   },
 
   // This layer colocates its tests under **/__tests__/*.test.ts (both src/ and
-  // server/). Nuxt sweeps the layer's src/ and server/ into the consumer's
-  // generated tsconfig.app.json + tsconfig.server.json, so those test files get
-  // subjected to the app's strict build config (noUncheckedIndexedAccess) and
+  // server/) plus isolated Nuxt fixtures under tests/. Nuxt sweeps the layer
+  // into the consumer's generated tsconfig.app.json + tsconfig.server.json, so
+  // those test files get subjected to the app's strict build config
+  // (noUncheckedIndexedAccess) and
   // their fixtures/index-access get flagged — even though vitest
   // (CI: `pnpm --filter @rentacar-main/logic test`) validates them fine. Test
   // files are not build artifacts; exclude them from the type-check in both
@@ -57,13 +58,21 @@ export default defineNuxtConfig({
   // (packages/ui-*/.nuxt → ../../logic), same depth for all 3 brands.
   typescript: {
     tsConfig: {
-      exclude: ['../../logic/**/__tests__/**', '../../logic/**/*.test.ts'],
+      exclude: [
+        '../../logic/**/__tests__/**',
+        '../../logic/**/*.test.ts',
+        '../../logic/tests/**',
+      ],
     },
   },
   nitro: {
     typescript: {
       tsConfig: {
-        exclude: ['../../logic/**/__tests__/**', '../../logic/**/*.test.ts'],
+        exclude: [
+          '../../logic/**/__tests__/**',
+          '../../logic/**/*.test.ts',
+          '../../logic/tests/**',
+        ],
       },
     },
   },

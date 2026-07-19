@@ -15,6 +15,7 @@ describe('buildAttributionTouch — signal extraction', () => {
       '?utm_source=facebook&utm_medium=cpc&gclid=g1&gad_source=1&fbclid=fb1&ttclid=tt1&msclkid=ms1';
     const { attribution, isTouch } = buildAttributionTouch(search, '', HOST);
     expect(attribution).toEqual({
+      attribution_version: 2,
       utm_source: 'facebook',
       utm_medium: 'cpc',
       gclid: 'g1',
@@ -74,7 +75,73 @@ describe('buildAttributionTouch — signal extraction', () => {
 
   it('still captures utm when a click-id is absent', () => {
     const { attribution, isTouch } = buildAttributionTouch('?utm_source=newsletter&utm_medium=email', '', HOST);
-    expect(attribution).toEqual({ utm_source: 'newsletter', utm_medium: 'email' });
+    expect(attribution).toEqual({
+      attribution_version: 2,
+      utm_source: 'newsletter',
+      utm_medium: 'email',
+    });
     expect(isTouch).toBe(true);
+  });
+
+  it('captures the complete v2 contract with campaign fields, modern click IDs, and entry metadata', () => {
+    const search = new URLSearchParams({
+      utm_source: 'google',
+      utm_medium: 'cpc',
+      utm_campaign: 'cars',
+      utm_term: 'rental',
+      utm_content: 'creative-a',
+      gclid: 'g',
+      gad_source: '1',
+      gbraid: 'gb',
+      wbraid: 'wb',
+      dclid: 'dc',
+      fbclid: 'fb',
+      ttclid: 'tt',
+      twclid: 'tw',
+      msclkid: 'ms',
+    });
+    const { attribution, isTouch } = buildAttributionTouch(
+      search,
+      'https://google.com/',
+      HOST,
+      {
+        landingUrl: '/bogota',
+        capturedAt: '2026-07-18T17:00:00.000Z',
+        brand: 'alquilatucarro',
+      },
+    );
+
+    expect(isTouch).toBe(true);
+    expect(attribution).toEqual({
+      attribution_version: 2,
+      utm_source: 'google',
+      utm_medium: 'cpc',
+      utm_campaign: 'cars',
+      utm_term: 'rental',
+      utm_content: 'creative-a',
+      gclid: 'g',
+      gad_source: '1',
+      gbraid: 'gb',
+      wbraid: 'wb',
+      dclid: 'dc',
+      fbclid: 'fb',
+      ttclid: 'tt',
+      twclid: 'tw',
+      msclkid: 'ms',
+      referrer: 'https://google.com/',
+      landing_url: '/bogota',
+      captured_at: '2026-07-18T17:00:00.000Z',
+      brand: 'alquilatucarro',
+    });
+  });
+
+  it('does not fabricate v2 entry metadata on a direct/internal non-touch', () => {
+    const { attribution, isTouch } = buildAttributionTouch('', '', HOST, {
+      landingUrl: '/reservas',
+      capturedAt: '2026-07-18T17:00:00.000Z',
+      brand: 'alquilatucarro',
+    });
+    expect(isTouch).toBe(false);
+    expect(attribution).toEqual({});
   });
 });

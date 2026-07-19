@@ -9,15 +9,30 @@
 import type AttributionInput from '../types/type/AttributionInput';
 
 // Order mirrors the contract (Apéndice A de rentacar-dashboard#113).
-const SIGNAL_KEYS = [
+export const ATTRIBUTION_SIGNAL_KEYS = [
   'utm_source',
   'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
   'gclid',
   'gad_source',
+  'gbraid',
+  'wbraid',
+  'dclid',
   'fbclid',
   'ttclid',
+  'twclid',
   'msclkid',
 ] as const;
+
+export interface AttributionCaptureContext {
+  /** Entry pathname only, matching the WhatsApp beacon and excluding query PII. */
+  landingUrl?: string;
+  /** ISO-8601 capture time supplied by the browser boundary for deterministic tests. */
+  capturedAt?: string;
+  brand?: string;
+}
 
 export interface AttributionTouch {
   /** Captured signals. `{}` when the load carries nothing relevant. */
@@ -47,12 +62,13 @@ export default function buildAttributionTouch(
   search: string | URLSearchParams,
   referrer: string,
   currentHost: string,
+  context: AttributionCaptureContext = {},
 ): AttributionTouch {
   const params = typeof search === 'string' ? new URLSearchParams(search) : search;
   const attribution: AttributionInput = {};
   let hasParam = false;
 
-  for (const key of SIGNAL_KEYS) {
+  for (const key of ATTRIBUTION_SIGNAL_KEYS) {
     const value = params.get(key)?.trim();
     if (value) {
       attribution[key] = value;
@@ -63,5 +79,13 @@ export default function buildAttributionTouch(
   const externalReferrer = pickExternalReferrer(referrer, currentHost);
   if (externalReferrer) attribution.referrer = externalReferrer;
 
-  return { attribution, isTouch: hasParam || externalReferrer !== null };
+  const isTouch = hasParam || externalReferrer !== null;
+  if (isTouch) {
+    attribution.attribution_version = 2;
+    if (context.landingUrl) attribution.landing_url = context.landingUrl;
+    if (context.capturedAt) attribution.captured_at = context.capturedAt;
+    if (context.brand) attribution.brand = context.brand;
+  }
+
+  return { attribution, isTouch };
 }
