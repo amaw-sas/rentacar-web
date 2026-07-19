@@ -7,7 +7,7 @@
       </p>
       <p class="text-lg mt-2">Si deseas hacer una reserva, contáctanos:</p>
       <p class="text-lg mt-1">
-        <a :href="`https://wa.me/57${whatsappContact.phone}`" target="_blank" rel="noopener" class="text-yellow-400 underline">
+        <a :href="`https://wa.me/57${whatsappContact.phone}`" target="_blank" rel="noopener" data-analytics-placement="error" class="text-yellow-400 underline">
           WhatsApp {{ whatsappContact.display }}
         </a>
       </p>
@@ -49,6 +49,7 @@
             :href="`https://wa.me/57${whatsappContact.phone}`"
             target="_blank"
             rel="noopener"
+            data-analytics-placement="error"
             class="text-yellow-400 underline"
           >
             WhatsApp {{ whatsappContact.display }}
@@ -660,6 +661,7 @@ onBeforeUnmount(() => {
 function setSelectedCategory(category: ReturnType<typeof useCategory>) {
   vehiculo.value = category.categoryCode.value;
   selectedCategory.value = category;
+  storeSearch.trackVehicleSelection(category);
   // Abrir en el paso "resumen"; el watcher [slideoverOpen, slideoverStep]
   // sincroniza la URL a /categoria/X.
   slideoverStep.value = 'resumen';
@@ -673,6 +675,7 @@ function setSelectedCategory(category: ReturnType<typeof useCategory>) {
 // un [role=dialog], garantizado estructuralmente por el único DialogContent.
 function goToForm() {
   slideoverStep.value = 'datos';
+  storeSearch.trackCheckoutStarted();
 }
 // Botón "Volver" en Datos: solo cambia de paso a Resumen (NO toca el historial;
 // el slideover tiene una sola entrada). El watcher reescribe la URL a

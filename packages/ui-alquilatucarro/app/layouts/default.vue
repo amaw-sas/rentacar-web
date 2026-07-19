@@ -300,6 +300,6 @@ const getCityReservationURL = (city: CityData): string =>
     endDay: reservationEndDay.value,
     initHour: "12:00",
     endHour: "12:00",
-  });
+  }, "city-search");
 
 </script>

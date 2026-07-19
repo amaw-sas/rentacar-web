@@ -17,6 +17,7 @@
  * client-only per-brand singleton wrapper with a hard SSR guard.
  */
 import { ref } from 'vue';
+import { trackAnalyticsEvent } from '@rentacar-main/logic/utils';
 // Suppress-after-engagement window is aligned with the chat's local TTL (15d):
 // after a contact action, no teaser for the same span the chat history lives.
 import { CHAT_TTL_MS } from './useChatConversation';
@@ -33,19 +34,9 @@ const TEASER_LINE_1_PLAIN = '¡Hola! ¿Buscas carro? Escríbenos, respondemos ya
 
 export type TeaserTarget = 'whatsapp' | 'llamada' | 'chat';
 
-// Analytics beacon reusing the site's existing GA4/gtag bridge. Duplicated from
-// useChatConversation.emitChatEvent (module-private there) rather than shared —
-// the teaser carries a params object ({step}/{target}) the chat helper doesn't.
-// No-op safe: never throws, never gates the teaser when analytics is absent.
-function emitTeaserEvent(name: string, params?: Record<string, unknown>): void {
-  const w = typeof window !== 'undefined' ? (window as unknown as { gtag?: (...a: unknown[]) => void }) : undefined;
-  if (w && typeof w.gtag === 'function') {
-    try {
-      w.gtag('event', name, params ?? {});
-    } catch {
-      /* analytics must never break the site */
-    }
-  }
+/** Reservation pages keep the contact FAB, but never show its proactive nudge. */
+export function isContactTeaserRouteExcluded(path: string): boolean {
+  return path === '/reservas' || path.startsWith('/reservas/');
 }
 
 // Per-instance config resolved once from the Nuxt context by the wrapper below,
@@ -63,7 +54,7 @@ export interface ContactTeaserConfig {
 // drivable under vitest with stubbed globals; the wrapper's import.meta.client
 // guard is what prevents cross-request memo pollution on the server.
 export function createContactTeaser(cfg: ContactTeaserConfig) {
-  const { shownKey, engagedKey } = cfg;
+  const { brand, shownKey, engagedKey } = cfg;
   const hasWindow = typeof window !== 'undefined';
   const hasSession = typeof sessionStorage !== 'undefined';
   const hasLocal = typeof localStorage !== 'undefined';
@@ -74,6 +65,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
   const teaserAnnounce = ref('');
 
   let realUnread: () => number = () => 0;
+  let allowed: () => boolean = () => true;
   // Terminal latch (suppressed | dismissed | engaged). Once set, start() is a
   // no-op for the rest of this instance's life — the teaser is DONE for the
   // session. NOT a "started" flag: an unshown/mid-progression teaser stays
@@ -139,6 +131,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
   // (stop → clear timers) leaves an unshown/mid-progression teaser resumable. --
   function showStep1() {
     timer1 = null;
+    if (!allowed()) return;
     // Re-check the REAL unread at fire time (closes the race with a chat reply
     // that landed during the 5s wait). A real reply means the teaser is DONE for
     // the session (full reset, terminal) — never resurrects. markSessionShown
@@ -150,18 +143,19 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     syntheticCount.value = 1;
     teaserVisible.value = true;
     teaserAnnounce.value = TEASER_LINE_1_PLAIN;
-    emitTeaserEvent('contact_teaser_shown', { step: 1 });
+    trackAnalyticsEvent('contact_teaser_shown', { brand, step: 1 });
     timer2 = setTimeout(showStep2, TEASER_SECOND_DELAY_MS);
   }
 
   function showStep2() {
     timer2 = null;
+    if (!allowed()) return;
     if (realUnread() > 0) return suppressForSession();
     teaserStep.value = 2;
     syntheticCount.value = 2; // capped at 2
     teaserVisible.value = true;
     teaserAnnounce.value = `${TEASER_LINE_1_PLAIN} ${TEASER_LINE_2}`;
-    emitTeaserEvent('contact_teaser_shown', { step: 2 });
+    trackAnalyticsEvent('contact_teaser_shown', { brand, step: 2 });
   }
 
   // Resumable scheduling: NOT a one-shot. A remount (stop cleared the pending
@@ -169,10 +163,12 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
   // off — schedule step 1 if unshown, re-arm step 2 if mid-progression. Terminal
   // → done. "unless already pending" keeps it idempotent within a mounted
   // lifetime (double start never double-schedules).
-  function start(deps: { realUnread: () => number }) {
+  function start(deps: { realUnread: () => number; allowed?: () => boolean }) {
     realUnread = deps.realUnread;
+    allowed = deps.allowed ?? (() => true);
     if (terminal) return;
     if (!hasWindow) return;
+    if (!allowed()) return;
     if (teaserStep.value === 0) {
       if (timer1 !== null) return; // already pending
       // Guards only gate the first scheduling: session cap, 15d suppression, and
@@ -216,7 +212,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     const wasActive = teaserVisible.value || syntheticCount.value > 0;
     clearVisual();
     terminal = true;
-    if (wasActive) emitTeaserEvent('contact_teaser_dismissed');
+    if (wasActive) trackAnalyticsEvent('contact_teaser_dismissed', { brand });
   }
 
   // Any contact action (WhatsApp / Llamar / open Chat). Stamps the 15d
@@ -228,7 +224,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     stampEngaged();
     clearVisual();
     terminal = true;
-    if (wasActive) emitTeaserEvent('contact_teaser_engaged', { target });
+    if (wasActive) trackAnalyticsEvent('contact_teaser_engaged', { brand, target });
   }
 
   return {

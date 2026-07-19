@@ -61,7 +61,10 @@ export default defineEventHandler(async (event) => {
       ? undefined
       : transformExtras(companyResult.data),
     vehicleCategories: transformVehicleCategories(categoriesResult.data),
-    cities: transformCities(citiesResult.data),
+    cities: transformCities(
+      citiesResult.data,
+      locationsResult.data as unknown as Parameters<typeof transformCities>[1],
+    ),
     franchiseTestimonials: transformFranchiseTestimonials(franchisesResult.data),
     faqs: transformFAQs(faqsResult.data),
   }

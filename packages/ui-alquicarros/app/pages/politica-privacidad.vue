@@ -153,7 +153,7 @@
 const { franchise } = useAppConfig()
 
 useHead({
-  title: `Política de Privacidad | ${franchise.shortname}`,
+  title: 'Política de privacidad',
   link: [
     { rel: 'canonical', href: `${franchise.website}/politica-privacidad` }
   ]

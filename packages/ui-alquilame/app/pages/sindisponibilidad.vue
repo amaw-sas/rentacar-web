@@ -45,9 +45,6 @@
 
 <script setup lang="ts">
 const { franchise } = useAppConfig()
-// GA4: registra esta pagina de resultado en navegacion interna (el page_view
-// automatico no dispara para el navigateTo post-reserva). Ver useResultPageView.
-useResultPageView('Sin Disponibilidad');
 const store = useStoreReservationForm()
 
 // "Intentar de nuevo" reconstruye la búsqueda hacia la superficie de reserva de
@@ -66,7 +63,7 @@ const searchUrl = computed(() => {
 })
 
 useHead({
-  title: `Sin Disponibilidad | ${franchise.shortname}`,
+  title: 'Sin disponibilidad',
   meta: [
     { name: 'robots', content: 'noindex, nofollow' }
   ]

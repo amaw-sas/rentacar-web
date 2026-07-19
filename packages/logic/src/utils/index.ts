@@ -24,6 +24,7 @@ export { extractChatActions } from './extractChatActions';
 export type { ChatActions } from './extractChatActions';
 export { buildChatPayloadMessages, CHAT_PAYLOAD_TAIL } from './buildChatPayloadMessages';
 export type { ChatPayloadMessage } from './buildChatPayloadMessages';
+export { normalizeReservationCode } from './reservationCode';
 
 // ============================================================================
 // Pricing
@@ -41,17 +42,46 @@ export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';
 export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, latestOpenDayOnOrBefore, nearestSlotByTime, returnDateForPickupChange } from './scheduleAvailability';
 export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
-export type { CityReservationDates } from './buildCityReservationURL';
+export type { CityReservationDates, CityReservationSurface } from './buildCityReservationURL';
+
+// ============================================================================
+// Analytics (typed GA4 event contract)
+// ============================================================================
+export {
+  analyticsPageType,
+  createContactClickHandler,
+  createSpaPageViewTracker,
+  normalizeAnalyticsErrorReason,
+  trackAnalyticsEvent,
+  trackGenerateLead,
+  trackReservationOutcome,
+} from './analytics';
+export type {
+  AnalyticsErrorReason,
+  AnalyticsEventMap,
+  AnalyticsEventName,
+  AnalyticsItem,
+  AnalyticsPageType,
+  ChatOpenSource,
+  ContactClickContext,
+  ContactPlacement,
+  PageViewSnapshot,
+  ReservationErrorReason,
+} from './analytics';
 
 // ============================================================================
 // Attribution (marketing origin capture)
 // ============================================================================
-export { default as buildAttributionTouch } from './attribution/buildAttributionTouch';
-export type { AttributionTouch } from './attribution/buildAttributionTouch';
+export {
+  default as buildAttributionTouch,
+  ATTRIBUTION_SIGNAL_KEYS,
+} from './attribution/buildAttributionTouch';
+export type { AttributionCaptureContext, AttributionTouch } from './attribution/buildAttributionTouch';
 export {
   persistAttribution,
   readStoredAttribution,
   ATTRIBUTION_STORAGE_KEY,
+  ATTRIBUTION_TTL_MS,
 } from './attribution/attributionStorage';
 
 // ============================================================================

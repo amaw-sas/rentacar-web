@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useBaseSEO } from '../useBaseSEO'
 
-// Holdout for issue #116: the AutoRental's ReserveAction must expose, alongside
+// Holdout for issue #116: the Service's ReserveAction must expose, alongside
 // the existing web EntryPoint (#64), a PROGRAMMATIC EntryPoint pointing at the
 // dashboard's public reservations API plus an actionApplication resolvable to
 // the public OpenAPI (D2). schema.org/JSON-LD is observed via the useSchemaOrg
@@ -31,7 +31,7 @@ const stub = (website: string, apiBase: string = API_BASE) => {
   vi.stubGlobal('useRoute', () => ({ path: '/' }))
   vi.stubGlobal('useSeoMeta', () => {})
   vi.stubGlobal('useHead', () => {})
-  // nuxt-schema-org define* helpers: pass-through so the AutoRental literal is
+  // nuxt-schema-org define* helpers: pass-through so the Service literal is
   // captured intact alongside them.
   vi.stubGlobal('defineWebSite', (o: any) => ({ '@type': 'WebSite', ...o }))
   vi.stubGlobal('defineWebPage', (o: any) => ({ '@type': 'WebPage', ...o }))
@@ -41,11 +41,11 @@ const stub = (website: string, apiBase: string = API_BASE) => {
   })
 }
 
-const autoRentalOf = (schemas: any[]) =>
-  schemas.find((s) => s?.['@type'] === 'AutoRental')
+const serviceOf = (schemas: any[]) =>
+  schemas.find((s) => s?.['@type'] === 'Service')
 
 const entryPoints = (schemas: any[]): any[] => {
-  const target = autoRentalOf(schemas)?.potentialAction?.target
+  const target = serviceOf(schemas)?.potentialAction?.target
   return Array.isArray(target) ? target : [target]
 }
 
@@ -61,7 +61,7 @@ describe('useBaseSEO ReserveAction (issue #116)', () => {
   it('keeps the web EntryPoint (franchise.website + desktop/mobile) and RentalCarReservation result', () => {
     stub('https://brand-a.example')
     useBaseSEO()
-    const action = autoRentalOf(capturedSchemas)?.potentialAction
+    const action = serviceOf(capturedSchemas)?.potentialAction
     const web = entryPoints(capturedSchemas).find(
       (e) => e.urlTemplate === 'https://brand-a.example',
     )
