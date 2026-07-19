@@ -467,6 +467,18 @@ export default defineNuxtConfig({
         // generic placeholder and was removed so the .ico wins in modern browsers.
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       ],
+      script: [
+        // Google Analytics 4 — manual sanitized SPA page views are emitted by
+        // the shared tracker, so config must not auto-send an initial view.
+        {
+          src: 'https://www.googletagmanager.com/gtag/js?id=G-ZPZC1TP9T0',
+          async: true,
+        },
+        {
+          innerHTML:
+            "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-ZPZC1TP9T0',{send_page_view:false});",
+        },
+      ],
     },
   },
 
