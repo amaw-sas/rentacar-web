@@ -172,7 +172,7 @@
 const { franchise } = useAppConfig()
 
 useHead({
-  title: 'Términos y Condiciones | Alquilatucarro',
+  title: 'Términos y condiciones',
   link: [
     { rel: 'canonical', href: `${franchise.website}/terminos-condiciones` }
   ]

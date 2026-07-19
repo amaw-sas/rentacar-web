@@ -75,7 +75,7 @@
 
 | Elemento | Estado | Implementación |
 |----------|--------|----------------|
-| Title SEO | ✅ 19/19 | `"Alquiler de Carros en [Ciudad] desde $32/día"` |
+| Title SEO | ✅ 19/19 | `"Alquiler de Carros en [Ciudad]"` (el precio base verificado se publica como `$220.000 COP/día`) |
 | Meta Description | ✅ 19/19 | Única por ciudad, truncada a 155 chars |
 | H1 con keyword | ✅ 19/19 | `"ALQUILER DE CARROS EN [Ciudad] Colombia"` |
 | H2s con keyword | ✅ 8/8 | Todas incluyen variaciones de "alquiler de carros" |

@@ -154,8 +154,8 @@
               <span class="text-2xl">📍</span>
             </div>
             <div>
-              <h3 class="font-bold text-gray-900 mb-1">Entrega flexible</h3>
-              <p class="text-gray-600 text-sm">Recoge y devuelve tu carro en diferentes puntos de {{ city?.name }}. Aeropuerto, centro de la ciudad o donde te resulte más cómodo.</p>
+              <h3 class="font-bold text-gray-900 mb-1">Puntos de recogida</h3>
+              <p class="text-gray-600 text-sm">Consulta en el buscador los puntos de recogida activos en {{ city?.name }}. Las opciones disponibles se actualizan con el inventario de sedes.</p>
             </div>
           </div>
           <div class="flex items-start gap-4 bg-white p-5 rounded-lg shadow-sm">
@@ -459,4 +459,3 @@ const LazyImagesCiudadesChica = defineAsyncComponent(
 );
 
 </script>
-

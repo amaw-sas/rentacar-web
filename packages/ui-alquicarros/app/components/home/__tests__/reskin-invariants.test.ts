@@ -130,13 +130,15 @@ describe('reskin — index.vue assembles the 11 sections in order (sans Reviews)
     expect(positions.every((p) => p >= 0)).toBe(true)
   })
 
-  it('keeps the brand-config-driven SEO (useBaseSEO + FAQPage schema)', () => {
-    expect(index).toMatch(/useBaseSEO\(\)/)
+  it('keeps pricing-derived base SEO and the FAQPage schema', () => {
+    expect(index).toMatch(/const homeSEO = useHomeSEO\(\)/)
+    expect(index).toMatch(/useBaseSEO\(\{\s*title: homeSEO\.title,\s*description: homeSEO\.description/s)
     expect(index).toMatch(/useHomeBreadcrumb\(\)/)
     expect(index).toMatch(/useSchemaOrg/)
     expect(index).toMatch(/FAQPage/)
-    // og copy is config-driven (franchise.*), never a hardcoded brand title.
-    expect(index).toMatch(/ogTitle:\s*franchise\.title/)
+    // Social copy uses the same pricing-derived refs as the document metadata.
+    expect(index).toMatch(/ogTitle:\s*homeSEO\.title/)
+    expect(index).toMatch(/ogDescription:\s*homeSEO\.description/)
   })
 })
 

@@ -63,14 +63,13 @@
 <script setup lang="ts">
 import useReservationConfirmation from '@rentacar-main/logic/composables/useReservationConfirmation'
 
-const { franchise } = useAppConfig()
 const validation = await useReservationConfirmation()
 const reserveCode = validation.reserveCode
 
 useHead({
   title: validation.status === 'found'
-    ? `Reserva Confirmada | ${franchise.shortname}`
-    : `Verificando reserva | ${franchise.shortname}`,
+    ? 'Reserva confirmada'
+    : 'Verificando reserva',
   meta: [
     { name: 'robots', content: 'noindex, nofollow' }
   ]
