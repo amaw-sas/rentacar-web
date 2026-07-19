@@ -22,27 +22,11 @@
 // message as the user advances the search; it only changes when they switch
 // cities. Other top-level routes (home, blog, gana, seo, tarifas, …) are not
 // city ids, so they fall through to the generic message.
-const CITY_BY_ID: Record<string, string> = {
-  armenia: 'Armenia',
-  barranquilla: 'Barranquilla',
-  bogota: 'Bogotá',
-  bucaramanga: 'Bucaramanga',
-  cali: 'Cali',
-  cartagena: 'Cartagena',
-  cucuta: 'Cúcuta',
-  ibague: 'Ibagué',
-  manizales: 'Manizales',
-  medellin: 'Medellín',
-  monteria: 'Montería',
-  neiva: 'Neiva',
-  pereira: 'Pereira',
-  'santa-marta': 'Santa Marta',
-  valledupar: 'Valledupar',
-  villavicencio: 'Villavicencio',
-  floridablanca: 'Floridablanca',
-  palmira: 'Palmira',
-  soledad: 'Soledad',
-}
+import { PUBLIC_CITIES } from '@rentacar-main/logic/composables/usePublicCities'
+
+const CITY_BY_ID: Readonly<Record<string, string>> = Object.fromEntries(
+  PUBLIC_CITIES.map(city => [city.id, city.name]),
+)
 
 const WA_NUMBER = '573016729250'
 

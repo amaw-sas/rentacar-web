@@ -197,18 +197,14 @@ describe('SEO content hygiene across brands (F5/F9)', () => {
     }
   })
 
-  it('makes each brand CTA request its final reservation surface', () => {
-    expect(readBrandFile('ui-alquilatucarro', 'app/layouts/default.vue')).toContain(
-      '}, "city-search");',
-    )
+  it('keeps footer city navigation lightweight and sends real CTAs to their final surface', () => {
+    for (const brand of BRANDS) {
+      const layout = readBrandFile(brand, 'app/layouts/default.vue')
+      expect(layout).toContain(':to="`/${city.id}`"')
+      expect(layout).not.toContain('buildCityReservationURL')
+    }
     expect(readBrandFile('ui-alquilatucarro', 'app/pages/tiktok.vue')).toContain(
       "}, 'city-search')",
-    )
-    expect(readBrandFile('ui-alquilame', 'app/layouts/default.vue')).toContain(
-      '}, "reservas");',
-    )
-    expect(readBrandFile('ui-alquicarros', 'app/layouts/default.vue')).toContain(
-      '}, "reservas");',
     )
   })
 

@@ -6,6 +6,7 @@ import { mount } from '@vue/test-utils'
 import type ReservasApiData from '@rentacar-main/logic/utils/types/data/ReservasApiData'
 import type CategoryData from '@rentacar-main/logic/utils/types/data/CategoryData'
 import type { CategoryType } from '@rentacar-main/logic/utils/types/type/CategoryType'
+import { installRouteCatalogFreshness } from '../../../../logic/src/composables/useRentacarData'
 import TarifasPage from '../tarifas.vue'
 
 const ONE_HOUR_MS = 60 * 60 * 1000
@@ -55,7 +56,7 @@ describe('/tarifas mounted catalog refresh', () => {
     vi.resetModules()
     vi.stubGlobal('computed', computed)
     vi.stubGlobal('ref', ref)
-    vi.stubGlobal('defineNuxtPlugin', (plugin: unknown) => plugin)
+    vi.stubGlobal('definePageMeta', vi.fn())
     vi.stubGlobal('useAppConfig', () => ({
       franchise: { website: 'https://alquilatucarro.com' },
     }))
@@ -74,10 +75,10 @@ describe('/tarifas mounted catalog refresh', () => {
   it('re-renders the visible monthly price when an expired catalog is refreshed', async () => {
     const stale = catalog(3_806_000, Date.now())
     const fresh = catalog(8_765_000, Date.now() + ONE_HOUR_MS)
-    const catalogState = ref<ReservasApiData | null>(stale)
+    const catalogState = ref<ReservasApiData>(stale)
+    const loadedState = ref(true)
     const fetchSpy = vi.fn(async () => fresh)
     vi.stubGlobal('useState', () => catalogState)
-    vi.stubGlobal('useAsyncData', vi.fn())
     vi.stubGlobal('$fetch', fetchSpy)
 
     let mountedHook: (() => void) | undefined
@@ -86,9 +87,11 @@ describe('/tarifas mounted catalog refresh', () => {
         if (name === 'app:mounted') mountedHook = callback
       }),
     }
-    const plugin = (await import('../../../../logic/plugins/rentacar-data')).default as unknown as
-      (app: typeof nuxtApp) => Promise<void>
-    await plugin(nuxtApp)
+    vi.stubGlobal('useNuxtApp', () => nuxtApp)
+    vi.stubGlobal('useRouter', () => ({
+      currentRoute: ref({ meta: { middleware: ['rentacar-data'] } }),
+    }))
+    installRouteCatalogFreshness(catalogState, loadedState)
 
     const wrapper = mount(TarifasPage, {
       global: {

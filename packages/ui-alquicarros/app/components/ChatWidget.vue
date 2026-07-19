@@ -44,7 +44,7 @@
         tabindex="-1"
         class="chat-panel pointer-events-auto"
       >
-        <ChatConversation variant="panel" @dismiss="panelOpen = false" />
+        <ChatConversation :active="panelOpen" variant="panel" @dismiss="panelOpen = false" />
       </div>
 
       <div
@@ -155,13 +155,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import {
   isContactTeaserRouteExcluded,
   TEASER_LINE_1,
   TEASER_LINE_2,
 } from '@rentacar-main/logic/composables/useContactTeaser'
+
+// The conversation/SSE/markdown graph is interaction-only. Because the panel
+// is also guarded by v-if, this loader is not requested until desktop chat is
+// opened (mobile keeps using the already route-split /chat page).
+const ChatConversation = defineAsyncComponent(() => import('./ChatConversation.vue'))
 
 const { franchise } = useAppConfig()
 const route = useRoute()
@@ -182,7 +187,7 @@ const isDesktop = useMediaQuery('(min-width: 768px)')
 // inerte en servidor). La insignia se limpia cuando la SUPERFICIE monta
 // (onSurfaceMounted → markRead), no aquí: marcar leído en openChat borraría el
 // separador "Mensajes nuevos" antes de que ChatConversation capture su ancla.
-const { unread, announce, emitReopenedFromBadge, prepareChatOpen } = useChatConversation()
+const { unread, announce, emitReopenedFromBadge, prepareChatOpen } = useChatUnreadBadge(franchise.shortname as string)
 
 // Teaser proactivo (saludo + badge sintético). Singleton por marca, SSR-safe
 // (instancia inerte en servidor). El texto/keys viven en el composable.
@@ -303,7 +308,9 @@ function openChat() {
   if (unread.value > 0) emitReopenedFromBadge()
   menuOpen.value = false
   // Desktop: panel inline sobre la página (no navega). Móvil: /chat full-screen.
-  if (isDesktop.value) panelOpen.value = true
+  if (isDesktop.value) {
+    panelOpen.value = true
+  }
   else navigateTo('/chat')
 }
 </script>

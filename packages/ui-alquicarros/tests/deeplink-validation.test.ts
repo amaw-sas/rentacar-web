@@ -47,7 +47,7 @@ describe('SCEN-322-V01 — alquicarros valida deep-links de /reservas', () => {
     const label = p.replace('app/pages/reservas/', '').replace(TAIL, '…')
     it(`la página PATH declara el middleware: reservas/${label}`, () => {
       const src = tryRead(p)
-      expect(src).toMatch(/definePageMeta\(\s*\{[\s\S]*?middleware:\s*\['validate-search-params'\]/)
+      expect(src).toMatch(/definePageMeta\(\s*\{[\s\S]*?middleware:\s*\[[^\]]*'validate-search-params'/)
     })
   }
 })

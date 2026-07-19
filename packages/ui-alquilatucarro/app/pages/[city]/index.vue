@@ -3,6 +3,8 @@
 </template>
 
 <script lang="ts" setup>
+definePageMeta({ middleware: ['rentacar-data'] })
+
 const { city } = useCityPageSEO()
 
 // Lanzar error 404 si la ciudad no existe. `fatal: true` es necesario para que

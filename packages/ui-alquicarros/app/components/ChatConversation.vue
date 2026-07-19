@@ -263,7 +263,10 @@ function bubblesFor(m: { text: string; actions?: unknown; quoteTable?: unknown; 
   return m.actions || m.quoteTable || m.gamaCards ? [''] : []
 }
 
-const props = withDefaults(defineProps<{ variant?: 'panel' | 'page' }>(), { variant: 'panel' })
+const props = withDefaults(
+  defineProps<{ variant?: 'panel' | 'page'; active?: boolean }>(),
+  { variant: 'panel', active: true },
+)
 const emit = defineEmits<{ dismiss: [] }>()
 
 const {
@@ -401,7 +404,7 @@ watch(
 // old messages (the scroll watch above is not immediate). On mount, position at
 // the "Mensajes nuevos" separator when there are unread replies, else at the
 // bottom. Focus stays on the composer — never moved into the message list.
-onMounted(() => {
+function activateSurface() {
   newSeparatorBeforeId.value = firstUnreadAssistantId.value
   onSurfaceMounted(props.variant === 'page' ? 'chat_page' : 'fab')
   nextTick(() => {
@@ -413,10 +416,18 @@ onMounted(() => {
     }
     inputEl.value?.focus()
   })
+}
+
+onMounted(() => {
+  if (props.active) activateSurface()
+})
+watch(() => props.active, (active, previous) => {
+  if (active && !previous) activateSurface()
+  else if (!active && previous) onSurfaceUnmounted()
 })
 // NEVER abort the stream on unmount — the singleton keeps streaming into the
 // same messages ref so a reopen sees the reply continue.
-onUnmounted(() => onSurfaceUnmounted())
+onUnmounted(() => { if (props.active) onSurfaceUnmounted() })
 </script>
 
 <style scoped>

@@ -76,6 +76,7 @@ useHead({
 
 definePageMeta({
   colorMode: "light",
+  middleware: ["rentacar-data"],
 });
 
 // The aggregate-rating schema was removed site-wide (#312): the ratings were

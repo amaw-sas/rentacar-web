@@ -19,7 +19,7 @@
  * the transcript persist in localStorage (per brand) so the chat survives
  * reloads and SSR/ISR navigation. Reasoning parts are ignored.
  */
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
   readStoredAttribution,
   trackAnalyticsEvent,
@@ -28,6 +28,7 @@ import {
 } from '@rentacar-main/logic/utils';
 import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
 import { buildChatPayloadMessages } from '../utils/buildChatPayloadMessages';
+import { publishChatUnread, takePreparedChatOpen } from './useChatUnreadBadge';
 
 // Code-owned data parts emitted by the hybrid orchestrator (dashboard /api/chat)
 // ALONGSIDE the streamed text. They arrive as `data-*` SSE events and are
@@ -256,6 +257,10 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     return count;
   });
 
+  watch([unread, announce], ([unreadCount, announcement]) => {
+    publishChatUnread({ brand, unread: unreadCount, announce: announcement })
+  })
+
   // Id of the first unread assistant message — where the "Mensajes nuevos"
   // separator renders. Read by the surface BEFORE markRead() advances the marker.
   const firstUnreadAssistantId = computed(() => {
@@ -323,12 +328,6 @@ export function createChatConversation(cfg: ChatConversationConfig) {
   // before the outgoing one unmounts; a bare boolean would flip to false while a
   // surface is still on screen.
   let mountCount = 0;
-  let pendingOpenSource: ChatOpenSource | null = null;
-
-  function prepareChatOpen(source: ChatOpenSource) {
-    pendingOpenSource = source;
-  }
-
   // Called by the surface on mount: it is now visible, so catch the marker up.
   function onSurfaceMounted(fallbackSource: ChatOpenSource = 'chat_page') {
     const wasAlreadyMounted = mountCount > 0;
@@ -337,9 +336,8 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     if (!wasAlreadyMounted) {
       trackAnalyticsEvent('chat_open', {
         brand,
-        source: pendingOpenSource ?? fallbackSource,
+        source: takePreparedChatOpen(brand) ?? fallbackSource,
       });
-      pendingOpenSource = null;
     }
     if (docVisible.value) markRead();
   }
@@ -367,8 +365,8 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     announce.value = n === 1 ? '1 mensaje nuevo en el chat' : `${n} mensajes nuevos en el chat`;
   }
 
-  // Called by the FAB when the chat is reopened from the badge (analytics only;
-  // markRead is invoked separately by openChat / onSurfaceMounted).
+  // Kept on the full conversation API for callers/tests that already own the
+  // lazy engine. The always-visible FAB uses the lightweight badge equivalent.
   function emitReopenedFromBadge() {
     trackAnalyticsEvent('chat_reopened_from_badge', { brand });
   }
@@ -758,7 +756,6 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     isViewing,
     markRead,
     onSurfaceMounted,
-    prepareChatOpen,
     onSurfaceUnmounted,
     completeAssistantTurn,
     emitReopenedFromBadge,

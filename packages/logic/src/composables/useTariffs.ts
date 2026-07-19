@@ -174,10 +174,11 @@ export function buildTariffs(categories: CategoryData[], todayDate?: string): Ta
 /**
  * Reactive tariff projection of the shared catalog.
  *
- * The catalog plugin replaces `rentacar-data` when its one-hour snapshot
- * expires. Keep the state read inside a computed getter so already-mounted
- * tariff surfaces render the empty fail-closed state and then the fresh
- * prices, instead of retaining a one-time `buildTariffs` snapshot.
+ * The route-scoped catalog freshness controller updates `rentacar-data` when
+ * its one-hour snapshot expires. Keep the state read inside a computed getter
+ * so already-mounted tariff surfaces render the empty fail-closed state and
+ * then the fresh prices, instead of retaining a one-time `buildTariffs`
+ * snapshot.
  */
 export default function useTariffs(): ComputedRef<TariffsView> {
   const data = useState<ReservasApiData | null>('rentacar-data')

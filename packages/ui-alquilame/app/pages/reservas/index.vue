@@ -241,5 +241,6 @@ useHead({
 
 definePageMeta({
   colorMode: 'light',
+  middleware: ['rentacar-data'],
 })
 </script>

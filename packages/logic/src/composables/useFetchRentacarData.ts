@@ -13,12 +13,5 @@ const EMPTY_SENTINEL: ReservasApiData = Object.freeze({
 export default function useFetchRentacarData(): ReservasApiData {
   const data = useState<ReservasApiData | null>('rentacar-data')
 
-  if (!data.value) {
-    if (import.meta.dev) {
-      console.warn('[useFetchRentacarData] state is null; returning empty sentinel.')
-    }
-    return EMPTY_SENTINEL
-  }
-
-  return data.value
+  return data.value ?? EMPTY_SENTINEL
 }

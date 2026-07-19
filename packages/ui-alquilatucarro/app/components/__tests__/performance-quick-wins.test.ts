@@ -92,7 +92,7 @@ describe('PERF-6 — responsive decorative images', () => {
 
   it('keeps the confirmed-safe monthly teaser on its versioned NuxtImg path', () => {
     expect(monthlyTeaser).toContain('<NuxtImg')
-    expect(monthlyTeaser).toContain('~/assets/images/monthly/')
+    expect(monthlyTeaser).toContain('src="/images/monthly/teaser-suv-bogota-c5a.webp"')
     expect(monthlyTeaser).not.toMatch(/background-image\s*:/)
   })
 })
@@ -109,7 +109,7 @@ describe('CLS safeguards', () => {
   const nuxtConfig = source('../../../nuxt.config.ts')
 
   it('reserves the final header height in critical CSS before the main bundle loads', () => {
-    expect(defaultLayout).toMatch(/<UHeader[\s\S]*?class="[^"]*\bh-16\b/)
+    expect(defaultLayout).toMatch(/<(?:UHeader|header)[\s\S]*?class="[^"]*\bh-16\b/)
   })
 
   it('matches the blog hero breakpoint geometry in the critical CSS', () => {

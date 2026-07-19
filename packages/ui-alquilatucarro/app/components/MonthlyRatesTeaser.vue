@@ -7,7 +7,7 @@
     <!-- Versioned, responsive image. CSS preserves the former background's
          cover/position treatment without bypassing @nuxt/image. -->
     <NuxtImg
-      :src="monthlyTeaserSrc"
+      src="/images/monthly/teaser-suv-bogota-c5a.webp"
       alt="Carro de alquiler frente al paisaje urbano de Bogotá"
       width="1024"
       height="1024"
@@ -45,7 +45,6 @@
 
 <script setup lang="ts">
 import useTariffs from '@rentacar-main/logic/composables/useTariffs';
-import monthlyTeaserSrc from '~/assets/images/monthly/teaser-suv-bogota.webp';
 
 const tariffs = useTariffs();
 
