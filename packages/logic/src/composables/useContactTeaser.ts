@@ -34,9 +34,23 @@ const TEASER_LINE_1_PLAIN = '¡Hola! ¿Buscas carro? Escríbenos, respondemos ya
 
 export type TeaserTarget = 'whatsapp' | 'llamada' | 'chat';
 
+/**
+ * Shared reservation-funnel boundary for contact surfaces.
+ *
+ * Alquicarros/alquilame use `/reservas`; alquilatucarro renders its search,
+ * category summary and reservation form below `/{city}/buscar-vehiculos`.
+ */
+export function isReservationFunnelRoute(path: string): boolean {
+  return (
+    path === '/reservas' ||
+    path.startsWith('/reservas/') ||
+    /^\/[^/]+\/buscar-vehiculos(?:\/|$)/.test(path)
+  );
+}
+
 /** Reservation pages keep the contact FAB, but never show its proactive nudge. */
 export function isContactTeaserRouteExcluded(path: string): boolean {
-  return path === '/reservas' || path.startsWith('/reservas/');
+  return isReservationFunnelRoute(path);
 }
 
 // Per-instance config resolved once from the Nuxt context by the wrapper below,

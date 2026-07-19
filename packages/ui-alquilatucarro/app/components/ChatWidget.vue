@@ -171,6 +171,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsync
 import { useMediaQuery } from '@vueuse/core'
 import {
   isContactTeaserRouteExcluded,
+  isReservationFunnelRoute,
   TEASER_LINE_1,
   TEASER_LINE_2,
 } from '@rentacar-main/logic/composables/useContactTeaser'
@@ -211,10 +212,10 @@ const { syntheticCount, teaserVisible, teaserStep, teaserAnnounce } = teaser
 // WhatsApp/phone available but suppress the proactive invitation throughout the
 // funnel, including deep links to summary and the following step.
 const isReservationRoute = computed(() =>
-  isContactTeaserRouteExcluded(route.path),
+  isReservationFunnelRoute(route.path),
 )
 const teaserAllowed = computed(
-  () => chatEnabled.value && !isReservationRoute.value,
+  () => chatEnabled.value && !isContactTeaserRouteExcluded(route.path),
 )
 const displayedSyntheticCount = computed(() =>
   teaserAllowed.value ? syntheticCount.value : 0,
@@ -341,10 +342,11 @@ function openChat() {
 a,
 button { -webkit-tap-highlight-color: transparent; }
 
-/* Keep the default position byte-for-byte equivalent to bottom-6. On the
-   reservation funnel only, the mobile summary bar is lg:hidden and measures
-   roughly 4.5rem including its py-3 shell; add a tap-safe clearance plus the
-   device safe area so the FAB never covers its CTA. */
+/* Keep the default position byte-for-byte equivalent to bottom-6. In the
+   reservation funnels, both mobile CTA surfaces fit a 4.5rem bottom envelope:
+   WizardSummary is ~3.94rem, while alquilatucarro's fixed slideover footer uses
+   1rem bottom padding + a 3.5rem CTA (py-4 + text-base line box). Add a tap-safe
+   clearance plus the device safe area so the FAB never covers either CTA. */
 .contact-fab-stack { bottom: 1.5rem; }
 @media (max-width: 1023.98px) {
   .contact-fab-stack--reservation {

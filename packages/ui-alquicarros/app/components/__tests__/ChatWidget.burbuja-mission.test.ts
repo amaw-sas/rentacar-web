@@ -24,6 +24,11 @@ const searchHydratorSource = readFileSync(
 )
 
 describe('Burbuja chat mission E1–E4 — widget integration', () => {
+  it('E10 — all three widget copies remain byte-identical', () => {
+    expect(brandWidgets[1]?.source).toBe(brandWidgets[0]?.source)
+    expect(brandWidgets[2]?.source).toBe(brandWidgets[0]?.source)
+  })
+
   it('E1 — OFF gates timers, announcements, badges, panel and typing surface', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toMatch(
@@ -43,16 +48,19 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
     }
   })
 
-  it('E2 — every widget derives suppression from the current /reservas path', () => {
+  it('E2/E9 — every widget suppresses teasers on both reservation funnels', () => {
     expect(teaserSource).toMatch(
-      /path === '\/reservas' \|\| path\.startsWith\('\/reservas\/'\)/,
+      /path === '\/reservas'[\s\S]*path\.startsWith\('\/reservas\/'\)[\s\S]*buscar-vehiculos/,
+    )
+    expect(teaserSource).toMatch(
+      /function isContactTeaserRouteExcluded\(path: string\)[\s\S]*return isReservationFunnelRoute\(path\)/,
     )
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toMatch(
-        /const isReservationRoute = computed\([\s\S]*isContactTeaserRouteExcluded\(route\.path\)/,
+        /const isReservationRoute = computed\([\s\S]*isReservationFunnelRoute\(route\.path\)/,
       )
       expect(source, brand).toMatch(
-        /chatEnabled\.value && !isReservationRoute\.value/,
+        /chatEnabled\.value && !isContactTeaserRouteExcluded\(route\.path\)/,
       )
       expect(source, brand).toMatch(
         /teaserAllowed\.value\s*&&\s*teaserVisible\.value/,

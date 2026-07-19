@@ -3,6 +3,7 @@ import {
   createContactTeaser,
   getOrCreateTeaser,
   isContactTeaserRouteExcluded,
+  isReservationFunnelRoute,
   useContactTeaser,
   TEASER_FIRST_DELAY_MS,
   TEASER_SECOND_DELAY_MS,
@@ -420,16 +421,35 @@ describe('Burbuja chat mission E1–E4', () => {
     expect(inst.teaserVisible.value).toBe(true);
   });
 
-  it('E2 — summary and every following /reservas funnel URL are excluded', () => {
-    expect(isContactTeaserRouteExcluded('/reservas')).toBe(true);
-    expect(isContactTeaserRouteExcluded('/reservas/')).toBe(true);
-    expect(
-      isContactTeaserRouteExcluded(
-        '/reservas/lugar-recogida/bogota/categoria/CCAR',
-      ),
-    ).toBe(true);
-    expect(isContactTeaserRouteExcluded('/')).toBe(false);
-    expect(isContactTeaserRouteExcluded('/carros')).toBe(false);
+  it('E2/E9 — both reservation funnels and all their deep links are excluded', () => {
+    const funnelPaths = [
+      '/reservas',
+      '/reservas/',
+      '/reservas/lugar-recogida/bogota/categoria/CCAR',
+      '/bogota/buscar-vehiculos',
+      '/bogota/buscar-vehiculos/',
+      '/bogota/buscar-vehiculos/lugar-recogida/bogota-aeropuerto/categoria/c',
+      '/medellin/buscar-vehiculos/referido/aliado/lugar-recogida/poblado/categoria/f',
+    ];
+
+    for (const path of funnelPaths) {
+      expect(isReservationFunnelRoute(path), path).toBe(true);
+      expect(isContactTeaserRouteExcluded(path), path).toBe(true);
+    }
+
+    const normalPaths = [
+      '/',
+      '/carros',
+      '/bogota',
+      '/buscar-vehiculos',
+      '/bogota/buscar-vehiculos-extra',
+      '/reservado/ABC123',
+    ];
+
+    for (const path of normalPaths) {
+      expect(isReservationFunnelRoute(path), path).toBe(false);
+      expect(isContactTeaserRouteExcluded(path), path).toBe(false);
+    }
   });
 
   it('E3 — dismiss is local state only and leaves the current URL untouched', () => {
