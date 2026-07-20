@@ -48,7 +48,7 @@
       </div>
 
       <div
-        class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4 pointer-events-none"
+        class="contact-fab-stack absolute left-6 flex flex-col items-start gap-4 pointer-events-none"
         :class="{ 'contact-fab-stack--reservation': isReservationRoute }"
       >
         <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
@@ -85,7 +85,7 @@
           v-show="menuOpen"
           id="contact-fab-menu"
           aria-label="Opciones de contacto"
-          class="flex flex-col items-end gap-3 pointer-events-auto"
+          class="flex flex-col items-start gap-3 pointer-events-auto"
         >
           <li v-if="chatEnabled" class="flex">
             <button type="button" class="fab-item" aria-label="Abrir Chat 24 horas" @click="openChat">
@@ -141,7 +141,7 @@
           :aria-expanded="menuOpen"
           aria-controls="contact-fab-menu"
           :aria-label="menuOpen || panelOpen ? 'Cerrar' : badgeCount > 0 ? `Abrir opciones de contacto (${badgeCount} ${badgeCount === 1 ? 'mensaje nuevo' : 'mensajes nuevos'})` : 'Abrir opciones de contacto'"
-          class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 hover:scale-105 transition-all duration-200 pointer-events-auto"
+          class="relative flex items-center justify-center w-14 h-14 rounded-full bg-whatsapp text-black shadow-xl hover:bg-whatsapp-hover hover:scale-105 transition-all duration-200 pointer-events-auto"
           :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen && badgeCount === 0 }"
           @click="toggle"
         >
@@ -362,7 +362,8 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* --- Items del menú FAB --- */
-.fab-item { display: flex; align-items: center; gap: 0.75rem; border-radius: 9999px; }
+/* Stack anclado a la izquierda: círculo primero, etiqueta hacia adentro. */
+.fab-item { display: flex; flex-direction: row-reverse; align-items: center; gap: 0.75rem; border-radius: 9999px; }
 .fab-label {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
@@ -445,7 +446,7 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .teaser-bubble {
   position: absolute;
-  right: 0;
+  left: 0;
   bottom: 0;
   width: 100%;
   max-width: 100%;
@@ -453,10 +454,10 @@ button { -webkit-tap-highlight-color: transparent; }
   backdrop-filter: blur(4px);
   color: #111827;
   padding: 0.75rem 2rem 0.75rem 0.9rem; /* margen derecho para la X */
-  border-radius: 1rem 1rem 0.25rem 1rem; /* esquina hacia el FAB */
+  border-radius: 1rem 1rem 1rem 0.25rem; /* esquina hacia el FAB (abajo-izq) */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transform-origin: bottom right;
+  transform-origin: bottom left;
   will-change: transform, opacity;
 }
 .teaser-bubble-entering { animation: teaser-pop 0.2s ease-out; }
@@ -504,7 +505,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .chat-panel {
   position: absolute;
   bottom: 6rem;
-  right: 1.5rem;
+  left: 1.5rem;
   width: 24rem;
   max-width: calc(100vw - 2rem);
   height: 32rem;
@@ -516,8 +517,8 @@ button { -webkit-tap-highlight-color: transparent; }
 
 /* Pulso de atención del FAB (respeta reduce-motion) */
 @keyframes pulse-attention {
-  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(204, 2, 43, 0.4); }
-  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px rgba(204, 2, 43, 0); }
+  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(37, 211, 102, 0.45); }
+  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px rgba(37, 211, 102, 0); }
 }
 .animate-pulse-attention { animation: pulse-attention 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .animate-pulse-attention { animation: none; } }
