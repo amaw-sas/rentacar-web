@@ -36,7 +36,7 @@
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Contáctanos por WhatsApp"
-              class="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+              class="inline-flex lg:hidden items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -56,12 +56,13 @@
         <div class="flex items-center justify-center">
           <div
             ref="visualBox"
-            class="w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
+            class="relative w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
             style="aspect-ratio: 16 / 9"
           >
-            <!-- Default paint: poster only (no multi-MB video on critical path). -->
+            <!-- Default paint: poster only (no multi-MB video on critical path).
+                 Stays as the first frame under reduced-motion / data-saver too. -->
             <NuxtImg
-              v-if="!videoActive"
+              v-if="!videoActive && !audioActive"
               src="/videos/hero-poster.jpg"
               alt="Flota Alquilame Colombia"
               width="960"
@@ -69,22 +70,58 @@
               format="webp"
               loading="eager"
               fetchpriority="high"
-              class="w-full h-full object-cover"
+              class="absolute inset-0 w-full h-full object-cover"
             />
-            <!-- Prefer mp4 (audit: webm was heavier). Activated post-idle when visible. -->
+            <!-- Muted preview loop (no audio track). Prefer mp4 (audit: webm was
+                 heavier). Activated post-idle when visible; hidden once sound is on. -->
             <video
-              v-else
-              class="w-full h-full object-cover"
+              v-show="videoActive && !audioActive"
+              ref="previewVideo"
+              class="absolute inset-0 w-full h-full object-cover"
               poster="/videos/hero-poster.jpg"
               autoplay
               muted
               loop
               playsinline
               preload="metadata"
-              aria-label="Video promocional de Alquilame Colombia"
+              aria-label="Video promocional de Alquilame Colombia (silenciado)"
             >
               <source src="/videos/hero.mp4" type="video/mp4" />
             </video>
+            <!-- Full video WITH audio: preload="none" → nothing downloads until
+                 the user clicks the sound button. That click is the user gesture
+                 browsers require to play media with audio. -->
+            <video
+              v-show="audioActive"
+              ref="audioVideo"
+              class="absolute inset-0 w-full h-full object-cover bg-black"
+              poster="/videos/hero-poster.jpg"
+              controls
+              playsinline
+              preload="none"
+              aria-label="Video promocional de Alquilame Colombia con audio"
+            >
+              <source src="/videos/hero-audio.mp4" type="video/mp4" />
+            </video>
+            <!-- Sound affordance: full-cover play button over the poster/preview.
+                 Over the poster (reduced-motion / data-saver) it reads "Reproducir
+                 con sonido"; over the running preview, "Activar sonido". -->
+            <button
+              v-if="!audioActive"
+              type="button"
+              class="group absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors duration-200"
+              :aria-label="videoActive ? 'Activar sonido del video' : 'Reproducir video con sonido'"
+              @click="enableSound"
+            >
+              <span
+                class="inline-flex items-center gap-2 rounded-full bg-black/55 group-hover:bg-black/70 text-white text-sm font-semibold px-4 py-2.5 shadow-lg backdrop-blur-sm transition-colors duration-200"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                {{ videoActive ? 'Activar sonido' : 'Reproducir con sonido' }}
+              </span>
+            </button>
           </div>
         </div>
       </div>
@@ -99,13 +136,43 @@ const { franchise } = useAppConfig()
 const cityCount = useCityCount()
 
 const visualBox = ref<HTMLElement | null>(null)
+const previewVideo = ref<HTMLVideoElement | null>(null)
+const audioVideo = ref<HTMLVideoElement | null>(null)
 const videoActive = ref(false)
+const audioActive = ref(false)
 let idleId: number | undefined
 let io: IntersectionObserver | undefined
+
+/**
+ * User clicked the sound affordance. This gesture is what lets the browser play
+ * media WITH audio (autoplay-with-audio is blocked). Swap the muted preview for
+ * the full audio video (preload="none" → it downloads only now), from the start.
+ */
+function enableSound() {
+  audioActive.value = true
+  previewVideo.value?.pause()
+  const v = audioVideo.value
+  if (!v) return
+  try {
+    v.muted = false
+    v.currentTime = 0
+    const p = v.play()
+    if (p && typeof p.catch === 'function') p.catch(() => {})
+  }
+  catch {
+    /* play() may reject on some browsers; native controls remain as fallback */
+  }
+}
 
 onMounted(() => {
   if (typeof window === 'undefined') return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  // Data-saver / very slow links: skip the muted preview autoplay entirely and
+  // stay on the poster + "Reproducir con sonido" button (no background download).
+  const conn = (navigator as Navigator & {
+    connection?: { saveData?: boolean; effectiveType?: string }
+  }).connection
+  if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) return
   const el = visualBox.value
   if (!el) return
 
