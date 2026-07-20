@@ -85,8 +85,8 @@ describe('Home hero — golden parity', () => {
     // First paint: NuxtImg poster, not multi-MB autoplay sources.
     expect(hero).toMatch(/NuxtImg/)
     expect(hero).toMatch(/hero-poster\.jpg/)
-    expect(hero).toMatch(/v-if="!videoActive"/)
-    // Deferred video branch (activated after idle/visible).
+    expect(hero).toMatch(/v-if="!videoActive && !audioActive"/)
+    // Deferred muted-preview branch (activated after idle/visible).
     expect(hero).toMatch(/<video\b/)
     expect(hero).toMatch(/autoplay/)
     expect(hero).toMatch(/\bmuted\b/)
@@ -94,6 +94,21 @@ describe('Home hero — golden parity', () => {
     expect(hero).toMatch(/\bplaysinline\b/)
     expect(hero).toMatch(/hero\.mp4/)
     expect(hero).not.toMatch(/hero\.webm/)
+  })
+
+  // SCEN-SND: muted preview loops for free; a user click loads the full video
+  // WITH audio (preload="none" → no cost until intent), the only way browsers
+  // allow audible playback. Audible playback itself is verified in the browser.
+  it('adds a click-to-enable-sound flow backed by a preload=none audio video', () => {
+    // The audio master is a SEPARATE, deferred asset — never on the critical path.
+    expect(hero).toMatch(/hero-audio\.mp4/)
+    expect(hero).toMatch(/preload="none"/)
+    // A real button (a11y label) toggles sound on; wired to enableSound.
+    expect(hero).toMatch(/@click="enableSound"/)
+    expect(hero).toMatch(/aria-label="[^"]*sonido[^"]*"/i)
+    // State + handler exist in the script.
+    expect(hero).toMatch(/audioActive/)
+    expect(hero).toMatch(/function enableSound|const enableSound/)
   })
 
   it('has the "Ver Precios" CTA anchoring to #fleet (no WhatsApp-to-reserve)', () => {
