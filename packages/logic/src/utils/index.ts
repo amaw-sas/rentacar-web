@@ -32,6 +32,7 @@ export { normalizeReservationCode } from './reservationCode';
 export { pickPriceForDate } from './pickPriceForDate';
 export { isBeyondPricingHorizon, allRenderableBeyondHorizon } from './pricingHorizon';
 export { pickRepresentativeDailyPrice } from './pickRepresentativeDailyPrice';
+export { lowSeasonMonthly1k, lowSeasonDailyFrom30 } from './lowSeasonDailyPrice';
 export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 export { IVA_PERCENTAGE } from './ivaRate';

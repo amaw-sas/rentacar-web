@@ -10,14 +10,14 @@
       G4 → Camioneta · Mecánica         LE → Camioneta Premium · Automática
 
     Prices are REAL, never the mockup's hardcoded figures:
-      - Diario: pickRepresentativeDailyPrice over month_prices (cheapest active
-        positive one_day_price — the same source the city landing / checkout use).
-      - Mensualidad: cheapest active positive 1k_kms (the monthly 1.000 km plan).
+      - Diario: lowSeasonDailyFrom30 over month_prices — the low-season 1.000 km
+        MONTHLY rate prorated over a 30-day rental (round(monthly / 30)).
+      - Mensualidad: lowSeasonMonthly1k — that same low-season 1.000 km monthly floor.
     Fail-soft: a category with no active positive row shows NO price block —
     never "$0" nor a fabricated value.
 
     CTA note: the golden's "Consultar disponibilidad" CTA points at an external
-    site; here "Ver disponibilidad" redirects to /reservas instead. On a city page
+    site; here the "Cotizar mis fechas" CTA redirects to /reservas instead. On a city page
     it preselects a branch of that city (searchBranchByCity) by seeding the
     reservation-form store before navigating, so /reservas opens with the pickup
     ready WITHOUT running a search; on the home (no city) it goes to a clean
@@ -98,15 +98,16 @@
             <p class="text-sm text-gray-500 mb-4 leading-snug">{{ card.description }}</p>
 
             <!-- Price: real; omitted (fail-soft) when undefined -->
-            <div class="mb-4 min-h-[2.5rem]">
-              <p
-                v-if="plan === 'daily' && card.dailyPrice !== undefined"
-                class="flex items-baseline gap-2 flex-wrap"
-              >
-                <span class="text-sm text-gray-500">Desde</span>
-                <span class="text-2xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}/día</span>
-                <span class="text-xs text-gray-400">+ IVA</span>
-              </p>
+            <div class="mb-4 min-h-[3.5rem]">
+              <!-- Diario: low-season 1.000 km monthly rate prorated over 30 days -->
+              <div v-if="plan === 'daily' && card.dailyPrice !== undefined" class="leading-tight">
+                <p class="text-xs text-gray-500">Precio día en alquileres de 30 días</p>
+                <p class="flex items-baseline gap-2 flex-wrap">
+                  <span class="text-2xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}</span>
+                  <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
+                </p>
+                <p class="text-xs font-semibold text-gray-600">Temporada Baja</p>
+              </div>
               <p
                 v-else-if="plan === 'monthly' && card.monthlyPrice !== undefined"
                 class="flex items-baseline gap-2 flex-wrap"
@@ -126,20 +127,29 @@
               <span class="flex items-center gap-1.5" :title="`${card.luggage} maletas`">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20h0a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h0" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
                 {{ card.luggage }}
-                <span class="text-gray-500"> · {{ plan === 'daily' ? 'Kilometraje ilimitado' : '1.000 km/mes incluidos' }}</span>
+                <span class="text-gray-500"> · 1.000 km/mes incluidos</span>
               </span>
             </div>
 
             <!-- CTA: redirige a /reservas. En una city page preselecciona una
                  sucursal de esa ciudad (searchBranchByCity) sembrando el store
                  antes de navegar, así /reservas abre con la recogida lista SIN
-                 disparar búsqueda. En el home no hay ciudad → /reservas limpio. -->
-            <UButton
-              class="mt-auto block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold uppercase transition-colors"
-              @click="goToReservas"
-            >
-              Ver disponibilidad
-            </UButton>
+                 disparar búsqueda. En el home no hay ciudad → /reservas limpio.
+
+                 El precio Diario es una tarifa de 30 días; 1-29 días se cotizan
+                 con precio por día distinto → la nota (solo en Diario) lo aclara
+                 y el CTA invita a cotizar cualquier duración. -->
+            <div class="mt-auto">
+              <p v-if="plan === 'daily'" class="text-xs text-gray-500 mb-3 leading-snug">
+                ¿Menos días? El precio por día cambia — cotiza tus fechas.
+              </p>
+              <UButton
+                class="block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold uppercase transition-colors"
+                @click="goToReservas"
+              >
+                Cotizar mis fechas
+              </UButton>
+            </div>
           </div>
         </div>
       </div>
@@ -152,8 +162,7 @@
 import { computed, ref } from 'vue'
 
 // utils
-import { pickRepresentativeDailyPrice } from '@rentacar-main/logic/utils'
-import type { CategoryMonthPriceData } from '@rentacar-main/logic/utils'
+import { lowSeasonMonthly1k, lowSeasonDailyFrom30 } from '@rentacar-main/logic/utils'
 
 type Plan = 'daily' | 'monthly'
 
@@ -242,23 +251,6 @@ const CATEGORIES: {
   },
 ]
 
-/**
- * Cheapest positive active monthly (1.000 km plan) rate. Mirrors
- * pickRepresentativeDailyPrice's selection rule, but on `1k_kms` — the monthly
- * "Desde $X/mes" floor. Returns undefined when no active row carries a positive
- * monthly price, so the card omits the block (never $0 / fabricated).
- */
-function pickRepresentativeMonthlyPrice(prices: CategoryMonthPriceData[]): number | undefined {
-  return prices
-    .filter((p) => p.status === 'active' && p['1k_kms'] > 0)
-    .sort((a, b) => {
-      const delta = a['1k_kms'] - b['1k_kms']
-      if (delta !== 0) return delta
-      // tie-break: most recent init_date wins, mirroring pickRepresentativeDailyPrice
-      return b.init_date.localeCompare(a.init_date)
-    })[0]?.['1k_kms']
-}
-
 const { categories } = useFetchRentacarData()
 const { moneyFormat } = useMoneyFormat()
 
@@ -283,13 +275,18 @@ function goToReservas() {
 
 // Prices are global per category code (not per-city): work on the home with no
 // city. undefined => that card's price block is hidden (never $0 / fabricated).
+//
+// "Alquiler Diario" is NOT the standalone one_day_price column: it is the
+// low-season 1.000 km MONTHLY rate prorated over a 30-day rental
+// (lowSeasonDailyFrom30 = round(lowSeasonMonthly1k / 30)). "Mensualidad" shows
+// that same low-season 1.000 km monthly floor.
 const cards = computed(() =>
   CATEGORIES.map((category) => {
     const monthPrices = categories.find((c) => c.id === category.code)?.month_prices ?? []
     return {
       ...category,
-      dailyPrice: pickRepresentativeDailyPrice(monthPrices)?.one_day_price,
-      monthlyPrice: pickRepresentativeMonthlyPrice(monthPrices),
+      dailyPrice: lowSeasonDailyFrom30(monthPrices),
+      monthlyPrice: lowSeasonMonthly1k(monthPrices),
     }
   }),
 )
