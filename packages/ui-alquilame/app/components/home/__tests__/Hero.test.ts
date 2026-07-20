@@ -62,10 +62,19 @@ describe('Home hero — golden parity', () => {
     expect(hero).not.toMatch(/<HeroHeadline\b/)
   })
 
-  it('uses the brand heading font (font-heading) for the headline', () => {
-    expect(hero).toMatch(/<h1[^>]*\bfont-heading\b/)
+  it('uses the city-sized heading-hero display headline', () => {
+    // Match the city hero headline scale (heading-hero + text-3xl…lg:text-5xl).
+    expect(hero).toMatch(/<h1[^>]*\bheading-hero\b/)
+    expect(hero).toMatch(/<h1[^>]*text-3xl sm:text-4xl lg:text-5xl/)
     expect(hero).toContain('Alquiler de Carros en Colombia')
     expect(hero).not.toMatch(/al Mejor Precio/)
+  })
+
+  it('shows the city-style star trust badge above the headline', () => {
+    // Global auto-import name is IconsStarIcon (Icons/ dir prefix); the bare
+    // <StarIcon> alias only exists where a file imports it explicitly.
+    expect(hero).toMatch(/<IconsStarIcon\b/)
+    expect(hero).toMatch(/4\.9 reviews/)
   })
 
   it('reserves visual space with an aspect-ratio card (CLS)', () => {

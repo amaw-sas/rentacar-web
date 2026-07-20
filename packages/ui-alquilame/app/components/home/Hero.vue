@@ -14,9 +14,15 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
       <div class="grid lg:grid-cols-2 gap-10 items-center">
         <div class="text-center lg:text-left">
-          <h1
-            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-white leading-[1.1]"
+          <!-- Trust signal: "4.9 reviews" star badge (parity with the city hero). -->
+          <div
+            class="flex flex-row space-x-0.5 justify-center lg:justify-start items-center text-sm text-white mb-3"
           >
+            <IconsStarIcon v-for="i in [1, 2, 3, 4, 5]" :key="i" cls="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span class="ml-2">4.9 reviews</span>
+          </div>
+
+          <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
             Alquiler de Carros en Colombia
           </h1>
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
