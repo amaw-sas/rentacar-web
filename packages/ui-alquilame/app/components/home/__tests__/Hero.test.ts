@@ -64,7 +64,8 @@ describe('Home hero — golden parity', () => {
 
   it('uses the brand heading font (font-heading) for the headline', () => {
     expect(hero).toMatch(/<h1[^>]*\bfont-heading\b/)
-    expect(hero).toContain('Alquiler de Carros en Colombia al Mejor Precio')
+    expect(hero).toContain('Alquiler de Carros en Colombia')
+    expect(hero).not.toMatch(/al Mejor Precio/)
   })
 
   it('reserves visual space with an aspect-ratio card (CLS)', () => {

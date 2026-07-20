@@ -17,7 +17,7 @@
           <h1
             class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-white leading-[1.1]"
           >
-            Alquiler de Carros en Colombia al Mejor Precio
+            Alquiler de Carros en Colombia
           </h1>
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
             Sin anticipos, sin fila. Flota con menos de 2 años y mantenimiento incluido.
