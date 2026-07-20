@@ -59,8 +59,9 @@ describe('F3 — /reservas page hero + gradient', () => {
     expect(page).toMatch(/<h1[^>]*heading-hero/)
   })
 
-  it('renders a search-focused headline', () => {
-    expect(page).toMatch(/Reserva tu carro/)
+  it('renders the quote-and-book headline', () => {
+    expect(page).toMatch(/Cotiza y Reserva/)
+    expect(page).not.toMatch(/Cotiza y Reserva aquí/)
   })
 })
 
