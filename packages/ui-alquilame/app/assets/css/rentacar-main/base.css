@@ -88,20 +88,15 @@ header .text-highlighted,
     }
 }
 
-/* UHeader - reduce gap between logo and navigation (desktop) */
-@media (min-width: 1024px) {
-    header [data-slot="container"] {
-        justify-content: center !important;
-        gap: 1rem !important;
-    }
-    header [data-slot="left"] {
-        flex: none !important;
-    }
-    header [data-slot="right"] {
-        flex: none !important;
-        justify-content: flex-start !important;
-    }
-}
+/* UHeader spacing is Nuxt UI's own: the container is `justify-between` and the
+   left/right slots are `lg:flex-1`, so the logo sits flush left and the CTA
+   flush right with the nav floating between them.
+
+   A previous override forced `justify-content: center` + `flex: none` here to
+   "reduce the gap between logo and navigation". It collapsed the whole row into
+   a centred cluster — at 1280px the three blocks occupied 286→994 with ~270px
+   of dead space on each side, while the design has them spanning edge to edge.
+   Don't reintroduce it; adjust the container's max-width or padding instead. */
 
 /* UPageHero - reduce top padding to bring content closer to header */
 /* Only target hero (no ID), not regular sections */

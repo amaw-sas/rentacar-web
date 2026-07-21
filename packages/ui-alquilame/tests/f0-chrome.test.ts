@@ -205,3 +205,40 @@ describe('SCEN-CHROME-NOGREEN — the only green in default.vue is WhatsApp toke
     expect(layout).not.toMatch(/bg-\[#090\]/)
   })
 })
+
+/**
+ * Header spacing — the three chrome blocks span the container edge to edge:
+ *   GIVEN a desktop viewport (>= lg)
+ *   WHEN  the header renders logo | nav | "Reserva Ahora"
+ *   THEN  the logo sits flush against the container's left padding and the CTA
+ *         against its right, with the nav floating between them.
+ * A local `!important` override used to force `justify-content: center` and
+ * `flex: none` on the left/right slots, which collapsed the row into a centered
+ * cluster with ~270px of dead space on each side at 1280px. Nuxt UI's own theme
+ * already ships `justify-between` + `lg:flex-1`; the fix is to stop fighting it.
+ */
+describe('header — logo and CTA reach the container edges', () => {
+  const css = read('app/assets/css/rentacar-main/base.css')
+
+  it('does not force the header container to centre its blocks', () => {
+    const containerRule = css.match(
+      /header \[data-slot="container"\]\s*\{[^}]*\}/g,
+    ) ?? []
+    for (const rule of containerRule) {
+      expect(rule, 'header container must not be centred').not.toMatch(
+        /justify-content:\s*center/,
+      )
+    }
+  })
+
+  it('does not cancel the flex-1 growth on the left/right slots', () => {
+    const slotRules = css.match(
+      /header \[data-slot="(left|right)"\]\s*\{[^}]*\}/g,
+    ) ?? []
+    for (const rule of slotRules) {
+      expect(rule, 'header side slots must keep their flex growth').not.toMatch(
+        /flex:\s*none/,
+      )
+    }
+  })
+})
