@@ -67,30 +67,24 @@ header .text-highlighted,
     @apply w-full bg-whatsapp hover:bg-whatsapp-hover text-black font-bold justify-center;
 }
 
-/* Glow pulse animation for active search button (green, #25D366 = 37,211,102) */
-@keyframes glow-pulse {
-    0%, 100% {
-        box-shadow: 0 0 8px rgba(37, 211, 102, 0.6),
-                    0 0 16px rgba(37, 211, 102, 0.4),
-                    0 0 24px rgba(37, 211, 102, 0.2);
-    }
-    50% {
-        box-shadow: 0 0 16px rgba(37, 211, 102, 0.9),
-                    0 0 32px rgba(37, 211, 102, 0.7),
-                    0 0 48px rgba(37, 211, 102, 0.4);
-    }
+/* "Breathing" scale animation for the active search button — subtly grows and
+   shrinks to draw attention (operator pick B). Kept small (1.04) so it never
+   overflows the grid cell. */
+@keyframes search-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
 }
 
 .search-button-glow {
-    animation: glow-pulse 1.5s ease-in-out infinite;
+    animation: search-breathe 1.6s ease-in-out infinite;
+    transform-origin: center;
+    will-change: transform;
 }
 
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
     .search-button-glow {
         animation: none;
-        box-shadow: 0 0 16px rgba(37, 211, 102, 0.7),
-                    0 0 32px rgba(37, 211, 102, 0.5);
     }
 }
 
