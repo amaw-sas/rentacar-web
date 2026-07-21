@@ -108,7 +108,7 @@
               </span>
             </button>
           </li>
-          <li class="flex">
+          <li v-if="whatsappVisible" class="flex">
             <a
               :href="franchise.whatsapp"
               target="_blank"
@@ -190,7 +190,7 @@ const route = useRoute()
 // useChatStatus). Fetch client-only, fail-closed. Reemplaza al viejo flag de
 // entorno NUXT_PUBLIC_CHAT_ENABLED (runtimeConfig.public.chatEnabled ya no gobierna
 // la visibilidad; el operador prende/apaga cada marca desde /chat-knowledge).
-const { enabled: chatEnabled, resolved: chatStatusResolved } = useChatStatus(franchise.shortname as string)
+const { enabled: chatEnabled, resolved: chatStatusResolved, whatsappVisible } = useChatStatus(franchise.shortname as string)
 
 // Estado client-only: arranca colapsado (lección #109).
 const menuOpen = ref(false)
