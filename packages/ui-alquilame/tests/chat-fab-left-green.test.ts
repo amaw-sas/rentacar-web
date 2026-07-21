@@ -41,3 +41,10 @@ describe('SCEN-FAB2: FAB stack anchors bottom-left', () => {
     expect(SRC).not.toMatch(/\bitems-end\b/)
   })
 })
+
+describe('SCEN-FAB3: closed FAB shows the support-agent (headset) icon', () => {
+  it('uses the headset icon viewBox, not the old chat-bubble path', () => {
+    expect(SRC).toMatch(/viewBox="85 160 897 897"/)
+    expect(SRC).not.toMatch(/M21 15a2 2 0 0 1-2 2H7l-4 4V5/)
+  })
+})
