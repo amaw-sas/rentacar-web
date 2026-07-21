@@ -61,34 +61,30 @@ header .text-highlighted,
     --ui-text-highlighted: #1f2937;
 }
 
+/* WhatsApp green (#25D366) with black text: white on #25D366 fails WCAG AA
+   (~2:1), black is ~10.6:1 — same rule the header WhatsApp button follows. */
 .search-button {
-    @apply w-full bg-red-600 hover:bg-red-700 text-white font-bold justify-center;
+    @apply w-full bg-whatsapp hover:bg-whatsapp-hover text-black font-bold justify-center;
 }
 
-/* Glow pulse animation for active search button */
-@keyframes glow-pulse {
-    0%, 100% {
-        box-shadow: 0 0 8px rgba(220, 38, 38, 0.6),
-                    0 0 16px rgba(220, 38, 38, 0.4),
-                    0 0 24px rgba(220, 38, 38, 0.2);
-    }
-    50% {
-        box-shadow: 0 0 16px rgba(220, 38, 38, 0.9),
-                    0 0 32px rgba(220, 38, 38, 0.7),
-                    0 0 48px rgba(220, 38, 38, 0.4);
-    }
+/* "Breathing" scale animation for the active search button — subtly grows and
+   shrinks to draw attention (operator pick B). Kept small (1.04) so it never
+   overflows the grid cell. */
+@keyframes search-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
 }
 
 .search-button-glow {
-    animation: glow-pulse 1.5s ease-in-out infinite;
+    animation: search-breathe 1.6s ease-in-out infinite;
+    transform-origin: center;
+    will-change: transform;
 }
 
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
     .search-button-glow {
         animation: none;
-        box-shadow: 0 0 16px rgba(220, 38, 38, 0.7),
-                    0 0 32px rgba(220, 38, 38, 0.5);
     }
 }
 

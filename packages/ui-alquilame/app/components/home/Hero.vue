@@ -1,23 +1,38 @@
 <template>
   <!--
-    Hero — golden parity (astro-alquilame #hero). Red gradient bg via the v4
-    bg-linear-to-* utility.
+    Hero — textured red banner + car cutout (parity with astro-alquilame). Red
+    gradient via the v4 bg-linear-to-* utility, overlaid with the fondo-banner
+    pattern. The car (carro_hero.webp, alpha) is the main visual; a small corner
+    video loops muted and plays WITH audio on click.
 
-    Perf (issue 322 SCEN-322-P01): first paint is the poster image only (NuxtImg).
-    Multi-MB video is NOT autoplay on the critical path — it activates after the
-    hero is visible + browser idle (skipped when prefers-reduced-motion).
+    Perf: the car webp reserves space via width/height (no CLS). The muted preview
+    is off the critical path — it activates after the hero is visible + browser
+    idle (skipped under prefers-reduced-motion / data-saver). The full audio video
+    is preload="none" → it downloads only when the user clicks "Activar sonido".
   -->
   <section
     id="hero"
     class="relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to [--ctx-text-primary:#fff]"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
-      <div class="grid lg:grid-cols-2 gap-10 items-center">
+    <!-- Textured banner pattern over the red gradient. -->
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-0 bg-center bg-cover opacity-60"
+      style="background-image: url('/images/fondo-banner.webp')"
+    />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-12 w-full">
+      <div class="grid lg:grid-cols-2 gap-3 lg:gap-10 items-center">
         <div class="text-center lg:text-left">
-          <h1
-            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-white leading-[1.1]"
+          <!-- Trust signal: "4.9 reviews" star badge (parity with the city hero). -->
+          <div
+            class="flex flex-row space-x-0.5 justify-center lg:justify-start items-center text-sm text-white mb-3"
           >
-            Alquiler de Carros en Colombia al Mejor Precio
+            <IconsStarIcon v-for="i in [1, 2, 3, 4, 5]" :key="i" cls="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span class="ml-2">4.9 reviews</span>
+          </div>
+
+          <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
+            Alquiler de Carros en Colombia
           </h1>
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
             Sin anticipos, sin fila. Flota con menos de 2 años y mantenimiento incluido.
@@ -53,38 +68,80 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-center">
-          <div
-            ref="visualBox"
-            class="w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
-            style="aspect-ratio: 16 / 9"
+        <div ref="visualBox" class="relative flex items-center justify-center min-h-[16rem]">
+          <!-- Main visual: car cutout (webp, alpha). width/height reserve space → no CLS. -->
+          <img
+            src="/images/carro_hero.webp"
+            alt="SUV disponible para alquilar en Colombia con Alquilame"
+            width="1199"
+            height="678"
+            class="w-full max-w-xl drop-shadow-2xl"
+            loading="eager"
+            fetchpriority="high"
           >
-            <!-- Default paint: poster only (no multi-MB video on critical path). -->
+
+          <!-- Small corner video over the car: muted preview loops, click plays
+               with audio. Desktop bottom-right (over the promo corner); mobile
+               right + vertically centered on the car. -->
+          <div
+            class="absolute right-2 top-1/2 -translate-y-1/2 lg:top-auto lg:translate-y-0 lg:bottom-2 lg:right-2 w-[42vw] lg:w-80 aspect-[5/3] lg:aspect-[16/9] rounded-xl overflow-hidden shadow-2xl ring-2 ring-white/70 bg-black"
+          >
+            <!-- Default paint: poster only. Stays under reduced-motion / data-saver. -->
             <NuxtImg
-              v-if="!videoActive"
+              v-if="!videoActive && !audioActive"
               src="/videos/hero-poster.jpg"
-              alt="Flota Alquilame Colombia"
-              width="960"
-              height="540"
+              alt="Video promocional Alquilame"
+              width="320"
+              height="180"
               format="webp"
               loading="eager"
-              fetchpriority="high"
-              class="w-full h-full object-cover"
+              class="absolute inset-0 w-full h-full object-cover"
             />
-            <!-- Prefer mp4 (audit: webm was heavier). Activated post-idle when visible. -->
+            <!-- Muted preview loop (no audio track). Activated post-idle when visible. -->
             <video
-              v-else
-              class="w-full h-full object-cover"
+              v-show="videoActive && !audioActive"
+              ref="previewVideo"
+              class="absolute inset-0 w-full h-full object-cover"
               poster="/videos/hero-poster.jpg"
               autoplay
               muted
               loop
               playsinline
               preload="metadata"
-              aria-label="Video promocional de Alquilame Colombia"
+              aria-label="Video promocional de Alquilame Colombia (silenciado)"
             >
               <source src="/videos/hero.mp4" type="video/mp4" />
             </video>
+            <!-- Full video WITH audio: preload="none" → downloads only on click. -->
+            <video
+              v-show="audioActive"
+              ref="audioVideo"
+              class="absolute inset-0 w-full h-full object-cover bg-black"
+              poster="/videos/hero-poster.jpg"
+              controls
+              playsinline
+              preload="none"
+              aria-label="Video promocional de Alquilame Colombia con audio"
+            >
+              <source src="/videos/hero-audio.mp4" type="video/mp4" />
+            </video>
+            <!-- "Activar sonido" pill at the bottom of the small video. -->
+            <button
+              v-if="!audioActive"
+              type="button"
+              class="group absolute inset-0 flex items-end justify-center pb-2 lg:pb-3 bg-black/10 hover:bg-black/25 transition-colors duration-200"
+              aria-label="Activar sonido del video"
+              @click="enableSound"
+            >
+              <span
+                class="inline-flex items-center gap-1 lg:gap-2 rounded-full bg-black/65 group-hover:bg-black/80 text-white text-[11px] lg:text-sm font-semibold px-2 py-1 lg:px-4 lg:py-2 shadow backdrop-blur-sm transition-colors duration-200"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="w-3 h-3 lg:w-4 lg:h-4">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Activar sonido
+              </span>
+            </button>
           </div>
         </div>
       </div>
@@ -99,13 +156,43 @@ const { franchise } = useAppConfig()
 const cityCount = useCityCount()
 
 const visualBox = ref<HTMLElement | null>(null)
+const previewVideo = ref<HTMLVideoElement | null>(null)
+const audioVideo = ref<HTMLVideoElement | null>(null)
 const videoActive = ref(false)
+const audioActive = ref(false)
 let idleId: number | undefined
 let io: IntersectionObserver | undefined
+
+/**
+ * User clicked the sound affordance. This gesture is what lets the browser play
+ * media WITH audio (autoplay-with-audio is blocked). Swap the muted preview for
+ * the full audio video (preload="none" → it downloads only now), from the start.
+ */
+function enableSound() {
+  audioActive.value = true
+  previewVideo.value?.pause()
+  const v = audioVideo.value
+  if (!v) return
+  try {
+    v.muted = false
+    v.currentTime = 0
+    const p = v.play()
+    if (p && typeof p.catch === 'function') p.catch(() => {})
+  }
+  catch {
+    /* play() may reject on some browsers; native controls remain as fallback */
+  }
+}
 
 onMounted(() => {
   if (typeof window === 'undefined') return
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  // Data-saver / very slow links: skip the muted preview autoplay entirely and
+  // stay on the poster + "Reproducir con sonido" button (no background download).
+  const conn = (navigator as Navigator & {
+    connection?: { saveData?: boolean; effectiveType?: string }
+  }).connection
+  if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) return
   const el = visualBox.value
   if (!el) return
 

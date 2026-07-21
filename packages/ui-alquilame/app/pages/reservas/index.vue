@@ -44,7 +44,7 @@
           <!-- Text column -->
           <div class="text-center lg:text-left">
             <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
-              Reserva tu carro
+              Cotiza y Reserva
             </h1>
 
             <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
