@@ -8,13 +8,15 @@
  *   - 6 cards mapped to the 6 real category codes C/F/FX/G4/GC/LE.
  *   - golden copy: category titles + transmission + example + descriptions.
  *   - a Diario/Mensualidad toggle drives which price is shown.
- *   - daily price from pickRepresentativeDailyPrice (real, not hardcoded);
- *     monthly price from a representative monthly picker (real, not hardcoded).
+ *   - both prices derive from the SAME low-season 1.000 km monthly floor
+ *     (lowSeasonMonthly1k), with the daily figure prorated over 30 days
+ *     (lowSeasonDailyFrom30) — real, never hardcoded, never one_day_price.
  *   - fail-soft: each price block is omitted (v-if) when its value is undefined.
  *   - gradient uses bg-linear-* (F0 lesson), never bg-gradient-to-*.
  *   - headings use the font-heading family (Plus Jakarta, F0-03).
- *   - the engine flow is preserved: SelectBranch inside a modal, "Ver
- *     disponibilidad" CTA — now in BRAND RED (bg-brand-600), never green.
+ *   - the engine flow is preserved: no modal — the CTA "Cotizar mis fechas"
+ *     redirects to /reservas, in BRAND RED (bg-brand-600), never green.
+ *   - card typography is a small closed system: 4 sizes / 3 weights / 4 colors.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -71,21 +73,34 @@ describe('Fleet — Diario/Mensualidad toggle', () => {
 })
 
 describe('Fleet — real prices + fail-soft', () => {
-  it('reads the daily price from pickRepresentativeDailyPrice (real, not hardcoded)', () => {
-    expect(FLEET).toContain('pickRepresentativeDailyPrice')
+  it('derives the daily price from the 30-day low-season rate, never one_day_price', () => {
+    // "Alquiler Diario" advertises a 30-day rental, so it is the low-season
+    // 1.000 km monthly floor prorated over 30 days — NOT the standalone
+    // one_day_price column, which is a different (much higher) product.
+    expect(FLEET).toContain('lowSeasonDailyFrom30')
     expect(FLEET).toMatch(/categories\.find\(\s*\(?c\)?\s*=>\s*c\.id\s*===\s*category\.code\s*\)/)
     expect(FLEET).toContain('month_prices')
-    expect(FLEET).toContain('one_day_price')
+    expect(FLEET).toMatch(/dailyPrice:\s*lowSeasonDailyFrom30\(/)
+    // Never READ from the one_day_price column (the name may still appear in a
+    // comment explaining precisely why it is not used).
+    expect(FLEET).not.toMatch(/[.[]\s*'?one_day_price/)
   })
 
-  it('reads the monthly price from a representative monthly picker (real, not hardcoded)', () => {
-    expect(FLEET).toContain('pickRepresentativeMonthlyPrice')
-    expect(FLEET).toContain("'1k_kms'")
+  it('reads the monthly price from the shared low-season 1.000 km picker', () => {
+    expect(FLEET).toContain('lowSeasonMonthly1k')
+    // Both figures come from the same shared util, not from a local re-derivation.
+    expect(FLEET).toMatch(
+      /import\s*\{[^}]*lowSeasonMonthly1k[^}]*\}\s*from\s*'@rentacar-main\/logic\/utils'/,
+    )
   })
 
-  it('formats COP via moneyFormat with the /día and /mes suffixes', () => {
+  it('formats COP via moneyFormat — bare daily figure, /mes on the monthly one', () => {
+    // The daily figure carries no "/día" suffix: the label above it already says
+    // "Precio x día en alquiler de 30 días", which is the honest framing.
     expect(FLEET).toContain('useMoneyFormat')
-    expect(FLEET).toMatch(/\$\{\{\s*moneyFormat\(card\.dailyPrice\)\s*\}\}\/día/)
+    expect(FLEET).toMatch(/\$\{\{\s*moneyFormat\(card\.dailyPrice\)\s*\}\}/)
+    expect(FLEET).not.toMatch(/moneyFormat\(card\.dailyPrice\)\s*\}\}\/día/)
+    expect(FLEET).toContain('Precio x día en alquiler de 30 días')
     expect(FLEET).toMatch(/\$\{\{\s*moneyFormat\(card\.monthlyPrice\)\s*\}\}\/mes/)
   })
 
@@ -113,8 +128,10 @@ describe('Fleet — engine flow (redirect to /reservas)', () => {
     expect(FLEET).toContain('searchBranchByCity')
   })
 
-  it('keeps the "Ver disponibilidad" CTA in BRAND RED, never green', () => {
-    expect(FLEET).toContain('Ver disponibilidad')
+  it('keeps the "Cotizar mis fechas" CTA in BRAND RED, never green', () => {
+    // The copy invites quoting ANY duration because the shown daily figure is a
+    // 30-day rate; 1-29 days price differently.
+    expect(FLEET).toContain('Cotizar mis fechas')
     expect(FLEET).toMatch(/bg-brand-600\s+hover:bg-brand-700/)
     expect(FLEET).not.toMatch(/bg-green-/)
   })
@@ -133,5 +150,58 @@ describe('Fleet — F0 styling lessons', () => {
   it('the brand accent bar and price use the brand token, not raw red-600', () => {
     expect(FLEET).toContain('bg-brand-600')
     expect(FLEET).toContain('text-brand-600')
+  })
+})
+
+/**
+ * Card typography is a CLOSED system — the card previously mixed 5 weights,
+ * 2 support grays and 4 sizes, which read as visual noise:
+ *   sizes   → text-2xl (price) / text-lg (title) / text-sm (body, specs) /
+ *             text-xs (meta labels). Nothing else.
+ *   weights → bold (title, price, CTA) / medium (labels) / normal (rest).
+ *             No extrabold, no semibold.
+ *   colors  → gray-900 (title) / gray-600 (ALL support copy) /
+ *             brand-600 (price) / emerald-600 (single accent, "IVA incluido").
+ * Scoped to the card body only: the section heading and the Diario/Mensualidad
+ * toggle are section chrome and keep their own (heavier) scale on purpose.
+ */
+describe('Fleet — card typography system', () => {
+  // The card body: from the category <h3> to the CTA label. lastIndexOf on the
+  // CTA because the copy is also quoted in the file's top docblock.
+  const start = FLEET.indexOf('<h3 class="text-lg')
+  const end = FLEET.lastIndexOf('Cotizar mis fechas')
+  const CARD = FLEET.slice(start, end)
+
+  it('extracts a non-empty card body slice (guards the slice itself)', () => {
+    expect(start).toBeGreaterThan(-1)
+    expect(end).toBeGreaterThan(start)
+  })
+
+  it('uses a single support gray — gray-500 is gone from the card', () => {
+    expect(CARD).not.toMatch(/\btext-gray-500\b/)
+    expect(CARD).toMatch(/\btext-gray-600\b/)
+    expect(CARD).toMatch(/\btext-gray-900\b/)
+  })
+
+  it('uses only bold / medium / normal — no extrabold, no semibold', () => {
+    expect(CARD).not.toMatch(/\bfont-extrabold\b/)
+    expect(CARD).not.toMatch(/\bfont-semibold\b/)
+  })
+
+  it('uses only the 4 sizes text-2xl / text-lg / text-sm / text-xs', () => {
+    const allowed = new Set(['text-2xl', 'text-lg', 'text-sm', 'text-xs'])
+    const sizes = CARD.match(/\btext-(xs|sm|base|lg|xl|\dxl)\b/g) ?? []
+    const rogue = [...new Set(sizes)].filter((s) => !allowed.has(s))
+    expect(rogue, `unexpected size utilities in the card: ${rogue.join(', ')}`).toEqual([])
+  })
+
+  it('keeps the price as the loudest element: 2xl + bold + brand red', () => {
+    expect(CARD).toMatch(/text-2xl\s+font-bold\s+font-heading\s+text-brand-600/)
+  })
+
+  it('keeps "IVA incluido" as the only non-brand accent color', () => {
+    expect(CARD).toMatch(/text-xs\s+font-medium\s+text-emerald-600">IVA incluido/)
+    const colors = CARD.match(/\btext-(emerald|green|blue|amber|yellow|purple|pink)-\d{3}\b/g) ?? []
+    expect([...new Set(colors)]).toEqual(['text-emerald-600'])
   })
 })

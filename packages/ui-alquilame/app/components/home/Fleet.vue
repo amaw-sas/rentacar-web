@@ -87,33 +87,45 @@
             />
           </div>
 
-          <!-- Content -->
+          <!-- Content
+
+               Type system (kept deliberately small — the card used to mix 5
+               weights, 2 grays and 4 sizes, which read as noise):
+                 · sizes  → text-2xl (price) / text-lg (title) / text-sm (body,
+                            specs) / text-xs (meta labels). Nothing else.
+                 · weights→ bold (title, price, CTA) / medium (labels: "IVA
+                            incluido", "Temporada Baja") / normal (everything
+                            else). No extrabold, no semibold.
+                 · colors → gray-900 (title) / gray-600 (ALL support copy —
+                            gray-500 is gone) / brand-600 (price) /
+                            emerald-600 (the single accent, "IVA incluido").
+          -->
           <div class="p-6 flex flex-col flex-1">
             <!-- Category + transmission -->
             <h3 class="text-lg font-bold font-heading text-gray-900 mb-2">
               {{ card.title }}
-              <span class="text-sm font-normal text-gray-500"> · {{ card.transmission }}</span>
+              <span class="text-sm font-normal text-gray-600"> · {{ card.transmission }}</span>
             </h3>
             <p class="text-sm text-gray-600 mb-2">Ej: {{ card.example }} o similar</p>
-            <p class="text-sm text-gray-500 mb-4 leading-snug">{{ card.description }}</p>
+            <p class="text-sm text-gray-600 mb-4 leading-snug">{{ card.description }}</p>
 
             <!-- Price: real; omitted (fail-soft) when undefined -->
             <div class="mb-4 min-h-[3.5rem]">
               <!-- Diario: low-season 1.000 km monthly rate prorated over 30 days -->
               <div v-if="plan === 'daily' && card.dailyPrice !== undefined" class="leading-tight">
-                <p class="text-xs text-gray-500">Precio x día en alquiler de 30 días</p>
+                <p class="text-xs text-gray-600">Precio x día en alquiler de 30 días</p>
                 <p class="flex items-baseline gap-2 flex-wrap">
-                  <span class="text-2xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}</span>
+                  <span class="text-2xl font-bold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}</span>
                   <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
                 </p>
-                <p class="text-xs font-semibold text-gray-600">Temporada Baja</p>
+                <p class="text-xs font-medium text-gray-600">Temporada Baja</p>
               </div>
               <p
                 v-else-if="plan === 'monthly' && card.monthlyPrice !== undefined"
                 class="flex items-baseline gap-2 flex-wrap"
               >
-                <span class="text-sm text-gray-500">Desde</span>
-                <span class="text-2xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.monthlyPrice) }}/mes</span>
+                <span class="text-sm text-gray-600">Desde</span>
+                <span class="text-2xl font-bold font-heading text-brand-600">${{ moneyFormat(card.monthlyPrice) }}/mes</span>
                 <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
               </p>
             </div>
@@ -127,7 +139,7 @@
               <span class="flex items-center gap-1.5" :title="`${card.luggage} maletas`">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20h0a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h0" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
                 {{ card.luggage }}
-                <span class="text-gray-500"> · 1.000 km/mes incluidos</span>
+                <span> · 1.000 km/mes incluidos</span>
               </span>
             </div>
 
@@ -140,7 +152,7 @@
                  con precio por día distinto → la nota (solo en Diario) lo aclara
                  y el CTA invita a cotizar cualquier duración. -->
             <div class="mt-auto">
-              <p v-if="plan === 'daily'" class="text-xs text-gray-500 mb-3 leading-snug">
+              <p v-if="plan === 'daily'" class="text-xs text-gray-600 mb-3 leading-snug">
                 ¿Menos días? El precio por día cambia — cotiza tus fechas.
               </p>
               <UButton
