@@ -165,6 +165,39 @@ describe('Fleet — F0 styling lessons', () => {
  * Scoped to the card body only: the section heading and the Diario/Mensualidad
  * toggle are section chrome and keep their own (heavier) scale on purpose.
  */
+/**
+ * Card surface — the "matte frame" treatment ported from the Astro design's
+ * `framed` + `tinted` FleetShowcase variant:
+ *   - the SECTION sits on a soft tint (surface-soft, #EDF0F5) instead of white,
+ *     so the cards read as objects laid on a surface rather than boxes drawn on
+ *     a page;
+ *   - each CARD is a lighter panel (surface-softest, #F8F9FC) wrapped in a thick
+ *     white border, which is what produces the "matte frame" look.
+ * Both colors come from @theme tokens, never raw hex — the brand scale is the
+ * single source of truth.
+ */
+describe('Fleet — framed cards on a tinted section', () => {
+  it('puts the section on the soft tint token, not white', () => {
+    const section = FLEET.match(/<section id="fleet"[^>]*class="([^"]+)"/)
+    expect(section, 'fleet section not found').not.toBeNull()
+    expect(section![1]).toMatch(/\bbg-surface-soft\b/)
+    expect(section![1]).not.toMatch(/\bbg-white\b/)
+  })
+
+  it('frames each card with a thick white border over the lightest surface', () => {
+    const card = FLEET.match(/v-for="card in cards"[\s\S]{0,120}?class="([^"]+)"/)
+    expect(card, 'fleet card root not found').not.toBeNull()
+    expect(card![1]).toMatch(/\bbg-surface-softest\b/)
+    expect(card![1]).toMatch(/\bborder-\[7px\]/)
+    expect(card![1]).toMatch(/\bborder-white\b/)
+    expect(card![1]).not.toMatch(/\bborder-gray-200\b/)
+  })
+
+  it('uses brand @theme tokens for both surfaces, never raw hex', () => {
+    expect(FLEET).not.toMatch(/bg-\[#[0-9a-fA-F]{6}\]/)
+  })
+})
+
 describe('Fleet — card typography system', () => {
   // The card body: from the category <h3> to the CTA label. lastIndexOf on the
   // CTA because the copy is also quoted in the file's top docblock.
@@ -197,6 +230,13 @@ describe('Fleet — card typography system', () => {
 
   it('keeps the price as the loudest element: 2xl + bold + brand red', () => {
     expect(CARD).toMatch(/text-2xl\s+font-bold\s+font-heading\s+text-brand-600/)
+  })
+
+  it('drops UPPERCASE on the CTA — sentence case reads as a phrase, not a shout', () => {
+    const cta = FLEET.match(/<UButton[\s\S]*?<\/UButton>/)
+    expect(cta, 'fleet CTA button not found').not.toBeNull()
+    expect(cta![0]).not.toMatch(/\buppercase\b/)
+    expect(cta![0]).toContain('Cotizar mis fechas')
   })
 
   it('keeps "IVA incluido" as the only non-brand accent color', () => {

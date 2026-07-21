@@ -27,7 +27,11 @@
     Gradient on the image frame uses the v4 bg-linear-to-* utility: with custom
     @theme tokens the v3 alias renders background-image:none (F0 lesson).
   -->
-  <section id="fleet" class="bg-white text-black py-12 md:py-20 px-4 sm:px-6 lg:px-8">
+  <!-- Soft tint (surface-soft) instead of white: the cards read as panels laid
+       ON a surface rather than boxes drawn on the page. Pairs with the white
+       card frame below — the contrast between the two is what makes the frame
+       visible at all. -->
+  <section id="fleet" class="bg-surface-soft text-black py-12 md:py-20 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
       <!-- Heading -->
       <div class="text-center mb-12">
@@ -70,7 +74,7 @@
         <div
           v-for="card in cards"
           :key="card.code"
-          class="bg-[#F4F5F9] rounded-2xl overflow-hidden shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 border border-gray-200 group flex flex-col"
+          class="bg-surface-softest rounded-[22px] overflow-hidden border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(17,17,34,0.09)] transition-all duration-200 group flex flex-col"
         >
           <!-- Vehicle image via @nuxt/image (issue 322 SCEN-322-P02 — no raw JPEG). -->
           <div class="aspect-[16/10] bg-linear-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden">
@@ -156,7 +160,7 @@
                 ¿Menos días? El precio por día cambia — cotiza tus fechas.
               </p>
               <UButton
-                class="block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold uppercase transition-colors"
+                class="block w-full text-center py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold transition-colors"
                 @click="goToReservas"
               >
                 Cotizar mis fechas
