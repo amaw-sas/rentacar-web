@@ -1,18 +1,27 @@
 <template>
   <!--
-    Hero — golden parity (astro-alquilame #hero). Red gradient bg via the v4
-    bg-linear-to-* utility.
+    Hero — textured red banner + car cutout (parity with astro-alquilame). Red
+    gradient via the v4 bg-linear-to-* utility, overlaid with the fondo-banner
+    pattern. The car (carro_hero.webp, alpha) is the main visual; a small corner
+    video loops muted and plays WITH audio on click.
 
-    Perf (issue 322 SCEN-322-P01): first paint is the poster image only (NuxtImg).
-    Multi-MB video is NOT autoplay on the critical path — it activates after the
-    hero is visible + browser idle (skipped when prefers-reduced-motion).
+    Perf: the car webp reserves space via width/height (no CLS). The muted preview
+    is off the critical path — it activates after the hero is visible + browser
+    idle (skipped under prefers-reduced-motion / data-saver). The full audio video
+    is preload="none" → it downloads only when the user clicks "Activar sonido".
   -->
   <section
     id="hero"
     class="relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to [--ctx-text-primary:#fff]"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
-      <div class="grid lg:grid-cols-2 gap-10 items-center">
+    <!-- Textured banner pattern over the red gradient. -->
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-0 bg-center bg-cover opacity-60"
+      style="background-image: url('/images/fondo-banner.webp')"
+    />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-12 w-full">
+      <div class="grid lg:grid-cols-2 gap-3 lg:gap-10 items-center">
         <div class="text-center lg:text-left">
           <!-- Trust signal: "4.9 reviews" star badge (parity with the city hero). -->
           <div
@@ -42,7 +51,7 @@
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Contáctanos por WhatsApp"
-              class="inline-flex lg:hidden items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+              class="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -59,27 +68,36 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-center">
-          <div
-            ref="visualBox"
-            class="relative w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
-            style="aspect-ratio: 16 / 9"
+        <div ref="visualBox" class="relative flex items-center justify-center min-h-[16rem]">
+          <!-- Main visual: car cutout (webp, alpha). width/height reserve space → no CLS. -->
+          <img
+            src="/images/carro_hero.webp"
+            alt="SUV disponible para alquilar en Colombia con Alquilame"
+            width="1199"
+            height="678"
+            class="w-full max-w-xl drop-shadow-2xl"
+            loading="eager"
+            fetchpriority="high"
           >
-            <!-- Default paint: poster only (no multi-MB video on critical path).
-                 Stays as the first frame under reduced-motion / data-saver too. -->
+
+          <!-- Small corner video over the car: muted preview loops, click plays
+               with audio. Desktop bottom-right (over the promo corner); mobile
+               right + vertically centered on the car. -->
+          <div
+            class="absolute right-2 top-1/2 -translate-y-1/2 lg:top-auto lg:translate-y-0 lg:bottom-2 lg:right-2 w-[42vw] lg:w-80 aspect-[5/3] lg:aspect-[16/9] rounded-xl overflow-hidden shadow-2xl ring-2 ring-white/70 bg-black"
+          >
+            <!-- Default paint: poster only. Stays under reduced-motion / data-saver. -->
             <NuxtImg
               v-if="!videoActive && !audioActive"
               src="/videos/hero-poster.jpg"
-              alt="Flota Alquilame Colombia"
-              width="960"
-              height="540"
+              alt="Video promocional Alquilame"
+              width="320"
+              height="180"
               format="webp"
               loading="eager"
-              fetchpriority="high"
               class="absolute inset-0 w-full h-full object-cover"
             />
-            <!-- Muted preview loop (no audio track). Prefer mp4 (audit: webm was
-                 heavier). Activated post-idle when visible; hidden once sound is on. -->
+            <!-- Muted preview loop (no audio track). Activated post-idle when visible. -->
             <video
               v-show="videoActive && !audioActive"
               ref="previewVideo"
@@ -94,9 +112,7 @@
             >
               <source src="/videos/hero.mp4" type="video/mp4" />
             </video>
-            <!-- Full video WITH audio: preload="none" → nothing downloads until
-                 the user clicks the sound button. That click is the user gesture
-                 browsers require to play media with audio. -->
+            <!-- Full video WITH audio: preload="none" → downloads only on click. -->
             <video
               v-show="audioActive"
               ref="audioVideo"
@@ -109,23 +125,21 @@
             >
               <source src="/videos/hero-audio.mp4" type="video/mp4" />
             </video>
-            <!-- Sound affordance: full-cover play button over the poster/preview.
-                 Over the poster (reduced-motion / data-saver) it reads "Reproducir
-                 con sonido"; over the running preview, "Activar sonido". -->
+            <!-- "Activar sonido" pill at the bottom of the small video. -->
             <button
               v-if="!audioActive"
               type="button"
-              class="group absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors duration-200"
-              :aria-label="videoActive ? 'Activar sonido del video' : 'Reproducir video con sonido'"
+              class="group absolute inset-0 flex items-end justify-center pb-2 lg:pb-3 bg-black/10 hover:bg-black/25 transition-colors duration-200"
+              aria-label="Activar sonido del video"
               @click="enableSound"
             >
               <span
-                class="inline-flex items-center gap-2 rounded-full bg-black/55 group-hover:bg-black/70 text-white text-sm font-semibold px-4 py-2.5 shadow-lg backdrop-blur-sm transition-colors duration-200"
+                class="inline-flex items-center gap-1 lg:gap-2 rounded-full bg-black/65 group-hover:bg-black/80 text-white text-[11px] lg:text-sm font-semibold px-2 py-1 lg:px-4 lg:py-2 shadow backdrop-blur-sm transition-colors duration-200"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="w-3 h-3 lg:w-4 lg:h-4">
                   <path d="M8 5v14l11-7z" />
                 </svg>
-                {{ videoActive ? 'Activar sonido' : 'Reproducir con sonido' }}
+                Activar sonido
               </span>
             </button>
           </div>

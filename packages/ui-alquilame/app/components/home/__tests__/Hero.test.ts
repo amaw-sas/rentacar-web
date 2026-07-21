@@ -81,14 +81,16 @@ describe('Home hero — golden parity', () => {
     expect(hero).toMatch(/aspect-\[/)
   })
 
-  // SCEN-CLS-04: the aspect-[16/9] utility rule is NOT in Nuxt's inlined critical
-  // CSS (it ships in the JS-injected stylesheet), and the <video> carries no
-  // width/height attrs, so pre-CSS the card falls back to the 300×150 video
-  // default and shifts when the real ratio applies (home CLS 0.129). An INLINE
-  // aspect-ratio reserves the 16:9 box in the SSR HTML regardless of stylesheet
-  // timing. See docs/specs/city-hero-cls.
-  it('reserves the video card with an inline aspect-ratio (survives pre-CSS — CLS)', () => {
-    expect(hero).toMatch(/style="[^"]*aspect-ratio:\s*16\s*\/\s*9/)
+  // The banner pattern overlays the red gradient (reference look).
+  it('overlays the textured fondo-banner pattern', () => {
+    expect(hero).toMatch(/fondo-banner\.webp/)
+  })
+
+  // The car cutout is the main visual; its intrinsic width/height reserve the
+  // box in the SSR HTML → no CLS from a late-loading image.
+  it('renders the car cutout with intrinsic dimensions (CLS)', () => {
+    expect(hero).toMatch(/carro_hero\.webp/)
+    expect(hero).toMatch(/<img[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
   })
 
   it('defaults to poster image; defers video (mp4) off the critical path (issue 322 P01)', () => {

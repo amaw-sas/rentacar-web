@@ -49,16 +49,6 @@
           >
             Reserva Ahora
           </NuxtLink>
-          <!-- WhatsApp — token bg-whatsapp (#25D366) + text-black (WCAG AA) -->
-          <a
-            :href="franchise.whatsapp"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Contactar por WhatsApp"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover transition-all duration-200"
-          >
-            <Icon name="lucide:message-circle" class="w-5 h-5" />
-          </a>
         </div>
       </template>
       <!-- Menú móvil (slideover blanco) -->
