@@ -60,7 +60,7 @@ describe('evaluateWhatsappVisibility — no midnight crossing (S5)', () => {
   })
 })
 
-describe('evaluateWhatsappVisibility — fail-open (S4 + malformed)', () => {
+describe('evaluateWhatsappVisibility — fail-open is reserved for shape faults (S4)', () => {
   it('null schedule → always visible', () => {
     expect(evaluateWhatsappVisibility(null, at('2026-07-22T01:00:00Z'))).toBe(true)
   })
@@ -69,27 +69,78 @@ describe('evaluateWhatsappVisibility — fail-open (S4 + malformed)', () => {
     expect(evaluateWhatsappVisibility(undefined, at('2026-07-22T01:00:00Z'))).toBe(true)
   })
 
-  it('non-object schedule → always visible', () => {
+  it('non-object schedule → always visible (payload is not a schedule at all)', () => {
     expect(evaluateWhatsappVisibility('nope' as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
     expect(evaluateWhatsappVisibility(42 as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
     expect(evaluateWhatsappVisibility([] as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
+    expect(evaluateWhatsappVisibility(true as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
   })
 
-  it('schedule with no recognizable weekday key (llaves raras) → always visible', () => {
-    expect(evaluateWhatsappVisibility({ foo: ['08:00-18:00'] } as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
-    expect(evaluateWhatsappVisibility({} as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
-  })
-
-  it('active day present but not an array → fail-open visible', () => {
-    // Tuesday 20:00 Bogota; tue is a string, not a list.
+  it('active day present but not a list → fail-open visible (shape fault)', () => {
+    // Tuesday 20:00 Bogota; tue is a string / null instead of an array.
     expect(evaluateWhatsappVisibility({ tue: '08:00-18:00' } as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
+    expect(evaluateWhatsappVisibility({ tue: null } as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
   })
 
-  it('malformed range in the active day → fail-open visible', () => {
-    // Tuesday 20:00 Bogota; the only range is unparseable.
-    expect(evaluateWhatsappVisibility({ tue: ['8-18'] } as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
-    expect(evaluateWhatsappVisibility({ tue: ['08:00_18:00'] } as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
-    expect(evaluateWhatsappVisibility({ tue: ['25:00-26:00'] } as unknown, at('2026-07-22T01:00:00Z'))).toBe(true)
+  it('an unusable clock (Invalid Date) → fail-open visible', () => {
+    expect(evaluateWhatsappVisibility(STANDARD, new Date('not-a-date'))).toBe(true)
+  })
+})
+
+// The canonical contract shared with the dashboard: an empty object is a VALID
+// schedule meaning "no windows anywhere", NOT a malformed payload. Only
+// null/undefined means "no schedule configured → always visible".
+describe('evaluateWhatsappVisibility — {} is a valid schedule → hidden ALL week', () => {
+  // One instant per Bogota weekday (midday, so no boundary effects).
+  const middayPerWeekday: Array<[string, string]> = [
+    ['sun', '2026-07-26T17:00:00Z'],
+    ['mon', '2026-07-27T17:00:00Z'],
+    ['tue', '2026-07-21T17:00:00Z'],
+    ['wed', '2026-07-22T17:00:00Z'],
+    ['thu', '2026-07-23T17:00:00Z'],
+    ['fri', '2026-07-24T17:00:00Z'],
+    ['sat', '2026-07-25T17:00:00Z'],
+  ]
+
+  it.each(middayPerWeekday)('{} hides WhatsApp on %s', (_day, iso) => {
+    expect(evaluateWhatsappVisibility({} as unknown, at(iso))).toBe(false)
+  })
+
+  it('an object whose keys are all unrecognized behaves like {} → hidden', () => {
+    // No weekday key matches, so every day resolves to "no window configured".
+    expect(evaluateWhatsappVisibility({ foo: ['08:00-18:00'] } as unknown, at('2026-07-21T15:00:00Z'))).toBe(false)
+    expect(evaluateWhatsappVisibility({ lunes: ['08:00-18:00'] } as unknown, at('2026-07-27T17:00:00Z'))).toBe(false)
+  })
+})
+
+// D6 — a typo must not swing the day open. A malformed range simply opens no
+// window; well-formed ranges beside it keep working.
+describe('evaluateWhatsappVisibility — malformed ranges are IGNORED, not fail-open', () => {
+  it('a lone malformed range leaves the day closed', () => {
+    // Tuesday 20:00 Bogota; the only range is unparseable → no window at all.
+    expect(evaluateWhatsappVisibility({ tue: ['8-18'] } as unknown, at('2026-07-22T01:00:00Z'))).toBe(false)
+    expect(evaluateWhatsappVisibility({ tue: ['08:00_18:00'] } as unknown, at('2026-07-22T01:00:00Z'))).toBe(false)
+    expect(evaluateWhatsappVisibility({ tue: ['25:00-26:00'] } as unknown, at('2026-07-22T01:00:00Z'))).toBe(false)
+  })
+
+  it("the reviewer's counterexample: a single missing digit no longer opens Sunday 24h", () => {
+    // Sunday 03:00 Bogota = 08:00Z. '8:00-16:00' (missing leading zero) is
+    // malformed; before D6 this returned true and left Sunday open all day.
+    expect(evaluateWhatsappVisibility({ sun: ['8:00-16:00'] } as unknown, at('2026-07-26T08:00:00Z'))).toBe(false)
+  })
+
+  it('a malformed range does not disturb a valid sibling range', () => {
+    const mixed = { tue: ['garbage', '08:00-18:00'] } as unknown
+    // Tuesday 10:00 Bogota → inside the valid window despite the bad sibling.
+    expect(evaluateWhatsappVisibility(mixed, at('2026-07-21T15:00:00Z'))).toBe(true)
+    // Tuesday 20:00 Bogota → outside it; the bad sibling must not open the day.
+    expect(evaluateWhatsappVisibility(mixed, at('2026-07-22T01:00:00Z'))).toBe(false)
+  })
+
+  it('a non-string range entry is ignored the same way', () => {
+    const weird = { tue: [{ start: '08:00', end: '18:00' }, '08:00-18:00'] } as unknown
+    expect(evaluateWhatsappVisibility(weird, at('2026-07-21T15:00:00Z'))).toBe(true)
+    expect(evaluateWhatsappVisibility(weird, at('2026-07-22T01:00:00Z'))).toBe(false)
   })
 })
 
@@ -131,8 +182,8 @@ describe('evaluateWhatsappVisibility — 24:00 close', () => {
     expect(evaluateWhatsappVisibility(lateNight, at('2026-07-22T05:30:00Z'))).toBe(false)
   })
 
-  it('24:00 is rejected as a start (malformed) → fail-open visible', () => {
-    // Tuesday 10:00 Bogota; 24:00 start is not a valid time.
-    expect(evaluateWhatsappVisibility({ tue: ['24:00-24:00'] } as unknown, at('2026-07-21T15:00:00Z'))).toBe(true)
+  it('24:00 is rejected as a start — the range is ignored, so the day stays closed', () => {
+    // Tuesday 10:00 Bogota; 24:00 is only valid as a close, so this opens nothing.
+    expect(evaluateWhatsappVisibility({ tue: ['24:00-24:00'] } as unknown, at('2026-07-21T15:00:00Z'))).toBe(false)
   })
 })

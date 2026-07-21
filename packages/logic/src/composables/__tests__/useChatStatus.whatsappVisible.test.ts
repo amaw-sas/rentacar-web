@@ -37,6 +37,25 @@ function stubFocusListener() {
   return () => focusListener?.()
 }
 
+// D7 — mobile throttles background timers and does not reliably fire `focus` on
+// tab restore, so the composable also listens to visibilitychange. Returns a
+// trigger that sets visibilityState and fires the event.
+function stubVisibilityListener() {
+  let listener: (() => void) | undefined
+  const doc = {
+    visibilityState: 'visible' as DocumentVisibilityState,
+    addEventListener: (type: string, l: () => void) => {
+      if (type === 'visibilitychange') listener = l
+    },
+    removeEventListener: () => undefined,
+  }
+  vi.stubGlobal('document', doc)
+  return (state: DocumentVisibilityState) => {
+    doc.visibilityState = state
+    listener?.()
+  }
+}
+
 async function flushMicrotasks() {
   await Promise.resolve()
   await Promise.resolve()
@@ -145,6 +164,47 @@ describe('useChatStatus — 60s re-evaluation timer', () => {
     vi.advanceTimersByTime(60_000)
     expect(status.whatsappVisible.value).toBe(false)
     expect(fetchMock).toHaveBeenCalledTimes(1) // no extra fetch
+  })
+})
+
+describe('useChatStatus — visibilitychange (D7)', () => {
+  it('re-evaluates the window when the tab becomes visible again', async () => {
+    vi.setSystemTime(new Date(TUE_10H)) // inside the window
+    const fetchMock = vi.fn().mockResolvedValue({
+      brand: 'alquilatucarro', enabled: true, whatsappSchedule: STANDARD,
+    })
+    vi.stubGlobal('$fetch', fetchMock)
+    stubFocusListener()
+    const setVisibility = stubVisibilityListener()
+
+    const status = useChatStatus('alquilatucarro')
+    await flushMicrotasks()
+    expect(status.whatsappVisible.value).toBe(true)
+
+    // The tab sat in the background past the close; timers were throttled and
+    // `focus` never fired. Returning to the tab must close the button at once.
+    vi.setSystemTime(new Date(TUE_20H))
+    setVisibility('visible')
+    expect(status.whatsappVisible.value).toBe(false)
+  })
+
+  it('ignores the event when the tab is being hidden', async () => {
+    vi.setSystemTime(new Date(TUE_10H))
+    const fetchMock = vi.fn().mockResolvedValue({
+      brand: 'alquilatucarro', enabled: true, whatsappSchedule: STANDARD,
+    })
+    vi.stubGlobal('$fetch', fetchMock)
+    stubFocusListener()
+    const setVisibility = stubVisibilityListener()
+
+    const status = useChatStatus('alquilatucarro')
+    await flushMicrotasks()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    setVisibility('hidden')
+    // No extra revalidation work while the tab is going away.
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(status.whatsappVisible.value).toBe(true)
   })
 })
 

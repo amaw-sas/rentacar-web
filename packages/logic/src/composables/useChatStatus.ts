@@ -50,35 +50,41 @@ function parseRangeToMinutes(range: unknown): [number, number] | null {
 /**
  * Pure predicate: is WhatsApp visible at `nowUtc` given `schedule`?
  *
- * Fail-open by design — the WhatsApp button must never vanish because of a bad
- * config or a decoding slip. `null`/`undefined`, a non-object, or a schedule
- * with no recognizable weekday key at all → `true` (always visible, current
- * behavior). For a well-formed schedule, the current Bogota weekday decides:
- * an absent or empty day list hides WhatsApp; otherwise it shows only inside one
- * of that day's `[start, end)` windows. A single malformed range in the active
- * day also fails open.
+ * Canonical semantics (shared contract with the dashboard that serves the field):
+ *   - `null` / `undefined` (no schedule configured) → always visible.
+ *   - `{}` — a VALID but empty schedule → hidden all week. An operator who saves
+ *     a schedule with no windows means "never show", not "always show".
+ *   - day key absent, or an empty list → hidden that day.
+ *   - otherwise visible only inside one of that day's `[start, end)` windows.
+ *
+ * A malformed range inside an otherwise valid day is IGNORED — it simply opens no
+ * window — so one typo (`'8:00-16:00'`) cannot swing the whole day open.
+ *
+ * Fail-open is reserved for shape violations that mean "we could not read a
+ * schedule at all": a non-object payload, a day whose value is not a list, or an
+ * unusable `nowUtc`. Those keep WhatsApp visible so a backend or decoding fault
+ * never silently removes the button.
  */
 export function evaluateWhatsappVisibility(schedule: unknown, nowUtc: Date): boolean {
   if (schedule === null || schedule === undefined) return true
   if (typeof schedule !== 'object' || Array.isArray(schedule)) return true
 
   const record = schedule as Record<string, unknown>
-  // A schedule that names no weekday at all is malformed → keep WhatsApp visible.
-  if (!DAY_KEYS.some(key => key in record)) return true
 
   const bogota = new Date(nowUtc.getTime() - BOGOTA_OFFSET_MS)
   const dayKey = DAY_KEYS[bogota.getUTCDay()]
+  // An unusable clock (Invalid Date → NaN) leaves no day to evaluate → fail-open.
   if (!dayKey) return true
   const nowMinutes = bogota.getUTCHours() * 60 + bogota.getUTCMinutes()
 
   const ranges = record[dayKey]
   if (ranges === undefined) return false // no window configured today → hidden.
-  if (!Array.isArray(ranges)) return true // day present but malformed → fail-open.
+  if (!Array.isArray(ranges)) return true // day is not a list → shape fault → fail-open.
   if (ranges.length === 0) return false // explicit empty window → hidden today.
 
   for (const range of ranges) {
     const parsed = parseRangeToMinutes(range)
-    if (parsed === null) return true // malformed range → fail-open.
+    if (parsed === null) continue // malformed range opens nothing; other ranges still count.
     if (nowMinutes >= parsed[0] && nowMinutes < parsed[1]) return true
   }
   return false
@@ -180,11 +186,24 @@ export function useChatStatus(brand: string) {
     void refresh()
   }
 
+  // Mobile browsers throttle background timers and do not reliably fire `focus`
+  // when a tab is restored, so a visitor could see up to a minute of stale state.
+  // `visibilitychange` covers that path: re-evaluate the window immediately on
+  // return, and refresh the schedule itself in the background.
+  function onVisibilityChange() {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+    reevaluateWhatsapp()
+    void refresh()
+  }
+
   let whatsappTimer: ReturnType<typeof setInterval> | undefined
 
   onMounted(() => {
     void refresh()
     if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange)
+    }
     // Re-evaluate the active window each minute so WhatsApp appears/disappears at
     // the boundary without a page reload. Unref so it never keeps a process alive.
     whatsappTimer = setInterval(reevaluateWhatsapp, 60_000)
@@ -192,6 +211,9 @@ export function useChatStatus(brand: string) {
   })
   onBeforeUnmount(() => {
     if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
     if (whatsappTimer !== undefined) clearInterval(whatsappTimer)
   })
 
