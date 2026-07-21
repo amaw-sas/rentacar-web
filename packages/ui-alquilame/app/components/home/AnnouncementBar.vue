@@ -15,10 +15,16 @@
     in onMounted (post-hydration, so the server never observes it) and set on
     dismiss. A returning user who dismissed it sees the bar collapse just after
     mount; everyone else sees no shift.
+
+    Stacking (runtime bug): the bar must stay BELOW the sticky header
+    (layouts/default.vue → UHeader `sticky top-0 z-50`). It lives inside <main>,
+    i.e. AFTER the header in the DOM, so an equal `z-50` won the tie and painted
+    OVER the header — scrolling ~16px clipped the logo and the menu toggle.
+    `z-30` restores the intent: the bar scrolls away under the sticky header.
   -->
   <div
     v-if="!dismissed"
-    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative z-50"
+    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative z-30"
   >
     <!-- px-10 reserves room for the absolute close button on both sides so the
          (centered) copy never runs under the X when it wraps on mobile. -->

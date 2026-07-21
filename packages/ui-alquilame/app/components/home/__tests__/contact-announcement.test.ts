@@ -186,3 +186,43 @@ describe('F1 step07a — single FAB invariant', () => {
     expect(index).not.toMatch(/<(Lazy)?ChatWidget\b/)
   })
 })
+
+/**
+ * Stacking contract (runtime bug):
+ *   GIVEN the home scrolled a few px past the top
+ *   WHEN  the sticky header (layouts/default.vue → UHeader `sticky top-0 z-50`)
+ *         overlaps the announcement bar, which lives inside <main> and therefore
+ *         AFTER the header in the DOM
+ *   THEN  the header paints ON TOP — the bar slides underneath.
+ * With an equal z-index the later DOM node wins the tie, so the bar painted over
+ * the header and clipped the logo + the menu toggle. The bar's z MUST be
+ * strictly lower than the header's.
+ */
+describe('AnnouncementBar — stays under the sticky header', () => {
+  const zOf = (cls: string): number | null => {
+    const m = cls.match(/\bz-(\d+)\b/)
+    return m ? Number(m[1]) : null
+  }
+
+  it('gives the bar a strictly lower z-index than the sticky header', () => {
+    const bar = read('app/components/home/AnnouncementBar.vue')
+    const barRoot = bar.match(/<div\s+v-if="!dismissed"\s+class="([^"]+)"/)
+    expect(barRoot, 'announcement bar root should carry a class list').not.toBeNull()
+
+    const layout = read('app/layouts/default.vue')
+    const headerRoot = layout.match(/<UHeader[\s\S]{0,400}?\bclass="([^"]+)"/)
+    expect(headerRoot, 'UHeader should carry a class list').not.toBeNull()
+
+    const barZ = zOf(barRoot![1]!)
+    const headerZ = zOf(headerRoot![1]!)
+    expect(barZ, 'bar must declare an explicit z-index').not.toBeNull()
+    expect(headerZ, 'header must declare an explicit z-index').not.toBeNull()
+    expect(barZ!).toBeLessThan(headerZ!)
+  })
+
+  it('keeps the bar in normal flow so it scrolls away (never sticky/fixed)', () => {
+    const bar = read('app/components/home/AnnouncementBar.vue')
+    const barRoot = bar.match(/<div\s+v-if="!dismissed"\s+class="([^"]+)"/)!
+    expect(barRoot[1]).not.toMatch(/\b(sticky|fixed)\b/)
+  })
+})
