@@ -6,9 +6,13 @@
 **Estabilidad:** el barrido de husos, el contrato de producción, los md5 de los widgets y la
 suite completa se re-ejecutaron una segunda vez antes de cerrar; resultados idénticos.
 
+> **⚠️ Este documento tiene dos partes.** Lo que sigue hasta la línea `# Re-verificación` es la
+> revisión original sobre `6df6402`. El veredicto vigente y los hallazgos abiertos están en la
+> [sección de re-verificación](#re-verificación--ad16c46) sobre `ad16c46`, al final del archivo.
+
 ---
 
-## Veredicto
+## Veredicto (revisión original, `6df6402`)
 
 **APROBADO para fusión — RECHAZADA la afirmación de que la funcionalidad esté entregada.**
 
@@ -349,3 +353,293 @@ Nota de entorno: este worktree no tiene `.env.local`, así que `/` devuelve 500 
 credenciales de Supabase. `/blog` sí renderiza el layout completo con el FAB — es la ruta que
 usé para toda la validación en DOM. Los errores de consola que aparecen son todos de esa falta
 de credenciales, ninguno del cambio.
+
+---
+---
+
+# Re-verificación — `ad16c46`
+
+**Fecha:** 2026-07-21 · **Revisor:** el mismo que emitió D1–D8 · **Base:** `f77c201..ad16c46`
+**Postura:** re-ejecutar mis propios contraejemplos contra el código corregido, no leer el diff
+y confiar. Toda cifra de abajo salió de un comando que corrí en esta sesión.
+
+## Veredicto final
+
+**APROBADO.** Las correcciones son reales y las verifiqué una por una. Ninguna aserción previa
+se debilitó: los 7 asserts que desaparecieron son exactamente los de fail-open que se
+invirtieron a propósito, y entraron 16 en su lugar. Los tests de frontera (`15:59`/`16:00`,
+`08:00` inclusivo, cruce de medianoche, S1/S2/S5) están intactos byte a byte.
+
+Con una condición que **no bloquea el merge pero sí bloquea el despliegue del dashboard**:
+al quitar la guarda de "ninguna clave de día reconocida", cinco formas de deriva entre repos
+que antes fallaban abiertas ahora **ocultan WhatsApp 24/7 en las 3 marcas, en silencio**
+(D9, abajo). Es una línea de código.
+
+## Cifras medidas
+
+| Verificación | Comando | Resultado |
+|---|---|---|
+| Suite completa | Node 22.23.1 · `npx vitest run` | **284 archivos / 2396 tests pasan, 0 errores, exit 0** (2 corridas, cifras idénticas) |
+| Build | Node 22 · `pnpm build:alquicarros` | **exit 0**, `Build complete`, gate en 2 chunks del bundle |
+| Typecheck HEAD | `pnpm typecheck` | 166 errores, **ninguno menciona archivos de la rama** |
+| Typecheck BASE (A/B real) | fuentes revertidas a `6df6402~1` | 172 errores |
+| **Errores nuevos** | `comm -13 base head` | **0** |
+| Widgets | `md5 -q ChatWidget.vue` ×3 | `cb084b6f…` ×3, y `E10` sigue exigiéndolo |
+
+**D3 queda cerrado.** Los 284/2396 que reporta el implementador son exactamente lo que me da
+a mí bajo Node 22. Mis 278/2335+5 eran Node 20. La explicación reproduce.
+
+## Mis contraejemplos, re-ejecutados
+
+### R1 · Ruta normal, 7 husos — sigue en 0
+
+Barrido de 11 040 minutos consecutivos contra `Intl/America/Bogota` bajo
+`America/Bogota, UTC, Europe/Madrid, America/New_York, Asia/Kolkata, Pacific/Kiritimati (UTC+14), Pacific/Midway (UTC−11)`:
+
+```
+[TZ=Pacific/Kiritimati] R1 barrido semana (ruta normal): 0 discrepancias
+...las 7 idénticas
+```
+
+El cambio de semántica no tocó el camino feliz.
+
+### R2 · `{}` oculta toda la semana — confirmado exhaustivamente
+
+No me bastó con un instante por día. Evalué **los 10 080 minutos de una semana completa**, en
+los 7 husos:
+
+```
+[TZ=UTC]                R2 {} visible en 0/10080 minutos
+[TZ=Pacific/Midway]     R2 {} visible en 0/10080 minutos
+...las 7 en 0/10080
+```
+
+La afirmación es cierta sin excepciones.
+
+### R3 · Frontera de día — intacta
+
+```
+OK  dom 00:30 Bogota                        -> false
+OK  dom 20:00 Bogota (lunes en UTC)         -> false
+OK  lun 20:00 Bogota (martes en UTC)        -> false
+OK  sáb 23:00 Bogota (domingo en UTC)       -> false
+OK  sáb 15:59 / 16:00 (fin exclusivo)       -> true / false
+OK  mar 08:00 (inicio inclusivo)            -> true
+OK  dom 19:00 con ventana entera en lunes UTC -> true
+```
+
+### R4 · Qué falla abierto y qué oculta ahora
+
+| Entrada | Antes (`6df6402`) | Ahora (`ad16c46`) |
+|---|---|---|
+| `null` / `undefined` / campo ausente | visible | visible |
+| no-objeto (`'x'`, `42`, `[]`, `true`) | visible | visible |
+| `{tue: null}` / `{tue: 'x'}` (día no-lista) | visible | visible |
+| `Invalid Date` | visible | visible |
+| `{}` | visible | **oculto** ✔ corregido |
+| `{tue: ['8:00-18:00']}` (typo) | visible 24 h | **oculto** ✔ corregido (D6) |
+| `{tue: [{start,end}]}` (rango objeto) | visible | **oculto** ⚠ ver D9 |
+| `{lunes: [...]}` | visible | **oculto** ⚠ ver D9 |
+| `{monday: [...]}` | visible | **oculto** ⚠ ver D9 |
+| `{Tue: [...]}` | visible | **oculto** ⚠ ver D9 |
+| `{version:2, days:{...}}` | visible | **oculto** ⚠ ver D9 |
+
+### R5 · La misma matriz en DOM real
+
+Servidor dev apuntando a un stub del dashboard, FAB leído del DOM con el navegador de Orca:
+
+| Respuesta del API | Ítems renderizados |
+|---|---|
+| ventana abierta | `Chat 24 horas`, `WhatsApp`, `Llámanos` |
+| `{hoy: []}` | `Chat 24 horas`, `Llámanos` |
+| día de hoy ausente | `Chat 24 horas`, `Llámanos` |
+| **`{}`** | `Chat 24 horas`, `Llámanos` ✔ |
+| **`{monday:[…], lunes:[…]}`** | `Chat 24 horas`, `Llámanos` ⚠ D9 |
+| typo `8:00-23:00` | `Chat 24 horas`, `Llámanos` ✔ |
+| `{hoy: 'no-soy-lista'}` | `Chat`, **`WhatsApp`**, `Llámanos` (fail-open) |
+| `whatsappSchedule: null` | `Chat`, **`WhatsApp`**, `Llámanos` |
+| HTTP 500 | **`WhatsApp`**, `Llámanos` (fail-open) |
+
+## Rojo-verde del test de contrato — verificado con 3 mutaciones
+
+No me fié del "verificado en rojo-verde". Rompí el contrato yo mismo:
+
+**A · el dashboard deja de servir el campo** (borré `whatsappSchedule` del fixture):
+```
+Tests  5 failed | 7 passed (12)
+AssertionError: CONTRACT BROKEN: fixture "scheduled" has no "whatsappSchedule" key.
+  […] Check rentacar-dashboard@diego-alex-melo/whatsapp-schedule-dash (app/api/chat/status/route.ts)
+```
+
+**B · el dashboard renombra las claves a `monday`/`tuesday`**:
+```
+Tests  2 failed
+AssertionError: CONTRACT BROKEN: unexpected weekday key "monday". The reader only understands
+  mon/tue/wed/thu/fri/sat/sun; any other key collapses that day to hidden.
+```
+
+**C · semántica vieja** (`useChatStatus.ts` revertido a `f77c201`):
+```
+Tests  15 failed | 29 passed (44)
+```
+
+**Verde con el estado actual:** `Test Files 2 passed (2)` · `Tests 44 passed (44)`.
+Fixture y fuentes restaurados; árbol limpio tras cada experimento.
+
+## El test del widget ahora tiene dientes
+
+`ChatWidget.whatsappSchedule.test.ts` pasó de regex sobre el `.vue` a un `mount()` real con
+`@vue/test-utils` + jsdom, el `useChatStatus` de verdad, y aserciones sobre `document.body`
+(el widget se teletransporta). Comprobé la mutación yo mismo — quité el `v-if` del `<li>`:
+
+```
+× removes the WhatsApp option outside the window, keeping Chat and Llámanos
+× hides WhatsApp all week for an empty schedule {} (canonical semantics)
+× closes the option on the 60s tick when the window ends
+Tests  3 failed | 5 passed (8)
+```
+
+Monta solo la copia de alquicarros, pero `ChatWidget.burbuja-mission.test.ts` (`E10`) exige que
+las tres sean byte-idénticas, así que la cobertura alcanza a las tres. D4 cerrado.
+
+## Hallazgos
+
+### D9 · NUEVO — la deriva de claves entre repos ahora apaga el botón — MEDIA-ALTA
+
+Al borrar la guarda `if (!DAY_KEYS.some(key => key in record)) return true`, un payload cuyas
+claves no reconoce **ninguna** el lector dejó de ser "no pude leer un horario" y pasó a ser
+"un horario sin ninguna ventana". Resultado: WhatsApp desaparece de las 3 marcas, las 24 h,
+sin log, sin alerta y sin que ningún test se ponga rojo.
+
+Es exactamente la deriva contra la que advierte el mensaje de error del propio test de
+contrato — *"any other key collapses that day to hidden"* — solo que el test vigila el
+**fixture**, que es un archivo estático. Si el dashboard cambia y nadie re-captura el fixture,
+la suite sigue verde mientras el botón se apaga en producción. El `_comment` del JSON dice
+"If this file stops matching the endpoint, chatStatusContract.test.ts fails loudly": eso no es
+cierto, nada compara el fixture con el endpoint vivo.
+
+**Contraejemplo ejecutable** (verificado en función pura y en DOM):
+```js
+evaluateWhatsappVisibility({ monday: ['00:00-24:00'] }, new Date())  // → false
+evaluateWhatsappVisibility({ lunes:  ['00:00-24:00'] }, new Date())  // → false
+evaluateWhatsappVisibility({ Tue:    ['00:00-24:00'] }, new Date())  // → false
+evaluateWhatsappVisibility({ version: 2, days: { tue: ['00:00-24:00'] } }, new Date())  // → false
+```
+
+Nótese la asimetría invertida que introduce: un fallo de forma en **un** día (`{tue: null}`)
+falla abierto, pero un fallo de forma en **todas** las claves falla cerrado. El fallo más
+grave recibe el trato menos seguro.
+
+**Arreglo mínimo** — distinguir "cero claves" de "claves que no entiendo", que preserva la
+semántica canónica de `{}` sin sacrificar el fail-open:
+
+```js
+if (Object.keys(record).length === 0) return false          // {} canónico → oculto
+if (!DAY_KEYS.some(k => k in record)) return true           // claves ilegibles → fail-open
+```
+
+Con eso `{}` sigue ocultando toda la semana y `{monday: […]}` vuelve a fallar abierto.
+
+No bloquea el merge: hoy el endpoint no manda el campo, así que la rama no puede activar este
+camino. **Bloquea el despliegue del dashboard.**
+
+### D6 · Cerrado, con una consecuencia que conviene tener presente — informativo
+
+El typo ya no abre el día (`{sun: ['8:00-16:00']}` → oculto, verificado). El precio es que
+ahora un dígito de menos **oculta** el canal en vez de mostrarlo de más. Es la elección
+correcta si el dashboard valida al guardar — y el fixture documenta que lo hace
+(`lib/schemas/whatsapp-schedule.ts`, un horario inválido se sirve como `null`). Queda
+registrado para que nadie se sorprenda: en este diseño, un error de configuración pierde
+leads en silencio.
+
+### D8 · Sigue abierto — trazabilidad
+
+`whatsappVisibility.test.ts:5` sigue diciendo `// SCEN S1/S2/S5/S4` y sigue sin existir el
+artefacto:
+
+```bash
+$ grep -rln "whatsappVisible\|whatsappSchedule" docs/specs/
+(sin resultados)
+```
+
+`decisions-web.md` responde a D1, D2, D3, D4, D5, D6 y D7. D8 no aparece. Es el hallazgo más
+barato de cerrar: publicar el archivo de escenarios o borrar la referencia.
+
+### D1 · Convertido en un no-op documentado y cubierto por test — mejorado, no resuelto
+
+El endpoint real, re-consultado hoy:
+
+```
+{"brand":"alquilatucarro","enabled":true}
+{"brand":"alquilame","enabled":false}
+{"brand":"alquicarros","enabled":false}
+```
+
+Sigue sin `whatsappSchedule`. La funcionalidad sigue sin hacer nada en producción. Lo que
+cambió — y es la respuesta correcta — es que ahora es una propiedad **explícita y verificada**:
+el caso `legacyBeforeDashboardShipped` del fixture fija que una respuesta sin el campo deja
+WhatsApp siempre visible. Ya no es un punto ciego, es una decisión revisada con orden de
+despliegue escrito: dashboard primero.
+
+Consecuencia menor: el fixture se describe como "respuesta capturada", pero el endpoint vivo
+nunca ha servido ese payload. Está derivado de leer el esquema del dashboard, que es legítimo
+— conviene que el `_comment` lo diga así.
+
+### D2 · Diferido de forma explícita — aceptable
+
+La tabla de ~8 superficies sin gate por marca quedó copiada en `decisions-web.md` como
+decisión de producto pendiente, con la condición de resolverla antes de anunciar la
+funcionalidad. Es el manejo correcto de un hallazgo de alcance.
+
+### D5 · Cerrado
+
+El método reproducible (revertir a `6df6402~1`, contar, `comm -13`) quedó escrito. La frase
+que no correspondía nunca llegó al repo.
+
+### D7 · Cerrado
+
+`visibilitychange` añadido junto a `focus` y al timer, con limpieza simétrica en
+`onBeforeUnmount`. Detalle sin importancia: al volver a una pestaña pueden dispararse
+`focus` y `visibilitychange` a la vez y provocar dos `refresh()`; la guarda de generación ya
+descarta el que llegue tarde, así que solo es una petición de más.
+
+## Estado de los hallazgos
+
+| # | Estado |
+|---|---|
+| D1 · feature inerte en producción | **Mejorado** — no-op documentado y cubierto por test; pendiente aguas arriba |
+| D2 · alcance limitado al FAB | **Diferido explícitamente** (decisión de producto) |
+| D3 · números del gate no reproducibles | **Cerrado** — era Node 20 vs 22; 284/2396 reproduce |
+| D4 · test de widget sin render | **Cerrado** — monta de verdad, mutación mata 3 tests |
+| D5 · evidencia citada inexistente | **Cerrado** |
+| D6 · asimetría de fallo | **Cerrado** (con la consecuencia anotada arriba) |
+| D7 · sin `visibilitychange` | **Cerrado** |
+| D8 · SCEN sin artefacto | **Abierto** |
+| D9 · deriva de claves apaga el botón | **Abierto — nuevo, bloquea el deploy del dashboard** |
+
+## Condiciones para el despliegue
+
+1. **D9** — restaurar el fail-open para claves irreconocibles (2 líneas) **antes** de que el
+   dashboard empiece a servir el campo.
+2. **D1** — re-capturar el fixture contra el endpoint real en cuanto el dashboard despliegue, y
+   corregir el `_comment` para que no prometa una detección automática que no existe.
+3. **D8** — publicar el artefacto de escenarios o quitar las referencias `SCEN`.
+4. **D2** — decidir si el horario aplica solo al FAB antes de anunciar la funcionalidad.
+
+## Reproducir
+
+```bash
+export PATH="/tmp/node-v22.23.1-darwin-arm64/bin:$PATH" COREPACK_INTEGRITY_KEYS=0
+npx vitest run                                    # 284 / 2396 / 0 errores
+pnpm build:alquicarros                            # exit 0
+
+# rojo-verde del contrato: borrar whatsappSchedule del fixture, o renombrar mon -> monday
+npx vitest run packages/logic/src/composables/__tests__/chatStatusContract.test.ts
+
+# mutación del widget: quitar v-if="whatsappVisible" del <li> de alquicarros
+npx vitest run packages/ui-alquicarros/app/components/__tests__/ChatWidget.whatsappSchedule.test.ts
+
+# D9
+node -e 'import("./packages/logic/src/composables/useChatStatus.ts")' # o vía tsx:
+# evaluateWhatsappVisibility({ monday: ["00:00-24:00"] }, new Date()) -> false
+```
