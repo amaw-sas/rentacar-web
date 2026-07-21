@@ -111,6 +111,25 @@ lo encuentra igual en el header y en el footer. Queda como follow-up explícito:
 hay que decidir si el horario aplica al FAB o a todas las puertas **antes** de
 anunciar la funcionalidad.
 
+## Gate — cifras medidas (Node 22.23.1 portátil)
+
+| Verificación | Comando | Resultado |
+|---|---|---|
+| Suite completa | `pnpm vitest run` | **284 archivos / 2396 tests pasan, 0 errores** |
+| Typecheck HEAD | `pnpm typecheck` | 166 errores, ninguno menciona archivos de esta rama |
+| Typecheck BASE (A/B) | fuentes revertidas a `6df6402~1` | 166 errores |
+| **Errores nuevos** | `comm -13 base head` | **0** |
+| Build | `pnpm build:alquicarros` | **exit 0, "Build complete"**; el gate viaja en el bundle |
+
+Los 166 son deuda preexistente del repo (`wordpress-to-nuxt.ts`, `robots` en
+`nuxt.config.ts`, `Searcher.vue`, `ReservationForm.vue`, layouts). `nuxt
+typecheck` no está en verde en este worktree con o sin esta rama; lo que aporta
+el A/B es que el delta es cero.
+
+Delta de tests respecto a la revisión: 283 → 284 archivos (+1, el de contrato) y
+2366 → 2396 tests (+30: 12 de contrato, +11 del predicado, +2 de
+`visibilitychange`, +5 del montaje del widget).
+
 ## Pendiente aguas arriba
 
 Desplegar el dashboard primero. Hasta entonces la funcionalidad es un no-op
