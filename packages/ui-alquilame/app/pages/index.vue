@@ -6,14 +6,17 @@
     (LazyChatWidget), the footer is the F0 chrome.
   -->
   <div>
-    <HomeAnnouncementBar />
+    <!-- The announcement bar moved to layouts/default.vue: it is top chrome and
+         must render ABOVE the header, which only the layout owns. -->
     <HomeHero />
     <HomeFleet />
     <HomeHowItWorks />
+    <!-- Stats sit high — right after "Cómo funciona" and before "¿Por qué?" —
+         matching the reference order (was previously buried below Reviews). -->
+    <HomeStats />
     <HomeValueProps />
     <HomeCities />
     <HomeReviews />
-    <HomeStats />
     <HomeRequirements />
     <HomeFaq />
     <HomeContact />

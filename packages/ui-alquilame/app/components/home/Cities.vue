@@ -24,11 +24,11 @@
   <section id="cities" class="bg-gray-100 py-12 md:py-20 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
       <div class="text-center mb-10">
-        <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
-          Presentes en más de {{ cities.length }} Ciudades
+        <h2 class="heading-section font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
+          Alquila tu carro en las principales ciudades de Colombia
         </h2>
         <p class="mt-4 text-lg text-gray-600">
-          Encuentra tu carro en las principales ciudades de Colombia
+          Operamos en más de {{ cities.length }} ciudades de Colombia. Estas son las más solicitadas.
         </p>
       </div>
 
@@ -91,6 +91,40 @@
           {{ city.name }}
         </NuxtLink>
       </div>
+
+      <!-- Trust row (confianza) — ported from the reference's PuntosEntrega
+           footer: three reassurance items under a divider. -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 mt-12 pt-8 border-t border-gray-900/[0.08]">
+        <div
+          v-for="(item, i) in confianza"
+          :key="item.title"
+          :class="[
+            'flex flex-row items-start gap-3.5 sm:flex-col sm:gap-2',
+            i === 0 ? 'sm:pr-6' : 'sm:px-6 sm:border-l sm:border-gray-900/[0.08]',
+            i > 0 ? 'pt-5 mt-5 border-t border-gray-900/[0.08] sm:pt-0 sm:mt-0 sm:border-t-0' : '',
+          ]"
+        >
+          <span class="shrink-0 text-brand-600">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              v-html="item.icon"
+            />
+          </span>
+          <div class="sm:contents">
+            <p class="font-bold font-heading text-sm text-gray-900">{{ item.title }}</p>
+            <p class="text-[13px] text-gray-500 leading-snug">{{ item.description }}</p>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </template>
@@ -130,6 +164,26 @@ const marqueeCities = computed<FeaturedCity[]>(() => [
   ...featuredCities.value,
   ...featuredCities.value,
 ])
+
+// Trust row copy + icons ported verbatim from the reference's PuntosEntrega
+// "confianza" block.
+const confianza: ReadonlyArray<{ title: string; description: string; icon: string }> = [
+  {
+    title: 'Seguridad y confianza',
+    description: 'Protocolos de bioseguridad en todos nuestros puntos.',
+    icon: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  },
+  {
+    title: 'Entregas rápidas',
+    description: 'Proceso ágil para que empieces tu viaje.',
+    icon: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  },
+  {
+    title: 'Soporte 24/7',
+    description: 'Estamos contigo en cada paso del alquiler.',
+    icon: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  },
+]
 </script>
 
 <style scoped>

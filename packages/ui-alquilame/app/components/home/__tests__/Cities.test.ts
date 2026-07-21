@@ -68,4 +68,24 @@ describe('F1 step04 — Cities.vue', () => {
   it('reserves image space with aspect-ratio (CLS) for the featured cards', () => {
     expect(cities).toMatch(/aspect-\[/)
   })
+
+  it('adopts the reference title while keeping the marquee + pill order', () => {
+    // Title ported from the reference's "Alquila tu carro…" section. The marquee
+    // animation and the pill grid order are OURS and must survive untouched.
+    expect(cities).toContain('Alquila tu carro en las principales ciudades de Colombia')
+    expect(cities).not.toContain('Presentes en más de')
+    // Marquee animation kept.
+    expect(cities).toMatch(/marquee-track/)
+    expect(cities).toMatch(/cities-marquee/)
+    // Pill grid still iterates the full data-source order, unchanged.
+    expect(cities).toMatch(/v-for="city in cities"/)
+  })
+
+  it('adds the reference trust row (confianza) below the cities', () => {
+    // Three reassurance items ported from the reference: seguridad, entregas
+    // rápidas, soporte 24/7.
+    expect(cities).toContain('Seguridad y confianza')
+    expect(cities).toContain('Entregas rápidas')
+    expect(cities).toContain('Soporte 24/7')
+  })
 })

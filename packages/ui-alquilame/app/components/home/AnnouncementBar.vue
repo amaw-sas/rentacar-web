@@ -24,7 +24,8 @@
   -->
   <div
     v-if="!dismissed"
-    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative z-30"
+    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative z-30 transition-all duration-300"
+    :class="leaving ? '-translate-y-full opacity-0' : ''"
   >
     <!-- px-10 reserves room for the absolute close button on both sides so the
          (centered) copy never runs under the X when it wraps on mobile. -->
@@ -66,11 +67,30 @@ const STORAGE_KEY = 'announcement-dismissed'
 // client-side — restored in onMounted, set on dismiss.
 const dismissed = ref(false)
 
+// Exit animation (ported from the design): flipping `dismissed` straight to
+// true unmounts the node in a single frame, so no transition can play and the
+// page snaps upward. `leaving` applies the exit classes while the node is still
+// mounted; `dismissed` flips only once the 300ms slide has finished.
+const leaving = ref(false)
+const EXIT_MS = 300
+
 onMounted(() => {
   if (sessionStorage.getItem(STORAGE_KEY) === 'true') dismissed.value = true
 })
 
 function dismiss(): void {
+  // Reduced-motion users get the instant removal — an unrequested slide is the
+  // exact kind of movement the preference asks us to drop.
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  if (reduced) {
+    remove()
+    return
+  }
+  leaving.value = true
+  setTimeout(remove, EXIT_MS)
+}
+
+function remove(): void {
   dismissed.value = true
   sessionStorage.setItem(STORAGE_KEY, 'true')
 }

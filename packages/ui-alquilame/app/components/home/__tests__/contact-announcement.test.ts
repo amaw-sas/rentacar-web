@@ -226,3 +226,75 @@ describe('AnnouncementBar — stays under the sticky header', () => {
     expect(barRoot[1]).not.toMatch(/\b(sticky|fixed)\b/)
   })
 })
+
+/**
+ * Dismiss behaviour ported from the Astro design:
+ *   GIVEN the announcement bar is visible
+ *   WHEN  the user taps the close button
+ *   THEN  the bar slides up and fades over ~300ms, and only then leaves the
+ *         layout — it does not vanish in a single frame, which reads as a
+ *         glitch and snaps the whole page upward.
+ * Reduced-motion users get the instant removal instead of the slide.
+ */
+/**
+ * Placement — the bar is top chrome, above the header:
+ *   GIVEN the home page
+ *   WHEN  it renders
+ *   THEN  the announcement bar sits ABOVE the logo/menu row, matching the
+ *         reference design, and appears on the home route ONLY — /reservas,
+ *         city pages and /gana must not carry it.
+ * It therefore lives in the layout (the only place that renders the header),
+ * behind a home-route guard, instead of being the first child of index.vue.
+ */
+describe('AnnouncementBar — top chrome, home route only', () => {
+  const layout = read('app/layouts/default.vue')
+
+  it('renders in the layout BEFORE the header, not inside the page', () => {
+    const barAt = layout.indexOf('AnnouncementBar')
+    const headerAt = layout.indexOf('<UHeader')
+    expect(barAt, 'layout must mount the announcement bar').toBeGreaterThan(-1)
+    expect(headerAt).toBeGreaterThan(-1)
+    expect(barAt).toBeLessThan(headerAt)
+  })
+
+  it('is gated to the home route so inner pages stay clean', () => {
+    const line = layout.split('\n').find((l) => l.includes('AnnouncementBar'))
+    expect(line, 'announcement bar mount line not found').toBeDefined()
+    expect(line!).toMatch(/v-if="[^"]*isHome[^"]*"/)
+    expect(layout).toMatch(/const isHome\s*=\s*computed\(/)
+    expect(layout).toMatch(/route\.path === '\/'/)
+  })
+
+  it('no longer mounts the bar from the home page itself (no double bar)', () => {
+    const index = read('app/pages/index.vue')
+    expect(index).not.toMatch(/<HomeAnnouncementBar\b/)
+  })
+})
+
+describe('AnnouncementBar — animated dismissal', () => {
+  const bar = read('app/components/home/AnnouncementBar.vue')
+
+  it('animates out over 300ms before leaving the layout', () => {
+    expect(bar).toMatch(/duration-300|300/)
+    expect(bar).toMatch(/-translate-y-full/)
+    expect(bar).toMatch(/opacity-0/)
+    expect(bar).toMatch(/transition/)
+  })
+
+  it('drives the exit from a leaving flag, so the node survives the animation', () => {
+    // A bare `dismissed = true` unmounts the node instantly and no transition
+    // can play. The component needs a separate "leaving" state that applies the
+    // exit classes first and flips `dismissed` when the animation ends.
+    expect(bar).toMatch(/leaving/)
+    expect(bar).toMatch(/setTimeout|onTransitionend|transitionend/)
+  })
+
+  it('persists the dismissal only after the animation, keeping it per-session', () => {
+    expect(bar).toMatch(/sessionStorage\.setItem/)
+    expect(bar).toMatch(/STORAGE_KEY/)
+  })
+
+  it('respects prefers-reduced-motion by skipping the slide', () => {
+    expect(bar).toMatch(/prefers-reduced-motion/)
+  })
+})

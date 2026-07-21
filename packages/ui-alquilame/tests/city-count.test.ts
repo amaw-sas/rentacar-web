@@ -28,9 +28,11 @@ function read(abs: string): string {
 const HARDCODED_COUNT = /\d+\s+ciudades/i
 
 describe('SCEN-002: no hardcoded city count in alquilame components', () => {
+  // Files that DISPLAY a city figure must derive it from cityCount, never a
+  // literal. (ValueProps no longer shows a coverage figure since it adopted the
+  // reference's photo advantages — it is checked separately below.)
   const files = {
     'home/Stats.vue': 'app/components/home/Stats.vue',
-    'home/ValueProps.vue': 'app/components/home/ValueProps.vue',
     'home/Hero.vue': 'app/components/home/Hero.vue',
     'layouts/default.vue': 'app/layouts/default.vue',
   }
@@ -42,6 +44,14 @@ describe('SCEN-002: no hardcoded city count in alquilame components', () => {
       expect(src).toMatch(/cityCount/)
     })
   }
+
+  it('home/ValueProps.vue shows photo advantages and hardcodes no city count', () => {
+    // The section no longer carries a coverage figure, so the invariant here is
+    // purely negative: it must not smuggle in a hardcoded "N ciudades".
+    const src = read(join(ALQUILAME, 'app/components/home/ValueProps.vue'))
+    expect(src).not.toMatch(HARDCODED_COUNT)
+    expect(src).toContain('/images/ventajas/')
+  })
 
   it('Stats.vue no longer carries the literal value: \'19\'', () => {
     const src = read(join(ALQUILAME, 'app/components/home/Stats.vue'))

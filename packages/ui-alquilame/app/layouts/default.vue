@@ -5,6 +5,14 @@
        background (e.g. the red hero). Flipping to a light surface here would make
        that white text invisible. -->
   <div class="min-h-screen bg-linear-to-b from-brand-900 to-brand-950 font-sans text-gray-800">
+    <!-- Announcement bar — top chrome, ABOVE the logo/menu row (design parity).
+         It lives here rather than in index.vue because the layout is the only
+         place that renders the header, and the bar must precede it. Gated to
+         the home route: /reservas, city pages and /gana stay clean. Rendered in
+         SSR (no client-only gate) so it occupies its space from first paint and
+         does not shift the hero. -->
+    <HomeAnnouncementBar v-if="isHome" />
+
     <!-- Header — golden parity: fondo BLANCO sticky, logo rojo, nav oscuro,
          CTA rojo "Reserva Ahora" + círculo WhatsApp (token bg-whatsapp / #25D366).
          Toggle icon color is owned by base.css (.iconify background-color, scoped
@@ -279,6 +287,9 @@ const mobileMenuOpen = ref(false);
 // para hacer scroll en sitio sin navegar (no se pierde la selección de ciudad);
 // en el resto caemos a /#... (home). #sedes vive en el layout → siempre presente.
 const hasInPageSections = computed(() => route.path === '/' || !!route.params.city);
+
+// The announcement bar is home-only chrome (see the template comment above).
+const isHome = computed(() => route.path === '/');
 
 // Anclas en página: relativas en home/[city] (scroll sin perder ciudad),
 // si no caen a /#... (home). Las secciones existen en el home Nuxt con estos ids.

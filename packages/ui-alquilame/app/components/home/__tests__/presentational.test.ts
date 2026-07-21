@@ -31,6 +31,24 @@ const stats = read('Stats.vue')
 
 const ALL = [howItWorks, valueProps, stats]
 
+describe('home section order — stats sit high, matching the reference', () => {
+  const index = readFileSync(join(HOME, '..', '..', 'pages/index.vue'), 'utf-8')
+  const pos = (tag: string) => index.indexOf(tag)
+
+  it('places HomeStats right after HowItWorks and before the ¿por qué? block', () => {
+    // Reference order: Hero → Fleet → Cómo funciona → ESTADÍSTICAS → ¿Por qué? →
+    // Ciudades. The stats band used to sit far down (below Reviews).
+    const how = pos('<HomeHowItWorks')
+    const st = pos('<HomeStats')
+    const why = pos('<HomeValueProps')
+    const cities = pos('<HomeCities')
+    expect(how).toBeGreaterThan(-1)
+    expect(st).toBeGreaterThan(how)
+    expect(why).toBeGreaterThan(st)
+    expect(cities).toBeGreaterThan(why)
+  })
+})
+
 describe('F1 step03 — HowItWorks.vue (3 steps)', () => {
   it('renders the 3 design steps with their titles', () => {
     expect(howItWorks).toContain('Elige tu Ciudad y Vehículo')
@@ -65,27 +83,39 @@ describe('F1 step03 — HowItWorks.vue (3 steps)', () => {
   })
 })
 
-describe('F1 step03 — ValueProps.vue (4 props)', () => {
-  it('renders the 4 design value props', () => {
-    expect(valueProps).toContain('Sin Anticipos')
-    expect(valueProps).toContain('Flota Nueva')
-    expect(valueProps).toContain('Asistencia 24/7')
-    expect(valueProps).toContain('Cobertura Nacional')
+describe('ValueProps.vue — "¿Por qué alquilar con …?" photo cards', () => {
+  // Adopted verbatim from the reference design's VentajasCity: four framed
+  // PHOTO cards replacing the old flat text-only props. Copy is the reference's.
+  it('renders the 4 reference advantage titles', () => {
+    expect(valueProps).toContain('Sin anticipos para reservar')
+    expect(valueProps).toContain('Plan diario con kilometraje ilimitado')
+    expect(valueProps).toContain('Entrega en aeropuertos y puntos físicos')
+    expect(valueProps).toContain('Pico y placa controlado')
   })
 
-  it('headline derives the brand name from organization.brand', () => {
-    // Reads the config brand and interpolates it into the headline.
+  it('drops the old flat props copy', () => {
+    expect(valueProps).not.toContain('Flota Nueva')
+    expect(valueProps).not.toContain('Asistencia 24/7')
+    expect(valueProps).not.toContain('Cobertura Nacional')
+  })
+
+  it('wires the 4 ported ventaja photos', () => {
+    expect(valueProps).toContain('/images/ventajas/sin-anticipos-foto.webp')
+    expect(valueProps).toContain('/images/ventajas/kilometraje-ilimitado-foto.webp')
+    expect(valueProps).toContain('/images/ventajas/aeropuerto-eldorado-foto.webp')
+    expect(valueProps).toContain('/images/ventajas/pico-y-placa-foto.webp')
+  })
+
+  it('uses the framed-card treatment (thick white border on the lightest surface)', () => {
+    expect(valueProps).toMatch(/\bborder-\[7px\]/)
+    expect(valueProps).toMatch(/\bborder-white\b/)
+    expect(valueProps).toMatch(/\bbg-surface-softest\b/)
+  })
+
+  it('headline derives the brand name from organization.brand — never hardcoded', () => {
     expect(valueProps).toMatch(/organization\.brand/)
-    expect(valueProps).toMatch(/¿Por Qué Elegir \{\{\s*brand\s*\}\}\?/)
-  })
-
-  it('does NOT hardcode "Alquilame" in the headline copy', () => {
-    expect(valueProps).not.toContain('¿Por Qué Elegir Alquilame')
-    // The brand string is never inlined as a literal anywhere in the file.
-    expect(valueProps).not.toContain('Alquilame')
-  })
-
-  it('does NOT use franchise.shortname (lowercase) for the brand', () => {
+    expect(valueProps).toMatch(/¿Por qué alquilar con \{\{\s*brand\s*\}\}\?/)
+    expect(valueProps).not.toContain('alquilar con Alquilame')
     expect(valueProps).not.toContain('shortname')
     expect(valueProps).not.toContain('franchise')
   })
