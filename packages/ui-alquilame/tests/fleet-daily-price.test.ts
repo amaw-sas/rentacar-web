@@ -32,7 +32,7 @@ describe('SCEN-FD1: Fleet daily price is the 30-day low-season derivation', () =
   })
 
   it('renders the three-line daily label', () => {
-    expect(src).toMatch(/alquileres de 30 días/)
+    expect(src).toMatch(/Precio x día en alquiler de 30 días/)
     expect(src).toMatch(/Temporada Baja/)
   })
 

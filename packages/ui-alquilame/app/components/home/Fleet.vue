@@ -101,7 +101,7 @@
             <div class="mb-4 min-h-[3.5rem]">
               <!-- Diario: low-season 1.000 km monthly rate prorated over 30 days -->
               <div v-if="plan === 'daily' && card.dailyPrice !== undefined" class="leading-tight">
-                <p class="text-xs text-gray-500">Precio día en alquileres de 30 días</p>
+                <p class="text-xs text-gray-500">Precio x día en alquiler de 30 días</p>
                 <p class="flex items-baseline gap-2 flex-wrap">
                   <span class="text-2xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}</span>
                   <span class="text-xs font-medium text-emerald-600">IVA incluido</span>

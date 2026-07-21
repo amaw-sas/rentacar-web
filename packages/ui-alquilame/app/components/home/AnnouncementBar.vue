@@ -20,7 +20,9 @@
     v-if="!dismissed"
     class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative z-50"
   >
-    <div class="relative max-w-7xl mx-auto flex items-center justify-center gap-2">
+    <!-- px-10 reserves room for the absolute close button on both sides so the
+         (centered) copy never runs under the X when it wraps on mobile. -->
+    <div class="relative max-w-7xl mx-auto flex items-center justify-center gap-2 px-10">
       <p class="text-sm font-medium">
         Reserva con anticipación — Precios sujetos a disponibilidad
       </p>
