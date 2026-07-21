@@ -20,10 +20,16 @@ describe('SCEN-WA1: hero WhatsApp CTA sits beside Ver Precios (all breakpoints)'
     expect(anchor![0]).not.toMatch(/\blg:hidden\b/)
   })
 
-  it('keeps "Ver Precios" in the same CTA row', () => {
-    expect(HERO).toMatch(/href="#fleet"/)
-    expect(HERO).toMatch(/Ver Precios/)
+  it('is now the ONLY hero CTA — "Ver Precios" was dropped', () => {
+    // SCEN-WA1 amended: the original scenario put WhatsApp *beside* "Ver
+    // Precios" so it would stop being desktop-hidden. That intent — WhatsApp
+    // visible on every breakpoint — is unchanged and in fact stronger now that
+    // it is the single hero action. Only the companion CTA is gone.
     expect(HERO).toMatch(/aria-label="Contáctanos por WhatsApp"/)
+    expect(HERO).toMatch(/\bbg-whatsapp\b/)
+    expect(HERO).toMatch(/:href="franchise\.whatsapp"/)
+    expect(HERO).not.toMatch(/Ver Precios/i)
+    expect(HERO).not.toMatch(/href="#fleet"/)
   })
 })
 

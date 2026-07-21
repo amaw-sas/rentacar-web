@@ -31,7 +31,14 @@
             <span class="ml-2">4.9 reviews</span>
           </div>
 
-          <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
+          <!-- The ramp is spelled out instead of leaning on `.heading-hero`:
+               that utility applies `text-4xl md:text-5xl lg:text-7xl
+               leading-tight`, which silently beat both the size ramp declared
+               here and `leading-[1.1]` — the headline rendered at 72px/90px
+               while the markup said 48px/1.1. Explicit wins are debuggable. -->
+          <h1
+            class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold font-heading text-white leading-[1.1]"
+          >
             Alquiler de Carros en Colombia
           </h1>
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
@@ -39,13 +46,11 @@
             Reserva por WhatsApp en {{ cityCount }} ciudades.
           </p>
 
+          <!-- Single CTA: WhatsApp. The former secondary pill only scrolled to
+               the fleet section — a destination the page already reaches by
+               scrolling — while competing for attention with the action that
+               actually converts. -->
           <div class="mt-6 flex flex-row items-stretch gap-3 justify-center lg:justify-start">
-            <a
-              href="#fleet"
-              class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-red-700 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
-            >
-              Ver Precios
-            </a>
             <a
               :href="franchise.whatsapp"
               target="_blank"

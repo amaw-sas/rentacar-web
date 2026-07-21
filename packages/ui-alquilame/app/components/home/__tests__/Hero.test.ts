@@ -62,10 +62,16 @@ describe('Home hero — golden parity', () => {
     expect(hero).not.toMatch(/<HeroHeadline\b/)
   })
 
-  it('uses the city-sized heading-hero display headline', () => {
-    // Match the city hero headline scale (heading-hero + text-3xl…lg:text-5xl).
-    expect(hero).toMatch(/<h1[^>]*\bheading-hero\b/)
-    expect(hero).toMatch(/<h1[^>]*text-3xl sm:text-4xl lg:text-5xl/)
+  it('sizes the headline with explicit utilities, never the heading-hero class', () => {
+    // The h1 declared `lg:text-5xl leading-[1.1]` but rendered at 72px/90px:
+    // `.heading-hero` (@apply text-4xl md:text-5xl lg:text-7xl leading-tight)
+    // won the cascade and silently overrode BOTH the size ramp and the leading.
+    // Spelling the ramp out — and dropping heading-hero — makes the markup the
+    // single source of truth for the headline scale.
+    expect(hero).not.toMatch(/<h1[^>]*\bheading-hero\b/)
+    expect(hero).toMatch(/<h1[^>]*text-3xl sm:text-4xl lg:text-5xl xl:text-6xl/)
+    expect(hero).toMatch(/<h1[^>]*font-extrabold[^>]*font-heading|<h1[^>]*font-heading[^>]*font-extrabold/)
+    expect(hero).toMatch(/<h1[^>]*leading-\[1\.1\]/)
     expect(hero).toContain('Alquiler de Carros en Colombia')
     expect(hero).not.toMatch(/al Mejor Precio/)
   })
@@ -123,9 +129,12 @@ describe('Home hero — golden parity', () => {
     expect(hero).toMatch(/function enableSound|const enableSound/)
   })
 
-  it('has the "Ver Precios" CTA anchoring to #fleet (no WhatsApp-to-reserve)', () => {
-    expect(hero).toMatch(/href="#fleet"/)
-    expect(hero).toMatch(/Ver Precios/)
+  it('drops the "Ver Precios" CTA — WhatsApp is the single hero action', () => {
+    // Two CTAs of equal visual weight split the intent; the hero now commits to
+    // the one action that actually converts (WhatsApp). "Ver Precios" only
+    // scrolled to #fleet, which the page already reaches by scrolling.
+    expect(hero).not.toMatch(/Ver Precios/i)
+    expect(hero).not.toMatch(/href="#fleet"/)
   })
 
   it('keeps a CONTACT WhatsApp CTA bound to franchise.whatsapp, never a hardcoded number', () => {
