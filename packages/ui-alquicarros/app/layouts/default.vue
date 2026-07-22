@@ -235,7 +235,11 @@
             <p class="text-gray-400 text-sm">
               © 2026 {{ franchise.name }}. Todos los derechos reservados.
             </p>
-            <p class="text-gray-500 text-sm mt-1">
+            <!-- #364: este párrafo era text-gray-500 y daba 4.34:1 sobre el
+                 footer negro. En superficie oscura la regla se invierte —hay que
+                 ACLARAR, no oscurecer—; gray-400 llega a 8.07:1. Medido con la
+                 sonda de estilos computados, no deducido de la clase. -->
+            <p class="text-gray-400 text-sm mt-1">
               Elaborado por <span class="text-gray-300 font-medium">Estrategias</span>
             </p>
           </div>
