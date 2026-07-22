@@ -61,15 +61,31 @@ function parseRangeToMinutes(range: unknown): [number, number] | null {
  * window — so one typo (`'8:00-16:00'`) cannot swing the whole day open.
  *
  * Fail-open is reserved for shape violations that mean "we could not read a
- * schedule at all": a non-object payload, a day whose value is not a list, or an
- * unusable `nowUtc`. Those keep WhatsApp visible so a backend or decoding fault
- * never silently removes the button.
+ * schedule at all": a non-object payload, a NON-EMPTY object that names no
+ * weekday we recognize (`{monday: […]}`, `{lunes: […]}`, `{version: 2, days: {…}}`),
+ * a day whose value is not a list, or an unusable `nowUtc`. Those keep WhatsApp
+ * visible so a backend or decoding fault never silently removes the button.
+ *
+ * The empty object is the one case where "no recognizable weekday" still means
+ * hidden, because `{}` is what the producer stores for "saved, no windows". It is
+ * therefore checked before the readability rule.
  */
 export function evaluateWhatsappVisibility(schedule: unknown, nowUtc: Date): boolean {
   if (schedule === null || schedule === undefined) return true
   if (typeof schedule !== 'object' || Array.isArray(schedule)) return true
 
   const record = schedule as Record<string, unknown>
+
+  // Order matters here. `{}` is the canonical "saved with no windows" value and
+  // must hide all week, so it is settled BEFORE the readability check below —
+  // otherwise it would look like a schedule naming no weekday and fail open.
+  if (Object.keys(record).length === 0) return false
+
+  // A non-empty object that names no weekday we understand (`{monday: […]}`,
+  // `{lunes: […]}`, `{version: 2, days: {…}}`) is a shape we cannot read, not a
+  // schedule that closes every day. Reading it as "closed" would silently remove
+  // the button on a producer rename — the exact failure fail-open exists to stop.
+  if (!DAY_KEYS.some(key => key in record)) return true
 
   const bogota = new Date(nowUtc.getTime() - BOGOTA_OFFSET_MS)
   const dayKey = DAY_KEYS[bogota.getUTCDay()]

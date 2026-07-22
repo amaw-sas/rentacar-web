@@ -106,10 +106,56 @@ describe('evaluateWhatsappVisibility — {} is a valid schedule → hidden ALL w
     expect(evaluateWhatsappVisibility({} as unknown, at(iso))).toBe(false)
   })
 
-  it('an object whose keys are all unrecognized behaves like {} → hidden', () => {
-    // No weekday key matches, so every day resolves to "no window configured".
-    expect(evaluateWhatsappVisibility({ foo: ['08:00-18:00'] } as unknown, at('2026-07-21T15:00:00Z'))).toBe(false)
-    expect(evaluateWhatsappVisibility({ lunes: ['08:00-18:00'] } as unknown, at('2026-07-27T17:00:00Z'))).toBe(false)
+  it('{} stays hidden even though it names no weekday (checked before the readability rule)', () => {
+    // Guards the ordering: if the unreadable-shape rule ran first, {} would fail
+    // open and the canonical "saved with no windows" meaning would be lost.
+    expect(evaluateWhatsappVisibility({} as unknown, at('2026-07-27T17:00:00Z'))).toBe(false)
+  })
+
+  it('a recognizable weekday that is absent still hides just that day', () => {
+    // Monday 12:00 Bogota; mon is configured but empty, so Monday is closed.
+    expect(evaluateWhatsappVisibility({ mon: [] } as unknown, at('2026-07-27T17:00:00Z'))).toBe(false)
+    // Tuesday 12:00 Bogota with only mon configured → Tuesday absent → closed.
+    expect(evaluateWhatsappVisibility({ mon: ['08:00-18:00'] } as unknown, at('2026-07-21T17:00:00Z'))).toBe(false)
+  })
+})
+
+// D9 — regression guard. Making `{}` hidden must not drag unreadable shapes down
+// with it: an object that names no weekday we understand is a payload we cannot
+// read, and the canonical rule for unreadable form is fail-OPEN. Reading it as
+// "closed every day" would silently remove the button the moment the producer
+// renames its keys — precisely what fail-open exists to prevent.
+describe('evaluateWhatsappVisibility — unreadable key shapes fail OPEN (D9)', () => {
+  const MON_12H = at('2026-07-27T17:00:00Z') // Monday 12:00 Bogota
+  const SUN_03H = at('2026-07-26T08:00:00Z') // Sunday 03:00 Bogota
+
+  it('English weekday keys → visible', () => {
+    expect(evaluateWhatsappVisibility({ monday: ['00:00-24:00'] } as unknown, MON_12H)).toBe(true)
+    expect(evaluateWhatsappVisibility({ monday: ['00:00-24:00'] } as unknown, SUN_03H)).toBe(true)
+  })
+
+  it('Spanish weekday keys → visible', () => {
+    expect(evaluateWhatsappVisibility({ lunes: ['08:00-18:00'] } as unknown, MON_12H)).toBe(true)
+    expect(evaluateWhatsappVisibility({ domingo: ['08:00-18:00'] } as unknown, SUN_03H)).toBe(true)
+  })
+
+  it('a wrapped/versioned envelope → visible', () => {
+    expect(evaluateWhatsappVisibility({ version: 2, days: {} } as unknown, MON_12H)).toBe(true)
+    expect(
+      evaluateWhatsappVisibility({ version: 2, days: { mon: ['08:00-18:00'] } } as unknown, SUN_03H),
+    ).toBe(true)
+  })
+
+  it('any other unrecognized key → visible', () => {
+    expect(evaluateWhatsappVisibility({ foo: ['08:00-18:00'] } as unknown, MON_12H)).toBe(true)
+  })
+
+  it('but a single recognized weekday makes the object readable again', () => {
+    // `version` is noise; `mon` is understood, so the schedule is evaluated
+    // normally and Sunday (unconfigured) stays closed.
+    const mixed = { version: 2, mon: ['08:00-18:00'] } as unknown
+    expect(evaluateWhatsappVisibility(mixed, MON_12H)).toBe(true)
+    expect(evaluateWhatsappVisibility(mixed, SUN_03H)).toBe(false)
   })
 })
 
