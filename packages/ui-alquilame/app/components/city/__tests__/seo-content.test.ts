@@ -175,32 +175,34 @@ describe('F2 city SEO content — design styling lessons', () => {
 })
 
 /**
- * Container width rhythm in the SEO block:
- *   GIVEN a city landing on desktop
- *   WHEN  the reader moves from Ventajas → Explora {ciudad} → Destinos
- *   THEN  the blocks do not jump narrow-wide-narrow.
- * #introduccion was max-w-3xl (768px) sitting between a 1024px section above
- * and a 1152px one below, so it read as sunken. Matched to Ventajas (1024px):
- * a wider measure than ideal for prose, chosen knowingly over the visual jump.
+ * SUPERSEDED by the two-width rule (see section-widths.test.ts).
+ *
+ * This block briefly matched #introduccion to its neighbours at 1024px to kill
+ * a narrow-wide-narrow jump. The operator then chose a rule that decides width
+ * by CONTENT instead: grids full width, running prose capped. Under that rule
+ * the intro is deliberately narrower than the card sections around it — the
+ * consistency comes from every grid agreeing on 1280px, not from prose
+ * stretching to meet them. What remains here is the part that still holds:
+ * the intro is prose and must stay capped.
  */
-describe('SEO block — #introduccion no longer sits narrower than its neighbours', () => {
+describe('SEO block — #introduccion is prose and stays capped', () => {
   const widthOf = (id: string): string | null => {
     const at = SEO.indexOf(`id="${id}"`)
     if (at < 0) return null
-    const m = SEO.slice(at, at + 500).match(/max-w-(\w+)/)
+    const m = SEO.slice(at, at + 600).match(/max-w-(\w+)\s+mx-auto/)
     return m ? m[1]! : null
   }
 
-  it('matches the Ventajas container instead of the narrow prose one', () => {
-    expect(widthOf('introduccion')).toBe('5xl')
+  it('caps the intro at the reading width, not the grid width', () => {
+    expect(widthOf('introduccion')).toBe('3xl')
   })
 
-  it('sits between neighbours that are equal or wider, never narrower', () => {
-    const order = ['ventajas', 'introduccion', 'destinos']
-    const rank: Record<string, number> = { '3xl': 3, '4xl': 4, '5xl': 5, '6xl': 6, '7xl': 7 }
-    const widths = order.map((id) => rank[widthOf(id) ?? ''] ?? 0)
-    expect(widths.every((w) => w > 0), `unresolved widths: ${widths}`).toBe(true)
-    expect(widths[1]).toBeGreaterThanOrEqual(widths[0]!)
-    expect(widths[2]).toBeGreaterThanOrEqual(widths[1]!)
+  it('its neighbouring CARD sections are the ones that run full width', () => {
+    expect(widthOf('ventajas')).toBe('7xl')
+    expect(widthOf('destinos')).toBe('7xl')
+  })
+
+  it('the other prose block follows the same cap', () => {
+    expect(widthOf('mejor-temporada')).toBe('3xl')
   })
 })

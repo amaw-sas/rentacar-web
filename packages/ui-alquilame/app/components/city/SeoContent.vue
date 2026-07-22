@@ -21,7 +21,7 @@
   <div>
     <!-- Benefits Section (#ventajas) — adds ~100 words for SEO -->
     <section id="ventajas" class="bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-5xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
@@ -63,7 +63,7 @@
            768px between a 1024px section above and a 1152px one below, which
            read as sunken. Matching Ventajas costs a longer line (~118 chars vs
            89) and that trade was made deliberately. -->
-      <div class="max-w-5xl mx-auto">
+      <div class="max-w-3xl mx-auto">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
         <h2 class="heading-section text-gray-900 mb-5">
           <span class="text-red-700">Explora {{ city?.name }}</span>
@@ -81,7 +81,7 @@
       id="destinos"
       class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8"
     >
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
@@ -113,7 +113,7 @@
       id="consejos-conduccion"
       class="bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8"
     >
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
@@ -163,7 +163,7 @@
       id="ciudades-cercanas"
       class="bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8"
     >
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-7xl mx-auto">
         <div class="text-center mb-8">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
