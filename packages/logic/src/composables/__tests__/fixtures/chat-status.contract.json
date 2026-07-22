@@ -1,0 +1,38 @@
+{
+  "_comment": [
+    "Captured contract for GET {apiBase}/api/chat/status?brand=.",
+    "Producer: rentacar-dashboard, branch diego-alex-melo/whatsapp-schedule-dash,",
+    "app/api/chat/status/route.ts -> NextResponse.json({ brand, enabled, whatsappSchedule }).",
+    "The dashboard validates the jsonb with lib/schemas/whatsapp-schedule.ts BEFORE",
+    "serving it, so an invalid stored schedule is served as null, never as garbage.",
+    "Re-capture with: curl -s \"$API_BASE/api/chat/status?brand=alquilatucarro\"",
+    "If this file stops matching the endpoint, chatStatusContract.test.ts fails loudly."
+  ],
+  "scheduled": {
+    "brand": "alquilatucarro",
+    "enabled": true,
+    "whatsappSchedule": {
+      "mon": ["07:00-19:00"],
+      "tue": ["07:00-19:00"],
+      "wed": ["07:00-19:00"],
+      "thu": ["07:00-19:00"],
+      "fri": ["07:00-19:00"],
+      "sat": ["07:00-16:00"],
+      "sun": []
+    }
+  },
+  "noSchedule": {
+    "brand": "alquilame",
+    "enabled": false,
+    "whatsappSchedule": null
+  },
+  "emptySchedule": {
+    "brand": "alquicarros",
+    "enabled": false,
+    "whatsappSchedule": {}
+  },
+  "legacyBeforeDashboardShipped": {
+    "brand": "alquicarros",
+    "enabled": false
+  }
+}
