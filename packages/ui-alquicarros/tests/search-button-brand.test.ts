@@ -93,6 +93,18 @@ function baseUtility(utilities: string[], prefix: string): string {
   return hit.slice(prefix.length + 1)
 }
 
+/**
+ * Utilidad bajo una variante concreta (`hover:bg-brand-950` → `brand-950`). El
+ * hover se mide igual que el estado base: un hover que se disuelve en el hero
+ * hace desaparecer el botón justo cuando el usuario lo está apuntando.
+ */
+function variantUtility(utilities: string[], variant: string, prefix: string): string {
+  const head = `${variant}:${prefix}-`
+  const hit = utilities.find((u) => u.startsWith(head))
+  if (!hit) throw new Error(`el @apply no declara ninguna utilidad ${variant}:${prefix}-*`)
+  return hit.slice(head.length)
+}
+
 /** Nombre de color Tailwind → hex, vía los tokens de theme.css o los literales. */
 function resolveColor(name: string): string {
   if (COLOR_LITERALS[name]) return COLOR_LITERALS[name]!
@@ -131,35 +143,54 @@ describe('issue #363 — el CTA de búsqueda viste la marca alquicarros', () => 
   })
 
   // SCEN-363-02 — el fallo que la propuesta del issue no vio.
+  // Reposo Y hover: un hover que se disuelve en el hero borra el botón justo
+  // cuando el usuario lo está apuntando, que es el peor momento posible.
   describe('el relleno se despega del hero en el que está apoyado', () => {
-    for (const token of HERO_TOKENS) {
-      it(`alcanza ${MIN_UI_RATIO}:1 contra ${token}`, () => {
-        const fill = resolveColor(baseUtility(appliedUtilities('.search-button'), 'bg'))
-        const hero = readToken(token)
-        const ratio = contrast(fill, hero)
+    const fills = () => {
+      const u = appliedUtilities('.search-button')
+      return [
+        { estado: 'reposo', color: resolveColor(baseUtility(u, 'bg')) },
+        { estado: 'hover', color: resolveColor(variantUtility(u, 'hover', 'bg')) },
+      ]
+    }
 
-        expect(
-          ratio,
-          `el relleno del CTA (${fill}) contra ${token} (${hero}) da ${ratio.toFixed(2)}:1, ` +
-            `por debajo del mínimo de ${MIN_UI_RATIO}:1 de WCAG 1.4.11. El botón vive pelado ` +
-            `sobre el gradiente del hero, sin tarjeta detrás: si no se despega, desaparece.`,
-        ).toBeGreaterThanOrEqual(MIN_UI_RATIO)
-      })
+    for (const token of HERO_TOKENS) {
+      for (const estado of ['reposo', 'hover']) {
+        it(`${estado}: alcanza ${MIN_UI_RATIO}:1 contra ${token}`, () => {
+          const fill = fills().find((f) => f.estado === estado)!.color
+          const hero = readToken(token)
+          const ratio = contrast(fill, hero)
+
+          expect(
+            ratio,
+            `el relleno del CTA en ${estado} (${fill}) contra ${token} (${hero}) da ` +
+              `${ratio.toFixed(2)}:1, por debajo del mínimo de ${MIN_UI_RATIO}:1 de WCAG 1.4.11. ` +
+              `El botón vive pelado sobre el gradiente del hero, sin tarjeta detrás: si no se ` +
+              `despega, desaparece.`,
+          ).toBeGreaterThanOrEqual(MIN_UI_RATIO)
+        })
+      }
     }
   })
 
-  // SCEN-363-03
-  it('la etiqueta se lee sobre el relleno', () => {
-    const utilities = appliedUtilities('.search-button')
-    const fill = resolveColor(baseUtility(utilities, 'bg'))
-    const ink = resolveColor(baseUtility(utilities, 'text'))
-    const ratio = contrast(ink, fill)
+  // SCEN-363-03 — la etiqueta es la misma en ambos estados, el relleno no.
+  describe('la etiqueta se lee sobre el relleno', () => {
+    for (const estado of ['reposo', 'hover']) {
+      it(`${estado}: alcanza ${MIN_TEXT_RATIO}:1`, () => {
+        const u = appliedUtilities('.search-button')
+        const fill = resolveColor(
+          estado === 'reposo' ? baseUtility(u, 'bg') : variantUtility(u, 'hover', 'bg'),
+        )
+        const ink = resolveColor(baseUtility(u, 'text'))
+        const ratio = contrast(ink, fill)
 
-    expect(
-      ratio,
-      `el texto del CTA (${ink}) sobre su relleno (${fill}) da ${ratio.toFixed(2)}:1, ` +
-        `por debajo del mínimo AA de ${MIN_TEXT_RATIO}:1 para texto normal.`,
-    ).toBeGreaterThanOrEqual(MIN_TEXT_RATIO)
+        expect(
+          ratio,
+          `el texto del CTA (${ink}) sobre su relleno en ${estado} (${fill}) da ` +
+            `${ratio.toFixed(2)}:1, por debajo del mínimo AA de ${MIN_TEXT_RATIO}:1 para texto normal.`,
+        ).toBeGreaterThanOrEqual(MIN_TEXT_RATIO)
+      })
+    }
   })
 
   // SCEN-363-01 + SCEN-363-06
@@ -210,6 +241,16 @@ describe('issue #363 — el CTA de búsqueda viste la marca alquicarros', () => 
       `el pulso dura ${total} s (${seconds}s × ${iterations}), por encima del umbral de ` +
         `${MAX_ANIMATION_SECONDS} s de WCAG 2.2.2.`,
     ).toBeLessThan(MAX_ANIMATION_SECONDS)
+
+    // SCEN-363-04 pide que la muestra final NO sea `none`. Sin `forwards`, al
+    // terminar la última iteración el box-shadow se corta de golpe en vez de
+    // quedarse en el halo suave del keyframe 100%: el CTA pierde su affordance
+    // de golpe y el usuario ve un parpadeo final.
+    expect(
+      animation!,
+      `la animación no declara \`forwards\` ("${animation!.trim()}"): al acabar, el halo se ` +
+        `corta en seco en vez de quedarse en el keyframe 100%.`,
+    ).toMatch(/\bforwards\b/)
   })
 
   // SCEN-363-07 — el rojo de alquilame es correcto EN alquilame.
