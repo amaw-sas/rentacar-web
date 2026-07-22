@@ -21,7 +21,7 @@
   >
     <span
       class="flex size-12 shrink-0 items-center justify-center rounded-xl transition-colors"
-      :class="active ? 'bg-brand-600 text-gray-900' : 'bg-surface-soft text-brand-700 group-hover:bg-brand-100'"
+      :class="active ? 'bg-brand-600 text-gray-900' : 'bg-surface-soft text-brand-800 group-hover:bg-brand-100'"
     >
       <UIcon :name="segment.icon" class="size-6" />
     </span>
@@ -43,7 +43,7 @@
       </span>
       <template v-else>
         <span class="block body-xs text-gray-600">desde</span>
-        <span class="block price-md font-heading text-brand-700">$ {{ fromPrice }}</span>
+        <span class="block price-md font-heading text-brand-800">$ {{ fromPrice }}</span>
       </template>
     </span>
   </button>

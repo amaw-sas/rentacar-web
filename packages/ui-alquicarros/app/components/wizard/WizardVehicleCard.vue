@@ -56,7 +56,7 @@
       <div v-else class="mt-auto flex items-end justify-between gap-3 border-t border-gray-100 pt-3">
         <div>
           <p class="body-xs text-gray-600">Precio total · {{ getFormattedDays }}</p>
-          <p class="price-md font-heading text-brand-700">$ {{ currencyTotalPrice }}</p>
+          <p class="price-md font-heading text-brand-800">$ {{ currencyTotalPrice }}</p>
           <p class="body-xs text-gray-600">$ {{ currencyDailyPrice }} / día</p>
         </div>
         <UButton
@@ -64,7 +64,7 @@
           class="shrink-0 justify-center rounded-full font-bold"
           :class="
             selected
-              ? 'bg-brand-100 text-brand-800 hover:bg-brand-200'
+              ? 'bg-brand-100 text-brand-900 hover:bg-brand-200'
               : 'bg-brand-600 text-gray-900 hover:bg-brand-700'
           "
           :data-testid="`wizard-select-${categoryCode}-test`"

@@ -27,7 +27,7 @@
             <span class="block body-sm text-gray-500">{{ opt.hint }}</span>
           </div>
         </div>
-        <span class="shrink-0 price-md font-heading text-brand-700">$ {{ opt.price.value }}</span>
+        <span class="shrink-0 price-md font-heading text-brand-800">$ {{ opt.price.value }}</span>
       </label>
     </div>
 

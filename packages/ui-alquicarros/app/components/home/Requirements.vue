@@ -65,7 +65,7 @@
             :style="{ animationDelay: `${index * 150}ms` }"
           >
             <span
-              class="flex-shrink-0 w-9 h-9 rounded-xl bg-brand-600/10 text-brand-700 flex items-center justify-center"
+              class="flex-shrink-0 w-9 h-9 rounded-xl bg-brand-600/10 text-brand-800 flex items-center justify-center"
               aria-hidden="true"
             >
               <UIcon :name="req.icon" class="size-5" />

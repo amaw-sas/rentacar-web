@@ -38,7 +38,7 @@
           :href="`https://wa.me/57${whatsappContact.phone}`"
           target="_blank"
           rel="noopener"
-          class="mt-3 inline-block body-sm font-semibold text-brand-700 underline"
+          class="mt-3 inline-block body-sm font-semibold text-brand-800 underline"
         >
           Escríbenos por WhatsApp {{ whatsappContact.display }}
         </a>
@@ -103,7 +103,7 @@
           :href="`https://wa.me/57${whatsappContact.phone}`"
           target="_blank"
           rel="noopener"
-          class="mt-3 inline-block body-sm font-semibold text-brand-700 underline"
+          class="mt-3 inline-block body-sm font-semibold text-brand-800 underline"
         >
           Escríbenos por WhatsApp {{ whatsappContact.display }}
         </a>

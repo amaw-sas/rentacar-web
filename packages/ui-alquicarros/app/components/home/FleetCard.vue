@@ -47,17 +47,17 @@
           v-if="plan === 'daily' && card.dailyPrice !== undefined"
           class="flex items-baseline gap-2 flex-wrap"
         >
-          <span class="text-sm text-gray-500">Desde</span>
-          <span class="text-3xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}/día</span>
-          <span class="text-sm text-gray-400">+ IVA</span>
+          <span class="text-sm text-gray-600">Desde</span>
+          <span class="text-3xl font-extrabold font-heading text-brand-800">${{ moneyFormat(card.dailyPrice) }}/día</span>
+          <span class="text-sm text-gray-600">+ IVA</span>
         </p>
         <p
           v-else-if="plan === 'monthly' && card.monthlyPrice !== undefined"
           class="flex items-baseline gap-2 flex-wrap"
         >
-          <span class="text-sm text-gray-500">Desde</span>
-          <span class="text-3xl font-extrabold font-heading text-brand-600">${{ moneyFormat(card.monthlyPrice) }}/mes</span>
-          <span class="text-sm font-medium text-emerald-600">IVA incluido</span>
+          <span class="text-sm text-gray-600">Desde</span>
+          <span class="text-3xl font-extrabold font-heading text-brand-800">${{ moneyFormat(card.monthlyPrice) }}/mes</span>
+          <span class="text-sm font-medium text-emerald-700">IVA incluido</span>
         </p>
       </div>
 

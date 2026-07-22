@@ -28,10 +28,10 @@
 
         <!-- Poster: "En {franchise} {city} la libertad ... es realidad" -->
         <div class="flex flex-col gap-0 text-center">
-          <div class="heading-sub text-brand-600 font-extrabold text-xl md:text-3xl">
+          <div class="heading-sub text-brand-800 font-extrabold text-xl md:text-3xl">
             En {{ franchise.shortname }}
           </div>
-          <div class="heading-section text-brand-600 font-extrabold text-3xl md:text-5xl" v-text="city?.name"></div>
+          <div class="heading-section text-brand-800 font-extrabold text-3xl md:text-5xl" v-text="city?.name"></div>
           <p class="heading-card text-gray-900 font-extrabold text-2xl md:text-4xl mb-0 leading-snug">
             la libertad <br />
             de moverte <br />
@@ -67,7 +67,7 @@
       <div class="max-w-3xl mx-auto">
         <div class="h-1 w-10 rounded-full bg-brand-600 mb-5"></div>
         <h2 class="heading-section text-gray-900 mb-5">
-          <span class="text-brand-700">Explora {{ city?.name }}</span>
+          <span class="text-brand-800">Explora {{ city?.name }}</span>
           <span class="text-gray-900"> con tu carro de alquiler</span>
         </h2>
         <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">

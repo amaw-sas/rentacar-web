@@ -25,7 +25,7 @@
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-brand-900">
           Reserva tu Carro Hoy
         </h2>
-        <p class="mt-3 text-base md:text-lg text-brand-900/70">
+        <p class="mt-3 text-base md:text-lg text-brand-900">
           Sin anticipos. Sin cargos ocultos. Cancela gratis hasta 24 horas antes.
         </p>
       </div>
@@ -34,14 +34,14 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
         <!-- Ruta 1: reserva online → motor interno -->
         <div
-          class="rounded-2xl p-7 md:p-8 text-center text-white shadow-[0_16px_34px_rgba(124,45,18,0.28)] flex flex-col items-center"
+          class="context-brand rounded-2xl p-7 md:p-8 text-center text-on-brand shadow-[0_16px_34px_rgba(124,45,18,0.28)] flex flex-col items-center"
           :style="onlineTileStyle"
         >
           <div class="w-14 h-14 rounded-2xl bg-white/18 flex items-center justify-center mb-4">
             <UIcon name="i-lucide-car" class="size-7" aria-hidden="true" />
           </div>
           <h3 class="font-heading text-lg font-bold">Reserva online</h3>
-          <p class="mt-1.5 mb-6 text-sm text-white/85">
+          <p class="mt-1.5 mb-6 text-sm text-on-brand">
             Cotiza y confirma en 2 minutos, sin llamadas.
           </p>
           <a
@@ -83,9 +83,9 @@
         <li
           v-for="badge in badges"
           :key="badge.label"
-          class="flex items-center gap-2 text-sm font-medium text-brand-900/75"
+          class="flex items-center gap-2 text-sm font-medium text-brand-900"
         >
-          <UIcon :name="badge.icon" class="size-5 text-brand-600" aria-hidden="true" />
+          <UIcon :name="badge.icon" class="size-5 text-brand-700" aria-hidden="true" />
           {{ badge.label }}
         </li>
       </ul>
@@ -119,11 +119,25 @@ const badges = computed<Badge[]>(() => [
   { icon: 'i-lucide-map-pinned', label: `+${cityCount.value} ciudades` },
 ])
 
-// Tile A background: warm radial glow over a linear orange→amber-dark base. The
-// dark lower stop (#c2410c) keeps the white text/labels above WCAG AA. Radials
-// aren't Tailwind utilities → bound inline as a real CSS `linear-gradient`, not
-// the broken v3 gradient utility alias.
+// Tile A background: warm radial glow over a linear orange base. Radials aren't
+// Tailwind utilities → bound inline as a real CSS `linear-gradient`, not the
+// broken v3 gradient utility alias.
+//
+// The comment here used to claim the dark lower stop "keeps the white text above
+// WCAG AA". It never did: white measured 2.36:1 at the top of the ramp. Only the
+// bottom of the gradient was ever checked.
+/*
+ * Issue #364. El gradiente terminaba en #c2410c y eso lo hacía IMPOSIBLE de
+ * resolver: sobre #ff8a00 el blanco da 2.36:1 y sobre #c2410c gray-900 da
+ * 3.43:1. Ningún color de texto cumplía en todo el recorrido — no era un
+ * problema de qué texto elegir, sino de un gradiente demasiado ancho.
+ *
+ * Ahora termina en footer-to, el mismo rango que la sección de aliados, donde
+ * --color-on-brand cumple de punta a punta (7.51:1 → 4.93:1). Los stops salen
+ * de los tokens en vez de hexes sueltos, así que
+ * tests/brand-surface-contrast.test.ts también cubre esta superficie.
+ */
 const onlineTileStyle =
   'background: radial-gradient(70% 120% at 50% 0%, rgba(255,146,96,0.55) 0%, rgba(255,107,28,0) 60%), ' +
-  'linear-gradient(160deg, #ff8a00 0%, #e35d0a 60%, #c2410c 100%);'
+  'linear-gradient(160deg, var(--color-footer-from) 0%, var(--color-footer-to) 100%);'
 </script>

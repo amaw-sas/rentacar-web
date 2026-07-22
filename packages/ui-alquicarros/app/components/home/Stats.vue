@@ -20,7 +20,7 @@
         <template v-for="(stat, index) in stats" :key="stat.label">
           <div class="flex flex-1 flex-col items-center px-4 text-center">
             <svg
-              class="h-6 w-6 text-brand-600"
+              class="h-6 w-6 text-brand-700"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -31,7 +31,7 @@
               v-html="stat.icon"
             />
             <span
-              class="mt-3 inline-flex items-center rounded-full border border-brand-200 bg-brand-50/60 px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-brand-600"
+              class="mt-3 inline-flex items-center rounded-full border border-brand-200 bg-brand-50/60 px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-brand-800"
             >
               {{ stat.badge }}
             </span>
