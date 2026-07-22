@@ -173,3 +173,34 @@ describe('F2 city SEO content — design styling lessons', () => {
     expect(SEO).toMatch(/h-1 w-10 rounded-full bg-red-600/)
   })
 })
+
+/**
+ * Container width rhythm in the SEO block:
+ *   GIVEN a city landing on desktop
+ *   WHEN  the reader moves from Ventajas → Explora {ciudad} → Destinos
+ *   THEN  the blocks do not jump narrow-wide-narrow.
+ * #introduccion was max-w-3xl (768px) sitting between a 1024px section above
+ * and a 1152px one below, so it read as sunken. Matched to Ventajas (1024px):
+ * a wider measure than ideal for prose, chosen knowingly over the visual jump.
+ */
+describe('SEO block — #introduccion no longer sits narrower than its neighbours', () => {
+  const widthOf = (id: string): string | null => {
+    const at = SEO.indexOf(`id="${id}"`)
+    if (at < 0) return null
+    const m = SEO.slice(at, at + 500).match(/max-w-(\w+)/)
+    return m ? m[1]! : null
+  }
+
+  it('matches the Ventajas container instead of the narrow prose one', () => {
+    expect(widthOf('introduccion')).toBe('5xl')
+  })
+
+  it('sits between neighbours that are equal or wider, never narrower', () => {
+    const order = ['ventajas', 'introduccion', 'destinos']
+    const rank: Record<string, number> = { '3xl': 3, '4xl': 4, '5xl': 5, '6xl': 6, '7xl': 7 }
+    const widths = order.map((id) => rank[widthOf(id) ?? ''] ?? 0)
+    expect(widths.every((w) => w > 0), `unresolved widths: ${widths}`).toBe(true)
+    expect(widths[1]).toBeGreaterThanOrEqual(widths[0]!)
+    expect(widths[2]).toBeGreaterThanOrEqual(widths[1]!)
+  })
+})

@@ -59,7 +59,11 @@
       id="introduccion"
       class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8"
     >
-      <div class="max-w-3xl mx-auto">
+      <!-- max-w-5xl, not the narrower prose width: this block used to sit at
+           768px between a 1024px section above and a 1152px one below, which
+           read as sunken. Matching Ventajas costs a longer line (~118 chars vs
+           89) and that trade was made deliberately. -->
+      <div class="max-w-5xl mx-auto">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
         <h2 class="heading-section text-gray-900 mb-5">
           <span class="text-red-700">Explora {{ city?.name }}</span>
