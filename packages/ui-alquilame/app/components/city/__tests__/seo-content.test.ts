@@ -25,9 +25,23 @@ const CHICA = readFileSync(
 )
 
 describe('F2 city Intro — #descripcion + #introduccion preserved (SCEN-F2-02)', () => {
-  it('keeps both section ids', () => {
+  it('keeps #descripcion, and #introduccion moved to the SEO block', () => {
+    // #introduccion now sits directly ABOVE #destinos in SeoContent.vue: the two
+    // read as one story (why a car here → where to go), and the operator asked
+    // for them stacked rather than merged, so BOTH headings survive.
     expect(INTRO).toContain('id="descripcion"')
-    expect(INTRO).toContain('id="introduccion"')
+    expect(INTRO).not.toContain('id="introduccion"')
+    expect(SEO).toContain('id="introduccion"')
+  })
+
+  it('places #introduccion immediately before #destinos', () => {
+    const intro = SEO.indexOf('id="introduccion"')
+    const destinos = SEO.indexOf('id="destinos"')
+    expect(intro).toBeGreaterThan(-1)
+    expect(destinos).toBeGreaterThan(intro)
+    // Nothing else between them.
+    const between = SEO.slice(intro, destinos)
+    expect(between).not.toMatch(/id="(ventajas|consejos-conduccion|mejor-temporada|ciudades-cercanas)"/)
   })
 
   it('keeps the #descripcion poster copy verbatim', () => {
@@ -46,10 +60,11 @@ describe('F2 city Intro — #descripcion + #introduccion preserved (SCEN-F2-02)'
   })
 
   it('keeps the #introduccion heading + intro paragraph, guarded by expandedContent', () => {
-    expect(INTRO).toContain('Explora {{ city?.name }}')
-    expect(INTRO).toContain('con tu carro de alquiler')
-    expect(INTRO).toContain('expandedContent.intro')
-    expect(INTRO).toMatch(/v-if="expandedContent"/)
+    // Same contract, now owned by SeoContent.vue.
+    expect(SEO).toContain('Explora {{ city?.name }}')
+    expect(SEO).toContain('con tu carro de alquiler')
+    expect(SEO).toContain('expandedContent.intro')
+    expect(SEO).toMatch(/v-if="expandedContent"/)
   })
 
   it('renders the city illustration (CLS-safe reserved box)', () => {

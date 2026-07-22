@@ -47,6 +47,30 @@
       </div>
     </section>
 
+    <!--
+      Intro (#introduccion) — moved here from city/Intro.vue so it sits directly
+      above #destinos: the paragraph ends by naming places to visit, which is
+      exactly what the cards below list. Kept as its OWN section with its own
+      heading rather than merged into Destinos, so the city keeps both
+      keyword-bearing headings.
+    -->
+    <section
+      v-if="expandedContent"
+      id="introduccion"
+      class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8"
+    >
+      <div class="max-w-3xl mx-auto">
+        <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
+        <h2 class="heading-section text-gray-900 mb-5">
+          <span class="text-red-700">Explora {{ city?.name }}</span>
+          <span class="text-gray-900"> con tu carro de alquiler</span>
+        </h2>
+        <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
+          <p>{{ expandedContent.intro }}</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Destinations Section (#destinos) — only rich-content cities -->
     <section
       v-if="expandedContent"

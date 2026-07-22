@@ -2,9 +2,9 @@
   <!--
     F2 step03 — City Intro (issue #112, SCEN-F2-02).
 
-    Restyle of CityPage.vue's #descripcion + #introduccion to the design's #intro
-    look: a clean light document section with the red accent bar (h-1 w-10 rounded
-    bg-red-600), a .heading-section title (Plus Jakarta) and relaxed body copy.
+    Restyle of CityPage.vue's #descripcion to the design's intro look: a clean
+    light document section with the red accent bar (h-1 w-10 rounded bg-red-600),
+    a .heading-section title (Plus Jakarta) and relaxed body copy.
 
     COPY: all indexable per-city SEO copy (city.description, expandedContent) is
     kept verbatim. The only brand-authored line is the #descripcion poster, which
@@ -12,11 +12,13 @@
     the sister brand:
       - #descripcion: the "En {franchise} {city} muévete a tu ritmo, sin límites"
         poster + city.description + the city illustration.
-      - #introduccion (#intro): the "Explora {city} con tu carro de alquiler"
-        heading + expandedContent.intro paragraph (only for cities with rich
-        content — same hasExpandedContent guard as before).
+    The "Explora {city} con tu carro de alquiler" block that used to live here
+    MOVED to city/SeoContent.vue, directly above #destinos: its paragraph closes
+    by naming places to visit, which is what the destination cards list. It kept
+    its own heading rather than being merged, so the city keeps both
+    keyword-bearing headings.
 
-    Both sections are light backgrounds → default dark text is correct; no
+    Light background → default dark text is correct; no
     [--ctx-text-primary:#fff] override (that is only for dark/red sections).
   -->
   <div>
@@ -60,23 +62,6 @@
       </div>
     </section>
 
-    <!-- Intro Section (#introduccion → design #intro) — only for rich-content cities -->
-    <section
-      v-if="expandedContent"
-      id="introduccion"
-      class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8"
-    >
-      <div class="max-w-3xl mx-auto">
-        <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
-        <h2 class="heading-section text-gray-900 mb-5">
-          <span class="text-red-700">Explora {{ city?.name }}</span>
-          <span class="text-gray-900"> con tu carro de alquiler</span>
-        </h2>
-        <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
-          <p>{{ expandedContent.intro }}</p>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
