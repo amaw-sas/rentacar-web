@@ -35,8 +35,10 @@
         </p>
       </div>
 
-      <!-- Branch cards -->
-      <div class="flex flex-col gap-4">
+      <!-- Branch cards, two per row on desktop. Stacked in a single column each
+           card spanned the whole 1280px container, which made this section read
+           far wider than every other card block on the page. -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
           v-for="branch in cityBranches"
           :key="branch.code"

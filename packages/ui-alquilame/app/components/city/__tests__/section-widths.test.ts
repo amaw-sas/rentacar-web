@@ -77,3 +77,29 @@ describe('city sections — only the two sanctioned widths exist', () => {
     }
   })
 })
+
+/**
+ * Delivery points layout:
+ *   GIVEN a city with several branches (Bogotá has 5)
+ *   WHEN  the section renders on desktop
+ *   THEN  the branch cards sit two per row, not stacked one under another.
+ * Stacked, each card spanned the full 1280px container, which made the section
+ * read far wider than every other card block on the page.
+ */
+describe('city delivery points — branches in two columns', () => {
+  const DELIVERY_SRC = read('DeliveryPoints.vue')
+
+  it('lays the branch cards out as a two-column grid on desktop', () => {
+    const at = DELIVERY_SRC.indexOf('v-for="branch in cityBranches"')
+    expect(at, 'branch loop not found').toBeGreaterThan(-1)
+    const container = DELIVERY_SRC.slice(Math.max(0, at - 300), at)
+    expect(container).toMatch(/grid/)
+    expect(container).toMatch(/md:grid-cols-2|sm:grid-cols-2/)
+  })
+
+  it('no longer stacks them in a single flex column', () => {
+    const at = DELIVERY_SRC.indexOf('v-for="branch in cityBranches"')
+    const container = DELIVERY_SRC.slice(Math.max(0, at - 300), at)
+    expect(container).not.toMatch(/flex flex-col gap-4/)
+  })
+})
