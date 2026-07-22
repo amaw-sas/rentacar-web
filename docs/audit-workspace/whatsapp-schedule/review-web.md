@@ -506,6 +506,9 @@ las tres sean byte-idénticas, así que la cobertura alcanza a las tres. D4 cerr
 
 ### D9 · NUEVO — la deriva de claves entre repos ahora apaga el botón — MEDIA-ALTA
 
+> **CERRADO en `b10c517`.** Verificación puntual al final del documento:
+> [Cierre de D9](#cierre-de-d9--b10c517).
+
 Al borrar la guarda `if (!DAY_KEYS.some(key => key in record)) return true`, un payload cuyas
 claves no reconoce **ninguna** el lector dejó de ser "no pude leer un horario" y pasó a ser
 "un horario sin ninguna ventana". Resultado: WhatsApp desaparece de las 3 marcas, las 24 h,
@@ -615,12 +618,12 @@ descarta el que llegue tarde, así que solo es una petición de más.
 | D6 · asimetría de fallo | **Cerrado** (con la consecuencia anotada arriba) |
 | D7 · sin `visibilitychange` | **Cerrado** |
 | D8 · SCEN sin artefacto | **Abierto** |
-| D9 · deriva de claves apaga el botón | **Abierto — nuevo, bloquea el deploy del dashboard** |
+| D9 · deriva de claves apaga el botón | **Cerrado en `b10c517`** — ver el cierre al final |
 
 ## Condiciones para el despliegue
 
-1. **D9** — restaurar el fail-open para claves irreconocibles (2 líneas) **antes** de que el
-   dashboard empiece a servir el campo.
+1. ~~**D9** — restaurar el fail-open para claves irreconocibles (2 líneas) **antes** de que el
+   dashboard empiece a servir el campo.~~ **Hecho en `b10c517` y verificado.**
 2. **D1** — re-capturar el fixture contra el endpoint real en cuanto el dashboard despliegue, y
    corregir el `_comment` para que no prometa una detección automática que no existe.
 3. **D8** — publicar el artefacto de escenarios o quitar las referencias `SCEN`.
@@ -643,3 +646,108 @@ npx vitest run packages/ui-alquicarros/app/components/__tests__/ChatWidget.whats
 node -e 'import("./packages/logic/src/composables/useChatStatus.ts")' # o vía tsx:
 # evaluateWhatsappVisibility({ monday: ["00:00-24:00"] }, new Date()) -> false
 ```
+
+---
+
+## Cierre de D9 — `b10c517`
+
+**Veredicto: D9 CERRADO.** Verificación puntual, mismos contraejemplos, ejecutados de nuevo.
+
+El arreglo es el que propuse y está en el orden correcto — `{}` se resuelve **antes** que la
+regla de legibilidad, que es justo lo que evita que el vacío canónico se cuele por el
+fail-open:
+
+```js
+if (Object.keys(record).length === 0) return false        // {} canónico → oculto
+if (!DAY_KEYS.some(key => key in record)) return true     // forma ilegible → fail-open
+```
+
+### Los contraejemplos de D9 vuelven a fallar abiertos
+
+No probé un instante: evalué **los 10 080 minutos de la semana** para cada forma ilegible, en
+`Pacific/Kiritimati` (UTC+14, el huso más hostil al cálculo de día). Ninguna se oculta ni un
+solo minuto:
+
+| Payload | Antes (`ad16c46`) | Ahora (`b10c517`) |
+|---|---|---|
+| `{monday: ['00:00-24:00']}` | oculto | **visible 10080/10080** |
+| `{lunes: ['08:00-18:00']}` | oculto | **visible 10080/10080** |
+| `{version: 2, days: {}}` | oculto | **visible 10080/10080** |
+| `{version: 2, days: {tue: […]}}` | oculto | **visible 10080/10080** |
+| `{Tue: ['00:00-24:00']}` | oculto | **visible 10080/10080** |
+| `{Mon: [], Tue: []}` | oculto | **visible 10080/10080** |
+| `{lun: [], mar: []}` | oculto | **visible 10080/10080** |
+| `{_comment: 'x'}` | oculto | **visible 10080/10080** |
+
+### Nada de lo anterior regresó
+
+| Caso | Resultado |
+|---|---|
+| `{}` oculto toda la semana | **0/10 080 minutos visible**, en los 7 husos |
+| Barrido de la ruta normal vs `Intl/America/Bogota` | **0 discrepancias**, en los 7 husos |
+| `{mon: []}` un lunes | oculto ✓ |
+| `{mon: ['08:00-18:00']}` un **martes** (día ausente) | oculto ✓ |
+| `{mon: ['08:00-18:00']}` un **lunes** dentro de ventana | visible ✓ |
+| `{sun: []}` un martes (hoy ausente, otro día reconocible) | oculto ✓ |
+| `{tue: ['8:00-18:00']}` (typo, D6) | oculto ✓ |
+| `{tue: null}` (día no-lista) | visible ✓ |
+| `null` / `'basura'` / `[]` / `Invalid Date` | visible ✓ |
+
+### El agujero que busqué y no existe
+
+Restaurar el fail-open podría haber roto la forma realista de decir "cerrado toda la semana"
+desde una UI, que no es `{}` sino los siete días con lista vacía. Comprobé las dos:
+
+```
+{} (vacío canónico)                  : visible 0/10080 min
+los 7 días con [] (cerrado total)    : visible 0/10080 min
+solo {sun: []} (1 día reconocible)   : visible 0/10080 min
+{version: 2} sin días reconocibles   : visible 10080/10080 min   ← fail-open, correcto
+```
+
+Ambas maneras de cerrar la semana siguen cerrando. El fail-open solo se activa cuando de
+verdad no hay ninguna llave que el lector entienda.
+
+### En DOM real
+
+Servidor dev contra el stub del dashboard, FAB leído del DOM:
+
+| Respuesta del API | Ítems renderizados |
+|---|---|
+| **`{monday:[…], lunes:[…]}`** | `Chat 24 horas`, **`WhatsApp`**, `Llámanos` ✔ antes faltaba |
+| `{}` | `Chat 24 horas`, `Llámanos` ✔ sigue oculto |
+| ventana abierta | `Chat 24 horas`, `WhatsApp`, `Llámanos` |
+| `{hoy: []}` / día ausente / typo | `Chat 24 horas`, `Llámanos` |
+| `{hoy: 'no-soy-lista'}` / `null` | `Chat`, `WhatsApp`, `Llámanos` |
+| HTTP 500 | `WhatsApp`, `Llámanos` |
+
+### Tests
+
+Los dos asserts que codificaban el bug (`{foo: […]}` y `{lunes: […]}` → oculto) no
+desaparecieron: se reemplazaron por una suite de regresión D9 explícita, más una prueba que
+fija el **orden** (`{}` oculto aunque no nombre ningún día) y otra que confirma que una sola
+llave reconocible vuelve legible el objeto (`{version: 2, mon: […]}` → lunes abierto, domingo
+cerrado). El `it.each` de `{}` en los 7 días quedó intacto.
+
+```
+npx vitest run  (Node 22.23.1)
+Test Files  284 passed (284)
+     Tests  2402 passed (2402)      # +6 respecto a ad16c46, todos de la regresión D9
+    Errors  0        exit 0
+```
+
+Dos corridas, cifras idénticas. Los barridos de 10 080 minutos también se re-ejecutaron en un
+huso distinto (`Pacific/Midway`, UTC−11) con los mismos resultados.
+
+### Estado final de los hallazgos
+
+| # | Estado |
+|---|---|
+| D1 | Mejorado — no-op documentado y cubierto por test; pendiente aguas arriba (dashboard primero) |
+| D2 | Diferido explícitamente (decisión de producto) |
+| D3 · D4 · D5 · D6 · D7 | Cerrados |
+| **D9** | **Cerrado** |
+| **D8** | **Abierto** — los `SCEN S1/S2/S4/S5` siguen sin artefacto en `docs/specs/` |
+
+Queda un solo hallazgo abierto, el más barato: publicar el archivo de escenarios o borrar la
+referencia.
