@@ -33,7 +33,7 @@
         <template v-for="(step, index) in steps" :key="`marker-${step.number}`">
           <span
             :data-testid="`step-marker-${step.number}`"
-            class="flex items-center justify-center size-11 md:size-12 rounded-full font-extrabold text-base shrink-0 bg-brand-600 text-white shadow-[0_4px_12px_rgba(239,150,0,0.35)]"
+            class="flex items-center justify-center size-11 md:size-12 rounded-full font-extrabold text-base shrink-0 bg-brand-600 text-gray-900 shadow-[0_4px_12px_rgba(239,150,0,0.35)]"
           >
             {{ step.number }}
           </span>
@@ -89,7 +89,7 @@
           </svg>
           Seguridad • Transparencia • Soporte 24/7
         </p>
-        <p class="mt-1 text-sm text-gray-500">
+        <p class="mt-1 text-sm text-gray-600">
           Estamos contigo en todo el proceso.
         </p>
       </div>

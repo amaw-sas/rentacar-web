@@ -61,7 +61,7 @@
       <!-- Cobertura nacional — listado tipográfico de TODAS las ciudades -->
       <div class="flex items-center gap-4 mb-6 max-w-4xl mx-auto">
         <span class="h-px flex-1 bg-gray-300"></span>
-        <span class="text-sm font-semibold uppercase tracking-wide text-gray-500">Cobertura nacional</span>
+        <span class="text-sm font-semibold uppercase tracking-wide text-gray-600">Cobertura nacional</span>
         <span class="h-px flex-1 bg-gray-300"></span>
       </div>
 
