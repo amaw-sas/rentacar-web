@@ -1,13 +1,17 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Verify Firebase has been removed from the project configuration.
  * These are infrastructure-level assertions — not runtime tests.
  */
 test.describe('Firebase cleanup verification', () => {
-  const root = resolve(__dirname, '..');
+  // ESM module scope has no __dirname — deriving it from import.meta.url is the
+  // portable equivalent. Using __dirname here aborted collection of the WHOLE
+  // suite (0 tests in 0 files) for all three brands.
+  const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
   test('firebase.json should not exist', () => {
     expect(existsSync(resolve(root, 'firebase.json'))).toBe(false);
