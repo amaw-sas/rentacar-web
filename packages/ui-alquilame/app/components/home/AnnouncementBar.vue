@@ -16,15 +16,17 @@
     dismiss. A returning user who dismissed it sees the bar collapse just after
     mount; everyone else sees no shift.
 
-    Stacking (runtime bug): the bar must stay BELOW the sticky header
-    (layouts/default.vue → UHeader `sticky top-0 z-50`). It lives inside <main>,
-    i.e. AFTER the header in the DOM, so an equal `z-50` won the tie and painted
-    OVER the header — scrolling ~16px clipped the logo and the menu toggle.
-    `z-30` restores the intent: the bar scrolls away under the sticky header.
+    Stacking: claim NO z-index. The bar renders BEFORE the header in the layout,
+    so document order alone keeps the sticky header on top. The explicit z it
+    used to carry (needed back when the bar sat inside <main>, AFTER the header)
+    is not merely redundant now — it broke the mobile menu: the slideover paints
+    at z-index:auto, so a z-30 bar beat it and the bar's close button showed
+    through the open menu as a second X. `relative` stays, because the close
+    button is positioned against this box.
   -->
   <div
     v-if="!dismissed"
-    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative z-30 transition-all duration-300"
+    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative transition-all duration-300"
     :class="leaving ? '-translate-y-full opacity-0' : ''"
   >
     <!-- px-10 reserves room for the absolute close button on both sides so the

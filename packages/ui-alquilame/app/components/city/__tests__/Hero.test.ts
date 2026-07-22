@@ -210,10 +210,21 @@ describe('Hero redesign — richer landing (vehicle card + trust chips + depth)'
     expect(visual).toMatch(/fetchpriority="high"/)
   })
 
-  it('renders trust chips from a static (Date-free) list in the text column', () => {
-    expect(hero).toMatch(/trustChips\s*=\s*\[/)
-    expect(hero).toMatch(/v-for="chip in trustChips"/)
-    expect(hero).toContain('Sin anticipos')
+  it('drops the trust chips — the home hero has none', () => {
+    // Removed by request: the chip row sat between the subtitle and the CTA and
+    // has no counterpart on the home, which the city hero now mirrors.
+    expect(hero).not.toMatch(/trustChips/)
+    expect(hero).not.toMatch(/v-for="chip in/)
+    expect(hero).not.toContain('Hasta 60% de descuento')
+  })
+
+  it('matches the home hero spacing so the two heroes breathe the same', () => {
+    // Both marked gaps in the operator screenshot: the band's top padding and
+    // the text-to-visual gap. City used py-10 / gap-10, home uses py-5 / gap-3
+    // on mobile — twice and three times the space respectively.
+    expect(hero).toMatch(/py-5 md:py-12/)
+    expect(hero).not.toMatch(/py-10 md:py-12/)
+    expect(hero).toMatch(/gap-3 lg:gap-10/)
   })
 
   it('overlays the textured fondo-banner pattern, inert and non-interactive', () => {

@@ -1,10 +1,9 @@
 <template>
   <!--
-    City hero — brand-red gradient band. Left column: trust badge + city-targeted
-    h1 + subtitle + trust chips. Right column: the Searcher engine (results mode)
-    OR the shared car+video visual (landing mode). The lone
-    floating CTA on flat red read as too bare; the car card mirrors the home hero's
-    visual-card language and soft background-glow blobs add depth. PRESERVED untouched:
+    City hero — mirrors the home hero: banner texture over the brand-red band,
+    trust badge + city h1 + subtitle + WhatsApp CTA on the left, the shared
+    car+video visual on the right (landing) or the Searcher engine (results).
+    PRESERVED untouched:
       - The Searcher engine: same component, same data-testid
         (pickup-location-test / return-location-test), same navigation to
         /{city}/buscar-vehiculos/... It stays wrapped in <ClientOnly> with a
@@ -45,8 +44,11 @@
       style="background-image: url('/images/fondo-banner.webp')"
     />
 
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
-      <div class="grid lg:grid-cols-2 gap-10 items-center">
+    <!-- Spacing mirrors the home hero exactly: py-5 (not py-10) so the band does
+         not open with 40px of dead red above the badge, and gap-3 (not gap-10)
+         so the visual sits close under the CTA on mobile. -->
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-12 w-full">
+      <div class="grid lg:grid-cols-2 gap-3 lg:gap-10 items-center">
         <!-- Text column -->
         <div class="text-center lg:text-left">
           <!-- Trust signal: "4.9 reviews" star badge (design hero) -->
@@ -75,29 +77,6 @@
             Consulta disponibilidad y precios. Elige ciudad, fechas y horarios y
             renta un vehículo por días, semanas o el tiempo que necesites.
           </p>
-
-          <!--
-            Trust chips (both modes) — restate the brand promises and give the
-            text column weight against the visual/engine column. Inert <li>/<span>
-            only: no controls (#41), no Date baked into markup (#109).
-          -->
-          <ul class="mt-6 flex flex-wrap gap-x-5 gap-y-2 justify-center lg:justify-start text-sm font-medium text-white/90">
-            <li v-for="chip in trustChips" :key="chip" class="inline-flex items-center gap-1.5">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="w-4 h-4 shrink-0 text-white"
-                aria-hidden="true"
-              >
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-              {{ chip }}
-            </li>
-          </ul>
 
           <!-- Single CTA: WhatsApp, same treatment as the home hero. Landing
                mode only — in results mode the Searcher is the action. -->
@@ -216,8 +195,6 @@ withDefaults(
 
 const { franchise } = useAppConfig()
 
-/** Static brand promises shown as hero trust chips (no Date — #109 SSR/ISR safe). */
-const trustChips = ['Sin anticipos', 'Hasta 60% de descuento', 'Disponible los 7 días']
 
 const Searcher = defineAsyncComponent(() => import('../Searcher.vue'))
 const PlaceholdersSearcher = defineAsyncComponent(

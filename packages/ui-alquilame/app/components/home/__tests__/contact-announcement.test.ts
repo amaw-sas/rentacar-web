@@ -204,20 +204,25 @@ describe('AnnouncementBar — stays under the sticky header', () => {
     return m ? Number(m[1]) : null
   }
 
-  it('gives the bar a strictly lower z-index than the sticky header', () => {
+  it('claims NO z-index, so nothing it should sit under gets out-stacked', () => {
+    // The bar carried z-30 from when it lived INSIDE <main>, after the header:
+    // back then an explicit lower z was the only way to keep the sticky header
+    // on top. Now the bar precedes the header in the DOM, so document order
+    // already does that — and the leftover z-30 actively broke things: the
+    // mobile menu slideover paints at z-index:auto, so 30 beat it and the bar's
+    // close button showed through the open menu as a second X.
     const bar = read('app/components/home/AnnouncementBar.vue')
     const barRoot = bar.match(/<div\s+v-if="!dismissed"\s+class="([^"]+)"/)
     expect(barRoot, 'announcement bar root should carry a class list').not.toBeNull()
+    expect(zOf(barRoot![1]!), 'the bar must not declare a z-index').toBeNull()
 
+    // It still precedes the header, which is what keeps the header on top.
     const layout = read('app/layouts/default.vue')
-    const headerRoot = layout.match(/<UHeader[\s\S]{0,400}?\bclass="([^"]+)"/)
-    expect(headerRoot, 'UHeader should carry a class list').not.toBeNull()
+    expect(layout.indexOf('AnnouncementBar')).toBeLessThan(layout.indexOf('<UHeader'))
 
-    const barZ = zOf(barRoot![1]!)
-    const headerZ = zOf(headerRoot![1]!)
-    expect(barZ, 'bar must declare an explicit z-index').not.toBeNull()
-    expect(headerZ, 'header must declare an explicit z-index').not.toBeNull()
-    expect(barZ!).toBeLessThan(headerZ!)
+    // The header keeps its own explicit z.
+    const headerRoot = layout.match(/<UHeader[\s\S]{0,400}?\bclass="([^"]+)"/)
+    expect(zOf(headerRoot![1]!), 'header must declare an explicit z-index').not.toBeNull()
   })
 
   it('keeps the bar in normal flow so it scrolls away (never sticky/fixed)', () => {
