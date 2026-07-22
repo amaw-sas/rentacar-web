@@ -107,7 +107,13 @@ const props = defineProps<{
 // City-specific testimonials, fetched per city via /api/city-testimonials
 // (#322 PR10 — they no longer travel inside the master catalog payload).
 // Still keyed by props.city, NEVER the brand-level testimonial list.
-const testimonios = useCityTestimonials(props.city?.id);
+const allTestimonios = useCityTestimonials(props.city?.id);
+
+// Featured row is capped at THREE, matching the home. With the Google badge
+// above it, a longer wall of cards made the badge read as the label of a list
+// instead of a headline with a short row of proof under it. The source list is
+// untouched — only what the section features is capped.
+const testimonios = computed(() => (allTestimonios.value ?? []).slice(0, 3));
 
 const userUIConfig = {
   name: "text-gray-900 font-bold",

@@ -105,3 +105,30 @@ describe('F2 step05 — city/Testimonios.vue', () => {
     expect(testimonios).toMatch(/heading-(section|card|hero)/)
   })
 })
+
+/**
+ * Card count on a city landing:
+ *   GIVEN a city with more testimonials than fit the featured row
+ *   WHEN  the testimonials section renders
+ *   THEN  it shows THREE, the same as the home — the Google badge reads as a
+ *         headline with a short row of proof under it, not as the label of a
+ *         long wall of cards.
+ * The source list stays untouched; only the featured slice is capped.
+ */
+describe('city testimonials — featured row is capped at three, like the home', () => {
+  const testimonios = read('app/components/city/Testimonios.vue')
+  const home = read('app/components/home/Reviews.vue')
+
+  it('slices the city list to 3 featured cards', () => {
+    expect(testimonios).toMatch(/\.slice\(0,\s*3\)/)
+  })
+
+  it('matches the home, which already features 3', () => {
+    expect(home).toMatch(/\.slice\(0,\s*3\)/)
+  })
+
+  it('still sources every card from the city-specific list', () => {
+    expect(testimonios).toMatch(/useCityTestimonials\(/)
+    expect(testimonios).toMatch(/v-for="testimonio in/)
+  })
+})
