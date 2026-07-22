@@ -61,25 +61,53 @@ header .text-highlighted,
     --ui-text-highlighted: #1f2937;
 }
 
-/* Main funnel CTA (issue #363). It sits BARE on the orange hero gradient
-   (city/Hero.vue in results mode, wizard/steps/StepSearch.vue) — the form fields
-   are individual bg-white pills, the button is not — so its fill competes with
-   #ff9500 → #ff6b1c. brand-900 is the LIGHTEST shade of the brand ramp that still
-   clears 3:1 against the #ff6b1c end (3.29:1), the WCAG 1.4.11 floor for non-text
-   contrast; brand-800 only reaches 1.95:1 and brand-600 — the shade the audit
-   originally proposed — collapses to 1.06:1 and would dissolve into the hero.
-   The ink stays WHITE (9.37:1): #364's rule (dark text on orange) governs orange
-   surfaces, and this one is dark. Same pairing as blog/index.vue:149. */
+/* Main funnel CTA (issue #363). It sits BARE on the orange hero gradient — the
+   form fields around it are individual bg-white pills, the button is not — so
+   its fill competes directly with #ff9500 → #ff6b1c. Live surface is
+   wizard/steps/StepSearch.vue (/reservas); city/Hero.vue also mounts it but only
+   under mode === 'results', which no caller passes (CityPage.vue), so that path
+   is currently dead.
+
+   brand-900 is the LIGHTEST shade of the brand ramp that still clears 3:1 — the
+   WCAG 1.4.11 floor for non-text contrast — against BOTH gradient stops: 4.26:1
+   vs #ff9500 and 3.29:1 vs #ff6b1c. brand-800 only reaches 1.95:1 vs #ff6b1c,
+   and brand-600 (the shade the audit originally proposed) collapses to 1.06:1
+   vs #ff9500, dissolving into the hero. The ink stays WHITE (9.37:1): #364's
+   rule — dark text on orange — governs ORANGE surfaces, and this one is dark.
+   Same pairing as blog/index.vue:149. */
 .search-button {
     @apply w-full bg-brand-900 hover:bg-brand-950 text-white font-bold justify-center;
 }
 
-/* "You can search now" halo. WHITE, not orange: an #ef9600 glow over an #ff9500
-   hero is invisible. Bounded to 3 cycles = 4.5s, under the 5s threshold of WCAG
-   2.2.2 (blinking content with no pause mechanism); `forwards` holds the soft
-   halo instead of snapping it off. It restarts on its own whenever
-   animateSearchButton flips false → true (logic useSearch.ts) — i.e. when search
-   criteria change after a completed search — because that re-adds the class. */
+/* Nuxt UI's button base slot ships `disabled:opacity-75` and its
+   `aria-disabled:` twin. `.search-button` is unlayered CSS so it wins the fill
+   outright, but it declares no opacity — nothing conflicts, so the 75% applies.
+   Composited over the hero that drops brand-900 to 2.37:1 against #ff6b1c,
+   back under the 3:1 this whole change exists to clear. It matters most for the
+   SSR fallback (Placeholders/Searcher.vue), which is the first paint every
+   visitor gets. Keep the fill solid and signal "off" by going a shade darker.
+
+   The hover is pinned to the same value on purpose: :hover still matches on the
+   <a aria-disabled="true"> that Nuxt UI renders when `to` is present, so without
+   this a dead button would answer the mouse with a colour change. */
+.search-button:disabled,
+.search-button[aria-disabled='true'],
+.search-button:disabled:hover,
+.search-button[aria-disabled='true']:hover {
+    opacity: 1;
+    background-color: var(--color-brand-950);
+}
+
+/* "You can search now" halo. WHITE — the same ink as the label, and the only
+   colour that reads against BOTH the dark fill and the orange hero: an #ef9600
+   glow over an #ff9500 hero is 1.06:1, i.e. invisible.
+
+   Bounded to 3 cycles = 4.5s, under the 5s threshold of WCAG 2.2.2 (blinking
+   content with no pause mechanism); `forwards` holds the resting halo instead
+   of snapping it off. Re-arming is narrower than it looks: the class is bound
+   to animateSearchButton, which only leaves `true` once a search completes
+   (logic useSearch.ts), so a fresh page gets exactly one activation and later
+   criteria edits do NOT restart it until after a search has run. */
 @keyframes glow-pulse {
     0%, 100% {
         box-shadow: 0 0 8px rgba(255, 255, 255, 0.6),
@@ -97,12 +125,17 @@ header .text-highlighted,
     animation: glow-pulse 1.5s ease-in-out 3 forwards;
 }
 
-/* Respect reduced motion preference */
+/* Respect reduced motion preference. Matches the 0%/100% keyframe exactly, not
+   the 50% peak: now that the animation ENDS at rest instead of looping forever,
+   a brighter static fallback would leave reduced-motion users staring at the
+   loudest halo on the page permanently. Under `infinite` the asymmetry averaged
+   out over time; it no longer does. */
 @media (prefers-reduced-motion: reduce) {
     .search-button-glow {
         animation: none;
-        box-shadow: 0 0 16px rgba(255, 255, 255, 0.7),
-                    0 0 32px rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.6),
+                    0 0 16px rgba(255, 255, 255, 0.4),
+                    0 0 24px rgba(255, 255, 255, 0.2);
     }
 }
 
