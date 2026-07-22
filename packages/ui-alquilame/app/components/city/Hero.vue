@@ -2,7 +2,7 @@
   <!--
     City hero — brand-red gradient band. Left column: trust badge + city-targeted
     h1 + subtitle + trust chips. Right column: the Searcher engine (results mode)
-    OR a vehicle-photo visual card + "Reservar ahora" CTA (landing mode). The lone
+    OR the shared car+video visual (landing mode). The lone
     floating CTA on flat red read as too bare; the car card mirrors the home hero's
     visual-card language and soft background-glow blobs add depth. PRESERVED untouched:
       - The Searcher engine: same component, same data-testid
@@ -14,10 +14,10 @@
       - The #searcher scroll target: the in-page anchor the UnableCategoryCard
         CTAs ("Probar otras fechas" / "Probar otra sucursal cercana") and the
         city HomeContact "Reserva Ahora" CTA (reserveAnchor) scroll to.
-      - The #41 secret pin: copy-to-WhatsApp is an operator-only action, so it
-        stays an INERT aria-hidden span (never a focusable control) — outside
-        the accessible name of the <h1> (WCAG 2.5.3) and never exposed via
-        aria-label/title.
+    REMOVED: the #41 location pin inside the <h1>, and with it the operator-only
+    copy-the-search-to-WhatsApp shortcut it carried. It was an aria-hidden span
+    with a @click, so no keyboard user could ever reach it; if that shortcut is
+    still wanted it needs a real, focusable control.
 
     Gradient guard (F1/F0 lesson): the red gradient MUST use the v4
     bg-linear-to-* utility built from the hero-from/hero-to @theme tokens; the
@@ -37,13 +37,13 @@
     -->
     <div id="searcher" aria-hidden="true" class="absolute scroll-mt-20" />
 
-    <!--
-      Atmosphere — two soft radial glow blobs give the flat red band depth.
-      Purely decorative (aria-hidden, pointer-events-none) and clipped by the
-      section's overflow-hidden; they sit behind the relative content grid.
-    -->
-    <div aria-hidden="true" class="pointer-events-none absolute -top-24 -right-32 w-[28rem] h-[28rem] rounded-full bg-white/10 blur-3xl"></div>
-    <div aria-hidden="true" class="pointer-events-none absolute -bottom-40 -left-24 w-[24rem] h-[24rem] rounded-full bg-brand-900/40 blur-3xl"></div>
+    <!-- Textured banner pattern over the red gradient — same treatment as the
+         home hero, so a city landing and the home read as one site. -->
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-0 bg-center bg-cover opacity-60"
+      style="background-image: url('/images/fondo-banner.webp')"
+    />
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
       <div class="grid lg:grid-cols-2 gap-10 items-center">
@@ -58,20 +58,17 @@
           </div>
 
           <!--
-            City-targeted h1 (SEO). The pin is an inert <span aria-hidden> INSIDE
-            the <h1> but excluded from its accessible name — it carries no text
-            and is not focusable, so screen readers announce only
-            "Alquiler de carros en {city}". Issue #41.
+            City-targeted h1 (SEO). Same ramp as the home hero, spelled out:
+            the shared display utility applies lg:text-7xl + leading-tight and beat
+            both the declared size and leading here, exactly as it did on the
+            home. The location pin that used to sit inside the h1 is gone — it
+            was decorative, and it carried a click handler no one could reach
+            with a keyboard.
           -->
-          <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
+          <h1
+            class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold font-heading text-white leading-[1.1]"
+          >
             Alquiler de carros en {{ city?.name }}
-            <span
-              aria-hidden="true"
-              class="inline-flex align-middle"
-              @click="copySearchToWhatsapp"
-            >
-              <LocationIcon cls="text-white size-7 md:size-8 lg:size-10 -translate-y-0.5" />
-            </span>
           </h1>
 
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
@@ -101,6 +98,33 @@
               {{ chip }}
             </li>
           </ul>
+
+          <!-- Single CTA: WhatsApp, same treatment as the home hero. Landing
+               mode only — in results mode the Searcher is the action. -->
+          <div
+            v-if="mode !== 'results'"
+            class="mt-6 flex flex-row items-stretch gap-3 justify-center lg:justify-start"
+          >
+            <a
+              :href="franchise.whatsapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Contáctanos por WhatsApp"
+              class="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+              </svg>
+              WhatsApp
+            </a>
+          </div>
         </div>
 
         <!--
@@ -108,8 +132,8 @@
             - mode === 'results': the Searcher engine, preserved untouched
               (same component → same data-testid, #109 CLS guard). This is the
               buscar-vehiculos results route refining in-situ.
-            - mode === 'landing': NO Searcher; a primary "Reservar ahora" CTA
-              navigates (SPA) to the centralized /reservas search page. The city
+            - mode === 'landing': NO Searcher; the shared hero visual (car +
+              corner video), with the WhatsApp CTA in the text column. The city
               landing is marketing-only — the search engine moved out of the hero.
           The empty <div id="searcher"> anchor above is kept in BOTH modes
           (harmless in landing; preserves the #searcher scroll-target contract).
@@ -141,44 +165,18 @@
           </div>
         </div>
         <!-- landing — marketing-only: a vehicle-photo visual card (fills the column
-             that used to hold a lone CTA on flat red) + the "Reservar ahora" CTA
+             that used to hold a lone CTA on flat red)
              that navigates (SPA) to /reservas. NO Searcher engine here
              (SCEN-F3-03). The car image uses an aspect-ratio box → footprint
              reserved (no CLS); eager + high fetchpriority as the landing LCP. -->
-        <div v-else class="flex flex-col items-center gap-5">
-          <!--
-            CLS guard: reserve the card's 16:10 box with an INLINE aspect-ratio,
-            not only the aspect-[16/10] utility. The utility rule ships in Nuxt's
-            JS-injected stylesheet (no <link rel=stylesheet>; not in the inlined
-            critical CSS), and the image below is `absolute inset-0` (out of flow,
-            zero height). Without the inline style the card computes
-            aspect-ratio:auto → height 0 until the late CSS lands, then jumps to
-            its full height and shoves the whole hero down (measured CLS 0.839,
-            Lighthouse mobile). The inline style exists in the SSR HTML from the
-            first paint, so the box is reserved regardless of stylesheet timing.
-          -->
-          <div
-            class="relative w-full max-w-lg aspect-[16/10] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/30 ring-1 ring-white/15"
-            style="aspect-ratio: 16 / 10"
-          >
-            <NuxtImg
-              src="/images/vehicles/premium.jpg"
-              :alt="`Carro disponible para alquilar en ${city?.name}`"
-              width="800"
-              height="500"
-              sizes="sm:90vw lg:512px"
-              loading="eager"
-              fetchpriority="high"
-              class="absolute inset-0 w-full h-full object-cover"
-            />
-          </div>
-          <NuxtLink
-            to="/reservas"
-            class="inline-flex items-center justify-center rounded-full bg-white text-hero-from font-semibold px-8 py-4 text-base md:text-lg shadow-lg hover:bg-white/90 transition-colors"
-          >
-            Reservar ahora
-          </NuxtLink>
-        </div>
+        <!-- landing — the SAME visual the home hero renders (car cutout + corner
+             video), via the shared component. Replaces the lone vehicle photo
+             card and its navigation CTA: WhatsApp now lives in the text
+             column, matching the home. -->
+        <HomeHeroVisual
+          v-else
+          :car-alt="`Carro disponible para alquilar en ${city?.name}`"
+        />
       </div>
     </div>
   </section>
@@ -190,10 +188,7 @@ import type { City } from '@rentacar-main/logic/utils'
 
 /** imports */
 import { defineAsyncComponent } from 'vue'
-import {
-  IconsStarIcon as StarIcon,
-  IconsLocationIcon as LocationIcon,
-} from '#components'
+import { IconsStarIcon as StarIcon } from '#components'
 
 /** props */
 withDefaults(
@@ -203,8 +198,8 @@ withDefaults(
      * Hero engine mode (F3 — issue #112):
      *   - 'results' (default, fail-safe): mounts the <Searcher> engine to refine
      *     a search in-situ (buscar-vehiculos route).
-     *   - 'landing': marketing-only city landing — no engine, a "Reservar ahora"
-     *     CTA navigates to the centralized /reservas page.
+     *   - 'landing': marketing-only city landing — no engine; the shared hero
+     *     visual plus the WhatsApp CTA.
      * Each page file passes this explicitly (no router-based detection); if a
      * caller forgets, the engine stays present rather than silently breaking.
      */
@@ -213,12 +208,13 @@ withDefaults(
   { mode: 'results' },
 )
 
-/**
- * Secret operator action (issue #41): copies the current search params into a
- * prefilled WhatsApp message. Wired to the inert <span aria-hidden> pin above —
- * never a focusable control, so it never enters the tab order or the a11y tree.
- */
-const { copyToWhatsapp: copySearchToWhatsapp } = useShareSearchParams()
+// NOTE: the hero used to carry a hidden operator action (issue #41) — clicking
+// the location pin inside the h1 copied the current search params into a
+// prefilled WhatsApp message. The pin was removed by request, so that shortcut
+// is gone with it; `useShareSearchParams` is no longer wired here. Reinstate it
+// on a REAL, focusable control if the operator still needs it.
+
+const { franchise } = useAppConfig()
 
 /** Static brand promises shown as hero trust chips (no Date — #109 SSR/ISR safe). */
 const trustChips = ['Sin anticipos', 'Hasta 60% de descuento', 'Disponible los 7 días']

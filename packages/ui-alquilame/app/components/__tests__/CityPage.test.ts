@@ -36,13 +36,18 @@ describe('CityPage — copy-to-WhatsApp pin is an inert, customer-invisible oper
     expect(hero).not.toMatch(/title="Copiar datos de búsqueda para WhatsApp"/)
   })
 
-  it('wraps the LocationIcon in an aria-hidden <span> bound to copySearchToWhatsapp (inert decorative pin)', () => {
-    const ariaHiddenSpan = /<span\b[^>]*aria-hidden="true"[^>]*@click="copySearchToWhatsapp"[^>]*>[\s\S]*?<LocationIcon\b[\s\S]*?\/>[\s\S]*?<\/span>/
-    expect(hero).toMatch(ariaHiddenSpan)
+  it('no longer renders the pin at all — it was removed from the hero', () => {
+    // Requested removal. The pin was an aria-hidden <span> inside the <h1>, so
+    // nothing announced by assistive tech changes; what DID go with it is the
+    // operator-only copy-the-search-to-WhatsApp shortcut it carried.
+    expect(hero).not.toMatch(/<LocationIcon\b/)
+    expect(hero).not.toMatch(/@click="copySearchToWhatsapp"/)
   })
 
-  it('keeps the useShareSearchParams binding so the handler is still wired', () => {
-    expect(hero).toMatch(/copyToWhatsapp:\s*copySearchToWhatsapp\s*\}\s*=\s*useShareSearchParams\(\)/)
+  it('drops the now-dead useShareSearchParams binding with it', () => {
+    // Keeping the handler wired to nothing would read as "this still works".
+    expect(hero).not.toMatch(/useShareSearchParams\(\)/)
+    expect(hero).not.toMatch(/copySearchToWhatsapp/)
   })
 })
 
@@ -116,5 +121,69 @@ describe('CityPage — generic home marketing is gated off on active results (SC
   it('landing cannot leak stale search state: no store-driven results wiring remains', () => {
     expect(source).not.toMatch(/useStoreSearchData/)
     expect(source).not.toMatch(/filteredCategories/)
+  })
+})
+
+/**
+ * City pages gain the three marketing blocks the home already had and the
+ * reference design also puts on its city landings:
+ *   - the stats band,
+ *   - "¿Por qué alquilar con …?" — titled WITH the city, as the reference does,
+ *     so the heading targets the city query rather than repeating the home's;
+ *   - Empresas Aliadas.
+ * All three sit behind the same SSR-stable `mode !== 'results'` gate as the rest
+ * of the generic marketing: a results page is a search view, not a brochure.
+ * Order mirrors the home — HowItWorks → Stats → ¿Por qué? — and Partners closes
+ * the page, again like the home.
+ */
+describe('CityPage — home marketing blocks added to city landings', () => {
+  const vIf = (tag: string): string | null => {
+    const open = new RegExp(`<${tag}\\b[^>]*>`).exec(source)
+    if (!open) return null
+    const m = /v-if="([^"]+)"/.exec(open[0])
+    return m ? m[1] : null
+  }
+  const at = (tag: string) => source.indexOf(`<${tag}`)
+
+  it('mounts the stats band, the why-rent block and the partners row', () => {
+    expect(source).toMatch(/<HomeStats\b/)
+    expect(source).toMatch(/<HomeValueProps\b/)
+    expect(source).toMatch(/<HomePartners\b/)
+  })
+
+  it('gates all three on the SSR-stable results mode, like the rest of the marketing', () => {
+    for (const tag of ['HomeStats', 'HomeValueProps', 'HomePartners']) {
+      expect(vIf(tag), `${tag} must carry a v-if`).not.toBeNull()
+      expect(vIf(tag)!).toMatch(/mode\s*!==\s*['"]results['"]/)
+    }
+  })
+
+  it('orders them like the home: HowItWorks → Stats → ¿Por qué?, Partners last', () => {
+    expect(at('HomeStats')).toBeGreaterThan(at('HomeHowItWorks'))
+    expect(at('HomeValueProps')).toBeGreaterThan(at('HomeStats'))
+    expect(at('HomePartners')).toBeGreaterThan(at('HomeContact'))
+  })
+
+  it('passes the city through so the why-rent heading names it', () => {
+    expect(source).toMatch(/<HomeValueProps[^>]*:city="city"/)
+  })
+})
+
+describe('ValueProps — heading names the city when given one', () => {
+  const valueProps = readFileSync(
+    fileURLToPath(new URL('../home/ValueProps.vue', import.meta.url)),
+    'utf8',
+  )
+
+  it('accepts an optional city and appends it to the headline', () => {
+    // Reference: "¿Por qué alquilar con Alquilame en Bogotá?" on a city landing,
+    // "¿Por qué alquilar con Alquilame?" on the home.
+    expect(valueProps).toMatch(/city\?:\s*City|city\?:/)
+    expect(valueProps).toMatch(/en \$\{|\ben\b/)
+  })
+
+  it('still derives the brand from config, never a literal', () => {
+    expect(valueProps).toMatch(/organization\.brand/)
+    expect(valueProps).not.toContain('alquilar con Alquilame')
   })
 })

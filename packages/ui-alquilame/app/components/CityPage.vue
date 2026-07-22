@@ -42,6 +42,17 @@
 
     <!-- Marketing F1 genérico (how-it-works + requirements): mismo gate SSR-estable -->
     <HomeHowItWorks v-if="mode !== 'results'" />
+
+    <!--
+      Bloques de marketing que ya tenía el home y que el diseño de referencia
+      también pone en sus páginas de ciudad. Mismo orden que el home
+      (Cómo Funciona → Estadísticas → ¿Por qué?) y mismo gate SSR-estable: una
+      página de RESULTADOS es una vista de búsqueda, no un folleto.
+      A ValueProps se le pasa la ciudad para que el h2 la nombre.
+    -->
+    <HomeStats v-if="mode !== 'results'" />
+    <HomeValueProps v-if="mode !== 'results'" :city="city" />
+
     <HomeRequirements v-if="mode !== 'results'" />
 
     <!-- Reseñas city (useCityTestimonials, #322 PR10) -->
@@ -57,6 +68,9 @@
         - landing: no hay form en #searcher → navega a la página /reservas.
     -->
     <HomeContact :reserve-anchor="mode === 'landing' ? '/reservas' : '#searcher'" />
+
+    <!-- Empresas Aliadas cierra la página, igual que en el home. -->
+    <HomePartners v-if="mode !== 'results'" />
   </UPage>
 </template>
 

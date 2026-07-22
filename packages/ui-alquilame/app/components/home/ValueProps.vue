@@ -16,7 +16,7 @@
       <div class="mb-10">
         <div class="h-1 w-10 rounded-full bg-brand-600 mb-4" />
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-          ¿Por qué alquilar con {{ brand }}?
+          ¿Por qué alquilar con {{ brand }}{{ citySuffix }}?
         </h2>
       </div>
 
@@ -79,6 +79,13 @@ interface Ventaja {
   // Inner SVG markup (paths/shapes) for the icon.
   icon: string
 }
+
+// Optional city: on a city landing the heading names it, so the section targets
+// that city's query instead of repeating the home's. Same wording the reference
+// design uses on its city pages.
+const props = defineProps<{ city?: { name?: string } | null }>()
+
+const citySuffix = computed(() => (props.city?.name ? ` en ${props.city.name}` : ''))
 
 // Brand name for the headline — sourced from app config, never hardcoded and
 // never the lowercase brand identifier.

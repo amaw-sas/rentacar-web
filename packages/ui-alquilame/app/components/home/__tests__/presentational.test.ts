@@ -114,7 +114,9 @@ describe('ValueProps.vue — "¿Por qué alquilar con …?" photo cards', () => 
 
   it('headline derives the brand name from organization.brand — never hardcoded', () => {
     expect(valueProps).toMatch(/organization\.brand/)
-    expect(valueProps).toMatch(/¿Por qué alquilar con \{\{\s*brand\s*\}\}\?/)
+    // The headline now takes an optional city suffix on city landings, so the
+    // interpolation is `{{ brand }}{{ citySuffix }}` — citySuffix is '' on the home.
+    expect(valueProps).toMatch(/¿Por qué alquilar con \{\{\s*brand\s*\}\}\{\{\s*citySuffix\s*\}\}\?/)
     expect(valueProps).not.toContain('alquilar con Alquilame')
     expect(valueProps).not.toContain('shortname')
     expect(valueProps).not.toContain('franchise')

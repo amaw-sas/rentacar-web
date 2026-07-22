@@ -24,7 +24,7 @@
     class="py-12 md:py-16 bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- A real <h2>, at the same scale as every other section heading. This
+      <!-- A real heading element, at the same scale as every other section. This
            used to be a small uppercase <p>, which left the section with no
            heading element at all: assistive tech could not jump to it and
            crawlers saw an untitled block. -->
