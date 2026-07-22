@@ -187,3 +187,34 @@ describe('ValueProps — heading names the city when given one', () => {
     expect(valueProps).not.toContain('alquilar con Alquilame')
   })
 })
+
+/**
+ * Reading order on a city landing.
+ *
+ * The page used to go Flota → five long SEO blocks → Entrega → Cómo Funciona,
+ * so a visitor met four sections of prose before learning how renting works or
+ * why to pick us. The SEO copy earns its keep, but not in the best slot on the
+ * page. Selling sections move up (matching the home and the reference), the SEO
+ * block moves below the social proof, and FAQ/CTA/Partners still close.
+ */
+describe('CityPage — reading order puts the selling sections first', () => {
+  const at = (tag: string) => source.indexOf(`<${tag}`)
+
+  it('runs Fleet → Cómo Funciona → Stats → ¿Por qué? before the delivery points', () => {
+    expect(at('HomeFleet')).toBeGreaterThan(at('CityIntro'))
+    expect(at('HomeHowItWorks')).toBeGreaterThan(at('HomeFleet'))
+    expect(at('HomeStats')).toBeGreaterThan(at('HomeHowItWorks'))
+    expect(at('HomeValueProps')).toBeGreaterThan(at('HomeStats'))
+    expect(at('CityDeliveryPoints')).toBeGreaterThan(at('HomeValueProps'))
+  })
+
+  it('drops the long SEO block below the testimonials', () => {
+    expect(at('CitySeoContent')).toBeGreaterThan(at('CityTestimonios'))
+  })
+
+  it('still closes with FAQ → contact → partners', () => {
+    expect(at('CityFaq')).toBeGreaterThan(at('CitySeoContent'))
+    expect(at('HomeContact')).toBeGreaterThan(at('CityFaq'))
+    expect(at('HomePartners')).toBeGreaterThan(at('HomeContact'))
+  })
+})

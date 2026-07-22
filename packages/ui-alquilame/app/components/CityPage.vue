@@ -30,16 +30,6 @@
     -->
     <HomeFleet v-if="mode !== 'results'" />
 
-    <!-- Contenido SEO city (ventajas/destinos/consejos/temporada/ciudades-cercanas) -->
-    <CitySeoContent
-      :city="city"
-      :expanded-content="expandedContent"
-      :related-cities="relatedCities"
-    />
-
-    <!-- Puntos de entrega (branches reales) -->
-    <CityDeliveryPoints :city-branches="cityBranches" :city="city" />
-
     <!-- Marketing F1 genérico (how-it-works + requirements): mismo gate SSR-estable -->
     <HomeHowItWorks v-if="mode !== 'results'" />
 
@@ -53,10 +43,20 @@
     <HomeStats v-if="mode !== 'results'" />
     <HomeValueProps v-if="mode !== 'results'" :city="city" />
 
+    <!-- Puntos de entrega (branches reales) -->
+    <CityDeliveryPoints :city-branches="cityBranches" :city="city" />
+
     <HomeRequirements v-if="mode !== 'results'" />
 
     <!-- Reseñas city (useCityTestimonials, #322 PR10) -->
     <CityTestimonios :city="city" />
+
+    <!-- Contenido SEO city (ventajas/destinos/consejos/temporada/ciudades-cercanas) -->
+    <CitySeoContent
+      :city="city"
+      :expanded-content="expandedContent"
+      :related-cities="relatedCities"
+    />
 
     <!-- FAQ city (useCityFAQs) -->
     <CityFaq :city="city" />

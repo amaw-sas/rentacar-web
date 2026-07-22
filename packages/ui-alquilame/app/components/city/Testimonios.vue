@@ -37,6 +37,17 @@
         </p>
       </div>
 
+      <!--
+        Google trust block, shared with the home. A city landing is the page
+        competing for "alquiler de carros en {ciudad}" and it carried no Google
+        signal at all — the strongest proof we have was missing exactly where it
+        works hardest. Rendered as an h3: the section's own h2 already titles
+        this block, and a second h2 would flatten the heading outline.
+      -->
+      <div class="mb-10 md:mb-12 flex justify-center text-center">
+        <HomeGoogleRating heading="Calificación verificada en Google" heading-tag="h3" />
+      </div>
+
       <!-- Review cards — city-specific testimonials -->
       <div
         v-if="testimonios.length"

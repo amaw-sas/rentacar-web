@@ -33,6 +33,9 @@ const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 
 describe('Reviews.vue — golden #google-reviews parity', () => {
   const reviews = read('app/components/home/Reviews.vue')
+  // The rating/logo/CTA moved into the shared HomeGoogleRating so the city
+  // testimonials sections show the same proof. Same assertions, new subject.
+  const rating = read('app/components/home/GoogleRating.vue')
 
   it('sources the featured cards from franchiseTestimonials[brandCode] via useFetchRentacarData (same as legacy)', () => {
     expect(reviews).toMatch(/useFetchRentacarData\(\)/)
@@ -50,22 +53,26 @@ describe('Reviews.vue — golden #google-reviews parity', () => {
     // The count left the heading: it only ever grows, so a hardcoded literal
     // goes stale and reads as neglect. The 5,0 rating and the verification line
     // carry the credibility on their own.
-    expect(reviews).toMatch(/>\s*Reseñas verificadas en Google\s*</)
-    expect(reviews).not.toMatch(/\d+\s+reseñas verificadas en Google/i)
-    expect(reviews).toContain('5,0')
-    expect(reviews).toMatch(/Verificadas con autor y fecha/)
+    expect(rating).toMatch(/>\s*\{\{ heading \}\}\s*</)
+    expect(rating).toMatch(/heading\?:\s*string/)
+    expect(rating).toContain("'Reseñas verificadas en Google'")
+    expect(rating).not.toMatch(/\d+\s+reseñas/i)
+    expect(rating).toContain('5,0')
+    expect(rating).toMatch(/Verificadas con autor y fecha/)
   })
 
   it('links to the real Google Business reviews profile + CTA', () => {
+    expect(rating).toMatch(/google\.com\/maps\?cid=11824841242913553901/)
+    expect(rating).toMatch(/Ver reseñas en Google/)
+    // The testimonial cards still deep-link to the same profile.
     expect(reviews).toMatch(/google\.com\/maps\?cid=11824841242913553901/)
-    expect(reviews).toMatch(/Ver reseñas en Google/)
   })
 
   it('renders the multicolor Google logo (real brand colors, not a brand button)', () => {
-    expect(reviews).toContain('#EA4335') // red
-    expect(reviews).toContain('#4285F4') // blue
-    expect(reviews).toContain('#FBBC05') // yellow
-    expect(reviews).toContain('#34A853') // green
+    expect(rating).toContain('#EA4335') // red
+    expect(rating).toContain('#4285F4') // blue
+    expect(rating).toContain('#FBBC05') // yellow
+    expect(rating).toContain('#34A853') // green
   })
 
   it('surfaces no aggregate-rating SCHEMA composable here (removed site-wide, #312)', () => {
@@ -82,7 +89,9 @@ describe('Reviews.vue — golden #google-reviews parity', () => {
 
   it('uses the golden flat gray-100 background and the brand red token #CC022B (no gradient)', () => {
     expect(reviews).toMatch(/bg-gray-100/)
-    expect(reviews).toContain('#CC022B')
+    // The CTA moved to the shared block and now uses the brand TOKEN
+    // (bg-brand-600 === #CC022B) instead of the raw hex.
+    expect(rating).toMatch(/bg-brand-600/)
     expect(reviews).not.toMatch(BROKEN_V3_GRADIENT)
   })
 })
