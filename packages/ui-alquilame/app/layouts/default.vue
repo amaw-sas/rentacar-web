@@ -300,7 +300,14 @@ const isHome = computed(() => route.path === '/');
 // si no caen a /#... (home). Las secciones existen en el home Nuxt con estos ids.
 const heroTo = computed(() => hasInPageSections.value ? '#hero' : '/#hero');
 const fleetTo = computed(() => hasInPageSections.value ? '#fleet' : '/#fleet');
-const citiesTo = computed(() => hasInPageSections.value ? '#cities' : '/#cities');
+// "Ciudades" needs a per-page target: the home has #cities (Cities.vue) but a
+// city landing does NOT — its equivalent block is #ciudades-cercanas, in
+// city/SeoContent.vue. Pointing both at #cities left the button dead on all 19
+// city pages. Every other nav anchor resolves on both.
+const citiesTo = computed(() => {
+  if (route.params.city) return '#ciudades-cercanas';
+  return route.path === '/' ? '#cities' : '/#cities';
+});
 const requisitosTo = computed(() => hasInPageSections.value ? '#requisitos' : '/#requisitos');
 const faqsTo = computed(() => hasInPageSections.value ? '#faqs' : '/#faqs');
 const contactTo = computed(() => hasInPageSections.value ? '#contact' : '/#contact');

@@ -276,3 +276,38 @@ describe('footer — reference surface colour and link set', () => {
     expect(config).toContain('Registra tu Flota')
   })
 })
+
+/**
+ * Nav anchors must exist on the page they point at:
+ *   GIVEN a city landing (e.g. /armenia)
+ *   WHEN  the user clicks "Ciudades" in the header
+ *   THEN  it scrolls to that page's nearby-cities section.
+ * The link pointed at #cities, which only exists on the home — the city page's
+ * section is #ciudades-cercanas (city/SeoContent.vue), so the button did
+ * nothing. Every other nav anchor (#hero #fleet #requisitos #faqs #contact)
+ * does resolve on a city page; only this one was broken.
+ */
+describe('header nav — the Ciudades anchor resolves on city pages', () => {
+  const layout = read('app/layouts/default.vue')
+  const seo = read('app/components/city/SeoContent.vue')
+
+  it('targets the nearby-cities section when on a city route', () => {
+    // Assert the BEHAVIOUR of the citiesTo computed, not one particular syntax:
+    // whatever shape it takes, it must branch on the city route param and yield
+    // the #ciudades-cercanas anchor.
+    const start = layout.indexOf('const citiesTo')
+    expect(start, 'citiesTo computed not found').toBeGreaterThan(-1)
+    const block = layout.slice(start, start + 400)
+    expect(block).toMatch(/route\.params\.city/)
+    expect(block).toMatch(/'#ciudades-cercanas'/)
+  })
+
+  it('still targets #cities on the home and /#cities elsewhere', () => {
+    expect(layout).toMatch(/'#cities'/)
+    expect(layout).toMatch(/'\/#cities'/)
+  })
+
+  it('the id it points at actually exists in the city page markup', () => {
+    expect(seo).toMatch(/id="ciudades-cercanas"/)
+  })
+})
