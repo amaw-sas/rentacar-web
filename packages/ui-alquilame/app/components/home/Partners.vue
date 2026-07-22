@@ -24,10 +24,14 @@
     class="py-12 md:py-16 bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <p class="text-center text-sm font-medium uppercase tracking-wider text-white/80 mb-2">
+      <!-- A real <h2>, at the same scale as every other section heading. This
+           used to be a small uppercase <p>, which left the section with no
+           heading element at all: assistive tech could not jump to it and
+           crawlers saw an untitled block. -->
+      <h2 class="text-center text-3xl md:text-4xl font-extrabold font-heading text-white">
         Empresas Aliadas
-      </p>
-      <p class="mx-auto mb-10 max-w-2xl text-center text-base text-white/75">
+      </h2>
+      <p class="mx-auto mt-4 mb-10 max-w-2xl text-center text-base text-white/80">
         Nos apoyamos en una red de aliados para darte más vehículos disponibles,
         en más ciudades y fechas.
       </p>

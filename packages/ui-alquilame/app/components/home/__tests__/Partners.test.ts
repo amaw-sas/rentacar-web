@@ -76,6 +76,21 @@ describe('Partners.vue — static row of real ally logos', () => {
     expect(partners).toMatch(/\binvert\b/)
   })
 
+  it('titles the section with a real <h2>, not a styled paragraph', () => {
+    // The section had NO heading element at all: "Empresas Aliadas" was a small
+    // uppercase <p>. Screen-reader users could not jump to the section and it
+    // read as an untitled block to crawlers. The reference uses an h2 at the
+    // same scale as the other section headings.
+    const h2 = partners.match(/<h2[^>]*>[\s\S]*?<\/h2>/)
+    expect(h2, 'partners section must have an h2').not.toBeNull()
+    expect(h2![0]).toContain('Empresas Aliadas')
+    expect(h2![0]).toMatch(/font-heading/)
+    expect(h2![0]).toMatch(/text-3xl\s+md:text-4xl/)
+    expect(h2![0]).toMatch(/font-extrabold/)
+    // The old small-caps label treatment is gone.
+    expect(partners).not.toMatch(/<p[^>]*uppercase[^>]*>\s*Empresas Aliadas/)
+  })
+
   it('renders the brand gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
     expect(partners).toMatch(/bg-linear-to-[a-z]/)
     expect(partners).not.toMatch(BROKEN_V3_GRADIENT)
