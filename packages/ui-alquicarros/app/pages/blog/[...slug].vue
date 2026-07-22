@@ -68,7 +68,7 @@
                   <li v-for="link in post.body.toc.links" :key="link.id">
                     <a
                       :href="`#${link.id}`"
-                      class="text-sm text-gray-600 hover:text-brand-700 underline underline-offset-2 transition-colors"
+                      class="text-sm text-gray-600 hover:text-brand-800 underline underline-offset-2 transition-colors"
                     >
                       {{ link.text }}
                     </a>
@@ -76,7 +76,7 @@
                       <li v-for="child in link.children" :key="child.id">
                         <a
                           :href="`#${child.id}`"
-                          class="text-xs text-gray-500 hover:text-brand-700 underline underline-offset-2 transition-colors"
+                          class="text-xs text-gray-500 hover:text-brand-800 underline underline-offset-2 transition-colors"
                         >
                           {{ child.text }}
                         </a>
@@ -141,7 +141,7 @@
                 <p class="text-sm text-gray-800 mb-4">Sin anticipos, sin compromisos</p>
                 <NuxtLink
                   to="/reservas"
-                  class="block text-center bg-white text-brand-700 px-4 py-2 rounded-lg font-bold hover:bg-brand-100 transition-colors"
+                  class="block text-center bg-white text-brand-800 px-4 py-2 rounded-lg font-bold hover:bg-brand-100 transition-colors"
                 >
                   Reservar Ahora
                 </NuxtLink>
@@ -180,7 +180,7 @@
                 </NuxtLink>
                 <NuxtLink
                   to="/blog"
-                  class="inline-flex items-center gap-2 text-gray-600 hover:text-brand-700 font-medium transition-colors"
+                  class="inline-flex items-center gap-2 text-gray-600 hover:text-brand-800 font-medium transition-colors"
                 >
                   <UIcon name="i-lucide-book-open" class="size-4" />
                   Más artículos
@@ -211,7 +211,7 @@
                 loading="lazy"
               >
               <div class="p-4">
-                <h3 class="font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors line-clamp-2">
+                <h3 class="font-bold font-heading text-gray-900 group-hover:text-brand-800 transition-colors line-clamp-2">
                   {{ related.title }}
                 </h3>
                 <p class="text-sm text-gray-500 mt-2">{{ related.readingTime }} min de lectura</p>
@@ -227,7 +227,7 @@
       <div class="max-w-4xl mx-auto text-center">
         <NuxtLink
           to="/blog"
-          class="inline-flex items-center gap-2 px-6 py-3 bg-surface-soft hover:bg-surface-softer text-brand-700 font-medium rounded-lg transition-colors"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-surface-soft hover:bg-surface-softer text-brand-800 font-medium rounded-lg transition-colors"
         >
           <span>&larr;</span>
           <span>Volver al Blog</span>

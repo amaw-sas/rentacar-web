@@ -28,7 +28,7 @@
       >
         <div class="flex items-center justify-between">
           <span class="heading-sub text-gray-900">Seguro Básico</span>
-          <UIcon v-if="!isTotal" name="i-lucide-check-circle-2" class="size-6 text-brand-700" />
+          <UIcon v-if="!isTotal" name="i-lucide-check-circle-2" class="size-6 text-brand-800" />
         </div>
         <p class="mt-1 body-sm font-semibold text-gray-500">Incluido</p>
         <ul class="mt-3 space-y-1.5 body-sm text-gray-600">
@@ -56,9 +56,9 @@
         </span>
         <div class="flex items-center justify-between">
           <span class="heading-sub text-gray-900">Seguro Total</span>
-          <UIcon v-if="isTotal" name="i-lucide-check-circle-2" class="size-6 text-brand-700" />
+          <UIcon v-if="isTotal" name="i-lucide-check-circle-2" class="size-6 text-brand-800" />
         </div>
-        <p class="mt-1 body-sm font-semibold text-brand-700">
+        <p class="mt-1 body-sm font-semibold text-brand-800">
           + $ {{ coveragePrice }} / {{ haveMonthlyReservation ? 'mes' : 'día' }}
         </p>
         <ul class="mt-3 space-y-1.5 body-sm text-gray-600">
@@ -93,9 +93,9 @@
         >
           <div class="flex items-center justify-between">
             <span class="heading-sub text-gray-900">{{ plan.label }}</span>
-            <UIcon v-if="mileage === plan.value" name="i-lucide-check-circle-2" class="size-6 text-brand-700" />
+            <UIcon v-if="mileage === plan.value" name="i-lucide-check-circle-2" class="size-6 text-brand-800" />
           </div>
-          <p class="mt-1 body-sm font-semibold text-brand-700">$ {{ plan.price }} / mes</p>
+          <p class="mt-1 body-sm font-semibold text-brand-800">$ {{ plan.price }} / mes</p>
         </button>
       </div>
     </section>

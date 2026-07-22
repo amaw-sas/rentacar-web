@@ -70,9 +70,9 @@
           <NuxtLink
             :to="`/${city.id}`"
             :aria-label="`Alquiler de carros en ${city.name}`"
-            class="group/city inline-flex items-center gap-2 text-gray-700 hover:text-brand-700 transition-colors"
+            class="group/city inline-flex items-center gap-2 text-gray-700 hover:text-brand-800 transition-colors"
           >
-            <UIcon name="i-lucide-map-pin" class="size-4 shrink-0 text-brand-600" />
+            <UIcon name="i-lucide-map-pin" class="size-4 shrink-0 text-brand-700" />
             <span class="text-sm font-medium group-hover/city:underline underline-offset-4">{{ city.name }}</span>
           </NuxtLink>
         </li>

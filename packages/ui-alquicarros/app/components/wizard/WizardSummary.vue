@@ -31,7 +31,7 @@
         <div class="px-5 pb-4">
           <div class="flex items-baseline justify-between border-t border-dashed border-gray-200 pt-3">
             <span class="body-base font-semibold text-gray-900">Total</span>
-            <span class="price-md text-brand-700 font-heading">{{ totalLabel ?? '—' }}</span>
+            <span class="price-md text-brand-800 font-heading">{{ totalLabel ?? '—' }}</span>
           </div>
           <UButton
             block
@@ -90,7 +90,7 @@
                 :class="mobileOpen ? 'rotate-180' : ''"
               />
             </span>
-            <span class="price-md text-brand-700 font-heading leading-none">{{ totalLabel ?? '—' }}</span>
+            <span class="price-md text-brand-800 font-heading leading-none">{{ totalLabel ?? '—' }}</span>
           </button>
           <UButton
             block

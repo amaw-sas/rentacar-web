@@ -38,11 +38,11 @@
                 >
               </div>
               <div class="p-6 md:w-1/2 flex flex-col justify-center">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-brand-700 bg-brand-100 rounded-full w-fit mb-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-brand-800 bg-brand-100 rounded-full w-fit mb-3">
                   <UIcon :name="getCategoryIcon(featuredPost.category)" class="size-3.5" />
                   {{ formatCategory(featuredPost.category) }}
                 </span>
-                <h3 class="text-xl md:text-2xl font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors">
+                <h3 class="text-xl md:text-2xl font-bold font-heading text-gray-900 group-hover:text-brand-800 transition-colors">
                   {{ featuredPost.title }}
                 </h3>
                 <p class="text-gray-600 mt-3 line-clamp-3">
@@ -106,7 +106,7 @@
                 </span>
               </div>
               <div class="p-5 flex flex-col flex-grow">
-                <h3 class="text-lg font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors line-clamp-2">
+                <h3 class="text-lg font-bold font-heading text-gray-900 group-hover:text-brand-800 transition-colors line-clamp-2">
                   {{ post.title }}
                 </h3>
                 <p class="text-gray-600 mt-2 text-sm line-clamp-2 flex-grow">
@@ -137,7 +137,7 @@
           <button
             v-if="selectedCategory"
             @click="setCategory('')"
-            class="mt-4 text-brand-700 hover:text-brand-800 font-medium"
+            class="mt-4 text-brand-800 hover:text-brand-800 font-medium"
           >
             Ver todos los artículos
           </button>

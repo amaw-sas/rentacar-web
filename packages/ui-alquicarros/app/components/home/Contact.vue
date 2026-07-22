@@ -85,7 +85,7 @@
           :key="badge.label"
           class="flex items-center gap-2 text-sm font-medium text-brand-900/75"
         >
-          <UIcon :name="badge.icon" class="size-5 text-brand-600" aria-hidden="true" />
+          <UIcon :name="badge.icon" class="size-5 text-brand-700" aria-hidden="true" />
           {{ badge.label }}
         </li>
       </ul>

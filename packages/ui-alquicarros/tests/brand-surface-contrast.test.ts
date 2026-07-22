@@ -16,9 +16,19 @@
  * comentario no detiene nada; un test sí.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { resolve, dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+/** Todos los .vue bajo un directorio. Mismo recorrido que whatsapp-green-token.test.ts. */
+function walkVue(dir: string, acc: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const full = join(dir, name)
+    if (statSync(full).isDirectory()) walkVue(full, acc)
+    else if (name.endsWith('.vue')) acc.push(full)
+  }
+  return acc
+}
 
 const pkgRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const theme = readFileSync(resolve(pkgRoot, 'app/assets/css/theme.css'), 'utf-8')
@@ -151,6 +161,29 @@ describe('issue #364 — superficie de marca legible (alquicarros)', () => {
     it('no usa emerald-600, que se queda en 3.46:1', () => {
       expect(src).not.toMatch(/text-emerald-600/)
     })
+  })
+
+  /**
+   * R2 en todo el paquete. brand-500 y brand-600 no alcanzan NINGÚN umbral sobre
+   * fondo claro: 2.02 y 2.13 sobre #F4F5F9, 2.20 y 2.32 sobre blanco. Ni siquiera
+   * el 3:1 de los objetos gráficos, así que tampoco valen para iconos.
+   *
+   * brand-700 sí queda permitido, pero solo llega a 3.43-3.74: sirve para iconos
+   * y no para texto. Esa distinción necesita saber si el nodo es texto o gráfico,
+   * lo cual no se puede leer del fuente de forma fiable — vive en el barrido
+   * runtime, no aquí.
+   *
+   * Si algún día hace falta brand-600 sobre una superficie OSCURA (el layout usa
+   * un gradiente brand-900 → brand-950), habrá que medirlo y hacer una excepción
+   * explícita. Hoy no hay ninguna.
+   */
+  it('ningún componente usa brand-500/600 como color de texto', () => {
+    const offenders = walkVue(resolve(pkgRoot, 'app'))
+      .map((file) => ({ file, hits: readFileSync(file, 'utf-8').match(/text-brand-[56]00/g) }))
+      .filter((r) => r.hits)
+      .map((r) => `${relative(pkgRoot, r.file)} (${r.hits!.length})`)
+
+    expect(offenders, `usan un naranja ilegible como texto:\n  ${offenders.join('\n  ')}`).toEqual([])
   })
 
   it('el texto blanco sigue sin caber en el naranja — el motivo de la regla', () => {

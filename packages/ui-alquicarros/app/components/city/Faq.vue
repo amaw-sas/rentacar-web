@@ -69,7 +69,7 @@
           >
             <template #default="{ item }">
               <span class="flex items-center gap-3 text-base font-semibold text-gray-900">
-                <UIcon name="i-lucide-help-circle" class="size-5 shrink-0 text-brand-600" aria-hidden="true" />
+                <UIcon name="i-lucide-help-circle" class="size-5 shrink-0 text-brand-700" aria-hidden="true" />
                 <span v-text="item.label" />
               </span>
             </template>
@@ -105,6 +105,6 @@ const faqAccordionUIConfig = {
   root: "space-y-3",
   item: "bg-white rounded-2xl border border-gray-200 last:border-b shadow-sm transition-shadow duration-200 hover:shadow-md data-[state=open]:border-brand-200 data-[state=open]:shadow-md px-2",
   trigger: "px-3 py-4",
-  trailingIcon: "text-gray-400 group-data-[state=open]:text-brand-600 me-1",
+  trailingIcon: "text-gray-500 group-data-[state=open]:text-brand-700 me-1",
 };
 </script>

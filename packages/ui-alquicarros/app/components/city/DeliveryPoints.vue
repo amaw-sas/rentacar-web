@@ -59,7 +59,7 @@
             <!-- Schedule chip (real data, optional) -->
             <div v-if="branch.schedule?.display" class="flex flex-wrap gap-2">
               <span
-                class="inline-flex items-center gap-1.5 rounded-full border border-brand-600/40 bg-white text-brand-600 text-xs sm:text-sm font-semibold px-3 py-1.5"
+                class="inline-flex items-center gap-1.5 rounded-full border border-brand-600/40 bg-white text-brand-800 text-xs sm:text-sm font-semibold px-3 py-1.5"
               >
                 <ClockIcon cls="size-3.5 shrink-0" />
                 <span>{{ branch.schedule.display }}</span>
@@ -75,7 +75,7 @@
       >
         <div class="flex flex-row items-start gap-3.5 sm:flex-col sm:gap-2 sm:pr-6">
           <svg
-            class="shrink-0 size-6 text-brand-600"
+            class="shrink-0 size-6 text-brand-700"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -97,7 +97,7 @@
         <div
           class="flex flex-row items-start gap-3.5 sm:flex-col sm:gap-2 sm:px-6 sm:border-l sm:border-gray-900/[0.08] pt-5 mt-5 border-t border-gray-900/[0.08] sm:pt-0 sm:mt-0 sm:border-t-0"
         >
-          <ClockIcon cls="shrink-0 size-6 text-brand-600" />
+          <ClockIcon cls="shrink-0 size-6 text-brand-800" />
           <div class="sm:contents">
             <p class="font-heading font-bold text-sm text-gray-900">Entregas rápidas</p>
             <p class="text-[13px] text-gray-500 leading-snug">
@@ -109,7 +109,7 @@
           class="flex flex-row items-start gap-3.5 sm:flex-col sm:gap-2 sm:px-6 sm:border-l sm:border-gray-900/[0.08] pt-5 mt-5 border-t border-gray-900/[0.08] sm:pt-0 sm:mt-0 sm:border-t-0"
         >
           <svg
-            class="shrink-0 size-6 text-brand-600"
+            class="shrink-0 size-6 text-brand-700"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

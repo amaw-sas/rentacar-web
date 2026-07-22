@@ -73,7 +73,7 @@
             v-for="item in items"
             :key="`m-${item.label}`"
             :to="item.to"
-            class="text-xl font-medium text-gray-800 hover:text-brand-600 transition-colors"
+            class="text-xl font-medium text-gray-800 hover:text-brand-800 transition-colors"
             @click="mobileMenuOpen = false"
           >
             {{ item.label }}
@@ -274,8 +274,8 @@ const contactTo = computed(() => hasInPageSections.value ? '#contact' : '/#conta
 // naranja de marca; estado por defecto gris oscuro.
 const linkClass = (active: boolean) =>
   active
-    ? "text-brand-600 hover:text-brand-600"
-    : "text-gray-800 hover:text-brand-600";
+    ? "text-brand-800 hover:text-brand-800"
+    : "text-gray-800 hover:text-brand-800";
 
 // Items de navegación (orden y copy del diseño): Inicio · Flota · Ciudades ·
 // Requisitos · FAQ · Contacto. Compartidos entre desktop y móvil.
