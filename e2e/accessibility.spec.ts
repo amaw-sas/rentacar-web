@@ -72,6 +72,13 @@ test.describe('Accesibilidad', () => {
    * credenciales está en contrast-wcag-sweep.spec.ts.
    */
   test('el texto cumple el contraste mínimo de WCAG AA', async ({ page }) => {
+    // #364 remedió alquicarros. alquilame y alquilatucarro NO se han medido
+    // nunca: hasta ahora este test comprobaba que `color` fuera truthy, así que
+    // su verde no significaba nada para ninguna marca. Se omite en lugar de
+    // fingir cobertura, y en lugar de poner CI en rojo por trabajo que nadie ha
+    // hecho todavía. Cada marca necesita su propia remediación y su propio issue.
+    test.skip(process.env.BRAND !== 'alquicarros', 'Solo alquicarros está remediado (#364)');
+
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 

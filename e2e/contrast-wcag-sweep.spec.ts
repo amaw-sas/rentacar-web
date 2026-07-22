@@ -18,6 +18,11 @@
 import { test, expect } from '@playwright/test';
 import { CONTRAST_PROBE } from './support/contrast-probe';
 
+// Las rutas y los selectores de aquí (/bogota, #partners, el hero naranja) son
+// del rediseño de alquicarros. Bajo otra BRAND la estructura es distinta, así
+// que se omite — el mismo patrón que alquicarros-fleet-card.spec.ts.
+const isAlquicarros = process.env.BRAND === 'alquicarros';
+
 const CATALOG = {
   catalogFetchedAt: Date.now(),
   categories: [],
@@ -52,6 +57,7 @@ for (const [label, width, height] of [
 ] as const) {
   for (const route of ROUTES) {
     test(`#364 contraste — ${route.label} (${label})`, async ({ page, baseURL }) => {
+      test.skip(!isAlquicarros, 'Contraste de marca exclusivo de alquicarros');
       await page.setViewportSize({ width, height });
       await page.route('**/api/rentacar-data**', (r) =>
         route === undefined
