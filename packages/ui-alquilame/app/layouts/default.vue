@@ -109,10 +109,15 @@
       <slot></slot>
     </main>
 
-    <!-- Footer — golden parity: fondo navy #1A1A2E, 4 columnas + barra negra.
-         Conserva el wiring real: cities (v-for + deep-link), franchise.footerLinks,
-         whatsapp/phone/email/socialmedia. -->
-    <footer class="bg-[#1A1A2E] text-white">
+    <!-- Footer — golden parity: 4 columnas + barra negra. Conserva el wiring
+         real: cities (v-for + deep-link), franchise.footerLinks,
+         whatsapp/phone/email/socialmedia.
+
+         Surface is #231015 (deep warm brown), the reference footer colour. The
+         port had shipped #1A1A2E navy — the one thing that still differed from
+         the reference below the partners band. The black bottom bar is
+         unchanged. -->
+    <footer class="bg-[#231015] text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
         <div class="grid grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-8">
           <!-- Col 1: Logo + Quiénes somos + badge Google -->

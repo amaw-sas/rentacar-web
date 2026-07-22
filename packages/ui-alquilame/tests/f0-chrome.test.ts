@@ -86,13 +86,16 @@ describe('chrome — CTA "Reserva Ahora" + WhatsApp (default.vue)', () => {
   })
 })
 
-describe('chrome — footer navy golden (default.vue)', () => {
+describe('chrome — footer surface (default.vue)', () => {
   const layout = read('app/layouts/default.vue')
 
-  it('renders a single <footer> with the dark navy surface (#1A1A2E)', () => {
+  it('renders a single <footer> on the reference surface (#231015)', () => {
+    // Colour updated from the ported #1A1A2E navy to the reference's deep warm
+    // brown. The "exactly one <footer>" invariant is unchanged.
     const footers = layout.match(/<footer\b[^>]*>/g) ?? []
     expect(footers).toHaveLength(1)
-    expect(footers[0]).toMatch(/bg-\[#1A1A2E\]/)
+    expect(footers[0]).toMatch(/bg-\[#231015\]/)
+    expect(footers[0]).not.toMatch(/bg-\[#1A1A2E\]/i)
   })
 
   it('has a black bottom bar inside the footer', () => {
@@ -240,5 +243,30 @@ describe('header — logo and CTA reach the container edges', () => {
         /flex:\s*none/,
       )
     }
+  })
+})
+
+/**
+ * Footer surface + links, aligned with the reference design:
+ *   - the footer body sits on #231015 (deep warm brown), not the #1A1A2E navy
+ *     the port shipped. The black bottom bar is unchanged.
+ *   - "Registra tu Flota" joins the Enlaces column; it had no counterpart in
+ *     franchise.footerLinks, so the section silently lacked it.
+ */
+describe('footer — reference surface colour and link set', () => {
+  const layout = read('app/layouts/default.vue')
+  const config = read('app/app.config.ts')
+
+  it('uses the reference footer background, not the navy', () => {
+    expect(layout).toMatch(/<footer[^>]*bg-\[#231015\]/)
+    expect(layout).not.toMatch(/bg-\[#1A1A2E\]/i)
+  })
+
+  it('keeps the black bottom bar', () => {
+    expect(layout).toMatch(/\bbg-black\b/)
+  })
+
+  it('carries a "Registra tu Flota" footer link', () => {
+    expect(config).toContain('Registra tu Flota')
   })
 })

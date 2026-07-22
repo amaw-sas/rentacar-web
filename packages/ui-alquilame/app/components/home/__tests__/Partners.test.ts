@@ -1,21 +1,22 @@
 /**
- * F1 step07b — Partners "Empresas Aliadas" (issue #112).
+ * Partners "Empresas Aliadas".
  *
- * Static-source assertions encoding the observable partners contract (full
- * runtime/visual check deferred to the F1 preview verification):
- *   - SCEN-F1-03 (Empresas Aliadas): the section presents the ally names as
- *     STYLED TEXT inside a CSS marquee.
- *   - TEXT ONLY: the design ships no logo assets, so the section must NOT use any
- *     <img> tag or logo asset — allies are plain text spans.
- *   - The ally names are a local list driven via v-for (each ally appears once in
- *     the real copy; the duplicate copy that makes the loop seamless is
- *     aria-hidden so assistive tech announces each ally once).
- *   - Gradient guard (F0 lesson): the section + edge fades MUST use the v4
- *     `bg-linear-to-*` utility, NEVER the broken v3 `bg-gradient-to-*` alias.
- *   - Typography adopts the `font-heading` utility (Plus Jakarta), as the design.
+ * Contract UPDATED to match the reference design, which now ships real ally
+ * logos. The previous contract pinned a TEXT-ONLY marquee, and its stated
+ * premise — "the design ships no logo assets, so allies are text" — was true
+ * when written and is no longer: public/images/partners/*.svg exist in the
+ * reference and are now vendored here. The section therefore becomes:
+ *   - a STATIC centred row (flex-wrap), not a scrolling marquee;
+ *   - four real SVG logos, rendered white over the red band via
+ *     `brightness-0 invert`;
+ *   - each logo carries its ally name as alt text (the names must stay
+ *     announceable now that they are images, not text).
+ * The brand gradient guard (v4 `bg-linear-to-*`, never the broken v3 alias) is
+ * unchanged and still enforced.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = join(__dirname, '..', '..', '..', '..') // → packages/ui-alquilame
@@ -30,47 +31,53 @@ const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 
 const ALLIES = ['Localiza', 'Avis', 'Alquicarros', 'Alquilatucarro'] as const
 
-describe('F1 step07b — Partners.vue', () => {
+describe('Partners.vue — static row of real ally logos', () => {
   const partners = read('app/components/home/Partners.vue')
 
-  it('renders a CSS marquee (track + keyframes + animation)', () => {
-    expect(partners).toMatch(/class="marquee\b/)
-    expect(partners).toMatch(/marquee-track/)
-    expect(partners).toMatch(/@keyframes\s+partners-marquee/)
-    expect(partners).toMatch(/animation:\s*partners-marquee/)
+  it('is STATIC — the marquee track, keyframes and animation are gone', () => {
+    expect(partners).not.toMatch(/marquee-track/)
+    expect(partners).not.toMatch(/@keyframes\s+partners-marquee/)
+    expect(partners).not.toMatch(/animation:\s*partners-marquee/)
   })
 
-  it('declares the allies as a local TEXT list and iterates it with v-for', () => {
-    expect(partners).toMatch(/v-for="ally in allies"/)
+  it('lays the allies out as a centred wrapping row', () => {
+    expect(partners).toMatch(/flex-wrap/)
+    expect(partners).toMatch(/justify-center/)
+  })
+
+  it('renders each ally as a real logo image, not a text span', () => {
+    expect(partners).toMatch(/<(?:img|NuxtImg)\b/i)
+    expect(partners).not.toMatch(/<span[^>]*>\s*\{\{\s*ally(?:\.name)?\s*\}\}/)
+  })
+
+  it('wires the 4 vendored ally logos', () => {
     for (const ally of ALLIES) {
       expect(partners).toContain(`'${ally}'`)
     }
+    for (const slug of ['localiza', 'avis', 'alquicarros', 'alquilatucarro']) {
+      expect(partners).toContain(`/images/partners/${slug}.svg`)
+    }
   })
 
-  it('presents the ally names as styled text spans (font-heading)', () => {
-    expect(partners).toMatch(/<span[^>]*font-heading[^>]*>\s*\{\{\s*ally\s*\}\}/)
+  it('ships the logo assets it references', () => {
+    for (const slug of ['localiza', 'avis', 'alquicarros', 'alquilatucarro']) {
+      const asset = join(ROOT, 'public/images/partners', `${slug}.svg`)
+      expect(existsSync(asset), `missing asset ${slug}.svg`).toBe(true)
+    }
   })
 
-  it('is TEXT ONLY — no <img> tag and no image asset reference anywhere', () => {
-    // The design ships no ally logos; allies are text. Guard the rendered markup
-    // (no <img>, no <NuxtImg>) and forbid any image-asset file reference. The word
-    // "logo" may legitimately appear in explanatory comments (documenting the
-    // text-only decision), so it is intentionally NOT asserted against here.
-    expect(partners).not.toMatch(/<img\b/i)
-    expect(partners).not.toMatch(/<NuxtImg\b/i)
-    expect(partners).not.toMatch(/\.(?:png|jpe?g|svg|webp|avif|gif)\b/i)
+  it('keeps the ally names announceable via alt text', () => {
+    // Logos are images now; without alt the ally names vanish for screen readers.
+    expect(partners).toMatch(/:alt="[^"]*name[^"]*"|:alt="ally\.name"/)
+  })
+
+  it('renders the logos white over the red band', () => {
+    expect(partners).toMatch(/brightness-0/)
+    expect(partners).toMatch(/\binvert\b/)
   })
 
   it('renders the brand gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
     expect(partners).toMatch(/bg-linear-to-[a-z]/)
     expect(partners).not.toMatch(BROKEN_V3_GRADIENT)
-  })
-
-  it('respects prefers-reduced-motion (disables the marquee animation)', () => {
-    expect(partners).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/)
-  })
-
-  it('hides the seamless-loop duplicate copy from assistive tech', () => {
-    expect(partners).toMatch(/aria-hidden="true"/)
   })
 })

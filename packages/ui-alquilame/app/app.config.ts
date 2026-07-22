@@ -74,6 +74,12 @@ export default defineAppConfig({
         link: "/gana",
         label: "Gana comisiones",
       },
+      // Present in the reference footer, missing here. No destination exists yet,
+      // so it points at "#" — replace with the real route once it ships.
+      {
+        link: "#",
+        label: "Registra tu Flota",
+      },
       {
         link: "/blog",
         label: "Blog",
