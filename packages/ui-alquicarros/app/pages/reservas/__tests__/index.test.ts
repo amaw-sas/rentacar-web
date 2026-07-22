@@ -43,13 +43,20 @@ describe('/reservas — Paso 1 hero + gradient (StepSearch.vue)', () => {
     expect(stepSearch).toMatch(/from-hero-from\s+to-hero-to/)
   })
 
-  it('sets [--ctx-text-primary:#fff] so .heading-* headings render white on the orange hero', () => {
-    expect(stepSearch).toMatch(/\[--ctx-text-primary:#fff\]/)
+  // Issue #364. The previous version of this test REQUIRED
+  // [--ctx-text-primary:#fff]. White on this gradient measures 2.20:1, so the
+  // suite was holding a WCAG failure in place. Same replacement as the one in
+  // components/city/__tests__/Hero.test.ts — the hero still declares a text
+  // context, it is just no longer pretending to be a dark surface.
+  it('declares .context-brand so .heading-* resolves to --color-on-brand', () => {
+    expect(stepSearch).toMatch(/class="context-brand/)
+    expect(stepSearch).not.toMatch(/\[--ctx-text-primary:#fff\]/)
   })
 
   it('adopts a prominent .heading-* utility for the headline h1', () => {
     // Design-tier detail (heading-page here); the observable is a prominent
-    // white-on-orange branded headline, preserved.
+    // branded headline on the orange hero, preserved. Its colour now comes from
+    // the context rather than an inline text- utility (#364).
     expect(stepSearch).toMatch(/<h1[^>]*heading-(hero|page)/)
   })
 

@@ -16,15 +16,19 @@
         the accessible name of the <h1> (WCAG 2.5.3) and never exposed via
         aria-label/title.
 
-    Gradient guard (F1/F0 lesson): the red gradient MUST use the v4
+    Gradient guard (F1/F0 lesson): the ORANGE gradient MUST use the v4
     bg-linear-to-* utility built from the hero-from/hero-to @theme tokens; the
-    broken v3 alias renders background-image:none with custom tokens. The
-    section sets [--ctx-text-primary:#fff] so .heading-* headings render WHITE
-    on the red background (F1 contrast bug).
+    broken v3 alias renders background-image:none with custom tokens.
+
+    Contrast (issue #364, R1): the section declares .context-brand, so .heading-*
+    resolves to --color-on-brand. It used to force white, which measured 2.20:1
+    on #ff9500 — below the 3:1 large-text floor. Copy and the star badge use
+    text-on-brand; the "Reservar ahora" pill sits on white and follows R2
+    (brand-800), not the hero token, which was 2.20:1 as text.
   -->
   <section
     id="hero"
-    class="relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to [--ctx-text-primary:#fff]"
+    class="context-brand relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to"
   >
     <!--
       Scroll target for "Probar otras fechas" / "Probar otra sucursal cercana"
@@ -40,7 +44,7 @@
         <div class="text-center lg:text-left">
           <!-- Trust signal: "4.9 reviews" star badge (design hero) -->
           <div
-            class="flex flex-row space-x-0.5 justify-center lg:justify-start items-center text-sm text-white mb-3"
+            class="flex flex-row space-x-0.5 justify-center lg:justify-start items-center text-sm text-on-brand mb-3"
           >
             <StarIcon v-for="i in [1, 2, 3, 4, 5]" :key="i" cls="w-3.5 h-3.5 md:w-4 md:h-4" />
             <span class="ml-2">4.9 reviews</span>
@@ -52,18 +56,18 @@
             and is not focusable, so screen readers announce only
             "Alquiler de carros en {city}". Issue #41.
           -->
-          <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
+          <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-on-brand leading-[1.1]">
             Alquiler de carros en {{ city?.name }}
             <span
               aria-hidden="true"
               class="inline-flex align-middle"
               @click="copySearchToWhatsapp"
             >
-              <LocationIcon cls="text-white size-7 md:size-8 lg:size-10 -translate-y-0.5" />
+              <LocationIcon cls="text-on-brand size-7 md:size-8 lg:size-10 -translate-y-0.5" />
             </span>
           </h1>
 
-          <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
+          <p class="mt-4 text-base md:text-lg text-on-brand max-w-2xl mx-auto lg:mx-0">
             Consulta disponibilidad y precios. Elige ciudad, fechas y horarios y
             renta un vehículo por días, semanas o el tiempo que necesites.
           </p>
@@ -110,7 +114,7 @@
         <div v-else class="flex items-center justify-center">
           <NuxtLink
             to="/reservas"
-            class="inline-flex items-center justify-center rounded-full bg-white text-hero-from font-semibold px-8 py-4 text-base md:text-lg shadow-lg hover:bg-white/90 transition-colors"
+            class="inline-flex items-center justify-center rounded-full bg-white text-brand-800 font-semibold px-8 py-4 text-base md:text-lg shadow-lg hover:bg-white/90 transition-colors"
           >
             Reservar ahora
           </NuxtLink>

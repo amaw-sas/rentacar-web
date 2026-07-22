@@ -91,6 +91,68 @@ describe('issue #364 — superficie de marca legible (alquicarros)', () => {
     }
   })
 
+  /**
+   * Invariante estructural de R1. Cada paso que arregla una superficie naranja
+   * añade su archivo a esta lista; no hay un paso dedicado a "escribir tests".
+   *
+   * Lo estático vale aquí porque es ausencia de un literal en un archivo
+   * concreto: sin ternarios que resolver ni fondos heredados de un ancestro.
+   * La clasificación texto/icono/texto-grande, que sí necesita runtime, vive en
+   * el barrido con navegador.
+   */
+  describe.each([
+    'app/components/home/Hero.vue',
+    'app/components/city/Hero.vue',
+    'app/components/home/Partners.vue',
+    'app/components/wizard/steps/StepSearch.vue',
+  ])('%s — superficie naranja bajo R1', (rel) => {
+    // Sin los comentarios. Estos componentes documentan POR QUÉ se quitó el
+    // texto blanco, así que la prosa cita los literales prohibidos; afirmar
+    // sobre el archivo crudo convertiría cada explicación en un fallo. El
+    // invariante es sobre el markup que se pinta, no sobre lo que se cuenta.
+    const src = readFileSync(resolve(pkgRoot, rel), 'utf-8').replace(/<!--[\s\S]*?-->/g, '')
+
+    it('no pinta texto blanco sobre el naranja, en ningún estado', () => {
+      // Coge también hover:text-white y text-white/85. El estado hover del
+      // marquee de aliados daba 2.36:1, peor que el reposo — medir solo el
+      // estilo base deja fuera fallos reales.
+      expect(src).not.toMatch(/text-white/)
+    })
+
+    it('declara el contexto de marca en vez de fingir superficie oscura', () => {
+      expect(src).toContain('context-brand')
+      expect(src).not.toMatch(/--ctx-text-primary:\s*#fff/)
+    })
+  })
+
+  /**
+   * R2 y R3 sobre fondo claro. La card de flota lleva el dato por el que la
+   * gente entra al sitio, y lo pintaba a 2.13:1.
+   *
+   * Los tonos prohibidos van por nombre porque el fondo (#F4F5F9) es constante
+   * y conocido; donde el fondo depende de un ancestro, la comprobación es
+   * runtime y no cabe en un test estático.
+   */
+  describe('app/components/home/FleetCard.vue — fondo claro bajo R2/R3', () => {
+    const src = readFileSync(resolve(pkgRoot, 'app/components/home/FleetCard.vue'), 'utf-8')
+      .replace(/<!--[\s\S]*?-->/g, '')
+
+    it('no usa naranja por debajo de brand-800 como texto', () => {
+      // brand-600 = 2.13:1 y brand-700 = 3.43:1 sobre #F4F5F9. El precio es
+      // texto grande (30px/800) y le bastaría 3:1, pero ninguno de los dos llega.
+      expect(src).not.toMatch(/text-brand-[567]00/)
+    })
+
+    it('no usa grises por debajo de gray-600', () => {
+      // gray-400 = 2.33:1; gray-500 = 4.44:1, que falla por 0.06.
+      expect(src).not.toMatch(/text-gray-[45]00/)
+    })
+
+    it('no usa emerald-600, que se queda en 3.46:1', () => {
+      expect(src).not.toMatch(/text-emerald-600/)
+    })
+  })
+
   it('el texto blanco sigue sin caber en el naranja — el motivo de la regla', () => {
     // Ancla el porqué, no solo el qué. Si algún día blanco pasara sobre el
     // naranja institucional, la regla habría dejado de tener sentido y este
