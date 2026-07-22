@@ -132,3 +132,31 @@ describe('city testimonials — featured row is capped at three, like the home',
     expect(testimonios).toMatch(/v-for="testimonio in/)
   })
 })
+
+/**
+ * Google block layout on a city landing:
+ *   GIVEN a desktop viewport
+ *   WHEN  the testimonials section renders
+ *   THEN  the rating sits BESIDE the three cards, as on the home — not stacked
+ *         above them. The city h2 + subtitle stay centred on top; only the
+ *         rating-and-cards pair adopts the home's two-column split.
+ */
+describe('city testimonials — rating beside the cards, like the home', () => {
+  const testimonios = read('app/components/city/Testimonios.vue')
+  const home = read('app/components/home/Reviews.vue')
+
+  it('uses the same two-column split the home uses', () => {
+    const split = /grid lg:grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.6fr\)\]/
+    expect(home).toMatch(split)
+    expect(testimonios).toMatch(split)
+  })
+
+  it('no longer centres the rating in its own full-width row', () => {
+    expect(testimonios).not.toMatch(/flex justify-center text-center[\s\S]{0,120}HomeGoogleRating/)
+  })
+
+  it('keeps the city-specific heading above the pair', () => {
+    expect(testimonios).toMatch(/Opiniones de clientes que rentaron carros en/)
+    expect(testimonios).toMatch(/<HomeGoogleRating\b/)
+  })
+})

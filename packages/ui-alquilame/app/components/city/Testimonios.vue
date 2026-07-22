@@ -44,49 +44,52 @@
         works hardest. Rendered as an h3: the section's own h2 already titles
         this block, and a second h2 would flatten the heading outline.
       -->
-      <div class="mb-10 md:mb-12 flex justify-center text-center">
+      <!-- Rating BESIDE the cards, the same split the home uses: the rating
+           column reads as a headline and the three reviews as its evidence.
+           Stacked, the badge looked like the label of a list. -->
+      <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-10 lg:gap-12 items-center">
         <HomeGoogleRating heading="Calificación verificada en Google" heading-tag="h3" />
-      </div>
 
-      <!-- Review cards — city-specific testimonials -->
-      <div
-        v-if="testimonios.length"
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5"
-      >
-        <article
-          v-for="testimonio in testimonios"
-          :key="testimonio.user.name"
-          class="flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+        <!-- Review cards — city-specific testimonials -->
+        <div
+          v-if="testimonios.length"
+          class="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-5"
         >
-          <!-- Author + avatar (real city data via UUser) -->
-          <!-- CLS fix: reserve space for the avatar (48x48 = size 3xl) -->
-          <div class="min-h-[48px]">
-            <UUser
-              size="3xl"
-              v-bind="testimonio.user"
-              :ui="userUIConfig"
-              loading="lazy"
-            >
-              <template #avatar>
-                <ImagesAvatar :avatar="testimonio.user.avatar" />
-              </template>
-            </UUser>
-          </div>
+          <article
+            v-for="testimonio in testimonios"
+            :key="testimonio.user.name"
+            class="flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+          >
+            <!-- Author + avatar (real city data via UUser) -->
+            <!-- CLS fix: reserve space for the avatar (48x48 = size 3xl) -->
+            <div class="min-h-[48px]">
+              <UUser
+                size="3xl"
+                v-bind="testimonio.user"
+                :ui="userUIConfig"
+                loading="lazy"
+              >
+                <template #avatar>
+                  <ImagesAvatar :avatar="testimonio.user.avatar" />
+                </template>
+              </UUser>
+            </div>
 
-          <!-- Star row -->
-          <div class="flex gap-0.5 mt-3" aria-label="5 de 5 estrellas">
-            <StarIcon
-              v-for="i in 5"
-              :key="i"
-              cls="text-yellow-400 w-4 h-4"
-            />
-          </div>
+            <!-- Star row -->
+            <div class="flex gap-0.5 mt-3" aria-label="5 de 5 estrellas">
+              <StarIcon
+                v-for="i in 5"
+                :key="i"
+                cls="text-yellow-400 w-4 h-4"
+              />
+            </div>
 
-          <!-- Quote -->
-          <p class="mt-3 text-sm text-gray-600 leading-relaxed">
-            &ldquo;{{ testimonio.quote }}&rdquo;
-          </p>
-        </article>
+            <!-- Quote -->
+            <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+              &ldquo;{{ testimonio.quote }}&rdquo;
+            </p>
+          </article>
+        </div>
       </div>
     </div>
   </section>
