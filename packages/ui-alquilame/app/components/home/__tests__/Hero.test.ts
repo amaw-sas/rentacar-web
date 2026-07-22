@@ -34,6 +34,10 @@ const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 
 describe('Home hero — golden parity', () => {
   const hero = read('app/components/home/Hero.vue')
+  // The car + corner video moved to the shared HomeHeroVisual component so the
+  // city hero renders the identical visual. The assertions below still hold —
+  // they just live where the markup now is.
+  const visual = read('app/components/home/HeroVisual.vue')
 
   it('renders the brand red gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
     expect(hero).toMatch(/bg-linear-to-[a-z]/)
@@ -84,7 +88,7 @@ describe('Home hero — golden parity', () => {
   })
 
   it('reserves visual space with an aspect-ratio card (CLS)', () => {
-    expect(hero).toMatch(/aspect-\[/)
+    expect(visual).toMatch(/aspect-\[/)
   })
 
   // The banner pattern overlays the red gradient (reference look).
@@ -95,23 +99,23 @@ describe('Home hero — golden parity', () => {
   // The car cutout is the main visual; its intrinsic width/height reserve the
   // box in the SSR HTML → no CLS from a late-loading image.
   it('renders the car cutout with intrinsic dimensions (CLS)', () => {
-    expect(hero).toMatch(/carro_hero\.webp/)
-    expect(hero).toMatch(/<img[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
+    expect(visual).toMatch(/carro_hero\.webp/)
+    expect(visual).toMatch(/<img[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
   })
 
   it('defaults to poster image; defers video (mp4) off the critical path (issue 322 P01)', () => {
     // First paint: NuxtImg poster, not multi-MB autoplay sources.
-    expect(hero).toMatch(/NuxtImg/)
-    expect(hero).toMatch(/hero-poster\.jpg/)
-    expect(hero).toMatch(/v-if="!videoActive && !audioActive"/)
+    expect(visual).toMatch(/NuxtImg/)
+    expect(visual).toMatch(/hero-poster\.jpg/)
+    expect(visual).toMatch(/v-if="!videoActive && !audioActive"/)
     // Deferred muted-preview branch (activated after idle/visible).
-    expect(hero).toMatch(/<video\b/)
-    expect(hero).toMatch(/autoplay/)
-    expect(hero).toMatch(/\bmuted\b/)
-    expect(hero).toMatch(/\bloop\b/)
-    expect(hero).toMatch(/\bplaysinline\b/)
-    expect(hero).toMatch(/hero\.mp4/)
-    expect(hero).not.toMatch(/hero\.webm/)
+    expect(visual).toMatch(/<video\b/)
+    expect(visual).toMatch(/autoplay/)
+    expect(visual).toMatch(/\bmuted\b/)
+    expect(visual).toMatch(/\bloop\b/)
+    expect(visual).toMatch(/\bplaysinline\b/)
+    expect(visual).toMatch(/hero\.mp4/)
+    expect(visual).not.toMatch(/hero\.webm/)
   })
 
   // SCEN-SND: muted preview loops for free; a user click loads the full video
@@ -119,14 +123,14 @@ describe('Home hero — golden parity', () => {
   // allow audible playback. Audible playback itself is verified in the browser.
   it('adds a click-to-enable-sound flow backed by a preload=none audio video', () => {
     // The audio master is a SEPARATE, deferred asset — never on the critical path.
-    expect(hero).toMatch(/hero-audio\.mp4/)
-    expect(hero).toMatch(/preload="none"/)
+    expect(visual).toMatch(/hero-audio\.mp4/)
+    expect(visual).toMatch(/preload="none"/)
     // A real button (a11y label) toggles sound on; wired to enableSound.
-    expect(hero).toMatch(/@click="enableSound"/)
-    expect(hero).toMatch(/aria-label="[^"]*sonido[^"]*"/i)
+    expect(visual).toMatch(/@click="enableSound"/)
+    expect(visual).toMatch(/aria-label="[^"]*sonido[^"]*"/i)
     // State + handler exist in the script.
-    expect(hero).toMatch(/audioActive/)
-    expect(hero).toMatch(/function enableSound|const enableSound/)
+    expect(visual).toMatch(/audioActive/)
+    expect(visual).toMatch(/function enableSound|const enableSound/)
   })
 
   it('drops the "Ver Precios" CTA — WhatsApp is the single hero action', () => {
