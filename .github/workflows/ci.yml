@@ -70,24 +70,46 @@ jobs:
       # runs, rather than in the secret-gated e2e job. It guards the invariant
       # (the suite collects) instead of one cause of breaking it, so any future
       # collection-time error — syntax, bad import, missing module — fails here.
+      #
+      # The floors are minimums, not equalities, so adding specs never breaks
+      # CI. A total collapse already exits non-zero, so "> 0" would be dead
+      # code; the floors exist for PARTIAL erosion, which fails SILENTLY —
+      # widening a testIgnore glob or renaming a file off testMatch drops specs
+      # while Playwright still exits 0. Deliberate reductions are supposed to
+      # cost an explicit, reviewable edit here.
+      #
+      # Floors measured 2026-07-22: alquilatucarro 1105/42, alquicarros 800/30,
+      # alquilame 800/30. The two smaller brands share BUSCAR_VEHICULOS_FLOW_SPECS
+      # (12 ignored specs), which is why 42 - 12 = 30.
       - name: E2E suite must collect specs (all brands)
         run: |
           set -euo pipefail
           for brand in alquilatucarro alquicarros alquilame; do
+            case $brand in
+              alquilatucarro)          min_tests=1000; min_files=42 ;;
+              alquicarros|alquilame)   min_tests=750;  min_files=30 ;;
+            esac
             echo "::group::Collecting e2e specs for $brand"
             output=$(BRAND=$brand pnpm exec playwright test --list --reporter=list 2>&1) || {
+              echo "::endgroup::"
               echo "$output"
               echo "::error title=E2E collection failed::BRAND=$brand could not collect the e2e suite."
               exit 1
             }
             echo "$output" | tail -1
-            count=$(echo "$output" | sed -n 's/^Total: \([0-9]\+\) tests\? in .*/\1/p' | tail -1)
             echo "::endgroup::"
-            if [ -z "$count" ] || [ "$count" -lt 1 ]; then
-              echo "::error title=E2E collection empty::BRAND=$brand collected 0 tests. The brand command proves nothing."
+            summary=$(echo "$output" | sed -n 's/^Total: \([0-9]\+\) tests\? in \([0-9]\+\) files\?$/\1 \2/p' | tail -1)
+            if [ -z "$summary" ]; then
+              echo "::error title=E2E collection unparsable::BRAND=$brand — Playwright's summary line did not match the expected shape, so the guard cannot prove the suite collects. Check whether the reporter output changed."
               exit 1
             fi
-            echo "$brand: $count tests collected"
+            count=${summary% *}
+            files=${summary#* }
+            if [ "$count" -lt "$min_tests" ] || [ "$files" -lt "$min_files" ]; then
+              echo "::error title=E2E collection shrank::BRAND=$brand collected $count tests in $files files, below the floor of $min_tests tests / $min_files files. Specs stopped being collected. If the reduction is deliberate, lower the floor in this step."
+              exit 1
+            fi
+            echo "$brand: $count tests in $files files (floor $min_tests/$min_files)"
           done
 
   # Issue 322 SCEN-322-N04 — reservation-payload e2e specs in CI.
