@@ -58,11 +58,12 @@ interface Ally {
   logo: string
 }
 
-// Ally logos vendored from the reference design. Order matches its #partners row.
+// Ally logos vendored from the reference design. Display order is the
+// operator's, not the reference's.
 const allies: ReadonlyArray<Ally> = [
   { name: 'Localiza', logo: '/images/partners/localiza.svg' },
+  { name: 'Alquilatucarro', logo: '/images/partners/alquilatucarro.svg' },
   { name: 'Avis', logo: '/images/partners/avis.svg' },
   { name: 'Alquicarros', logo: '/images/partners/alquicarros.svg' },
-  { name: 'Alquilatucarro', logo: '/images/partners/alquilatucarro.svg' },
 ]
 </script>

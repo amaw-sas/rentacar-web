@@ -32,51 +32,57 @@
         </p>
       </div>
 
-      <!-- Featured cities — horizontal marquee of photo cards -->
-      <div v-if="featuredCities.length" class="marquee group relative mb-10 overflow-hidden">
-        <!-- Edge fades -->
-        <div class="pointer-events-none absolute left-0 top-0 bottom-0 w-12 md:w-24 bg-linear-to-r from-gray-100 to-transparent z-10"></div>
-        <div class="pointer-events-none absolute right-0 top-0 bottom-0 w-12 md:w-24 bg-linear-to-l from-gray-100 to-transparent z-10"></div>
+      <!-- Featured cities — static 4-up grid of tall photo cards that reveal on
+           scroll. Each carries the REAL number of branches in that city. -->
+      <div
+        v-if="featuredCities.length"
+        class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-10"
+      >
+        <NuxtLink
+          v-for="(city, i) in featuredCities"
+          :key="city.id"
+          :to="`/${city.id}`"
+          :aria-label="`Alquiler de carros en ${city.name}`"
+          class="city-reveal group relative block aspect-[4/5] overflow-hidden rounded-[22px] border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.10)] hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,17,34,0.18)] transition-all duration-300 [--ctx-text-primary:#fff]"
+          :style="`--reveal-delay:${i * 90}ms`"
+        >
+          <NuxtImg
+            :src="city.image"
+            :alt="`Vista de ${city.name}, Colombia`"
+            loading="lazy"
+            width="640"
+            height="800"
+            sizes="50vw lg:25vw"
+            class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+          />
+          <!-- Dark gradient overlay for text legibility -->
+          <span class="absolute inset-0 bg-linear-to-t from-gray-900/80 via-gray-900/25 to-transparent"></span>
 
-        <div class="marquee-track flex gap-5 w-max">
-          <!--
-            Two copies of the featured set: translating the track by -50% advances
-            it by exactly one copy width, so the loop is seamless. The second copy
-            is aria-hidden / not focusable to avoid duplicate links for AT.
-          -->
-          <div
-            v-for="(city, i) in marqueeCities"
-            :key="`${city.id}-${i}`"
-            class="w-64 md:w-72 flex-shrink-0"
-            :aria-hidden="i >= featuredCities.length ? 'true' : 'false'"
+          <!-- Hover affordance: a chevron that slides in from the left -->
+          <span
+            class="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-brand-600 opacity-0 -translate-x-1 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0"
+            aria-hidden="true"
           >
-            <NuxtLink
-              :to="`/${city.id}`"
-              :tabindex="i >= featuredCities.length ? -1 : undefined"
-              :aria-label="`Alquiler de carros en ${city.name}`"
-              class="group/card relative block rounded-2xl overflow-hidden aspect-[4/3] bg-linear-to-br from-gray-200 to-gray-100 [--ctx-text-primary:#fff]"
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </span>
+
+          <div class="absolute inset-x-0 bottom-0 p-4">
+            <h3 class="heading-card text-lg sm:text-xl font-bold text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]">
+              {{ city.name }}
+            </h3>
+            <span
+              v-if="city.branchLabel"
+              class="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm"
             >
-              <!-- Real city photo -->
-              <NuxtImg
-                :src="city.image"
-                :alt="`Vista de ${city.name}, Colombia`"
-                loading="lazy"
-                width="288"
-                height="216"
-                sizes="256px md:288px"
-                class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105"
-              />
-              <!-- Dark gradient overlay for text legibility -->
-              <div class="absolute inset-0 bg-linear-to-t from-gray-900/85 via-gray-900/30 to-transparent"></div>
-              <!-- Content -->
-              <div class="absolute bottom-0 left-0 right-0 p-6">
-                <h3 class="heading-card text-xl font-bold text-white drop-shadow-md">{{ city.name }}</h3>
-              </div>
-              <!-- Hover tint -->
-              <div class="absolute inset-0 bg-red-600/0 transition-colors duration-300 group-hover/card:bg-red-600/15"></div>
-            </NuxtLink>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              {{ city.branchLabel }}
+            </span>
           </div>
-        </div>
+        </NuxtLink>
       </div>
 
       <!-- All cities — pill / chip grid (every active city, internal link) -->
@@ -148,22 +154,51 @@ const FEATURED: ReadonlyArray<{ id: string; image: string }> = [
   { id: 'cartagena', image: '/images/cities/cartagena.jpg' },
 ]
 
-type FeaturedCity = City & { image: string }
+type FeaturedCity = City & { image: string; branchLabel: string | undefined }
+
+// Branch counts come from the SAME shared `rentacar-data` state the city list
+// already reads, so the badge costs no extra payload. The reference hardcodes
+// "4 puntos de entrega" for Bogotá; our data says 5 — deriving beats copying.
+// `branch.city` holds the city slug, which is City.id.
+const storeAdminData = useStoreAdminData()
+
+function branchLabelFor(cityId: string): string | undefined {
+  const branches = storeAdminData.branches ?? []
+  const n = branches.filter((b: { city?: string }) => b.city === cityId).length
+  // No badge at all when the count is zero — a zero badge reads as "closed".
+  if (n < 1) return undefined
+  return `${n} ${n === 1 ? 'sede' : 'sedes'}`
+}
 
 // Featured set: the ordered intersection of FEATURED photos with real active
 // cities. flatMap drops any photo whose city is not currently active.
 const featuredCities = computed<FeaturedCity[]>(() =>
   FEATURED.flatMap(({ id, image }) => {
     const city = cities.value.find((c: City) => c.id === id)
-    return city ? [{ ...city, image }] : []
+    return city ? [{ ...city, image, branchLabel: branchLabelFor(id) }] : []
   })
 )
 
-// Two copies for the seamless marquee loop (second copy rendered aria-hidden).
-const marqueeCities = computed<FeaturedCity[]>(() => [
-  ...featuredCities.value,
-  ...featuredCities.value,
-])
+// Reveal-on-scroll for the featured cards, staggered by --reveal-delay. Cards
+// start visible in the markup and are only hidden once JS confirms it can
+// animate them, so a no-JS or failed-hydration render never leaves a blank grid.
+onMounted(() => {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  const cards = document.querySelectorAll<HTMLElement>('.city-reveal')
+  if (!cards.length) return
+  cards.forEach((c) => c.classList.add('is-hidden'))
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        entry.target.classList.remove('is-hidden')
+        io.unobserve(entry.target)
+      })
+    },
+    { threshold: 0.2 },
+  )
+  cards.forEach((c) => io.observe(c))
+})
 
 // Trust row copy + icons ported verbatim from the reference's PuntosEntrega
 // "confianza" block.
@@ -188,32 +223,30 @@ const confianza: ReadonlyArray<{ title: string; description: string; icon: strin
 
 <style scoped>
 /*
-  Track holds two copies of the featured set; translating it by -50% advances it
-  by exactly one copy width, so the loop is seamless regardless of viewport.
-  Mirrors Partners.vue's marquee mechanism.
+  Reveal-on-scroll. The cards render VISIBLE by default and `is-hidden` is added
+  by script only when the animation can actually run — so if JS never executes,
+  the grid is still there instead of being permanently transparent.
 */
-@keyframes cities-marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+.city-reveal {
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease,
+    box-shadow 0.3s ease;
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
 }
 
-.marquee-track {
-  animation: cities-marquee 40s linear infinite;
-  will-change: transform;
-}
-
-.marquee:hover .marquee-track {
-  animation-play-state: paused;
+.city-reveal.is-hidden {
+  opacity: 0;
+  transform: translateY(26px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
-    justify-content: center;
+  .city-reveal,
+  .city-reveal.is-hidden {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 </style>

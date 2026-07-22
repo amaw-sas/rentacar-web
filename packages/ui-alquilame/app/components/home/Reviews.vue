@@ -2,12 +2,17 @@
   <!--
     Reviews — parity with the golden #google-reviews section.
 
-    GOOGLE BLOCK (rating + count): the "5,0", "43 reseñas verificadas en Google",
-    the 5-star row, the multicolor Google logo and the "Ver reseñas en Google"
-    CTA are REAL data confirmed by the directive — alquilame's actual Google
-    Business profile (cid=11824841242913553901). Reproduced as fixed golden values.
-    MANUAL upkeep: reviewed 2026-06 — re-verify rating/count at the cid above and
-    keep "5,0"/"43" in sync with the default.vue footer badge.
+    GOOGLE BLOCK: the "5,0" rating, the 5-star row, the multicolor Google logo
+    and the "Ver reseñas en Google" CTA are REAL data — alquilame's actual Google
+    Business profile (cid=11824841242913553901). Reproduced as fixed values.
+    MANUAL upkeep: reviewed 2026-06 — re-verify the rating at the cid above and
+    keep "5,0" in sync with the default.vue footer badge.
+
+    The heading carries NO review count. A hardcoded total only ever goes stale
+    (the count grows, the literal does not), and a visibly outdated number reads
+    as neglect on the one block whose job is to look trustworthy. The rating and
+    the "verificadas con autor y fecha" line carry the credibility instead. The
+    footer badge still shows a count — see default.vue.
 
     CARDS: render the REAL testimonials — franchiseTestimonials[brandCode] from
     useFetchRentacarData() (same Supabase source as the legacy #testimonios),
@@ -93,7 +98,7 @@
           <h2
             class="mt-4 text-3xl md:text-4xl font-extrabold font-heading text-gray-900 leading-tight"
           >
-            43 reseñas verificadas en Google
+            Reseñas verificadas en Google
           </h2>
           <p class="mt-2 text-base text-gray-500">Verificadas con autor y fecha</p>
         </div>

@@ -46,9 +46,13 @@ describe('Reviews.vue — golden #google-reviews parity', () => {
     expect(reviews).toMatch(/testimonio\.user/)
   })
 
-  it('renders the REAL Google rating block (5,0 · 43 reseñas verificadas en Google)', () => {
+  it('headlines the Google block WITHOUT a review count', () => {
+    // The count left the heading: it only ever grows, so a hardcoded literal
+    // goes stale and reads as neglect. The 5,0 rating and the verification line
+    // carry the credibility on their own.
+    expect(reviews).toMatch(/>\s*Reseñas verificadas en Google\s*</)
+    expect(reviews).not.toMatch(/\d+\s+reseñas verificadas en Google/i)
     expect(reviews).toContain('5,0')
-    expect(reviews).toMatch(/43 reseñas verificadas en Google/)
     expect(reviews).toMatch(/Verificadas con autor y fecha/)
   })
 
