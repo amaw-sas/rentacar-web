@@ -188,7 +188,9 @@ La preselección por deep-link (`ReservationWizard.vue:294-318`) construye la in
 
 ## Alcance de superficie
 
-`StepVehicle` y el watcher de reset viven dentro y fuera de las city pages por igual: el shell monta el mismo paso 2 con `externalSearch=true`, y el watcher de `:164-169` es de nivel superior, fuera del bloque gateado por esa prop. Así que arrastre y aviso aplican en `/reservas`, en las páginas de path y en las de ciudad, sin excepciones que declarar.
+El wizard se monta hoy en exactamente dos sitios, y ninguno pasa la prop: `pages/reservas/index.vue:16` y `components/reservas/Results.vue:16`. O sea que `externalSearch` está muerto en `false` — la superficie de ciudad dejó de montarlo (SCEN-322-X06, custodiado por `tests/reservation-wizard-integration.test.ts:58-73`).
+
+Lo que importa no es la ciudad, entonces, sino que esas dos superficies **hidratan por caminos distintos**: `/reservas` por query y `Results.vue` por path, vía `useSearchByRouteParams`. El watcher de reset de `:164-169` está por encima del bloque `if (!props.externalSearch)` de `:232`, así que sirve a las dos. Escribir el aviso en un driver de búsqueda no: cubriría solo la forma de query.
 
 ## Radio de impacto
 
@@ -220,7 +222,7 @@ Sin cambios en `e2e/`. Los escenarios de este spec son observables en jsdom, y e
 | Mount jsdom | El banner se ve en los cuatro estados de `StepVehicle`, incluido "sin resultados" |
 | Mount jsdom | **Una búsqueda que nunca llega a `search()`** (fecha de recogida ya pasada) deja intactas selección y ranura — ancla el sitio de escritura y falla ruidosamente si alguien la mueve a un driver |
 
-Los mount tests siguen el precedente de `wizard-summary-price.test.ts`, que obtuvo evidencia de DOM en jsdom sin levantar navegador.
+El precedente es `app/components/wizard/__tests__/WizardSummary.mount.test.ts`, **no** `tests/wizard-summary-price.test.ts`. La distinción es load-bearing: `vitest.config.ts:12` fija `environment: 'node'` para toda la marca, y el segundo archivo es un test de regex sobre fuente que lo dice en su propia cabecera ("sin entorno DOM en esta marca") y delega la evidencia viva a runtime. Solo el primero monta de verdad, con un docblock `// @vitest-environment jsdom` en la línea 1, `vi.mock('pinia')` reduciendo `storeToRefs` a identidad y los stores por `vi.stubGlobal`. Los tests nuevos van en ese mismo directorio y con ese mismo docblock; sin él corren en `node` y no hay DOM que assertar.
 
 Todos montan la forma de query. El arrastre no depende de la forma de la URL —`onSelect` no lee el route—, pero eso deja la superficie de path sin pasada en runtime: que B3, que sí vive en esa gramática, o D la recojan.
 
