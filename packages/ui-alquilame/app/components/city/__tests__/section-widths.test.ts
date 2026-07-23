@@ -103,3 +103,37 @@ describe('city delivery points — branches in two columns', () => {
     expect(container).not.toMatch(/flex flex-col gap-4/)
   })
 })
+
+/**
+ * Card size rhythm across the SEO card sections.
+ *
+ * Every section already sits at 1280px, but the CARDS inside ranged from 308px
+ * (ciudades-cercanas, 4-up) to 1280px (consejos, stacked) — a 4× spread that
+ * made some blocks feel much wider than others despite equal containers.
+ * Ventajas and Destinos ran 2-up (628px cards); consejos was a stacked column.
+ * All three move to a 3-up grid (~411px), matching Nuestra Flota, so cards land
+ * in one size band instead of three.
+ */
+describe('city SEO cards — three per row, so card sizes stop jumping', () => {
+  const cols = (id: string): string => {
+    const at = SEO.indexOf(`id="${id}"`)
+    const seg = SEO.slice(at, at + 900)
+    const m = seg.match(/(?:lg:)?grid-cols-(\d)/g) ?? []
+    return m.join(' ')
+  }
+
+  it('ventajas is a three-column grid', () => {
+    expect(cols('ventajas')).toMatch(/grid-cols-3/)
+  })
+
+  it('destinos is a three-column grid', () => {
+    expect(cols('destinos')).toMatch(/grid-cols-3/)
+  })
+
+  it('consejos-conduccion is a three-column grid, not a stacked column', () => {
+    const at = SEO.indexOf('id="consejos-conduccion"')
+    const seg = SEO.slice(at, at + 900)
+    expect(seg).toMatch(/grid-cols-3/)
+    expect(seg).not.toMatch(/<div class="space-y-5">\s*<div\s+v-for="tip/)
+  })
+})

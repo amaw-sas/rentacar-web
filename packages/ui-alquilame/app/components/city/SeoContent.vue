@@ -29,7 +29,7 @@
             <span class="text-gray-900"> en {{ city?.name }}</span>
           </h2>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div
             v-for="benefit in benefits"
             :key="benefit.title"
@@ -59,10 +59,9 @@
       id="introduccion"
       class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8"
     >
-      <!-- max-w-5xl, not the narrower prose width: this block used to sit at
-           768px between a 1024px section above and a 1152px one below, which
-           read as sunken. Matching Ventajas costs a longer line (~118 chars vs
-           89) and that trade was made deliberately. -->
+      <!-- Prose width (max-w-3xl): this is running text, not cards. Under the
+           two-width rule it stays capped for readability while the card
+           sections around it run full width. -->
       <div class="max-w-3xl mx-auto">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
         <h2 class="heading-section text-gray-900 mb-5">
@@ -89,7 +88,7 @@
             <span class="text-gray-900"> desde {{ city?.name }}</span>
           </h2>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div
             v-for="destination in expandedContent.destinations"
             :key="destination.name"
@@ -121,7 +120,9 @@
             <span class="text-gray-900"> para alquilar carro en {{ city?.name }}</span>
           </h2>
         </div>
-        <div class="space-y-5">
+        <!-- Three per row, matching Ventajas/Destinos: stacked, each tip card
+             spanned the full width and dwarfed every other card block. -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <div
             v-for="tip in drivingTips"
             :key="tip.title"
