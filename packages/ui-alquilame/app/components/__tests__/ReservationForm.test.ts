@@ -20,3 +20,12 @@ describe('ReservationForm — label contrast on white form background', () => {
     expect(uFormOpenTag![0]).toMatch(/class="[^"]*\blight\b[^"]*"/)
   })
 })
+
+describe('ReservationForm — Tus datos heading', () => {
+  it('uses Plus Jakarta while allowing the explicit red utility to win', () => {
+    expect(source).toMatch(
+      /<h3 class="font-heading text-red-700">Tus datos<\/h3>/,
+    )
+    expect(source).not.toMatch(/<h3[^>]*\bheading-card\b[^>]*>Tus datos<\/h3>/)
+  })
+})

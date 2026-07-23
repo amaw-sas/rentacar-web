@@ -12,8 +12,8 @@
     .reservation-data {
         @apply flex flex-col text-sm text-black;
 
-        /* Brand: Gama title uses .heading-card (Plus Jakarta) + red from the
-           template; keep tight bottom margin here. */
+        /* Brand: the template owns Plus Jakarta + red; this rule is the single
+           source for the Gama title's 14px/700 visual and bottom margin. */
         .category-name {
             @apply mb-0 text-sm font-bold;
         }

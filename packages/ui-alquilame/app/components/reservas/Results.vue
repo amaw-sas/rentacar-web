@@ -23,7 +23,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
         <div class="grid lg:grid-cols-2 gap-10 items-center">
           <div class="text-center lg:text-left">
-            <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
+            <h1 class="font-heading font-extrabold tracking-tight text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
               Reserva tu carro
             </h1>
             <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">

@@ -1,7 +1,7 @@
 <template>
   <div v-if="isServerError && !pendingSearch" class="text-center [--ctx-text-primary:#fff]">
     <div class="text-white text-center">
-      <div class="heading-section text-3xl">Servicio temporalmente no disponible</div>
+      <div class="font-heading text-3xl">Servicio temporalmente no disponible</div>
       <p class="text-lg mt-2">
         Estamos experimentando problemas técnicos. Por favor, intenta de nuevo en unos minutos.
       </p>
@@ -21,7 +21,7 @@
   </div>
   <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center [--ctx-text-primary:#fff]">
     <div class="text-white text-center">
-      <div class="heading-section text-3xl">¡Oops!</div>
+      <div class="font-heading text-3xl">¡Oops!</div>
       <div class="text-lg">
         Nos quedamos sin carritos en {{pickupCityName}} para el {{ humanFormattedPickupDate }}.
       </div>
@@ -40,7 +40,7 @@
       data-testid="pricing-horizon-unavailable-test"
     >
       <div class="text-white text-center rounded-2xl bg-black/30 px-6 py-6 max-w-2xl mx-auto">
-        <div class="heading-section text-xl md:text-2xl font-extrabold">
+        <div class="font-heading text-xl md:text-2xl font-extrabold">
           Las tarifas para tu fecha aún no están disponibles
         </div>
         <p class="text-base mt-2">Escríbenos y te cotizamos.</p>
@@ -59,7 +59,7 @@
     </div>
     <div v-if="hasRenderableAvailable" class="text-white text-center [--ctx-text-primary:#fff] mb-6">
       <span class="inline-block h-1 w-10 rounded-full bg-white/80 mb-3" aria-hidden="true"></span>
-      <div class="heading-section text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!</div>
+      <div class="font-heading text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!</div>
       <div class="text-sm md:text-base mt-1">
         <span>En <span class="text-yellow-400 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
@@ -104,7 +104,7 @@
       :ui="{
         content: 'bg-white',
         header: 'bg-white border-b-2 border-red-600/15',
-        title: 'heading-card font-heading text-gray-900 text-2xl font-extrabold',
+        title: 'font-heading text-gray-900 text-2xl font-extrabold',
         description: 'text-gray-600',
         body: 'bg-white text-gray-900',
         footer: 'bg-white gap-2 border-t-0',

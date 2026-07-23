@@ -12,7 +12,7 @@
         <div class="reservation-data">
           <!-- Red accent bar (alquilame brand signature, mirrors city/Intro) -->
           <div class="h-1 w-10 rounded-full bg-red-600 mb-2"></div>
-          <div class="category-name heading-card text-red-700" v-text="`Gama ${categoryCode}`"></div>
+          <div class="category-name font-heading text-red-700" v-text="`Gama ${categoryCode}`"></div>
           <div class="category-description" v-text="categoryDescription"></div>
           <div v-if="isPicoyPlacaExempt()" class="category-picoyplaca" >
             <span class="inline-block px-2 py-0.5 text-xs bg-[#a3f78b] text-green-900 rounded-full">sin pico y placa</span>

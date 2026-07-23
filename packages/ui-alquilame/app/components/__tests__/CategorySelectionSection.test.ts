@@ -38,3 +38,31 @@ describe('CategorySelectionSection — Solicitar reserva button loading state', 
     expect(submitButtonBlock).not.toMatch(/animate-spin/)
   })
 })
+
+describe('CategorySelectionSection — explicit heading utilities', () => {
+  it('keeps both service-error headings at their written text-3xl size', () => {
+    expect(source).toMatch(
+      /class="font-heading text-3xl">Servicio temporalmente no disponible<\/div>/,
+    )
+    expect(source).toMatch(/class="font-heading text-3xl">¡Oops!<\/div>/)
+  })
+
+  it('keeps the pricing and availability headings on their explicit responsive ramps', () => {
+    expect(source).toMatch(
+      /class="font-heading text-xl md:text-2xl font-extrabold">\s*Las tarifas para tu fecha aún no están disponibles/,
+    )
+    expect(source).toMatch(
+      /class="font-heading text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!<\/div>/,
+    )
+  })
+
+  it('keeps the slideover title in Plus Jakarta at the explicit 2xl/extrabold treatment', () => {
+    expect(source).toContain(
+      "title: 'font-heading text-gray-900 text-2xl font-extrabold'",
+    )
+  })
+
+  it('does not reintroduce unlayered heading tokens on these titles', () => {
+    expect(source).not.toMatch(/\bheading-(section|card)\b/)
+  })
+})

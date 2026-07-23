@@ -7,8 +7,7 @@
  *     prominent.
  *   - Gradient guard (F0/F1 lesson): the hero MUST use the v4 bg-linear-to-*
  *     utility from the hero-from/hero-to @theme tokens with
- *     [--ctx-text-primary:#fff] (so .heading-* renders white on red), NEVER the
- *     broken v3 bg-gradient-to-* alias.
+ *     [--ctx-text-primary:#fff], NEVER the broken v3 bg-gradient-to-* alias.
  *   - #109 CLS guard: the Searcher is wrapped in <ClientOnly> with a fixed-height
  *     <PlaceholdersSearcher> fallback, and no Date/today() is baked into the
  *     SSR/ISR markup.
@@ -55,8 +54,11 @@ describe('F3 — /reservas page hero + gradient', () => {
     expect(page).toMatch(/\[--ctx-text-primary:#fff\]/)
   })
 
-  it('adopts the .heading-hero utility (Plus Jakarta) for the headline h1', () => {
-    expect(page).toMatch(/<h1[^>]*heading-hero/)
+  it('keeps the headline token-free with Plus Jakarta and explicit hero typography', () => {
+    expect(page).toMatch(
+      /<h1 class="font-heading font-extrabold tracking-tight text-3xl sm:text-4xl lg:text-5xl text-white leading-\[1\.1\]">/,
+    )
+    expect(page).not.toMatch(/<h1[^>]*\bheading-hero\b/)
   })
 
   it('renders the quote-and-book headline', () => {

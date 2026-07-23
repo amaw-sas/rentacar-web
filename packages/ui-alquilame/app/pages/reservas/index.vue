@@ -10,8 +10,8 @@
     existing results route + its programmatic SEO stay intact.
 
     Layout reuses the approved F1/F2 visual language:
-      - Red hero (bg-linear-to-br from-hero-from to-hero-to), .heading-hero
-        headline, [--ctx-text-primary:#fff] so .heading-* renders white on red.
+      - Red hero (bg-linear-to-br from-hero-from to-hero-to), explicit
+        Plus Jakarta/extrabold/tracking headline utilities, and white text.
       - The Searcher engine mirrors city/Hero.vue's results mode EXACTLY: wrapped
         in <ClientOnly> with a fixed-height <PlaceholdersSearcher> fallback
         (h-[410px] desktop / h-[360px] mobile) so hydration causes no layout
@@ -43,7 +43,7 @@
         <div class="grid lg:grid-cols-2 gap-10 items-center">
           <!-- Text column -->
           <div class="text-center lg:text-left">
-            <h1 class="heading-hero text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
+            <h1 class="font-heading font-extrabold tracking-tight text-3xl sm:text-4xl lg:text-5xl text-white leading-[1.1]">
               Cotiza y Reserva
             </h1>
 

@@ -25,7 +25,7 @@
            no [--ctx-text-primary:#fff] override (that is for dark/red surfaces). -->
       <div class="mb-4">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-2"></div>
-        <h3 class="heading-card text-red-700">Tus datos</h3>
+        <h3 class="font-heading text-red-700">Tus datos</h3>
       </div>
       <div class="grid grid-cols-2 gap-2">
         <u-form-field name="nombreCompleto" label="Nombres">
