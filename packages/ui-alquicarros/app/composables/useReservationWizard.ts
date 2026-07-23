@@ -97,8 +97,6 @@ export interface WizardAdvanceState {
   searchExecuted?: boolean
   /** Hay una gama/vehículo seleccionado. */
   hasSelectedCategory?: boolean
-  /** El formulario de datos es válido. */
-  formValid?: boolean
 }
 
 /**
@@ -107,7 +105,18 @@ export interface WizardAdvanceState {
  *   - vehiculo: requiere una gama seleccionada.
  *   - seguro: siempre (Básico preseleccionado).
  *   - adicionales: siempre (paso opcional).
- *   - datos: requiere formulario válido.
+ *   - datos: siempre (issue #366 — ver abajo).
+ *
+ * Issue #366: `datos` gateaba por `formValid`, que era SOLO la casilla de consentimiento.
+ * El resto del schema (nombres, correo, teléfono…) nunca apagó el CTA: se pulsa, valibot
+ * marca los campos y no emite @submit, así que no sale ningún POST. Gatear el
+ * consentimiento aparte no añadía protección —valibot también lo valida— y sí producía un
+ * botón mudo al final de un formulario largo. Con esto la validez del formulario tiene una
+ * sola fuente de verdad: el schema.
+ *
+ * `datos` es terminal, así que este valor no gobierna ninguna transición de la máquina —
+ * solo el `:disabled` del sidebar, que conserva sus otros dos gates (envío en vuelo y lock
+ * por estado desconocido).
  */
 export function canAdvance(step: WizardStep, state: WizardAdvanceState): boolean {
   switch (step) {
@@ -120,7 +129,7 @@ export function canAdvance(step: WizardStep, state: WizardAdvanceState): boolean
     case 'adicionales':
       return true
     case 'datos':
-      return Boolean(state.formValid)
+      return true
   }
 }
 

@@ -184,8 +184,17 @@ describe('canAdvance — per-step gating', () => {
     expect(canAdvance('adicionales', {})).toBe(true)
   })
 
-  it('datos is gated by form validity', () => {
-    expect(canAdvance('datos', {})).toBe(false)
-    expect(canAdvance('datos', { formValid: true })).toBe(true)
+  // Issue #366: `datos` ya NO gatea. El consentimiento era el único campo que apagaba
+  // el CTA, y valibot ya bloquea el submit sin él (no emite @submit → cero POST), igual
+  // que en la marca hermana. Gatearlo aquí además producía un botón mudo: el usuario no
+  // podía pulsar y nada explicaba por qué. La validez del formulario tiene UNA fuente de
+  // verdad —el schema— y el paso es terminal, así que este valor solo gobierna el
+  // `:disabled` del sidebar.
+  it('datos never gates: valibot owns form validity (issue #366)', () => {
+    expect(canAdvance('datos', {})).toBe(true)
+    // Ni siquiera un estado que diga lo contrario lo apaga: el campo ya no existe y un
+    // extra desconocido no debe reintroducir el gate por la puerta de atrás.
+    expect(canAdvance('datos', { searchExecuted: false })).toBe(true)
+    expect(canAdvance('datos', { hasSelectedCategory: false })).toBe(true)
   })
 })

@@ -103,7 +103,6 @@ const {
   noAvailableCategories,
 } = storeToRefs(search)
 const {
-  politicaPrivacidad,
   isSubmittingForm,
   formSubmitLocked,
   vehiculo,
@@ -359,7 +358,9 @@ const advanceState = computed(() => ({
   // por flag, no por precio. Cubre el deep-link a /categoria/X con fecha 2027.
   hasSelectedCategory:
     !!selectedCategory.value && !selectedCategory.value.isMonthlyPriceUnavailable,
-  formValid: Boolean(politicaPrivacidad.value),
+  // Issue #366: el Paso 5 ya no aporta estado aquí. El consentimiento lo valida el schema
+  // de valibot en el submit (sin él no se emite @submit → cero POST), así que gatearlo
+  // también en el CTA solo producía un botón mudo. Ver canAdvance('datos').
 }))
 
 const canAdvanceCurrent = computed(() =>

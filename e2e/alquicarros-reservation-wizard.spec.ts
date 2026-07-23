@@ -216,13 +216,31 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     await phone.blur();
     await expect(phone).toHaveValue(/\+57/, { timeout: 5_000 });
 
-    // #311 (SCEN-311-01/03/04): la casilla de tratamiento de datos llega SIN
-    // marcar (Ley 1581: consentimiento expreso) y mantiene el CTA deshabilitado;
-    // marcarla — como haría el usuario real — lo habilita y permite confirmar.
+    // #311 + #366 (SCEN-311-01/03/04, SCEN-366-01/03): la casilla de tratamiento de
+    // datos llega SIN marcar (Ley 1581: consentimiento expreso). Lo que #366 cambia es
+    // el MECANISMO, no el invariante: el CTA ya no nace deshabilitado —eso era un botón
+    // mudo al final de un formulario largo— sino que se pulsa y valibot bloquea el envío
+    // marcando la casilla. El invariante legal es "sin consentimiento no hay registro",
+    // y así se asserta: cero requests al endpoint de registro. Un atributo `disabled`
+    // podía estar presente y aun así haber un POST por otra vía; cero requests no.
     const consent = page.locator('[data-testid="privacy-consent-checkbox-test"]');
     const confirmCta = page.locator('[data-testid="wizard-continue-desktop-test"]');
     await expect(consent).not.toBeChecked();
-    await expect(confirmCta).toBeDisabled();
+    await expect(confirmCta).toBeEnabled();
+
+    let recordRequests = 0;
+    page.on('request', (req) => {
+      if (req.url().includes('/api/reservations/record')) recordRequests += 1;
+    });
+
+    await confirmCta.click();
+    await expect(
+      page.getByText('Debe aceptar las políticas de privacidad'),
+    ).toBeVisible({ timeout: 10_000 });
+    expect(recordRequests).toBe(0);
+    expect(page.url()).not.toContain('/reservado/');
+
+    // Marcarla — como haría el usuario real — permite confirmar.
     await consent.check();
     await expect(confirmCta).toBeEnabled();
 

@@ -181,6 +181,14 @@ describe('Robustez — hallazgos de edge-case (regresión)', () => {
     expect(read(`${C}/WizardSummary.vue`)).toMatch(/formSubmitLocked/)
   })
 
+  it('ctaDisabled conserva !props.canAdvance: gatea los CINCO pasos, no solo el quinto (issue #366)', () => {
+    // #366 sacó el consentimiento del gate cambiando canAdvance('datos') → true, NO
+    // quitando `!props.canAdvance` de aquí. Quitarlo volvería pulsable el CTA del Paso 2
+    // y rompería el fail-closed de #313 (gama más allá del horizonte de tarifas), que
+    // pricing-horizon-alquicarros.spec.ts asserta y que el CI de esta marca NO ejecuta.
+    expect(read(`${C}/WizardSummary.vue`)).toMatch(/!props\.canAdvance/)
+  })
+
   it('el "desde $X" usa la familia getTotalPrice (Básico), no estimatedTotalAmount con IVA+tasa', () => {
     const src = stepVehicle()
     // total Básico = totalAmount + coverageTotalAmount + returnFee (misma familia que la card)
