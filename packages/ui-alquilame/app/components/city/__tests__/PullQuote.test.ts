@@ -48,18 +48,33 @@ describe('CityPullQuote.vue', () => {
     expect(SRC).not.toMatch(/py-1[0-9]|py-20/)
   })
 
-  it('puts the quotation mark on the RIGHT of the text', () => {
-    // The glyph sits after the blockquote in source and is pushed right.
+  it('frames the text with an OPENING mark on the left and a CLOSING one on the right', () => {
     const bqAt = SRC.indexOf('<blockquote')
-    const markAt = SRC.search(/aria-hidden="true"/)
-    expect(markAt).toBeGreaterThan(bqAt)
+    const bqEnd = SRC.indexOf('</blockquote>')
+    // Opening glyph before the blockquote, closing glyph after it.
+    const openAt = SRC.indexOf('&ldquo;')
+    const closeAt = SRC.indexOf('&rdquo;')
+    expect(openAt, 'opening quote missing').toBeGreaterThan(-1)
+    expect(closeAt, 'closing quote missing').toBeGreaterThan(-1)
+    expect(openAt).toBeLessThan(bqAt)
+    expect(closeAt).toBeGreaterThan(bqEnd)
+  })
+
+  it('is not boldface — plain weight for the whole strip', () => {
+    // The operator asked for the separators without negrilla.
+    expect(SRC).not.toMatch(/font-bold|font-semibold|font-medium/)
+    expect(SRC).toMatch(/font-normal/)
   })
 })
 
 describe('CityPullQuote.vue — optional lead', () => {
-  it('accepts an optional lead and renders it emphasized before the quote', () => {
+  it('accepts an optional lead and renders it before the quote (colour, not bold)', () => {
     expect(SRC).toMatch(/lead\?:\s*string/)
     expect(SRC).toMatch(/v-if="lead"/)
     expect(SRC).toMatch(/\{\{\s*lead\s*\}\}/)
+    // The lead is distinguished by brand colour, without boldface.
+    const leadSpan = SRC.match(/<span v-if="lead"[^>]*>/)?.[0] ?? ''
+    expect(leadSpan).toMatch(/text-brand-600|text-red-600/)
+    expect(leadSpan).not.toMatch(/font-bold|font-semibold/)
   })
 })
