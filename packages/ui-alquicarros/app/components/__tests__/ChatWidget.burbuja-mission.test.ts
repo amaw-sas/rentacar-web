@@ -97,4 +97,26 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
       )
     }
   })
+
+  // Issue #386 — the FAB pulse must not fix one brand's colour on every brand,
+  // and must not blink forever (WCAG 2.2.2). Asserted across all three copies so
+  // it rides the E10 byte-identical invariant instead of drifting per brand.
+  it('P386 — the FAB attention pulse is brand-tokened and bounded', () => {
+    for (const { brand, source } of brandWidgets) {
+      const keyframe = source.match(/@keyframes pulse-attention \{[\s\S]*?\n\}/)?.[0] ?? ''
+      // Colour resolves from the per-brand primary token, never the hardcoded
+      // alquilame red (rgba(204, 2, 43) === #cc022b).
+      expect(keyframe, brand).toContain('var(--ui-primary')
+      expect(keyframe, brand).not.toMatch(/rgba\(204, 2, 43/)
+      // Bounded to a finite run under 5s (2 × 2.4s = 4.8s), never infinite.
+      expect(source, brand).toMatch(
+        /\.animate-pulse-attention \{ animation: pulse-attention 2\.4s ease-in-out 2 forwards; \}/,
+      )
+      expect(source, brand).not.toMatch(/\.animate-pulse-attention \{ animation:[^}]*infinite/)
+      // Reduced-motion still disables it entirely.
+      expect(source, brand).toMatch(
+        /prefers-reduced-motion: reduce\) \{ \.animate-pulse-attention \{ animation: none; \} \}/,
+      )
+    }
+  })
 })
