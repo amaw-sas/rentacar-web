@@ -26,7 +26,7 @@
       <div class="mb-8">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-4" aria-hidden="true" />
         <h2 class="heading-section text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-          Entrega del vehículo en {{ city?.name }}
+          Sedes en {{ city?.name }}
         </h2>
         <p class="mt-3 text-base md:text-lg text-gray-600 max-w-2xl">
           {{ cityBranches.length }}

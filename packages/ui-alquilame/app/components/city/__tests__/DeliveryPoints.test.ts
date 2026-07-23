@@ -38,6 +38,11 @@ describe('F2 delivery-points — real branches (SCEN-F2-04)', () => {
     expect(SRC).toMatch(/cityBranches:\s*BranchData\[\]/)
     expect(SRC).toMatch(/city\?:\s*City/)
   })
+
+  it('titles the section "Sedes en {city}"', () => {
+    expect(SRC).toContain('Sedes en {{ city?.name }}')
+    expect(SRC).not.toContain('Entrega del vehículo en')
+  })
 })
 
 describe('F2 delivery-points — length guard', () => {

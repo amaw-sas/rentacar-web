@@ -219,7 +219,7 @@
               <li>
                 <a :href="`mailto:${franchise.email}`" class="flex items-center gap-3 text-gray-400 hover:text-white text-sm transition-colors">
                   <Icon name="lucide:mail" class="w-4 h-4 flex-shrink-0" />
-                  {{ franchise.email }}
+                  Correo
                 </a>
               </li>
               <li>
