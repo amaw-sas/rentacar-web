@@ -361,10 +361,10 @@
             <u-button
                 :to="searchDestination"
                 @click="onSearchClick"
-                :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied || !isSelectionWithinSchedule"
+                :disabled="!canSearch"
                 :loading="pendingSearching"
-                :aria-describedby="!isSelectionWithinSchedule ? 'schedule-gate-message' : undefined"
-                :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
+                :aria-describedby="ctaDescribedBy"
+                :class="{'search-button': true, 'search-button-glow': canSearch}"
                 size="xl"
             >
                 BUSCAR VEHÍCULOS
@@ -381,6 +381,26 @@
                 class="mt-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-red-700 shadow-sm"
             >
                 La fecha u hora elegida está fuera del horario de atención de la sucursal. Ajústala para continuar.
+            </p>
+            <!-- SCEN-387-01: when the branch list fails to load (network failure, or
+                 the rentacar-data plugin never populated useState) sortedBranches stays
+                 empty, no pickup can resolve, and BUSCAR disables silently —
+                 ULinkBase.onClickWrapper preventDefaults the click with no toast. Mirror
+                 the schedule-gate pattern: a persistent inline message wired via
+                 aria-describedby (ctaDescribedBy). Gated on `hydrated` so it never paints
+                 on the first client frame (setup runs with empty refs), and on
+                 `sortedBranches.length === 0` so the "recarga la página" copy only shows
+                 for the load-failure state it actually fixes — not a mid-render transient
+                 nor an unresolved-slug case where a reload would not help. The
+                 isSelectionWithinSchedule term keeps it mutually exclusive with the
+                 schedule message. -->
+            <p
+                v-if="hydrated && sortedBranches.length === 0 && isSelectionWithinSchedule"
+                id="params-gate-message"
+                data-testid="params-gate-message-test"
+                class="mt-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-red-700 shadow-sm"
+            >
+                No pudimos cargar las sucursales disponibles. Recarga la página para volver a buscar.
             </p>
         </div>
     </u-form>
@@ -442,6 +462,14 @@ const returnHourOptions = ref<any[]>([]);
 const searchLinkParams = ref<any>({});
 const animateSearchButton = ref<boolean>(true);
 
+// Issue #387: gates the params-gate message so it can only appear AFTER the client
+// has mounted and the stores have synced. The real Searcher is client-only
+// (<ClientOnly> in StepSearch), so setup() runs with empty local refs (sortedBranches
+// = [], searchLinkParams = {}) on the first client render; without this flag the red
+// "no pudimos cargar las sucursales" would paint for a frame on every healthy load —
+// the same trap the schedule gate dodges with its permissive `true` default.
+const hydrated = ref<boolean>(false);
+
 // Schedule restriction (#47 W4/W5): per-branch calendar predicates and the
 // submit gate, mirrored from useSearch. Defaults are permissive so the form is
 // never blocked before the composable initializes.
@@ -497,6 +525,36 @@ const onSearchClick = (e: MouseEvent) => {
 const searchDisabledGuardSatisfied = computed(() => {
   const params = searchLinkParams.value ?? {};
   return Boolean(params.lugar_recogida && params.fecha_recogida && params.fecha_devolucion);
+});
+
+// Issue #387: the glow must track REAL enable-ability, not just animateSearchButton.
+// canSearch is the exact negation of the button's disabled condition, so both the
+// disabled state AND the glow derive from one source of truth. Before this, glow
+// followed animateSearchButton alone: a button disabled by the params guard or the
+// schedule gate still glowed, and #363's `forwards` froze that false halo permanently.
+// Binding the glow class to canSearch also re-fires the bounded 3-cycle pulse the
+// moment the CTA becomes usable: while disabled the class is absent, and re-adding it
+// on the false→true transition restarts the animation — the mechanism #363 relies on
+// (SCEN-363-05). No :key/remount is needed, so the #129 same-URL retry (which flips
+// pendingSearching) never tears down and refocuses the just-clicked button.
+const canSearch = computed(() =>
+  !pendingSearching.value
+  && animateSearchButton.value
+  && searchDisabledGuardSatisfied.value
+  && isSelectionWithinSchedule.value);
+
+// Issue #387: the button now has TWO disabled-with-a-reason states — schedule gate and
+// params gate — so aria-describedby is a computed that points at whichever is active.
+// Schedule wins if both somehow fire (in practice they are mutually exclusive: an empty
+// branch list keeps isSelectionWithinSchedule at its permissive default of true). The
+// params branch keys off `sortedBranches empty after hydration`, the honest signal for
+// "branch data did not load" — the only state the copy ("recarga la página") fixes, and
+// narrower than the raw guard (which also fails for an unselected/unknown pickup slug,
+// where a reload would not help).
+const ctaDescribedBy = computed(() => {
+  if (!isSelectionWithinSchedule.value) return 'schedule-gate-message';
+  if (hydrated.value && sortedBranches.value.length === 0) return 'params-gate-message';
+  return undefined;
 });
 
 // Desktop popover y móvil slideover usan refs SEPARADOS: comparten estado haría
@@ -624,6 +682,11 @@ onMounted(() => {
   watch(() => searchComposable.isPickupDateUnavailable.value, (val) => isPickupDateUnavailable.value = val, { immediate: true });
   watch(() => searchComposable.isReturnDateUnavailable.value, (val) => isReturnDateUnavailable.value = val, { immediate: true });
   watch(() => searchComposable.isSelectionWithinSchedule.value, (val) => isSelectionWithinSchedule.value = val, { immediate: true });
+
+  // Issue #387: flip hydrated LAST — after every immediate watcher above has synced
+  // sortedBranches from the store — so on a healthy load the params-gate message never
+  // even renders once (sortedBranches is already populated when the gate goes live).
+  hydrated.value = true;
 });
 
 onBeforeUnmount(() => {
