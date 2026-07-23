@@ -50,10 +50,10 @@ export default defineAppConfig({
     whatsapp: "https://wa.me/573002436677",
     email: "alquilame@gmail.com",
     socialmedia: [
-      "https://www.facebook.com/alquilamecom",
-      "https://www.instagram.com/alquilame.com",
+      "https://www.facebook.com/alquilameco",
+      "https://www.instagram.com/alquilamecol",
       "https://twitter.com/alquilame",
-      "https://www.youtube.com/@alquilame",
+      "https://www.youtube.com/@alquilameco",
       "https://www.tiktok.com/@alquilame",
       "https://co.pinterest.com/alquilame/",
     ],
@@ -74,10 +74,8 @@ export default defineAppConfig({
         link: "/gana",
         label: "Gana comisiones",
       },
-      // Present in the reference footer, missing here. No destination exists yet,
-      // so it points at "#" — replace with the real route once it ships.
       {
-        link: "#",
+        link: "/registra-tu-flota",
         label: "Registra tu Flota",
       },
       {

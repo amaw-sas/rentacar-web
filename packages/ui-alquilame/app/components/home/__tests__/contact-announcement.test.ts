@@ -145,7 +145,9 @@ describe('F1 step07a — ChatWidget.vue (FAB restyle in place)', () => {
 
   it('drives both contacts from config (franchise.whatsapp full URL + franchise.phone)', () => {
     expect(fab).toMatch(/:href="franchise\.whatsapp"/)
-    expect(fab).toMatch(/:href="`tel:\$\{franchise\.phone\}`"/)
+    // El tel: se deriva de franchise.phone pero limpiando espacios (paridad con
+    // el footer) → tel:+573002436677 marcable, no "+57 300 243 6677".
+    expect(fab).toMatch(/:href="`tel:\$\{franchise\.phone\.replace\(\/\\s\/g, ''\)\}`"/)
     expect(fab).toMatch(/useAppConfig\(\)/)
   })
 

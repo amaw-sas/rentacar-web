@@ -122,7 +122,7 @@
           </li>
           <li class="flex">
             <a
-              :href="`tel:${franchise.phone}`"
+              :href="`tel:${franchise.phone.replace(/\s/g, '')}`"
               class="fab-item"
               :aria-label="`Llamar al ${franchise.phone}`"
               @click="teaser.engage('llamada')"

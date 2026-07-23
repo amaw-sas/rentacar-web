@@ -184,7 +184,7 @@
             </h3>
             <ul class="space-y-2">
               <li>
-                <NuxtLink to="/#hero" class="text-gray-400 hover:text-white text-sm transition-colors">Inicio</NuxtLink>
+                <NuxtLink :to="heroTo" class="text-gray-400 hover:text-white text-sm transition-colors">Inicio</NuxtLink>
               </li>
               <li>
                 <NuxtLink :to="fleetTo" class="text-gray-400 hover:text-white text-sm transition-colors">Flota</NuxtLink>
@@ -324,7 +324,7 @@ const linkClass = (active: boolean) =>
 const items = computed<NavigationMenuItem[]>(() => {
   const heroActive = route.path === '/' && (route.hash === '#hero' || route.hash === '');
   const fleetActive = route.hash === '#fleet';
-  const citiesActive = route.hash === '#cities';
+  const citiesActive = route.hash === '#cities' || route.hash === '#ciudades-cercanas';
   const requisitosActive = route.hash === '#requisitos';
   const faqsActive = route.hash === '#faqs';
   const contactActive = route.hash === '#contact';

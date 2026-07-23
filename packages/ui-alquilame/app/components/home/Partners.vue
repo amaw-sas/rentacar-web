@@ -38,14 +38,22 @@
 
       <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-6 md:gap-x-16">
         <div v-for="ally in allies" :key="ally.name">
-          <img
-            :src="ally.logo"
-            :alt="ally.name"
-            height="36"
-            loading="lazy"
-            decoding="async"
-            class="h-7 w-auto opacity-80 brightness-0 invert transition-opacity duration-300 hover:opacity-100 md:h-9"
+          <a
+            :href="ally.href"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="ally.name"
+            class="block"
           >
+            <img
+              :src="ally.logo"
+              :alt="ally.name"
+              height="36"
+              loading="lazy"
+              decoding="async"
+              class="h-7 w-auto opacity-80 brightness-0 invert transition-opacity duration-300 hover:opacity-100 md:h-9"
+            >
+          </a>
         </div>
       </div>
     </div>
@@ -56,14 +64,19 @@
 interface Ally {
   name: string
   logo: string
+  /**
+   * Destino de negocio al hacer clic. NO tiene por qué coincidir con el logo:
+   * Localiza y Avis dirigen a las marcas hermanas por decisión comercial.
+   */
+  href: string
 }
 
 // Ally logos vendored from the reference design. Display order is the
 // operator's, not the reference's.
 const allies: ReadonlyArray<Ally> = [
-  { name: 'Localiza', logo: '/images/partners/localiza.svg' },
-  { name: 'Alquilatucarro', logo: '/images/partners/alquilatucarro.svg' },
-  { name: 'Avis', logo: '/images/partners/avis.svg' },
-  { name: 'Alquicarros', logo: '/images/partners/alquicarros.svg' },
+  { name: 'Localiza', logo: '/images/partners/localiza.svg', href: 'https://alquilatucarro.com' },
+  { name: 'Alquilatucarro', logo: '/images/partners/alquilatucarro.svg', href: 'https://alquilatucarro.com' },
+  { name: 'Avis', logo: '/images/partners/avis.svg', href: 'https://alquicarros.com' },
+  { name: 'Alquicarros', logo: '/images/partners/alquicarros.svg', href: 'https://alquicarros.com' },
 ]
 </script>

@@ -51,11 +51,13 @@ describe('Requirements.vue — golden parity', () => {
     expect(requirements).not.toMatch(/LazyImagesPersona/)
   })
 
-  it('wires the "Reserva Ahora" CTA to the brand reservation website (not hardcoded)', () => {
-    expect(requirements).toMatch(/useAppConfig\(\)/)
-    expect(requirements).toMatch(/reservation\.website/)
+  it('routes the "Reserva Ahora" CTA internally to /reservas (client-side, not an external jump)', () => {
+    // Contract updated: el CTA ahora navega interno a /reservas como el resto de
+    // CTAs de reserva, en vez de un salto full-page al home externo del brand.
+    expect(requirements).toMatch(/to="\/reservas"/)
     expect(requirements).toMatch(/Reserva Ahora/)
-    // The golden's literal external URL must not be hardcoded.
+    // Ya no salta al sitio externo del brand ni hardcodea la URL del golden.
+    expect(requirements).not.toMatch(/reservation\.website/)
     expect(requirements).not.toContain('reservatuauto.com')
   })
 

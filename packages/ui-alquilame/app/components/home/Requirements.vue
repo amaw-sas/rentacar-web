@@ -5,8 +5,9 @@
     banner with a bottom blur-to-white, and the copy column on the left.
 
     The requirement list is static marketing copy (no API source); it mirrors the
-    golden verbatim. The "Reserva Ahora" CTA is wired to the brand reservation
-    website (NOT hardcoded), so it stays brand-correct across the shared codebase.
+    golden verbatim. The "Reserva Ahora" CTA navigates internally to /reservas
+    (client-side, same as the other reserve CTAs) instead of a full-page jump to
+    the external brand home.
 
     Background asset lives in public/images/requirements/. Gradients use the v4
     bg-linear-to-* utility (F0 lesson: the deprecated v3 alias renders
@@ -85,14 +86,12 @@
         </ul>
 
         <div class="mt-9">
-          <a
-            :href="reservation.website"
-            target="_blank"
-            rel="noopener noreferrer"
+          <NuxtLink
+            to="/reservas"
             class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-red-600 text-white font-semibold shadow-lg shadow-black/25 hover:bg-red-700 hover:-translate-y-0.5 transition-all duration-200"
           >
             Reserva Ahora
-          </a>
+          </NuxtLink>
         </div>
       </div>
     </div>
@@ -100,7 +99,6 @@
 </template>
 
 <script setup lang="ts">
-const { reservation } = useAppConfig()
 
 // Golden requirements list (static marketing copy — no API source).
 const requirements: string[] = [
