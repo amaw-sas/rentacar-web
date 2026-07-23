@@ -55,3 +55,11 @@ describe('CityPullQuote.vue', () => {
     expect(markAt).toBeGreaterThan(bqAt)
   })
 })
+
+describe('CityPullQuote.vue — optional lead', () => {
+  it('accepts an optional lead and renders it emphasized before the quote', () => {
+    expect(SRC).toMatch(/lead\?:\s*string/)
+    expect(SRC).toMatch(/v-if="lead"/)
+    expect(SRC).toMatch(/\{\{\s*lead\s*\}\}/)
+  })
+})

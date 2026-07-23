@@ -11,7 +11,7 @@
       <blockquote
         class="font-heading text-gray-700 font-medium text-base md:text-lg leading-snug text-center text-balance"
       >
-        {{ quote }}
+        <strong v-if="lead" class="text-brand-600 font-semibold">{{ lead }}</strong>{{ lead ? ' ' : '' }}{{ quote }}
       </blockquote>
       <span
         aria-hidden="true"
@@ -25,5 +25,7 @@
 defineProps<{
   /** One sentence of the city description (see cityPullQuotes util). */
   quote: string
+  /** Optional emphasized lead-in (the city name), rendered before the quote. */
+  lead?: string
 }>()
 </script>

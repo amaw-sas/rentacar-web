@@ -54,8 +54,9 @@
     <!-- Reseñas city (useCityTestimonials, #322 PR10) -->
     <CityTestimonios :city="city" />
 
-    <!-- Separator 3 — the closing line, between Opiniones (Google) and Ventajas. -->
-    <CityPullQuote v-if="pullQuotes[2]" :quote="pullQuotes[2]" />
+    <!-- Separator 3 — the closing line, between Opiniones (Google) and Ventajas.
+         Led by the city name so the closer reads "Bogotá — <closing line>". -->
+    <CityPullQuote v-if="pullQuotes[2]" :quote="pullQuotes[2]" :lead="city?.name" />
 
     <!-- Contenido SEO city (ventajas/destinos/consejos/temporada/ciudades-cercanas) -->
     <CitySeoContent
