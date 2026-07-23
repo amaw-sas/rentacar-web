@@ -23,27 +23,6 @@ input[type="date"]::-webkit-clear-button {
   display: none;
 }
 
-/* ============================================
-   CRITICAL CSS - Previene FOUC en hero section
-   Estos estilos deben coincidir con los de Nuxt UI
-   ============================================ */
-
-/* H1 - Forzar tracking-tight desde el inicio */
-.hero-section h1 {
-    letter-spacing: -0.025em !important; /* tracking-tight */
-}
-
-/* Form fields - Forzar tamaño xl desde el inicio */
-.hero-section [data-slot="label"] {
-    font-size: 0.75rem !important; /* text-xs para size xl */
-    line-height: 1rem !important;
-}
-
-/* UFormField size xl - altura mínima consistente */
-.hero-section .bg-white {
-    min-height: 4.5rem;
-}
-
 /* Header SVGs - prevenir FOUC de banderas/logos enormes */
 header svg {
     max-height: 3.5rem !important; /* h-14 máximo */
@@ -57,9 +36,7 @@ header svg {
 }
 
 /* Override highlighted text color to white - only for header/navigation */
-header .text-highlighted,
-.hero-section h1.text-highlighted,
-.hero-section h2.text-highlighted {
+header .text-highlighted {
     color: white !important;
     --color-highlighted: white !important;
 }
@@ -173,30 +150,6 @@ header [role="dialog"] [data-slot="close"]:hover {
     background-color: #f3f4f6 !important;
 }
 
-/* City Page - Reduce hero section internal container padding */
-.hero-section div[class*="max-w-"][class*="mx-auto"] {
-    padding-top: 2rem !important;
-    padding-bottom: 1rem !important;
-}
-@media (min-width: 1024px) {
-    .hero-section div[class*="max-w-"][class*="mx-auto"] {
-        padding-top: 3rem !important;
-        padding-bottom: 1.5rem !important;
-    }
-}
-
-/* City Page - Reduce description section internal container padding */
-#descripcion div[class*="max-w-"][class*="mx-auto"] {
-    padding-top: 1rem !important;
-    padding-bottom: 2rem !important;
-}
-@media (min-width: 1024px) {
-    #descripcion div[class*="max-w-"][class*="mx-auto"] {
-        padding-top: 1.5rem !important;
-        padding-bottom: 3rem !important;
-    }
-}
-
 /* Animated gradient background - blue to cyan shift */
 .bg-animated-gradient {
     background: linear-gradient(
@@ -271,79 +224,22 @@ header [role="dialog"] [data-slot="close"]:hover {
 }
 
 /* Searcher form - Force dark text on white background fields */
-.hero-section .bg-white {
-    color: #1f2937 !important;
-}
 
-.hero-section .bg-white button,
-.hero-section .bg-white button span,
-.hero-section .bg-white input,
-.hero-section .bg-white span,
-.hero-section .bg-white div {
-    color: #1f2937 !important;
-}
 
 /* Bold text for selected city in select-menu */
-.hero-section .bg-white [data-slot="value"],
-.hero-section .bg-white button > span:first-child,
-.hero-section .bg-white select {
-    font-weight: 600 !important;
-}
 
 /* Align select-menu content to the left */
-.hero-section .bg-white button[data-slot="base"] {
-    justify-content: flex-start !important;
-    text-align: left !important;
-}
 
-.hero-section .bg-white [data-slot="container"],
-.hero-section .bg-white [data-slot="wrapper"] {
-    text-align: left !important;
-}
 
-.hero-section .bg-white button {
-    justify-content: flex-start !important;
-}
 
-.hero-section .bg-white [data-slot="value"] {
-    text-align: left !important;
-    margin-right: auto !important;
-}
 
 /* Compact select-menu and date inputs on desktop */
-@media (min-width: 640px) {
-    .hero-section .bg-white button[data-slot="base"],
-    .hero-section .bg-white [data-slot="base"]:not(button) {
-        padding-top: 0.375rem !important;
-        padding-bottom: 0.375rem !important;
-    }
-}
 
 /* Ensure date input segments are visible and bold */
-.hero-section .bg-white [data-segment],
-.hero-section .bg-white [class*="segment"],
-.hero-section .bg-white input[type="date"] {
-    color: #1f2937 !important;
-    font-weight: 600 !important;
-}
 
 /* Force date input segments to display horizontally */
-.hero-section .bg-white [data-slot="base"] {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-}
 
-.hero-section .bg-white [data-segment] {
-    display: inline-block !important;
-    width: auto !important;
-    min-width: 1.25rem !important;
-    padding: 0 !important;
-}
 
-.hero-section .bg-white [data-segment="year"] {
-    min-width: 2.5rem !important;
-}
 
 /* Fix dropdown/listbox - force white background and dark text for contrast */
 /* Override the highlighted text variable for dropdowns/popovers */
@@ -390,9 +286,7 @@ body [aria-selected="true"] {
 
 /* Exclude header elements from the dark text rule */
 header [data-highlighted] *,
-header [data-highlighted],
-.hero-section h1 [data-highlighted],
-.hero-section h2 [data-highlighted] {
+header [data-highlighted] {
     color: white !important;
 }
 
