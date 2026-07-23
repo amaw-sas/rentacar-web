@@ -94,7 +94,6 @@ describe('CityPage — generic home marketing is gated off on active results (SC
 
   it('does NOT gate the city-specific SEO sections nor HomeContact (always rendered)', () => {
     for (const tag of [
-      'CityIntro',
       'CitySeoContent',
       'CityDeliveryPoints',
       'CityTestimonios',
@@ -201,7 +200,7 @@ describe('CityPage — reading order puts the selling sections first', () => {
   const at = (tag: string) => source.indexOf(`<${tag}`)
 
   it('runs Fleet → Cómo Funciona → Stats → ¿Por qué? before the delivery points', () => {
-    expect(at('HomeFleet')).toBeGreaterThan(at('CityIntro'))
+    expect(at('HomeFleet')).toBeGreaterThan(at('CityHero'))
     expect(at('HomeHowItWorks')).toBeGreaterThan(at('HomeFleet'))
     expect(at('HomeStats')).toBeGreaterThan(at('HomeHowItWorks'))
     expect(at('HomeValueProps')).toBeGreaterThan(at('HomeStats'))

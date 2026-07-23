@@ -25,7 +25,6 @@ const PAD = 'px-4 sm:px-6 lg:px-8'
 
 const FILES = [
   'app/components/home/Fleet.vue',
-  'app/components/city/Intro.vue',
   'app/components/city/DeliveryPoints.vue',
   'app/components/city/SeoContent.vue',
 ]

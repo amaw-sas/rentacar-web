@@ -18,9 +18,6 @@
     <!-- Hero — mode-aware (F3): landing = marketing-only CTA, results = Searcher engine -->
     <CityHero :city="city" :mode="mode" />
 
-    <!-- Intro city (descripcion + introduccion) -->
-    <CityIntro :city="city" :expanded-content="expandedContent" />
-
     <!--
       Marketing F1 genérico (fleet): SCEN-001 — oculto en una página de RESULTADOS
       (mode === 'results'). Gate por `mode` (prop conocido en SSR) y NO por el
@@ -29,6 +26,9 @@
       activa, así que mode === 'results' ⇔ resultados. Landing siempre lo muestra.
     -->
     <HomeFleet v-if="mode !== 'results'" />
+
+    <!-- Separator 1 — the city-identity sentence, between Flota and Cómo Funciona. -->
+    <CityPullQuote v-if="pullQuotes[0]" :quote="pullQuotes[0]" />
 
     <!-- Marketing F1 genérico (how-it-works + requirements): mismo gate SSR-estable -->
     <HomeHowItWorks v-if="mode !== 'results'" />
@@ -43,6 +43,9 @@
     <HomeStats v-if="mode !== 'results'" />
     <HomeValueProps v-if="mode !== 'results'" :city="city" />
 
+    <!-- Separator 2 — the pickup + places sentence, a breather before delivery. -->
+    <CityPullQuote v-if="pullQuotes[1]" :quote="pullQuotes[1]" />
+
     <!-- Puntos de entrega (branches reales) -->
     <CityDeliveryPoints :city-branches="cityBranches" :city="city" />
 
@@ -50,6 +53,9 @@
 
     <!-- Reseñas city (useCityTestimonials, #322 PR10) -->
     <CityTestimonios :city="city" />
+
+    <!-- Separator 3 — the closing line, between Opiniones (Google) and Ventajas. -->
+    <CityPullQuote v-if="pullQuotes[2]" :quote="pullQuotes[2]" />
 
     <!-- Contenido SEO city (ventajas/destinos/consejos/temporada/ciudades-cercanas) -->
     <CitySeoContent
@@ -77,6 +83,7 @@
 <script setup lang="ts">
 /** types */
 import type { City } from '@rentacar-main/logic/utils';
+import { cityPullQuotes } from '@rentacar-main/logic/utils';
 
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 
@@ -108,6 +115,12 @@ const cityBranches = computed(() =>
 // Expanded content (major cities) + related cities — pasados a los componentes city/*.
 const expandedContent = props.city?.name ? useCityExpandedContent(props.city.name) : null;
 const relatedCities = props.city?.id ? useRelatedCities(props.city.id) : [];
+
+// Editorial pull-quote separators, derived from the city's own description
+// (identity / pickup / closing sentences; the sales sentence is dropped). This
+// replaces the removed #descripcion poster — the same indexable text, split
+// into three white breathers between sections. See cityPullQuotes util.
+const pullQuotes = computed(() => cityPullQuotes(props.city?.description));
 
 // SEO schema: Product (#68). AggregateRating eliminado (#312 — datos fabricados).
 if (props.city?.name && props.city?.id) {

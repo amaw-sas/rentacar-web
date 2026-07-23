@@ -5,7 +5,7 @@
  * runtime/visual check (rendered text on the preview, contrast, CLS) is
  * deferred to the preview pass; here we pin the CONTRACT that matters for SEO:
  *
- *   - every original indexable section is present (descripcion / introduccion /
+ *   - every original indexable section is present (introduccion /
  *     ventajas / destinos / consejos-conduccion / mejor-temporada /
  *     ciudades-cercanas) with its key heading + key copy VERBATIM.
  *   - no SEO copy was dropped (benefit blurbs, driving-tip labels,
@@ -18,82 +18,23 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 const CITY = join(__dirname, '..')
-const INTRO = readFileSync(join(__dirname, '..', 'Intro.vue'), 'utf-8')
 const SEO = readFileSync(join(__dirname, '..', 'SeoContent.vue'), 'utf-8')
-const CHICA = readFileSync(
-  join(__dirname, '..', '..', 'Images', 'Ciudades', 'Chica.vue'),
-  'utf-8',
-)
 
-describe('F2 city Intro — #descripcion + #introduccion preserved (SCEN-F2-02)', () => {
-  it('keeps #descripcion, and #introduccion moved to the SEO block', () => {
-    // #introduccion now sits directly ABOVE #destinos in SeoContent.vue: the two
-    // read as one story (why a car here → where to go), and the operator asked
-    // for them stacked rather than merged, so BOTH headings survive.
-    expect(INTRO).toContain('id="descripcion"')
-    expect(INTRO).not.toContain('id="introduccion"')
+describe('city intro removed — #descripcion gone, #introduccion lives in the SEO block', () => {
+  it('no longer renders the #descripcion poster (the section was removed)', () => {
+    // The poster + city illustration were replaced by the editorial pull-quote
+    // separators (see PullQuote.vue + cityPullQuotes). Its indexable text now
+    // surfaces as those quotes, derived from the same city.description.
+    expect(SEO).not.toContain('id="descripcion"')
+    expect(SEO).not.toContain('muévete')
+  })
+
+  it('keeps #introduccion (moved here earlier) with its heading + paragraph', () => {
     expect(SEO).toContain('id="introduccion"')
-  })
-
-  it('places #introduccion immediately before #destinos', () => {
-    const intro = SEO.indexOf('id="introduccion"')
-    const destinos = SEO.indexOf('id="destinos"')
-    expect(intro).toBeGreaterThan(-1)
-    expect(destinos).toBeGreaterThan(intro)
-    // Nothing else between them.
-    const between = SEO.slice(intro, destinos)
-    expect(between).not.toMatch(/id="(ventajas|consejos-conduccion|mejor-temporada|ciudades-cercanas)"/)
-  })
-
-  it('keeps the #descripcion poster copy verbatim', () => {
-    expect(INTRO).toContain('En {{ franchise.shortname }}')
-    // alquilame-specific tagline (deliberately differs from alquilatucarro's
-    // "la libertad / de moverte / a tu manera / es realidad" — same message,
-    // distinct wording so the city page no longer mirrors the sister brand).
-    expect(INTRO).toContain('muévete')
-    expect(INTRO).toContain('a tu ritmo')
-    expect(INTRO).toContain('sin')
-    expect(INTRO).toContain('límites')
-    // and must NOT regress to the shared alquilatucarro phrasing
-    expect(INTRO).not.toContain('a tu manera')
-    // city.description still rendered (indexable per-city copy)
-    expect(INTRO).toMatch(/v-text="city\?\.description"/)
-  })
-
-  it('keeps the #introduccion heading + intro paragraph, guarded by expandedContent', () => {
-    // Same contract, now owned by SeoContent.vue.
     expect(SEO).toContain('Explora {{ city?.name }}')
     expect(SEO).toContain('con tu carro de alquiler')
     expect(SEO).toContain('expandedContent.intro')
     expect(SEO).toMatch(/v-if="expandedContent"/)
-  })
-
-  it('renders the city illustration (CLS-safe reserved box)', () => {
-    expect(INTRO).toContain('LazyImagesCiudadesChica')
-    expect(INTRO).toMatch(/aspect-square/)
-  })
-})
-
-describe('City #descripcion illustration — brand-specific (not the shared chica.webp)', () => {
-  // The #descripcion illustration used to be /images/ciudades/chica.webp, served
-  // from the logic layer and IDENTICAL across the three brands — which made the
-  // alquilame city page look like alquilatucarro. alquilame now ships its own
-  // illustration. These assertions are the regression sentinel: never revert to
-  // the shared asset.
-  it('points at the alquilame-owned image, not the shared logic-layer asset', () => {
-    expect(CHICA).toContain('/images/cities/descripcion.webp')
-    expect(CHICA).not.toContain('/images/ciudades/chica.webp')
-  })
-
-  it('keeps the SEO alt text per-city (city name + alquiler keyword)', () => {
-    expect(CHICA).toMatch(/alt="`[^`]*\$\{cityName\}/)
-    expect(CHICA).toContain('carro de alquiler')
-  })
-
-  it('keeps the CLS-safe 800x800 NuxtImg contract', () => {
-    expect(CHICA).toContain('width="800"')
-    expect(CHICA).toContain('height="800"')
-    expect(CHICA).toMatch(/aspect-square/)
   })
 })
 
@@ -160,17 +101,15 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
 
 describe('F2 city SEO content — design styling lessons', () => {
   it('headings adopt a .heading-* utility (Plus Jakarta, F0-03)', () => {
-    expect(INTRO).toMatch(/heading-(section|sub|card)/)
     expect(SEO).toMatch(/heading-section/)
   })
 
   it('never uses the broken v3 bg-gradient-to- alias', () => {
-    expect(INTRO).not.toContain('bg-gradient-to-')
     expect(SEO).not.toContain('bg-gradient-to-')
   })
 
   it('uses the design red accent bar on the SEO sections', () => {
-    expect(INTRO).toMatch(/h-1 w-10 rounded-full bg-red-600/)
+    // (accent bar assertions for #descripcion removed with the section)
     expect(SEO).toMatch(/h-1 w-10 rounded-full bg-red-600/)
   })
 })

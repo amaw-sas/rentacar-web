@@ -18,6 +18,7 @@ export * from './useValidateFunctions';
 // String Functions
 // ============================================================================
 export { slugify } from './slugify';
+export { cityPullQuotes, splitSentences } from './cityPullQuotes';
 export { renderChatMarkdown } from './renderChatMarkdown';
 export { splitBubbles } from './splitBubbles';
 export { extractChatActions } from './extractChatActions';
