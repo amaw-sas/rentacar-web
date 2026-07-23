@@ -40,13 +40,13 @@ const GRID_SECTIONS: ReadonlyArray<[string, string]> = [
   ['destinos', 'SEO'],
   ['consejos-conduccion', 'SEO'],
   ['ciudades-cercanas', 'SEO'],
+  ['mejor-temporada', 'SEO'],  // now text+image, full width
   ['puntos-entrega', 'DELIVERY'],
 ]
 
 // Sections that are running prose → capped for readability.
 const PROSE_SECTIONS: ReadonlyArray<[string, string]> = [
   ['introduccion', 'SEO'],
-  ['mejor-temporada', 'SEO'],
   ['faqs', 'FAQ'],
 ]
 

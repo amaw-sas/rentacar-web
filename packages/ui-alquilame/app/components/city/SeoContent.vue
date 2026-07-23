@@ -146,14 +146,35 @@
       id="mejor-temporada"
       class="bg-white py-12 md:py-16"
     >
-      <div class="max-w-3xl mx-auto">
-        <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
-        <h2 class="heading-section text-gray-900 mb-5">
-          <span class="text-red-700">Mejor época</span>
-          <span class="text-gray-900"> para alquilar carro y viajar a {{ city?.name }}</span>
-        </h2>
-        <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
-          <p>{{ expandedContent.bestSeason }}</p>
+      <!-- Text + a small road photo side by side on desktop. The image is
+           zoom-cropped (object-cover) into a fixed box that is shorter than the
+           paragraph, so it never adds to the section's height. The photo is
+           decorative and generic (a car on a scenic road) — this section is one
+           component shared by all 19 cities, so it is intentionally NOT
+           city-specific. -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.7fr_1fr] gap-8 lg:gap-12 items-center">
+        <div>
+          <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
+          <h2 class="heading-section text-gray-900 mb-5">
+            <span class="text-red-700">Mejor época</span>
+            <span class="text-gray-900"> para alquilar carro y viajar a {{ city?.name }}</span>
+          </h2>
+          <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
+            <p>{{ expandedContent.bestSeason }}</p>
+          </div>
+        </div>
+        <div class="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg ring-1 ring-black/5">
+          <NuxtImg
+            src="/images/cities/carretera-viaje.webp"
+            alt="Carro de alquiler recorriendo una carretera de montaña en Colombia"
+            width="1000"
+            height="750"
+            format="webp"
+            sizes="sm:100vw lg:400px"
+            loading="lazy"
+            decoding="async"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
         </div>
       </div>
     </section>

@@ -14,9 +14,10 @@
  *     gradients never use the broken v3 bg-gradient-to- alias.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
+const CITY = join(__dirname, '..')
 const INTRO = readFileSync(join(__dirname, '..', 'Intro.vue'), 'utf-8')
 const SEO = readFileSync(join(__dirname, '..', 'SeoContent.vue'), 'utf-8')
 const CHICA = readFileSync(
@@ -202,8 +203,10 @@ describe('SEO block — #introduccion is prose and stays capped', () => {
     expect(widthOf('destinos')).toBe('7xl')
   })
 
-  it('the other prose block follows the same cap', () => {
-    expect(widthOf('mejor-temporada')).toBe('3xl')
+  it('mejor-temporada is now full width (it gained an accompanying image)', () => {
+    // No longer pure prose: text + road photo side by side, so it matches the
+    // card sections' width instead of the narrow reading cap.
+    expect(widthOf('mejor-temporada')).toBe('7xl')
   })
 })
 
@@ -240,5 +243,41 @@ describe('city nearby section — all-cities pill grid, like the home', () => {
     const at = SEO.indexOf('id="ciudades-cercanas"')
     const openTag = SEO.slice(SEO.lastIndexOf('<section', at), at + 200)
     expect(openTag).not.toMatch(/v-if="relatedCities\.length > 0"\s*\n?\s*id="ciudades-cercanas"/)
+  })
+})
+
+/**
+ * "Mejor época" gets an accompanying image:
+ *   GIVEN a desktop viewport
+ *   WHEN  the best-season section renders
+ *   THEN  a small road photo sits BESIDE the paragraph, not above it, so it does
+ *         not add to the section's height. The image is object-cover (zoom-crop)
+ *         inside a fixed box, lazy, and webp.
+ * The photo is decorative and generic (a car on a scenic road), shared across
+ * all city pages — mejor-temporada is one component for all 19 cities.
+ */
+describe('best-season section — accompanying road image', () => {
+  const at = SEO.indexOf('id="mejor-temporada"')
+  const seg = SEO.slice(at, at + 2400)
+
+  it('renders the road photo as a lazy NuxtImg (webp)', () => {
+    expect(seg).toMatch(/<NuxtImg\b/)
+    expect(seg).toContain('/images/cities/carretera-viaje.webp')
+    expect(seg).toMatch(/loading="lazy"/)
+    expect(seg).toMatch(/format="webp"|\.webp/)
+  })
+
+  it('lays text and image side by side on desktop, so height is unchanged', () => {
+    expect(seg).toMatch(/lg:grid-cols-/)
+  })
+
+  it('zoom-crops the image with object-cover in a reserved box', () => {
+    expect(seg).toMatch(/object-cover/)
+    expect(seg).toMatch(/aspect-\[|h-full/)
+  })
+
+  it('ships the referenced asset', () => {
+    const asset = join(CITY, '..', '..', '..', 'public/images/cities/carretera-viaje.webp')
+    expect(existsSync(asset), 'carretera-viaje.webp missing').toBe(true)
   })
 })
