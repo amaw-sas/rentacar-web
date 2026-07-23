@@ -6,6 +6,14 @@ html {
   color-scheme: light;
 }
 
+/* In-page anchors clear the 80px sticky header. Without this, jumping to a
+   section (#ventajas, #puntos-entrega, #por-que, …) lands its title hidden
+   beneath the header. 6rem = header height + a small breathing gap. Every
+   in-page anchor is a <section id>, so this covers them all. */
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
 /* Hide the native clear (✕) button on date inputs. The searcher's date fields
    are always populated (store defaults + the mobile clamp), so a clear action
    would only let users empty a required field. Note: the Android OS date-picker

@@ -61,6 +61,11 @@ describe('F1 step03 — HowItWorks.vue (3 steps)', () => {
     expect(howItWorks).toContain('Cómo Funciona')
   })
 
+  it('ValueProps is anchorable as the #por-que section', () => {
+    // The "¿Por qué…?" title was the only section without an in-page anchor.
+    expect(valueProps).toMatch(/<section id="por-que"/)
+  })
+
   it('renders each step illustration via <NuxtImg> (not a raw <img>)', () => {
     // The raw <img loading="lazy"> with no intrinsic size collapsed/blew up
     // the aspect-[4/3] box inside the flex-stretch row → empty giant cards.

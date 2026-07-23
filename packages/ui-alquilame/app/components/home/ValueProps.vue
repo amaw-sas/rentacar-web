@@ -11,7 +11,7 @@
     Surface/frame tokens mirror the Fleet cards: bg-surface-soft section,
     bg-surface-softest card, 7px white border. Headings use font-heading.
   -->
-  <section class="bg-surface-soft py-16 md:py-24">
+  <section id="por-que" class="bg-surface-soft py-16 md:py-24">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="mb-10">
         <div class="h-1 w-10 rounded-full bg-brand-600 mb-4" />
