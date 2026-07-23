@@ -73,3 +73,14 @@ DOM en runtime mensual sin la línea.
 cambio. El CTA sigue bloqueado.
 **Evidence**: source (`totalLabel` devuelve null cuando `isMonthlyPriceUnavailable`);
 DOM mostrando "—".
+
+## SCEN-06: los importes del resumen se muestran con el signo peso ($)
+
+**Given**: cualquier reserva con precio disponible (diaria o mensual).
+**When**: el cliente ve el resumen persistente del wizard.
+**Then**: cada importe (Total renta, IVA + Tasa, Total a pagar) se muestra con el
+prefijo "$ ", consistente con las tarjetas de vehículo ("$ 953.990"). `moneyFormat`
+usa Intl estilo `decimal` (sin símbolo), así que el "$" lo antepone el template —
+como en la marca hermana `ReservationResume.vue`. El fail-closed (sin precio) sigue
+mostrando "—" SIN "$".
+**Evidence**: DOM del resumen ("$ 1.332.773", "$ 294.783", "$ 953.990"); fail-closed "—".
