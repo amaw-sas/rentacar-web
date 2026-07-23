@@ -17,14 +17,28 @@
           <div
             v-for="row in rows"
             :key="row.label"
-            class="flex items-baseline justify-between gap-3"
+            class="flex items-start justify-between gap-3"
+            :data-testid="row.testid"
           >
             <dt class="body-sm text-gray-500 shrink-0">{{ row.label }}</dt>
-            <dd
-              class="body-sm text-right font-medium"
-              :class="row.muted ? 'text-gray-600' : 'text-gray-900'"
-            >
-              {{ row.value }}
+            <dd class="text-right">
+              <span
+                class="body-sm font-medium"
+                :class="row.muted ? 'text-gray-600' : 'text-gray-900'"
+              >{{ row.value }}</span>
+              <!-- Issue #367: la entrega en otra sede/ciudad se marca aquí, no solo en
+                   el toast transitorio de la búsqueda. El separador explícito es
+                   obligatorio: Vue (whitespace: 'condense') borra el nodo de texto en
+                   blanco entre etiquetas, y un lector de pantalla anunciaba
+                   "Bogotá Aeropuertootra ciudad" de corrido. El margen visual (ml-1.5)
+                   no arregla el flujo de texto. -->
+              {{ ' ' }}
+              <span
+                v-if="row.badge"
+                class="ml-1.5 inline-block rounded-full bg-brand-100 px-1.5 py-0.5 body-xs font-medium text-brand-900 align-middle"
+                data-testid="wizard-oneway-badge"
+              >{{ row.badge }}</span>
+              <span v-if="row.sub" class="block body-xs text-gray-500">{{ row.sub }}</span>
             </dd>
           </div>
         </dl>
@@ -35,6 +49,16 @@
               <div class="flex items-baseline justify-between gap-3">
                 <span class="body-sm text-gray-500">Total renta</span>
                 <span class="body-sm font-medium text-gray-700" data-testid="wizard-total-renta">$ {{ rentaLabel }}</span>
+              </div>
+              <!-- Issue #367: el traslado del one-way ya vive DENTRO de "Total renta"
+                   (useCategory getTotalPrice), así que se enuncia como inclusión. -->
+              <div
+                v-if="returnFeeLabel"
+                class="flex items-baseline justify-between gap-3 pl-3"
+                data-testid="wizard-return-fee-line"
+              >
+                <span class="body-xs text-gray-500">incluye traslado</span>
+                <span class="body-xs text-gray-500">$ {{ returnFeeLabel }}</span>
               </div>
               <div class="flex items-baseline justify-between gap-3 mt-1" data-testid="wizard-iva-tax-line">
                 <span class="body-sm text-gray-500">IVA + Tasa</span>
@@ -82,11 +106,23 @@
             <div
               v-for="row in rows"
               :key="row.label"
-              class="flex items-baseline justify-between gap-3"
+              class="flex items-start justify-between gap-3"
+              :data-testid="row.testid ? `${row.testid}-mobile` : undefined"
             >
               <dt class="body-sm text-gray-500">{{ row.label }}</dt>
-              <dd class="body-sm text-right font-medium" :class="row.muted ? 'text-gray-600' : 'text-gray-900'">
-                {{ row.value }}
+              <dd class="text-right">
+                <span
+                  class="body-sm font-medium"
+                  :class="row.muted ? 'text-gray-600' : 'text-gray-900'"
+                >{{ row.value }}</span>
+                <!-- Separador explícito: ver el bloque de escritorio. -->
+                {{ ' ' }}
+                <span
+                  v-if="row.badge"
+                  class="ml-1.5 inline-block rounded-full bg-brand-100 px-1.5 py-0.5 body-xs font-medium text-brand-900 align-middle"
+                  data-testid="wizard-oneway-badge-mobile"
+                >{{ row.badge }}</span>
+                <span v-if="row.sub" class="block body-xs text-gray-500">{{ row.sub }}</span>
               </dd>
             </div>
             <!-- Issue #373: desglose per-day renta + IVA/tasa (oculto en mensual). -->
@@ -94,6 +130,11 @@
               <div class="flex items-baseline justify-between gap-3 border-t border-dashed border-gray-200 pt-2">
                 <dt class="body-sm text-gray-500">Total renta</dt>
                 <dd class="body-sm text-right font-medium text-gray-700" data-testid="wizard-total-renta-mobile">$ {{ rentaLabel }}</dd>
+              </div>
+              <!-- Issue #367: el traslado ya está dentro de "Total renta" (ver desktop). -->
+              <div v-if="returnFeeLabel" class="flex items-baseline justify-between gap-3 pl-3" data-testid="wizard-return-fee-line-mobile">
+                <dt class="body-xs text-gray-500">incluye traslado</dt>
+                <dd class="body-xs text-right text-gray-500">$ {{ returnFeeLabel }}</dd>
               </div>
               <div class="flex items-baseline justify-between gap-3" data-testid="wizard-iva-tax-line-mobile">
                 <dt class="body-sm text-gray-500">IVA + Tasa</dt>
@@ -161,8 +202,14 @@ const form = useStoreReservationForm()
 const search = useStoreSearchData()
 const {
   selectedPickupLocation,
+  selectedReturnLocation,
+  lugarRecogida,
+  lugarDevolucion,
   selectedDays,
   humanFormattedPickupDateShort,
+  humanFormattedPickupHour,
+  humanFormattedReturnDateShort,
+  humanFormattedReturnHour,
   isSubmittingForm,
   formSubmitLocked,
   haveMonthlyReservation,
@@ -238,6 +285,39 @@ const rentaLabel = computed(() => {
 // "IVA + Tasa" — la brecha entre renta y total a pagar (getIvaAndTaxAmount).
 const ivaTaxLabel = computed(() => selectedCategory.value?.currencyIvaAndTax ?? null)
 
+// Issue #367: la tarifa de traslado del one-way viaja SUMADA dentro de getTotalPrice
+// (useCategory.ts:271-275) y nunca se nombraba. Se muestra como sub-línea de "Total
+// renta" con redacción de INCLUSIÓN, no como sumando: presentarla aparte rompería la
+// reconciliación renta + IVA/tasa = total a pagar que fijó #373.
+// Se lee `returnFeeAmount` (número auto-desenvuelto) en vez de invocar `hasReturnFee()`:
+// la tarifa 0 debe ocultar la línea, y un `$ 0` sugeriría un cargo inexistente.
+const returnFeeLabel = computed(() => {
+  const sc = selectedCategory.value
+  if (!sc || (sc.returnFeeAmount ?? 0) <= 0) return null
+  return sc.currencyReturnFee ?? null
+})
+
+/**
+ * ¿La entrega es en otra sede? Se deriva de los CÓDIGOS de sucursal, nunca de la
+ * tarifa: la tarifa de traslado es pass-through desde Localiza y puede llegar en 0 en
+ * un one-way genuino (LLNRRE003). Atar la marca visual al dinero la haría desaparecer
+ * justo en el caso que este issue denuncia.
+ */
+const oneWayBadge = computed<string | null>(() => {
+  const from = lugarRecogida.value
+  const to = lugarDevolucion.value
+  if (!from || !to || from === to) return null
+  const fromCity = selectedPickupLocation.value?.city
+  const toCity = selectedReturnLocation.value?.city
+  return fromCity && toCity && fromCity !== toCity ? 'otra ciudad' : 'otra sede'
+})
+
+/** "22 de jul de 2026 · 10:00 a. m." — omite la parte que falte; null si no queda nada. */
+function whenLine(date?: string | null, hour?: string | null): string | null {
+  const parts = [date, hour].filter((p): p is string => !!p)
+  return parts.length ? parts.join(' · ') : null
+}
+
 // Brecha numérica IVA + tasa = total a pagar − renta (los adicionales se cancelan).
 // getIvaAndTaxAmount no se re-exporta desde useCategory, así que la derivamos de los
 // dos totales numéricos que sí viajan en selectedCategory.
@@ -263,11 +343,18 @@ interface SummaryRow {
   label: string
   value: string
   muted: boolean
+  /** Segunda línea bajo el valor (fecha · hora). */
+  sub?: string | null
+  /** Distintivo a la derecha del valor ("otra ciudad" / "otra sede"). */
+  badge?: string | null
+  /** Sufijo de `data-testid`; la barra móvil le añade "-mobile". */
+  testid?: string
 }
 
 const rows = computed<SummaryRow[]>(() => {
   const out: SummaryRow[] = []
   const branch = selectedPickupLocation.value
+  const returnBranch = selectedReturnLocation.value
   const days = selectedDays.value
 
   if (days) {
@@ -277,11 +364,27 @@ const rows = computed<SummaryRow[]>(() => {
       muted: false,
     })
   }
+  // Issue #367: recogida y devolución llevan cada una su sede en la primera línea y
+  // su fecha · hora debajo. Antes solo existía "Recogida" (sede) + "Desde" (fecha), y
+  // el cliente confirmaba sin ver dónde ni cuándo entrega — crítico en one-way.
   if (branch?.name) {
-    out.push({ label: 'Recogida', value: branch.name, muted: false })
+    out.push({
+      label: 'Recogida',
+      value: branch.name,
+      muted: false,
+      sub: whenLine(humanFormattedPickupDateShort.value, humanFormattedPickupHour.value),
+      testid: 'wizard-pickup-branch',
+    })
   }
-  if (humanFormattedPickupDateShort.value) {
-    out.push({ label: 'Desde', value: humanFormattedPickupDateShort.value, muted: false })
+  if (returnBranch?.name) {
+    out.push({
+      label: 'Devolución',
+      value: returnBranch.name,
+      muted: false,
+      sub: whenLine(humanFormattedReturnDateShort.value, humanFormattedReturnHour.value),
+      badge: oneWayBadge.value,
+      testid: 'wizard-return-branch',
+    })
   }
   out.push({ label: 'Vehículo', value: gamaLabel.value ?? 'Elige →', muted: !gamaLabel.value })
   out.push({ label: 'Seguro', value: coverageLabel.value ?? '—', muted: !coverageLabel.value })
