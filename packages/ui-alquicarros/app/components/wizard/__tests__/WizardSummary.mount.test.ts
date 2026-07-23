@@ -107,11 +107,12 @@ describe('WizardSummary — evidencia DOM del desglose de precio (#373)', () => 
     const iva = w.get('[data-testid="wizard-iva-tax-line"]').text()
     const renta = w.get('[data-testid="wizard-total-renta"]').text()
 
+    // SCEN-06: los importes llevan el signo peso "$ ".
     // El prominente es el total CON IVA + tasa (1.154.273), NO la renta (881.797).
-    expect(total).toContain(money(ACTUAL)) // "1.154.273"
+    expect(total).toContain('$ ' + money(ACTUAL)) // "$ 1.154.273"
     expect(total).not.toContain(money(RENT)) // ya no muestra 881.797 como total
-    expect(renta).toContain(money(RENT)) // "881.797"
-    expect(iva).toContain(money(ACTUAL - RENT)) // "272.476"
+    expect(renta).toContain('$ ' + money(RENT)) // "$ 881.797"
+    expect(iva).toContain('$ ' + money(ACTUAL - RENT)) // "$ 272.476"
 
     // SCEN-03: renta + IVA/tasa = total a pagar (reconciliación en el DOM).
     expect(RENT + Math.round(ACTUAL - RENT)).toBe(Math.round(ACTUAL))
@@ -123,9 +124,9 @@ describe('WizardSummary — evidencia DOM del desglose de precio (#373)', () => 
     stubStores(buildCategory({ rentSubtotal: RENT, actualTotal: ACTUAL, additionals: DRIVER }))
     const w = mountSummary()
 
-    expect(w.get('[data-testid="wizard-total-renta"]').text()).toContain(money(RENT + DRIVER)) // 965.797
-    expect(w.get('[data-testid="wizard-iva-tax-line"]').text()).toContain(money(ACTUAL - RENT)) // 272.476 (igual)
-    expect(w.get('[data-testid="wizard-total-a-pagar"]').text()).toContain(money(ACTUAL + DRIVER)) // 1.238.273
+    expect(w.get('[data-testid="wizard-total-renta"]').text()).toContain('$ ' + money(RENT + DRIVER)) // $ 965.797
+    expect(w.get('[data-testid="wizard-iva-tax-line"]').text()).toContain('$ ' + money(ACTUAL - RENT)) // $ 272.476 (igual)
+    expect(w.get('[data-testid="wizard-total-a-pagar"]').text()).toContain('$ ' + money(ACTUAL + DRIVER)) // $ 1.238.273
 
     // Reconciliación con adicional.
     expect((RENT + DRIVER) + Math.round(ACTUAL - RENT)).toBe(Math.round(ACTUAL + DRIVER))
@@ -139,15 +140,17 @@ describe('WizardSummary — evidencia DOM del desglose de precio (#373)', () => 
 
     expect(w.find('[data-testid="wizard-iva-tax-line"]').exists()).toBe(false)
     expect(w.find('[data-testid="wizard-total-renta"]').exists()).toBe(false)
-    // El total prominente conserva su valor mensual.
-    expect(w.get('[data-testid="wizard-total-a-pagar"]').text()).toContain(money(monthlyTotal))
+    // El total prominente conserva su valor mensual, con signo peso.
+    expect(w.get('[data-testid="wizard-total-a-pagar"]').text()).toContain('$ ' + money(monthlyTotal))
   })
 
-  it('SCEN-05: más allá del horizonte (isMonthlyPriceUnavailable) — total "—", sin desglose (regresión #313)', () => {
+  it('SCEN-05: más allá del horizonte (isMonthlyPriceUnavailable) — total "—" SIN "$", sin desglose (regresión #313)', () => {
     stubStores(buildCategory({ rentSubtotal: 0, actualTotal: 0, monthly: true, unavailable: true }), true)
     const w = mountSummary()
 
-    expect(w.get('[data-testid="wizard-total-a-pagar"]').text()).toContain('—')
+    const total = w.get('[data-testid="wizard-total-a-pagar"]').text()
+    expect(total).toContain('—')
+    expect(total).not.toContain('$') // fail-closed no antepone "$" al guion
     expect(w.find('[data-testid="wizard-iva-tax-line"]').exists()).toBe(false)
     expect(w.text()).not.toContain('Incluye IVA y tasa')
   })
@@ -160,6 +163,6 @@ describe('WizardSummary — evidencia DOM del desglose de precio (#373)', () => 
     expect(w.find('[data-testid="wizard-iva-tax-line"]').exists()).toBe(false)
     expect(w.find('[data-testid="wizard-total-renta"]').exists()).toBe(false)
     // Solo el total prominente (el que se cobra), sin líneas contradictorias.
-    expect(w.get('[data-testid="wizard-total-a-pagar"]').text()).toContain(money(230000))
+    expect(w.get('[data-testid="wizard-total-a-pagar"]').text()).toContain('$ ' + money(230000))
   })
 })

@@ -34,11 +34,11 @@
             <template v-if="showRentBreakdown">
               <div class="flex items-baseline justify-between gap-3">
                 <span class="body-sm text-gray-500">Total renta</span>
-                <span class="body-sm font-medium text-gray-700" data-testid="wizard-total-renta">{{ rentaLabel }}</span>
+                <span class="body-sm font-medium text-gray-700" data-testid="wizard-total-renta">$ {{ rentaLabel }}</span>
               </div>
               <div class="flex items-baseline justify-between gap-3 mt-1" data-testid="wizard-iva-tax-line">
                 <span class="body-sm text-gray-500">IVA + Tasa</span>
-                <span class="body-sm font-medium text-gray-700">{{ ivaTaxLabel }}</span>
+                <span class="body-sm font-medium text-gray-700">$ {{ ivaTaxLabel }}</span>
               </div>
             </template>
             <div
@@ -46,7 +46,7 @@
               :class="showRentBreakdown ? 'mt-2 pt-2 border-t border-gray-100' : ''"
             >
               <span class="body-base font-semibold text-gray-900">Total a pagar</span>
-              <span class="price-md text-brand-800 font-heading" data-testid="wizard-total-a-pagar">{{ totalLabel ?? '—' }}</span>
+              <span class="price-md text-brand-800 font-heading" data-testid="wizard-total-a-pagar">{{ totalDisplay }}</span>
             </div>
             <p v-if="totalLabel" class="mt-0.5 body-xs text-right text-gray-500">Incluye IVA y tasa</p>
           </div>
@@ -93,11 +93,11 @@
             <template v-if="showRentBreakdown">
               <div class="flex items-baseline justify-between gap-3 border-t border-dashed border-gray-200 pt-2">
                 <dt class="body-sm text-gray-500">Total renta</dt>
-                <dd class="body-sm text-right font-medium text-gray-700" data-testid="wizard-total-renta-mobile">{{ rentaLabel }}</dd>
+                <dd class="body-sm text-right font-medium text-gray-700" data-testid="wizard-total-renta-mobile">$ {{ rentaLabel }}</dd>
               </div>
               <div class="flex items-baseline justify-between gap-3" data-testid="wizard-iva-tax-line-mobile">
                 <dt class="body-sm text-gray-500">IVA + Tasa</dt>
-                <dd class="body-sm text-right font-medium text-gray-700">{{ ivaTaxLabel }}</dd>
+                <dd class="body-sm text-right font-medium text-gray-700">$ {{ ivaTaxLabel }}</dd>
               </div>
             </template>
           </dl>
@@ -118,7 +118,7 @@
                 :class="mobileOpen ? 'rotate-180' : ''"
               />
             </span>
-            <span class="price-md text-brand-800 font-heading leading-none">{{ totalLabel ?? '—' }}</span>
+            <span class="price-md text-brand-800 font-heading leading-none">{{ totalDisplay }}</span>
           </button>
           <UButton
             block
@@ -254,6 +254,10 @@ const ivaTaxAmount = computed(() => {
 const showRentBreakdown = computed(
   () => totalLabel.value != null && !haveMonthlyReservation.value && ivaTaxAmount.value > 0
 )
+
+// Issue #373 (SCEN-06): moneyFormat usa Intl estilo `decimal` (sin símbolo), así que
+// el "$" lo antepone la vista (como la marca hermana). Fail-closed → '—' SIN "$".
+const totalDisplay = computed(() => (totalLabel.value ? `$ ${totalLabel.value}` : '—'))
 
 interface SummaryRow {
   label: string

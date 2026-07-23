@@ -70,12 +70,27 @@ describe('WizardSummary — desglose de precio (#373)', () => {
 
   it('SCEN-05: fail-closed más allá del horizonte — el total sigue mostrando "—" (regresión #313)', () => {
     const src = summary()
-    // totalLabel devuelve null cuando isMonthlyPriceUnavailable, y el template cae a '—'.
+    // totalLabel devuelve null cuando isMonthlyPriceUnavailable; totalDisplay cae a '—'.
     expect(src).toMatch(/isMonthlyPriceUnavailable/)
-    expect(src).toMatch(/totalLabel \?\? '—'/)
+    expect(src).toMatch(/const totalDisplay/)
+    // El fail-closed produce '—' (sin "$") cuando no hay total.
+    const disp = /const totalDisplay\s*=[\s\S]{0,180}/.exec(src)?.[0] ?? ''
+    expect(disp).toMatch(/'—'/)
+    expect(disp).toMatch(/totalLabel/)
   })
 
   it('SCEN-01: leyenda "Incluye IVA y tasa" acompaña al total a pagar', () => {
     expect(summary()).toMatch(/Incluye IVA y tasa/)
+  })
+
+  it('SCEN-06: los importes del resumen se anteponen el signo peso ($)', () => {
+    const src = summary()
+    // Las líneas de renta e IVA prefijan "$ " (moneyFormat no trae símbolo).
+    expect(src).toMatch(/\$ \{\{ rentaLabel \}\}/)
+    expect(src).toMatch(/\$ \{\{ ivaTaxLabel \}\}/)
+    // El total prominente usa totalDisplay, que antepone "$ " al valor.
+    const disp = /const totalDisplay\s*=[\s\S]{0,180}/.exec(src)?.[0] ?? ''
+    expect(disp).toMatch(/\$ /)
+    expect(src).toMatch(/data-testid="wizard-total-a-pagar"[^>]*>\{\{ totalDisplay \}\}/)
   })
 })
