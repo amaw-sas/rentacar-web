@@ -152,8 +152,12 @@ import { storeToRefs } from 'pinia'
 // config
 import { groupBySegment, segmentForCode, type SegmentGroup, type SegmentId } from '~/config/vehicleSegments'
 
+// composables (import explícito, no auto-import: así el componente es montable
+// en tests sin el runtime de Nuxt)
+import { sellablePlans } from '~/composables/useMonthlyPlans'
+
 // utils
-import { pickPriceForDate, isBeyondPricingHorizon } from '@rentacar-main/logic/utils'
+import { isBeyondPricingHorizon } from '@rentacar-main/logic/utils'
 
 // Types
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
@@ -227,13 +231,9 @@ const groups = computed<SegmentGroup[]>(() =>
  * `pickPriceForDate` es la MISMA selección de fila que usa useCategory para cobrar.
  */
 function rowMonthlyBasic(row: CategoryAvailabilityData): number {
-  const prices = row.categoryMonthPrices
-  if (!prices) return Number.POSITIVE_INFINITY
-  const month = pickPriceForDate(prices, fechaRecogida.value ?? '')
-  if (!month) return Number.POSITIVE_INFINITY
-  const sellable = [month['1k_kms'], month['2k_kms']].filter((p) => p > 0)
-  if (sellable.length === 0) return Number.POSITIVE_INFINITY
-  return Math.min(...sellable) + (row.returnFeeAmount ?? 0)
+  const plans = sellablePlans(row.categoryMonthPrices, fechaRecogida.value)
+  if (plans.length === 0) return Number.POSITIVE_INFINITY
+  return Math.min(...plans.map((plan) => plan.price)) + (row.returnFeeAmount ?? 0)
 }
 
 /**
