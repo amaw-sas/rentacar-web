@@ -290,14 +290,99 @@ describe('WizardSummary — la devolución en el resumen (#367)', () => {
     expect(w.find('[data-testid="wizard-return-fee-line"]').exists()).toBe(false)
   })
 
-  it('SCEN-07: sin sede de devolución — la fila se omite, sin marca y sin "undefined"', () => {
+  it('SCEN-07: sin sede de devolución — "—" muted, sin marca y sin "undefined"', () => {
+    // SCEN-07 admite omitir la fila O mostrar "—". Con fecha y hora presentes la rama
+    // honesta es la segunda: omitirla se llevaría por delante el cuándo (ver el test
+    // de regresión de abajo).
     stubStores(daily(), false, { lugarDevolucion: null, selectedReturnLocation: null })
     const w = mountSummary()
 
-    expect(w.find('[data-testid="wizard-return-branch"]').exists()).toBe(false)
+    const row = w.get('[data-testid="wizard-return-branch"]').text()
+    expect(row).toContain('—')
+    expect(row).toContain('29 de jul de 2026')
     expect(w.find('[data-testid="wizard-oneway-badge"]').exists()).toBe(false)
     expect(w.text()).not.toContain('undefined')
     expect(w.text()).not.toContain('null')
+  })
+
+  it('SCEN-07 (regresión): si la sede de recogida no resuelve, la FECHA sobrevive', () => {
+    // `selectedPickupLocation` = searchBranchByCode(...), que da undefined con un código
+    // fuera del catálogo (deep-link viejo, o la ventana antes de que llegue la admin
+    // data). En main la fecha vivía en su propia fila "Desde" y aguantaba; al plegarla
+    // como sub-línea de "Recogida" quedó gateada por la sede y desaparecía con ella.
+    stubStores(daily(), false, { selectedPickupLocation: null })
+    const w = mountSummary()
+
+    const row = w.get('[data-testid="wizard-pickup-branch"]').text()
+    expect(row).toContain('22 de jul de 2026')
+    expect(row).toContain('10:00 a. m.')
+    expect(w.text()).not.toContain('undefined')
+  })
+
+  it('SCEN-07: sin fecha NI sede de devolución, la fila no se emite (nada que decir)', () => {
+    stubStores(daily(), false, {
+      lugarDevolucion: null,
+      selectedReturnLocation: null,
+      humanFormattedReturnDateShort: '',
+      humanFormattedReturnHour: '',
+    })
+    const w = mountSummary()
+
+    expect(w.find('[data-testid="wizard-return-branch"]').exists()).toBe(false)
+  })
+
+  it('SCEN-04 (mensual): el traslado se nombra también cuando NO hay desglose de IVA', () => {
+    // useCategory.ts:250,266 SUMA returnFee al total mensual, y el selector de
+    // devolución no está gateado por duración: un one-way mensual cobraba el traslado
+    // sin nombrarlo, porque la línea colgaba de showRentBreakdown (apagado en mensual).
+    const monthlyTotal = 4149000
+    stubStores(
+      buildCategory({ rentSubtotal: monthlyTotal, actualTotal: monthlyTotal, returnFee: TRANSFER, monthly: true }),
+      true,
+      ONE_WAY_OTHER_CITY,
+    )
+    const w = mountSummary()
+
+    expect(w.find('[data-testid="wizard-iva-tax-line"]').exists()).toBe(false)
+    expect(w.get('[data-testid="wizard-return-fee-line"]').text()).toContain('$ ' + money(TRANSFER))
+    expect(w.get('[data-testid="wizard-oneway-badge"]').text()).toBe('otra ciudad')
+  })
+
+  it('SCEN-05 + #313: más allá del horizonte no se anuncia traslado sobre un total "—"', () => {
+    stubStores(
+      buildCategory({ rentSubtotal: 0, actualTotal: 0, returnFee: TRANSFER, monthly: true, unavailable: true }),
+      true,
+      ONE_WAY_OTHER_CITY,
+    )
+    const w = mountSummary()
+
+    expect(w.get('[data-testid="wizard-total-a-pagar"]').text()).toContain('—')
+    expect(w.find('[data-testid="wizard-return-fee-line"]').exists()).toBe(false)
+  })
+
+  it('SCEN-01: con ciudad desconocida la marca NO afirma "misma ciudad"', () => {
+    // `city` se tipa requerido pero nada lo valida en el ingest. Colapsar el caso a
+    // "otra sede" understatea justo la entrega cara e inesperada en otra ciudad.
+    stubStores(daily(), false, {
+      selectedPickupLocation: { name: 'Bogotá Aeropuerto' },
+      lugarDevolucion: 'MED-CENTRO',
+      selectedReturnLocation: { name: 'Medellín Centro', city: 'medellin' },
+    })
+    const w = mountSummary()
+
+    const badge = w.get('[data-testid="wizard-oneway-badge"]').text()
+    expect(badge).toBe('otro punto')
+    expect(badge).not.toBe('otra sede')
+  })
+
+  it('SCEN-01: la marca tampoco se fusiona con la fecha que va debajo', () => {
+    // Misma trampa de `whitespace: condense` que entre sede y badge, un nodo más allá.
+    stubStores(daily(), false, ONE_WAY_OTHER_CITY)
+    const w = mountSummary()
+
+    const row = w.get('[data-testid="wizard-return-branch"]').text().replace(/\s+/g, ' ')
+    expect(row).not.toContain('ciudad29')
+    expect(row).toContain('otra ciudad 29 de jul de 2026')
   })
 
   it('SCEN-09: el bottom-bar móvil muestra lo mismo que la tarjeta de escritorio', async () => {
