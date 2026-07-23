@@ -262,15 +262,28 @@ describe('best-season section — accompanying road image', () => {
 })
 
 /**
- * "Explora {ciudad}" gets an optional per-city diorama:
- *   GIVEN a city that ships a diorama (Bogotá does)
- *   THEN  the intro shows text + the transparent diorama beside it, wider than
- *         the prose cap. Cities WITHOUT a diorama keep the narrow prose intro.
+ * "Explora {ciudad}" gets a per-city diorama — EVERY active city:
+ *   GIVEN any of the 19 active cities
+ *   THEN  the intro shows text + that city's transparent diorama beside it,
+ *         served from /images/ciudades/dioramas/{city.id}.webp, wider than the
+ *         prose cap. A city id with no artwork keeps the narrow prose intro.
  * The diorama is a transparent cutout: no card, no rounded box — object-contain.
  */
-describe('#introduccion — optional per-city diorama', () => {
-  it('has a per-city diorama map that includes Bogotá', () => {
-    expect(SEO).toMatch(/bogota:\s*'\/images\/cities\/diorama-bogota\.webp'/)
+const CITY_SLUGS = [
+  'armenia', 'barranquilla', 'bogota', 'bucaramanga', 'cali', 'cartagena',
+  'cucuta', 'floridablanca', 'ibague', 'manizales', 'medellin', 'monteria',
+  'neiva', 'palmira', 'pereira', 'santa-marta', 'soledad', 'valledupar',
+  'villavicencio',
+]
+
+describe('#introduccion — per-city diorama (all 19 cities)', () => {
+  it('derives the src from city.id at the reference path, guarded by a Set', () => {
+    expect(SEO).toMatch(/CITIES_WITH_DIORAMA\s*=\s*new Set\(/)
+    expect(SEO).toMatch(/\/images\/ciudades\/dioramas\/\$\{id\}\.webp/)
+    // Every active city slug is listed as shipping a diorama.
+    for (const slug of CITY_SLUGS) {
+      expect(SEO, `missing diorama slug: ${slug}`).toContain(`'${slug}'`)
+    }
   })
 
   it('renders the diorama as a transparent, lazy NuxtImg (no card box)', () => {
@@ -284,8 +297,10 @@ describe('#introduccion — optional per-city diorama', () => {
     expect(seg).not.toMatch(/rounded-2xl[^"]*shadow|border-\[7px\]/)
   })
 
-  it('ships the Bogotá diorama asset', () => {
-    const asset = join(CITY, '..', '..', '..', 'public/images/cities/diorama-bogota.webp')
-    expect(existsSync(asset), 'diorama-bogota.webp missing').toBe(true)
+  it('ships a diorama asset for every active city', () => {
+    const dir = join(CITY, '..', '..', '..', 'public/images/ciudades/dioramas')
+    for (const slug of CITY_SLUGS) {
+      expect(existsSync(join(dir, `${slug}.webp`)), `${slug}.webp missing`).toBe(true)
+    }
   })
 })

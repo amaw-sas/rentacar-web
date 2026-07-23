@@ -296,14 +296,20 @@ const otherCities = computed(() =>
   cities.value.filter((c: City) => c.id !== props.city?.id),
 )
 
-// Per-city hero diorama for the #introduccion showcase. Only a few cities ship
-// a bespoke transparent scene (Bogotá today); the rest keep the text-only intro.
-// Keyed by city id so it renders on exactly one city, never blanket like the
-// shared road photo. Add an entry here as more city dioramas are produced.
-const CITY_DIORAMA: Record<string, string> = {
-  bogota: '/images/cities/diorama-bogota.webp',
-}
-const dioramaSrc = computed(() => CITY_DIORAMA[props.city?.id ?? ''])
+// Per-city hero diorama for the #introduccion showcase: a transparent 3D scene
+// of the city, served from public/images/ciudades/dioramas/{city.id}.webp.
+// Every active city ships one; the Set guards against a future city id that has
+// no artwork yet (it would fall back to the text-only intro instead of a 404).
+const CITIES_WITH_DIORAMA = new Set([
+  'armenia', 'barranquilla', 'bogota', 'bucaramanga', 'cali', 'cartagena',
+  'cucuta', 'floridablanca', 'ibague', 'manizales', 'medellin', 'monteria',
+  'neiva', 'palmira', 'pereira', 'santa-marta', 'soledad', 'valledupar',
+  'villavicencio',
+])
+const dioramaSrc = computed(() => {
+  const id = props.city?.id ?? ''
+  return CITIES_WITH_DIORAMA.has(id) ? `/images/ciudades/dioramas/${id}.webp` : undefined
+})
 
 /**
  * Benefits copy. Pickup wording is availability-based because not every city
