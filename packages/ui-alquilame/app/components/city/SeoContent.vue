@@ -160,9 +160,9 @@
 
     <!-- Related Cities Section (#ciudades-cercanas) — internal linking -->
     <section
-      v-if="relatedCities.length > 0"
+      v-if="relatedCities.length > 0 || otherCities.length > 0"
       id="ciudades-cercanas"
-      class="bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8"
+      class="bg-[#EDF0F5] py-12 md:py-16"
     >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-8">
@@ -175,7 +175,10 @@
             ¿Planeas un viaje más largo? También ofrecemos alquiler de vehículos en estas ciudades cercanas a {{ city?.name }}.
           </p>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div
+          v-if="relatedCities.length > 0"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
+        >
           <NuxtLink
             v-for="related in relatedCities"
             :key="related.id"
@@ -186,6 +189,27 @@
             <LocationIcon cls="text-red-600 size-8 mb-2 group-hover:scale-110 transition-transform" />
             <span class="font-semibold text-gray-900 group-hover:text-red-700">{{ related.name }}</span>
             <span class="text-sm text-gray-500">{{ related.distance }} en carro</span>
+          </NuxtLink>
+        </div>
+
+        <!-- Every other city as a pill — same internal-linking grid the home
+             uses. Renders on all city pages, including those with no curated
+             nearby cards above. -->
+        <p
+          v-if="relatedCities.length > 0"
+          class="text-center text-sm font-medium text-gray-500 mt-10 mb-4"
+        >
+          O explora el alquiler de carros en todas nuestras ciudades:
+        </p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <NuxtLink
+            v-for="other in otherCities"
+            :key="other.id"
+            :to="`/${other.id}`"
+            :aria-label="`Alquiler de carros en ${other.name}`"
+            class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm shadow-red-600/20 hover:shadow-md"
+          >
+            {{ other.name }}
           </NuxtLink>
         </div>
       </div>
@@ -211,6 +235,15 @@ const props = defineProps<{
   /** Nearby cities for internal linking (empty array when none mapped). */
   relatedCities: RelatedCity[]
 }>()
+
+// Every active city (Supabase-dynamic), for the all-cities pill grid — the same
+// internal-linking treatment the home uses. Excludes the current city (no
+// self-link). This is what lets every city page reach every other, for both
+// visitors and crawlers, even when a city has no curated "nearby" mapping.
+const { cities } = useData()
+const otherCities = computed(() =>
+  cities.value.filter((c: City) => c.id !== props.city?.id),
+)
 
 /**
  * Benefits copy. Pickup wording is availability-based because not every city

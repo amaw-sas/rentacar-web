@@ -206,3 +206,39 @@ describe('SEO block — #introduccion is prose and stays capped', () => {
     expect(widthOf('mejor-temporada')).toBe('3xl')
   })
 })
+
+/**
+ * All-cities pill grid on a city page:
+ *   GIVEN a city landing
+ *   WHEN  the nearby-cities section renders
+ *   THEN  below the featured nearby cards it lists EVERY active city as a pill
+ *         button, the same treatment the home uses — internal links that help
+ *         both the visitor and search crawlers reach every city page.
+ * The current city is excluded (no self-link), and the section now shows even
+ * when a city has no curated "nearby" mapping, so all 19 pages get the grid.
+ */
+describe('city nearby section — all-cities pill grid, like the home', () => {
+  it('sources every active city from useData()', () => {
+    expect(SEO).toMatch(/useData\(\)/)
+    expect(SEO).toMatch(/const\s*\{\s*cities\s*\}\s*=\s*useData\(\)/)
+  })
+
+  it('renders a wrapping pill grid over the cities, excluding the current one', () => {
+    expect(SEO).toMatch(/flex flex-wrap/)
+    expect(SEO).toMatch(/rounded-full/)
+    // Iterates a list that filters out the current city id.
+    expect(SEO).toMatch(/otherCities|c\.id !== city\?\.id|city\.id !== props\.city/)
+  })
+
+  it('links each pill internally to /{city.id}', () => {
+    expect(SEO).toMatch(/:to="`\/\$\{[a-z]+\.id\}`"/)
+  })
+
+  it('shows the section even without curated nearby cities', () => {
+    // The section no longer hides when relatedCities is empty — the all-cities
+    // pills are always worth rendering for internal linking.
+    const at = SEO.indexOf('id="ciudades-cercanas"')
+    const openTag = SEO.slice(SEO.lastIndexOf('<section', at), at + 200)
+    expect(openTag).not.toMatch(/v-if="relatedCities\.length > 0"\s*\n?\s*id="ciudades-cercanas"/)
+  })
+})
