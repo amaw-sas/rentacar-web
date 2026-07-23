@@ -8,15 +8,29 @@
  * bodies out of the agent context. Idempotent (upsert on brand+slug) so it is
  * safe to re-run.
  *
- * Run from the worktree root:
- *   set -a; source <repo>/.env.local; set +a
- *   pnpm --filter ui-alquilatucarro exec tsx scripts/seed-blog-posts.ts
+ * Run from the repo root:
+ *   npx tsx --env-file=.env.local scripts/seed-blog-posts.ts
+ *
+ * (Not `pnpm --filter <pkg> exec`: that sets cwd to the package directory, so a
+ * relative script path resolves under packages/<pkg>/ and Node exits with
+ * ERR_MODULE_NOT_FOUND before the script runs.)
+ *
+ * NOTE: `CONTENT_DIR` no longer exists — the markdown was deleted in 9c4411d
+ * once Supabase became the single source of truth, so this script cannot run
+ * as-is. It is kept because it documents how the table was populated, and it
+ * now localizes the brand token (issue #362) so restoring the content and
+ * re-seeding would not reintroduce the cross-brand mentions this script
+ * originally published. The already-seeded rows were repaired separately by
+ * `fix-blog-cross-brand-mentions.ts`.
  */
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml } from 'yaml'
 import { createClient } from '@supabase/supabase-js'
+import { replaceBrandToken } from '../packages/logic/src/utils/brandContent'
+import type { ContentBrand } from '../packages/logic/src/utils/trailingSlashRedirect'
+import { applyEditorialFixes } from './blogEditorialFixes'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CONTENT_DIR = resolve(__dirname, '..', 'packages', 'ui-alquilatucarro', 'content', 'blog')
@@ -50,12 +64,33 @@ function buildRows() {
     const slug = file.replace(/\.md$/, '')
     const { fm, body } = parseFrontmatter(readFileSync(resolve(CONTENT_DIR, file), 'utf-8'))
     for (const [brand, authorName] of Object.entries(BRANDS)) {
+      // The markdown is authored for Alquilatucarro and names it in prose, so a
+      // verbatim upsert made the other two brands publish their sister brand's
+      // name (issue #362). Two passes, in order: the editorial table replaces
+      // the six known first-person claims with franchise-neutral copy, then
+      // `replaceBrandToken` catches any brand mention added to the markdown
+      // since. Both deliberately spare the generic phrase "alquila tu carro".
+      const localize = (value: unknown) =>
+        typeof value === 'string' ? replaceBrandToken(value, brand as ContentBrand) : value
+
+      // A drifted sentence would fall through to `replaceBrandToken`, which
+      // would dutifully publish "En Alquicarros tenemos sedes…" — the exact
+      // first-person franchise claim the neutral rewrites exist to remove. Fail
+      // loudly instead, mirroring fix-blog-cross-brand-mentions.ts.
+      const editorial = applyEditorialFixes(body, slug)
+      if (editorial.missing.length > 0) {
+        throw new Error(
+          `${slug}: ${editorial.missing.length} editorial rewrite(s) no longer match the markdown. ` +
+            'The copy drifted — update EDITORIAL_REWRITES before re-seeding.',
+        )
+      }
+
       rows.push({
         brand,
         slug,
-        title: fm.title,
-        description: fm.description,
-        body,
+        title: localize(fm.title),
+        description: localize(fm.description),
+        body: localize(editorial.text),
         image: fm.image,
         alt: fm.alt,
         author_name: authorName,
@@ -67,7 +102,9 @@ function buildRows() {
         reading_time: fm.readingTime ?? 0,
         featured: fm.featured ?? false,
         faq_items: fm.faqItems ?? null,
-        meta_title: fm.metaTitle ?? null,
+        // `?? null`, not a truthiness check: an explicit empty metaTitle must
+        // keep persisting as '' rather than silently becoming NULL.
+        meta_title: localize(fm.metaTitle ?? null),
       })
     }
   }
