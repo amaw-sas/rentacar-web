@@ -19,12 +19,13 @@
 
     Gradient guard (F0 lesson): use the v4 `bg-linear-to-*` utility, never the
     broken v3 gradient alias (which renders background-image:none with custom
-    @theme tokens). Headings adopt the `.heading-*` utilities (Plus Jakarta).
+    @theme tokens). Headings use `font-heading` (Plus Jakarta) plus explicit
+    typography utilities.
   -->
   <section id="cities" class="bg-gray-100 py-12 md:py-20 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
       <div class="text-center mb-10">
-        <h2 class="heading-section font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
+        <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
           Alquila tu carro en las principales ciudades de Colombia
         </h2>
         <p class="mt-4 text-lg text-gray-600">
@@ -43,7 +44,7 @@
           :key="city.id"
           :to="`/${city.id}`"
           :aria-label="`Alquiler de carros en ${city.name}`"
-          class="city-reveal group relative block aspect-[4/5] overflow-hidden rounded-[22px] border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.10)] hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,17,34,0.18)] transition-all duration-300 [--ctx-text-primary:#fff]"
+          class="city-reveal group relative block aspect-[4/5] overflow-hidden rounded-[22px] border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.10)] hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(17,17,34,0.18)] [--ctx-text-primary:#fff]"
           :style="`--reveal-delay:${i * 90}ms`"
         >
           <NuxtImg
@@ -69,7 +70,7 @@
           </span>
 
           <div class="absolute inset-x-0 bottom-0 p-4">
-            <h3 class="heading-card text-lg sm:text-xl font-bold text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]">
+            <h3 class="font-heading text-lg sm:text-xl font-bold text-white leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)]">
               {{ city.name }}
             </h3>
             <span

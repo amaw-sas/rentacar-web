@@ -10,7 +10,8 @@
  *   - Gradient guard (F0 lesson): the section MUST use the v4 `bg-linear-to-*`
  *     utility, NEVER the broken v3 gradient alias (asserted via BROKEN_V3_GRADIENT,
  *     assembled from fragments so this file never contains the forbidden literal).
- *   - Headings adopt the `.heading-*` utilities (Plus Jakarta).
+ *   - Headings use Plus Jakarta without unlayered `.heading-*` typography
+ *     tokens overriding their explicit size/weight/color utilities.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -61,8 +62,18 @@ describe('F1 step04 — Cities.vue', () => {
     expect(cities).not.toMatch(BROKEN_V3_GRADIENT)
   })
 
-  it('adopts the .heading-* utilities (Plus Jakarta) for its headings', () => {
-    expect(cities).toMatch(/heading-(section|card)/)
+  it('keeps the section h2 in Plus Jakarta while its explicit title utilities remain authoritative', () => {
+    expect(cities).toMatch(
+      /<h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">/,
+    )
+    expect(cities).not.toMatch(/<h2[^>]*\bheading-section\b/)
+  })
+
+  it('keeps each city-name h3 in Plus Jakarta with its explicit card typography intact', () => {
+    expect(cities).toMatch(
+      /<h3 class="font-heading text-lg sm:text-xl font-bold text-white leading-tight drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.55\)\]">/,
+    )
+    expect(cities).not.toMatch(/<h3[^>]*\bheading-card\b/)
   })
 
   it('reserves image space with aspect-ratio (CLS) for the featured cards', () => {
@@ -112,6 +123,10 @@ describe('F1 step04 — Cities.vue', () => {
   it('reveals the cards on scroll and honours prefers-reduced-motion', () => {
     expect(cities).toMatch(/IntersectionObserver/)
     expect(cities).toMatch(/prefers-reduced-motion/)
+    expect(cities).toMatch(/\.city-reveal\s*\{[\s\S]*transition:/)
+    expect(cities).not.toMatch(
+      /class="city-reveal[^"]*\btransition-all\b[^"]*\bduration-300\b/,
+    )
   })
 
   it('shows a hover affordance on each card', () => {
