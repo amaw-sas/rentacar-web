@@ -69,14 +69,15 @@
       <div
         class="mx-auto px-4 sm:px-6 lg:px-8"
         :class="dioramaSrc
-          ? 'max-w-7xl grid items-center gap-6 lg:gap-12 lg:grid-cols-[minmax(0,19rem)_1fr]'
+          ? 'max-w-7xl grid items-center gap-6 lg:gap-12 lg:grid-cols-2'
           : 'max-w-3xl'"
       >
         <!--
-          Per-city diorama (Bogotá today): a small transparent 3D scene, LEFT of
-          the copy on desktop, below it on mobile. A cutout, not a framed photo:
-          object-contain, no card/rounded/shadow, so it floats on the white
-          section. Only renders for cities present in CITY_DIORAMA.
+          Per-city diorama (Bogotá today): a transparent 3D scene, LEFT of the
+          copy on desktop, below it on mobile. Sized to a full half-column so its
+          height comes up close to the paragraph's (the copy is tall). A cutout,
+          not a framed photo: object-contain, no card/rounded/shadow, so it
+          floats on the white section. Only for cities present in CITY_DIORAMA.
         -->
         <div v-if="dioramaSrc" class="order-2 lg:order-1">
           <NuxtImg
@@ -84,8 +85,8 @@
             :alt="`Explora ${city?.name} con tu carro de alquiler`"
             loading="lazy"
             format="webp"
-            sizes="304px"
-            class="w-full max-w-xs mx-auto h-auto object-contain select-none"
+            sizes="(min-width: 1024px) 600px, 100vw"
+            class="w-full h-auto object-contain select-none"
             draggable="false"
           />
         </div>
