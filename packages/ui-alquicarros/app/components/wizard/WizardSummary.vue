@@ -29,9 +29,26 @@
           </div>
         </dl>
         <div class="px-5 pb-4">
-          <div class="flex items-baseline justify-between border-t border-dashed border-gray-200 pt-3">
-            <span class="body-base font-semibold text-gray-900">Total</span>
-            <span class="price-md text-brand-800 font-heading">{{ totalLabel ?? '—' }}</span>
+          <div class="border-t border-dashed border-gray-200 pt-3">
+            <!-- Issue #373: desglose per-day renta + IVA/tasa (oculto en mensual). -->
+            <template v-if="showRentBreakdown">
+              <div class="flex items-baseline justify-between gap-3">
+                <span class="body-sm text-gray-500">Total renta</span>
+                <span class="body-sm font-medium text-gray-700" data-testid="wizard-total-renta">{{ rentaLabel }}</span>
+              </div>
+              <div class="flex items-baseline justify-between gap-3 mt-1" data-testid="wizard-iva-tax-line">
+                <span class="body-sm text-gray-500">IVA + Tasa</span>
+                <span class="body-sm font-medium text-gray-700">{{ ivaTaxLabel }}</span>
+              </div>
+            </template>
+            <div
+              class="flex items-baseline justify-between gap-3"
+              :class="showRentBreakdown ? 'mt-2 pt-2 border-t border-gray-100' : ''"
+            >
+              <span class="body-base font-semibold text-gray-900">Total a pagar</span>
+              <span class="price-md text-brand-800 font-heading" data-testid="wizard-total-a-pagar">{{ totalLabel ?? '—' }}</span>
+            </div>
+            <p v-if="totalLabel" class="mt-0.5 body-xs text-right text-gray-500">Incluye IVA y tasa</p>
           </div>
           <UButton
             block
@@ -72,6 +89,17 @@
                 {{ row.value }}
               </dd>
             </div>
+            <!-- Issue #373: desglose per-day renta + IVA/tasa (oculto en mensual). -->
+            <template v-if="showRentBreakdown">
+              <div class="flex items-baseline justify-between gap-3 border-t border-dashed border-gray-200 pt-2">
+                <dt class="body-sm text-gray-500">Total renta</dt>
+                <dd class="body-sm text-right font-medium text-gray-700" data-testid="wizard-total-renta-mobile">{{ rentaLabel }}</dd>
+              </div>
+              <div class="flex items-baseline justify-between gap-3" data-testid="wizard-iva-tax-line-mobile">
+                <dt class="body-sm text-gray-500">IVA + Tasa</dt>
+                <dd class="body-sm text-right font-medium text-gray-700">{{ ivaTaxLabel }}</dd>
+              </div>
+            </template>
           </dl>
         </transition>
 
@@ -84,7 +112,7 @@
             @click="mobileOpen = !mobileOpen"
           >
             <span class="body-xs text-gray-500 inline-flex items-center gap-1">
-              Total
+              Total a pagar
               <IconsChevronDownIcon
                 class="h-3.5 w-3.5 transition-transform"
                 :class="mobileOpen ? 'rotate-180' : ''"
@@ -182,15 +210,50 @@ const extrasLabel = computed(() => {
   return items.length ? items.join(' · ') : null
 })
 
+// Issue #373: el total prominente es lo que EFECTIVAMENTE se cobra con IVA + tasa
+// (currencyTotalToPayWithAdditionals = getActualTotalPrice + adicionales). Antes se
+// ligaba a currencyTotalWithAdditionals (renta SIN IVA/tasa): ~31% menos. Los
+// adicionales se muestran dentro del total pero se registran como flags aparte del
+// payload (misma convención que la marca hermana ReservationResume.vue).
+// El fallback usa currencyActualTotalPrice (también IVA + tasa incluidos), NUNCA
+// currencyTotalPrice: caer a la renta sin IVA reintroduciría el bug #373.
 const totalLabel = computed(() => {
   const sc = selectedCategory.value
-  // Issue #313: más allá del horizonte de tarifas getTotalPrice = 0, y
+  // Issue #313: más allá del horizonte de tarifas los totales = 0, y
   // moneyFormat(0) = "0" (no nulish) burlaría el `?? '—'` → mostraría "Total 0"
   // (precio fabricado). Fail-closed: sin total que mostrar (el CTA ya está
   // bloqueado y la card/tile explican por qué).
   if (!sc || sc.isMonthlyPriceUnavailable) return null
+  return sc.currencyTotalToPayWithAdditionals ?? sc.currencyActualTotalPrice ?? null
+})
+
+// "Total renta" — subtotal de renta con adicionales pero SIN IVA/tasa
+// (getTotalWithAdditionals). Es la base sobre la que aplica "IVA + Tasa".
+const rentaLabel = computed(() => {
+  const sc = selectedCategory.value
+  if (!sc || sc.isMonthlyPriceUnavailable) return null
   return sc.currencyTotalWithAdditionals ?? sc.currencyTotalPrice ?? null
 })
+
+// "IVA + Tasa" — la brecha entre renta y total a pagar (getIvaAndTaxAmount).
+const ivaTaxLabel = computed(() => selectedCategory.value?.currencyIvaAndTax ?? null)
+
+// Brecha numérica IVA + tasa = total a pagar − renta (los adicionales se cancelan).
+// getIvaAndTaxAmount no se re-exporta desde useCategory, así que la derivamos de los
+// dos totales numéricos que sí viajan en selectedCategory.
+const ivaTaxAmount = computed(() => {
+  const sc = selectedCategory.value
+  if (!sc) return 0
+  return (sc.getTotalToPayWithAdditionals ?? 0) - (sc.getTotalWithAdditionals ?? 0)
+})
+
+// El desglose renta / IVA solo tiene sentido per-day CON brecha positiva: en mensual
+// el catálogo ya incluye IVA (brecha 0) y en datos anómalos (actual ≤ renta) la brecha
+// se clampa a 0 → mostrar "IVA + Tasa $0" con renta ≥ total sería contradictorio.
+// Fail-closed (totalLabel null) también lo oculta.
+const showRentBreakdown = computed(
+  () => totalLabel.value != null && !haveMonthlyReservation.value && ivaTaxAmount.value > 0
+)
 
 interface SummaryRow {
   label: string
