@@ -120,14 +120,22 @@ describe('city SEO headings — unified big title size', () => {
       expect(tag, tag).toMatch(/font-extrabold/)
     }
   })
+
+  it('every card <h3> sub-title is text-xl font-bold (one size/weight)', () => {
+    const h3s = SEO.match(/<h3\b[^>]*>/g) ?? []
+    expect(h3s.length).toBeGreaterThan(0)
+    for (const tag of h3s) {
+      expect(tag, tag).toMatch(/text-xl/)
+      expect(tag, tag).toMatch(/font-bold/)
+    }
+  })
 })
 
 describe('F2 city SEO content — design styling lessons', () => {
   it('headings adopt a brand heading utility (Plus Jakarta, F0-03)', () => {
-    // Section <h2> titles use font-heading (heading-section renders the wrong
-    // golden size); h3 sub-headings still use the heading-sub token.
+    // Both section <h2> titles and card <h3> sub-titles use font-heading — off
+    // the heading-* tokens, whose applied weight/size lost to stacked utilities.
     expect(SEO).toMatch(/font-heading/)
-    expect(SEO).toMatch(/heading-sub/)
   })
 
   it('never uses the broken v3 bg-gradient-to- alias', () => {

@@ -54,7 +54,7 @@
               />
             </div>
 
-            <h3 class="heading-sub text-lg md:text-xl font-bold text-gray-900 mb-2">
+            <h3 class="font-heading text-xl font-bold text-gray-900 mb-2">
               {{ step.title }}
             </h3>
             <p class="text-sm md:text-base text-gray-500 leading-relaxed">

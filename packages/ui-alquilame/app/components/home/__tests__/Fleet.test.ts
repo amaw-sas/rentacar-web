@@ -201,7 +201,7 @@ describe('Fleet — framed cards on a tinted section', () => {
 describe('Fleet — card typography system', () => {
   // The card body: from the category <h3> to the CTA label. lastIndexOf on the
   // CTA because the copy is also quoted in the file's top docblock.
-  const start = FLEET.indexOf('<h3 class="text-lg')
+  const start = FLEET.indexOf('<h3 class="text-xl')
   const end = FLEET.lastIndexOf('Cotizar mis fechas')
   const CARD = FLEET.slice(start, end)
 
@@ -221,8 +221,9 @@ describe('Fleet — card typography system', () => {
     expect(CARD).not.toMatch(/\bfont-semibold\b/)
   })
 
-  it('uses only the 4 sizes text-2xl / text-lg / text-sm / text-xs', () => {
-    const allowed = new Set(['text-2xl', 'text-lg', 'text-sm', 'text-xs'])
+  it('uses only the 4 sizes text-2xl / text-xl / text-sm / text-xs', () => {
+    // Category <h3> unified to text-xl (20px) with the other card sub-titles.
+    const allowed = new Set(['text-2xl', 'text-xl', 'text-sm', 'text-xs'])
     const sizes = CARD.match(/\btext-(xs|sm|base|lg|xl|\dxl)\b/g) ?? []
     const rogue = [...new Set(sizes)].filter((s) => !allowed.has(s))
     expect(rogue, `unexpected size utilities in the card: ${rogue.join(', ')}`).toEqual([])

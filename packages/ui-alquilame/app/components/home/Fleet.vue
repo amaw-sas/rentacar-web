@@ -106,7 +106,7 @@
           -->
           <div class="p-6 flex flex-col flex-1">
             <!-- Category + transmission -->
-            <h3 class="text-lg font-bold font-heading text-gray-900 mb-2">
+            <h3 class="text-xl font-bold font-heading text-gray-900 mb-2">
               {{ card.title }}
               <span class="text-sm font-normal text-gray-600"> · {{ card.transmission }}</span>
             </h3>

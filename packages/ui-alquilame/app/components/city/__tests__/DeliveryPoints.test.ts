@@ -62,10 +62,9 @@ describe('F2 delivery-points — F0/F1 styling lessons', () => {
   })
 
   it('headings adopt a brand heading utility (Plus Jakarta, F0-03)', () => {
-    // Title uses font-heading + the golden size ramp (heading-section renders at
-    // the wrong golden size, so section titles moved off it — see home parity).
+    // Both the section <h2> title and the branch <h3> use font-heading — off the
+    // heading-* tokens, whose applied weight/size lost to stacked utilities.
     expect(SRC).toMatch(/font-heading/)
-    expect(SRC).toMatch(/heading-card/)
   })
 
   it('is a light section — no forced white text override', () => {

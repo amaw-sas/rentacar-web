@@ -39,7 +39,7 @@
               <span class="text-2xl" aria-hidden="true">{{ benefit.emoji }}</span>
             </div>
             <div>
-              <h3 class="heading-sub text-gray-900 mb-1">{{ benefit.title }}</h3>
+              <h3 class="font-heading text-xl font-bold text-gray-900 mb-1">{{ benefit.title }}</h3>
               <p class="text-gray-600 text-sm leading-relaxed">{{ benefit.body }}</p>
             </div>
           </div>
@@ -125,7 +125,7 @@
             class="bg-[#F8F9FC] rounded-[22px] border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(17,17,34,0.09)] transition-all duration-200 p-6"
           >
             <div class="flex items-start justify-between gap-3 mb-3">
-              <h3 class="heading-sub text-gray-900">{{ destination.name }}</h3>
+              <h3 class="font-heading text-xl font-bold text-gray-900">{{ destination.name }}</h3>
               <span class="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full whitespace-nowrap">
                 {{ destination.time }}
               </span>
@@ -162,7 +162,7 @@
               <span class="text-red-600 font-bold text-lg" aria-hidden="true">{{ tip.emoji }}</span>
             </div>
             <div>
-              <h3 class="heading-sub text-gray-900 mb-1">{{ tip.title }}</h3>
+              <h3 class="font-heading text-xl font-bold text-gray-900 mb-1">{{ tip.title }}</h3>
               <p class="text-gray-600 text-sm leading-relaxed">{{ tip.body }}</p>
             </div>
           </div>

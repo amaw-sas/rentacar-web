@@ -53,7 +53,7 @@
               >
                 <LocationIcon cls="size-4" />
               </span>
-              <h3 class="heading-card text-lg sm:text-xl font-bold text-gray-900 leading-snug pt-0.5">
+              <h3 class="font-heading text-xl font-bold text-gray-900 leading-snug pt-0.5">
                 {{ branch.name }}
               </h3>
             </div>
