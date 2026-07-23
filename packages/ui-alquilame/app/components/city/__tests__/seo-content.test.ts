@@ -99,9 +99,35 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
   })
 })
 
+/**
+ * Section titles are unified to one size across the whole city page:
+ *   GIVEN the SEO block's section headings
+ *   THEN  every <h2> uses the big treatment (text-3xl md:text-4xl font-extrabold),
+ *         matching the home/DeliveryPoints titles — no smaller heading-section-
+ *         only titles left, so the page has no size jump between sections.
+ */
+describe('city SEO headings — unified big title size', () => {
+  const h2s = SEO.match(/<h2\b[^>]*>/g) ?? []
+
+  it('has the expected number of section titles', () => {
+    expect(h2s.length).toBe(6)
+  })
+
+  it('every section <h2> is text-3xl md:text-4xl font-extrabold', () => {
+    for (const tag of h2s) {
+      expect(tag, tag).toMatch(/text-3xl/)
+      expect(tag, tag).toMatch(/md:text-4xl/)
+      expect(tag, tag).toMatch(/font-extrabold/)
+    }
+  })
+})
+
 describe('F2 city SEO content — design styling lessons', () => {
-  it('headings adopt a .heading-* utility (Plus Jakarta, F0-03)', () => {
-    expect(SEO).toMatch(/heading-section/)
+  it('headings adopt a brand heading utility (Plus Jakarta, F0-03)', () => {
+    // Section <h2> titles use font-heading (heading-section renders the wrong
+    // golden size); h3 sub-headings still use the heading-sub token.
+    expect(SEO).toMatch(/font-heading/)
+    expect(SEO).toMatch(/heading-sub/)
   })
 
   it('never uses the broken v3 bg-gradient-to- alias', () => {

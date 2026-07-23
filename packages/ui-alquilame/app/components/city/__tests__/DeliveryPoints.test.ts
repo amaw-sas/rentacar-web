@@ -61,8 +61,10 @@ describe('F2 delivery-points — F0/F1 styling lessons', () => {
     expect(SRC).not.toContain('bg-gradient-to-')
   })
 
-  it('headings adopt a .heading-* utility (Plus Jakarta, F0-03)', () => {
-    expect(SRC).toMatch(/heading-section/)
+  it('headings adopt a brand heading utility (Plus Jakarta, F0-03)', () => {
+    // Title uses font-heading + the golden size ramp (heading-section renders at
+    // the wrong golden size, so section titles moved off it — see home parity).
+    expect(SRC).toMatch(/font-heading/)
     expect(SRC).toMatch(/heading-card/)
   })
 

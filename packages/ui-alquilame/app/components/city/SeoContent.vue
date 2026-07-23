@@ -24,7 +24,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
-          <h2 class="heading-section text-gray-900">
+          <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
             <span class="text-red-700">Ventajas de alquilar carro</span>
             <span class="text-gray-900"> en {{ city?.name }}</span>
           </h2>
@@ -93,7 +93,7 @@
 
         <div class="order-1 lg:order-2">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
-          <h2 class="heading-section text-gray-900 mb-5">
+          <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-5">
             <span class="text-red-700">Explora {{ city?.name }}</span>
             <span class="text-gray-900"> con tu carro de alquiler</span>
           </h2>
@@ -113,7 +113,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
-          <h2 class="heading-section text-gray-900">
+          <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
             <span class="text-red-700">Destinos para recorrer con carro rentado</span>
             <span class="text-gray-900"> desde {{ city?.name }}</span>
           </h2>
@@ -145,7 +145,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
-          <h2 class="heading-section text-gray-900">
+          <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
             <span class="text-red-700">Consejos</span>
             <span class="text-gray-900"> para alquilar carro en {{ city?.name }}</span>
           </h2>
@@ -185,7 +185,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1.7fr_1fr] gap-8 lg:gap-12 items-center">
         <div>
           <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
-          <h2 class="heading-section text-gray-900 mb-5">
+          <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-5">
             <span class="text-red-700">Mejor época</span>
             <span class="text-gray-900"> para alquilar carro y viajar a {{ city?.name }}</span>
           </h2>
@@ -218,7 +218,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-8">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
-          <h2 class="heading-section text-gray-900">
+          <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
             <span class="text-red-700">Alquiler de carros</span>
             <span class="text-gray-900"> en ciudades cercanas</span>
           </h2>

@@ -27,7 +27,7 @@
           class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"
           aria-hidden="true"
         />
-        <h2 class="heading-section text-3xl md:text-4xl text-gray-900 leading-tight mb-3">
+        <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-3">
           Opiniones de clientes que rentaron carros en {{ city?.name }}
         </h2>
         <p class="text-base text-gray-600">

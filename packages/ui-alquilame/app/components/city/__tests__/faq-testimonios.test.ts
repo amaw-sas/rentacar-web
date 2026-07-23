@@ -56,7 +56,7 @@ describe('F2 step05 — city/Faq.vue', () => {
   })
 
   it('adopts the .heading-* utilities (Plus Jakarta) for its heading', () => {
-    expect(faq).toMatch(/heading-(section|card|hero)/)
+    expect(faq).toMatch(/font-heading|heading-(section|card|hero)/)
   })
 
   it('keeps the city name in the heading (city-targeted)', () => {
@@ -102,7 +102,7 @@ describe('F2 step05 — city/Testimonios.vue', () => {
   })
 
   it('adopts the .heading-* utilities (Plus Jakarta) for its heading', () => {
-    expect(testimonios).toMatch(/heading-(section|card|hero)/)
+    expect(testimonios).toMatch(/font-heading|heading-(section|card|hero)/)
   })
 })
 
