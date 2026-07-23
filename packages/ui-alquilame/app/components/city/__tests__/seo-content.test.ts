@@ -125,7 +125,7 @@ describe('F2 city SEO content — design styling lessons', () => {
  * stretching to meet them. What remains here is the part that still holds:
  * the intro is prose and must stay capped.
  */
-describe('SEO block — #introduccion is prose and stays capped', () => {
+describe('SEO block — #introduccion width is content-driven', () => {
   const widthOf = (id: string): string | null => {
     const at = SEO.indexOf(`id="${id}"`)
     if (at < 0) return null
@@ -133,8 +133,14 @@ describe('SEO block — #introduccion is prose and stays capped', () => {
     return m ? m[1]! : null
   }
 
-  it('caps the intro at the reading width, not the grid width', () => {
-    expect(widthOf('introduccion')).toBe('3xl')
+  it('caps the intro at the reading width when it has no diorama', () => {
+    const seg = SEO.slice(SEO.indexOf('id="introduccion"'), SEO.indexOf('id="introduccion"') + 900)
+    expect(seg).toMatch(/max-w-3xl/)
+  })
+
+  it('but expands to the grid width when a diorama is present', () => {
+    const seg = SEO.slice(SEO.indexOf('id="introduccion"'), SEO.indexOf('id="introduccion"') + 900)
+    expect(seg).toMatch(/dioramaSrc[\s\S]*max-w-7xl grid/)
   })
 
   it('its neighbouring CARD sections are the ones that run full width', () => {
@@ -218,5 +224,34 @@ describe('best-season section — accompanying road image', () => {
   it('ships the referenced asset', () => {
     const asset = join(CITY, '..', '..', '..', 'public/images/cities/carretera-viaje.webp')
     expect(existsSync(asset), 'carretera-viaje.webp missing').toBe(true)
+  })
+})
+
+/**
+ * "Explora {ciudad}" gets an optional per-city diorama:
+ *   GIVEN a city that ships a diorama (Bogotá does)
+ *   THEN  the intro shows text + the transparent diorama beside it, wider than
+ *         the prose cap. Cities WITHOUT a diorama keep the narrow prose intro.
+ * The diorama is a transparent cutout: no card, no rounded box — object-contain.
+ */
+describe('#introduccion — optional per-city diorama', () => {
+  it('has a per-city diorama map that includes Bogotá', () => {
+    expect(SEO).toMatch(/bogota:\s*'\/images\/cities\/diorama-bogota\.webp'/)
+  })
+
+  it('renders the diorama as a transparent, lazy NuxtImg (no card box)', () => {
+    const at = SEO.indexOf('id="introduccion"')
+    const seg = SEO.slice(at, at + 1600)
+    expect(seg).toMatch(/<NuxtImg\b/)
+    expect(seg).toMatch(/dioramaSrc/)
+    expect(seg).toMatch(/loading="lazy"/)
+    expect(seg).toMatch(/object-contain/)
+    // A transparent cutout, not a framed card.
+    expect(seg).not.toMatch(/rounded-2xl[^"]*shadow|border-\[7px\]/)
+  })
+
+  it('ships the Bogotá diorama asset', () => {
+    const asset = join(CITY, '..', '..', '..', 'public/images/cities/diorama-bogota.webp')
+    expect(existsSync(asset), 'diorama-bogota.webp missing').toBe(true)
   })
 })

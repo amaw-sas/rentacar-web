@@ -45,8 +45,9 @@ const GRID_SECTIONS: ReadonlyArray<[string, string]> = [
 ]
 
 // Sections that are running prose → capped for readability.
+// (#introduccion is prose ONLY without a diorama; its own test below covers the
+// conditional grid width, so it is not in this blanket list.)
 const PROSE_SECTIONS: ReadonlyArray<[string, string]> = [
-  ['introduccion', 'SEO'],
   ['faqs', 'FAQ'],
 ]
 
@@ -66,6 +67,20 @@ describe('city sections — prose stays readable', () => {
       expect(widthAfter(sources[file]!, id), `#${id} container not found`).toBe('3xl')
     })
   }
+})
+
+describe('#introduccion — width is content-driven (prose vs diorama grid)', () => {
+  const seg = SEO.slice(SEO.indexOf('id="introduccion"'), SEO.indexOf('id="introduccion"') + 900)
+
+  it('stays capped at max-w-3xl when the city has no diorama', () => {
+    expect(seg).toMatch(/max-w-3xl/)
+  })
+
+  it('expands to the 7xl 2-col grid when a diorama is present', () => {
+    expect(seg).toMatch(/dioramaSrc/)
+    expect(seg).toMatch(/max-w-7xl grid/)
+    expect(seg).toMatch(/lg:grid-cols-/)
+  })
 })
 
 describe('city sections — only the two sanctioned widths exist', () => {

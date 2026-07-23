@@ -59,17 +59,46 @@
       id="introduccion"
       class="bg-white py-12 md:py-16"
     >
-      <!-- Prose width (max-w-3xl): this is running text, not cards. Under the
-           two-width rule it stays capped for readability while the card
-           sections around it run full width. -->
-      <div class="max-w-3xl mx-auto">
-        <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
-        <h2 class="heading-section text-gray-900 mb-5">
-          <span class="text-red-700">Explora {{ city?.name }}</span>
-          <span class="text-gray-900"> con tu carro de alquiler</span>
-        </h2>
-        <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
-          <p>{{ expandedContent.intro }}</p>
+      <!--
+        Width is content-driven (two-width rule). Plain prose stays capped at
+        max-w-3xl for readability; when the city ships a diorama the intro
+        becomes a 2-col grid (small diorama left, text right) at the 7xl grid
+        width. Single source for the heading + paragraph — only the wrapper
+        class and the optional diorama column change.
+      -->
+      <div
+        class="mx-auto px-4 sm:px-6 lg:px-8"
+        :class="dioramaSrc
+          ? 'max-w-7xl grid items-center gap-6 lg:gap-12 lg:grid-cols-[minmax(0,19rem)_1fr]'
+          : 'max-w-3xl'"
+      >
+        <!--
+          Per-city diorama (Bogotá today): a small transparent 3D scene, LEFT of
+          the copy on desktop, below it on mobile. A cutout, not a framed photo:
+          object-contain, no card/rounded/shadow, so it floats on the white
+          section. Only renders for cities present in CITY_DIORAMA.
+        -->
+        <div v-if="dioramaSrc" class="order-2 lg:order-1">
+          <NuxtImg
+            :src="dioramaSrc"
+            :alt="`Explora ${city?.name} con tu carro de alquiler`"
+            loading="lazy"
+            format="webp"
+            sizes="304px"
+            class="w-full max-w-xs mx-auto h-auto object-contain select-none"
+            draggable="false"
+          />
+        </div>
+
+        <div class="order-1 lg:order-2">
+          <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
+          <h2 class="heading-section text-gray-900 mb-5">
+            <span class="text-red-700">Explora {{ city?.name }}</span>
+            <span class="text-gray-900"> con tu carro de alquiler</span>
+          </h2>
+          <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
+            <p>{{ expandedContent.intro }}</p>
+          </div>
         </div>
       </div>
     </section>
@@ -265,6 +294,15 @@ const { cities } = useData()
 const otherCities = computed(() =>
   cities.value.filter((c: City) => c.id !== props.city?.id),
 )
+
+// Per-city hero diorama for the #introduccion showcase. Only a few cities ship
+// a bespoke transparent scene (Bogotá today); the rest keep the text-only intro.
+// Keyed by city id so it renders on exactly one city, never blanket like the
+// shared road photo. Add an entry here as more city dioramas are produced.
+const CITY_DIORAMA: Record<string, string> = {
+  bogota: '/images/cities/diorama-bogota.webp',
+}
+const dioramaSrc = computed(() => CITY_DIORAMA[props.city?.id ?? ''])
 
 /**
  * Benefits copy. Pickup wording is availability-based because not every city
