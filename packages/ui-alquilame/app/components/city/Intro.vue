@@ -23,8 +23,8 @@
   -->
   <div>
     <!-- Description Section (#descripcion) — city poster + description copy -->
-    <section id="descripcion" class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 items-center">
+    <section id="descripcion" class="bg-white py-12 md:py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 items-center">
         <!-- City illustration (CLS-safe: reserved square box) -->
         <div class="flex justify-center md:self-center aspect-square w-full max-w-[400px] mx-auto">
           <LazyImagesCiudadesChica :city-name="city?.name" />

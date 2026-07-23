@@ -31,8 +31,8 @@
        ON a surface rather than boxes drawn on the page. Pairs with the white
        card frame below — the contrast between the two is what makes the frame
        visible at all. -->
-  <section id="fleet" class="bg-surface-soft text-black py-12 md:py-20 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
+  <section id="fleet" class="bg-surface-soft text-black py-12 md:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Heading -->
       <div class="text-center mb-12">
         <div class="h-1 w-10 rounded-full bg-brand-600 mb-4 mx-auto" />

@@ -21,7 +21,7 @@
     id="puntos-entrega"
     class="relative overflow-hidden bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8"
   >
-    <div class="max-w-7xl mx-auto relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <!-- Header: red accent bar + heading + subtitle -->
       <div class="mb-8">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-4" aria-hidden="true" />

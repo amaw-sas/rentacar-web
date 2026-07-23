@@ -20,8 +20,8 @@
   -->
   <div>
     <!-- Benefits Section (#ventajas) — adds ~100 words for SEO -->
-    <section id="ventajas" class="bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-7xl mx-auto">
+    <section id="ventajas" class="bg-[#EDF0F5] py-12 md:py-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
@@ -57,7 +57,7 @@
     <section
       v-if="expandedContent"
       id="introduccion"
-      class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8"
+      class="bg-white py-12 md:py-16"
     >
       <!-- Prose width (max-w-3xl): this is running text, not cards. Under the
            two-width rule it stays capped for readability while the card
@@ -78,9 +78,9 @@
     <section
       v-if="expandedContent"
       id="destinos"
-      class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8"
+      class="bg-white py-12 md:py-16"
     >
-      <div class="max-w-7xl mx-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
@@ -110,9 +110,9 @@
     <section
       v-if="expandedContent"
       id="consejos-conduccion"
-      class="bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8"
+      class="bg-[#EDF0F5] py-12 md:py-16"
     >
-      <div class="max-w-7xl mx-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
@@ -144,7 +144,7 @@
     <section
       v-if="expandedContent"
       id="mejor-temporada"
-      class="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-8"
+      class="bg-white py-12 md:py-16"
     >
       <div class="max-w-3xl mx-auto">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
@@ -164,7 +164,7 @@
       id="ciudades-cercanas"
       class="bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8"
     >
-      <div class="max-w-7xl mx-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-8">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
