@@ -35,12 +35,12 @@
           Estamos con problemas técnicos. Intenta de nuevo en unos minutos.
         </p>
         <a
-          :href="`https://wa.me/57${whatsappContact.phone}`"
+          :href="franchise.whatsapp"
           target="_blank"
           rel="noopener"
           class="mt-3 inline-block body-sm font-semibold text-brand-800 underline"
         >
-          Escríbenos por WhatsApp {{ whatsappContact.display }}
+          Escríbenos por WhatsApp {{ franchise.phone }}
         </a>
       </template>
       <template v-else>
@@ -100,12 +100,12 @@
         </p>
         <p class="mt-1 body-base text-gray-600">Escríbenos y te cotizamos.</p>
         <a
-          :href="`https://wa.me/57${whatsappContact.phone}`"
+          :href="franchise.whatsapp"
           target="_blank"
           rel="noopener"
           class="mt-3 inline-block body-sm font-semibold text-brand-800 underline"
         >
-          Escríbenos por WhatsApp {{ whatsappContact.display }}
+          Escríbenos por WhatsApp {{ franchise.phone }}
         </a>
       </div>
 
@@ -191,8 +191,10 @@ const errorMessage = computed(() => {
   )
 })
 
-// Fallback humano (WhatsApp) ante server_error — espeja CategorySelectionSection.
-const whatsappContact = { phone: '3187703670', display: '318 770 3670' }
+// Fallback humano (WhatsApp) ante server_error. Contacto desde app.config (misma
+// fuente que error.vue y el bloque de estado desconocido del shell), no un literal
+// propio — era la tercera copia del mismo número (issue #366 D5).
+const { franchise } = useAppConfig()
 
 // Solo gamas renderizables Y disponibles: espeja renderableCategories de
 // CategorySelectionSection (necesitan metadata de presentación) y descarta las
