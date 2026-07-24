@@ -114,7 +114,11 @@ function useSearchInstance() {
   const { createMessage, flushMessages } = useMessages();
   const { searchBranchByCity, searchBranchByCode } = storeAdminData;
   
-  const doSearch = () => {
+  // Reports whether the search actually went out. Callers that emit their own
+  // notices need it: doSearch opens with flushMessages(), so a message created
+  // beforehand dies here, and the two guards below bail without searching —
+  // notifying anyway would give the user two competing toasts (issue #402).
+  const doSearch = (): boolean => {
     flushMessages();
 
     // Block a pickup that is already in the past before hitting the backend.
@@ -142,7 +146,7 @@ function useSearchInstance() {
                 message: "Por favor escoge una hora de recogida posterior a la hora actual.",
               },
         );
-        return;
+        return false;
       }
     }
 
@@ -157,7 +161,7 @@ function useSearchInstance() {
         title: "Revisa las fechas",
         message: "La fecha de devolución debe ser posterior a la fecha de recogida.",
       });
-      return;
+      return false;
     }
 
     // Warn about extra-hour charges under the exact same condition that renders
@@ -211,6 +215,7 @@ function useSearchInstance() {
       rental_type: haveMonthlyReservation.value ? 'monthly' : 'daily',
     });
     search();
+    return true;
   }
 
   const changePickupLocation = function (branch_code: string) {
