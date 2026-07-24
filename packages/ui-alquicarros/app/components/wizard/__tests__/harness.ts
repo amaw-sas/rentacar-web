@@ -23,11 +23,21 @@ import { createPinia, setActivePinia } from 'pinia'
 import type { Ref } from 'vue'
 import type { VueWrapper } from '@vue/test-utils'
 
+// config
+import {
+  OTROS_SEGMENT,
+  VEHICLE_SEGMENTS,
+  segmentForCode,
+} from '~/config/vehicleSegments'
+
 // logic (los módulos REALES, no dobles)
 import useStoreSearchData from '@rentacar-main/logic/stores/useStoreSearchData'
 import useStoreReservationForm from '@rentacar-main/logic/stores/useStoreReservationForm'
 import useCategory from '@rentacar-main/logic/composables/useCategory'
 import useMoneyFormat from '@rentacar-main/logic/composables/useMoneyFormat'
+
+// utils
+import { categoryOffersMonthly } from '@rentacar-main/logic/utils'
 
 // Types
 import type {
@@ -190,6 +200,16 @@ export interface WizardHarness {
   runSearch: () => Promise<void>
   /** Clic en el CTA "Elegir" de una gama. Es el único disparador de `onSelect`. */
   selectGama: (code: CategoryType) => Promise<void>
+  /** Clic en "Continuar" del resumen (escritorio): avanza un paso. */
+  clickContinue: () => Promise<void>
+  /** Salto por el stepper al paso 1..5. Lo bloquea `maxReachedStep`, como en real. */
+  goToStep: (n: number) => Promise<void>
+  /** Paso actual del shell, leído del estado de setup. */
+  currentStep: () => string
+  /** ¿El CTA de escritorio del resumen está deshabilitado? */
+  ctaDisabled: () => boolean
+  /** Abre un segmento por su etiqueta ("Sedanes"). El Paso 2 solo pinta el abierto. */
+  openSegment: (label: string) => Promise<void>
 }
 
 const money = useMoneyFormat().moneyFormat
@@ -298,7 +318,14 @@ export async function mountWizard(options: MountWizardOptions = {}): Promise<Wiz
         // Reales: el Paso 2, el resumen y la card — esta última es la que emite
         // `select` con la instancia de useCategory, o sea el único disparador de
         // `onSelect`. Sin ella no arranca ningún escenario de la fase 3.
-        WizardStepper: true,
+        // Emite `go-to` como el real: es la única vía de saltar de paso sin pasar
+        // por los intermedios, que es justo lo que SCEN-368B1-03 necesita.
+        WizardStepper: {
+          props: ['current', 'maxReached'],
+          emits: ['go-to'],
+          template:
+            '<nav><button v-for="n in 5" :key="n" :data-testid="`stepper-${n}`" @click="$emit(\'go-to\', n)">{{ n }}</button></nav>',
+        },
         WizardStepsStepSearch: true,
         WizardStepsStepCoverage: true,
         WizardStepsStepExtras: true,
@@ -337,6 +364,19 @@ export async function mountWizard(options: MountWizardOptions = {}): Promise<Wiz
   expect(wrapper.find('[data-testid="wizard-total-a-pagar"]').exists(),
     'el resumen no se montó').toBe(true)
 
+  // En mensual el arnés escribe `categoriesAvailabilityData` directo, saltándose el
+  // filtro `offersMonthly` que la búsqueda real aplica (useStoreSearchData.ts:136).
+  // Sin esta comprobación una fixture puede representar una gama que producción NUNCA
+  // lista —fila aplicable con 1k y 2k a 0— y contra ella el resumen dice "$ 0" sin que
+  // ningún fail-closed intervenga, porque la fila existe. Un escenario apoyado en ese
+  // estado estaría midiendo un mundo que no ocurre.
+  if (options.monthly) {
+    for (const category of rentacarData.categories) {
+      expect(categoryOffersMonthly(category.month_prices, pickupDate),
+        `la gama ${category.id} no ofrece mensual para ${pickupDate}: la búsqueda real la habría filtrado`).toBe(true)
+    }
+  }
+
   const summaryRow = (label: string): string | null => {
     const dts = wrapper.findAll('dt')
     const dt = dts.find((node) => node.text().trim() === label)
@@ -352,14 +392,76 @@ export async function mountWizard(options: MountWizardOptions = {}): Promise<Wiz
     await nextTick()
   }
 
+  /**
+   * Abre el segmento de una gama si no es el que está abierto. El Paso 2 tiene dos
+   * niveles y solo pinta las cards del segmento abierto, así que cambiar a una gama
+   * de OTRO segmento —el caso realista de "elijo un sedán en vez de un compacto"—
+   * pasa primero por su tile. Sin esto, el CTA de la gama destino no existe y todo
+   * escenario de arrastre entre segmentos falla antes de empezar.
+   */
+  const openSegment = async (label: string): Promise<void> => {
+    const tile = wrapper
+      .findAll('[data-testid="segment-tile"]')
+      .find((node) => node.text().trim() === label)
+    expect(tile, `no se encontró el tile del segmento "${label}"`).toBeTruthy()
+    await tile!.trigger('click')
+    await nextTick()
+  }
+
+  const openSegmentFor = async (code: CategoryType): Promise<void> => {
+    if (wrapper.find(`[data-testid="wizard-select-${code}-test"]`).exists()) return
+    const segmentId = segmentForCode(code)
+    await openSegment(
+      VEHICLE_SEGMENTS.find((segment) => segment.id === segmentId)?.label ?? OTROS_SEGMENT.label,
+    )
+  }
+
   const selectGama = async (code: CategoryType): Promise<void> => {
+    await openSegmentFor(code)
     const cta = wrapper.find(`[data-testid="wizard-select-${code}-test"]`)
     expect(cta.exists(), `no se encontró el CTA "Elegir" de la gama ${code}`).toBe(true)
     await cta.trigger('click')
     await nextTick()
   }
 
-  return { wrapper, search, form, summaryRow, runSearch, selectGama }
+  const clickContinue = async (): Promise<void> => {
+    const cta = wrapper.find('[data-testid="wizard-continue-desktop-test"]')
+    expect(cta.exists(), 'no se encontró el CTA "Continuar" del resumen').toBe(true)
+    await cta.trigger('click')
+    await nextTick()
+  }
+
+  const goToStep = async (n: number): Promise<void> => {
+    await wrapper.find(`[data-testid="stepper-${n}"]`).trigger('click')
+    await nextTick()
+  }
+
+  // `<script setup>` no expone sus bindings por defecto; `setupState` sí, y
+  // auto-desenvuelve los refs. Es lectura de diagnóstico, no una vía de escritura:
+  // los escenarios navegan por el stepper y el CTA, como el usuario.
+  // Tipado nominal, no `Record<string, …>`: con `noUncheckedIndexedAccess` un Record
+  // hace opcional cada acceso y obliga a un `!` que oculta qué se está asumiendo.
+  type WizardSetupState = { setupState: { wizard: { currentStep: { value: string } } } }
+
+  const currentStep = (): string =>
+    String((wrapper.vm.$ as unknown as WizardSetupState).setupState.wizard.currentStep.value)
+
+  const ctaDisabled = (): boolean =>
+    wrapper.find('[data-testid="wizard-continue-desktop-test"]').attributes('disabled') !== undefined
+
+  return {
+    wrapper,
+    search,
+    form,
+    summaryRow,
+    runSearch,
+    selectGama,
+    clickContinue,
+    goToStep,
+    currentStep,
+    ctaDisabled,
+    openSegment,
+  }
 }
 
 export { money }

@@ -154,7 +154,8 @@ import { groupBySegment, segmentForCode, type SegmentGroup, type SegmentId } fro
 
 // composables (import explícito, no auto-import: así el componente es montable
 // en tests sin el runtime de Nuxt)
-import { sellablePlans } from '~/composables/useMonthlyPlans'
+import { canQuoteTotalCoverageFor, sellablePlans } from '~/composables/useMonthlyPlans'
+import { carrySelection } from '~/composables/useSelectionCarryOver'
 
 // utils
 import { isBeyondPricingHorizon } from '@rentacar-main/logic/utils'
@@ -331,15 +332,58 @@ const selectedCode = computed(() => selectedCategory.value?.categoryCode ?? null
 /**
  * Fija la gama elegida. `cat` es la instancia useCategory que emite la card;
  * queda como selectedCategory (lo que useRecordReservationForm lee al enviar) y
- * su código como `vehiculo`. Un vehículo recién elegido arranca en Seguro Básico
- * y kilometraje 1k: son los defaults de la instancia, y el watcher de derivación
- * de ReservationWizard los espeja en el form.
+ * su código como `vehiculo`.
+ *
+ * Issue #368 B1: la instancia nueva nace con todos sus flags en el default, así que
+ * lo que el usuario ya había elegido —Seguro Total, plan de kilometraje, adicionales—
+ * se arrastra sobre ella. Qué sobrevive lo decide `carrySelection`.
+ *
+ * El ORDEN no es estilo. Los flags se aplican sobre `cat` ANTES de asignar
+ * `selectedCategory`, porque el watcher de derivación de `ReservationWizard.vue:129-142`
+ * es `flush: 'sync'`: asignar primero lo dispara con los defaults frescos y escribe
+ * `haveTotalInsurance = false` en el form, que es lo que viaja en el payload. El estado
+ * final queda igual, así que solo un espía sobre esa ref distingue las dos versiones.
+ * `trackVehicleSelection` va también después, o mediría la instancia sin arrastrar.
+ * La marca hermana dejó escrito el mismo porqué en `CategorySelectionSection.vue:635-636`.
  */
 function onSelect(cat: ReturnType<typeof useCategory>): void {
   // Re-tap de la gama ya elegida = no-op: reasignar crearía una instancia fresca
   // (withTotalCoverage/withMileage/extras en su default) y borraría el Seguro Total,
   // el plan de kilometraje y los adicionales ya elegidos (data loss en conversión).
   if (cat.categoryCode.value === selectedCode.value) return
+
+  // `prev` llega auto-unwrapeado (el ref del store envuelve en reactive) y `cat` NO:
+  // viene crudo del emit de la card, así que sus flags son refs.
+  const prev = selectedCategory.value
+  const { flags } = carrySelection(
+    prev
+      ? {
+          withTotalCoverage: prev.withTotalCoverage,
+          withMileage: prev.withMileage,
+          withExtraDriver: prev.withExtraDriver,
+          withBabySeat: prev.withBabySeat,
+          withWash: prev.withWash,
+        }
+      : null,
+    {
+      monthly: haveMonthlyReservation.value,
+      // El predicado consciente del mensual, no `canQuoteTotalCoverage` crudo: en
+      // mensual el cobro sale de la fila del mes y el crudo tiraría el Seguro Total
+      // en gamas que sí lo venden.
+      canQuoteTotal: canQuoteTotalCoverageFor(
+        { canQuoteTotalCoverage: cat.canQuoteTotalCoverage.value },
+        haveMonthlyReservation.value,
+      ),
+      sellablePlans: sellablePlans(cat.categoryMonthPrices.value, fechaRecogida.value),
+    },
+  )
+
+  cat.withTotalCoverage.value = flags.withTotalCoverage
+  cat.withMileage.value = flags.withMileage
+  cat.withExtraDriver.value = flags.withExtraDriver
+  cat.withBabySeat.value = flags.withBabySeat
+  cat.withWash.value = flags.withWash
+
   selectedCategory.value = cat
   vehiculo.value = cat.categoryCode.value
   search.trackVehicleSelection(cat)
