@@ -82,8 +82,11 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
     expect(searchHydratorSource).toMatch(
       /const canReuseExistingSearch =[\s\S]*hasAvailableCategories\.value[\s\S]*selectedCategory\.value !== null[\s\S]*reservationSearchSignature/,
     )
+    // #402 reescribió esta línea: doSearch pasó a devolver si la búsqueda salió,
+    // así que su llamada vive en el lado falso de un ternario. Lo que este test
+    // fija no cambia — con una búsqueda reusable, doSearch NO se llama.
     expect(searchHydratorSource).toMatch(
-      /if \(canReuseExistingSearch\) return;\s*doSearch\(\);/,
+      /canReuseExistingSearch \? false : doSearch\(\);/,
     )
   })
 
