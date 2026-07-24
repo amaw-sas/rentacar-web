@@ -1,22 +1,20 @@
 <template>
   <UPage>
-    <UPageHero>
-      <template #title>
-        <h1 class="text-white text-2xl md:text-4xl text-center font-bold">
-          Contrato del Programa de Comisiones por Referidos
-        </h1>
-      </template>
-      <template #description>
-        <p class="text-gray-300 text-center">AMAW S.A.S.</p>
-      </template>
-    </UPageHero>
+        <!-- Banda de marca: mismo tratamiento que las otras legales del sitio. -->
+    <section class="bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
+        <h1 class="heading-page text-white">Contrato del Programa de Comisiones por Referidos</h1>
+        <div class="h-1 w-10 rounded-full bg-white/70 my-6 mx-auto" aria-hidden="true" />
+        <p class="text-sm text-white/75">AMAW S.A.S.</p>
+      </div>
+    </section>
 
     <section class="bg-white py-12 md:py-16">
-      <div class="max-w-4xl mx-auto px-4">
-        <div class="prose prose-lg max-w-none">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="legal-doc space-y-10 text-gray-700 leading-relaxed">
           <!-- 1. Definiciones -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">1. Definiciones</h2>
+            <h2 class="heading-section text-gray-900 mb-4">1. Definiciones</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 <strong>AMAW S.A.S.:</strong> Empresa propietaria del programa de referidos y operadora
@@ -39,7 +37,7 @@
 
           <!-- 2. Condiciones Generales -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">2. Condiciones Generales</h2>
+            <h2 class="heading-section text-gray-900 mb-4">2. Condiciones Generales</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 El programa de referidos está disponible para cualquier persona mayor de edad, excluyendo
@@ -55,7 +53,7 @@
 
           <!-- 3. Monto y Pago de Comisiones -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">3. Monto y Pago de Comisiones</h2>
+            <h2 class="heading-section text-gray-900 mb-4">3. Monto y Pago de Comisiones</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 La comisión será del <strong>5%</strong> del valor total de cada alquiler válido
@@ -80,7 +78,7 @@
 
           <!-- 4. Métodos de Pago -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">4. Métodos de Pago</h2>
+            <h2 class="heading-section text-gray-900 mb-4">4. Métodos de Pago</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 <strong>Para empresas colombianas:</strong> Los pagos se realizarán mediante
@@ -109,7 +107,7 @@
 
           <!-- 5. Reglas de Referidos -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">5. Reglas de Referidos</h2>
+            <h2 class="heading-section text-gray-900 mb-4">5. Reglas de Referidos</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 Se considera un alquiler válido cuando el referido completa el alquiler del vehículo.
@@ -128,7 +126,7 @@
 
           <!-- 6. Prohibiciones y Exclusiones -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">6. Prohibiciones y Exclusiones</h2>
+            <h2 class="heading-section text-gray-900 mb-4">6. Prohibiciones y Exclusiones</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 Quedan estrictamente prohibidas las prácticas desleales, fraudes o cualquier acción
@@ -147,7 +145,7 @@
 
           <!-- 7. Modificaciones y Comunicaciones -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">7. Modificaciones y Comunicaciones</h2>
+            <h2 class="heading-section text-gray-900 mb-4">7. Modificaciones y Comunicaciones</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 AMAW S.A.S. se reserva el derecho de modificar los términos y condiciones del programa.
@@ -170,7 +168,7 @@
 
           <!-- 8. Jurisdicción y Resolución de Conflictos -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">8. Jurisdicción y Resolución de Conflictos</h2>
+            <h2 class="heading-section text-gray-900 mb-4">8. Jurisdicción y Resolución de Conflictos</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 Cualquier controversia derivada del presente contrato será resuelta en los tribunales
@@ -184,7 +182,7 @@
 
           <!-- 9. Aceptación Digital -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-brand-700 mb-4">9. Aceptación Digital</h2>
+            <h2 class="heading-section text-gray-900 mb-4">9. Aceptación Digital</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 Al registrarse en el programa de referidos y aceptar digitalmente los términos y
@@ -226,7 +224,23 @@ useHead({
 })
 
 definePageMeta({
-  layout: 'gana',
   colorMode: 'light',
 })
 </script>
+
+<style scoped>
+/*
+  Marca de sección: barra roja corta antes de cada h2, el mismo gesto del resto
+  del sitio. Vía ::before para no tocar el markup de cada título — el texto
+  legal no debe editarse por un detalle visual.
+*/
+.legal-doc :deep(h2)::before {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  margin-bottom: 0.75rem;
+  border-radius: 9999px;
+  background-color: var(--color-brand-600);
+}
+</style>

@@ -26,8 +26,9 @@ import { join } from 'node:path'
 const ROOT = join(__dirname, '..', '..', '..') // → packages/ui-alquilame
 const read = (rel: string): string => readFileSync(join(ROOT, rel), 'utf-8')
 
+// El layout propio `gana.vue` ya no existe: las tres vistas del programa usan el
+// layout del sitio, así que el header y el footer reales viajan con ellas.
 const GANA_FILES = [
-  'app/layouts/gana.vue',
   'app/pages/gana/index.vue',
   'app/pages/gana/terminos-condiciones.vue',
   'app/pages/gana/politicas-privacidad.vue',
@@ -88,11 +89,15 @@ describe('/gana — identidad de alquilame, no de alquilatucarro', () => {
   }
 
   it('SCEN-GANA-04: adopta los tokens de marca de alquilame', () => {
-    expect(read('app/layouts/gana.vue')).toMatch(/from-footer-from|bg-brand-\d/)
     expect(read('app/pages/gana/index.vue')).toMatch(/\btext-brand-\d{3}\b/)
+    expect(read('app/pages/gana/index.vue')).toMatch(/from-footer-from/)
   })
 
-  it('SCEN-GANA-05: el layout no usa el alias de degradado v3 roto', () => {
-    expect(read('app/layouts/gana.vue')).not.toMatch(BROKEN_V3_GRADIENT)
+  it('SCEN-GANA-05: ninguna vista usa el alias de degradado v3 roto', () => {
+    for (const rel of GANA_FILES) expect(read(rel), rel).not.toMatch(BROKEN_V3_GRADIENT)
+  })
+
+  it('SCEN-GANA-06b: el layout propio desapareció (usan el del sitio)', () => {
+    expect(existsSync(join(ROOT, 'app/layouts/gana.vue'))).toBe(false)
   })
 })

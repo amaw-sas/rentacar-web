@@ -19,7 +19,15 @@ import { join } from 'node:path'
 const ROOT = join(__dirname, '..', '..', '..') // → packages/ui-alquilame
 const read = (rel: string): string => readFileSync(join(ROOT, rel), 'utf-8')
 
-const LEGALES = ['app/pages/terminos-condiciones.vue', 'app/pages/politica-privacidad.vue']
+// Las CUATRO legales del sitio comparten tratamiento: las dos generales y las
+// dos del programa de referidos. Estas últimas vivían en un layout propio con su
+// header inventado, así que al abrirlas se perdía la navegación real.
+const LEGALES = [
+  'app/pages/terminos-condiciones.vue',
+  'app/pages/politica-privacidad.vue',
+  'app/pages/gana/terminos-condiciones.vue',
+  'app/pages/gana/politicas-privacidad.vue',
+]
 
 describe('páginas legales — presentación alineada al sitio', () => {
   for (const rel of LEGALES) {
@@ -35,6 +43,10 @@ describe('páginas legales — presentación alineada al sitio', () => {
       expect(src).toContain('heading-section')
       // Ningún encabezado define su propia escala a mano.
       expect(src).not.toMatch(/<h[123][^>]*class="[^"]*\btext-(?:xl|2xl|3xl|4xl|5xl)\b/)
+    })
+
+    it(`SCEN-LEGAL-04: ${nombre} usa el layout del sitio (header y footer reales)`, () => {
+      expect(src).not.toMatch(/layout:\s*'gana'/)
     })
   }
 
