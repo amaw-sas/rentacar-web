@@ -145,7 +145,9 @@ if (returnBranch.corrected && searchDispatched) {
 
 El orden recogida→devolución no cambia en ninguna de las dos. El watcher `flush:'sync'` de `useSearch.ts:231-235` sigue espejando y la línea siguiente lo pisa con el valor resuelto, que ahora es correcto en vez de `null`.
 
-`useMessages` está auto-importado en ambas marcas vía la capa `logic` (`imports.d.ts:56` / `:57`), así que `createMessage` se obtiene sin import explícito, igual que en `validateSearchParams`. `Message.title` es opcional (`Message.ts:3`). Todo ocurre dentro de `onMounted`, así que `useToast` nunca se toca en SSR.
+`useMessages` está auto-importado en la capa app de ambas marcas vía `logic` (`imports.d.ts:57` en alquicarros, `:56` en alquilame), así que `createMessage` se obtiene sin import explícito. Ojo con el precedente: `validateSearchParams.ts:17` **sí** lo importa a mano, porque vive dentro de `packages/logic` y ahí no hay unimport que lo resuelva. Y ningún archivo de capa app de las dos marcas llama hoy a `useMessages()`, así que el `vi.stubGlobal('useMessages', …)` del mount test no tiene precedente en el repo: si falta, el síntoma parecerá un bug del código y no lo será.
+
+`Message.title` es opcional (`Message.ts:3`). Todo ocurre dentro de `onMounted`, así que `useToast` nunca se toca en SSR.
 
 ### Frecuencia del aviso
 
@@ -175,7 +177,7 @@ Archivos que cambian:
 - `packages/logic/src/composables/useSearch.ts` — `doSearch` pasa a devolver `boolean`; cambio aditivo, sin consumidores afectados
 - `packages/ui-alquicarros/app/composables/useSearchByQueryParams.ts`
 - `packages/ui-alquilame/app/composables/useSearchByQueryParams.ts`
-- `app/composables/__tests__/useSearchByQueryParams.test.ts` de ambas marcas — se amplían
+- `app/composables/__tests__/useSearchByQueryParams.test.ts` de ambas marcas — sin cambios, se conservan como regresión. Son regex sobre el texto del archivo: ampliarlos para cubrir el orden de emisión cubriría la invariante por texto, y el mount test la cubre por comportamiento
 - Un mount test nuevo por marca (ver estrategia)
 
 Consumidores afectados:
