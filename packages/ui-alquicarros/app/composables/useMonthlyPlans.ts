@@ -56,3 +56,34 @@ export function sellablePlans(
 
   return OFFERED.map((value) => ({ value, price: row[value] })).filter((plan) => plan.price > 0)
 }
+
+/** Lo único que este predicado necesita de una gama. */
+export interface TotalCoverageQuotable {
+  canQuoteTotalCoverage?: boolean
+}
+
+/**
+ * Si el Seguro Total puede cotizarse para esta gama.
+ *
+ * En reserva REGULAR el upgrade se cobra con `totalCoverageUnitCharge` (cargo diario
+ * de la fila de pricing activa aplicable a la fecha, #322 PR10); cuando `useCategory`
+ * no lo tiene, `canQuoteTotalCoverage` es false y la card se omite — fallo visible en
+ * vez de cotizar una tarifa retirada o un upgrade de $0.
+ *
+ * En MENSUAL el cobro real es `total_insurance_price` de la fila del mes
+ * (`useCategory.getTotalPrice`), otra unidad: no depende del cargo diario y por eso
+ * el mensual decide ANTES de mirar la gama. Una gama mensual sin cargo diario sigue
+ * vendiendo Total.
+ *
+ * La comparación es estricta a propósito: sin gama —primer montaje, antes de que
+ * exista la selección— la respuesta en regular debe ser false, no `undefined`. De eso
+ * depende el watcher que apaga `withTotalCoverage` cuando la opción deja de ser
+ * cotizable.
+ */
+export function canQuoteTotalCoverageFor(
+  category: TotalCoverageQuotable | null | undefined,
+  isMonthly: boolean,
+): boolean {
+  if (isMonthly) return true
+  return category?.canQuoteTotalCoverage === true
+}

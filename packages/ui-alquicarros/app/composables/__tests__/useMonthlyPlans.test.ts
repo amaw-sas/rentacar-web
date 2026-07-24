@@ -22,7 +22,7 @@
  */
 import { describe, it, expect } from 'vitest'
 
-import { sellablePlans } from '../useMonthlyPlans'
+import { canQuoteTotalCoverageFor, sellablePlans } from '../useMonthlyPlans'
 
 import type { CategoryMonthPriceData } from '@rentacar-main/logic/utils'
 
@@ -114,5 +114,48 @@ describe('sellablePlans — qué planes vende la gama', () => {
     // pickPriceForDate falla cerrado (#313): sin fila no hay planes que ofertar.
     expect(sellablePlans([row({ init_date: '2026-01-01', end_date: '2026-12-31' })], '2027-06-01'))
       .toEqual([])
+  })
+})
+
+/**
+ * Issue #368 B1, paso 2 — `canQuoteTotalCoverageFor`.
+ *
+ * Réplica ejecutable de la regla que hoy vive inlineada en
+ * `StepCoverage.vue:143-146`: en mensual el Seguro Total se cobra con
+ * `total_insurance_price` de la fila del mes, así que no depende del cargo DIARIO;
+ * en regular se cotiza con `totalCoverageUnitCharge`, y si `useCategory` no lo
+ * tiene la card se omite (fallo visible en vez de cotizar un upgrade $0).
+ *
+ * `carrySelection` (paso 3) necesita la misma regla para decidir si
+ * `withTotalCoverage` sobrevive al cambio de gama; duplicarla sería tener dos
+ * respuestas a la misma pregunta en la misma pantalla.
+ */
+describe('canQuoteTotalCoverageFor — si la card de Seguro Total puede cotizarse', () => {
+  it('en MENSUAL cotiza aunque la gama no tenga cargo diario de Total', () => {
+    // Es la entrada de SCEN-368B1-02: el cobro sale de la fila del mes.
+    expect(canQuoteTotalCoverageFor({ canQuoteTotalCoverage: false }, true)).toBe(true)
+  })
+
+  it('en REGULAR cotiza solo si la gama trae el cargo diario', () => {
+    expect(canQuoteTotalCoverageFor({ canQuoteTotalCoverage: true }, false)).toBe(true)
+  })
+
+  it('en REGULAR con `canQuoteTotalCoverage: false` NO cotiza', () => {
+    // No es redundante con el caso de categoría nula: el sentido del `=== true`
+    // estricto es que `false` y `undefined` den ambos falso, y este es el `false`.
+    expect(canQuoteTotalCoverageFor({ canQuoteTotalCoverage: false }, false)).toBe(false)
+  })
+
+  it('en REGULAR sin categoría NO cotiza', () => {
+    // Lo que ve el watcher de StepCoverage:149-156 en el primer montaje, antes de
+    // que la selección exista. `undefined` por la vía del optional chaining.
+    expect(canQuoteTotalCoverageFor(null, false)).toBe(false)
+    expect(canQuoteTotalCoverageFor(undefined, false)).toBe(false)
+    expect(canQuoteTotalCoverageFor({}, false)).toBe(false)
+  })
+
+  it('en MENSUAL sin categoría sigue cotizando (el mensual decide antes de mirarla)', () => {
+    // Preserva el comportamiento actual: `haveMonthlyReservation` corta primero.
+    expect(canQuoteTotalCoverageFor(null, true)).toBe(true)
   })
 })

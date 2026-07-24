@@ -114,7 +114,7 @@ import { storeToRefs } from 'pinia'
 
 // composables (import explícito, no auto-import: así el componente es montable
 // en tests sin el runtime de Nuxt)
-import { sellablePlans } from '~/composables/useMonthlyPlans'
+import { canQuoteTotalCoverageFor, sellablePlans } from '~/composables/useMonthlyPlans'
 
 // utils
 import { pickPriceForDate } from '@rentacar-main/logic/utils'
@@ -134,16 +134,16 @@ const isTotal = computed(() => selectedCategory.value?.withTotalCoverage === tru
 const mileage = computed(() => selectedCategory.value?.withMileage ?? null)
 
 /**
- * En reserva regular el upgrade a Total se cotiza con `totalCoverageUnitCharge`
- * (cargo diario de la fila de pricing activa aplicable a la fecha — #322 PR10);
- * si es null no hay tarifa aplicable y la card se omite. En mensual el cobro
- * real es `total_insurance_price` de la fila del mes, así que no depende del
- * cargo diario.
+ * Si la card de Seguro Total se puede cotizar. La regla —regular depende del cargo
+ * diario, mensual no— vive en `canQuoteTotalCoverageFor`, que es su dueño único: el
+ * arrastre entre gamas del issue #368 tiene que responder la misma pregunta, y dos
+ * respuestas a la misma pregunta en la misma pantalla es cómo se desincronizan.
+ * El computed local se queda porque el nombre `canQuoteTotal` se auto-importaría
+ * sobre sí mismo si tomara el del helper.
  */
-const canQuoteTotal = computed(() => {
-  if (haveMonthlyReservation.value) return true
-  return selectedCategory.value?.canQuoteTotalCoverage === true
-})
+const canQuoteTotal = computed(() =>
+  canQuoteTotalCoverageFor(selectedCategory.value, haveMonthlyReservation.value),
+)
 
 /** Si la opción deja de ser cotizable, ninguna reserva puede quedar en Total. */
 watch(
