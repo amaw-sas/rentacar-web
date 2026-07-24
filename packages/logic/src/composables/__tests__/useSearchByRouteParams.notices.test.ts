@@ -49,12 +49,24 @@ const VALID_PARAMS = {
 
 // Ordered trace of the two effects whose sequence matters.
 let calls: string[] = []
+// Notices currently ON SCREEN. The real toaster is not append-only: doSearch
+// opens with flushMessages() → toast.clear(), which empties it. Asserting that
+// createMessage merely RAN is what let #406 ship in the first place, so the
+// harness models the clear and the assertions read this array instead.
+let live: string[] = []
 let createMessage: ReturnType<typeof vi.fn>
+let flushMessages: ReturnType<typeof vi.fn>
 let replace: ReturnType<typeof vi.fn>
 let doSearch: ReturnType<typeof vi.fn>
 
 vi.mock('../useSearch', () => ({
   default: () => ({ doSearch }),
+}))
+
+// Mocked at the module path the composable actually imports, not as a global
+// auto-import: a broken import surfaces here instead of silently resolving.
+vi.mock('../useMessages', () => ({
+  default: () => ({ createMessage, flushMessages }),
 }))
 
 /** Mounts the composable over a given query and lets the strip promise settle. */
@@ -80,21 +92,28 @@ describe('useSearchByRouteParams — route-correction notices (#406)', () => {
   beforeEach(() => {
     vi.resetModules()
     calls = []
+    live = []
     createMessage = vi.fn((m: { message?: string }) => {
       calls.push(`createMessage:${m?.message ?? ''}`)
+      live.push(m?.message ?? '')
+    })
+    flushMessages = vi.fn(() => {
+      calls.push('flush')
+      live.length = 0
     })
     replace = vi.fn(() => {
       calls.push('replace')
       return Promise.resolve()
     })
+    // The real doSearch opens with flushMessages() — that is the whole hazard.
     doSearch = vi.fn(() => {
+      flushMessages()
       calls.push('doSearch')
       return true
     })
 
     vi.stubGlobal('useState', () => ref(ADMIN_PAYLOAD))
     vi.stubGlobal('useToast', () => ({ add: vi.fn(), clear: vi.fn() }))
-    vi.stubGlobal('useMessages', () => ({ createMessage }))
     setActivePinia(createPinia())
   })
 
@@ -103,19 +122,15 @@ describe('useSearchByRouteParams — route-correction notices (#406)', () => {
   })
 
   // SCEN-406-02. The whole point of the issue: a notice created before the
-  // flush is not a notice, it is 53 ms of nothing.
-  it('emits the notice AFTER doSearch, so the flush cannot eat it', async () => {
+  // flush is not a notice, it is 53 ms of nothing. So the assertion is that it
+  // is still ON SCREEN once everything settles — not that createMessage ran.
+  // Move announceRouteCorrections() above doSearch() (the #406 regression) and
+  // this must go red.
+  it('the notice survives doSearch — it is still on screen when the dust settles', async () => {
     await run({ aviso: 'sede' })
 
-    const searchAt = calls.indexOf('doSearch')
-    const messageAt = calls.findIndex((c) => c.startsWith('createMessage'))
-
-    expect(searchAt).toBeGreaterThanOrEqual(0)
-    expect(messageAt).toBeGreaterThan(searchAt)
-    expect(createMessage).toHaveBeenCalledTimes(1)
-    expect(createMessage.mock.calls[0]![0]).toMatchObject({
-      message: 'Ubicación inválida. Se ajustó a la sede por defecto.',
-    })
+    expect(calls).toContain('flush')
+    expect(live).toEqual(['Ubicación inválida. Se ajustó a la sede por defecto.'])
   })
 
   it('strips the carrier before creating the toast', async () => {
@@ -148,35 +163,33 @@ describe('useSearchByRouteParams — route-correction notices (#406)', () => {
     expect(replace.mock.calls[0]![0]).toEqual({ query: {} })
   })
 
-  // SCEN-406-05. Chained corrections each get their own toast.
-  it('emits one notice per accumulated code, in order', async () => {
+  // SCEN-406-05. Chained corrections each get their own toast, and BOTH have to
+  // be on screen at the end — not merely to have been emitted.
+  it('leaves one notice per accumulated code on screen, in order', async () => {
     await run({ aviso: 'sede-ciudad,duracion' })
 
-    expect(createMessage).toHaveBeenCalledTimes(2)
-    expect(createMessage.mock.calls[0]![0]).toMatchObject({
-      message:
-        'La sede de recogida no corresponde a la ciudad; se ajustó a la sede por defecto.',
-    })
-    expect(createMessage.mock.calls[1]![0]).toMatchObject({
-      message:
-        'La fecha de devolución ha sido ajustada a 30 días después de la fecha de recogida.',
-    })
+    expect(live).toEqual([
+      'La sede de recogida no corresponde a la ciudad; se ajustó a la sede por defecto.',
+      'La fecha de devolución ha sido ajustada a 30 días después de la fecha de recogida.',
+    ])
   })
 
   // SCEN-406-07. A guard that blocks the search explains why there is no quote;
   // it does not explain that the URL was rewritten. Both facts are the user's.
+  // The guard path still flushes, so survival is the assertion here too.
   it('still announces the correction when doSearch bails', async () => {
     doSearch = vi.fn(() => {
+      flushMessages()
       calls.push('doSearch')
       return false
     })
 
     await run({ aviso: 'sede-ciudad' })
 
-    expect(createMessage).toHaveBeenCalledTimes(1)
-    expect(calls.indexOf('doSearch')).toBeLessThan(
-      calls.findIndex((c) => c.startsWith('createMessage')),
-    )
+    expect(calls).toContain('flush')
+    expect(live).toEqual([
+      'La sede de recogida no corresponde a la ciudad; se ajustó a la sede por defecto.',
+    ])
   })
 
   // SCEN-406-06. No correction, no noise: an untouched URL must not be

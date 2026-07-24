@@ -70,9 +70,24 @@ describe('searchParamNotices — the notice catalog (#406)', () => {
         query = withNoticeCode(query, code)
       }
 
-      const carried = String(query[SEARCH_PARAM_NOTICE_KEY]).split(',')
+      expect(String(query[SEARCH_PARAM_NOTICE_KEY]).split(',')).toHaveLength(3)
+    })
+
+    // What the URL already carries is attacker-writable, so the cap can arrive
+    // pre-filled. The correction being raised right now must never be the one
+    // that falls off — otherwise a planted `?aviso=` silences a real change to
+    // the user's booking, which is the exact failure #406 exists to remove.
+    it('never drops the code being raised in favour of ones the URL carried', () => {
+      const planted = { aviso: 'sede,hora,parametros' }
+
+      const result = withNoticeCode(planted, 'duracion')
+
+      const carried = String(result[SEARCH_PARAM_NOTICE_KEY]).split(',')
       expect(carried).toHaveLength(3)
-      expect(carried).toEqual(['sede', 'sede-ciudad', 'hora'])
+      expect(carried).toContain('duracion')
+      expect(carried[carried.length - 1]).toBe('duracion')
+      // The oldest inherited code is the one that gives way.
+      expect(carried).not.toContain('sede')
     })
   })
 

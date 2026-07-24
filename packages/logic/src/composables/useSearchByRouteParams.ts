@@ -8,6 +8,7 @@ import useStoreAdminData from '../stores/useStoreAdminData';
 
 // Internal dependencies - composables
 import useSearch from './useSearch';
+import useMessages from './useMessages';
 
 // Internal dependencies - utils
 import {
@@ -76,10 +77,14 @@ export default function useSearchByRouteParams() {
     // instance instead of registering a duplicate set of sync watchers.
     const { doSearch } = useSearch();
 
-    // Perform search after setting params
-    doSearch();
-
-    announceRouteCorrections();
+    // Perform search after setting params. The notice is drained in `finally`
+    // so a throw inside doSearch cannot leave `?aviso` welded to the URL — the
+    // correction happened either way and the user is owed the explanation.
+    try {
+      doSearch();
+    } finally {
+      announceRouteCorrections();
+    }
   });
 
   /**

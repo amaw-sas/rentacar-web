@@ -258,11 +258,18 @@ export function createValidateSearchParams(
       to.params.fecha_recogida = tomorrow.toString();
       to.params.fecha_devolucion = newReturnDate.toString();
 
+      // `query` is not optional here, even though this branch raises no notice
+      // of its own: it is the only redirect of the eight that used to omit it,
+      // and omitting it drops the whole query string. A correction reached
+      // through a chain — a city-foreign branch realigned first, then these
+      // dates — arrived with its notice already parked in the query and lost
+      // it here, silently. It also took `utm_*` and `gclid` with it.
       return navigateTo({
         name: to.name,
         params: {
           ...to.params
-        }
+        },
+        query: to.query,
       });
     }
 

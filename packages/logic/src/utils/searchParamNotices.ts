@@ -116,6 +116,13 @@ export function withNoticeCode<T extends Record<string, unknown>>(
 
   return {
     ...query,
-    [SEARCH_PARAM_NOTICE_KEY]: next.slice(0, MAX_NOTICE_CODES).join(','),
+    // Drop from the FRONT, never the back. What is already carried comes from
+    // the URL, so anyone can arrive with the cap pre-filled — and truncating
+    // the tail would silently discard the code this correction just raised.
+    // A link with three planted codes and a 70-day window really did cap the
+    // return date a month early while announcing only the planted three: this
+    // issue's own silence, reintroduced through attacker input. The correction
+    // being made right now always outranks whatever the URL brought.
+    [SEARCH_PARAM_NOTICE_KEY]: next.slice(-MAX_NOTICE_CODES).join(','),
   };
 }

@@ -227,6 +227,40 @@ describe('createValidateSearchParams — shared deep-link validation (SCEN-322-V
     expect(afterCap.query.aviso).toBe('sede-ciudad,duracion')
   })
 
+  // The past-date branch raises no notice of its own, and used to be the only
+  // one of the eight redirects that omitted `query` — so a notice parked by an
+  // EARLIER correction died there. The user got a different pickup city AND
+  // different dates, and was told about neither. Campaign params went with it.
+  it('the past-date redirect preserves a notice raised earlier in the chain', () => {
+    const middleware = createValidateSearchParams()
+    const firstPass = makeRoute(
+      validParams({
+        lugar_recogida: 'bogota-aeropuerto',
+        lugar_devolucion: 'bogota-aeropuerto',
+        fecha_recogida: PAST,
+      }),
+      '/armenia/buscar-vehiculos/lugar-recogida/bogota-aeropuerto',
+    )
+    firstPass.query = { utm_source: 'newsletter' }
+
+    middleware(firstPass as never)
+    const afterCity = NAVIGATE_TO.mock.calls[0]![0] as RouteLike
+    expect(afterCity.query.aviso).toBe('sede-ciudad')
+
+    // Second pass over the corrected URL — the past pickup date is still there.
+    const secondPass = makeRoute(
+      { ...afterCity.params },
+      '/armenia/buscar-vehiculos/lugar-recogida/armenia-aeropuerto',
+    )
+    secondPass.query = { ...afterCity.query }
+    middleware(secondPass as never)
+
+    const afterDates = NAVIGATE_TO.mock.calls[1]![0] as RouteLike
+    expect(afterDates.params.fecha_recogida).toBe(TOMORROW)
+    expect(afterDates.query.aviso).toBe('sede-ciudad')
+    expect(afterDates.query.utm_source).toBe('newsletter')
+  })
+
   it('valid params pass through without a redirect (navigation continues)', () => {
     const middleware = createValidateSearchParams()
     const to = makeRoute(validParams())
