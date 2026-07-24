@@ -10,7 +10,7 @@
     -->
     <section class="bg-linear-to-b from-footer-from to-footer-to px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24 text-center [--ctx-text-primary:#fff]">
       <h1 class="heading-page text-white">
-        Blog de <span class="text-brand-200">{{ franchise.shortname }}</span>
+        Blog de <span class="text-white">{{ franchise.shortname }}</span>
       </h1>
       <p class="text-white max-w-2xl mx-auto mt-4">
         Guías, tips y consejos para alquilar carros en Colombia.

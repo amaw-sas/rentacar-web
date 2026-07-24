@@ -268,7 +268,13 @@
               © 2026 {{ franchise.name }}. Todos los derechos reservados.
             </p>
             <p class="text-gray-500 text-sm mt-1">
-              Elaborado por <span class="text-gray-300 font-medium">Estrategias</span>
+              Elaborado por
+                <a
+                  href="https://www.estrategias.us/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-gray-300 font-medium hover:text-white underline-offset-4 hover:underline transition-colors"
+                >Estrategias</a>
             </p>
           </div>
         </div>
