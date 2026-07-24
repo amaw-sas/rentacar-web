@@ -92,6 +92,21 @@ function stubRecord(page: Page, delayMs = 0) {
 }
 
 /**
+ * Stub de /record con un `reservationStatus` que NO mapea a ninguna ruta:
+ * routeForReservationStatus → null, submitForm levanta formSubmitLocked y NO navega.
+ * Es la forma exacta que dispara D3/D4 (la reserva pudo crearse; la web no lo sabe).
+ */
+function stubRecordUnknownStatus(page: Page, reserveCode = 'E2ECODE') {
+  return page.route('**/api/reservations/record', async (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ reservationStatus: 'desconocido', reserveCode }),
+    }),
+  );
+}
+
+/**
  * Rellena el formulario del Paso 5 con datos válidos. El teléfono es el campo delicado:
  * VueTelInput valida contra formato internacional e `isValidPhoneNumber` exige `+57…`,
  * que el widget solo produce tras reformatear el número completo — hay que teclear, hacer
@@ -338,6 +353,57 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
 
     await page.waitForURL(/\/reservado\/E2ECODE/, { timeout: 15_000 });
     expect(recordRequests).toBe(1);
+  });
+
+  test('SCEN-366-05: el estado desconocido queda explicado en pantalla', async ({ page }) => {
+    await stubAvailability(page, AVAILABILITY_STUB);
+    const rendered = await gotoCoverageWithGamaC(page);
+    test.skip(!rendered, 'vehicleCategories (Supabase) no disponible en el entorno');
+    await stubRecordUnknownStatus(page, 'E2ECODE');
+
+    // Paso 3 → 4 → 5, formulario válido + consentimiento.
+    await page.locator('[data-testid="wizard-continue-desktop-test"]').click();
+    await page.locator('[data-testid="wizard-extras-skip-test"]').click();
+    await expect(page.getByRole('heading', { name: 'Tus datos para reservar' })).toBeVisible();
+    await fillReservationForm(page);
+    await page.locator('[data-testid="privacy-consent-checkbox-test"]').check();
+
+    await page.locator('[data-testid="wizard-continue-desktop-test"]').click();
+
+    // El bloque persistente: no es el toast (no esperamos sus 25 s), es un role="alert"
+    // que sobrevive. Se localiza por testid a propósito —el toast del estado desconocido
+    // ES OTRO role="alert" que también trae el código, así que el rol solo no distingue
+    // (el escenario exige verificarlo "independiente del toast")—. Advierte, muestra el
+    // código y ofrece WhatsApp, los tres a la vez, que es lo que el toast excluyente no hace.
+    const alertBlock = page.locator('[data-testid="wizard-unknown-status-test"]');
+    await expect(alertBlock).toBeVisible({ timeout: 10_000 });
+    await expect(alertBlock).toHaveAttribute('role', 'alert');
+    await expect(alertBlock).toContainText('E2ECODE');
+    await expect(alertBlock).toContainText(/duplicad|no reenv[íi]es/i);
+    await expect(alertBlock.getByRole('link', { name: /whatsapp/i })).toBeVisible();
+
+    // No navegó: sigue en la superficie del wizard, no en /reservado.
+    expect(page.url()).not.toContain('/reservado/');
+
+    // El CTA sigue deshabilitado (el lock impide el reenvío que duplicaría la reserva).
+    await expect(page.locator('[data-testid="wizard-continue-desktop-test"]')).toBeDisabled();
+
+    // El bloque persiste al volver a un paso anterior SIN re-buscar: vive en el shell,
+    // fuera del switch de pasos. Volver al Paso 2 no lo desmonta ni baja el lock —eso solo
+    // lo hace una búsqueda nueva (useStoreSearchData). Prueba que no es un artefacto del
+    // Paso 5 que desaparece al navegar.
+    // El toaster es top-center (app.vue) y se posa sobre el stepper sticky durante su
+    // vida útil, interceptando el click. Un usuario real cierra el toast; el test hace lo
+    // mismo antes de navegar. NO se fuerza el click: forzarlo enmascararía una futura
+    // regresión de clicabilidad del stepper. (El solapamiento toast↔stepper es un hallazgo
+    // aparte, no lo que este escenario verifica.)
+    const toastRegion = page.getByRole('region', { name: /notifications/i });
+    for (const btn of await toastRegion.getByRole('button', { name: 'Cerrar' }).all()) {
+      await btn.click().catch(() => {});
+    }
+    await page.locator('[data-testid="wizard-step-2-test"]').click();
+    await expect(page.getByRole('heading', { name: 'Elige tu vehículo' })).toBeVisible();
+    await expect(page.locator('[data-testid="wizard-unknown-status-test"]')).toBeVisible();
   });
 
   test('SCEN-W-14: elegir la gama C por UI lleva al Paso 3 con la gama fijada', async ({ page }) => {

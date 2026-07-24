@@ -161,6 +161,53 @@ describe('Paso 5 · Datos — reúsa ReservationForm + submit (SCEN-W-11)', () =
   })
 })
 
+describe('Estado desconocido — bloque persistente entre pasos (issue #366, D3)', () => {
+  // El toast del estado desconocido (useMessages) muere a los 25 s y es excluyente:
+  // si trae código no menciona WhatsApp, y viceversa. El usuario que quedó con un
+  // submit ambiguo necesita AMBOS a la vez y sin límite de tiempo, porque puede haber
+  // una reserva creada que la web no vio (SCEN-366-05).
+  //
+  // Vive en el SHELL, no en StepData: SCEN-366-05 exige que el bloque "siga visible tras
+  // volver al paso 2", y el shell desmonta cada paso con v-if/v-else-if (los pasos no
+  // coexisten). Solo un bloque en la columna del shell —fuera del switch de pasos—
+  // sobrevive a la navegación entre pasos 2-5. El lock lo baja una búsqueda nueva
+  // (useStoreSearchData.ts), no un cambio de paso.
+  it('renderiza un bloque role="alert" gateado por formSubmitLocked en el shell', () => {
+    const src = shell()
+    expect(src).toMatch(/formSubmitLocked/)
+    expect(src).toMatch(/v-if="formSubmitLocked"[\s\S]*?role="alert"|role="alert"[\s\S]*?v-if="formSubmitLocked"/)
+  })
+
+  it('el bloque está FUERA del switch de pasos (no dentro de un isStep) para sobrevivir la navegación', () => {
+    // Si el role="alert" quedara dentro del v-else-if="isStep('datos')" se desmontaría
+    // al salir del paso 5. Debe estar en la columna, antes del primer isStep de paso.
+    const src = shell()
+    const alertIdx = src.indexOf('role="alert"')
+    const firstStepSwitch = src.indexOf(`isStep('vehiculo')`)
+    expect(alertIdx).toBeGreaterThan(-1)
+    expect(firstStepSwitch).toBeGreaterThan(-1)
+    expect(alertIdx).toBeLessThan(firstStepSwitch)
+  })
+
+  it('muestra el código que P4 dejó en unknownStatusReserveCode', () => {
+    // El único identificador con el que el usuario puede reclamar. Condicional a que
+    // el servidor lo haya devuelto (el ref puede ser null).
+    expect(shell()).toMatch(/unknownStatusReserveCode/)
+  })
+
+  it('advierte de no reenviar (evita la duplicación que el lock previene)', () => {
+    expect(shell()).toMatch(/duplicad|No reenv[íi]es/i)
+  })
+
+  it('ofrece WhatsApp desde franchise (app.config), no un literal nuevo (comparte fuente con D5)', () => {
+    const src = shell()
+    expect(src).toMatch(/useAppConfig\(\)/)
+    expect(src).toMatch(/franchise\.whatsapp/)
+    // Sin botón de reintento: el lock existe justo para no reintentar (D3).
+    expect(src).not.toMatch(/wizard-retry|Reintentar/i)
+  })
+})
+
 describe('Robustez — hallazgos de edge-case (regresión)', () => {
   it('Paso 2 gatea el estado vacío por groups.length, no por hasAvailableCategories (evita pantalla muerta con gama sin metadata)', () => {
     const src = stepVehicle()

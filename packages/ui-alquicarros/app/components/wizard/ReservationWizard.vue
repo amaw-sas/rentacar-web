@@ -33,6 +33,53 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         <div class="grid lg:grid-cols-12 gap-8">
           <div class="lg:col-span-8 pb-28 lg:pb-0">
+            <!--
+              Estado desconocido (issue #366 D3). Vive en el shell, FUERA del switch de
+              pasos: el submit ambiguo levanta formSubmitLocked, y el bloque debe seguir
+              visible aunque el usuario navegue a un paso anterior (SCEN-366-05). El toast
+              equivalente muere a los 25 s y es excluyente (código O WhatsApp); aquí van
+              ambos, sin límite de tiempo, porque puede haber una reserva creada que la web
+              no llegó a ver. Sin botón para volver a enviar, a propósito: el lock existe
+              justo para impedir otro envío; la salida es humana, por WhatsApp, con el
+              código en la mano.
+            -->
+            <div
+              v-if="formSubmitLocked"
+              role="alert"
+              class="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-5"
+              data-testid="wizard-unknown-status-test"
+            >
+              <div class="flex gap-3">
+                <UIcon
+                  name="i-lucide-alert-triangle"
+                  class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+                />
+                <div class="space-y-2 text-sm">
+                  <p class="font-semibold text-amber-900">
+                    Recibimos tu solicitud, pero no pudimos confirmar el estado
+                  </p>
+                  <p class="text-amber-800">
+                    No reenvíes el formulario para evitar una reserva duplicada.
+                  </p>
+                  <p v-if="unknownStatusReserveCode" class="text-amber-800">
+                    Guarda tu código de reserva:
+                    <span class="font-semibold">{{ unknownStatusReserveCode }}</span>
+                  </p>
+                  <p class="text-amber-800">
+                    Escríbenos por WhatsApp para confirmarla:
+                    <a
+                      :href="franchise.whatsapp"
+                      target="_blank"
+                      rel="noopener"
+                      class="font-semibold text-amber-900 underline hover:no-underline"
+                    >
+                      WhatsApp {{ franchise.phone }}
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <WizardStepsStepVehicle
               v-if="isStep('vehiculo')"
               @adjust-search="onGoTo('busqueda')"
@@ -105,11 +152,16 @@ const {
 const {
   isSubmittingForm,
   formSubmitLocked,
+  unknownStatusReserveCode,
   vehiculo,
   haveTotalInsurance,
   haveMonthlyReservation,
   selectedMonthlyMileage,
 } = storeToRefs(form)
+
+// Contacto humano del bloque de estado desconocido (D3/D5): misma fuente que error.vue,
+// no un literal. `whatsapp` es el href, `phone` el texto visible.
+const { franchise } = useAppConfig()
 
 /**
  * Fuente única de los flags que viajan en el payload (useRecordReservationForm).
