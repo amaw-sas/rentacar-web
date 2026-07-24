@@ -99,6 +99,8 @@ export {
 export { isBlockingSearchError } from './helpers/isBlockingSearchError';
 export { pickupTimingIssue } from './helpers/pickupTimingIssue';
 export type { PickupTimingIssue } from './helpers/pickupTimingIssue';
+export { resolveReturnBranch } from './helpers/resolveReturnBranch';
+export type { ReturnBranchResolution } from './helpers/resolveReturnBranch';
 
 // ============================================================================
 // Type Definitions - Data
