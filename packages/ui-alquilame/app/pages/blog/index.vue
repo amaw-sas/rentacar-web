@@ -8,9 +8,9 @@
       <section> reproduce exacto lo visual (mismo padding, título/descripción
       centrados, blanco sobre el dark del layout) y elimina el mismatch.
     -->
-    <section class="bg-linear-to-b from-footer-from to-footer-to px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24 text-center">
-      <h1 class="text-white text-3xl md:text-4xl font-bold font-heading">
-        Blog de <span class="text-brand-300">{{ franchise.shortname }}</span>
+    <section class="bg-linear-to-b from-footer-from to-footer-to px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24 text-center [--ctx-text-primary:#fff]">
+      <h1 class="heading-page text-white">
+        Blog de <span class="text-brand-200">{{ franchise.shortname }}</span>
       </h1>
       <p class="text-white max-w-2xl mx-auto mt-4">
         Guías, tips y consejos para alquilar carros en Colombia.
@@ -23,7 +23,7 @@
       <div class="max-w-7xl mx-auto">
         <!-- Featured Post -->
         <div v-if="featuredPost" class="mb-12">
-          <h2 class="text-xl font-bold text-gray-800 mb-6">Artículo Destacado</h2>
+          <h2 class="heading-section text-gray-900 mb-6">Artículo Destacado</h2>
           <NuxtLink
             :to="`/blog/${featuredPost.slug}`"
             class="block group"
@@ -42,7 +42,7 @@
                   <UIcon :name="getCategoryIcon(featuredPost.category)" class="size-3.5" />
                   {{ formatCategory(featuredPost.category) }}
                 </span>
-                <h3 class="text-xl md:text-2xl font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors">
+                <h3 class="heading-card text-gray-900 group-hover:text-brand-700 transition-colors">
                   {{ featuredPost.title }}
                 </h3>
                 <p class="text-gray-600 mt-3 line-clamp-3">
@@ -65,7 +65,7 @@
 
         <!-- Category Filters -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h2 class="text-xl font-bold text-gray-800">Todos los Artículos</h2>
+          <h2 class="heading-section text-gray-900">Todos los Artículos</h2>
           <div class="flex flex-wrap gap-2">
             <button
               v-for="cat in categories"
@@ -106,7 +106,7 @@
                 </span>
               </div>
               <div class="p-5 flex flex-col flex-grow">
-                <h3 class="text-lg font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors line-clamp-2">
+                <h3 class="heading-sub text-gray-900 group-hover:text-brand-700 transition-colors line-clamp-2">
                   {{ post.title }}
                 </h3>
                 <p class="text-gray-600 mt-2 text-sm line-clamp-2 flex-grow">
@@ -146,12 +146,12 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="bg-brand-900 text-white py-12 px-4">
+    <section class="bg-brand-900 text-white py-12 px-4 [--ctx-text-primary:#fff]">
       <div class="max-w-4xl mx-auto text-center">
-        <h2 class="text-2xl md:text-3xl font-bold font-heading mb-4">
+        <h2 class="heading-section mb-4">
           ¿Listo para tu próxima aventura?
         </h2>
-        <p class="text-gray-300 mb-6">
+        <p class="text-white/85 mb-6">
           Reserva tu carro sin anticipos en cualquiera de nuestras {{ cityCount }} ciudades
         </p>
         <NuxtLink

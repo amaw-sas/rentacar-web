@@ -25,9 +25,12 @@ describe('SCEN-F4-01 — hero brand (blog/index.vue)', () => {
     SOURCE.indexOf('</h1>'),
   )
 
-  it('hero h1 keeps text-white and adds font-heading', () => {
+  it('hero h1 keeps text-white and takes the brand heading font', () => {
     expect(heroH1).toMatch(/class="[^"]*\btext-white\b/)
-    expect(heroH1).toMatch(/class="[^"]*\bfont-heading\b/)
+    // Contrato actualizado: la fuente de marca ya no se pide suelta con
+    // `font-heading` — llega dentro de `heading-page`, que además fija la escala
+    // del sitio. Pedir el token suelto invitaba a inventar tamaños por página.
+    expect(heroH1).toMatch(/class="[^"]*\bheading-page\b/)
   })
 
   it('hero accent uses a brand tone, not the legacy text-red-500', () => {

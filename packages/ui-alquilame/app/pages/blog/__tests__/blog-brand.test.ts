@@ -26,4 +26,21 @@ describe('blog — consistencia de marca y datos', () => {
   it('SCEN-BLOG-02: el hero usa el degradado de marca como el resto de páginas', () => {
     expect(page).toMatch(/from-footer-from[\s\S]{0,40}to-footer-to/)
   })
+
+  /**
+   * SCEN-BLOG-03: la jerarquía tipográfica sale de las utilidades del sitio
+   * (heading-page / -section / -card / -sub, en typography.css), no de tamaños
+   * y grosores inventados por página. El blog venía con su propia escala
+   * (text-xl para h2, font-bold donde el sitio usa semibold, gray-800 en vez de
+   * gray-900), y por eso se sentía de otro sitio.
+   */
+  it('SCEN-BLOG-03: los títulos usan las utilidades heading-* del sitio', () => {
+    for (const h of ['heading-page', 'heading-section', 'heading-card', 'heading-sub']) {
+      expect(page, `falta ${h}`).toContain(h)
+    }
+    // Ningún encabezado define su propia escala a mano.
+    expect(page).not.toMatch(/<h[123][^>]*class="[^"]*\btext-(?:lg|xl|2xl|3xl|4xl)\b/)
+    // Los encabezados sobre claro usan el gris del sitio.
+    expect(page).not.toMatch(/<h[123][^>]*text-gray-800/)
+  })
 })
