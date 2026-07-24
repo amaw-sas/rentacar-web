@@ -239,3 +239,106 @@ describe('arrastre de la selección al cambiar de gama (paso 5)', () => {
     expect(search.selectedCategory!.categoryCode).toBe('C')
   })
 })
+
+/**
+ * Paso 6 del plan — la ranura del aviso y el banner del arrastre.
+ *
+ * El banner va como HERMANO por encima de las cuatro ramas del Paso 2, no dentro de
+ * los tiles: las cuatro son mutuamente excluyentes y colgarlo del grid lo haría
+ * invisible en las otras tres. La que importa es "sin resultados", donde el usuario
+ * perdió su vehículo y encima no obtuvo nada.
+ *
+ * No hay lógica de borrado. La elección de vehículo escribe SIEMPRE: aviso si algo
+ * cayó, `null` si no. Escribir solo cuando hay algo que anunciar deja el aviso armado,
+ * y `useState` es de ámbito de aplicación.
+ */
+describe('el aviso del Paso 2 (paso 6)', () => {
+  it('SCEN-368B1-02: perder el Seguro Total lo anuncia y deja la fila en Básico', async () => {
+    // La gama F no tiene cargo diario de Total aplicable a la fecha: `useCategory`
+    // deja `canQuoteTotalCoverage` en false y la card de Total ni se ofrece.
+    const { search, summaryRow, selectGama, wrapper } = await mountWizard({
+      codes: ['C', 'F'],
+      // Vía la fila ADMIN, no la de disponibilidad: el join del store sobreescribe
+      // `totalCoverageUnitCharge` con `coverageChargeFor(categoryAdmin)`
+      // (useStoreSearchData.ts:242), así que ponerlo en la de disponibilidad no hace
+      // nada y el escenario mediría una gama que sí cotiza Total.
+      admin: { F: { month_prices: [monthPriceRow({ total_coverage_unit_charge: null })] } },
+    })
+
+    await selectGama('C')
+    search.selectedCategory!.withTotalCoverage = true
+    await wrapper.vm.$nextTick()
+
+    await selectGama('F')
+
+    expect(summaryRow('Seguro')).toBe('Seguro Básico')
+    const banner = wrapper.find('[role="status"]')
+    expect(banner.exists(), 'el Paso 2 no pintó el aviso de pérdida').toBe(true)
+    expect(banner.text()).toContain('Seguro Total')
+  })
+
+  it('SCEN-368B1-05: el re-tap de la misma gama no pinta ningún aviso', async () => {
+    // Mitad de aviso del escenario; la de estado ya está en el paso 5.
+    const { search, selectGama, wrapper } = await mountWizard({ codes: ['C', 'F'] })
+
+    await selectGama('C')
+    search.selectedCategory!.withTotalCoverage = true
+    await wrapper.vm.$nextTick()
+
+    await selectGama('C')
+
+    expect(wrapper.find('[role="status"]').exists()).toBe(false)
+  })
+
+  it('SCEN-368B1-09: el aviso de arrastre sobrevive al ida y vuelta al Paso 3', async () => {
+    // Contrapunto deliberado de SCEN-368B1-08: sin lógica de borrado, lo único que
+    // puede quitar un aviso es la siguiente escritura, y navegar no escribe.
+    const { search, selectGama, clickContinue, goToStep, currentStep, wrapper } =
+      await mountWizard({
+        codes: ['C', 'F'],
+        // Vía la fila ADMIN, no la de disponibilidad: el join del store sobreescribe
+      // `totalCoverageUnitCharge` con `coverageChargeFor(categoryAdmin)`
+      // (useStoreSearchData.ts:242), así que ponerlo en la de disponibilidad no hace
+      // nada y el escenario mediría una gama que sí cotiza Total.
+      admin: { F: { month_prices: [monthPriceRow({ total_coverage_unit_charge: null })] } },
+      })
+
+    await selectGama('C')
+    search.selectedCategory!.withTotalCoverage = true
+    await wrapper.vm.$nextTick()
+    await selectGama('F')
+
+    const textoAntes = wrapper.get('[role="status"]').text()
+
+    await clickContinue()
+    expect(currentStep()).toBe('seguro')
+    await goToStep(2)
+    expect(currentStep()).toBe('vehiculo')
+
+    expect(wrapper.find('[role="status"]').exists(), 'el aviso se perdió al volver').toBe(true)
+    expect(wrapper.get('[role="status"]').text()).toBe(textoAntes)
+  })
+
+  it('elegir una gama sin perder nada deja la ranura en null, no la deja armada', async () => {
+    // La simetría de las dos escrituras es lo que sostiene el modelo sin borrado.
+    const { search, selectGama, wrapper } = await mountWizard({
+      codes: ['C', 'F'],
+      // Vía la fila ADMIN, no la de disponibilidad: el join del store sobreescribe
+      // `totalCoverageUnitCharge` con `coverageChargeFor(categoryAdmin)`
+      // (useStoreSearchData.ts:242), así que ponerlo en la de disponibilidad no hace
+      // nada y el escenario mediría una gama que sí cotiza Total.
+      admin: { F: { month_prices: [monthPriceRow({ total_coverage_unit_charge: null })] } },
+    })
+
+    await selectGama('C')
+    search.selectedCategory!.withTotalCoverage = true
+    await wrapper.vm.$nextTick()
+    await selectGama('F')
+    expect(wrapper.find('[role="status"]').exists()).toBe(true)
+
+    // Volver a una gama que sí cotiza Total: no se pierde nada y el aviso se va.
+    await selectGama('C')
+
+    expect(wrapper.find('[role="status"]').exists(), 'el aviso quedó armado').toBe(false)
+  })
+})

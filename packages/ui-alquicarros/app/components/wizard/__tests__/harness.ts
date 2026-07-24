@@ -110,8 +110,12 @@ export function adminCategory(
  * en mensual `createCategoryAvailability` los sintetiza en 0 y el precio vive en
  * `month_prices`, así que los escenarios mensuales los dejan como vengan.
  *
- * `totalCoverageUnitCharge` es lo que decide `canQuoteTotalCoverage`: un `null` apaga
- * la card de Seguro Total en reserva regular, que es la entrada de SCEN-368B1-02.
+ * `totalCoverageUnitCharge` NO se controla desde aquí, aunque el campo exista: el join
+ * del store lo sobreescribe con `coverageChargeFor(categoryAdmin)`
+ * (`useStoreSearchData.ts:242`), que lo saca de `month_prices[].total_coverage_unit_charge`.
+ * Para que una gama no cotice Seguro Total —la entrada de SCEN-368B1-02— hay que
+ * anularlo en la fila ADMIN; ponerlo aquí no hace nada y el escenario acabaría
+ * midiendo una gama que sí lo cotiza.
  */
 export function availabilityRow(
   code: CategoryType,

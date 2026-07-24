@@ -15,6 +15,21 @@
       </p>
     </header>
 
+    <!-- Aviso del wizard (#368 B1). Hermano por ENCIMA de las cuatro ramas de abajo,
+         no dentro del grid de tiles: las cuatro son mutuamente excluyentes y colgarlo
+         de los tiles lo haría invisible en las otras tres. La que más importa es "sin
+         resultados" — el usuario re-buscó, perdió su vehículo y encima no obtuvo nada,
+         que es el estado más confuso del flujo y justo donde falta la explicación.
+         `role="status"` sigue la convención de ChatConversation.vue:176. -->
+    <div
+      v-if="noticeText"
+      role="status"
+      class="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4"
+      data-testid="wizard-notice-test"
+    >
+      <p class="body-sm text-gray-700">{{ noticeText }}</p>
+    </div>
+
     <!-- Cargando disponibilidad -->
     <div v-if="pending" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <PlaceholdersCategoryCard />
@@ -156,6 +171,7 @@ import { groupBySegment, segmentForCode, type SegmentGroup, type SegmentId } fro
 // en tests sin el runtime de Nuxt)
 import { canQuoteTotalCoverageFor, sellablePlans } from '~/composables/useMonthlyPlans'
 import { carrySelection } from '~/composables/useSelectionCarryOver'
+import { noticeMessage, useWizardNotice } from '~/composables/useWizardNotice'
 
 // utils
 import { isBeyondPricingHorizon } from '@rentacar-main/logic/utils'
@@ -175,6 +191,10 @@ const { vehiculo, haveMonthlyReservation, fechaRecogida } = storeToRefs(form)
 
 const { vehicleCategories } = useFetchRentacarData()
 const { moneyFormat } = useMoneyFormat()
+
+// Ranura única del aviso (#368 B1). El Paso 2 es el único que la lee.
+const { notice, setNotice } = useWizardNotice()
+const noticeText = computed(() => noticeMessage(notice.value))
 
 // ── Estado de error de disponibilidad (Paso 12, SCEN-W-12) ────────────────────
 // El store ya clasificó el error en useFetchCategoriesAvailabilityData
@@ -355,7 +375,7 @@ function onSelect(cat: ReturnType<typeof useCategory>): void {
   // `prev` llega auto-unwrapeado (el ref del store envuelve en reactive) y `cat` NO:
   // viene crudo del emit de la card, así que sus flags son refs.
   const prev = selectedCategory.value
-  const { flags } = carrySelection(
+  const { flags, dropped } = carrySelection(
     prev
       ? {
           withTotalCoverage: prev.withTotalCoverage,
@@ -387,5 +407,10 @@ function onSelect(cat: ReturnType<typeof useCategory>): void {
   selectedCategory.value = cat
   vehiculo.value = cat.categoryCode.value
   search.trackVehicleSelection(cat)
+
+  // Escritura INCONDICIONAL de la ranura: aviso si algo cayó, `null` si no. Escribir
+  // solo cuando hay algo que anunciar deja el aviso armado, y `useState` es de ámbito
+  // de aplicación, así que un aviso nunca visto viaja por navegación de cliente.
+  setNotice(dropped.length > 0 ? { kind: 'carry', dropped } : null)
 }
 </script>
