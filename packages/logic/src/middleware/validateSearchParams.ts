@@ -14,7 +14,6 @@ import type { RouteLocationNormalized } from 'vue-router';
 // Internal dependencies - stores / composables (relative, logic-internal)
 import useStoreAdminData from '../stores/useStoreAdminData';
 import useDefaultRouteParams from '../composables/useDefaultRouteParams';
-import useMessages from '../composables/useMessages';
 
 // Internal dependencies - utils
 import {
@@ -28,6 +27,7 @@ import {
   parseTime12hOr24h,
   isTime12hFormat,
   resolveCityBranchCorrection,
+  withNoticeCode,
 } from '@rentacar-main/logic/utils';
 
 export interface ValidateSearchParamsOptions {
@@ -49,13 +49,23 @@ export interface ValidateSearchParamsOptions {
 /**
  * Factory for the validate-search-params route middleware body. Corrects
  * (via redirect to `to.name`, so each brand's own route tree is targeted):
- *  - unknown branch slugs/codes → brand/city defaults (+ info toast)
- *  - city-foreign pickup branch → city default (#129)
+ *  - unknown branch slugs/codes → brand/city defaults (+ notice `sede`)
+ *  - city-foreign pickup branch → city default (#129, + notice `sede-ciudad`)
  *  - legacy branch CODES → slugs
- *  - legacy 24h times → 12h (invalid times → defaults + toast)
- *  - malformed dates/times → defaults (+ toast)
+ *  - legacy 24h times → 12h (unparseable times → defaults + notice `hora`)
+ *  - malformed dates/times → defaults (+ notice `parametros`)
  *  - pickup date in the past → tomorrow / +7 days (SCEN-322-V01)
- *  - >30-day windows → 30-day cap (+ toast); ==30-day windows pin the return hour
+ *  - >30-day windows → 30-day cap (+ notice `duracion`); ==30-day windows pin
+ *    the return hour
+ *
+ * Notices are NOT emitted here (issue #406). This body runs during a navigation
+ * that ends in `navigateTo`, and a toast created just before a redirect never
+ * reaches anyone: on a hard load the redirect is a server-side 302 whose
+ * response carries no payload, and on a client navigation the results page
+ * opens its search with `flushMessages()`, which wipes it ~50 ms later. The
+ * correction instead rides the redirect as a CODE in the query
+ * (`withNoticeCode`) and is turned back into copy by `useSearchByRouteParams`
+ * once the search has been dispatched.
  */
 export function createValidateSearchParams(
   options: ValidateSearchParamsOptions = {},
@@ -63,8 +73,6 @@ export function createValidateSearchParams(
   const { nonCitySegments = ['reservas'] } = options;
 
   return (to: RouteLocationNormalized) => {
-    const { createMessage } = useMessages();
-
     const lugar_recogida = to.params.lugar_recogida as string;
     const lugar_devolucion = to.params.lugar_devolucion as string;
     const fecha_recogida = to.params.fecha_recogida as string;
@@ -109,15 +117,10 @@ export function createValidateSearchParams(
       to.params.hora_recogida = defaultHoraRecogida.value as string;
       to.params.hora_devolucion = defaultHoraDevolucion.value as string;
 
-      createMessage({
-        type: "info",
-        message: "Ubicación inválida. Se ajustó a la sede por defecto.",
-      });
-
       return navigateTo({
         name: to.name,
         params: to.params,
-        query: to.query,
+        query: withNoticeCode(to.query, 'sede'),
       });
     }
 
@@ -138,15 +141,10 @@ export function createValidateSearchParams(
         to.params.lugar_devolucion = cityCorrection.lugar_devolucion;
       }
 
-      createMessage({
-        type: "info",
-        message: "La sede de recogida no corresponde a la ciudad; se ajustó a la sede por defecto.",
-      });
-
       return navigateTo({
         name: to.name,
         params: to.params,
-        query: to.query,
+        query: withNoticeCode(to.query, 'sede-ciudad'),
       });
     }
 
@@ -193,12 +191,11 @@ export function createValidateSearchParams(
         to.params.hora_recogida = defaultHoraRecogida.value as string;
         to.params.hora_devolucion = defaultHoraDevolucion.value as string;
 
-        createMessage({
-          type: "info",
-          message: "Formato de hora inválido. Se ajustó al valor por defecto.",
+        return navigateTo({
+          name: to.name,
+          params: to.params,
+          query: withNoticeCode(to.query, 'hora'),
         });
-
-        return navigateTo({ name: to.name, params: to.params, query: to.query });
       }
 
       // Legacy 24h format detected - redirect to 12h URL
@@ -239,17 +236,12 @@ export function createValidateSearchParams(
       to.params.hora_recogida = defaultHoraRecogida.value as string;
       to.params.hora_devolucion = defaultHoraDevolucion.value as string;
 
-      createMessage({
-        type: "info",
-        message: "Parámetros inválidos. Se ajustaron a los valores por defecto.",
-      });
-
       return navigateTo({
         name: to.name,
         params: {
           ...to.params,
         },
-        query: to.query,
+        query: withNoticeCode(to.query, 'parametros'),
       });
 
     }
@@ -266,11 +258,18 @@ export function createValidateSearchParams(
       to.params.fecha_recogida = tomorrow.toString();
       to.params.fecha_devolucion = newReturnDate.toString();
 
+      // `query` is not optional here, even though this branch raises no notice
+      // of its own: it is the only redirect of the eight that used to omit it,
+      // and omitting it drops the whole query string. A correction reached
+      // through a chain — a city-foreign branch realigned first, then these
+      // dates — arrived with its notice already parked in the query and lost
+      // it here, silently. It also took `utm_*` and `gclid` with it.
       return navigateTo({
         name: to.name,
         params: {
           ...to.params
-        }
+        },
+        query: to.query,
       });
     }
 
@@ -298,17 +297,12 @@ export function createValidateSearchParams(
       to.params.fecha_devolucion = fecha_devolucion;
 
 
-      createMessage({
-        type: "info",
-        message: "La fecha de devolución ha sido ajustada a 30 días después de la fecha de recogida.",
-      });
-
       return navigateTo({
         name: to.name,
         params: {
           ...to.params
         },
-        query: to.query,
+        query: withNoticeCode(to.query, 'duracion'),
       });
 
     }

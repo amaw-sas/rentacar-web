@@ -118,7 +118,15 @@ describe('createValidateSearchParams — shared deep-link validation (SCEN-322-V
     expect(target.params.lugar_devolucion).toBe('bogota-aeropuerto')
   })
 
-  it('an unknown branch slug falls to defaults with an info toast', () => {
+  // Issue #406 — these two used to assert `TOAST_ADD` was called once. The
+  // assertion was TRUE and the user still saw nothing: on a hard load the
+  // middleware runs on the server and navigateTo answers 302, which carries no
+  // payload; on a client navigation doSearch's flushMessages() wiped the toast
+  // 53 ms after birth. The test measured the mechanism (toast.add ran) instead
+  // of the outcome (the notice arrives), which is how the bug outlived its own
+  // test. Repinned to the carrier that actually reaches the client — same
+  // observable invariant, correct measuring point.
+  it('an unknown branch slug falls to defaults and carries the notice code', () => {
     const middleware = createValidateSearchParams()
     const to = makeRoute(validParams({ lugar_recogida: 'sede-fantasma' }))
 
@@ -127,10 +135,10 @@ describe('createValidateSearchParams — shared deep-link validation (SCEN-322-V
     expect(NAVIGATE_TO).toHaveBeenCalledTimes(1)
     const target = NAVIGATE_TO.mock.calls[0]![0] as RouteLike
     expect(target.params.lugar_recogida).toBe('bogota-aeropuerto')
-    expect(TOAST_ADD).toHaveBeenCalledTimes(1)
+    expect(target.query.aviso).toBe('sede')
   })
 
-  it('a >30-day window is capped to 30 days with an info toast', () => {
+  it('a >30-day window is capped to 30 days and carries the notice code', () => {
     const middleware = createValidateSearchParams()
     const to = makeRoute(
       validParams({ fecha_devolucion: today.add({ days: 45 }).toString() }),
@@ -141,7 +149,116 @@ describe('createValidateSearchParams — shared deep-link validation (SCEN-322-V
     expect(NAVIGATE_TO).toHaveBeenCalledTimes(1)
     const target = NAVIGATE_TO.mock.calls[0]![0] as RouteLike
     expect(target.params.fecha_devolucion).toBe(today.add({ days: 40 }).toString())
-    expect(TOAST_ADD).toHaveBeenCalledTimes(1)
+    expect(target.query.aviso).toBe('duracion')
+  })
+
+  // A single-digit 12h hour is the reachable way into the "parámetros
+  // inválidos" branch: isTime12hFormat accepts \d{1,2} so the hour block is
+  // skipped, but parseTime12hOr24h requires \d{2} and returns null, so the
+  // isTimeObject guard below catches it. (A malformed DATE never reaches this
+  // branch — createDateFromString/parseDate throws first. Pre-existing, see the
+  // note in the PR; out of scope for #406.)
+  it('an unparseable param falls to defaults and carries the notice code', () => {
+    const middleware = createValidateSearchParams()
+    const to = makeRoute(validParams({ hora_recogida: '9:00am' }))
+
+    middleware(to as never)
+
+    expect(NAVIGATE_TO).toHaveBeenCalledTimes(1)
+    const target = NAVIGATE_TO.mock.calls[0]![0] as RouteLike
+    expect(target.params.hora_recogida).toBe('12:00pm')
+    expect(target.query.aviso).toBe('parametros')
+  })
+
+  it('an unparseable hour falls to defaults and carries the notice code', () => {
+    const middleware = createValidateSearchParams()
+    const to = makeRoute(validParams({ hora_recogida: 'medianoche' }))
+
+    middleware(to as never)
+
+    expect(NAVIGATE_TO).toHaveBeenCalledTimes(1)
+    const target = NAVIGATE_TO.mock.calls[0]![0] as RouteLike
+    expect(target.query.aviso).toBe('hora')
+  })
+
+  // The middleware must not emit toasts of its own any more: every notice it
+  // could raise is created immediately before a redirect that destroys it.
+  it('never calls toast.add — a notice emitted here dies in the redirect', () => {
+    const middleware = createValidateSearchParams()
+
+    middleware(makeRoute(validParams({ lugar_recogida: 'sede-fantasma' })) as never)
+    middleware(
+      makeRoute(
+        validParams({ fecha_devolucion: today.add({ days: 45 }).toString() }),
+      ) as never,
+    )
+
+    expect(TOAST_ADD).not.toHaveBeenCalled()
+  })
+
+  // SCEN-406-05. The #129 city correction leaves the user's dates alone, so it
+  // redirects again into the 30-day cap. Overwriting would drop the branch
+  // notice and leave the user unaware their pickup city changed.
+  it('chained corrections accumulate both codes instead of overwriting', () => {
+    const middleware = createValidateSearchParams()
+    const firstPass = makeRoute(
+      validParams({
+        lugar_recogida: 'bogota-aeropuerto',
+        lugar_devolucion: 'bogota-aeropuerto',
+        fecha_devolucion: today.add({ days: 45 }).toString(),
+      }),
+      '/armenia/buscar-vehiculos/lugar-recogida/bogota-aeropuerto',
+    )
+
+    middleware(firstPass as never)
+    const afterCity = NAVIGATE_TO.mock.calls[0]![0] as RouteLike
+    expect(afterCity.params.lugar_recogida).toBe('armenia-aeropuerto')
+    expect(afterCity.query.aviso).toBe('sede-ciudad')
+
+    // Second pass over the corrected URL — exactly what the redirect produces.
+    const secondPass = makeRoute(
+      { ...afterCity.params },
+      '/armenia/buscar-vehiculos/lugar-recogida/armenia-aeropuerto',
+    )
+    secondPass.query = { ...afterCity.query }
+    middleware(secondPass as never)
+
+    const afterCap = NAVIGATE_TO.mock.calls[1]![0] as RouteLike
+    expect(afterCap.query.aviso).toBe('sede-ciudad,duracion')
+  })
+
+  // The past-date branch raises no notice of its own, and used to be the only
+  // one of the eight redirects that omitted `query` — so a notice parked by an
+  // EARLIER correction died there. The user got a different pickup city AND
+  // different dates, and was told about neither. Campaign params went with it.
+  it('the past-date redirect preserves a notice raised earlier in the chain', () => {
+    const middleware = createValidateSearchParams()
+    const firstPass = makeRoute(
+      validParams({
+        lugar_recogida: 'bogota-aeropuerto',
+        lugar_devolucion: 'bogota-aeropuerto',
+        fecha_recogida: PAST,
+      }),
+      '/armenia/buscar-vehiculos/lugar-recogida/bogota-aeropuerto',
+    )
+    firstPass.query = { utm_source: 'newsletter' }
+
+    middleware(firstPass as never)
+    const afterCity = NAVIGATE_TO.mock.calls[0]![0] as RouteLike
+    expect(afterCity.query.aviso).toBe('sede-ciudad')
+
+    // Second pass over the corrected URL — the past pickup date is still there.
+    const secondPass = makeRoute(
+      { ...afterCity.params },
+      '/armenia/buscar-vehiculos/lugar-recogida/armenia-aeropuerto',
+    )
+    secondPass.query = { ...afterCity.query }
+    middleware(secondPass as never)
+
+    const afterDates = NAVIGATE_TO.mock.calls[1]![0] as RouteLike
+    expect(afterDates.params.fecha_recogida).toBe(TOMORROW)
+    expect(afterDates.query.aviso).toBe('sede-ciudad')
+    expect(afterDates.query.utm_source).toBe('newsletter')
   })
 
   it('valid params pass through without a redirect (navigation continues)', () => {
@@ -153,6 +270,17 @@ describe('createValidateSearchParams — shared deep-link validation (SCEN-322-V
     expect(result).toBeUndefined()
     expect(NAVIGATE_TO).not.toHaveBeenCalled()
     expect(TOAST_ADD).not.toHaveBeenCalled()
+  })
+
+  // A correction that has nothing to tell the user must not stuff the URL.
+  it('a legacy CODE redirect carries no notice code (nothing to announce)', () => {
+    const middleware = createValidateSearchParams()
+    const to = makeRoute(validParams({ lugar_recogida: 'AABOT', lugar_devolucion: 'AABOT' }))
+
+    middleware(to as never)
+
+    const target = NAVIGATE_TO.mock.calls[0]![0] as RouteLike
+    expect(target.query.aviso).toBeUndefined()
   })
 
   it('routes without search params are skipped (e.g. /bogota)', () => {
