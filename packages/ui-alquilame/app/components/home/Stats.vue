@@ -19,24 +19,16 @@
       >
         <template v-for="(stat, index) in stats" :key="stat.label">
           <div class="flex flex-1 flex-col items-center px-4 text-center">
-            <svg
-              class="h-6 w-6 text-red-600"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              v-html="stat.icon"
-            />
-            <span
-              class="mt-3 inline-flex items-center rounded-full border border-red-200 bg-red-50/60 px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-600"
-            >
-              {{ stat.badge }}
-            </span>
+            <!--
+              La cifra va sola: el ícono y la píldora de categoría se retiraron
+              porque repetían la etiqueta de abajo ("FLOTA DISPONIBLE" sobre
+              "Vehículos disponibles") y le robaban peso al dato.
+
+              No es un encabezado a propósito: es un dato, no un título. Como h2
+              entraría al índice del documento y ensuciaría la estructura.
+            -->
             <div
-              class="font-heading mt-3 text-5xl font-extrabold leading-none text-gray-900 md:text-6xl"
+              class="font-heading text-4xl font-extrabold leading-none text-gray-900 md:text-5xl"
             >
               {{ stat.value }}
             </div>
@@ -66,12 +58,9 @@
 
 <script setup lang="ts">
 interface Stat {
-  badge: string
   value: string
   label: string
   detail: string
-  // Inner SVG markup (paths/shapes) for the stat icon.
-  icon: string
 }
 
 const cityCount = useCityCount()
@@ -79,25 +68,19 @@ const cityCount = useCityCount()
 // computed so the "Ciudades" value follows cityCount (see component header).
 const stats = computed<Stat[]>(() => [
   {
-    badge: 'Flota disponible',
     value: '6.000+',
     label: 'Vehículos disponibles',
     detail: 'Compactos, sedanes, camionetas y SUVs.',
-    icon: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
   },
   {
-    badge: 'Ciudades',
     value: String(cityCount.value),
     label: 'Ciudades en Colombia',
     detail: 'Bogotá, Medellín, Cali, Cartagena y más.',
-    icon: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
   },
   {
-    badge: 'Experiencia',
     value: '10',
     label: 'Años de experiencia',
     detail: 'Operación constante desde 2015.',
-    icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   },
 ])
 </script>
