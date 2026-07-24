@@ -16,7 +16,7 @@
         <div class="prose prose-lg max-w-none">
           <!-- 1. Introducción -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">1. Introducción</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">1. Introducción</h2>
             <p class="text-gray-700">
               AMAW S.A.S. valora y respeta la privacidad de los participantes en su Programa de Referidos.
               Estas Políticas de Privacidad describen la información recopilada, el uso y protección de los
@@ -26,7 +26,7 @@
 
           <!-- 2. Información Recopilada -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">2. Información Recopilada</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">2. Información Recopilada</h2>
             <p class="text-gray-700 mb-4">
               AMAW S.A.S. recopila la siguiente información de los participantes y referidos:
             </p>
@@ -48,7 +48,7 @@
 
           <!-- 3. Uso de la Información -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">3. Uso de la Información</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">3. Uso de la Información</h2>
             <p class="text-gray-700 mb-4">
               La información recopilada será utilizada para los siguientes fines:
             </p>
@@ -65,7 +65,7 @@
 
           <!-- 4. Protección y Almacenamiento de Datos -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">4. Protección y Almacenamiento de Datos</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">4. Protección y Almacenamiento de Datos</h2>
             <p class="text-gray-700">
               AMAW S.A.S. implementa medidas de seguridad técnicas y organizativas para proteger la información
               personal de accesos no autorizados, pérdidas o alteraciones. Los datos se almacenarán en servidores
@@ -75,7 +75,7 @@
 
           <!-- 5. Compartición de Datos -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">5. Compartición de Datos</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">5. Compartición de Datos</h2>
             <p class="text-gray-700 mb-4">
               La información personal de los participantes y referidos no será vendida ni compartida con terceros,
               salvo en los siguientes casos:
@@ -98,7 +98,7 @@
 
           <!-- 6. Derechos de los Participantes -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">6. Derechos de los Participantes</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">6. Derechos de los Participantes</h2>
             <p class="text-gray-700 mb-4">
               Los participantes tienen los siguientes derechos sobre su información personal:
             </p>
@@ -114,7 +114,7 @@
 
           <!-- 7. Uso de Cookies y Tecnologías Similares -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">7. Uso de Cookies y Tecnologías Similares</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">7. Uso de Cookies y Tecnologías Similares</h2>
             <p class="text-gray-700">
               AMAW S.A.S. utiliza cookies para mejorar la experiencia del usuario en la plataforma digital.
               Los participantes pueden gestionar la configuración de cookies desde su navegador web.
@@ -123,27 +123,27 @@
 
           <!-- 8. Modificaciones a la Política de Privacidad -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">8. Modificaciones a la Política de Privacidad</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">8. Modificaciones a la Política de Privacidad</h2>
             <p class="text-gray-700">
               AMAW S.A.S. se reserva el derecho de modificar esta política en cualquier momento. Cualquier cambio
               será notificado a los participantes con al menos 15 días de anticipación y publicado en
-              <NuxtLink to="/gana" class="text-amber-600 hover:underline">{{ franchise.name }}/gana</NuxtLink>.
+              <NuxtLink to="/gana" class="text-brand-600 hover:underline">{{ franchise.name }}/gana</NuxtLink>.
             </p>
           </div>
 
           <!-- 9. Contacto -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">9. Contacto</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">9. Contacto</h2>
             <p class="text-gray-700">
               Para cualquier consulta sobre estas Políticas de Privacidad, los participantes pueden comunicarse
               a través del correo electrónico:
-              <a href="mailto:soporte@amawsas.com" class="text-amber-600 hover:underline">soporte@amawsas.com</a>.
+              <a href="mailto:soporte@amawsas.com" class="text-brand-600 hover:underline">soporte@amawsas.com</a>.
             </p>
           </div>
 
           <!-- 10. Aceptación de la Política de Privacidad -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">10. Aceptación de la Política de Privacidad</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">10. Aceptación de la Política de Privacidad</h2>
             <p class="text-gray-700">
               Al registrarse en el Programa de Referidos, el participante acepta estas Políticas de Privacidad
               y otorga su consentimiento para el tratamiento de su información personal conforme a lo aquí estipulado.
@@ -155,7 +155,7 @@
         <div class="mt-12 text-center">
           <NuxtLink
             to="/gana"
-            class="inline-block bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 rounded-lg font-bold transition-colors"
+            class="inline-block bg-brand-900 hover:bg-brand-700 text-white px-8 py-3 rounded-lg font-bold transition-colors"
           >
             Volver al programa
           </NuxtLink>

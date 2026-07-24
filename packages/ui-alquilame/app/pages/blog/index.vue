@@ -8,7 +8,7 @@
       <section> reproduce exacto lo visual (mismo padding, título/descripción
       centrados, blanco sobre el dark del layout) y elimina el mismatch.
     -->
-    <section class="px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24 text-center">
+    <section class="bg-linear-to-b from-footer-from to-footer-to px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24 text-center">
       <h1 class="text-white text-3xl md:text-4xl font-bold font-heading">
         Blog de <span class="text-brand-300">{{ franchise.shortname }}</span>
       </h1>
@@ -152,7 +152,7 @@
           ¿Listo para tu próxima aventura?
         </h2>
         <p class="text-gray-300 mb-6">
-          Reserva tu carro sin anticipos en cualquiera de nuestras 27 sedes
+          Reserva tu carro sin anticipos en cualquiera de nuestras {{ cityCount }} ciudades
         </p>
         <NuxtLink
           to="/reservas"
@@ -169,6 +169,11 @@
 import type { BlogPost } from '@rentacar-main/logic/src'
 
 const { franchise } = useAppConfig()
+
+// El conteo de ciudades sale de la MISMA fuente que el footer. Antes estaba
+// escrito a mano en el CTA y quedó desactualizado (decía un número de sedes que
+// ya no correspondía); cableado así no se puede desincronizar otra vez.
+const { cityCount } = usePublicCities()
 const route = useRoute()
 const router = useRouter()
 

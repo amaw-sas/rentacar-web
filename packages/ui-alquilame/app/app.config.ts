@@ -67,7 +67,7 @@ export default defineAppConfig({
         label: "Política de privacidad",
       },
       {
-        link: "https://docs.google.com/forms/d/e/1FAIpQLSe5NLCil5hQNqsdPhwDM3DYe3wbGiUyr-2VK4RBTYE3YQbcug/viewform",
+        link: "/quejas-y-reclamos",
         label: "Quejas y reclamos",
       },
       {
@@ -75,8 +75,9 @@ export default defineAppConfig({
         label: "Gana comisiones",
       },
       {
-        link: "/registra-tu-flota",
-        label: "Registra tu Flota",
+        // Convenios B2B con rentadoras (no es para un particular con un carro).
+        link: "/aliados",
+        label: "Sé nuestro aliado",
       },
       {
         link: "/blog",

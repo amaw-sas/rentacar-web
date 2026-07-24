@@ -16,7 +16,7 @@
         <div class="prose prose-lg max-w-none">
           <!-- 1. Definiciones -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">1. Definiciones</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">1. Definiciones</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 <strong>AMAW S.A.S.:</strong> Empresa propietaria del programa de referidos y operadora
@@ -39,7 +39,7 @@
 
           <!-- 2. Condiciones Generales -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">2. Condiciones Generales</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">2. Condiciones Generales</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 El programa de referidos está disponible para cualquier persona mayor de edad, excluyendo
@@ -55,7 +55,7 @@
 
           <!-- 3. Monto y Pago de Comisiones -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">3. Monto y Pago de Comisiones</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">3. Monto y Pago de Comisiones</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 La comisión será del <strong>5%</strong> del valor total de cada alquiler válido
@@ -80,7 +80,7 @@
 
           <!-- 4. Métodos de Pago -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">4. Métodos de Pago</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">4. Métodos de Pago</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 <strong>Para empresas colombianas:</strong> Los pagos se realizarán mediante
@@ -109,7 +109,7 @@
 
           <!-- 5. Reglas de Referidos -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">5. Reglas de Referidos</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">5. Reglas de Referidos</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 Se considera un alquiler válido cuando el referido completa el alquiler del vehículo.
@@ -128,7 +128,7 @@
 
           <!-- 6. Prohibiciones y Exclusiones -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">6. Prohibiciones y Exclusiones</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">6. Prohibiciones y Exclusiones</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 Quedan estrictamente prohibidas las prácticas desleales, fraudes o cualquier acción
@@ -147,7 +147,7 @@
 
           <!-- 7. Modificaciones y Comunicaciones -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">7. Modificaciones y Comunicaciones</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">7. Modificaciones y Comunicaciones</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 AMAW S.A.S. se reserva el derecho de modificar los términos y condiciones del programa.
@@ -156,7 +156,7 @@
                 Las modificaciones serán publicadas en la página oficial:
                 <NuxtLink 
                   to="/gana" 
-                  class="text-amber-600 hover:underline"
+                  class="text-brand-600 hover:underline"
                   v-text="franchise.name + '/gana'"
                 >
                 </NuxtLink>.
@@ -170,7 +170,7 @@
 
           <!-- 8. Jurisdicción y Resolución de Conflictos -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">8. Jurisdicción y Resolución de Conflictos</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">8. Jurisdicción y Resolución de Conflictos</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 Cualquier controversia derivada del presente contrato será resuelta en los tribunales
@@ -184,12 +184,12 @@
 
           <!-- 9. Aceptación Digital -->
           <div class="mb-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4">9. Aceptación Digital</h2>
+            <h2 class="text-xl font-bold text-brand-700 mb-4">9. Aceptación Digital</h2>
             <ul class="list-disc pl-6 text-gray-700 space-y-2">
               <li>
                 Al registrarse en el programa de referidos y aceptar digitalmente los términos y
                 condiciones en
-                <NuxtLink to="/gana" class="text-amber-600 hover:underline">
+                <NuxtLink to="/gana" class="text-brand-600 hover:underline">
                   {{ franchise.name }}/gana
                 </NuxtLink>,
                 el participante declara haber leído, entendido y aceptado este contrato en su totalidad.
@@ -202,7 +202,7 @@
         <div class="mt-12 text-center">
           <NuxtLink
             to="/gana"
-            class="inline-block bg-blue-900 hover:bg-blue-800 text-white px-8 py-3 rounded-lg font-bold transition-colors"
+            class="inline-block bg-brand-900 hover:bg-brand-700 text-white px-8 py-3 rounded-lg font-bold transition-colors"
           >
             Volver al programa
           </NuxtLink>

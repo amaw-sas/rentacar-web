@@ -564,6 +564,18 @@ export default defineNuxtConfig({
     // Override with NUXT_RENTACAR_ADMIN_URL and NUXT_RENTACAR_ADMIN_API_KEY
     rentacarAdminUrl: '',
     rentacarAdminApiKey: '',
+    // Formularios públicos (quejas y reclamos, registro de flota) — server-only.
+    // Override con NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO / NUXT_CONTACT_EMAIL_FROM.
+    // `from` debe ser un dominio verificado en Resend; si no, el envío es rechazado.
+    // El remitente es el sandbox de Resend (onboarding@resend.dev): NO requiere
+    // dominio verificado, pero Resend sólo entrega al correo dueño de la cuenta.
+    // Por eso el destino es info@artesyweb.com. Si algún día se verifica
+    // alquilame.co en Resend, basta cambiar estas dos variables por entorno.
+    // Nota: NO se envía copia a quien llena el formulario — el correo es una
+    // notificación interna; su dirección viaja en reply-to para poder responder.
+    resendApiKey: '',
+    contactEmailTo: 'info@artesyweb.com',
+    contactEmailFrom: 'Alquilame <onboarding@resend.dev>',
     // Public config (exposed to client)
     public: {
       rentacarFranchise: "alquilame",

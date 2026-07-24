@@ -1,319 +1,193 @@
 <template>
-  <UPage>
-    <!-- Hero Section -->
-    <UPageHero orientation="horizontal">
-      <template #title>
-        <div class="text-white text-3xl md:text-5xl text-center font-bold">
-          <span class="block">¡Gana Dinero Refiriendo</span>
-          <span class="block">con {{ franchise.shortname }}!</span>
-        </div>
-      </template>
-      <template #description>
-        <p class="text-white text-lg md:text-xl text-center max-w-2xl mx-auto">
+  <!--
+    Gana comisiones — programa de referidos.
+
+    Reescrita para usar el LAYOUT DEL SITIO (header y footer normales). Antes
+    tenía un layout propio con header y pie de página inventados, así que la
+    página se sentía como otro sitio: el usuario perdía la navegación y los
+    enlaces reales del footer. La estructura ahora replica /aliados
+    (hero rojo centrado, tarjetas, formulario) para que ambas se lean como parte
+    de la misma casa.
+
+    Cambios de fondo respecto a la versión anterior:
+      - Sin video: pesaba ~8 MB y el "cómo funciona" se entiende con los pasos.
+      - El formulario dejó de ser un iframe de Google Forms (sacaba al usuario
+        del sitio, no se puede estilar y no respeta la marca) y ahora postea a
+        /api/contact.
+      - Se eliminaron las secciones "Contacto" y "Footer legal" propias: el
+        footer del sitio ya las cubre. Los legales del programa quedan junto al
+        formulario, que es donde importan.
+  -->
+  <div class="bg-white">
+    <!-- Hero -->
+    <section class="bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
+        <h1 class="heading-page text-white">
+          Gana dinero refiriendo con {{ franchise.shortname }}
+        </h1>
+        <div class="h-1 w-10 rounded-full bg-white/70 my-6 mx-auto" aria-hidden="true" />
+        <p class="text-lg md:text-xl text-white/85 max-w-2xl mx-auto">
           Regístrate, comparte tu enlace único y recibe el
-          <span class="font-bold text-amber-400">5% de comisión</span>
+          <span class="font-bold text-white">5% de comisión</span>
           por cada reserva efectiva.
         </p>
-      </template>
-      <template #body>
-        <div class="flex justify-center">
-          <UButton
-            to="#registro"
-            size="xl"
-            class="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-lg font-bold text-lg uppercase transition-colors"
-          >
-            Únete Ahora
-          </UButton>
-        </div>
-      </template>
-    </UPageHero>
-
-    <!-- Video + Pasos Section -->
-    <UPageSection class="bg-white text-black">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <!-- Video -->
-        <div class="flex flex-col items-center">
-          <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-4">¿Cómo Funciona?</h2>
-          <p class="text-gray-600 mb-6 text-center">
-            Mira este video y aprende en minutos cómo empezar a ganar dinero fácilmente.
-          </p>
-          <div class="w-full max-w-md aspect-[9/16] bg-gray-100 rounded-xl overflow-hidden shadow-lg">
-            <video
-              controls
-              class="w-full h-full object-cover"
-              preload="metadata"
-              poster=""
-            >
-              <source src="/gana/video/explicativo.mp4" type="video/mp4" />
-              Tu navegador no soporta videos HTML5.
-            </video>
-          </div>
-        </div>
-
-        <!-- Pasos -->
-        <div class="flex flex-col">
-          <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-6 text-center lg:text-left">
-            Pasos para Ganar
-          </h2>
-          <div class="flex flex-col gap-6">
-            <div
-              v-for="(paso, index) in pasos"
-              :key="index"
-              class="flex items-start gap-4"
-            >
-              <div
-                class="flex-shrink-0 w-12 h-12 bg-amber-500 text-white rounded-full flex items-center justify-center text-xl font-bold"
-              >
-                {{ index + 1 }}
-              </div>
-              <div class="flex-1 pt-2">
-                <p class="text-gray-700 text-lg">{{ paso }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <a
+          href="#registro"
+          class="mt-8 inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-white text-brand-700 font-semibold shadow-lg shadow-black/20 hover:-translate-y-0.5 transition-all duration-200"
+        >
+          Quiero registrarme
+        </a>
       </div>
-    </UPageSection>
+    </section>
 
-    <!-- Formulario de Registro -->
-    <section id="registro" class="bg-gray-100 py-12 md:py-20">
-      <div class="max-w-4xl mx-auto px-4">
-        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 text-center mb-8">
-          Regístrate Ahora
-        </h2>
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-          <iframe
-            src="https://docs.google.com/forms/d/e/1FAIpQLSdBVIRur23_vObsyIvibv0nGxLUZOiCFo06gMjlWEgHg06psA/viewform?embedded=true"
-            width="100%"
-            height="800"
-            frameborder="0"
-            marginheight="0"
-            marginwidth="0"
-            loading="lazy"
-            title="Formulario de registro programa de referidos"
-          >
-            Cargando formulario...
-          </iframe>
-        </div>
-      </div>
+    <!-- Cómo funciona: los pasos (antes acompañaban a un video) -->
+    <section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+      <h2 class="heading-section text-center text-gray-900 mb-10">
+        <span class="text-brand-700">Cómo</span> funciona
+      </h2>
+      <ol class="space-y-6">
+        <li v-for="(paso, i) in pasos" :key="i" class="flex items-start gap-4">
+          <span
+            class="shrink-0 grid place-items-center size-9 rounded-full bg-brand-600 text-white font-bold"
+            aria-hidden="true"
+          >{{ i + 1 }}</span>
+          <p class="text-gray-700 leading-relaxed pt-1">{{ paso }}</p>
+        </li>
+      </ol>
     </section>
 
     <!-- Beneficios -->
-    <UPageSection class="bg-white text-black">
-      <template #title>
-        <h2 class="text-2xl md:text-3xl font-bold text-center">
-          <span class="text-blue-900">¿Por Qué Unirte</span>
-          <span class="text-amber-500"> a Nuestro Programa?</span>
+    <section class="bg-[#EDF0F5] py-12 md:py-16">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="heading-section text-center text-gray-900 mb-10">
+          <span class="text-brand-700">Por qué</span> unirte al programa
         </h2>
-      </template>
-      <template #default>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div
-            v-for="beneficio in beneficios"
-            :key="beneficio.titulo"
-            class="bg-gray-50 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow text-center"
+            v-for="b in beneficios"
+            :key="b.titulo"
+            class="rounded-2xl border border-gray-200 bg-white p-6"
           >
-            <div class="text-4xl mb-4">{{ beneficio.icono }}</div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">{{ beneficio.titulo }}</h3>
-            <p class="text-gray-600">{{ beneficio.descripcion }}</p>
+            <div class="h-1 w-8 rounded-full bg-brand-600 mb-4" aria-hidden="true" />
+            <h3 class="font-bold text-gray-900 mb-2">{{ b.titulo }}</h3>
+            <p class="text-gray-600 text-sm leading-relaxed">{{ b.descripcion }}</p>
           </div>
         </div>
-      </template>
-    </UPageSection>
-
-    <!-- FAQs -->
-    <UPageSection id="preguntas" class="bg-gray-100 text-black">
-      <div class="max-w-4xl mx-auto">
-        <h2 class="text-2xl md:text-3xl font-bold text-center mb-8">
-          <span class="text-blue-900">Preguntas</span>
-          <span class="text-amber-500"> Frecuentes</span>
-        </h2>
-        <UAccordion :items="preguntas" :ui="faqAccordionUIConfig">
-          <template #default="{ item }">
-            <div class="text-base font-medium text-gray-800 px-4">{{ item.label }}</div>
-          </template>
-          <template #content="{ item }">
-            <div class="text-base text-gray-600 py-3 bg-white px-4 rounded-lg">{{ item.content }}</div>
-          </template>
-        </UAccordion>
-      </div>
-    </UPageSection>
-
-    <!-- Testimonios -->
-    <UPageSection class="bg-white text-black">
-      <template #title>
-        <h2 class="text-2xl md:text-3xl font-bold text-center">
-          <span class="text-blue-900">Lo Que Dicen</span>
-          <span class="text-amber-500"> Nuestros Afiliados</span>
-        </h2>
-      </template>
-      <template #default>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <div
-            v-for="testimonio in testimonios"
-            :key="testimonio.nombre"
-            class="bg-gray-50 rounded-xl p-6 shadow-md"
-          >
-            <p class="text-gray-600 italic mb-4">"{{ testimonio.texto }}"</p>
-            <p class="font-bold text-gray-800">- {{ testimonio.nombre }}</p>
-          </div>
-        </div>
-      </template>
-    </UPageSection>
-
-    <!-- Contacto -->
-    <section class="bg-blue-900 text-white py-12 md:py-16">
-      <div class="max-w-4xl mx-auto px-4 text-center">
-        <h2 class="text-2xl md:text-3xl font-bold mb-4">Contáctanos</h2>
-        <p class="text-lg mb-6">
-          ¿Tienes dudas? Escríbenos a nuestro correo
-          <a :href="`mailto:${franchise.email}`" class="text-amber-400 hover:underline">
-            {{ franchise.email }}
-          </a>
-          o contáctanos a través de WhatsApp en el número
-          <a :href="franchise.whatsapp" target="_blank" class="text-amber-400 hover:underline">
-            {{ franchise.phone }}
-          </a>
-        </p>
-        <p class="text-gray-300">Estamos aquí para ayudarte.</p>
       </div>
     </section>
 
-    <!-- Footer Legal -->
-    <section class="bg-blue-950 text-white py-6">
-      <div class="max-w-4xl mx-auto px-4 text-center">
-        <p class="text-sm">
-          &copy; {{ currentYear }} {{ franchise.name }}. Todos los derechos reservados.
-          <NuxtLink to="/gana/politicas-privacidad" class="text-amber-400 hover:underline ml-2">
-            Políticas de privacidad
-          </NuxtLink>
-          |
-          <NuxtLink to="/gana/terminos-condiciones" class="text-amber-400 hover:underline">
-            Términos y condiciones
-          </NuxtLink>
-        </p>
+    <!-- Formulario -->
+    <section id="registro" class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 scroll-mt-24">
+      <h2 class="heading-section text-gray-900 mb-2">Regístrate</h2>
+      <p class="text-gray-600 mb-8">
+        Déjanos tus datos y te enviamos tu enlace único para empezar a ganar.
+      </p>
+
+      <PublicContactForm
+        type="referidos"
+        :fields="fields"
+        submit-label="Quiero mi enlace"
+        success-message="¡Recibido! Te contactaremos con tu enlace único para empezar a referir."
+      />
+
+      <p class="mt-6 text-sm text-gray-600">
+        Al registrarte aceptas los
+        <NuxtLink to="/gana/terminos-condiciones" class="text-brand-700 font-semibold hover:underline">
+          términos y condiciones
+        </NuxtLink>
+        y las
+        <NuxtLink to="/gana/politicas-privacidad" class="text-brand-700 font-semibold hover:underline">
+          políticas de privacidad
+        </NuxtLink>
+        del programa.
+      </p>
+    </section>
+
+    <!-- Preguntas frecuentes -->
+    <section id="preguntas" class="bg-[#EDF0F5] py-12 md:py-16 scroll-mt-24">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="heading-section text-center text-gray-900 mb-8">
+          Preguntas <span class="text-brand-700">frecuentes</span>
+        </h2>
+        <div class="space-y-3">
+          <details
+            v-for="(p, i) in preguntas"
+            :key="i"
+            class="group rounded-2xl border border-gray-200 bg-white px-5 py-4"
+          >
+            <summary class="cursor-pointer list-none font-semibold text-gray-900 flex items-center justify-between gap-4">
+              {{ p.pregunta }}
+              <span class="shrink-0 text-brand-600 transition-transform group-open:rotate-45" aria-hidden="true">+</span>
+            </summary>
+            <p class="mt-3 text-gray-600 leading-relaxed">{{ p.respuesta }}</p>
+          </details>
+        </div>
       </div>
     </section>
-  </UPage>
+  </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
+import type { PublicFormField } from '~/components/PublicContactForm.vue'
+
 const { franchise } = useAppConfig()
 
-const currentYear = new Date().getFullYear()
-
-useHead({
-  title: 'Programa de referidos',
-  meta: [
-    {
-      name: 'description',
-      content: `Únete al programa de referidos de ${franchise.name} y gana el 5% de comisión por cada reserva efectiva que realicen tus contactos.`
-    }
-  ]
-})
-
-useSeoMeta({
-  ogTitle: `Programa de Referidos | ${franchise.shortname}`,
-  ogDescription: `Gana dinero refiriendo con ${franchise.name}. Recibe el 5% de comisión por cada reserva efectiva.`,
-  ogType: 'website',
-})
-
-definePageMeta({
-  layout: 'gana',
-  colorMode: 'light',
-})
-
 const pasos = [
-  `Regístrate en ${franchise.name}/gana y completa el formulario con tus datos.`,
+  'Regístrate en esta página completando el formulario con tus datos.',
   'Recibe tu enlace único para compartir con tus contactos.',
-  'Comparte tu enlace y ayuda a tus contactos a realizar reservas.',
-  'Gana el 5% de comisión por cada reserva efectiva realizada a través de tu enlace.'
+  'Comparte tu enlace e invita a tus contactos a realizar reservas.',
+  'Gana el 5% de comisión por cada reserva efectiva hecha a través de tu enlace.',
 ]
 
 const beneficios = [
   {
-    icono: '💰',
-    titulo: 'Gana Dinero Extra',
-    descripcion: 'Recibe el 5% de comisión por cada reserva efectiva.'
+    titulo: 'Gana dinero extra',
+    descripcion: 'Recibe el 5% de comisión por cada reserva efectiva que llegue con tu enlace.',
   },
   {
-    icono: '♾️',
-    titulo: 'Sin Límites',
-    descripcion: 'Invita a tantas personas como quieras y multiplica tus ganancias.'
+    titulo: 'Sin límites',
+    descripcion: 'No hay tope de referidos ni de comisiones: mientras más compartas, más ganas.',
   },
   {
-    icono: '🔒',
-    titulo: 'Pagos Seguros',
-    descripcion: 'Recibe tus comisiones por transferencia bancaria o USDT.'
+    titulo: 'Pagos seguros',
+    descripcion: 'Te pagamos de forma confiable por cada reserva efectiva, con reglas claras.',
   },
   {
-    icono: '🤝',
-    titulo: 'Soporte Dedicado',
-    descripcion: 'Te apoyamos en todo momento para que obtengas tus comisiones.'
-  }
+    titulo: 'Soporte dedicado',
+    descripcion: 'Te acompañamos por WhatsApp para resolver cualquier duda del programa.',
+  },
 ]
 
 const preguntas = [
   {
-    label: '¿Quién puede participar en el programa de referidos?',
-    content: 'Cualquier persona mayor de edad puede participar, excepto empleados de AMAW S.A.S., socios y rentadoras locales.'
+    pregunta: '¿Cuánto gano por cada referido?',
+    respuesta: 'Ganas el 5% de comisión sobre cada reserva efectiva realizada a través de tu enlace único.',
   },
   {
-    label: '¿Cómo recibo mi comisión?',
-    content: 'Las comisiones se pagan mediante transferencia bancaria para empresas colombianas y en USDT para empresas extranjeras.'
+    pregunta: '¿Tiene algún costo participar?',
+    respuesta: 'No. Registrarte y participar en el programa de referidos es totalmente gratis.',
   },
   {
-    label: '¿Cuánto tiempo tarda en pagarse mi comisión?',
-    content: 'El pago se realiza un mes después de que el referido complete su alquiler, siempre que se alcance el monto mínimo requerido.'
+    pregunta: '¿Cuándo recibo mi comisión?',
+    respuesta: 'La comisión se liquida una vez la reserva se hace efectiva. Te contactamos para coordinar el pago.',
   },
   {
-    label: '¿Qué pasa si no alcanzo el monto mínimo de $200,000 COP en 6 meses?',
-    content: 'Si no alcanzas el monto mínimo después de 6 meses, las comisiones acumuladas serán anuladas según las políticas del programa.'
+    pregunta: '¿Hay un límite de personas que puedo referir?',
+    respuesta: 'No hay límite: puedes referir a todas las personas que quieras.',
   },
-  {
-    label: '¿Puedo usar mi enlace para hacer mis propias reservas?',
-    content: 'No, las auto-referencias están prohibidas y podrían descalificarte del programa.'
-  },
-  {
-    label: '¿Qué sucede si un referido cancela su reserva?',
-    content: 'Las comisiones solo se pagan por reservas efectivas completadas. Si el referido cancela, no se generará comisión.'
-  },
-  {
-    label: '¿Hay un límite en la cantidad de referidos?',
-    content: 'No, puedes invitar a tantos referidos como desees. ¡Cuantos más, mejor!'
-  },
-  {
-    label: '¿Qué hago si tengo problemas con mi enlace o mis comisiones?',
-    content: `Puedes contactarnos a través de nuestro correo ${franchise.email} o nuestro WhatsApp ${franchise.phone}.`
-  },
-  {
-    label: '¿En qué ciudades de Colombia está disponible el servicio?',
-    content: 'Estamos disponibles en: Armenia, Barranquilla, Bogotá, Bucaramanga, Cali, Cartagena, Cúcuta, Floridablanca, Ibagué, Manizales, Medellín, Montería, Neiva, Pereira, Santa Marta, Soledad, Palmira, Valledupar y Villavicencio.'
-  },
-  {
-    label: `¿Por qué confiar en ${franchise.name}?`,
-    content: 'Somos una plataforma confiable y líder en la renta de autos en Colombia, con una amplia red de socios y rentadoras locales en más de 20 ciudades del país.'
-  }
 ]
 
-const testimonios = [
-  {
-    nombre: 'Juan Pérez',
-    texto: 'Gracias al programa de referidos, he generado ingresos extra de manera fácil y segura. ¡Es increíble!'
-  },
-  {
-    nombre: 'María López',
-    texto: `Recomendar ${franchise.name} fue una decisión sencilla. Mi enlace generó comisiones rápidamente.`
-  },
-  {
-    nombre: 'Carlos García',
-    texto: 'El soporte y la transparencia del programa son impecables. Totalmente recomendado.'
-  }
+const fields: PublicFormField[] = [
+  { name: 'nombre', label: 'Nombre completo', type: 'text', required: true, autocomplete: 'name' },
+  { name: 'email', label: 'Correo electrónico', type: 'email', required: true, autocomplete: 'email' },
+  { name: 'telefono', label: 'Teléfono / WhatsApp', type: 'tel', required: true, inputmode: 'tel', autocomplete: 'tel' },
+  { name: 'ciudad', label: 'Ciudad (opcional)', type: 'text' },
+  { name: 'mensaje', label: '¿Algo que quieras contarnos? (opcional)', type: 'textarea' },
 ]
 
-const faqAccordionUIConfig = {
-  item: 'bg-white rounded-lg mb-2 px-2 pb-2 !border-0 shadow-sm',
-  body: '!border-none',
-  trailingIcon: 'mr-2 transition-transform duration-200',
-}
+useHead({ title: 'Gana comisiones — Programa de referidos' })
+useSeoMeta({
+  description:
+    'Únete al programa de referidos de Alquilame: comparte tu enlace único y gana el 5% de comisión por cada reserva efectiva. Registrarte es gratis.',
+})
 </script>

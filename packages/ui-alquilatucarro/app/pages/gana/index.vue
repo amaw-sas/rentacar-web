@@ -45,7 +45,7 @@
               preload="metadata"
               poster=""
             >
-              <source src="/gana/video/explicativo.mp4" type="video/mp4" />
+              <source src="/videos/gana/explicativo.mp4" type="video/mp4" />
               Tu navegador no soporta videos HTML5.
             </video>
           </div>

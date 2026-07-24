@@ -1,9 +1,9 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-[#000073] via-blue-800 to-blue-900 font-sans text-gray-800">
+  <div class="min-h-screen bg-linear-to-b from-footer-from to-footer-to font-sans text-gray-800">
     <!-- Header -->
     <UHeader
       v-model:open="mobileMenuOpen"
-      class="bg-[#000073] z-50 py-4 md:py-6 px-6 border-none relative"
+      class="bg-brand-900 z-50 py-4 md:py-6 px-6 border-none relative"
       mode="slideover"
       :toggle="{
         color: 'white',

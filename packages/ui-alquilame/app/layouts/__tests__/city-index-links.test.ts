@@ -77,15 +77,30 @@ describe('city landing — CTA y "Inicio" del footer', () => {
     expect(layout).toMatch(/:to="heroTo"[\s\S]{0,80}>Inicio</)
   })
 
-  it('SCEN-LINK-09: el footer ofrece "Registra tu Flota" apuntando a su página propia', () => {
+  it('SCEN-LINK-09: el footer ofrece el convenio B2B apuntando a su página propia', () => {
+    // El público son rentadoras, no un particular con un carro: la etiqueta lo
+    // dice para no atraer al lead equivocado.
     const config = read('app/app.config.ts')
-    expect(config).toContain('Registra tu Flota')
-    expect(config).toContain('/registra-tu-flota')
+    expect(config).toContain('/aliados')
+    expect(config).toMatch(/label:\s*"Sé nuestro aliado"/)
   })
 
-  it('SCEN-LINK-10: existe la página /registra-tu-flota con estado "En construcción"', () => {
-    const page = read('app/pages/registra-tu-flota.vue')
-    expect(page).toMatch(/En construcci[óo]n/)
+  it('SCEN-LINK-10: /aliados es una landing con formulario (ya no un placeholder)', () => {
+    // Contrato actualizado: dejó de ser "En construcción" y pasó a captar datos.
+    const page = read('app/pages/aliados.vue')
+    expect(page).not.toMatch(/En construcci[óo]n/)
+    expect(page).toMatch(/<PublicContactForm[\s\S]*type="flota"/)
+  })
+
+  it('SCEN-FORM-07: "Quejas y reclamos" apunta a la página propia, no al Google Form con login', () => {
+    const config = read('app/app.config.ts')
+    expect(config).toContain('/quejas-y-reclamos')
+    expect(config).not.toContain('docs.google.com/forms')
+  })
+
+  it('SCEN-FORM-08: /quejas-y-reclamos existe y monta el formulario de quejas', () => {
+    const page = read('app/pages/quejas-y-reclamos.vue')
+    expect(page).toMatch(/<PublicContactForm[\s\S]*type="quejas"/)
   })
 
   it('SCEN-LINK-08: todo href tel: quita los espacios del número (footer y ChatWidget)', () => {
