@@ -29,7 +29,7 @@
         success-message="Recibimos tu queja. Te responderemos al correo que nos dejaste."
       />
 
-      <p class="mt-10 text-sm text-gray-600">
+      <p class="mt-10 body-sm">
         ¿Prefieres hablar con alguien?
         <a :href="franchise.whatsapp" target="_blank" rel="noopener noreferrer" class="text-brand-700 font-semibold hover:underline">
           Escríbenos por WhatsApp

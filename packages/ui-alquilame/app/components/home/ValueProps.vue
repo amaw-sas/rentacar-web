@@ -60,7 +60,7 @@
             <h3 class="text-xl font-bold font-heading text-gray-900 mb-2 leading-tight">
               {{ ventaja.title }}
             </h3>
-            <p class="text-gray-500 text-sm leading-relaxed">
+            <p class="text-gray-700 text-sm leading-relaxed">
               {{ ventaja.description }}
             </p>
             <div class="h-1 w-10 rounded-full bg-brand-600 mt-4" />

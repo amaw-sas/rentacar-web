@@ -28,7 +28,7 @@
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
           Alquila tu carro en las principales ciudades de Colombia
         </h2>
-        <p class="mt-4 text-lg text-gray-600">
+        <p class="mt-4 body-lg">
           Operamos en más de {{ cities.length }} ciudades de Colombia. Estas son las más solicitadas.
         </p>
       </div>
@@ -128,7 +128,7 @@
           </span>
           <div class="sm:contents">
             <p class="font-bold font-heading text-sm text-gray-900">{{ item.title }}</p>
-            <p class="text-[13px] text-gray-500 leading-snug">{{ item.description }}</p>
+            <p class="text-sm text-gray-700 leading-snug">{{ item.description }}</p>
           </div>
         </div>
       </div>

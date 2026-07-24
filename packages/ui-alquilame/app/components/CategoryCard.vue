@@ -117,7 +117,7 @@
         <!--==== columna der t1 ====-->
         <div class="pl-5 flex flex-col justify-center">
           <div>
-            <p class="text-lg text-gray-700 mb-1">Escoge protección</p>
+            <p class="body-lg mb-1">Escoge protección</p>
 
             <div class="flex flex-col justify-start">
               <div class="opcion-seleccionable">

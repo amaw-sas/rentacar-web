@@ -47,7 +47,7 @@
             <p class="mt-3 text-sm font-bold text-gray-900">
               {{ stat.label }}
             </p>
-            <p class="mt-1 max-w-[210px] text-xs leading-snug text-gray-500">
+            <p class="mt-1 max-w-[210px] body-sm">
               {{ stat.detail }}
             </p>
           </div>

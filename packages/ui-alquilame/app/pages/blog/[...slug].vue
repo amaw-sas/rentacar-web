@@ -214,7 +214,7 @@
                 <h3 class="font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors line-clamp-2">
                   {{ related.title }}
                 </h3>
-                <p class="text-sm text-gray-500 mt-2">{{ related.readingTime }} min de lectura</p>
+                <p class="body-sm mt-2">{{ related.readingTime }} min de lectura</p>
               </div>
             </article>
           </NuxtLink>

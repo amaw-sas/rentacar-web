@@ -62,7 +62,7 @@
               <div class="flex gap-0.5 mt-1.5 sm:justify-center">
                 <StarIcon v-for="i in 5" :key="i" cls="text-yellow-400 w-[15px] h-[15px]" />
               </div>
-              <p class="mt-2.5 text-sm text-gray-600 leading-relaxed">
+              <p class="mt-2.5 body-sm leading-relaxed">
                 &ldquo;{{ testimonio.quote }}&rdquo;
               </p>
             </div>

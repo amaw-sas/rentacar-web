@@ -70,7 +70,7 @@
           >
             <div class="h-1 w-8 rounded-full bg-brand-600 mb-4" aria-hidden="true" />
             <h3 class="font-bold text-gray-900 mb-2">{{ b.titulo }}</h3>
-            <p class="text-gray-600 text-sm leading-relaxed">{{ b.descripcion }}</p>
+            <p class="body-sm leading-relaxed">{{ b.descripcion }}</p>
           </div>
         </div>
       </div>
@@ -90,7 +90,7 @@
         success-message="¡Recibido! Te contactaremos con tu enlace único para empezar a referir."
       />
 
-      <p class="mt-6 text-sm text-gray-600">
+      <p class="mt-6 body-sm">
         Al registrarte aceptas los
         <NuxtLink to="/gana/terminos-condiciones" class="text-brand-700 font-semibold hover:underline">
           términos y condiciones

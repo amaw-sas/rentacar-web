@@ -28,7 +28,7 @@
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
           Sedes en {{ city?.name }}
         </h2>
-        <p class="mt-3 text-base md:text-lg text-gray-600 max-w-2xl">
+        <p class="mt-3 text-base md:body-lg max-w-2xl">
           {{ cityBranches.length }}
           {{ cityBranches.length === 1 ? 'punto físico de entrega' : 'puntos físicos de entrega' }}
           en la ciudad. Elige el que te quede más cómodo.
@@ -91,7 +91,7 @@
           </svg>
           <div class="sm:contents">
             <p class="font-heading font-bold text-sm text-gray-900">Seguridad y confianza</p>
-            <p class="text-[13px] text-gray-500 leading-snug">
+            <p class="text-sm text-gray-700 leading-snug">
               Protocolos de bioseguridad en todos nuestros puntos.
             </p>
           </div>
@@ -102,7 +102,7 @@
           <ClockIcon cls="shrink-0 size-6 text-red-600" />
           <div class="sm:contents">
             <p class="font-heading font-bold text-sm text-gray-900">Entregas rápidas</p>
-            <p class="text-[13px] text-gray-500 leading-snug">
+            <p class="text-sm text-gray-700 leading-snug">
               Proceso ágil para que empieces tu viaje.
             </p>
           </div>
@@ -125,7 +125,7 @@
           </svg>
           <div class="sm:contents">
             <p class="font-heading font-bold text-sm text-gray-900">Soporte 24/7</p>
-            <p class="text-[13px] text-gray-500 leading-snug">
+            <p class="text-sm text-gray-700 leading-snug">
               Estamos contigo en cada paso del alquiler.
             </p>
           </div>

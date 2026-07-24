@@ -19,7 +19,7 @@
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">
           Cómo Funciona
         </h2>
-        <p class="mt-3 text-base md:text-lg text-gray-600">
+        <p class="mt-3 text-base md:body-lg">
           Alquila tu carro en 3 simples pasos
         </p>
       </div>
@@ -57,7 +57,7 @@
             <h3 class="font-heading text-xl font-bold text-gray-900 mb-2">
               {{ step.title }}
             </h3>
-            <p class="text-sm md:text-base text-gray-500 leading-relaxed">
+            <p class="text-sm md:text-base text-gray-700 leading-relaxed">
               {{ step.description }}
             </p>
             <span
@@ -111,7 +111,7 @@
           </svg>
           Seguridad • Transparencia • Soporte 24/7
         </p>
-        <p class="mt-1 text-sm text-gray-500">
+        <p class="mt-1 body-sm">
           Estamos contigo en todo el proceso.
         </p>
       </div>

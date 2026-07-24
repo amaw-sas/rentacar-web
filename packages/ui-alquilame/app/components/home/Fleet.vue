@@ -39,7 +39,7 @@
         <h2 class="text-3xl md:text-4xl font-extrabold font-heading text-gray-900">
           Nuestra Flota
         </h2>
-        <p class="mt-3 text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+        <p class="mt-3 text-base md:body-lg max-w-2xl mx-auto">
           Reserva con anticipación y obtén mejores precios — el precio final varía
           según la temporada y los días de renta.
         </p>
@@ -110,19 +110,19 @@
               {{ card.title }}
               <span class="text-sm font-normal text-gray-600"> · {{ card.transmission }}</span>
             </h3>
-            <p class="text-sm text-gray-600 mb-2">Ej: {{ card.example }} o similar</p>
-            <p class="text-sm text-gray-600 mb-4 leading-snug">{{ card.description }}</p>
+            <p class="body-sm mb-2">Ej: {{ card.example }} o similar</p>
+            <p class="body-sm mb-4 leading-snug">{{ card.description }}</p>
 
             <!-- Price: real; omitted (fail-soft) when undefined -->
             <div class="mb-4 min-h-[3.5rem]">
               <!-- Diario: low-season 1.000 km monthly rate prorated over 30 days -->
               <div v-if="plan === 'daily' && card.dailyPrice !== undefined" class="leading-tight">
-                <p class="text-xs text-gray-600">Precio x día en alquiler de 30 días</p>
+                <p class="text-sm text-gray-600">Precio x día en alquiler de 30 días</p>
                 <p class="flex items-baseline gap-2 flex-wrap">
                   <span class="text-2xl font-bold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}</span>
                   <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
                 </p>
-                <p class="text-xs font-medium text-gray-600">Temporada Baja</p>
+                <p class="text-sm font-medium text-gray-600">Temporada Baja</p>
               </div>
               <p
                 v-else-if="plan === 'monthly' && card.monthlyPrice !== undefined"

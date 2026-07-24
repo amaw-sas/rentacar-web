@@ -40,7 +40,7 @@
             </div>
             <div>
               <h3 class="font-heading text-xl font-bold text-gray-900 mb-1">{{ benefit.title }}</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">{{ benefit.body }}</p>
+              <p class="body-sm leading-relaxed">{{ benefit.body }}</p>
             </div>
           </div>
         </div>
@@ -130,7 +130,7 @@
                 {{ destination.time }}
               </span>
             </div>
-            <p class="text-gray-600 text-sm leading-relaxed">{{ destination.description }}</p>
+            <p class="body-sm leading-relaxed">{{ destination.description }}</p>
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@
             </div>
             <div>
               <h3 class="font-heading text-xl font-bold text-gray-900 mb-1">{{ tip.title }}</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">{{ tip.body }}</p>
+              <p class="body-sm leading-relaxed">{{ tip.body }}</p>
             </div>
           </div>
         </div>

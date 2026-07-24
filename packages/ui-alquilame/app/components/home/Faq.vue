@@ -14,7 +14,7 @@
         <h2 class="font-heading text-3xl md:text-4xl text-gray-900">
           Preguntas Frecuentes
         </h2>
-        <p class="mt-4 text-lg text-gray-600">
+        <p class="mt-4 body-lg">
           Todo lo que necesitas saber sobre nuestro servicio de alquiler de carros.
         </p>
       </div>

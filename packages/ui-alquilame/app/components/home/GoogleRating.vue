@@ -57,7 +57,7 @@
     >
       {{ heading }}
     </component>
-    <p class="mt-2 text-base text-gray-500">Verificadas con autor y fecha</p>
+    <p class="mt-2 text-base text-gray-700">Verificadas con autor y fecha</p>
 
     <a
       :href="GOOGLE_REVIEWS_URL"

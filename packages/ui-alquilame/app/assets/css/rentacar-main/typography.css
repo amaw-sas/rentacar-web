@@ -1,3 +1,12 @@
+/*
+  CAPA: estas utilidades viven en `@layer components` a propósito.
+  Sin capa, en Tailwind v4 el CSS sin capa GANA a `@layer utilities`, así que un
+  `heading-page text-white` o un `body-base text-white/85` veían su color
+  ignorado en silencio — la clase se leía como si hiciera algo y no hacía nada
+  (hoy hay 61 casos así, invisibles sólo porque el token coincide con el color
+  pedido). Dentro de la capa, la utilidad manda y el código hace lo que dice.
+*/
+@layer components {
 /* ==========================================================================
    Typography System - Alquilame
 
@@ -264,3 +273,4 @@
     }
 }
 */
+}

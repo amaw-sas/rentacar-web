@@ -30,7 +30,7 @@
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-3">
           Opiniones de clientes que rentaron carros en {{ city?.name }}
         </h2>
-        <p class="text-base text-gray-600">
+        <p class="body-base">
           Descubre por qué somos la opción preferida para alquilar carros en
           {{ city?.name }}: atención cercana, precios competitivos y la
           facilidad para explorar la ciudad y sus alrededores.
@@ -85,7 +85,7 @@
             </div>
 
             <!-- Quote -->
-            <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+            <p class="mt-3 body-sm leading-relaxed">
               &ldquo;{{ testimonio.quote }}&rdquo;
             </p>
           </article>

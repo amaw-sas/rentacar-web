@@ -51,7 +51,7 @@
         <div v-for="b in beneficios" :key="b.titulo" class="rounded-2xl border border-gray-200 bg-[#F8F9FC] p-6">
           <div class="h-1 w-8 rounded-full bg-brand-600 mb-4" aria-hidden="true" />
           <h3 class="font-bold text-gray-900 mb-2">{{ b.titulo }}</h3>
-          <p class="text-gray-600 text-sm leading-relaxed">{{ b.texto }}</p>
+          <p class="body-sm leading-relaxed">{{ b.texto }}</p>
         </div>
       </div>
     </section>
