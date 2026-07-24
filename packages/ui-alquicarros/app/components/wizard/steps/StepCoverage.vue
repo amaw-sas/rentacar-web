@@ -112,6 +112,10 @@
 import { computed, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
+// composables (import explícito, no auto-import: así el componente es montable
+// en tests sin el runtime de Nuxt)
+import { canQuoteTotalCoverageFor, sellablePlans } from '~/composables/useMonthlyPlans'
+
 // utils
 import { pickPriceForDate } from '@rentacar-main/logic/utils'
 
@@ -130,16 +134,16 @@ const isTotal = computed(() => selectedCategory.value?.withTotalCoverage === tru
 const mileage = computed(() => selectedCategory.value?.withMileage ?? null)
 
 /**
- * En reserva regular el upgrade a Total se cotiza con `totalCoverageUnitCharge`
- * (cargo diario de la fila de pricing activa aplicable a la fecha — #322 PR10);
- * si es null no hay tarifa aplicable y la card se omite. En mensual el cobro
- * real es `total_insurance_price` de la fila del mes, así que no depende del
- * cargo diario.
+ * Si la card de Seguro Total se puede cotizar. La regla —regular depende del cargo
+ * diario, mensual no— vive en `canQuoteTotalCoverageFor`, que es su dueño único: el
+ * arrastre entre gamas del issue #368 tiene que responder la misma pregunta, y dos
+ * respuestas a la misma pregunta en la misma pantalla es cómo se desincronizan.
+ * El computed local se queda porque el nombre `canQuoteTotal` se auto-importaría
+ * sobre sí mismo si tomara el del helper.
  */
-const canQuoteTotal = computed(() => {
-  if (haveMonthlyReservation.value) return true
-  return selectedCategory.value?.canQuoteTotalCoverage === true
-})
+const canQuoteTotal = computed(() =>
+  canQuoteTotalCoverageFor(selectedCategory.value, haveMonthlyReservation.value),
+)
 
 /** Si la opción deja de ser cotizable, ninguna reserva puede quedar en Total. */
 watch(
@@ -181,19 +185,28 @@ const coveragePrice = computed(() => {
 })
 
 /**
- * Planes vendibles. El de 3.000 km existe en el tipo y en los datos pero ninguna marca
- * lo oferta (CategoryCard lo tiene tras `v-if="false"`), y categoryOffersMonthly
- * tampoco lo cuenta. El de 2.000 km se omite cuando su precio no es positivo: una gama
- * puede ofrecer mensual solo con el plan de 1.000 km.
+ * Etiquetas de los planes ofertados. `Partial` a propósito: `MonthlyMileage` incluye
+ * una tercera clave que ninguna marca vende, y un `Record` completo obligaría a
+ * declararla aquí solo para satisfacer a TypeScript.
  */
-const mileagePlans = computed<{ value: MonthlyMileage; label: string; price: string }[]>(() => {
-  const row = monthPrice.value
-  if (!row) return []
-  const plans: { value: MonthlyMileage; label: string; price: string }[] = []
-  if (row['1k_kms'] > 0) plans.push({ value: '1k_kms', label: '1.000 km', price: moneyFormat(row['1k_kms']) })
-  if (row['2k_kms'] > 0) plans.push({ value: '2k_kms', label: '2.000 km', price: moneyFormat(row['2k_kms']) })
-  return plans
-})
+const MILEAGE_LABELS: Partial<Record<MonthlyMileage, string>> = {
+  '1k_kms': '1.000 km',
+  '2k_kms': '2.000 km',
+}
+
+/**
+ * Planes vendibles, con etiqueta y precio formateado para la vista. Qué planes vende
+ * la gama —y sobre qué fila de precios— lo decide `sellablePlans`, que es el dueño
+ * único de esa regla (la comparten el piso "desde $X" del Paso 2 y el arrastre del
+ * issue #368). Aquí solo se compone la presentación.
+ */
+const mileagePlans = computed<{ value: MonthlyMileage; label: string; price: string }[]>(() =>
+  sellablePlans(selectedCategory.value?.categoryMonthPrices, fechaRecogida.value).map((plan) => ({
+    value: plan.value,
+    label: MILEAGE_LABELS[plan.value] ?? plan.value,
+    price: moneyFormat(plan.price),
+  })),
+)
 
 /**
  * `useCategory.withMileage` arranca SIEMPRE en `"1k_kms"` (logic, no se toca). Si la gama

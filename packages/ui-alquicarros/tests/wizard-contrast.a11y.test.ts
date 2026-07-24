@@ -10,6 +10,9 @@ const FILES = [
   'WizardVehicleCard.vue',
   'VehicleSegmentTile.vue',
   'steps/StepCoverage.vue',
+  // #368 B1: el Paso 2 pinta ahora el aviso de arrastre/reset, que es copy de cuerpo
+  // sobre fondo claro y hasta ahora no estaba cubierto por esta invariante.
+  'steps/StepVehicle.vue',
 ]
 
 describe('SCEN-322-A04 — wizard price/notice text contrast on white', () => {
