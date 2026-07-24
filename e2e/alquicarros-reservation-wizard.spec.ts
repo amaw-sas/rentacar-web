@@ -74,16 +74,43 @@ function stubAvailability(page: Page, body: unknown, status = 200) {
     return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   });
 }
-function stubRecord(page: Page) {
-  return page.route('**/api/reservations/record', (route: Route) =>
-    route.fulfill({
+function stubRecord(page: Page, delayMs = 0) {
+  return page.route('**/api/reservations/record', async (route: Route) => {
+    // El retardo abre la ventana en la que el envío está EN VUELO, que es lo único que
+    // permite observar el estado de carga del CTA (SCEN-366-04). Con 0 ms la respuesta
+    // llega antes de que se pueda asertar nada y el test mediría el después, no el
+    // durante.
+    if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
+    return route.fulfill({
       status: 200,
       contentType: 'application/json',
       // El estado debe ser 'reservado' (español) — routeForReservationStatus
       // normaliza a minúsculas y 'reserved' (inglés) cae en default → null → no navega.
       body: JSON.stringify({ reservationStatus: 'reservado', reserveCode: 'E2ECODE' }),
-    }),
-  );
+    });
+  });
+}
+
+/**
+ * Rellena el formulario del Paso 5 con datos válidos. El teléfono es el campo delicado:
+ * VueTelInput valida contra formato internacional e `isValidPhoneNumber` exige `+57…`,
+ * que el widget solo produce tras reformatear el número completo — hay que teclear, hacer
+ * blur y esperar el reformateo. `consent` queda fuera a propósito: sin marcar es el estado
+ * por defecto que exige la Ley 1581 (#311), y cada test decide qué hacer con él.
+ */
+async function fillReservationForm(page: Page) {
+  await page.getByPlaceholder('Nombres*').fill('Pablo');
+  await page.getByPlaceholder('Apellidos*').fill('Díaz');
+  await page.getByPlaceholder('ID Número*').fill('1020304050');
+  await page.getByPlaceholder('Email*').fill('pablo@example.com');
+  // Tipo de identificación es un combobox (@nuxt/ui u-select): abrir + elegir opción.
+  await page.getByRole('combobox', { name: 'Tipo de identificación' }).click();
+  await page.getByRole('option', { name: 'Cédula' }).click();
+  const phone = page.locator('input#telefono');
+  await phone.click();
+  await phone.pressSequentially('3001234567', { delay: 40 });
+  await phone.blur();
+  await expect(phone).toHaveValue(/\+57/, { timeout: 5_000 });
 }
 
 // Superficie de reserva de alquicarros = el wizard en `/reservas` (query params).
@@ -273,6 +300,44 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     await confirmCta.click();
     await page.waitForURL(/\/reservado\/E2ECODE|\/pendiente|\/sindisponibilidad/, { timeout: 15_000 });
     expect(page.url()).toContain('/reservado/E2ECODE');
+  });
+
+  test('SCEN-366-04: el envío en vuelo se anuncia y no se duplica', async ({ page }) => {
+    await stubAvailability(page, AVAILABILITY_STUB);
+    const rendered = await gotoCoverageWithGamaC(page);
+    test.skip(!rendered, 'vehicleCategories (Supabase) no disponible en el entorno');
+    // 1.5 s de round-trip: suficiente para asertar el estado de carga sin depender de
+    // ganarle una carrera al stub.
+    await stubRecord(page, 1_500);
+
+    // Paso 3 → 4 → 5
+    await page.locator('[data-testid="wizard-continue-desktop-test"]').click();
+    await page.locator('[data-testid="wizard-extras-skip-test"]').click();
+    await expect(page.getByRole('heading', { name: 'Tus datos para reservar' })).toBeVisible();
+    await fillReservationForm(page);
+    await page.locator('[data-testid="privacy-consent-checkbox-test"]').check();
+
+    let recordRequests = 0;
+    page.on('request', (req) => {
+      if (req.url().includes('/api/reservations/record')) recordRequests += 1;
+    });
+
+    const cta = page.locator('[data-testid="wizard-continue-desktop-test"]');
+    await cta.click();
+
+    // Durante el vuelo: spinner + label propio. Antes de #366 el usuario solo veía un
+    // botón gris, sin forma de distinguir "enviando" de "roto".
+    await expect(cta.locator('[data-slot="leadingIcon"]')).toBeVisible({ timeout: 5_000 });
+    await expect(cta).toHaveText(/Confirmando/);
+    await expect(cta).toBeDisabled();
+
+    // Segundo click con force: el botón está deshabilitado y sin force el actionability
+    // check de Playwright colgaría 20 s en vez de comprobar lo que interesa — que un
+    // usuario impaciente no registre la reserva dos veces.
+    await cta.click({ force: true });
+
+    await page.waitForURL(/\/reservado\/E2ECODE/, { timeout: 15_000 });
+    expect(recordRequests).toBe(1);
   });
 
   test('SCEN-W-14: elegir la gama C por UI lleva al Paso 3 con la gama fijada', async ({ page }) => {

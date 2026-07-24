@@ -181,6 +181,19 @@ describe('Robustez — hallazgos de edge-case (regresión)', () => {
     expect(read(`${C}/WizardSummary.vue`)).toMatch(/formSubmitLocked/)
   })
 
+  it('los DOS CTAs anuncian el envío en vuelo con spinner y label propio (issue #366, D2)', () => {
+    // Sin esto el round-trip de registro solo se veía como un botón gris: el CTA queda
+    // deshabilitado por isSubmittingForm y nada indica que algo está pasando. Van los dos
+    // porque el CTA de desktop vive en el aside y el de móvil en la barra fija de abajo;
+    // arreglar uno solo deja la mitad de los usuarios sin señal.
+    const src = read(`${C}/WizardSummary.vue`)
+    const ctas = src.match(/<UButton[\s\S]*?>/g) ?? []
+    const submitCtas = ctas.filter((t) => /wizard-continue-(desktop|mobile)-test/.test(t))
+    expect(submitCtas).toHaveLength(2)
+    for (const cta of submitCtas) expect(cta).toMatch(/:loading="isSubmittingForm"/)
+    expect(src).toMatch(/Confirmando/)
+  })
+
   it('ctaDisabled conserva !props.canAdvance: gatea los CINCO pasos, no solo el quinto (issue #366)', () => {
     // #366 sacó el consentimiento del gate cambiando canAdvance('datos') → true, NO
     // quitando `!props.canAdvance` de aquí. Quitarlo volvería pulsable el CTA del Paso 2
