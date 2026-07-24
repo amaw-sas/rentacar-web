@@ -342,3 +342,144 @@ describe('el aviso del Paso 2 (paso 6)', () => {
     expect(wrapper.find('[role="status"]').exists(), 'el aviso quedó armado').toBe(false)
   })
 })
+
+/**
+ * Paso 7 del plan — el reset escribe la ranura, siempre.
+ *
+ * La escritura vive DENTRO del callback del `watch(pending, …)` del shell, la misma
+ * transición que descarta la selección. Esa es la invariante que sostiene el modelo
+ * sin borrado: ranura y selección no pueden discrepar porque las gobierna el mismo
+ * evento. La alternativa —engancharla a un driver de búsqueda— solo cubriría la
+ * superficie de query, porque las rutas por path hidratan por otro camino.
+ */
+describe('el reset por búsqueda nueva (paso 7)', () => {
+  it('SCEN-368B1-06: re-buscar con vehículo elegido lo explica', async () => {
+    const { summaryRow, selectGama, runSearch, wrapper } = await mountWizard()
+
+    await selectGama('C')
+    expect(summaryRow('Vehículo')).toContain('C')
+
+    await runSearch()
+
+    expect(summaryRow('Vehículo')).toBe('Elige →')
+    const banner = wrapper.find('[role="status"]')
+    expect(banner.exists(), 'la selección desapareció sin explicación').toBe(true)
+    expect(banner.text()).toContain('Elige el vehículo de nuevo')
+  })
+
+  it('SCEN-368B1-07: re-buscar sin vehículo elegido no pinta nada', async () => {
+    const { runSearch, wrapper } = await mountWizard()
+
+    await runSearch()
+
+    expect(wrapper.find('[role="status"]').exists()).toBe(false)
+  })
+
+  it('SCEN-368B1-08: el aviso de reset no sobrevive a la elección', async () => {
+    // Contrapunto de SCEN-368B1-09: sin lógica de borrado, lo único que pudo
+    // quitarlo es la escritura de la elección. El ida y vuelta es lo que lo prueba.
+    const { selectGama, runSearch, clickContinue, goToStep, currentStep, wrapper } =
+      await mountWizard()
+
+    await selectGama('C')
+    await runSearch()
+    expect(wrapper.find('[role="status"]').exists()).toBe(true)
+
+    await selectGama('C')
+    await clickContinue()
+    expect(currentStep()).toBe('seguro')
+    await goToStep(2)
+
+    expect(wrapper.find('[role="status"]').exists(), 'el aviso de reset sobrevivió').toBe(false)
+  })
+
+  it('SCEN-368B1-10: sin resultados, el estado vacío sale CON el banner encima', async () => {
+    // El estado más confuso del flujo: re-buscó, perdió el vehículo y encima no hay
+    // nada. Si el banner colgara del grid de tiles, aquí sería invisible.
+    const { selectGama, runSearch, wrapper } = await mountWizard()
+
+    await selectGama('C')
+    await runSearch({ empty: true })
+
+    expect(wrapper.find('[data-testid="wizard-vehicle-empty-test"]').exists()).toBe(true)
+    expect(wrapper.find('[role="status"]').exists(), 'el vacío se comió el aviso').toBe(true)
+  })
+
+  it('SCEN-368B1-11: una segunda búsqueda que no descarta nada no hereda el banner', async () => {
+    // Aquí es donde una escritura condicional se rompe: el segundo reset no tendría
+    // nada que descartar, no escribiría, y el banner del primero seguiría pegado.
+    const { selectGama, runSearch, wrapper } = await mountWizard()
+
+    await selectGama('C')
+    await runSearch({ empty: true })
+    expect(wrapper.find('[role="status"]').exists()).toBe(true)
+
+    await runSearch()
+
+    expect(wrapper.findAll('[data-testid="segment-tile"]').length).toBeGreaterThan(0)
+    expect(wrapper.find('[role="status"]').exists(), 'el banner se heredó').toBe(false)
+  })
+})
+
+/**
+ * Las tres reglas de borrado que el spec descartó por envenenadas. Estos tests no
+ * cubren escenarios: defienden decisiones, y cada uno se rompe si alguien reintroduce
+ * la regla que descarta.
+ */
+describe('defensas del modelo sin borrado', () => {
+  it('re-buscar con los MISMOS parámetros desde el Paso 1 conserva el banner', async () => {
+    // La ruta del handshake de ReservationWizard.vue:266, que ninguna otra prueba
+    // toca: al asentar la búsqueda estando en Paso 1 el shell llama `wizard.next()`.
+    // Colgar la limpieza de ahí borra el aviso en el mismo ciclo que lo escribió.
+    //
+    // Hace además un segundo trabajo: en el Paso 1 StepVehicle está DESMONTADO y el
+    // `next()` lo remonta. Ese es el remontaje por el que la ranura vive en
+    // `useState`, así que esto lo demuestra en vez de darlo por bueno.
+    const { selectGama, goToStep, runSearch, currentStep, wrapper } = await mountWizard()
+
+    await selectGama('C')
+    await goToStep(1)
+    expect(currentStep()).toBe('busqueda')
+    expect(wrapper.find('[data-testid="wizard-vehicle-empty-test"]').exists(),
+      'el Paso 2 debería estar desmontado').toBe(false)
+
+    await runSearch()
+
+    expect(currentStep(), 'el handshake no devolvió al Paso 2').toBe('vehiculo')
+    expect(wrapper.find('[role="status"]').exists(), 'el aviso no sobrevivió al remontaje').toBe(true)
+  })
+
+  it('el rebote de la red de seguridad no borra el aviso', async () => {
+    // Se rompe si alguien reintroduce un watcher sobre `currentStep`: el reset escribe
+    // la nota y acto seguido la red de seguridad (:339-349) llama `goTo('vehiculo')`.
+    const { selectGama, clickContinue, runSearch, currentStep, wrapper } = await mountWizard()
+
+    await selectGama('C')
+    await clickContinue()
+    expect(currentStep()).toBe('seguro')
+
+    await runSearch()
+
+    expect(currentStep(), 'la red de seguridad no rebotó').toBe('vehiculo')
+    expect(wrapper.find('[role="status"]').exists()).toBe(true)
+  })
+
+  it('una búsqueda que nunca llega a search() deja intactas la selección y la ranura', async () => {
+    // Honestidad sobre lo que este test NO prueba: el arnés stubea
+    // `useSearchByQueryParams`, así que si alguien moviera la escritura a ese driver
+    // el driver no correría y esto seguiría verde. Lo que sí fija es que sin
+    // transición de `pending` no pasa nada — que es la invariante real, porque los dos
+    // guards de `doSearch` (fecha pasada, rango invertido) retornan antes de `search()`
+    // y `pending` no togglea. El sitio de escritura lo ancla la aserción de fuente de
+    // `tests/wizard-notice-write-site.test.ts`.
+    const { search, selectGama, wrapper } = await mountWizard()
+
+    await selectGama('C')
+    const instancia = search.selectedCategory
+
+    await wrapper.vm.$nextTick()
+
+    expect(search.selectedCategory).toBe(instancia)
+    expect(wrapper.find('[role="status"]').exists()).toBe(false)
+  })
+})

@@ -66,6 +66,10 @@ import useReservationWizard, {
   type WizardStep,
 } from '~/composables/useReservationWizard'
 
+// composables (import explícito, no auto-import: así el shell es montable en tests
+// sin el runtime de Nuxt)
+import { useWizardNotice } from '~/composables/useWizardNotice'
+
 const props = withDefaults(
   defineProps<{
     /**
@@ -94,6 +98,9 @@ useSearchByQueryParams()
 
 const search = useStoreSearchData()
 const form = useStoreReservationForm()
+
+/** Ranura del aviso del wizard (#368 B1). El shell escribe; el Paso 2 lee. */
+const { setNotice } = useWizardNotice()
 const {
   pending,
   hasAvailableCategories,
@@ -161,10 +168,22 @@ const searchSettled = computed(
 // gama es no-op y la red de seguridad solo rescata selectedCategory===null. Forzar
 // re-elegir contra las filas frescas. Sin gate: cubre /reservas y city (que remonta
 // por navegación); en city el preselect de /categoria vuelve a fijarla tras asentar.
+// Issue #368 B1: el descarte también se ANUNCIA, y la escritura es incondicional —
+// aviso si había selección que descartar, `null` si no. La simetría con la escritura
+// de StepVehicle es lo que impide que ranura y selección discrepen: las gobierna esta
+// misma transición de `pending`, así que cuando el reset no dispara la selección
+// tampoco se descarta y la ranura sigue hablando de la que sobrevive.
+//
+// Escribir solo cuando hay algo que anunciar deja el aviso ARMADO: bastaría re-buscar
+// hacia una búsqueda sin disponibilidad, pulsar "Ajustar búsqueda" y volver a buscar
+// con éxito para que el segundo reset no escribiera y el banner del primero apareciera
+// pegado a una búsqueda que no descartó nada.
 watch(pending, (isPending, wasPending) => {
   if (isPending && !wasPending) {
+    const hadSelection = !!selectedCategory.value
     selectedCategory.value = null
     vehiculo.value = null
+    setNotice(hadSelection ? { kind: 'search-reset' } : null)
   }
 })
 

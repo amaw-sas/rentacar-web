@@ -201,7 +201,7 @@ export interface WizardHarness {
   /** Texto de una fila del resumen por su etiqueta ("Vehículo", "Seguro", …). */
   summaryRow: (label: string) => string | null
   /** Toggle de `pending` false→true→false, que es lo que dispara el reset. */
-  runSearch: () => Promise<void>
+  runSearch: (opts?: { empty?: boolean }) => Promise<void>
   /** Clic en el CTA "Elegir" de una gama. Es el único disparador de `onSelect`. */
   selectGama: (code: CategoryType) => Promise<void>
   /** Clic en "Continuar" del resumen (escritorio): avanza un paso. */
@@ -389,9 +389,21 @@ export async function mountWizard(options: MountWizardOptions = {}): Promise<Wiz
     return dd ? (dd.textContent ?? '').trim() : null
   }
 
-  const runSearch = async (): Promise<void> => {
+  /**
+   * Una búsqueda completa: `pending` false→true→false. La transición de SUBIDA es la
+   * que gobierna el reset de la selección y la escritura del aviso; la de bajada es la
+   * que asienta los resultados.
+   *
+   * `empty: true` deja llegar cero disponibilidad. El store convierte entonces cada
+   * gama admin en una fila "unable" con el centinela 999999999, `renderable` las
+   * descarta y el Paso 2 pinta "Sin vehículos para esta búsqueda".
+   */
+  const runSearch = async (opts: { empty?: boolean } = {}): Promise<void> => {
     search.pending = true
     await nextTick()
+    search.categoriesAvailabilityData = opts.empty
+      ? []
+      : codes.map((code) => availabilityRow(code, options.availability?.[code] ?? {}))
     search.pending = false
     await nextTick()
   }
