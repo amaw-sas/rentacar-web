@@ -199,14 +199,32 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     await page.locator('[data-testid="wizard-extras-skip-test"]').click();
     await expect(page.getByRole('heading', { name: 'Tus datos para reservar' })).toBeVisible();
 
+    // SCEN-366-01: el CTA nace PULSABLE, antes de escribir un solo campo. Se asserta aquí
+    // —no más abajo— porque el escenario habla del primer render del paso 5: si el aserto
+    // viviera tras rellenar el formulario, pasaría igual con el gate viejo puesto.
+    // No se mira `aria-disabled`: UButton solo lo emite en su rama link, y esto es un
+    // <button> real.
+    await expect(page.locator('[data-testid="wizard-continue-desktop-test"]')).toBeEnabled();
+
     // Paso 5 — llenar el formulario y confirmar (SCEN-W-11 → /reservado/[code])
     await page.getByPlaceholder('Nombres*').fill('Pablo');
     await page.getByPlaceholder('Apellidos*').fill('Díaz');
     await page.getByPlaceholder('ID Número*').fill('1020304050');
-    await page.getByPlaceholder('Email*').fill('pablo@example.com');
     // Tipo de identificación es un combobox (@nuxt/ui u-select): abrir + elegir opción.
     await page.getByRole('combobox', { name: 'Tipo de identificación' }).click();
     await page.getByRole('option', { name: 'Cédula' }).click();
+
+    // El foco va al primer campo inválido en ORDEN DE DOM, no al primero de la lista de
+    // errores (issue #366, D6). Con correo y teléfono vacíos los dos órdenes discrepan y
+    // el caso discrimina: valibot los devuelve en orden de declaración del schema
+    // (…telefono, email…) mientras el formulario los pinta al revés (email, telefono).
+    // Enfocar el primero de la lista llevaría al teléfono, saltándose un campo vacío que
+    // el usuario tiene por encima. Es además el único caso con VARIOS errores a la vez,
+    // así que sin él la comparación por posición en el documento no llega a ejecutarse.
+    await page.locator('[data-testid="wizard-continue-desktop-test"]').click();
+    await expect(page.getByPlaceholder('Email*')).toBeFocused();
+
+    await page.getByPlaceholder('Email*').fill('pablo@example.com');
     // VueTelInput valida contra formato internacional: isValidPhoneNumber exige
     // `+57…`, que el widget produce SOLO tras reformatear el número completo. Hay
     // que teclear, hacer blur y esperar el reformateo antes de confirmar.
@@ -239,6 +257,14 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     ).toBeVisible({ timeout: 10_000 });
     expect(recordRequests).toBe(0);
     expect(page.url()).not.toContain('/reservado/');
+
+    // SCEN-366-02: el error no basta con existir, tiene que VERSE. El consentimiento es el
+    // último campo del formulario y el CTA vive en el aside sticky, así que sin el handler
+    // de @error el mensaje nace fuera de pantalla y el click se siente igual de muerto que
+    // el botón gris que reemplaza. `toBeInViewport` reintenta: el scroll es suave.
+    // El testid aterriza en el <button role="checkbox"> de reka-ui, que es enfocable.
+    await expect(consent).toBeInViewport();
+    await expect(consent).toBeFocused();
 
     // Marcarla — como haría el usuario real — permite confirmar.
     await consent.check();

@@ -4,6 +4,7 @@
     :state="formState"
     :schema="validationSchema"
     @submit="onSubmit"
+    @error="onValidationError"
     class="light"
   >
       <!-- Requisitos para reservar: texto plano, sin recuadro ni modal anidado
@@ -212,6 +213,56 @@ defineExpose({submit});
 /** functions */
 const onSubmit = (event) => {
   emit('submit', event.data)
+}
+
+/**
+ * Issue #366 (D6) — lleva el primer campo inválido a la pantalla y le da el foco.
+ *
+ * @nuxt/ui captura la FormValidationException y solo emite `error`: no hace scroll ni
+ * mueve el foco. Desde que el CTA del wizard dejó de nacer deshabilitado, un submit
+ * inválido no tenía ninguna consecuencia visible — el consentimiento es el último campo
+ * del formulario y el CTA vive en un aside sticky (desktop) o en una barra fija abajo
+ * (móvil), así que el error nacía fuera de pantalla.
+ *
+ * Se enfoca el primero en ORDEN DE DOM, no el primero de la lista de errores. Medido:
+ * valibot devuelve los issues en orden de declaración del schema, y ese orden no coincide
+ * con el del formulario en dos puntos. `vehiculo` encabeza la lista y no tiene ningún
+ * campo aquí (la gama se elige en el Paso 2), así que tomar el primero de la lista
+ * resolvería a null y el click volvería a no hacer nada; y email/telefono están cruzados
+ * entre ambos órdenes.
+ *
+ * Handler nombrado a propósito: una arrow inline dentro del tag de <u-form> rompe el
+ * regex de ReservationForm.test.ts, que captura el tag de apertura hasta el primer `>`.
+ */
+const onValidationError = (event) => {
+  if (typeof document === 'undefined') return;
+
+  const fields = (event?.errors ?? [])
+    // VueTelInput no usa useFormField, así que el id que UFormField registra para
+    // `telefono` no existe en el DOM; usePhoneField fija `id: "telefono"` de forma
+    // determinista. Sin este caso el scroll falla en silencio en el campo más frágil.
+    .map((err) => (err?.name === 'telefono' ? 'telefono' : err?.id))
+    .map((id) => (id ? document.getElementById(id) : null))
+    .filter((el) => el !== null);
+
+  if (!fields.length) return;
+
+  const first = fields.reduce((earliest, el) =>
+    earliest.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING ? el : earliest
+  );
+
+  // Se espera al siguiente frame a propósito, y no es cosmético. Mientras UForm valida
+  // mantiene `loading` en true (`loadingAuto` viene activado por defecto) y ese estado se
+  // inyecta como `disabled` a TODOS los campos. El evento `error` se emite dentro de esa
+  // ventana —el `finally` que apaga `loading` corre después—, así que enfocar en ese
+  // instante cae sobre un <button disabled> y el navegador lo ignora sin avisar. Medido:
+  // en el tick del evento el campo sigue deshabilitado (nextTick tampoco basta); en el
+  // frame siguiente ya está habilitado y el foco prende. El nodo no se reemplaza, así que
+  // la referencia sigue siendo válida.
+  requestAnimationFrame(() => {
+    first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    first.focus({ preventScroll: true });
+  });
 }
 
 </script>
