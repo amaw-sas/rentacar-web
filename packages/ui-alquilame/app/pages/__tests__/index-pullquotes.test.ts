@@ -27,19 +27,14 @@ describe('home — franjas separadoras', () => {
     expect(n).toBe(3)
   })
 
-  it('SCEN-PQ-03: el copy habla del país y evita tono comercial', () => {
+  it('SCEN-PQ-03: las tres franjas hablan de Colombia y evitan tono comercial', () => {
     // Acotado al array de las franjas: "anticipos" aparece en otro copy de la
     // home (el hero), y ahí sí es válido.
-    const quotes = index.match(/const pullQuotes = computed\(\(\) => \[([\s\S]*?)\]\)/)?.[1] ?? ''
-    expect(quotes).toMatch(/Colombia se ve distinta desde la carretera/)
+    const quotes = index.match(/const pullQuotes = \[([\s\S]*?)\]/)?.[1] ?? ''
+    // "Colombia" aparece explícito en dos frases; la tercera lo lleva como lead.
+    expect((quotes.match(/Colombia/g) || []).length).toBeGreaterThanOrEqual(2)
+    expect(index).toMatch(/lead="Colombia"/)
     expect(quotes).not.toMatch(/anticipos|descuento|%/)
-  })
-
-  it('SCEN-PQ-04: el conteo de ciudades es dinámico', () => {
-    expect(index).toMatch(/useCityCount\(\)/)
-    expect(index).toMatch(/\$\{cityCount\.value\}\s*ciudades/)
-    // No hay un número de ciudades escrito a mano en las franjas.
-    expect(index).not.toMatch(/\b\d+\s+ciudades del pa/)
   })
 
   it('SCEN-PQ-05: ninguna franja es vecina de una sección blanca (Stats/Requirements)', () => {

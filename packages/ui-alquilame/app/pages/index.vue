@@ -25,7 +25,7 @@
     <HomeValueProps />
     <CityPullQuote :quote="pullQuotes[1]!" />
     <HomeCities />
-    <CityPullQuote :quote="pullQuotes[2]!" :lead="franchise.shortname" />
+    <CityPullQuote :quote="pullQuotes[2]!" lead="Colombia" />
     <HomeReviews />
     <HomeRequirements />
     <HomeFaq />
@@ -40,16 +40,15 @@ import type { FAQPage } from "schema-dts";
 
 const { franchise } = useAppConfig();
 
-// Texto de las franjas separadoras. La home habla del pais, no de una ciudad,
-// asi que estas frases se escriben aqui (en ciudad salen de su descripcion).
-// El numero de ciudades sale de la misma fuente que el footer: escrito a mano
-// se desactualiza, como ya paso con "27 sedes" en el blog.
-const cityCount = useCityCount();
-const pullQuotes = computed(() => [
+// Franjas separadoras: las tres hablan de Colombia (en ciudad el texto sale de
+// la descripcion de cada ciudad; la home no tiene equivalente). Tono editorial,
+// nada comercial. La tercera lleva "Colombia" como palabra destacada en rojo,
+// igual que en ciudad va el nombre de la ciudad.
+const pullQuotes = [
   'Colombia se ve distinta desde la carretera. Lo bueno suele estar entre una ciudad y otra.',
-  'Sin carro dependes del horario de otros. Con carro, del tuyo.',
-  `entrega carros en ${cityCount.value} ciudades del pais desde 2015.`,
-]);
+  'Del páramo al mar en el mismo día. Colombia es más grande de lo que cabe en un vuelo.',
+  'no se acaba: siempre hay un pueblo más adelante que vale la parada.',
+];
 const { faqs } = useData();
 const homeSEO = useHomeSEO();
 
