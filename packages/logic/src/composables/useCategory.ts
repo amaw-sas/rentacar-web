@@ -202,7 +202,15 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    });
    
    const getTotalCoveragePrice = computed<number>(() => effectiveTotalCoverageUnitCharge.value * coverageQuantity.value);
-   
+
+   /**
+    * Precio diario CON Seguro Básico, estable: no cambia al marcar Seguro Total.
+    * Sirve para mostrar la "Tarifa Diaria" fija cuando el Total pasa a ser un
+    * extra opcional (línea "+ Seguro Total" aparte) en vez de reemplazar el
+    * diario. Solo aplica a reservas por día (no mensual, que usa monthPrice).
+    */
+   const getBasicDailyPrice = computed<number>(() => vehicleDayCharge.value + coverageUnitCharge.value);
+
    const getSubtotal = computed<number>(() => {
       return (withTotalCoverage.value)
          ? totalAmount.value + getTotalCoveragePrice.value + (returnFeeAmount.value ?? 0)
@@ -413,6 +421,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const currencyTotalCoverageDailyPrice = computed<string>(() => getFormattedPrice(effectiveTotalCoverageUnitCharge.value));
    const currencyCoverageDailyPrice = computed<string>(() => getFormattedPrice(coverageUnitCharge.value));
    const currencyCoveragePrice = computed<string>(() => getFormattedPrice(coverageTotalAmount.value));
+   const currencyTotalCoveragePrice = computed<string>(() => getFormattedPrice(getTotalCoveragePrice.value));
+   const currencyBasicDailyPrice = computed<string>(() => getFormattedPrice(getBasicDailyPrice.value));
    const currencyReturnFee = computed<string>(() => getFormattedPrice(returnFeeAmount.value));
    const currencySubtotal = computed<string>(() => getFormattedPrice(getSubtotal.value));
    const currencyTaxFee = computed<string>(() => getFormattedPrice(getTaxFeePrice.value));
@@ -519,6 +529,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       currencyExtraHoursPrice,
       currencyCoverageDailyPrice,
       currencyCoveragePrice,
+      currencyTotalCoveragePrice,
+      currencyBasicDailyPrice,
       currencyDailyPrice,
       currencyDailyBasePrice,
       currencyReturnFee,

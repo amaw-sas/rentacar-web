@@ -24,7 +24,7 @@
         <!-- Contador informativo, NO navegación: reemplaza los puntos, que sí
              eran clickeables. Cada slide conoce su propio `index`, así que no
              hace falta estado ni escuchar el evento `select` del carrusel. -->
-        <div class="contador-fotos">{{ index + 1 }} de {{ vehicleModels?.length }}</div>
+        <div class="contador-fotos">Fotos {{ index + 1 }} de {{ vehicleModels?.length }}</div>
         <NuxtImg
           :src="item.image"
           :alt="item.nombre"

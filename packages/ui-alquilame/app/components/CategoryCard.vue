@@ -98,9 +98,58 @@
                  igual a la derecha porque `valor-tarifa` usa `ms-auto`. -->
             <div class="fila-tarifa">
               <span class="porcentaje-descuento" v-if="hasDiscount()">
-                Dto hoy {{ getDiscount }}%
+                Hoy con {{ getDiscount }}% Dto.
               </span>
-              <span class="valor-tarifa precio-diario">$ {{ currencyDailyPrice }}</span>
+              <!-- Diario SIEMPRE con Seguro Básico: no cambia al marcar Total (que
+                   ahora es un extra aparte). En mensual sí usa el diario del mes. -->
+              <span class="valor-tarifa precio-diario">$ {{ haveMonthlyReservation ? currencyDailyPrice : currencyBasicDailyPrice }}</span>
+            </div>
+            <!-- El Seguro Básico va siempre incluido en el diario. Su detalle de
+                 coberturas queda accesible en el "?". -->
+            <div class="fila-tarifa">
+              <span class="text-sm inline-flex items-center gap-1">
+                Seguro Básico
+                <UModal :ui="modalUIConfig" title="Seguro Básico" description="Protección Obligatoria">
+                  <UButton variant="ghost" color="neutral" size="xs" aria-label="Coberturas del Seguro Básico" class="cursor-pointer" :ui="questionButtonUIConfig">
+                    <template #leading>
+                      <InfoQuestionIcon cls="size-3 text-gray-400" />
+                    </template>
+                  </UButton>
+                  <template #body>
+                    <p class="text-sm mb-4">
+                      Está incluido en el valor de alquiler del vehículo y cubre lo siguiente:
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Daños a terceros</b>: Cubre los daños materiales causados a otras
+                      personas o propiedades en caso de un accidente.
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Lesiones personales a terceros</b>: Cubre las lesiones sufridas por
+                      otras personas involucradas en el accidente.
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Daños al vehículo alquilado</b>: En caso de daños o pérdida total,
+                      cubre la mayor parte del costo, dejando al arrendatario responsable solo
+                      de una participación obligatoria que varía según la gama (entre
+                      $3.570.000 y $4.760.000).
+                    </p>
+                    <b class="text-sm mb-4">Ningún seguro cubre</b>
+                    <p class="text-sm mb-4">
+                      Pérdida de accesorios removibles del vehículo, documentos, placas o
+                      llaves. Tampoco multas de tránsito o fotomultas.
+                    </p>
+                  </template>
+                </UModal>
+              </span>
+              <span class="valor-tarifa text-sm text-gray-500">incluido</span>
+            </div>
+            <!-- Seguro Total: extra opcional que se marca en "Servicios
+                 adicionales". Aquí aparece su sobrecosto (pre-impuestos), que es
+                 justo lo que sube el subtotal. Gate a por-día: en mensual el
+                 diario ya lo incluye y duplicaría. -->
+            <div v-if="withTotalCoverage && !haveMonthlyReservation" class="fila-tarifa">
+              <span class="text-sm">+ Seguro Total {{ getFormattedDays }}</span>
+              <span class="valor-tarifa text-sm">$ {{ currencyTotalCoveragePrice }}</span>
             </div>
             <div v-if="hasExtraHours()" class="fila-tarifa">
               <span class="text-sm">
@@ -116,8 +165,57 @@
 
             <hr class="separador-tarifa">
 
+            <!--
+              Opción C (2026-07-24): el precio "todo incluido" a la vista. Cuando
+              hay impuestos que mostrar (getActualTotalPrice > getTotalPrice, i.e.
+              NO mensual) se surge la escalera: subtotal + (tasa+IVA) → total a
+              pagar. En mensual el total ya los incluye ⇒ getIvaAndTax = 0 ⇒ se
+              cae al total único de siempre, sin una línea "+ $0".
+            -->
+            <template v-if="hasSurfacedTaxes">
+              <div class="fila-tarifa">
+                <span class="text-sm">Subtotal {{ getFormattedDays }}</span>
+                <span class="valor-tarifa text-sm">$ {{ currencyTotalPrice }}</span>
+              </div>
+              <div class="fila-tarifa">
+                <span class="text-sm">Tasa administrativa + IVA</span>
+                <span class="valor-tarifa text-sm">$ {{ currencyIvaAndTax }}</span>
+              </div>
+
+              <hr class="separador-tarifa">
+
+              <!--
+                Adicionales SIN IVA (Conductor/Silla/Lavado): se suman tras el
+                "Total renta", no en el subtotal, porque no se les aplica IVA
+                (getTotalToPayWithAdditionals = total renta + adicionales). Cada
+                línea aparece al marcar su selector abajo; su precio ya no vive en
+                la sección de adicionales, se inyecta aquí.
+              -->
+              <template v-if="hasSelectedAdditionals">
+                <div class="fila-tarifa">
+                  <span class="text-sm">Total renta</span>
+                  <span class="valor-tarifa text-sm">$ {{ currencyActualTotalPrice }}</span>
+                </div>
+                <div v-if="withExtraDriver" class="fila-tarifa">
+                  <span class="text-sm">+ Conductor adicional {{ getFormattedDays }}</span>
+                  <span class="valor-tarifa text-sm">$ {{ currencyExtraDriverPrice }}</span>
+                </div>
+                <div v-if="withBabySeat" class="fila-tarifa">
+                  <span class="text-sm">+ Silla para bebé {{ getFormattedDays }}</span>
+                  <span class="valor-tarifa text-sm">$ {{ currencyBabySeatPrice }}</span>
+                </div>
+                <div v-if="withWash" class="fila-tarifa">
+                  <span class="text-sm">+ Lavado del vehículo</span>
+                  <span class="valor-tarifa text-sm">$ {{ currencyWashPrice }}</span>
+                </div>
+
+                <hr class="separador-tarifa">
+              </template>
+            </template>
+
             <div class="fila-tarifa">
-              <span class="dias-reservados">
+              <span class="dias-reservados" v-if="hasSurfacedTaxes">Total a pagar</span>
+              <span class="dias-reservados" v-else>
                 Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
               </span>
 
@@ -130,12 +228,13 @@
                     IVA: $ {{ ivaFeePriceTooltip }} <br />
                     Total: $ {{ actualTotalPriceTooltip }} <br />
                   </template>
-                  <ULink raw class="precio-total"> $ <span>{{currencyTotalPrice}}</span></ULink>
+                  <ULink raw class="precio-total"> $ <span>{{ hasSurfacedTaxes ? (hasSelectedAdditionals ? currencyTotalToPayWithAdditionals : currencyActualTotalPrice) : currencyTotalPrice }}</span></ULink>
                 </UTooltip>
               </span>
             </div>
 
-            <p class="texto-no-incluye text-right" v-if="haveMonthlyReservation">
+            <p class="texto-no-incluye text-right" v-if="hasSurfacedTaxes">Precio final, todo incluido</p>
+            <p class="texto-no-incluye text-right" v-else-if="haveMonthlyReservation">
               Incluye IVA y tasa admin
             </p>
             <p class="texto-no-incluye text-right" v-else>No incluye IVA ni tasa admin</p>
@@ -144,144 +243,16 @@
 
         <hr class="separador-tarifa">
 
-        <div class="contenedor-protecciones">
+        <!--
+          "Escoge protección" desapareció: el Seguro Básico va siempre incluido
+          (se ve en el desglose) y el Seguro Total pasó a ser un extra opcional en
+          "Servicios adicionales". Esta sección ahora solo aloja el selector de
+          kilometraje, que es exclusivo de la reserva mensual — por eso el
+          contenedor entero se muestra solo en ese caso.
+        -->
+        <div v-if="haveMonthlyReservation" class="contenedor-protecciones">
           <div>
-            <p class="body-lg mb-1">Escoge protección</p>
-
-            <div class="grid grid-cols-2 gap-x-2">
-              <div class="opcion-seleccionable">
-                <input
-                  :id="basicCoverageCheckboxID"
-                  v-model="withTotalCoverage"
-                  type="radio"
-                  class="form-radio"
-                  :name="coverageCheckboxName"
-                  :value="false"
-                />
-
-                <label :for="basicCoverageCheckboxID">Seguro Básico</label>
-
-                <UModal
-                  :ui="modalUIConfig"
-                  title="Seguro Básico"
-                  description="Protección Obligatoria"
-                >
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    aria-label="Más información"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      Esta incluido en el valor de alquiler del vehículo y cubre
-                      lo siguiente:
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>Daños a terceros</b>: Cubre los daños materiales
-                      causados a otras personas o propiedades en caso de un
-                      accidente, el vehículo de otra persona o propiedades
-                      dañadas.
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>Lesiones personales a terceros</b>: Cubre las lesiones
-                      sufridas por otras personas involucradas en el accidente,
-                      como peatones o ocupantes de otros vehículos.
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>Daños al vehículo alquilado</b>: En caso de daños o
-                      pérdida total del vehículo, el Seguro Básico cubre la
-                      mayor parte del costo de reparación o reposición, dejando
-                      al arrendatario responsable solo de una participación
-                      obligatoria que varía según la gama. entre $3.570.000 y
-                      $4.760.000. Si el costo de reparación es menor a la
-                      participación obligatoria, el arrendatario solo pagará el
-                      valor real de la reparación.
-                    </p>
-
-                    <b class="text-sm mb-4">Ningún seguro cubre</b>
-                    <p class="text-sm mb-4">
-                      Pérdida de accesorios removibles del vehículo (radios,
-                      espejos, farolas, entre otros), ni la pérdida documentos,
-                      placas o llaves. Tampoco cubre multas de tránsito o
-                      fotomultas generadas durante el período de alquiler
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-              <!-- Sin fila de pricing activa aplicable a la fecha no hay tarifa
-                   de Seguro Total: se omite la opción (fallo visible) en vez de
-                   cotizar una tarifa retirada o un upgrade $0. Issue #322 PR10. -->
-              <div v-if="canQuoteTotalCoverage" class="opcion-seleccionable">
-                <input
-                  :id="totalCoverageCheckboxID"
-                  v-model="withTotalCoverage"
-                  type="radio"
-                  class="form-radio"
-                  :name="coverageCheckboxName"
-                  :value="true"
-                />
-
-                <label :for="totalCoverageCheckboxID">Seguro Total</label>
-
-                <UModal
-                  :ui="modalUIConfig"
-                  title="Seguro Total"
-                  description="Protección Obligatoria"
-                >
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    aria-label="Más información"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      El Seguro Total es una opción adicional al Seguro Básico,
-                      pero con beneficios ampliados:
-                    </p>
-
-                    <p class="text-sm mb-4">
-                      <b>Daños a terceros Cobertura completa del vehículo</b>
-                      Cubre el 100% de los daños al vehículo alquilado, ya sean
-                      parciales o totales, por daño o robo.
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>Eliminación de la participación obligatoria</b> No
-                      tendrás que pagar ningún valor adicional en caso de un
-                      siniestro, ya que el seguro cubre la totalidad de los
-                      daños sin ningún cargo extra, Este seguro te ofrece una
-                      mayor tranquilidad al eliminar la responsabilidad
-                      económica en caso de siniestro, asegurando que los daños
-                      sean cubiertos completamente.
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>No cubre</b> perdida de accesorios removibles del
-                      vehículo (radios, espejos, farolas, entre otros), ni la
-                      pérdida de documentos, placas o llaves. Tampoco cubre
-                      multas de tránsito o fotomultas generadas durante el
-                      período de alquiler.
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-            </div>
-
-            <p v-if="haveMonthlyReservation" class="font-bold my-1">
+            <p class="font-bold my-1">
               Escoge kilometraje:
             </p>
 
@@ -465,6 +436,62 @@
         </UButton>
         <template #content>
           <div class="flex flex-col gap-1 px-5 pt-3 pb-4 adicionales-contenido">
+            <!--
+              Seguro Total como extra opcional (antes vivía en "Escoge
+              protección"). Reusa withTotalCoverage: al marcarlo, el diario sigue
+              en Básico y sube el subtotal por su sobrecosto (la línea
+              "+ Seguro Total" del desglose). Solo si es cotizable a la fecha.
+            -->
+            <div v-if="canQuoteTotalCoverage" class="flex items-center justify-between">
+              <div class="flex">
+                <UCheckbox
+                  v-model="withTotalCoverage"
+                  color="success"
+                  class="opcion-seleccionable"
+                >
+                  <template #label>
+                    Seguro Total {{ getFormattedDays }}
+                  </template>
+                </UCheckbox>
+
+                <UModal :ui="modalUIConfig" title="Seguro Total" description="Protección ampliada">
+                  <UButton
+                    variant="ghost"
+                    color="neutral"
+                    size="xs"
+                    aria-label="Más información"
+                    class="cursor-pointer"
+                    :ui="questionButtonUIConfig"
+                  >
+                    <template #leading>
+                      <InfoQuestionIcon cls="size-3 text-gray-400" />
+                    </template>
+                  </UButton>
+
+                  <template #body>
+                    <p class="text-sm mb-4">
+                      El Seguro Total es una opción adicional al Seguro Básico,
+                      pero con beneficios ampliados:
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Cobertura completa del vehículo</b>: cubre el 100% de los
+                      daños al vehículo alquilado, parciales o totales, por daño o robo.
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Eliminación de la participación obligatoria</b>: no pagas
+                      ningún valor adicional en caso de siniestro; el seguro cubre la
+                      totalidad de los daños sin cargo extra.
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>No cubre</b>: pérdida de accesorios removibles del vehículo
+                      (radios, espejos, farolas), documentos, placas o llaves. Tampoco
+                      multas de tránsito o fotomultas.
+                    </p>
+                  </template>
+                </UModal>
+              </div>
+              <span v-show="withTotalCoverage && !hasSurfacedTaxes" class="ml-4">$ {{ currencyTotalCoveragePrice }}</span>
+            </div>
             <div class="flex items-center justify-between">
               <div class="flex">
                 <UCheckbox
@@ -508,7 +535,7 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withExtraDriver" class="ml-4"
+              <span v-show="withExtraDriver && !hasSurfacedTaxes" class="ml-4"
                 >$ {{ currencyExtraDriverPrice }}</span
               >
             </div>
@@ -560,7 +587,7 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withBabySeat" id="precio4" class="ml-4"
+              <span v-show="withBabySeat && !hasSurfacedTaxes" id="precio4" class="ml-4"
                 >$ {{ currencyBabySeatPrice }}</span
               >
             </div>
@@ -616,7 +643,7 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withWash" id="precio3" class="ml-4"
+              <span v-show="withWash && !hasSurfacedTaxes" id="precio3" class="ml-4"
                 >$ {{ currencyWashPrice }}</span
               >
             </div>
@@ -701,9 +728,6 @@ const { haveMonthlyReservation } = storeToRefs(useStoreReservationForm());
 /** category composable */
 const category: ReturnType<typeof useCategory> = useCategory(props.category);
 const {
-  coverageCheckboxName,
-  basicCoverageCheckboxID,
-  totalCoverageCheckboxID,
   mileageCheckboxName,
   oneKmMileageCheckboxID,
   twoKmsMileageCheckboxID,
@@ -721,6 +745,13 @@ const {
   categoryModels,
   isMonthlyPriceUnavailable,
   currencyTotalPrice,
+  currencyActualTotalPrice,
+  currencyTotalToPayWithAdditionals,
+  currencyIvaAndTax,
+  currencyTotalCoveragePrice,
+  currencyBasicDailyPrice,
+  getTotalPrice,
+  getActualTotalPrice,
   currencyDailyPrice,
   currencyDailyBasePrice,
   currencyExtraHoursPrice,
@@ -747,6 +778,18 @@ const {
 } = category;
 
 const { modelos, grupo } = props.vehicleCategory;
+
+// Opción C: ¿hay tasa/IVA que surgir? getIvaAndTax = actualTotal − subtotal, y
+// en mensual actualTotal === subtotal ⇒ 0. Compuerta de la escalera de precios.
+const hasSurfacedTaxes = computed(() => getActualTotalPrice.value > getTotalPrice.value);
+
+// Adicionales que se INYECTAN en el desglose (sin IVA, tras "Total renta"):
+// Conductor, Silla y Lavado. El Seguro Total NO cuenta aquí — ese va en el
+// subtotal (con IVA) como línea propia. Cuando hay alguno, el total prominente
+// pasa a currencyTotalToPayWithAdditionals.
+const hasSelectedAdditionals = computed(
+  () => withExtraDriver.value || withBabySeat.value || withWash.value,
+);
 
 // Test-only knob: in dev, ?e2eTooltipDelays=1 shrinks the open/close delays so
 // the tooltip contract can be driven deterministically in e2e (Reka's 3s

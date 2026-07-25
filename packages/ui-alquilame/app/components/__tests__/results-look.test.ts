@@ -87,20 +87,76 @@ describe('SCEN-L03 — sobre gris claro no queda texto blanco ni acento amarillo
   })
 })
 
-describe('SCEN-L04 — el badge de descuento es verde llamativo, no rojo', () => {
+describe('SCEN-L04 — el badge de descuento conserva el fondo verde, pero su texto se iguala al bloque', () => {
   const badge = categoryCss.slice(
     categoryCss.indexOf('.porcentaje-descuento'),
     categoryCss.indexOf('.precio-base-diario'),
   )
 
-  it('el fondo es verde lavado al 70% de transparencia', () => {
+  it('el fondo sigue siendo verde lavado al 70% de transparencia', () => {
     expect(badge).toMatch(/bg-green-\d{3}\/30\b/)
     expect(badge).not.toContain('bg-red-600')
   })
 
-  it('el texto va en negro — regla de marca para verdes brillantes (ver --color-whatsapp)', () => {
-    expect(badge).toContain('text-black')
+  /**
+   * Decisión 2026-07-24: dentro del desglose de la tarifa diaria todo se lee al
+   * mismo tamaño, grosor y tono. El badge conserva SOLO el fondo verde como
+   * realce del descuento; su texto deja de ser negro/negrita y se iguala al gris
+   * del resto (hereda el text-gray-800 del contenedor, sin color propio).
+   */
+  it('el texto ya no es negro ni negrita: se iguala en tono y grosor al resto', () => {
+    expect(badge).not.toContain('text-black')
     expect(badge).not.toContain('text-white')
+    expect(badge).not.toContain('font-bold')
+  })
+
+  it('mide text-sm como las demás filas de la tarifa, no text-xs', () => {
+    expect(badge).toMatch(/\btext-sm\b/)
+    expect(badge).not.toContain('text-xs')
+  })
+})
+
+describe('SCEN-L14 — el desglose de la tarifa diaria se lee uniforme: mismo tamaño y grosor', () => {
+  const rule = (sel: string) =>
+    categoryCss.slice(categoryCss.indexOf(sel), categoryCss.indexOf('}', categoryCss.indexOf(sel)))
+
+  it('el precio diario ya no sobresale: text-sm, no text-xl', () => {
+    const r = rule('.precio-diario {')
+    expect(r).toContain('text-sm')
+    expect(r).not.toContain('text-xl')
+  })
+
+  it('el precio base tachado también baja a text-sm, conservando el line-through', () => {
+    const r = rule('.precio-base-diario {')
+    expect(r).toContain('text-sm')
+    expect(r).toContain('line-through')
+    expect(r).not.toContain('text-xs')
+  })
+
+  /**
+   * El total de la reserva (.precio-total) SÍ sigue destacando: vive bajo el
+   * separador, fuera de este desglose, y es la cifra que el usuario decide. La
+   * uniformidad es solo dentro de las filas de la tarifa diaria.
+   */
+  it('el total de la reserva sigue destacando aparte (text-xl), no se aplana', () => {
+    const r = rule('.precio-total {')
+    expect(r).toContain('text-xl')
+  })
+})
+
+describe('SCEN-L15 — el badge de descuento se lee en orden natural, no abreviado al frente', () => {
+  const badge = categoryCard.slice(
+    categoryCard.indexOf('class="porcentaje-descuento"'),
+    categoryCard.indexOf('</span>', categoryCard.indexOf('class="porcentaje-descuento"')),
+  )
+
+  it('empieza por "Hoy con" y conserva el porcentaje dinámico', () => {
+    expect(badge).toContain('Hoy con')
+    expect(badge).toMatch(/\{\{\s*getDiscount\s*\}\}\s*%/)
+  })
+
+  it('ya no arranca con la abreviatura suelta "Dto hoy"', () => {
+    expect(badge).not.toContain('Dto hoy')
   })
 })
 
@@ -253,8 +309,8 @@ describe('SCEN-L08 — un contador "N de M" reemplaza los puntos del carrusel', 
     expect(carrusel).not.toMatch(/\bdot:\s*'/)
   })
 
-  it('cada foto declara su posición con el índice que ya expone la slot', () => {
-    expect(carrusel).toMatch(/\{\{\s*index \+ 1\s*\}\}\s*de\s*\{\{\s*vehicleModels\?*\.?length/)
+  it('cada foto declara su posición con el índice que ya expone la slot, rotulada "Fotos"', () => {
+    expect(carrusel).toMatch(/Fotos\s*\{\{\s*index \+ 1\s*\}\}\s*de\s*\{\{\s*vehicleModels\?*\.?length/)
   })
 
   it('no es clickeable para navegar — no lleva handler propio ni rol de botón', () => {
@@ -340,6 +396,115 @@ describe('SCEN-L12 — el bloque de precios es "concepto a la izquierda, cifra a
     const rama = bloque.indexOf('<template v-else>')
     expect(rama).toBeGreaterThan(estado)
     expect(bloque.slice(estado, rama)).not.toContain('precio-diario')
+  })
+})
+
+describe('SCEN-L16 — la card surge el desglose "todo incluido" (opción C)', () => {
+  const bloque = categoryCard.slice(
+    categoryCard.indexOf('class="contenedor-tarifas'),
+    categoryCard.indexOf('adicionales cabezera'),
+  )
+
+  it('el Seguro Básico va siempre incluido (línea fija con su "?"), ya no un radio', () => {
+    expect(bloque).toContain('Seguro Básico')
+    expect(bloque).toContain('incluido')
+    expect(bloque).not.toContain('withTotalCoverage ? "Seguro Total" : "Seguro Básico"')
+  })
+
+  it('el diario mostrado es el básico estable: no cambia al subir a Total', () => {
+    expect(bloque).toContain('currencyBasicDailyPrice')
+  })
+
+  it('el Seguro Total aparece como línea "+ ..." con su sobrecosto, gatillada por la selección', () => {
+    expect(bloque).toContain('+ Seguro Total')
+    expect(bloque).toContain('currencyTotalCoveragePrice')
+    expect(bloque).toContain('v-if="withTotalCoverage && !haveMonthlyReservation"')
+  })
+
+  it('surge tasa + IVA en una sola línea, con el monto real del composable', () => {
+    expect(bloque).toContain('Tasa administrativa + IVA')
+    expect(bloque).toContain('currencyIvaAndTax')
+  })
+
+  it('cuando hay impuestos, el total prominente es el "todo incluido", no el subtotal', () => {
+    expect(bloque).toContain('Total a pagar')
+    // El subtotal crudo (currencyTotalPrice) solo se usa en el fallback mensual;
+    // el total prominente por-día es el all-in (con o sin adicionales).
+    expect(bloque).toContain('currencyActualTotalPrice')
+    expect(bloque).toContain('Precio final, todo incluido')
+  })
+
+  /**
+   * La escalera (subtotal + tasa/IVA → total) solo aparece cuando hay impuestos
+   * que surgir. En mensual getActualTotalPrice === getTotalPrice, así que la
+   * compuerta cae a 0 y NO se pinta una línea "Tasa + IVA $0". La aritmética
+   * (subtotal + tasa/IVA = total) la garantiza el composable:
+   * getIvaAndTaxAmount = max(0, getActualTotalPrice − getTotalPrice).
+   */
+  it('la escalera está gatillada por getActualTotalPrice > getTotalPrice', () => {
+    expect(categoryCard).toContain('getActualTotalPrice.value > getTotalPrice.value')
+    const bloqueTaxes = bloque.slice(bloque.indexOf('hasSurfacedTaxes'))
+    expect(bloqueTaxes).toContain('Tasa administrativa + IVA')
+  })
+
+  it('conserva el fallback mensual: "Total 30 días" e "Incluye IVA y tasa admin"', () => {
+    expect(bloque).toContain('haveMonthlyReservation ? "30 días"')
+    expect(bloque).toContain('Incluye IVA y tasa admin')
+  })
+})
+
+describe('SCEN-L17 — Seguro Total se elige en "Servicios adicionales", no en "Escoge protección"', () => {
+  it('ya no renderiza el encabezado "Escoge protección"', () => {
+    expect(categoryCard).not.toMatch(/body-lg[^>]*>\s*Escoge protección/)
+  })
+
+  it('el toggle de Seguro Total vive dentro del contenedor de adicionales, con su sobrecosto', () => {
+    const adicionales = categoryCard.slice(categoryCard.indexOf('adicionales-contenido'))
+    expect(adicionales).toMatch(/v-model="withTotalCoverage"[\s\S]*?Seguro Total/)
+    expect(adicionales).toContain('currencyTotalCoveragePrice')
+  })
+
+  it('solo se ofrece si el Seguro Total es cotizable a la fecha', () => {
+    const adicionales = categoryCard.slice(categoryCard.indexOf('adicionales-contenido'))
+    expect(adicionales).toMatch(/v-if="canQuoteTotalCoverage"[\s\S]*?withTotalCoverage/)
+  })
+
+  it('el selector de kilometraje mensual se conserva', () => {
+    expect(categoryCard).toContain('Escoge kilometraje')
+  })
+})
+
+describe('SCEN-L18 — Conductor/Silla/Lavado se inyectan en el desglose (sin IVA), y la sección queda sin precios', () => {
+  const bloque = categoryCard.slice(
+    categoryCard.indexOf('class="contenedor-tarifas'),
+    categoryCard.indexOf('adicionales cabezera'),
+  )
+  const adicionales = categoryCard.slice(categoryCard.indexOf('adicionales-contenido'))
+
+  it('hasSelectedAdditionals agrupa Conductor/Silla/Lavado (NO el Seguro Total)', () => {
+    expect(categoryCard).toMatch(
+      /hasSelectedAdditionals = computed\(\s*\(\)\s*=>\s*withExtraDriver\.value \|\| withBabySeat\.value \|\| withWash\.value/,
+    )
+  })
+
+  it('al haber adicionales aparece "Total renta" y cada línea "+ ..."', () => {
+    expect(bloque).toContain('v-if="hasSelectedAdditionals"')
+    expect(bloque).toContain('Total renta')
+    expect(bloque).toContain('+ Conductor adicional')
+    expect(bloque).toContain('+ Silla para bebé')
+    expect(bloque).toContain('+ Lavado del vehículo')
+  })
+
+  it('los adicionales NO pasan por el subtotal (van sin IVA): el total prominente los suma aparte', () => {
+    expect(bloque).toContain('hasSelectedAdditionals ? currencyTotalToPayWithAdditionals : currencyActualTotalPrice')
+  })
+
+  it('la sección de adicionales ya no muestra "$" cuando se inyecta en la escalera', () => {
+    // Los precios de la sección solo se ven en el caso mensual (!hasSurfacedTaxes),
+    // donde la escalera no inyecta.
+    for (const w of ['withExtraDriver', 'withBabySeat', 'withWash', 'withTotalCoverage']) {
+      expect(adicionales).toMatch(new RegExp(`v-show="${w} && !hasSurfacedTaxes"`))
+    }
   })
 })
 

@@ -154,20 +154,22 @@
       @apply flex flex-col gap-1;
     }
 
-    /* Verde brillante con texto negro: el rojo anterior competía con el precio
-       tachado y con el resto del rojo de marca. Texto negro por contraste — el
-       verde brillante no sostiene texto blanco (misma regla que --color-whatsapp). */
+    /* Solo el fondo verde queda como realce del descuento. El texto se iguala al
+       resto del desglose (2026-07-24): text-sm, peso normal y sin color propio,
+       hereda el text-gray-800 del contenedor. Antes iba negro/negrita/xs y
+       rompía la uniformidad de las filas de la tarifa diaria. */
     .porcentaje-descuento{
-      @apply bg-green-500/30 text-black font-bold text-xs px-1.5 py-0.5 rounded-full;
+      @apply bg-green-500/30 text-sm px-1.5 py-0.5 rounded-full;
     }
 
     .precio-base-diario {
-      @apply text-xs line-through;
+      @apply text-sm line-through;
     }
 
+    /* Igual que el resto del desglose: sin tamaño ni peso propios. El precio que
+       destaca es el TOTAL (.precio-total), no la tarifa diaria. */
     .precio-diario {
-      /* @apply roboto-bold text-xl */
-      @apply text-xl;
+      @apply text-sm;
     }
 
     /* Sin mt-2: el aire entre filas lo pone .separador-tarifa, y dentro de una
