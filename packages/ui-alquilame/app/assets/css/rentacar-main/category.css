@@ -42,8 +42,19 @@
        de la foto, recta abajo y curvada arriba. Solo informa la posición — la
        navegación vive en las flechas. */
     .contador-fotos {
-      @apply absolute bottom-0 left-1/2 -translate-x-1/2 bg-black text-white text-xs py-1 px-3;
+      @apply absolute bottom-0 left-1/2 -translate-x-1/2 bg-black text-white text-xs flex items-stretch gap-0.5 overflow-hidden;
       @apply rounded-t-[10px] rounded-b-none whitespace-nowrap;
+    }
+
+    /* Flechas de navegación: cuadros negros a cada lado del texto, con realce al
+       pasar el cursor. Son <button> reales (accesibles); su clic no propaga al
+       tap de reserva del slide. */
+    .contador-flecha {
+      @apply flex items-center justify-center px-1.5 cursor-pointer transition-colors hover:bg-white/25 active:bg-white/40;
+    }
+
+    .contador-texto {
+      @apply flex items-center px-2 py-1;
     }
 
     .contenedor-descripcion-carro {
@@ -117,8 +128,11 @@
     /* "sin pico y placa" es el diferenciador que más pesa en Bogotá: amarillo
        para que se lea a distancia. Texto negro — el amarillo brillante no
        sostiene texto blanco (misma regla que --color-whatsapp). */
+    /* text-sm para igualar el tamaño del kicker de gama (.categoria-carro); el
+       amarillo al 50% para bajarle intensidad sin perder el acento. Sin borde
+       (border-0 anula el `border` gris de .etiqueta-carro). */
     .etiqueta-sin-pico-placa {
-      @apply bg-yellow-300 border-yellow-400 text-black font-semibold;
+      @apply bg-yellow-300/50 text-black font-semibold text-sm border-0;
     }
 
     /* Una sola columna: filas "concepto | cifra" y, bajo un separador, la
@@ -246,8 +260,19 @@
        @apply opacity-50 grayscale;
     }
 
-    .contenedor-descripcion-carro {
-      @apply opacity-90;
+    /* Título, gama y descripción atenuados a gris 30%: la tarjeta está inactiva
+       y su texto no debe competir con las disponibles. */
+    .descripcion-corta,
+    .categoria-carro,
+    .descripcion-larga {
+      @apply text-gray-900/30;
+    }
+
+    /* Barras del carrusel (nombre del modelo y contador de fotos): gris PLANO
+       (sin transparencia) en vez del negro opaco, texto blanco plano. */
+    .nombre-modelo,
+    .contador-fotos {
+      @apply bg-gray-500;
     }
 }
 

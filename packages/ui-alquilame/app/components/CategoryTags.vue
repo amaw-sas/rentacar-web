@@ -22,9 +22,7 @@ type categoryTagsType = Partial<{
     [K in CategoryType]: string[];
 }>
 
-const categoryTags: categoryTagsType = {
-    'C': ['mas rentado'],
-}
+const categoryTags: categoryTagsType = {}
 
 </script>
 

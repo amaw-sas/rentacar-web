@@ -241,8 +241,6 @@
           </template>
         </div>
 
-        <hr class="separador-tarifa">
-
         <!--
           "Escoge protección" desapareció: el Seguro Básico va siempre incluido
           (se ve en el desglose) y el Seguro Total pasó a ser un extra opcional en

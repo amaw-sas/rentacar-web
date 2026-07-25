@@ -313,14 +313,18 @@ describe('SCEN-L08 — un contador "N de M" reemplaza los puntos del carrusel', 
     expect(carrusel).toMatch(/Fotos\s*\{\{\s*index \+ 1\s*\}\}\s*de\s*\{\{\s*vehicleModels\?*\.?length/)
   })
 
-  it('no es clickeable para navegar — no lleva handler propio ni rol de botón', () => {
-    const bloque = carrusel.slice(
-      carrusel.indexOf('class="contador-fotos"'),
-      carrusel.indexOf('</div>', carrusel.indexOf('class="contador-fotos"')),
-    )
-    expect(bloque).not.toContain('@click')
-    expect(bloque).not.toContain('scrollTo')
-    expect(bloque).not.toContain('role="button"')
+  it('las flechas del contador navegan las fotos (emblaApi scrollPrev/scrollNext) sin disparar la reserva', () => {
+    // @click.stop → no propaga al @click de reserva del slide.
+    expect(carrusel).toContain('@click.stop="scrollPrev"')
+    expect(carrusel).toContain('@click.stop="scrollNext"')
+    // Usa la API de Embla que expone UCarousel (defineExpose emblaApi).
+    expect(carrusel).toMatch(/ref="carousel"/)
+    expect(carrusel).toMatch(/carousel\.value\?\.emblaApi\?\.scrollPrev/)
+    expect(carrusel).toMatch(/carousel\.value\?\.emblaApi\?\.scrollNext/)
+  })
+
+  it('las flechas solo aparecen si hay más de una foto', () => {
+    expect(carrusel).toMatch(/v-if="\(vehicleModels\?\.length \?\? 0\) > 1"/)
   })
 
   it('cuelga del borde inferior, centrado y en negro opaco', () => {
