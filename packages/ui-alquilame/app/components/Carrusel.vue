@@ -2,14 +2,11 @@
     <UCarousel
       v-slot="{ item, index }"
       :items="vehicleModels"
-      dots
       prev-icon="lucide:chevron-left"
       next-icon="lucide:chevron-right"
       arrows
       :ui="{
         viewport: 'rounded-t-lg',
-        dots: 'bottom-5 gap-1',
-        dot: 'size-2 bg-gray-400/70 rounded-full transition-all duration-300 data-[state=active]:w-6 data-[state=active]:bg-white'
       }"
     >
       <div
@@ -24,6 +21,10 @@
         <div class="nombre-modelo">
           <span>{{ item.nombre }}</span>
         </div>
+        <!-- Contador informativo, NO navegación: reemplaza los puntos, que sí
+             eran clickeables. Cada slide conoce su propio `index`, así que no
+             hace falta estado ni escuchar el evento `select` del carrusel. -->
+        <div class="contador-fotos">{{ index + 1 }} de {{ vehicleModels?.length }}</div>
         <NuxtImg
           :src="item.image"
           :alt="item.nombre"

@@ -1,6 +1,10 @@
+/* El marco es el mismo de las tarjetas de "Nuestra Flota" en el home
+   (home/Fleet.vue): borde blanco de 7px + radio 22 + la misma sombra suave.
+   Solo lee como marco porque la sección de resultados va sobre bg-surface-soft
+   — si ese fondo cambia a blanco, el borde desaparece. */
 .categoria {
-    @apply bg-white rounded-lg md:col-span-1 relative text-black p-0 sm:p-0 lg:p-0;
-    @apply border border-red-600/12 shadow-[0_8px_24px_rgba(17,17,34,0.06)] overflow-hidden;
+    @apply bg-white rounded-[22px] md:col-span-1 relative text-black p-0 sm:p-0 lg:p-0;
+    @apply border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] overflow-hidden;
     
     /* .agotado {
       opacity: 0.28 !important;
@@ -23,8 +27,23 @@
       border-color: grey !important;
     } */
 
+    /* Cuelga del borde superior de la foto, centrada: esquinas de arriba rectas
+       (continúan el borde de la imagen) y de abajo en cápsula. */
     .nombre-modelo {
-      @apply absolute top-5 left-5 bg-black/75 rounded-lg text-white text-xs py-1 px-3;
+      @apply absolute top-0 left-1/2 -translate-x-1/2 bg-black text-white text-xs py-1 px-3;
+      @apply rounded-t-none rounded-b-[10px];
+      /* Una línea SIEMPRE: nombres largos (LU: "Suzuki Grand Vitara Híbrida
+         MHEV") partían la píldora en dos y rompían la simetría con la cápsula
+         de puntos. Acotada al ancho de la foto menos el aire lateral. */
+      @apply whitespace-nowrap max-w-[calc(100%-1rem)] overflow-hidden text-ellipsis;
+    }
+
+    /* Espejo de .nombre-modelo en el borde opuesto: cuelga del borde inferior
+       de la foto, recta abajo y curvada arriba. Solo informa la posición — la
+       navegación vive en las flechas. */
+    .contador-fotos {
+      @apply absolute bottom-0 left-1/2 -translate-x-1/2 bg-black text-white text-xs py-1 px-3;
+      @apply rounded-t-[10px] rounded-b-none whitespace-nowrap;
     }
 
     .contenedor-descripcion-carro {
@@ -56,8 +75,11 @@
       transform: rotate(180deg);
     }
 
+    /* Kicker de gama: es metadato, no titular. Gris y al tamaño del texto más
+       chico de la card (.metodo-pago-valor, "Tarjeta de crédito en sede") para
+       que el nombre del vehículo (.descripcion-corta) sea lo que manda. */
     .categoria-carro {
-      @apply font-heading font-semibold text-red-600 text-lg leading-tight block;
+      @apply font-normal text-gray-600 text-sm leading-snug block;
     }
 
     .descripcion-corta {
@@ -79,32 +101,64 @@
       @apply font-normal text-black px-2 py-1 rounded-full text-xs bg-white border border-gray-300;
     }
 
+    /* Una sola línea bajo el nombre del vehículo: etiquetas + grupo, centrados
+       entre sí (la píldora es más alta que el texto). `flex-wrap` para que en
+       móvil el grupo baje en vez de desbordar. */
+    .fila-etiquetas-grupo {
+      @apply flex flex-wrap items-center gap-x-2 gap-y-1 mt-2;
+    }
+
+    /* `empty:hidden` es obligatorio: sin etiquetas, el gap de la fila dejaría un
+       hueco a la izquierda del grupo. El margen superior lo pone la fila. */
+    .etiquetas-categoria {
+      @apply flex flex-wrap gap-1 empty:hidden;
+    }
+
+    /* "sin pico y placa" es el diferenciador que más pesa en Bogotá: amarillo
+       para que se lea a distancia. Texto negro — el amarillo brillante no
+       sostiene texto blanco (misma regla que --color-whatsapp). */
+    .etiqueta-sin-pico-placa {
+      @apply bg-yellow-300 border-yellow-400 text-black font-semibold;
+    }
+
+    /* Una sola columna: filas "concepto | cifra" y, bajo un separador, la
+       protección a lo ancho. Antes eran dos columnas (precios | protección). */
     .contenedor-tarifas{
-      @apply grid grid-cols-2 py-4 relative text-gray-800 rounded-b-lg;
+      @apply flex flex-col px-5 py-4 relative text-gray-800 rounded-b-lg;
     }
 
-    /* Fondo degradado sutil: blanco → gris claro → blanco */
-    .contenedor-tarifas.sutil-fondo {
-      background: linear-gradient(to right, white, #ededed 50%, white);
+    .fila-tarifa {
+      @apply flex items-baseline gap-3;
     }
 
+    /* La cifra se empuja al margen derecho por sí sola, NO con justify-between:
+       la fila del descuento no tiene concepto cuando no hay descuento, y con
+       justify-between su cifra se iría a la izquierda. */
+    .valor-tarifa {
+      @apply ms-auto text-right;
+    }
+
+    .separador-tarifa {
+      @apply my-3 border-gray-300/70;
+    }
+
+    .contenedor-protecciones {
+      @apply flex flex-col justify-center;
+    }
+
+
+    /* Ya no alinea todo a la derecha: los conceptos anclan a la izquierda y solo
+       las cifras (.valor-tarifa) van al margen derecho. La línea vertical
+       difuminada que separaba las dos columnas se eliminó con ellas. */
     .contenedor-precios-tarifa{
-      @apply flex flex-col items-end pr-5 text-right;
+      @apply flex flex-col gap-1;
     }
 
-    /* Línea vertical difuminada entre las dos columnas */
-    .contenedor-precios-tarifa.con-borde-difuminado {
-      @apply relative min-h-[100px];
-    }
-
-    .contenedor-precios-tarifa.con-borde-difuminado::after {
-      content: '';
-      @apply absolute top-0 right-0 bottom-0 w-px pointer-events-none;
-      background: linear-gradient(to bottom, transparent, #d1d5db 30%, #d1d5db 70%, transparent);
-    }
-
+    /* Verde brillante con texto negro: el rojo anterior competía con el precio
+       tachado y con el resto del rojo de marca. Texto negro por contraste — el
+       verde brillante no sostiene texto blanco (misma regla que --color-whatsapp). */
     .porcentaje-descuento{
-      @apply bg-red-600 text-white font-semibold text-xs px-1.5 py-0.5 rounded-full;
+      @apply bg-green-500/30 text-black font-bold text-xs px-1.5 py-0.5 rounded-full;
     }
 
     .precio-base-diario {
@@ -116,12 +170,14 @@
       @apply text-xl;
     }
 
+    /* Sin mt-2: el aire entre filas lo pone .separador-tarifa, y dentro de una
+       fila flex ese margen desalineaba el concepto respecto a su cifra. */
     .dias-reservados {
-      @apply text-sm mt-2;
+      @apply text-sm;
     }
 
     .precio-total {
-      @apply font-heading text-red-600 font-extrabold text-xl whitespace-nowrap;
+      @apply font-heading text-black font-extrabold text-xl whitespace-nowrap;
     }
 
     .texto-no-incluye {
@@ -137,9 +193,7 @@
     }
 
     .seccion-boton-seleccion {
-      @apply rounded-b-lg p-4;
-      /* Fondo gris desvanecido compartido con la sección de precios (issue #124) */
-      background: linear-gradient(to right, white, #ededed 50%, white);
+      @apply rounded-b-lg p-4 bg-surface-softest;
 
       .metodo-pago {
         @apply text-center mb-3;
@@ -163,15 +217,19 @@
       @apply scheme-light accent-black;
     }
 
-    /* Fondo degradado sutil reutilizable */
+    /* Gris plano de las tarjetas de "Nuestra Flota" del home (bg-surface-softest
+       en home/Fleet.vue). Antes era un degradado horizontal blanco→#ededed→blanco
+       que hacía que el bloque cambiara de tono a lo ancho. */
     .sutil-fondo {
-      background: linear-gradient(to right, white, #ededed 50%, white);
+      @apply bg-surface-softest;
     }
 
-    /* Contenido abierto de "Servicios adicionales": tono blanco como la sección
-       cerrada, no el gris de la sección de precios */
+    /* Contenido abierto de "Servicios adicionales": blanco como la sección
+       cerrada, para que se distinga del gris de precios y del botón. Era un
+       degradado casi-blanco; plano cumple la misma intención sin cambiar de
+       tono a lo ancho. */
     .adicionales-contenido {
-      background: linear-gradient(to right, white, #fafafa 50%, white);
+      @apply bg-white;
     }
 }
 

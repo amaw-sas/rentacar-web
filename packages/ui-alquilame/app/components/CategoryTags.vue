@@ -1,6 +1,7 @@
 <template>
-    <span class="space-x-1">
-        <span v-if="isPicoyPlacaExempt()" class="etiqueta-carro">sin pico y placa</span>
+    <!-- Fila propia bajo la descripción corta del vehículo (ver CategoryCard). -->
+    <span class="etiquetas-categoria">
+        <span v-if="isPicoyPlacaExempt()" class="etiqueta-carro etiqueta-sin-pico-placa">sin pico y placa</span>
         <span v-for="tag in categoryTags[categoryCode]" :key="tag" class="etiqueta-carro" v-text="tag"></span>
     </span>
 </template>

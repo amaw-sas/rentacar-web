@@ -66,6 +66,7 @@
     <UPageSection
       id="seleccion-categorias"
       v-if="resultsActive"
+      class="bg-surface-soft"
       :ui="{ container: 'pt-0' }"
     >
       <CategorySelectionSection />

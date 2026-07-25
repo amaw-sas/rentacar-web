@@ -27,13 +27,20 @@
           }"
         >
           <template #leading>
+            <!-- Orden de lectura: nombre del vehículo y, debajo, una sola fila
+                 con las etiquetas ("sin pico y placa") seguidas del grupo. El
+                 código de gama es metadato de operación, así que cierra la
+                 línea. Sin etiquetas, .etiquetas-categoria se colapsa
+                 (empty:hidden) y el grupo queda solo en esa fila. -->
             <span class="text-left text-gray-700 items-center">
-              <span class="categoria-carro">
-                Grupo {{ categoryCode }} ({{ grupo }})
-                <CategoryTags :category />
-              </span>
               <span class="descripcion-corta">
                 {{ vehicleCategory?.descripcion_corta }}
+              </span>
+              <span class="fila-etiquetas-grupo">
+                <CategoryTags :category />
+                <span class="categoria-carro">
+                  Grupo {{ categoryCode }} ({{ grupo }})
+                </span>
               </span>
             </span>
           </template>
@@ -62,12 +69,19 @@
       </UCollapsible>
 
       <!--==== ini cuerpo t1 ====-->
+      <!--
+        Disposición "concepto | cifra" (patrón de recibo): el concepto ancla la
+        lectura a la izquierda y la cifra se alinea al margen derecho, así el ojo
+        baja por los conceptos y salta al número solo cuando le interesa. Antes
+        eran dos columnas (precios | protección) con TODO alineado a la derecha,
+        conceptos incluidos, así que nada anclaba la lectura y la protección
+        quedaba estrecha. La protección ahora va a lo ancho, bajo un separador.
+      -->
       <div class="contenedor-tarifas sutil-fondo">
-        <!--==== columna izq t1====-->
-        <div class="contenedor-precios-tarifa con-borde-difuminado">
+        <div class="contenedor-precios-tarifa">
           <!-- Issue #313: reserva mensual más allá del horizonte de tarifas no se
                cotiza (todas las cifras de precio son 0). Fail-closed: se reemplaza
-               TODA la columna de precio por el estado inline — nunca un "$ 0"
+               TODA la zona de precio por el estado inline — nunca un "$ 0"
                diario/total fabricado en una superficie visible. -->
           <template v-if="isMonthlyPriceUnavailable">
             <p class="precio-total" data-testid="category-unavailable-test">
@@ -76,50 +90,65 @@
             <p class="texto-no-incluye">Escríbenos y te cotizamos.</p>
           </template>
           <template v-else>
-            <p class="text-sm">Tarifa Diaria</p>
-            <p class="precio-base-diario">$ {{ currencyDailyBasePrice }}</p>
-            <div class="porcentaje-descuento" v-if="hasDiscount()">
-              Dto hoy {{ getDiscount }}%
+            <div class="fila-tarifa">
+              <span class="text-sm">Tarifa Diaria</span>
+              <span class="valor-tarifa precio-base-diario">$ {{ currencyDailyBasePrice }}</span>
             </div>
-            <p class="precio-diario">$ {{ currencyDailyPrice }}</p>
-            <p v-if="hasExtraHours()" class="text-sm">
-              + {{ extraHoursQuantity }}
-              {{ extraHoursQuantity > 1 ? "Horas" : "Hora" }} extra
-            </p>
-            <p v-if="hasExtraHours()" class="text-sm">
-              $ {{ currencyExtraHoursPrice }}
-            </p>
-            <p v-if="hasReturnFee()" class="text-sm">+ Retorno otra sede</p>
-            <p v-if="hasReturnFee()" class="text-sm">$ {{ currencyReturnFee }}</p>
-            <p class="dias-reservados">
-              Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
-            </p>
+            <!-- Sin descuento la fila queda sin concepto: la cifra se alinea
+                 igual a la derecha porque `valor-tarifa` usa `ms-auto`. -->
+            <div class="fila-tarifa">
+              <span class="porcentaje-descuento" v-if="hasDiscount()">
+                Dto hoy {{ getDiscount }}%
+              </span>
+              <span class="valor-tarifa precio-diario">$ {{ currencyDailyPrice }}</span>
+            </div>
+            <div v-if="hasExtraHours()" class="fila-tarifa">
+              <span class="text-sm">
+                + {{ extraHoursQuantity }}
+                {{ extraHoursQuantity > 1 ? "Horas" : "Hora" }} extra
+              </span>
+              <span class="valor-tarifa text-sm">$ {{ currencyExtraHoursPrice }}</span>
+            </div>
+            <div v-if="hasReturnFee()" class="fila-tarifa">
+              <span class="text-sm">+ Retorno otra sede</span>
+              <span class="valor-tarifa text-sm">$ {{ currencyReturnFee }}</span>
+            </div>
 
-            <UTooltip :open="totalPriceTooltipOpen" :delay-duration="tooltipOpenDelayMs" :content="{ onEscapeKeyDown: forceTotalPriceTooltipClose, onPointerDownOutside: forceTotalPriceTooltipClose }" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
-              <template #content>
-                Día: $ {{ dayPriceTooltip }} <br />
-                Seguro día: $ {{ coverageDayPriceTooltip }} <br />
-                Tasa: $ {{ taxFeePriceTooltip }} <br />
-                IVA: $ {{ ivaFeePriceTooltip }} <br />
-                Total: $ {{ actualTotalPriceTooltip }} <br />
-              </template>
-              <ULink raw class="precio-total"> $ <span>{{currencyTotalPrice}}</span></ULink>
-            </UTooltip>
+            <hr class="separador-tarifa">
 
-            <!-- <div class="font-bold text-xl" style="white-space: nowrap;" v-text="currencyTotalPrice"></div> -->
-            <p class="texto-no-incluye" v-if="haveMonthlyReservation">
+            <div class="fila-tarifa">
+              <span class="dias-reservados">
+                Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
+              </span>
+
+              <span class="valor-tarifa">
+                <UTooltip :open="totalPriceTooltipOpen" :delay-duration="tooltipOpenDelayMs" :content="{ onEscapeKeyDown: forceTotalPriceTooltipClose, onPointerDownOutside: forceTotalPriceTooltipClose }" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
+                  <template #content>
+                    Día: $ {{ dayPriceTooltip }} <br />
+                    Seguro día: $ {{ coverageDayPriceTooltip }} <br />
+                    Tasa: $ {{ taxFeePriceTooltip }} <br />
+                    IVA: $ {{ ivaFeePriceTooltip }} <br />
+                    Total: $ {{ actualTotalPriceTooltip }} <br />
+                  </template>
+                  <ULink raw class="precio-total"> $ <span>{{currencyTotalPrice}}</span></ULink>
+                </UTooltip>
+              </span>
+            </div>
+
+            <p class="texto-no-incluye text-right" v-if="haveMonthlyReservation">
               Incluye IVA y tasa admin
             </p>
-            <p class="texto-no-incluye" v-else>No incluye IVA ni tasa admin</p>
+            <p class="texto-no-incluye text-right" v-else>No incluye IVA ni tasa admin</p>
           </template>
         </div>
 
-        <!--==== columna der t1 ====-->
-        <div class="pl-5 flex flex-col justify-center">
+        <hr class="separador-tarifa">
+
+        <div class="contenedor-protecciones">
           <div>
             <p class="body-lg mb-1">Escoge protección</p>
 
-            <div class="flex flex-col justify-start">
+            <div class="grid grid-cols-2 gap-x-2">
               <div class="opcion-seleccionable">
                 <input
                   :id="basicCoverageCheckboxID"
@@ -258,7 +287,7 @@
 
             <div
               v-if="haveMonthlyReservation"
-              class="flex flex-col justify-start"
+              class="grid grid-cols-2 gap-x-2"
             >
               <!-- <URadioGroup
                   v-model="withMileage" 

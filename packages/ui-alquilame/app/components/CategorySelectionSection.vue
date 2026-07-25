@@ -1,26 +1,30 @@
 <template>
-  <div v-if="isServerError && !pendingSearch" class="text-center [--ctx-text-primary:#fff]">
-    <div class="text-white text-center">
+  <!-- Los estados de esta sección van sobre bg-surface-soft (gris claro), no
+       sobre el degradado oscuro del layout: el texto es oscuro y el acento es
+       brand-600, no blanco/amarillo. Si el fondo vuelve a ser oscuro hay que
+       revertir estos colores. -->
+  <div v-if="isServerError && !pendingSearch" class="text-center">
+    <div class="text-gray-900 text-center">
       <div class="font-heading text-3xl">Servicio temporalmente no disponible</div>
       <p class="text-lg mt-2">
         Estamos experimentando problemas técnicos. Por favor, intenta de nuevo en unos minutos.
       </p>
       <p class="text-lg mt-2">Si deseas hacer una reserva, contáctanos:</p>
       <p class="text-lg mt-1">
-        <a :href="`https://wa.me/57${whatsappContact.phone}`" target="_blank" rel="noopener" data-analytics-placement="error" class="text-yellow-400 underline">
+        <a :href="`https://wa.me/57${whatsappContact.phone}`" target="_blank" rel="noopener" data-analytics-placement="error" class="text-brand-600 font-semibold underline">
           WhatsApp {{ whatsappContact.display }}
         </a>
       </p>
       <p class="text-base mt-2 font-semibold">Horario de atención</p>
-      <p class="text-sm text-gray-300">
+      <p class="text-sm text-gray-600">
         Lunes a viernes: 07:00am - 07:00pm<br>
         Sábados: 07:00am - 04:00pm<br>
         Domingos y festivos: Cerrado
       </p>
     </div>
   </div>
-  <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center [--ctx-text-primary:#fff]">
-    <div class="text-white text-center">
+  <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center">
+    <div class="text-gray-900 text-center">
       <div class="font-heading text-3xl">¡Oops!</div>
       <div class="text-lg">
         Nos quedamos sin carritos en {{pickupCityName}} para el {{ humanFormattedPickupDate }}.
@@ -36,10 +40,10 @@
          tarifas (caso 2027). Fail-closed: no se cotiza, se ofrece contacto. -->
     <div
       v-if="allBeyondHorizon"
-      class="text-center [--ctx-text-primary:#fff] mb-6"
+      class="text-center mb-6"
       data-testid="pricing-horizon-unavailable-test"
     >
-      <div class="text-white text-center rounded-2xl bg-black/30 px-6 py-6 max-w-2xl mx-auto">
+      <div class="text-gray-900 text-center rounded-[22px] border-[7px] border-white bg-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] px-6 py-6 max-w-2xl mx-auto">
         <div class="font-heading text-xl md:text-2xl font-extrabold">
           Las tarifas para tu fecha aún no están disponibles
         </div>
@@ -50,18 +54,18 @@
             target="_blank"
             rel="noopener"
             data-analytics-placement="error"
-            class="text-yellow-400 underline"
+            class="text-brand-600 font-semibold underline"
           >
             WhatsApp {{ whatsappContact.display }}
           </a>
         </p>
       </div>
     </div>
-    <div v-if="hasRenderableAvailable" class="text-white text-center [--ctx-text-primary:#fff] mb-6">
-      <span class="inline-block h-1 w-10 rounded-full bg-white/80 mb-3" aria-hidden="true"></span>
+    <div v-if="hasRenderableAvailable" class="text-gray-900 text-center mb-6">
+      <span class="inline-block h-1 w-10 rounded-full bg-brand-600 mb-3" aria-hidden="true"></span>
       <div class="font-heading text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!</div>
-      <div class="text-sm md:text-base mt-1">
-        <span>En <span class="text-yellow-400 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
+      <div class="text-sm md:text-base mt-1 text-gray-700">
+        <span>En <span class="text-brand-600 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-brand-600 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
     </div>
