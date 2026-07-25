@@ -49,8 +49,10 @@
     /* Flechas de navegación: cuadros negros a cada lado del texto, con realce al
        pasar el cursor. Son <button> reales (accesibles); su clic no propaga al
        tap de reserva del slide. */
+    /* Fondo gris SIEMPRE visible (el mismo tono del hover), con realce extra al
+       pasar el cursor. Los cuadros se leen como botones sin necesidad de hover. */
     .contador-flecha {
-      @apply flex items-center justify-center px-1.5 cursor-pointer transition-colors hover:bg-white/25 active:bg-white/40;
+      @apply flex items-center justify-center px-1.5 cursor-pointer transition-colors bg-white/25 hover:bg-white/40 active:bg-white/55;
     }
 
     .contador-texto {

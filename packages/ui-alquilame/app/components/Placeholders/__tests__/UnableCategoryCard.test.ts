@@ -65,10 +65,10 @@ describe('UnableCategoryCard — mensaje de no disponibilidad', () => {
     expect(src).not.toMatch(/<h3[^>]*text-2xl/)
   })
 
-  it('el detalle del carro es expandible (UCollapsible + chevron), como las disponibles', () => {
-    expect(src).toContain('UCollapsible')
-    expect(src).toContain('ChevronDownIcon')
-    expect(src).toContain('descripcion-larga')
+  it('el nombre/grupo NO es expandible: sin colapsable ni flecha (nada que ampliar)', () => {
+    expect(src).not.toContain('UCollapsible')
+    expect(src).not.toContain('ChevronDownIcon')
+    expect(src).not.toContain('descripcion-larga')
   })
 
   it('el botón "Probar otras fechas" es verde como los demás CTAs', () => {

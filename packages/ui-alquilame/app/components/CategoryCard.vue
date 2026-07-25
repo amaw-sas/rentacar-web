@@ -233,11 +233,11 @@
               </span>
             </div>
 
-            <p class="texto-no-incluye text-right" v-if="hasSurfacedTaxes">Precio final, todo incluido</p>
-            <p class="texto-no-incluye text-right" v-else-if="haveMonthlyReservation">
+            <p class="texto-no-incluye" v-if="hasSurfacedTaxes">Precio final, todo incluido</p>
+            <p class="texto-no-incluye" v-else-if="haveMonthlyReservation">
               Incluye IVA y tasa admin
             </p>
-            <p class="texto-no-incluye text-right" v-else>No incluye IVA ni tasa admin</p>
+            <p class="texto-no-incluye" v-else>No incluye IVA ni tasa admin</p>
           </template>
         </div>
 

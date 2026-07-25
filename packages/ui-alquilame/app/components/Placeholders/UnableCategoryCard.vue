@@ -1,5 +1,5 @@
 <template>
-  <div class="categoria categoria-no-disponible">
+  <div class="categoria categoria-no-disponible flex flex-col">
     <!-- Carrusel del modelo (dimmed via CSS .categoria-no-disponible img) -->
     <div class="carrusel">
       <Carrusel
@@ -9,65 +9,37 @@
       />
     </div>
 
-    <!-- Titulo + detalle expandible: misma estructura que las tarjetas
-         disponibles (nombre grande + grupo debajo, y la flecha ⌄ abre la
-         descripción larga). Antes iba al revés y sin detalle. -->
-    <UCollapsible class="contenedor-descripcion-carro">
-      <UButton
-        class="boton-contenedor-descripcion-carro group"
-        size="xl"
-        :ui="{
-          base: 'rounded-none',
-          trailingIcon:
-            'group-data-[state=open]:rotate-180 transition-transform duration-200',
-        }"
-      >
-        <template #leading>
-          <span class="text-left text-gray-700 items-center">
-            <span class="descripcion-corta">{{ vehicleCategory?.descripcion_corta }}</span>
-            <span class="fila-etiquetas-grupo">
-              <span class="categoria-carro">Grupo {{ categoryCode }} ({{ vehicleCategory?.grupo }})</span>
-            </span>
-          </span>
-        </template>
-        <template #trailing>
-          <ChevronDownIcon cls="size-7" />
-        </template>
-      </UButton>
-      <template #content>
-        <div class="px-4 py-0 text-sm">
-          <p class="descripcion-larga" v-text="vehicleCategory?.descripcion_larga"></p>
-          <div class="contenedor-etiquetas">
-            <span
-              v-for="tag in vehicleCategory?.tags"
-              :key="`tag-${tag}`"
-              v-text="tag"
-              class="etiqueta-carro"
-            ></span>
-          </div>
-        </div>
-      </template>
-    </UCollapsible>
+    <!-- Nombre + grupo estáticos: nombre grande arriba, grupo debajo (mismo
+         tamaño/orden que las disponibles), SIN detalle expandible ni flecha ⌄
+         (en una tarjeta no disponible no hay nada que ampliar). -->
+    <div class="contenedor-descripcion-carro px-5 pt-4 pb-3">
+      <span class="descripcion-corta">{{ vehicleCategory?.descripcion_corta }}</span>
+      <span class="fila-etiquetas-grupo">
+        <span class="categoria-carro">Grupo {{ categoryCode }} ({{ vehicleCategory?.grupo }})</span>
+      </span>
+    </div>
 
     <!-- Razón de no disponibilidad: banner a lo ANCHO de la tarjeta (full-bleed),
          con la línea roja a AMBOS lados. Fondo gris y texto negro; el rojo se
          reserva para el icono de alerta y las líneas laterales. -->
-    <div class="bg-gray-100 border-x-4 border-red-500 px-5 py-8 flex items-start gap-2">
-      <UIcon name="i-lucide-alert-triangle" class="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+    <!-- grow: absorbe el alto sobrante de la fila (las tarjetas se estiran a la
+         más alta), así el gris llena el hueco y el botón verde queda pegado al
+         fondo sin blanco de más. Contenido centrado en vertical. -->
+    <div class="bg-gray-100 border-x-4 border-red-500 px-5 py-8 flex grow items-center gap-2">
+      <UIcon name="i-lucide-alert-triangle" class="w-5 h-5 text-red-600 shrink-0" />
       <div>
         <div class="text-lg font-semibold text-gray-900 leading-tight">No disponible</div>
-        <!-- Fecha y sucursal en dos líneas, sin repetir "No disponible" (ya está
+        <!-- Fecha y sucursal en UNA línea, sin repetir "No disponible" (ya está
              en el título de arriba). -->
         <div
           v-if="isSpecific"
-          class="text-sm text-gray-900 mt-0.5 leading-snug"
+          class="text-sm text-gray-900 mt-2 leading-snug"
         >
-          <div>el {{ pickupDateLabel }}</div>
-          <div>en {{ locationLabel }}</div>
+          el {{ pickupDateLabel }} en {{ locationLabel }}
         </div>
         <!-- Invitación dentro del gris; el listado con su título va en el
              cuerpo blanco de abajo. Solo si hay otras sucursales. -->
-        <div v-if="nearbyBranches.length" class="text-sm text-gray-900 mt-1">
+        <div v-if="nearbyBranches.length" class="text-sm text-gray-900 mt-1.5">
           Intenta con sucursales cercanas
         </div>
       </div>
@@ -80,7 +52,7 @@
            enlaces verdes a la misma búsqueda; el botón verde va al final. Si no
            hay ninguna, todo el bloque (texto incluido) se oculta. -->
       <div v-if="nearbyBranches.length">
-        <p class="text-sm font-semibold text-gray-900">Sucursales cercanas:</p>
+        <p class="text-lg font-semibold text-gray-900">Sucursales cercanas:</p>
         <ul class="mt-3 space-y-1.5">
           <li v-for="branch in nearbyBranches" :key="branch.slug">
             <NuxtLink
@@ -116,7 +88,6 @@ import { computed, defineAsyncComponent } from 'vue';
 
 /** Internal components */
 import ChevronRightIcon from '~/components/Icons/ChevronRightIcon.vue';
-import ChevronDownIcon from '~/components/Icons/ChevronDownIcon.vue';
 const Carrusel = defineAsyncComponent(() => import('../Carrusel.vue'));
 
 /** Types */
