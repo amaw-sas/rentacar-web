@@ -10,7 +10,7 @@
     -->
     <section class="bg-linear-to-b from-footer-from to-footer-to px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-24 text-center [--ctx-text-primary:#fff]">
       <h1 class="heading-page text-white">
-        Blog de <span class="text-white">{{ franchise.shortname }}</span>
+        Blog de <span class="text-white">{{ organization.brand }}</span>
       </h1>
       <p class="text-white max-w-2xl mx-auto mt-4">
         Guías, tips y consejos para alquilar carros en Colombia.
@@ -168,7 +168,7 @@
 <script setup lang="ts">
 import type { BlogPost } from '@rentacar-main/logic/src'
 
-const { franchise } = useAppConfig()
+const { franchise, organization } = useAppConfig()
 
 // El conteo de ciudades sale de la MISMA fuente que el footer. Antes estaba
 // escrito a mano en el CTA y quedó desactualizado (decía un número de sedes que
@@ -269,10 +269,13 @@ useSeoMeta({
   ogDescription: 'Guías, tips y consejos para alquilar carros en Colombia.',
   ogType: 'website',
   ogUrl: `${franchise.website}/blog`,
-  ogImage: franchise.logo,
+  // El logo es SVG y ninguna red social lo renderiza como tarjeta: compartir
+  // /blog salía sin imagen. franchise.ogImage es el JPG 1200x630 de marca.
+  ogImage: franchise.ogImage,
   twitterCard: 'summary_large_image',
   twitterTitle: `Blog | ${franchise.shortname}`,
-  twitterDescription: 'Guías, tips y consejos para alquilar carros en Colombia.'
+  twitterDescription: 'Guías, tips y consejos para alquilar carros en Colombia.',
+  twitterImage: franchise.ogImage
 })
 
 // Breadcrumb schema

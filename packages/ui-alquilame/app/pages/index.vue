@@ -65,7 +65,6 @@ useSeoMeta({
   ogImage: franchise.ogImage,
   ogImageAlt: `Familia colombiana disfrutando viaje en carro alquilado - ${franchise.name}`,
   ogImageType: "image/jpeg",
-  ogImageUrl: franchise.ogImage,
   ogImageWidth: "1200",
   ogImageHeight: "630",
   ogUrl: franchise.website,
