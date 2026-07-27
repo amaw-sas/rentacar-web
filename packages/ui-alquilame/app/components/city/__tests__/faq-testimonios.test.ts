@@ -64,8 +64,9 @@ describe('F2 step05 — city/Faq.vue', () => {
   })
 
   it('keeps the Alquílame-specific heading and supporting copy', () => {
-    expect(faq).toContain('Respuestas útiles para alquilar en')
-    expect(faq).toContain('Aquí aclaramos lo esencial del alquiler de carros en')
+    expect(faq).toContain('Preguntas frecuentes sobre alquiler en')
+    expect(faq).toContain('Aquí encuentras respuestas claras sobre el alquiler de carros en')
+    expect(faq).not.toContain('{{ city?.name }},')
     expect(faq).not.toContain('Resolvemos tus dudas más comunes sobre el alquiler de carros en')
   })
 })
