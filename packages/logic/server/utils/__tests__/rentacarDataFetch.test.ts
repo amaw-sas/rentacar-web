@@ -152,7 +152,7 @@ describe('fetchRentacarData', () => {
     vehicle_categories: OK, locations: OK, rental_companies: OK, cities: OK, franchises: OK, faqs: OK,
   } as const
 
-  it('SCEN-M2: reads price_anchors scoped to the brand, on the shared deadline, when the pilot is on', async () => {
+  it('SCEN-M2: reads price_anchors scoped to the brand when the pilot is on', async () => {
     vi.useFakeTimers()
     const anchors = { data: [{ category_code: 'GC', anchor_day_price_gross: 280607, computed_at: '2026-07-26T00:00:00Z' }], error: null }
     const { supabase, builders } = makeSupabase({ ...SIX_OK, price_anchors: anchors })
@@ -161,9 +161,25 @@ describe('fetchRentacarData', () => {
 
     expect(results[6]).toEqual(anchors)
     expect(builders.price_anchors.__state.eqCalls).toEqual([['franchise', 'alquilame']])
-    // Same AbortController as the rest: the accessory query cannot outlive the
-    // deadline and keep a pooled connection busy.
-    expect(builders.price_anchors.__state.signal).toBe(builders.cities.__state.signal)
+    // Its OWN controller, NOT the catalog's (H-W1): sharing it meant a slow
+    // anchors query aborted six answered queries and 504'd the whole catalog.
+    // Deadline behaviour is pinned in rentacarDataFetch.anchorsDeadline.adversarial.
+    expect(builders.price_anchors.__state.signal).not.toBe(builders.cities.__state.signal)
+  })
+
+  it('SCEN-M2: a catalog deadline SHORTER than the anchors one still tears the anchors query down', async () => {
+    vi.useFakeTimers()
+    // With a 1s catalog deadline the outer signal fires before the anchors'
+    // own 2s one. The chaining is what stops the in-flight accessory query from
+    // outliving the request and holding a pooled connection.
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_anchors: undefined })
+
+    const promise = fetchRentacarData(supabase, 1000, 'alquilame', true)
+    const assertion = expect(promise).rejects.toBeInstanceOf(RentacarDataTimeoutError)
+    await vi.advanceTimersByTimeAsync(1000)
+    await assertion
+
+    expect(builders.price_anchors.__state.signal!.aborted).toBe(true)
   })
 
   it('SCEN-M1: makes no anchors round trip when the pilot is off (default)', async () => {
