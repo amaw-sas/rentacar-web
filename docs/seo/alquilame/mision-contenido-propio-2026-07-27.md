@@ -131,6 +131,8 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 
 | 2026-07-27 14:10 | Veredictos completos: 5/5 APTOS con verificación independiente (controles positivos 49-68% en texto viejo vs 0-2,9% en el nuevo; matrices cruzadas limpias; S8 sin invenciones salvo 1 calificador regulatorio en cali → W2.1). Rondas de pulido despachadas a los 5 (W2.1 S8-cali+epítetos+pasajes, W3.1 placa/parqueadero+moldes, W4.1 plantilla retórica+frases, W5.1 rating 4,9+curaduría+pins tipados, W7.1 keyword en H2s+prosa). Tickets para el dueño: contradicciones factuales HEREDADAS entre bloques y FAQs (pico y placa y tiempos en ~8 ciudades) — preexistentes en producción de alquilatucarro, documentadas por los jueces de W2/W3/W4. |
 
+| 2026-07-27 14:35 | Rondas de pulido completas en los 5 frentes (W2.1 78f0fdd, W3.1 62b34d1, W4.1 1812573, W5.1+W5.2 8d746aa con re-veredicto APTO del juez, W7.1 1ebbd9b). Deltas verificados en alcance (0 archivos fuera de ui-alquilame). INTEGRACIÓN: los 5 mergeados a la rama de misión (HEAD 9d715cb); el conflicto previsto en faq-testimonios.test.ts se auto-resolvió. Vitest completo corriendo. |
+
 ### Bloqueos / errores
 - 12:10 — A/B de baseline en worktree de integración falló por entorno (faltaba `.nuxt/` copiado). Corregido, relanzado. No afecta a los workers.
 - 12:47 — La corrida completa de vitest en background quedó colgada (vitest no sale en worktrees); se reemplazó por A/B dirigido a las suites rojas. Resuelto.
