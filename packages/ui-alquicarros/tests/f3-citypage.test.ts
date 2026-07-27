@@ -213,14 +213,22 @@ describe('F3 — SCEN-F3-07/08/09: Searcher submit context-aware + badges naranj
 })
 
 describe('F3 — SCEN-F3-10: páginas de estado de reserva, design-system + naranja', () => {
-  const STATE_PAGES = [
-    'app/pages/pendiente.vue',
-    'app/pages/sindisponibilidad.vue',
-    'app/pages/reservado/[reserveCode]/index.vue',
+  // #368 h.1: /reservado delegó su markup a ReservationConfirmation.vue (la
+  // página quedó como wrapper delgado que solo pasa props). El design-system y la
+  // ausencia de residuales se verifican en la página + su componente.
+  const STATE_PAGES: Array<{ name: string; files: string[] }> = [
+    { name: 'pendiente', files: ['app/pages/pendiente.vue'] },
+    { name: 'sindisponibilidad', files: ['app/pages/sindisponibilidad.vue'] },
+    {
+      name: 'reservado',
+      files: [
+        'app/pages/reservado/[reserveCode]/index.vue',
+        'app/components/ReservationConfirmation.vue',
+      ],
+    },
   ]
-  for (const p of STATE_PAGES) {
-    const name = p.split('/').slice(-1)[0] === 'index.vue' ? 'reservado' : p.split('/').slice(-1)[0]
-    const src = () => tryRead(p)
+  for (const { name, files } of STATE_PAGES) {
+    const src = () => files.map((f) => tryRead(f)).join('\n')
     it(`${name}: usa el design-system nuevo (heading-*)`, () => {
       expect(src()).toMatch(/heading-(page|sub|hero)/)
     })
