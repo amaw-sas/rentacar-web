@@ -431,7 +431,12 @@ por qué la formulación vieja era insuficiente: dejaba llegar a un «Confirmar 
 Alternativa si se prefiere no tocar SCEN-W-07: dejar `canAdvance` intacto y reinstaurar el rebote de
 paso solo para `currentStepNumber >= 3`. Cuesta la experiencia descrita en el riesgo de clamps
 (sacar al usuario de Datos a mitad de formulario) y vuelve a depender del orden entre invalidación y
-máquina de pasos. **Es una decisión del usuario, no mía.**
+máquina de pasos.
+
+**Decidido por el usuario el 2026-07-24: enmendar SCEN-W-07** con la reformulación de arriba. La
+alternativa del rebote queda descartada. La cabecera de `reservation-wizard-machine.test.ts:10` hay
+que reescribirla junto con la aserción de `:184`, para que el id siga apuntando al invariante nuevo
+y no quede huérfano.
 
 **Fuera:** `packages/logic`. `useRecordReservationForm` conserva su corte vivo/congelado, pero en
 alquicarros deja de ser alcanzable: sin gama no hay submit. Y `useSearch` conserva su toast de
@@ -477,6 +482,16 @@ están tapadas por el `min-value` del calendario y el auto-bump (la única varia
 la página abierta hasta que pase la hora de recogida elegida); y el cuarto necesita un montaje con
 `pending` ya en true. **Los cuatro son unitarios.** El resto se ejercita en navegador.
 
+## Refinamientos durante la implementación
+
+Tres cosas cambiaron respecto a lo diseñado arriba. Se registran para que el spec no mienta sobre el código que se envió.
+
+**Los seis guards viven en `computeStaleTransition`, no en el cuerpo del watcher.** El pseudocódigo de arriba se extrajo a una función pura exportada en `useReservationWizard.ts`. El watcher quedó como cableado: llama a la función con cuatro entradas y aplica el resultado a los tres refs. La razón es la prueba. Los 33 casos de la máquina golpean la función directamente, sin montar nada ni simular el scheduler de Vue.
+
+**El agujero «true sobre true» se cerró dentro del alcance, sin tocar `packages/logic`.** El diseño lo dejó escrito como deuda que exigía exponer `searchGeneration`. No hacía falta. Dos cambios en los guards lo resuelven en el wizard: la guarda 2 adopta el tramo vivo en *cada* resolución, no solo cuando `quoted===null`, y la guarda 6 ya no latchea mientras hay una búsqueda en vuelo (`!isPending`). Así una segunda búsqueda arrancada sin flanco se auto-cura al resolver —adopta lo consultado— en vez de quedar rancia sobre resultados frescos. La nota sobre `searchGeneration` (arriba, en «Dependencia del flanco») queda obsoleta.
+
+**El ámbar del renglón de motivo era CSS muerto.** `text-amber-800` en las dos líneas de motivo del resumen no pintaba: la clase tipográfica `body-xs` fija el color vía `--text-muted` con la misma especificidad y gana por orden en la cascada, así que el motivo salía gris-600. Legible —7.56 AA—, pero sin la señal ámbar que lo ata al aviso. Se corrigió con el modificador `!` de Tailwind 4 (`text-amber-800!`), con un test de montaje que comprueba la clase para que no vuelva a caer a gris en silencio.
+
 ## Riesgos
 
 **Falsos positivos por clamps de horario — y son el único disparo real de la invalidación fuera del
@@ -492,8 +507,11 @@ donde está, sin poder avanzar y con el motivo a la vista. Se fija en SCEN-401-0
 **Contraste del aviso.** El texto nuevo aparece en cuatro sitios que resuelven a dos fondos:
 `bg-white` en la tarjeta sticky de escritorio (`WizardSummary.vue:12`) y en el contenedor de la barra
 móvil (`:101`), y el `bg-surface-soft` del contenedor de pasos 2-5 (`ReservationWizard.vue:32`) bajo
-las tarjetas de `WizardStaleNotice`. Hay que medirlo con el método de #364 —canvas 1×1 sobre el color
-computado, porque Tailwind 4 emite `oklch()` y el fondo se resuelve subiendo por el árbol—. Mínimo AA.
+las tarjetas de `WizardStaleNotice`. Se midió con el método de #364 —canvas 1×1 sobre el color
+computado, porque Tailwind 4 emite `oklch()` y el fondo se resuelve subiendo por el árbol—. Todo pasa
+AA: título del aviso 17.11, cuerpo 9.94 y botón «Ajustar búsqueda» 9.94 sobre `amber-50`; renglón de
+motivo 7.09 (amber-800 sobre blanco, ya con el arreglo del ámbar muerto). El renglón era el único al
+límite: sin el modificador `!` habría salido gris-600 —7.56, también AA, pero sin señal de color.
 
 ## Verificación
 

@@ -8,6 +8,13 @@
     texto oscuro.
   -->
   <div>
+    <!-- Cotización rancia (issue #401): el aviso SUSTITUYE al comparador. El v-if va
+         DENTRO del componente a propósito: los watchers de script (canQuoteTotal,
+         corrección de kilometraje) siguen corriendo y no-opean sobre `sc === null`.
+         Cambiarlos al padre los desmontaría. Sin esto, con la gama anulada la card
+         Total imprime "+ $ / mes" y la Básico se pinta marcada — afirmaciones falsas. -->
+    <WizardStaleNotice v-if="searchStale" @adjust-search="emit('adjust-search')" />
+    <template v-else>
     <header class="mb-5">
       <h2 class="heading-card text-gray-900">Elige tu cobertura</h2>
       <p class="mt-1 body-base text-gray-500">
@@ -104,6 +111,7 @@
       Ningún seguro cubre accesorios removibles, documentos, placas, llaves ni multas
       de tránsito generadas durante el alquiler.
     </p>
+    </template>
   </div>
 </template>
 
@@ -121,6 +129,16 @@ import { pickPriceForDate } from '@rentacar-main/logic/utils'
 
 // Types
 import type { MonthlyMileage } from '@rentacar-main/logic/utils'
+
+defineProps<{
+  /** Issue #401: el tramo cambió sin re-buscar → sustituye el comparador por el aviso. */
+  searchStale?: boolean
+}>()
+
+const emit = defineEmits<{
+  /** El usuario pide volver a la búsqueda desde el aviso de rancia. */
+  (e: 'adjust-search'): void
+}>()
 
 const search = useStoreSearchData()
 const form = useStoreReservationForm()

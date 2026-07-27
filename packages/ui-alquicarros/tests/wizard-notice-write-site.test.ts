@@ -30,13 +30,19 @@ const queryDriver = read('../app/composables/useSearchByQueryParams.ts')
 const routeDriver = read('../../logic/src/composables/useSearchByRouteParams.ts')
 
 describe('#368 B1 — la escritura del aviso vive en el shell, no en los drivers de búsqueda', () => {
-  it('el shell escribe la ranura dentro del watcher de `pending`', () => {
+  it('el shell escribe la ranura dentro del watcher de reset/invalidación', () => {
     // El bloque del watcher, no el archivo entero: la escritura tiene que compartir
     // transición con el reset de la selección, que es la invariante que sostiene el
     // modelo sin borrado.
-    const watcher = shell.match(/watch\(pending,\s*\(isPending, wasPending\)[\s\S]*?^\}\)/m)?.[0] ?? ''
+    //
+    // Issue #401 fusionó el watcher de `pending` a `[pending, liveSearchSignature]`
+    // (la máquina de invalidación de cotización). La escritura del aviso sigue AHÍ,
+    // en el shell, compartiendo transición con el reset — que es lo que este
+    // invariante protege. Localizamos ese watcher, no el archivo entero.
+    const watcher =
+      shell.match(/watch\(\s*\[pending, liveSearchSignature\],[\s\S]*?^\)/m)?.[0] ?? ''
 
-    expect(watcher, 'no se encontró el watcher de reset').not.toBe('')
+    expect(watcher, 'no se encontró el watcher de reset/invalidación').not.toBe('')
     expect(watcher).toMatch(/selectedCategory\.value = null/)
     expect(watcher).toMatch(/setNotice\(/)
   })

@@ -9,6 +9,7 @@ const FILES = [
   'WizardSummary.vue',
   'WizardVehicleCard.vue',
   'VehicleSegmentTile.vue',
+  'WizardStaleNotice.vue',
   'steps/StepCoverage.vue',
   // #368 B1: el Paso 2 pinta ahora el aviso de arrastre/reset, que es copy de cuerpo
   // sobre fondo claro y hasta ahora no estaba cubierto por esta invariante.

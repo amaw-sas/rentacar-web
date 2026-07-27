@@ -117,15 +117,103 @@ describe('Robustez Fase 3 — hallazgos de review (regresión)', () => {
     expect(src).toMatch(/fecha_recogida[\s\S]{0,120}fecha_devolucion/)
   })
 
-  it('al arrancar una búsqueda nueva se descarta la gama elegida (evita cotización congelada — hallazgo PR)', () => {
+  it('al arrancar una búsqueda nueva se descarta la gama elegida (evita cotización congelada — hallazgo PR / #401)', () => {
     const src = shell()
-    expect(src).toMatch(/isPending && !wasPending/)
+    // La decisión (flanco pending false→true → descartar gama) vive ahora en
+    // computeStaleTransition, unit-testeada en reservation-wizard-machine.test.ts.
+    // El shell la cablea con flush:'sync' y anula selectedCategory como consecuencia.
+    expect(src).toMatch(/computeStaleTransition/)
     expect(src).toMatch(/selectedCategory\.value = null/)
+    expect(src).toMatch(/flush: 'sync'/)
   })
 
   it('la presencia de pickup se evalúa TRIMEADA (whitespace no cuenta), consistente con deriveStepFromRoute', () => {
     expect(shell()).toMatch(/String\(raw\)\.trim\(\)/)
     expect(read('app/pages/reservas/index.vue')).toMatch(/hasPickup/)
+  })
+})
+
+describe('Invalidación de cotización por deriva del tramo (#401)', () => {
+  const stepVehicle = () => read('app/components/wizard/steps/StepVehicle.vue')
+  const stepCoverage = () => read('app/components/wizard/steps/StepCoverage.vue')
+  const stepExtras = () => read('app/components/wizard/steps/StepExtras.vue')
+  const summary = () => read('app/components/wizard/WizardSummary.vue')
+
+  it('el watcher de invalidación captura con flush:sync vía computeStaleTransition', () => {
+    const src = shell()
+    expect(src).toMatch(/\[pending, liveSearchSignature\]/)
+    expect(src).toMatch(/computeStaleTransition/)
+    expect(src).toMatch(/flush: 'sync'/)
+  })
+
+  it('SCEN-401-04 (no-rebote): el watcher de invalidación NO mueve al usuario (sin goTo ni maxReachedStep)', () => {
+    const src = shell()
+    // Acota al CUERPO del watcher de invalidación (de su fuente al flush).
+    const start = src.indexOf('[pending, liveSearchSignature]')
+    const block = src.slice(start, src.indexOf("{ flush: 'sync' }", start))
+    expect(block.length).toBeGreaterThan(0)
+    expect(block).not.toMatch(/goTo/)
+    expect(block).not.toMatch(/maxReachedStep/)
+    // Su única secuela sobre la máquina es anular la gama, no navegar.
+    expect(block).toMatch(/selectedCategory\.value = null/)
+  })
+
+  it('la firma del tramo vivo se deriva de los SEIS campos con reservationSearchSignature', () => {
+    const src = shell()
+    expect(src).toMatch(/reservationSearchSignature/)
+    expect(src).toMatch(/liveSearchSignature[\s\S]{0,200}lugarRecogida[\s\S]{0,200}horaDevolucion/)
+  })
+
+  it('la adopción inicial va en onMounted, condicionada a searchSettled O gama', () => {
+    const src = shell()
+    expect(src).toMatch(/onMounted\(/)
+    expect(src).toMatch(/quotedSearchSignature\.value = liveSearchSignature\.value/)
+    expect(src).toMatch(/searchSettled\.value \|\| selectedCategory\.value/)
+  })
+
+  it('el @skip de Adicionales se enruta por un handler gateado (no wizard.next directo)', () => {
+    const src = shell()
+    expect(src).toMatch(/@skip="onSkipExtras"/)
+    expect(src).not.toMatch(/@skip="wizard\.next"/)
+    const fn = src.slice(src.indexOf('function onSkipExtras'))
+    expect(fn.slice(0, 200)).toMatch(/canAdvanceCurrent/)
+  })
+
+  it('searchStale viaja como prop a los pasos 2/3/4 y al resumen', () => {
+    const src = shell()
+    // Cuatro superficies reciben el pestillo.
+    expect((src.match(/:search-stale="searchStale"/g) ?? []).length).toBe(4)
+  })
+
+  it('los pasos 2/3/4 renderizan WizardStaleNotice cuando el tramo está rancio', () => {
+    expect(stepVehicle()).toMatch(/<WizardStaleNotice\b/)
+    expect(stepCoverage()).toMatch(/<WizardStaleNotice\b/)
+    expect(stepExtras()).toMatch(/<WizardStaleNotice\b/)
+  })
+
+  it('en StepVehicle el aviso PRECEDE al error y al vacío (gana el orden de guardas)', () => {
+    const src = stepVehicle()
+    const stale = src.indexOf('v-else-if="searchStale"')
+    const error = src.indexOf('v-else-if="availabilityError"')
+    const empty = src.indexOf('v-else-if="groups.length === 0"')
+    expect(stale).toBeGreaterThan(-1)
+    expect(stale).toBeLessThan(error)
+    expect(stale).toBeLessThan(empty)
+  })
+
+  it('en StepCoverage/StepExtras el v-if del aviso va DENTRO del componente (los watchers de script no-opean)', () => {
+    // El aviso y su template alterno conviven en el mismo root: v-if / template v-else.
+    expect(stepCoverage()).toMatch(/WizardStaleNotice v-if="searchStale"[\s\S]{0,80}<template v-else>/)
+    expect(stepExtras()).toMatch(/WizardStaleNotice v-if="searchStale"[\s\S]{0,80}<template v-else>/)
+  })
+
+  it('el resumen añade la causa (desktop + móvil) sin ocultar el tramo vivo', () => {
+    const src = summary()
+    expect(src).toMatch(/v-else-if="searchStale"/)
+    expect(src).toMatch(/data-testid="wizard-stale-reason"/)
+    expect(src).toMatch(/data-testid="wizard-stale-reason-mobile"/)
+    // La franja móvil va ENCIMA del transition del detalle (visible sin expandir).
+    expect(src.indexOf('wizard-stale-reason-mobile')).toBeLessThan(src.indexOf('<transition'))
   })
 })
 
