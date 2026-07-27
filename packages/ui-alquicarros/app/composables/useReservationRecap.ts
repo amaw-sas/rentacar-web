@@ -24,7 +24,14 @@ export interface ReservationRecapView {
   mileageLabel: string | null
 }
 
-// Espejo de MILEAGE_LABELS en StepCoverage.vue — el recap debe decir lo mismo.
+// El seguro y el kilometraje del recap salen de los flags del form-store
+// (haveTotalInsurance, haveMonthlyReservation + monthlyMileage), que son la MISMA
+// fuente que el payload de la reserva (useRecordReservationForm.ts: total_insurance,
+// monthly_mileage). Así el recap muestra lo que EFECTIVAMENTE se reservó, no lo
+// que el resumen del wizard pintó desde selectedCategory (que puede divergir bajo
+// el bug dual-SoT haveTotalInsurance≠withTotalCoverage — arreglo aparte).
+// Este mapa cubre los 3 planes; StepCoverage solo etiqueta 1k/2k y cae al valor
+// crudo para 3k, así que NO es un espejo exacto.
 const MILEAGE_LABELS: Record<MonthlyMileage, string> = {
   '1k_kms': '1.000 km',
   '2k_kms': '2.000 km',
@@ -41,7 +48,19 @@ export function deriveReservationRecap(
   routeCode: unknown,
 ): { show: boolean; recap: ReservationRecapView | null } {
   const code = normalizeReservationCode(routeCode)
-  if (!summary || !code || summary.code !== code || !summary.categoryName || !summary.total) {
+  // Completitud por `typeof string`, no solo por truthy: si un día el deep-unwrap
+  // de selectedCategory se rompiera (shallowRef/markRaw), categoryName/total
+  // llegarían como Ref (truthy) y el recap pintaría "[object Object]". La
+  // comprobación de tipo mantiene el fail-safe (ocultar) ante esa regresión.
+  if (
+    !summary ||
+    !code ||
+    summary.code !== code ||
+    typeof summary.categoryName !== 'string' ||
+    !summary.categoryName ||
+    typeof summary.total !== 'string' ||
+    !summary.total
+  ) {
     return { show: false, recap: null }
   }
   return {

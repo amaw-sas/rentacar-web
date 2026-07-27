@@ -90,7 +90,7 @@ describe('SCEN-368A-05 — enlaces de contacto reales', () => {
     const w = mountConfirmed()
     expect(w.get('[data-testid="contact-whatsapp"]').attributes('href')).toBe('https://wa.me/573187703670')
     expect(w.get('[data-testid="contact-email"]').attributes('href')).toBe('mailto:alquicarros@gmail.com')
-    expect(w.get('[data-testid="contact-phone"]').attributes('href')).toBe('tel:+57 318 770 3670')
+    expect(w.get('[data-testid="contact-phone"]').attributes('href')).toBe('tel:+573187703670')
   })
 })
 

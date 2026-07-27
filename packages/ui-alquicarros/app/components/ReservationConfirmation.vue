@@ -162,10 +162,13 @@ const props = defineProps<{
 
 const requirements = RESERVATION_REQUIREMENTS
 
+// tel: sin espacios ni separadores (RFC 3966): "+57 318 770 3670" → "tel:+573187703670".
+const telHref = computed(() => `tel:${props.phone.replace(/[^\d+]/g, '')}`)
+
 const contactLinks = computed(() => [
   { testid: 'contact-whatsapp', href: props.whatsappUrl, label: 'WhatsApp', icon: '📱' },
   { testid: 'contact-email', href: `mailto:${props.email}`, label: 'Correo', icon: '📧' },
-  { testid: 'contact-phone', href: `tel:${props.phone}`, label: 'Llamar', icon: '📞' },
+  { testid: 'contact-phone', href: telHref.value, label: 'Llamar', icon: '📞' },
 ])
 
 const copied = ref(false)
