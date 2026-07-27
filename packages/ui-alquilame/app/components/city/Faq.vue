@@ -6,9 +6,9 @@
     brand-level FAQ list that HomeFaq renders. Reusing HomeFaq here
     would regress the city's indexable SEO content.
 
-    The FAQ JSON-LD schema is NOT emitted here: it stays in
-    useCityFAQSchema (inside useCityPageSEO, in [city]/index.vue) so it
-    keeps reading the same city FAQ source — single source of truth, untouched.
+    The FAQ JSON-LD schema is NOT emitted here: Alquilame's local
+    useCityFAQSchema is invoked by useAlquilameCityPageSEO, and both read this
+    same local FAQ module as their single source of truth.
 
     Gradient uses the v4 bg-linear-to-* utility (F0 lesson: the broken v3
     alias with custom @theme tokens renders background-image:none).
@@ -73,6 +73,7 @@
 <script setup lang="ts">
 /** types */
 import type { City } from "@rentacar-main/logic/utils";
+import { useCityFAQs } from "~/data/cityFAQs";
 
 /** props */
 const props = defineProps<{
@@ -82,7 +83,7 @@ const props = defineProps<{
 const { franchise } = useAppConfig();
 
 // City-specific FAQs (pico y placa, El Dorado, etc.) — same source the legacy
-// #faqs used and the one useCityFAQSchema reads. NEVER the brand-level list.
+// #faqs used and the one Alquilame's local useCityFAQSchema reads.
 const cityFAQs = props.city?.name ? useCityFAQs(props.city.name) : [];
 
 const faqAccordionUIConfig = {

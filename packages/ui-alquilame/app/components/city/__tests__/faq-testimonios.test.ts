@@ -7,8 +7,8 @@
  *     (useCityFAQs(city.name) — pico y placa, El Dorado, etc.), NOT the
  *     brand-level useData().faqs that HomeFaq renders. Reusing HomeFaq would
  *     regress the city's indexable SEO content.
- *   - The FAQPage schema is NOT inlined here: it stays in useCityFAQSchema /
- *     useCityPageSEO (in [city]/index.vue), untouched.
+ *   - The FAQPage schema is NOT inlined here: Alquilame's local
+ *     useCityFAQSchema is invoked by useAlquilameCityPageSEO.
  *   - The testimonials cards keep the CITY-SPECIFIC data (props.city.testimonials),
  *     NOT the brand-level franchiseTestimonials that HomeReviews renders. The
  *     heading is city-targeted ("…en {city.name}"). The AggregateRating schema
@@ -44,7 +44,7 @@ describe('F2 step05 — city/Faq.vue', () => {
     expect(faq).not.toMatch(/franchiseFaqs|faqs\s*}\s*=\s*useData/)
   })
 
-  it('does NOT inline the FAQPage schema (stays in useCityPageSEO, untouched)', () => {
+  it('does NOT inline the FAQPage schema (local SEO composable owns it)', () => {
     expect(faq).not.toMatch(/FAQPage/)
     expect(faq).not.toMatch(/useSchemaOrg/)
     expect(faq).not.toMatch(/defineQuestion/)
