@@ -3,30 +3,29 @@ import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 export const cityName = "Cali"
 export const citySlug = "cali"
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
         {
-            label: '¿Dónde puedo recoger mi carro en Cali?',
+            label: '¿Dónde puedo recoger el vehículo alquilado en Cali?',
             content: getCityPickupAnswer('Cali')
         },
         {
-            label: '¿Qué vehículo recomiendan para Cali?',
-            content: 'Para Cali ciudad un compacto es perfecto. Si planeas visitar el Pacífico (Buenaventura) o San Cipriano, una camioneta ofrece mejor desempeño en esas rutas. Para el Eje Cafetero, un sedán es ideal.'
+            label: '¿Qué tipo de carro debería elegir para mi viaje desde Cali?',
+            content: 'Un compacto responde bien para trayectos dentro de Cali. Si vas hacia Buenaventura, en el Pacífico, o a San Cipriano, una camioneta ofrece mejor desempeño en esas rutas. Para viajar al Eje Cafetero, la opción indicada es un sedán.'
         },
         {
-            label: '¿Aplica pico y placa en Cali?',
-            content: 'Sí, Cali tiene restricción de pico y placa según el último dígito de la placa. Te informamos al entregar el vehículo. Los fines de semana y festivos puedes circular sin restricción.'
+            label: '¿Cómo funciona el pico y placa para un carro rentado en Cali?',
+            content: 'La medida sí aplica y se determina con el último número de la placa. Al entregarte el carro te indicaremos el día que le corresponde. Los fines de semana y los festivos no tienen esta restricción.'
         },
         {
-            label: '¿Cuánto cuesta alquilar un carro en Cali?',
+            label: '¿Cómo sé cuánto vale alquilar un carro en Cali?',
             content: getCityPriceAnswer('Cali')
         },
         {
-            label: '¿Qué lugares puedo visitar con carro desde Cali?',
-            content: 'Destinos populares: Buga y el Señor de los Milagros (1.5h), Lago Calima (2h), Popayán (3h), y el Parque Natural Farallones. El carro te permite explorar el Valle del Cauca con total libertad.'
+            label: '¿A dónde puedo ir por carretera desde Cali?',
+            content: 'Entre las opciones están Buga y el Señor de los Milagros, a 1.5 horas; el Lago Calima, a 2 horas; Popayán, a 3 horas; y el Parque Natural Farallones. Con carro puedes acomodar estas salidas por el Valle del Cauca a tu horario.'
         },
         {
-            label: '¿Puedo viajar al Pacífico con el carro alquilado?',
-            content: 'Sí, puedes viajar a Buenaventura y la costa Pacífica. Recomendamos camioneta para mayor comodidad. Algunas zonas requieren precauciones especiales que te indicamos al momento de la reserva.'
+            label: '¿El carro de alquiler puede ir hasta la costa Pacífica?',
+            content: 'Sí, está permitido conducir hasta Buenaventura y otros puntos de la costa Pacífica. Una camioneta ofrece mayor comodidad para este recorrido. Al reservar te explicaremos las precauciones especiales que requieren algunas zonas.'
         }
     ]

@@ -3,41 +3,38 @@ import type { CityExpandedContent } from './types'
 export const cityName = "Santa Marta"
 export const citySlug = "santa-marta"
 
-// W1 placeholder: copied from the current city catalog so rendering stays unchanged.
-export const metaDescription = "Santa Marta tiene algo que pocas ciudades ofrecen: sierra nevada, playas caribeñas y selva tropical a minutos de distancia. Recoge tu carro en el Aeropuerto Simón Bolívar y en el mismo viaje puedes visitar el Parque Tayrona, subir a Minca por café y cascadas, explorar Taganga al atardecer o llegar hasta Palomino. La Quinta de San Pedro Alejandrino y el centro histórico completan la experiencia. Reserva sin anticipos, con descuentos de hasta el 60% y entrega inmediata. La Bahía Más Linda de América tiene demasiado para verlo desde un solo punto."
+export const metaDescription = "Alquiler de carros en Santa Marta para conectar la bahía con Tayrona, Minca, Taganga y Palomino, entre el Caribe y la Sierra Nevada."
 
-// Keep this independent from the short SEO meta so all three editorial separators survive.
-export const pullQuoteSource = "Santa Marta tiene algo que pocas ciudades ofrecen: sierra nevada, playas caribeñas y selva tropical a minutos de distancia. Recoge tu carro en el Aeropuerto Simón Bolívar y en el mismo viaje puedes visitar el Parque Tayrona, subir a Minca por café y cascadas, explorar Taganga al atardecer o llegar hasta Palomino. La Quinta de San Pedro Alejandrino y el centro histórico completan la experiencia. Reserva sin anticipos, con descuentos de hasta el 60% y entrega inmediata. La Bahía Más Linda de América tiene demasiado para verlo desde un solo punto."
+export const pullQuoteSource = "Santa Marta cambia de paisaje en pocos kilómetros: bahía, selva y montaña comparten la misma ruta. Con carro puedes amanecer rumbo a Tayrona y buscar el aire fresco de Minca al día siguiente. Taganga y Palomino quedan como paradas posibles, no como excursiones atadas a un horario ajeno."
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const content: CityExpandedContent = {
-        intro: `Santa Marta, la ciudad más antigua de Colombia fundada en 1525, es la puerta de entrada al Parque Tayrona y la Sierra Nevada. Con un carro de alquiler puedes explorar esta región de contrastes únicos: playas caribeñas, montañas nevadas y selva tropical en pocos kilómetros. El Aeropuerto Internacional Simón Bolívar te conecta con las principales ciudades del país. Tener vehículo propio es casi esencial aquí, ya que te permite acceder a playas remotas como Palomino, subir a Minca en la Sierra Nevada, visitar el Parque Tayrona a tu ritmo y explorar pueblos de la Zona Bananera. Santa Marta combina historia colonial, naturaleza exuberante y la magia de ser el lugar donde murió el Libertador Simón Bolívar.`,
+        intro: `En Santa Marta, el mar Caribe, la selva y las cumbres nevadas de la Sierra aparecen separados por pocos kilómetros. La ciudad más antigua de Colombia, fundada en 1525, es la entrada natural al Parque Tayrona y conserva además la historia del lugar donde murió el Libertador Simón Bolívar. El Aeropuerto Internacional Simón Bolívar la conecta con las principales ciudades del país y permite iniciar la ruta desde la costa. El alquiler de carros en Santa Marta es especialmente útil porque muchos de sus atractivos están fuera del centro: puedes subir a Minca, llegar a playas remotas como Palomino, visitar Tayrona sin depender de un grupo y recorrer pueblos de la Zona Bananera. Un vehículo también da espacio para llevar lo necesario en días de playa o montaña. Tú decides si cada jornada termina junto a la bahía, entre el bosque tropical o en el aire más fresco de la Sierra Nevada.`,
         destinations: [
             {
                 name: 'Parque Nacional Tayrona',
                 time: '45 minutos',
-                description: 'El parque natural más icónico de Colombia. Playas vírgenes como Cabo San Juan, senderos en la selva y encuentro de Sierra Nevada con el mar. Reserva entrada con anticipación.'
+                description: 'En el parque natural más emblemático del país, los caminos atraviesan la selva hasta playas vírgenes como Cabo San Juan. Allí la Sierra Nevada llega al mar. Compra la entrada con anticipación.'
             },
             {
                 name: 'Minca',
                 time: '45 minutos',
-                description: 'Pueblo de montaña en la Sierra Nevada a 650 msnm. Fincas cafeteras, cascadas, avistamiento de aves y temperaturas frescas. Escape perfecto del calor de la costa.'
+                description: 'Sube hasta este pueblo de la Sierra Nevada, ubicado a 650 metros sobre el nivel del mar. Sus fincas de café, cascadas, aves y temperatura fresca ofrecen una pausa frente al calor costero.'
             },
             {
                 name: 'Palomino',
                 time: '1.5 horas',
-                description: 'Playa bohemia donde el río Palomino se encuentra con el mar. Tubing por el río, surf, ambiente mochilero y atardeceres espectaculares. Cada vez más popular.'
+                description: 'El río Palomino desemboca aquí en el mar, junto a una playa de espíritu bohemio cada vez más conocida. Puedes hacer tubing, practicar surf y cerrar el día con el ambiente mochilero del lugar.'
             },
             {
                 name: 'Taganga',
                 time: '15 minutos',
-                description: 'Antiguo pueblo de pescadores convertido en destino de buceo. Bahía tranquila, restaurantes de mariscos frescos y punto de partida para playas cercanas en lancha.'
+                description: 'Este antiguo poblado pesquero se convirtió en un destino de buceo. Su bahía tranquila reúne restaurantes de mariscos frescos y sirve como salida en lancha hacia otras playas cercanas.'
             }
         ],
         drivingTips: {
-            picoPlaca: 'Santa Marta NO tiene pico y placa para vehículos particulares. Puedes circular libremente cualquier día y hora.',
-            tolls: 'Hacia Palomino hay un peaje (~$9.200 COP). Hacia Barranquilla hay 3 peajes (~$30.000 COP total). No hay peajes hacia Minca ni Taganga.',
-            parking: 'En el centro histórico y El Rodadero los parqueaderos cuestan entre $3.000-6.000 COP/hora. En Taganga el parqueo es limitado y en temporada alta se complica.'
+            picoPlaca: 'Los vehículos particulares pueden circular cualquier día y a cualquier hora, pues Santa Marta no les aplica restricción de pico y placa.',
+            tolls: 'Hacia Palomino se paga un peaje de unos $9.200 COP. El recorrido a Barranquilla incluye 3, que suman cerca de $30.000 COP. Para subir a Minca o llegar a Taganga no pasas por ninguno.',
+            parking: 'Una hora en los estacionamientos del centro histórico o El Rodadero cuesta entre $3.000 y $6.000 COP. En Taganga hay pocos lugares para parquear y encontrarlos se vuelve más difícil durante la temporada alta.'
         },
-        bestSeason: 'Santa Marta tiene clima cálido todo el año (28-34°C). La temporada seca de diciembre a abril es ideal para playas y Tayrona. El Parque Tayrona cierra cada año en febrero y junio para recuperación ecológica (verifica fechas). Para Minca, cualquier época es buena, con lluvias más frecuentes de mayo a noviembre.'
+        bestSeason: 'La temperatura de Santa Marta oscila entre 28 y 34 °C durante todo el año. De diciembre a abril, el tiempo seco favorece las jornadas de playa y las caminatas en Tayrona. El parque cierra cada año en febrero y junio para su recuperación ecológica, así que verifica las fechas antes de salir. Minca recibe visitantes en cualquier temporada, aunque las lluvias son más frecuentes entre mayo y noviembre.'
     }

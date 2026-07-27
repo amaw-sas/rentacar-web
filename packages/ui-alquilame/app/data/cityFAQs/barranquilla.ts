@@ -3,30 +3,29 @@ import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 export const cityName = "Barranquilla"
 export const citySlug = "barranquilla"
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
         {
-            label: '¿Dónde puedo recoger mi carro en Barranquilla?',
+            label: '¿Dónde puedo recoger un vehículo de alquiler en Barranquilla?',
             content: getCityPickupAnswer('Barranquilla')
         },
         {
-            label: '¿Qué vehículo recomiendan para Barranquilla?',
-            content: 'Un compacto con buen aire acondicionado es ideal para el clima de Barranquilla. Si planeas visitar otras ciudades de la costa como Cartagena o Santa Marta, un sedán te dará más comodidad.'
+            label: '¿Cuál carro conviene para manejar en Barranquilla?',
+            content: 'Dentro de la ciudad funciona bien un compacto con buen aire acondicionado, especialmente por el clima. Para continuar por la costa hasta Cartagena o Santa Marta, un sedán ofrece más comodidad durante el trayecto.'
         },
         {
-            label: '¿Cuánto cuesta alquilar un carro en Barranquilla?',
+            label: '¿Cómo puedo consultar la tarifa de alquiler en Barranquilla?',
             content: getCityPriceAnswer('Barranquilla')
         },
         {
-            label: '¿Puedo viajar a Cartagena o Santa Marta desde Barranquilla?',
-            content: 'Sí, Cartagena está a 2 horas y Santa Marta a 1.5 horas. Ambas rutas son seguras y bien pavimentadas. Puedes devolver el carro en cualquiera de estas ciudades.'
+            label: '¿Puedo llevar el carro de Barranquilla a Cartagena o Santa Marta?',
+            content: 'Sí. Desde Barranquilla, Cartagena queda a 2 horas y Santa Marta a 1.5 horas. Las dos carreteras son seguras y están bien pavimentadas; además, tienes la opción de entregar el vehículo en cualquiera de esas ciudades.'
         },
         {
-            label: '¿Hay pico y placa en Barranquilla?',
-            content: 'Actualmente Barranquilla no tiene restricción de pico y placa para vehículos particulares. Puedes circular libremente cualquier día de la semana.'
+            label: '¿Los carros particulares tienen pico y placa en Barranquilla?',
+            content: 'En la actualidad no existe esa restricción para los vehículos particulares en Barranquilla. Puedes conducir cualquier día de la semana sin depender del número de la placa.'
         },
         {
-            label: '¿Qué lugares puedo visitar con carro desde Barranquilla?',
-            content: 'Destinos recomendados: Cartagena (2h), Santa Marta y Parque Tayrona (2h), Puerto Colombia y sus playas (30min), y Usiacurí, pueblo artesanal (1h).'
+            label: '¿Qué destinos cercanos puedo recorrer desde Barranquilla?',
+            content: 'Puedes ir a Cartagena en 2 horas, a Santa Marta y el Parque Tayrona en 2 horas, a las playas de Puerto Colombia en 30 minutos o al pueblo artesanal de Usiacurí en 1 hora.'
         }
     ]

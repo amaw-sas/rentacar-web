@@ -3,30 +3,29 @@ import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 export const cityName = "Bucaramanga"
 export const citySlug = "bucaramanga"
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
         {
-            label: '¿Dónde puedo recoger mi carro en Bucaramanga?',
+            label: '¿Dónde puedo recoger el carro alquilado en Bucaramanga?',
             content: getCityPickupAnswer('Bucaramanga')
         },
         {
-            label: '¿Qué vehículo recomiendan para Bucaramanga y alrededores?',
-            content: 'Un sedán es ideal para la ciudad y viajes a pueblos cercanos. Para San Gil y deportes extremos o el Cañón del Chicamocha, recomendamos camioneta por las carreteras de montaña.'
+            label: '¿Qué carro se adapta mejor a Bucaramanga y sus alrededores?',
+            content: 'Un sedán es una opción cómoda para la ciudad y las salidas a poblaciones cercanas. Si el plan incluye San Gil, deportes extremos o el Cañón del Chicamocha, recomendamos una camioneta para las vías de montaña.'
         },
         {
-            label: '¿Cuánto cuesta alquilar un carro en Bucaramanga?',
+            label: '¿Dónde consulto el precio de un alquiler en Bucaramanga?',
             content: getCityPriceAnswer('Bucaramanga')
         },
         {
-            label: '¿Aplica pico y placa en Bucaramanga?',
-            content: 'Sí, Bucaramanga tiene pico y placa rotativo según el último dígito de la placa. Te informamos la restricción al entregar el vehículo. Los fines de semana puedes circular sin restricción.'
+            label: '¿Un vehículo rentado debe cumplir pico y placa en Bucaramanga?',
+            content: 'Sí. La rotación se establece con el último dígito de la placa y te indicaremos la limitación cuando recibas el carro. Durante los fines de semana puedes manejar sin esa restricción.'
         },
         {
-            label: '¿Cómo llego al Cañón del Chicamocha en carro?',
-            content: 'El Cañón del Chicamocha está a 1 hora de Bucaramanga por la vía a San Gil. La carretera es pavimentada con vistas espectaculares. Puedes parar en el Parque Nacional del Chicamocha (Panachi).'
+            label: '¿Qué ruta tomo para llegar en carro al Cañón del Chicamocha?',
+            content: 'Sal por la carretera que conduce a San Gil. El cañón está a 1 hora de Bucaramanga y el trayecto pavimentado ofrece grandes vistas. En el camino puedes detenerte en el Parque Nacional del Chicamocha, Panachi.'
         },
         {
-            label: '¿Qué lugares puedo visitar con carro desde Bucaramanga?',
-            content: 'Destinos de aventura: San Gil y deportes extremos (2h), Barichara pueblo patrimonio (2.5h), Cañón del Chicamocha (1h), y Girón pueblo colonial (15min). Santander es el destino de aventura de Colombia.'
+            label: '¿Cuáles son las principales salidas en carro desde Bucaramanga?',
+            content: 'La ruta de aventura puede incluir San Gil, a 2 horas; Barichara, pueblo patrimonio a 2.5 horas; el Cañón del Chicamocha, a 1 hora; y el casco colonial de Girón, a 15 minutos. Santander es el destino de aventura de Colombia.'
         }
     ]
