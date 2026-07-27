@@ -64,6 +64,8 @@ const EXTRAS_NULL_FIXTURE = {
   extras: {
     extraDriverDayPrice: null,
     babySeatDayPrice: null,
+    extraDriverMonthPrice: null,
+    babySeatMonthPrice: null,
     washPrice: null,
     washOnsitePrice: null,
     washDeepPrice: null,

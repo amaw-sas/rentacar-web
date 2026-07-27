@@ -288,6 +288,8 @@ export function transformBranches(rows: SupabaseLocation[]): BranchData[] {
 export function transformExtras(rentalCompany: {
   extra_driver_day_price: number | null
   baby_seat_day_price: number | null
+  extra_driver_month_price?: number | null
+  baby_seat_month_price?: number | null
   wash_price: number | null
   wash_onsite_price: number | null
   wash_deep_price: number | null
@@ -297,6 +299,8 @@ export function transformExtras(rentalCompany: {
   return {
     extraDriverDayPrice: num(rentalCompany.extra_driver_day_price),
     babySeatDayPrice: num(rentalCompany.baby_seat_day_price),
+    extraDriverMonthPrice: num(rentalCompany.extra_driver_month_price ?? null),
+    babySeatMonthPrice: num(rentalCompany.baby_seat_month_price ?? null),
     washPrice: num(rentalCompany.wash_price),
     washOnsitePrice: num(rentalCompany.wash_onsite_price),
     washDeepPrice: num(rentalCompany.wash_deep_price),

@@ -31,6 +31,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const { extras } = useFetchRentacarData();
    const EXTRA_DRIVER_DAY_PRICE: number = extras?.extraDriverDayPrice ?? 12000;
    const BABY_SEAT_DAY_PRICE: number = extras?.babySeatDayPrice ?? 12000;
+   // Mensual: precio FIJO del mes, no 30 × el diario (migración 109).
+   const EXTRA_DRIVER_MONTH_PRICE: number = extras?.extraDriverMonthPrice ?? 100000;
+   const BABY_SEAT_MONTH_PRICE: number = extras?.babySeatMonthPrice ?? 100000;
    const WASH_PRICE: number = extras?.washPrice ?? 20000;
    const WASH_ONSITE_PRICE: number = extras?.washOnsitePrice ?? 30000;
    const WASH_DEEP_PRICE: number = extras?.washDeepPrice ?? 150000;
@@ -359,17 +362,23 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    });
    
    /**
-    * Get the extra driver price, current daily price is 100.000 COP
+    * Extra driver: a flat monthly price on a monthly reservation, days × the
+    * daily price otherwise. The monthly figure is NOT a daily rate — it never
+    * gets multiplied (SCEN-X1, SCEN-X3).
     */
-   const getExtraDriverPrice = computed<number>(() => 
-       ((haveMonthlyReservation.value) ? 30 : numberDays.value) * EXTRA_DRIVER_DAY_PRICE
+   const getExtraDriverPrice = computed<number>(() =>
+      haveMonthlyReservation.value
+         ? EXTRA_DRIVER_MONTH_PRICE
+         : numberDays.value * EXTRA_DRIVER_DAY_PRICE
    );
 
    /**
-    * Get the baby seat price, current daily price is 100.000 COP
+    * Baby seat: same shape as the extra driver (SCEN-X2, SCEN-X3).
     */
-   const getBabySeatPrice = computed<number>(() => 
-      ((haveMonthlyReservation.value) ? 30 : numberDays.value) * BABY_SEAT_DAY_PRICE
+   const getBabySeatPrice = computed<number>(() =>
+      haveMonthlyReservation.value
+         ? BABY_SEAT_MONTH_PRICE
+         : numberDays.value * BABY_SEAT_DAY_PRICE
    );
 
    /**

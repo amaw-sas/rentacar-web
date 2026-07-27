@@ -119,7 +119,7 @@ export async function fetchRentacarData(
 
       supabase
         .from('rental_companies')
-        .select('extra_driver_day_price, baby_seat_day_price, wash_price, wash_onsite_price, wash_deep_price, wash_deep_upholstery_price')
+        .select('extra_driver_day_price, baby_seat_day_price, extra_driver_month_price, baby_seat_month_price, wash_price, wash_onsite_price, wash_deep_price, wash_deep_upholstery_price')
         .eq('code', 'localiza')
         .abortSignal(signal)
         .single(),
