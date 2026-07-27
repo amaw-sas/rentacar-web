@@ -51,11 +51,11 @@ const CITY_SLUGS = [
 ] as const
 
 describe('Google reviews — audited source (S2)', () => {
-  it('contains a curated set of 20–25 unique, five-star customer reviews', () => {
-    expect(googleReviews.length).toBeGreaterThanOrEqual(20)
-    expect(googleReviews.length).toBeLessThanOrEqual(25)
+  it('contains 24 unique, five-star customer reviews', () => {
+    expect(googleReviews).toHaveLength(24)
     expect(new Set(googleReviews.map(({ name }) => name)).size).toBe(googleReviews.length)
     expect(googleReviews.every(({ rating }) => rating === 5)).toBe(true)
+    expect(googleReviews.map(({ name }) => name)).not.toContain('Raul Ramirez')
   })
 
   it('keeps every customer name, quote and relative date verbatim from the export', () => {

@@ -157,12 +157,6 @@ export const googleReviews = [
     rating: 5,
     relativeDate: 'Hace 7 meses',
   },
-  {
-    name: 'Raul Ramirez',
-    quote: 'Un extraordinario servicio, muchas gracias. La gente muy atenta.',
-    rating: 5,
-    relativeDate: 'Hace 8 meses',
-  },
 ] as const satisfies readonly GoogleReview[]
 
 type CuratedGoogleReviewName = (typeof googleReviews)[number]['name']
@@ -176,6 +170,7 @@ const citySpecificReviewNames = new Set<CuratedGoogleReviewName>(
   Object.values(PINNED_REVIEW_BY_CITY),
 )
 
+// Add every new city here; otherwise its slug intentionally falls back to the stable hash.
 const CITY_SELECTION_INDEX = {
   armenia: 0,
   barranquilla: 1,
@@ -219,7 +214,9 @@ export const pickCityReviews = (
   if (limit === 0) return []
 
   const normalizedSlug = slug.trim().toLowerCase()
-  const pinnedName = PINNED_REVIEW_BY_CITY[normalizedSlug]
+  const pinnedName = PINNED_REVIEW_BY_CITY[
+    normalizedSlug as keyof typeof PINNED_REVIEW_BY_CITY
+  ]
   const pinnedReview = pinnedName
     ? googleReviews.find((review) => review.name === pinnedName)
     : undefined
