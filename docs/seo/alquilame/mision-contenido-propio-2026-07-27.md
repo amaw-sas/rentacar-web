@@ -127,8 +127,10 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 - 12:10 — A/B de baseline en worktree de integración falló por entorno (faltaba `.nuxt/` copiado). Corregido, relanzado. No afecta a los workers.
 - 12:47 — La corrida completa de vitest en background quedó colgada (vitest no sale en worktrees); se reemplazó por A/B dirigido a las suites rojas. Resuelto.
 
+| 2026-07-27 13:15 | W1.2 (46f93a1) verificado (solo el test, 8/8 verde) y W1 COMPLETO mergeado a integración (6892479, 0 archivos fuera de alcance). Worktrees de W2/W3/W4/W5/W7 creados, aprovisionados y con Codex trabajando. |
+
 ### Hitos
-- [ ] W1 entregado y revisado — entregado ✔, revisado ✔, pendiente W1.1 + merge
+- [x] W1 entregado y revisado — mergeado en 6892479
 - [ ] W7 (chrome) entregado y revisado
 - [ ] W2 entregado y revisado
 - [ ] W3 entregado y revisado
