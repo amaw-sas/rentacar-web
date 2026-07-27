@@ -9,10 +9,9 @@
  *     regress the city's indexable SEO content.
  *   - The FAQPage schema is NOT inlined here: Alquilame's local
  *     useCityFAQSchema is invoked by useAlquilameCityPageSEO.
- *   - The testimonials cards keep the CITY-SPECIFIC data (props.city.testimonials),
- *     NOT the brand-level franchiseTestimonials that HomeReviews renders. The
- *     heading is city-targeted ("…en {city.name}"). The AggregateRating schema
- *     those testimonials once fed was removed site-wide (#312 — fabricated data).
+ *   - The testimonial cards use the audited local Google source through a
+ *     deterministic city selection. The heading names the city without
+ *     claiming every reviewer rented there.
  *   - Gradient guard (F0 lesson): both sections MUST use the v4 `bg-linear-to-*`
  *     utility, NEVER the broken v3 `bg-gradient-to-*` alias.
  *   - Headings adopt the `.heading-*` utilities (Plus Jakarta).
@@ -67,28 +66,29 @@ describe('F2 step05 — city/Faq.vue', () => {
 describe('F2 step05 — city/Testimonios.vue', () => {
   const testimonios = read('app/components/city/Testimonios.vue')
 
-  // Issue #322 PR10: the cards stay CITY-scoped but the data now arrives via
-  // useCityTestimonials(props.city.id) → /api/city-testimonials instead of
-  // traveling inside the master catalog payload.
-  it('sources the cards from useCityTestimonials(props.city.id) — city-specific', () => {
-    expect(testimonios).toMatch(/useCityTestimonials\(\s*props\.city\?\.id\s*\)/)
+  it('sources the cards from pickCityReviews(props.city.id) — deterministic by city', () => {
+    expect(testimonios).toMatch(/pickCityReviews\(\s*props\.city\?\.id/)
     expect(testimonios).toMatch(/v-for="testimonio in testimonios"/)
     expect(testimonios).toMatch(/testimonio\.quote/)
+    expect(testimonios).toMatch(/testimonio\.name/)
   })
 
-  it('does NOT source from the brand-level franchiseTestimonials (would swap city→brand)', () => {
+  it('does NOT source from either legacy testimonial backend', () => {
     expect(testimonios).not.toMatch(/franchiseTestimonials/)
     expect(testimonios).not.toMatch(/useFetchRentacarData/)
+    expect(testimonios).not.toMatch(/useCityTestimonials/)
   })
 
-  it('uses a city-targeted heading ("…en {city.name}")', () => {
-    expect(testimonios).toMatch(/en\s*\{\{\s*city\?\.name\s*\}\}/)
+  it('uses an honest city-targeted heading and identifies the cards as Google reviews', () => {
+    expect(testimonios).toMatch(/Opiniones para alquilar carro en\s*\{\{\s*city\?\.name\s*\}\}/)
+    expect(testimonios).toMatch(/Opiniones verificadas de clientes de Alquílame en Google/)
+    expect(testimonios).not.toMatch(/clientes que rentaron carros en/)
   })
 
-  it('does NOT surface the mockup marketing numbers ("43 reseñas" / "5,0")', () => {
+  it('keeps the real Google profile link without mockup marketing numbers', () => {
     expect(testimonios).not.toMatch(/43\s*reseñas/i)
     expect(testimonios).not.toContain('5,0')
-    expect(testimonios).not.toMatch(/google\.com\/maps/)
+    expect(testimonios).toMatch(/GOOGLE_REVIEWS_URL/)
   })
 
   it('does NOT inline the AggregateRating schema (removed site-wide, #312)', () => {
@@ -113,22 +113,23 @@ describe('F2 step05 — city/Testimonios.vue', () => {
  *   THEN  it shows THREE, the same as the home — the Google badge reads as a
  *         headline with a short row of proof under it, not as the label of a
  *         long wall of cards.
- * The source list stays untouched; only the featured slice is capped.
+ * The selector's default count caps the featured row without changing the
+ * curated source.
  */
-describe('city testimonials — featured row is capped at three, like the home', () => {
+describe('city testimonials — featured row is three cards, like the home', () => {
   const testimonios = read('app/components/city/Testimonios.vue')
   const home = read('app/components/home/Reviews.vue')
 
-  it('slices the city list to 3 featured cards', () => {
-    expect(testimonios).toMatch(/\.slice\(0,\s*3\)/)
+  it('uses the selector default of 3 featured cards', () => {
+    expect(testimonios).toMatch(/pickCityReviews\(props\.city\?\.id/)
   })
 
   it('matches the home, which already features 3', () => {
     expect(home).toMatch(/\.slice\(0,\s*3\)/)
   })
 
-  it('still sources every card from the city-specific list', () => {
-    expect(testimonios).toMatch(/useCityTestimonials\(/)
+  it('still sources every card from the deterministic city list', () => {
+    expect(testimonios).toMatch(/pickCityReviews\(/)
     expect(testimonios).toMatch(/v-for="testimonio in/)
   })
 })
@@ -156,7 +157,7 @@ describe('city testimonials — rating beside the cards, like the home', () => {
   })
 
   it('keeps the city-specific heading above the pair', () => {
-    expect(testimonios).toMatch(/Opiniones de clientes que rentaron carros en/)
+    expect(testimonios).toMatch(/Opiniones para alquilar carro en/)
     expect(testimonios).toMatch(/<HomeGoogleRating\b/)
   })
 })

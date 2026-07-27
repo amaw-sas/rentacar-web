@@ -110,12 +110,13 @@ describe('chrome — footer surface (default.vue)', () => {
     }
   })
 
-  it('renders the Google 5,0 trust badge WITHOUT a review count', () => {
+  it('renders the Google 4,9 trust badge WITHOUT a review count', () => {
     // The count is gone from the badge for the same reason it left the Reviews
     // heading: a hardcoded total only ages downward in credibility. The rating
     // and the "verificadas" wording carry the trust signal.
     const footer = layout.slice(layout.indexOf('<footer'))
-    expect(footer).toContain('5,0')
+    expect(footer).toContain('4,9')
+    expect(footer).not.toContain('5,0')
     expect(footer).toContain('Verificadas en Google')
     expect(footer).not.toMatch(/\d+\s+reseñas/)
     // The accessible name must not announce a count the badge no longer shows.
