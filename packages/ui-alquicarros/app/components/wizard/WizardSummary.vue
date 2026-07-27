@@ -78,6 +78,15 @@
               <span class="body-xs text-gray-500">$ {{ returnFeeLabel }}</span>
             </div>
             <p v-if="totalLabel" class="mt-0.5 body-xs text-right text-gray-500">Incluye IVA y tasa</p>
+            <!-- Issue #401: sin total (gama anulada por rancia) el CTA queda deshabilitado;
+                 esta línea dice por qué, para que no repita el CTA muerto sin motivo de #387. -->
+            <p
+              v-else-if="searchStale"
+              class="mt-0.5 body-xs text-right text-amber-800! font-medium"
+              data-testid="wizard-stale-reason"
+            >
+              {{ staleReasonText }}
+            </p>
           </div>
           <UButton
             block
@@ -99,6 +108,17 @@
     <!-- Móvil: barra inferior fija expandible -->
     <div class="lg:hidden fixed inset-x-0 bottom-0 z-40">
       <div class="border-t border-gray-200 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <!-- Issue #401: franja de motivo ENCIMA del detalle colapsable. El detalle nace
+             cerrado, así que meter la explicación ahí dejaría al usuario móvil con un CTA
+             muerto y sin motivo visible (el defecto que arregló #387). Aquí se ve sin
+             expandir (SCEN-401-10). -->
+        <p
+          v-if="searchStale"
+          class="px-4 pt-2 body-xs text-center text-amber-800! font-medium"
+          data-testid="wizard-stale-reason-mobile"
+        >
+          {{ staleReasonText }}
+        </p>
         <!--
           El techo de la transición debe superar la altura REAL del panel: es el
           estado final del enter y el inicial del leave, así que si se queda corto
@@ -212,11 +232,21 @@ const props = defineProps<{
   canAdvance: boolean
   /** Texto del CTA (varía por paso: "Continuar" / "Confirmar reserva"). */
   ctaLabel?: string
+  /**
+   * Issue #401: el tramo cambió sin re-buscar → la cotización se descartó. El precio
+   * cae solo (sin selectedCategory, totalLabel es null y con él el desglose); esto
+   * solo AÑADE la causa, para que el CTA muerto no quede sin explicación (defecto #387).
+   */
+  searchStale?: boolean
 }>()
 
 defineEmits<{ (e: 'next'): void }>()
 
 const ctaLabel = computed(() => props.ctaLabel ?? 'Continuar')
+
+// Issue #401: una sola fuente para el motivo de rancia. Escrito en desktop y móvil;
+// que el texto viva aquí evita la deriva entre superficies que este issue combate.
+const staleReasonText = 'Cambiaste la búsqueda · pulsa BUSCAR para ver el precio'
 
 const mobileOpen = ref(false)
 

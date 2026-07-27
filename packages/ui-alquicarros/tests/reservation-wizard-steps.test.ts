@@ -131,6 +131,10 @@ describe('Paso 3 · Seguro — comparador Básico/Total (SCEN-W-06)', () => {
   })
 })
 
+// SCEN-W-07 se enmendó por #401 en la capa de máquina (canAdvance ya no es
+// incondicionalmente true para adicionales; ver reservation-wizard-machine.test.ts).
+// Esta faceta a nivel componente —Adicionales es OPCIONAL y ofrece "Omitir"— sigue
+// siendo verdadera: la enmienda cambió el gating del avance, no la opcionalidad del paso.
 describe('Paso 4 · Adicionales — opcional + Omitir (SCEN-W-07)', () => {
   it('togglea los tres adicionales en selectedCategory', () => {
     const src = stepExtras()

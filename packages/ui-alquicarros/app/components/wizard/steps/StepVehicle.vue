@@ -36,6 +36,16 @@
       <PlaceholdersCategoryCard class="hidden sm:block" />
     </div>
 
+    <!-- Cotización rancia (issue #401): el tramo cambió sin volver a buscar. Gana al
+         error de disponibilidad (que describe un trayecto que ya no es el del usuario)
+         y al estado vacío (durante el debounce de 50 ms `groups` aún es > 0, después
+         0 — sin precedencia el paso pasaría de grid viejo a "Sin vehículos", las dos
+         afirmaciones falsas). El aviso dice la verdad: no se ha buscado este tramo. -->
+    <WizardStaleNotice
+      v-else-if="searchStale"
+      @adjust-search="emit('adjust-search')"
+    />
+
     <!-- Error de disponibilidad bloqueante (server / one-way / timeout / horario…):
          banner inline accionable (Paso 12, SCEN-W-12). server_error añade el
          fallback humano por WhatsApp. -->
@@ -178,6 +188,11 @@ import { isBeyondPricingHorizon } from '@rentacar-main/logic/utils'
 
 // Types
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
+
+defineProps<{
+  /** Issue #401: el tramo cambió sin re-buscar → sustituye el grid por el aviso. */
+  searchStale?: boolean
+}>()
 
 const emit = defineEmits<{
   /** El usuario pide volver a la búsqueda (Paso 1 en /reservas, #searcher en city). */
