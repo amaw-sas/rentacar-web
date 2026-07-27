@@ -48,7 +48,14 @@ describe('SCEN-FAB2: FAB stack anchors bottom-right', () => {
 
 describe('SCEN-FAB3: the whole stack disappears when both channels are OFF', () => {
   it('gates the stack on either live channel', () => {
-    expect(SRC).toContain('v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"')
+    expect(SRC).toContain('v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"')
+  })
+
+  it('hides the stack on every viewport while the reservation overlay is open', () => {
+    // The slideover footer carries its own WhatsApp CTA; the floating stack used
+    // to hide only on mobile and sat exactly on top of that CTA on desktop.
+    expect(SRC).toContain('const hideContactButtons = computed(() => reservationOverlayOpen.value)')
+    expect(SRC).not.toContain('!isDesktop.value && reservationOverlayOpen.value')
     expect(SRC).toMatch(/enabled: chatEnabled,[\s\S]*whatsappVisible,[\s\S]*useChatStatus/)
   })
 })

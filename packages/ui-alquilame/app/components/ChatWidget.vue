@@ -48,7 +48,7 @@
       </div>
 
       <div
-        v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"
+        v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"
         class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4 pointer-events-none"
       >
         <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
@@ -161,9 +161,10 @@ const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
-const hideContactButtonsOnMobile = computed(
-  () => !isDesktop.value && reservationOverlayOpen.value,
-)
+// The reservation slideover carries its own WhatsApp CTA in the footer; the
+// floating stack sits exactly on top of it on desktop, so it hides on EVERY
+// viewport while the overlay is open (it used to hide only on mobile).
+const hideContactButtons = computed(() => reservationOverlayOpen.value)
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
 // la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
@@ -297,8 +298,8 @@ function openChat() {
 a,
 button { -webkit-tap-highlight-color: transparent; }
 
-/* Posición flotante normal. Al abrir la reserva en móvil el stack se oculta, así
-   que no necesita elevarse para esquivar el CTA del slideover. */
+/* Posición flotante normal. Al abrir la reserva el stack se oculta en todos
+   los tamaños, así que no necesita elevarse para esquivar el CTA del slideover. */
 .contact-fab-stack { bottom: 1.5rem; }
 
 /* --- Botones directos de contacto --- */
