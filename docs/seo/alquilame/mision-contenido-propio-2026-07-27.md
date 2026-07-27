@@ -127,6 +127,8 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 
 | 2026-07-27 13:36 | W2 (72031b2, incl. shared.ts, contradicción de Barranquilla conservada por S8) y W7 (b0b00d1, chrome: 4 componentes, solo copy, 98/98 tests) entregados. LOS 5 WORKERS COMPLETOS en <15 min c/u. Jueces adversariales de W2 y W7 lanzados; los de W3/W4/W5 siguen deliberando. Nota de integración: W5 y W7 tocaron ambos faq-testimonios.test.ts → posible conflicto de merge, resolver en integración. |
 
+| 2026-07-27 13:55 | Veredictos: W5 APTO (citas byte a byte; W5.1 despachado: rating real 4,9, curaduría sin quejas-5★ ni mención de competidor, pins tipados). W4 APTO (control 59-61% vs ~1%; W4.1 despachado: plantilla de cierres, repetición de tiempos, frases largas). W3 APTO (control 65-68% vs ~1-2%; W3.1 despachado: placa/parqueadero + moldes). Los H2 de SeoContent.vue los cubrió W7 (verificándose). Pendientes: veredictos de W2 y W7. Para W6: test de ≤155/unicidad de metas + envelope de extensión en vivo. |
+
 ### Bloqueos / errores
 - 12:10 — A/B de baseline en worktree de integración falló por entorno (faltaba `.nuxt/` copiado). Corregido, relanzado. No afecta a los workers.
 - 12:47 — La corrida completa de vitest en background quedó colgada (vitest no sale en worktrees); se reemplazó por A/B dirigido a las suites rojas. Resuelto.
