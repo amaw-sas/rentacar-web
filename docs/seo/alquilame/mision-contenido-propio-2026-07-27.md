@@ -141,10 +141,37 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 
 ### Hitos
 - [x] W1 entregado y revisado — mergeado en 6892479
-- [ ] W7 (chrome) entregado y revisado
-- [ ] W2 entregado y revisado
-- [ ] W3 entregado y revisado
-- [ ] W4 entregado y revisado
-- [ ] W5 entregado y revisado
-- [ ] Integración: tests + shingle global + QA runtime
-- [ ] Worktrees mergeados limpiados
+- [x] W7 (chrome) entregado y revisado — mergeado (b0b00d1 + 1ebbd9b)
+- [x] W2 entregado y revisado — mergeado (72031b2 + 78f0fdd)
+- [x] W3 entregado y revisado — mergeado (88b5b78 + 62b34d1)
+- [x] W4 entregado y revisado — mergeado (6907fa3 + 1812573)
+- [x] W5 entregado y revisado — mergeado (18468f4 + 34e6184 + 8d746aa)
+- [x] Integración: tests + shingle global + QA runtime — 2026-07-27 ~15:00
+- [x] Worktrees mergeados limpiados
+
+## RESULTADO FINAL (verificado en vivo, 2026-07-27)
+
+Medición SSR real (dev :4302) contra alquilatucarro.com producción, con `shingle-check.mjs`:
+
+| Criterio | Antes | Meta | Logrado |
+|---|---|---|---|
+| S1 página completa (19 ciudades) | 45-49% | <15% | **1,20% - 4,32%** |
+| S1 bloque de ciudad (--region) | 92,1% (bogotá) | <15% | **2,03% - 5,07%** |
+| FAQs vía JSON-LD (muestreo 4 ciudades) | ~100% | — | **0,00% - 3,96%** |
+| Pares cruzados internos (nuevo vs nuevo, region) | — | <25% | **4,2% - 6,1%** |
+| Extensión por ciudad | ~1.700 | ±15% | **1.780 - 1.862 palabras** |
+| S4 vitest | 924+7 preexistentes | 0 rojos nuevos | **924/931, mismos 7 preexistentes** |
+| S5 | — | 0 archivos fuera | **0 en toda la rama (19b386c..HEAD)** |
+| S6 consola/red (home + 3 ciudades) | — | 0 errores | **0 errores, 0 requests fallidos** (solo ssr:warn de image.screens, preexistente y dev-only) |
+| S2/S7 | testimonios inventados | reales verbatim | **25→24 reseñas reales byte a byte; 19 tríos únicos (solape máx 1); pins vivos** |
+| S8 | — | 0 invenciones | **verificado campo a campo por 3 jueces; 1 calificador (cali) corregido en W2.1** |
+
+**Rama:** `diego-alex-melo/alquilame-contenido-mision` (local, SIN push — requiere autorización).
+
+### Tickets abiertos (fuera del alcance de esta misión)
+1. **Contradicciones factuales HEREDADAS** entre bloques de contenido y FAQs (pico y placa y tiempos en ~8 ciudades: barranquilla, valledupar, villavicencio, soledad, palmira, floridablanca, bucaramanga, pereira, monteria). Preexistentes — hoy están publicadas igual en alquilatucarro. Necesitan decisión factual del dueño.
+2. Residuo: el `alt` de la imagen de ciudad aún dice "Explora {ciudad} con tu carro de alquiler" (frase vieja compartida). Cosmético para SEO; limpiar en un follow-up.
+3. Código muerto: `Hero/Headline.vue` de ui-alquilame con "4.9 reviews" sin usos.
+4. Hueco de test: ≤155 y unicidad de metaDescription no tienen test automatizado (verificado a mano).
+5. Al añadir una ciudad 20: registrarla en CITY_SELECTION_INDEX de googleReviews.ts (el fallback hash puede duplicar tríos).
+6. Siguientes pasos del plan SEO (auditoría 2026-07-24): publicar, confirmar indexación, y solo entonces redirigir satélites por olas.
