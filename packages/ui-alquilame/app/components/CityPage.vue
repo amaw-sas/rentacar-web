@@ -68,13 +68,8 @@
     <!-- FAQ city (useCityFAQs) -->
     <CityFaq :city="city" />
 
-    <!--
-      Contacto F1 — "Reserva Ahora" destino mode-aware (F3):
-        - results: ancla in-page al engine del hero city (#searcher), donde el
-          form sí existe (los CTAs de UnableCategoryCard también anclan ahí).
-        - landing: no hay form en #searcher → navega a la página /reservas.
-    -->
-    <HomeContact :reserve-anchor="mode === 'landing' ? '/reservas' : '#searcher'" />
+    <!-- Contacto F1 — CTA compartido de llamada y WhatsApp. -->
+    <HomeContact />
 
     <!-- Empresas Aliadas cierra la página, igual que en el home. -->
     <HomePartners v-if="mode !== 'results'" />

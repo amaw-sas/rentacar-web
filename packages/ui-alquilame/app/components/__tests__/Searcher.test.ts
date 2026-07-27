@@ -6,6 +6,41 @@ const source = readFileSync(
   fileURLToPath(new URL('../Searcher.vue', import.meta.url)),
   'utf8',
 )
+const baseStyles = readFileSync(
+  fileURLToPath(new URL('../../assets/css/rentacar-main/base.css', import.meta.url)),
+  'utf8',
+)
+
+describe('Searcher — CTA alineado con "Solicitar este vehículo"', () => {
+  const buttonRule = baseStyles.match(/\.search-button\s*\{([\s\S]*?)\}/)?.[1] ?? ''
+  const sweepRule = baseStyles.match(/\.search-button-ready::after\s*\{([\s\S]*?)\}/)?.[1] ?? ''
+  const arrowRule = baseStyles.match(/\.search-button-arrow\s*\{([\s\S]*?)\}/)?.[1] ?? ''
+
+  it('usa el mismo alto de 56px, verde oscuro y texto blanco', () => {
+    expect(buttonRule).toMatch(/\bpy-4\b/)
+    expect(buttonRule).toMatch(/\bbg-green-700\b/)
+    expect(buttonRule).toMatch(/\bhover:bg-green-800\b/)
+    expect(buttonRule).toMatch(/\btext-white\b/)
+    expect(buttonRule).not.toMatch(/\bbg-whatsapp\b|\btext-black\b/)
+  })
+
+  it('combina un barrido de luz finito con dos impulsos breves de la flecha', () => {
+    expect(buttonRule).toMatch(/\brelative\b/)
+    expect(buttonRule).toMatch(/\boverflow-hidden\b/)
+    expect(sweepRule).toMatch(/search-shine-pass 1200ms ease-in-out 2/)
+    expect(sweepRule).not.toContain('infinite')
+    expect(arrowRule).toMatch(/search-arrow-nudge 800ms ease-in-out 2/)
+    expect(arrowRule).not.toContain('infinite')
+    expect(baseStyles).not.toContain('@keyframes search-breathe')
+  })
+
+  it('muestra y anima la flecha solo cuando el mismo estado permite hacer clic', () => {
+    expect(source).toMatch(/:disabled="!isSearchButtonEnabled"/)
+    expect(source).toMatch(/'search-button-ready': isSearchButtonEnabled/)
+    expect(source).toMatch(/v-if="isSearchButtonEnabled"[\s\S]*class="search-button-arrow"/)
+    expect(source).toMatch(/const isSearchButtonEnabled = computed/)
+  })
+})
 
 describe('Searcher — pickup/return calendars hide year controls', () => {
   const calendarTags = source.match(/<u-calendar\b[\s\S]*?\/>/g) ?? []

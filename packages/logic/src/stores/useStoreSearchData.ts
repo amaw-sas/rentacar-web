@@ -49,6 +49,12 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   const error = ref<ErrorMessage | null>(null);
   
   const selectedCategory = ref<ReturnType<typeof useCategory> | null >(null);
+  // Shared UI signal for the reservation summary/data slideover used by
+  // Alquilame and Alquila Tu Carro. ChatWidget lives at layout level, so it
+  // cannot observe the section-local `slideoverOpen` directly. Keeping the
+  // mirrored state here lets the floating contact controls yield the mobile
+  // viewport while the customer completes the reservation.
+  const reservationOverlayOpen = ref<boolean>(false);
   const noAvailableCategories = ref<boolean>(false);
 
   // Whether a category is offered for monthly rental is derived from its
@@ -326,6 +332,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     pending,
     error,
     selectedCategory,
+    reservationOverlayOpen,
     noAvailableCategories,
     trackVehicleSelection,
     trackCheckoutStarted,

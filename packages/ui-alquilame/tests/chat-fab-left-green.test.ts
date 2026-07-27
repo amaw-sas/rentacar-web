@@ -1,12 +1,9 @@
 /**
- * SCEN-FAB1 — floating contact button: green + bottom-left (operator request,
- * alquilame only).
+ * SCEN-FAB1 — two direct floating contact buttons, bottom-right.
  *
- * The FAB toggle turns WhatsApp green (#25D366 = bg-whatsapp) with black text
- * (white on #25D366 fails WCAG AA), and the whole stack anchors to the LEFT
- * (left-6, items-start) instead of the right. Menu items and teaser bubble align
- * left accordingly. The visual result and the expanded menu are verified in the
- * browser.
+ * The old expandable toggle and call action are gone. Chat 24/7 and WhatsApp
+ * remain directly visible, independently gated by the dashboard, and the whole
+ * stack stays anchored to the RIGHT in its normal bottom position.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -16,35 +13,48 @@ const SRC = readFileSync(
   join(__dirname, '..', 'app/components/ChatWidget.vue'),
   'utf-8',
 )
+const LAYOUT = readFileSync(
+  join(__dirname, '..', 'app/layouts/default.vue'),
+  'utf-8',
+)
 
-describe('SCEN-FAB1: FAB toggle is WhatsApp green with black text', () => {
-  it('uses bg-whatsapp + text-black, not bg-primary/text-white', () => {
-    const btn = SRC.match(/class="relative flex items-center justify-center w-14 h-14[^"]*"/)
-    expect(btn, 'FAB toggle button class not found').not.toBeNull()
-    expect(btn![0]).toMatch(/bg-whatsapp/)
-    expect(btn![0]).toMatch(/hover:bg-whatsapp-hover/)
-    expect(btn![0]).toMatch(/text-black/)
-    expect(btn![0]).not.toMatch(/bg-primary/)
+describe('SCEN-FAB1: Chat and WhatsApp are direct dashboard-gated controls', () => {
+  it('renders only the two requested channels without an expandable menu', () => {
+    expect(SRC).toContain('<li v-if="chatEnabled"')
+    expect(SRC).toContain('<li v-if="whatsappVisible"')
+    expect(SRC).toContain('<span class="fab-label">Chat 24 horas</span>')
+    expect(SRC).toContain('<span class="fab-label">WhatsApp</span>')
+    expect(SRC).not.toContain('menuOpen')
+    expect(SRC).not.toContain('Llámanos')
+    expect(SRC).not.toContain('fab-call')
   })
 })
 
-describe('SCEN-FAB2: FAB stack anchors bottom-left', () => {
-  it('the stack container uses left-6 and items-start (no right-6 / items-end)', () => {
+describe('SCEN-FAB2: FAB stack anchors bottom-right', () => {
+  it('the stack container uses right-6 and items-end', () => {
     const stack = SRC.match(/class="contact-fab-stack absolute [^"]*"/)
     expect(stack, 'FAB stack container class not found').not.toBeNull()
-    expect(stack![0]).toMatch(/\bleft-6\b/)
-    expect(stack![0]).toMatch(/\bitems-start\b/)
-    expect(stack![0]).not.toMatch(/\bright-6\b/)
+    expect(stack![0]).toMatch(/\bright-6\b/)
+    expect(stack![0]).toMatch(/\bitems-end\b/)
+    expect(stack![0]).not.toMatch(/\bleft-6\b/)
+    expect(SRC).toContain('class="flex flex-col items-end gap-3 pointer-events-auto"')
   })
 
-  it('no right-anchoring items-end remains on the FAB layout', () => {
-    expect(SRC).not.toMatch(/\bitems-end\b/)
+  it('uses the normal bottom position without a reservation offset', () => {
+    expect(SRC).toContain('.contact-fab-stack { bottom: 1.5rem; }')
+    expect(SRC).not.toContain('contact-fab-stack--reservation')
   })
 })
 
-describe('SCEN-FAB3: closed FAB shows the support-agent (headset) icon', () => {
-  it('uses the headset icon viewBox, not the old chat-bubble path', () => {
-    expect(SRC).toMatch(/viewBox="85 160 897 897"/)
-    expect(SRC).not.toMatch(/M21 15a2 2 0 0 1-2 2H7l-4 4V5/)
+describe('SCEN-FAB3: the whole stack disappears when both channels are OFF', () => {
+  it('gates the stack on either live channel', () => {
+    expect(SRC).toContain('v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"')
+    expect(SRC).toMatch(/enabled: chatEnabled,[\s\S]*whatsappVisible,[\s\S]*useChatStatus/)
+  })
+})
+
+describe('SCEN-FAB4: footer clearance on mobile', () => {
+  it('reserves black space for both buttons without changing desktop spacing', () => {
+    expect(LAYOUT).toContain('pt-10 pb-40 md:py-10')
   })
 })

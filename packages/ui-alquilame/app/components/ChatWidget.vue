@@ -1,11 +1,11 @@
 <template>
   <!--
-    FAB de contacto — 3 vías en orden Chat · WhatsApp · Llamar.
+    FAB de contacto — 2 accesos directos: Chat 24/7 y WhatsApp.
       - Chat  → desktop abre el panel inline (overlay, sin navegar, patrón
                 Intercom/Crisp); móvil navega a /chat (pantalla completa). Lleva
                 un chip verde con brillo: el chat IA está disponible 24/7.
-      - WhatsApp / Llamar → enlaces wa.me / tel: (el plugin compartido de
-                contacto registra ambos), sin indicador de horario.
+      - WhatsApp → enlace wa.me, visible sólo cuando su interruptor maestro y
+                   su horario del dashboard lo permiten.
 
     HTML/CSS plano (sin Reka UI Dialog, sin role="menu" — los hacks !important
     de base.css romperían colores). Todo bajo <ClientOnly>: SSR/ISR nunca
@@ -26,12 +26,12 @@
 
       <!-- Backdrop -->
       <button
-        v-if="menuOpen || (chatEnabled && panelOpen)"
+        v-if="chatEnabled && panelOpen"
         type="button"
         aria-hidden="true"
         tabindex="-1"
         class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 cursor-default pointer-events-auto"
-        @click="closeAll"
+        @click="closePanel"
       />
 
       <!-- Panel de chat inline (solo desktop) -->
@@ -48,13 +48,13 @@
       </div>
 
       <div
-        class="contact-fab-stack absolute left-6 flex flex-col items-start gap-4 pointer-events-none"
-        :class="{ 'contact-fab-stack--reservation': isReservationRoute }"
+        v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"
+        class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4 pointer-events-none"
       >
         <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
              con transform/opacity sin cambiar la geometría del contenedor ni
              mover el FAB a mitad de sesión. -->
-        <div class="teaser-slot">
+        <div v-if="chatEnabled" class="teaser-slot">
           <div class="teaser-bubble teaser-sizer" aria-hidden="true">
             <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
             <p class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
@@ -64,7 +64,7 @@
             :key="teaserStep"
             class="teaser-bubble pointer-events-auto"
             :class="{ 'teaser-bubble-entering': teaserStep === 1 }"
-            @click="toggle"
+            @click="openChat"
           >
             <button
               ref="teaserCloseEl"
@@ -80,22 +80,24 @@
           </div>
         </div>
 
-        <!-- Menú de 3 vías (orden: Chat, WhatsApp, Llamar) -->
+        <!-- Los dos canales son visibles y accionables sin abrir un menú. -->
         <ul
-          v-show="menuOpen"
-          id="contact-fab-menu"
-          aria-label="Opciones de contacto"
-          class="flex flex-col items-start gap-3 pointer-events-auto"
+          aria-label="Canales de contacto"
+          class="flex flex-col items-end gap-3 pointer-events-auto"
         >
           <li v-if="chatEnabled" class="flex">
-            <button type="button" class="fab-item" aria-label="Abrir Chat 24 horas" @click="openChat">
+            <button
+              type="button"
+              class="fab-item"
+              :aria-expanded="panelOpen"
+              :aria-label="panelOpen ? 'Cerrar Chat 24 horas' : 'Abrir Chat 24 horas'"
+              @click="toggleChat"
+            >
               <span class="fab-label">Chat 24 horas</span>
               <span class="fab-circle fab-chat">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /><path d="M8 12h.01" /><path d="M12 12h.01" /><path d="M16 12h.01" /></svg>
-                <!-- El conteo (real o sintético del teaser) aterriza en Chat: un
-                     "mensaje" vive en el chat. El real manda sobre el sintético.
-                     Sin ningún conteo: punto verde 24/7. Nunca dos indicadores a la
-                     vez — el brillo se oculta si hay chip. -->
+                <!-- Sin mensajes: punto verde 24/7. Con conteo real o sintético,
+                     una sola insignia; los no leídos reales siempre mandan. -->
                 <span
                   v-if="unread === 0 && displayedSyntheticCount === 0"
                   class="fab-chip fab-chip-glow"
@@ -105,7 +107,7 @@
               </span>
             </button>
           </li>
-          <li class="flex">
+          <li v-if="whatsappVisible" class="flex">
             <a
               :href="franchise.whatsapp"
               target="_blank"
@@ -120,47 +122,7 @@
               </span>
             </a>
           </li>
-          <li class="flex">
-            <a
-              :href="`tel:${franchise.phone.replace(/\s/g, '')}`"
-              class="fab-item"
-              :aria-label="`Llamar al ${franchise.phone}`"
-              @click="teaser.engage('llamada')"
-            >
-              <span class="fab-label">Llámanos</span>
-              <span class="fab-circle fab-call">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92" /></svg>
-              </span>
-            </a>
-          </li>
         </ul>
-
-        <!-- Botón flotante (toggle) -->
-        <button
-          type="button"
-          :aria-expanded="menuOpen"
-          aria-controls="contact-fab-menu"
-          :aria-label="menuOpen || panelOpen ? 'Cerrar' : badgeCount > 0 ? `Abrir opciones de contacto (${badgeCount} ${badgeCount === 1 ? 'mensaje nuevo' : 'mensajes nuevos'})` : 'Abrir opciones de contacto'"
-          class="relative flex items-center justify-center w-14 h-14 rounded-full bg-whatsapp text-black shadow-xl hover:bg-whatsapp-hover hover:scale-105 transition-all duration-200 pointer-events-auto"
-          :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen && badgeCount === 0 }"
-          @click="toggle"
-        >
-          <!-- Support-agent (headset) icon — parity with the astro-alquilame FAB. -->
-          <svg v-if="!menuOpen && !panelOpen" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="85 160 897 897" fill="currentColor" aria-hidden="true">
-            <path d="M792 440Q790 393 768 352Q747 311 712.50 280.50Q678 250 634 232Q589 215 542 215L498 215L488 215Q432 217 385 239Q339 262 305.50 299.50Q272 337 253 387Q235 437 235 493L244 599L287 599L277 493L278 484Q279 436 296 395Q313 354 342 323.50Q371 293 411 275Q450 257 498 257L542 257L551 257Q589 259 625 275Q661 291 688.50 316.50Q716 342 732 376Q749 410 749 449L749 577L749 583Q746 608 728 624.50Q710 641 685 641L595 641Q594 656 594.50 661.50Q595 667 594 684L685 684L692 684Q734 681 763 650.50Q792 620 792 577L792 449L792 440M515 320L511 320Q423 328 383 374Q343 420 343 475Q340 511 345.50 555Q351 599 351 599L401 599Q401 599 395 557Q389 515 391 489L391 477Q392 464 396.50 448.50Q401 433 411 418Q424 399 447 386Q470 373 505 368L513 367L511 367Q551 371 577 384Q603 397 617 418Q625 430 628.50 442.50Q632 455 633 467L634 491Q634 522 633 543.50Q632 565 627 586L625 599L675 599Q675 599 679 565.50Q683 532 683 504L682 475Q682 455 676.50 434Q671 413 657 392Q637 362 602 343Q567 324 515 320M721 750L700 747L693 763Q682 789 645.50 814.50Q609 840 566 849Q513 861 464 840Q415 819 375 760L366 747L348 751Q253 772 208.50 831Q164 890 172 983L173 1003L895 1003L896 982Q900 885 856 826.50Q812 768 721 750M726 800L728 796L730 796Q785 811 814.50 848.50Q844 886 847 948L848 961L219 961L219 959Q218 895 248 855Q278 815 340 797L344 796L348 801Q395 860 454 882Q513 904 577 890Q623 881 663.50 855.50Q704 830 726 800M533 704Q516 704 503.50 691.50Q491 679 491 661Q491 644 503.50 631.50Q516 619 533 619Q551 619 563.50 631.50Q576 644 576 661Q576 679 563.50 691.50Q551 704 533 704M533 747Q569 747 594 722Q619 697 619 661Q619 626 594 601Q569 576 533 576Q498 576 473 601Q448 626 448 661Q448 697 473 722Q498 747 533 747M576 683L576 640L661 640L661 683" />
-          </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-
-          <!-- Insignia del FAB: no leídos REALES mandan; si no hay, el contador
-               sintético del teaser. Abrir el menú NO limpia el real (solo abrir
-               el chat → markRead); el sintético se limpia con engage/dismiss.
-               Con el menú/panel abierto el FAB es una X: la insignia se OCULTA y
-               el conteo salta al círculo de la opción correspondiente (Chat si
-               es real, WhatsApp si es sintético) — solo ocultamos, no limpiamos. -->
-          <span v-if="badgeCount > 0 && !menuOpen && !panelOpen" class="fab-badge" aria-hidden="true">{{ badgeCount > 9 ? '9+' : badgeCount }}</span>
-        </button>
       </div>
     </div>
     </Teleport>
@@ -172,7 +134,6 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsync
 import { useMediaQuery } from '@vueuse/core'
 import {
   isContactTeaserRouteExcluded,
-  isReservationFunnelRoute,
   TEASER_LINE_1,
   TEASER_LINE_2,
 } from '@rentacar-main/logic/composables/useContactTeaser'
@@ -184,18 +145,25 @@ const ChatConversation = defineAsyncComponent(() => import('./ChatConversation.v
 
 const { franchise } = useAppConfig()
 const route = useRoute()
+const { reservationOverlayOpen } = storeToRefs(useStoreSearchData())
 // Visibilidad del chat = el switch por marca del dashboard manda (auto-import
 // useChatStatus). Fetch client-only, fail-closed. Reemplaza al viejo flag de
 // entorno NUXT_PUBLIC_CHAT_ENABLED (runtimeConfig.public.chatEnabled ya no gobierna
 // la visibilidad; el operador prende/apaga cada marca desde /chat-knowledge).
-const { enabled: chatEnabled, resolved: chatStatusResolved } = useChatStatus(franchise.shortname as string)
+const {
+  enabled: chatEnabled,
+  whatsappVisible,
+  resolved: chatStatusResolved,
+} = useChatStatus(franchise.shortname as string)
 
 // Estado client-only: arranca colapsado (lección #109).
-const menuOpen = ref(false)
 const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
+const hideContactButtonsOnMobile = computed(
+  () => !isDesktop.value && reservationOverlayOpen.value,
+)
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
 // la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
@@ -210,11 +178,8 @@ const teaser = useContactTeaser()
 const { syntheticCount, teaserVisible, teaserStep, teaserAnnounce } = teaser
 
 // The dashboard switch gates every chat-derived surface. Reservation URLs keep
-// WhatsApp/phone available but suppress the proactive invitation throughout the
+// direct contact available but suppress the proactive invitation throughout the
 // funnel, including deep links to summary and the following step.
-const isReservationRoute = computed(() =>
-  isReservationFunnelRoute(route.path),
-)
 const teaserAllowed = computed(
   () => chatEnabled.value && !isContactTeaserRouteExcluded(route.path),
 )
@@ -222,22 +187,13 @@ const displayedSyntheticCount = computed(() =>
   teaserAllowed.value ? syntheticCount.value : 0,
 )
 
-// El badge del FAB fusiona no leídos REALES (mandan) con el contador sintético
-// del teaser; el chip del ítem Chat del menú sigue en unread real (novedad del
-// chat, no del teaser).
-const badgeCount = computed(() => {
-  if (chatEnabled.value && unread.value > 0) return unread.value
-  return displayedSyntheticCount.value
-})
-
 // La burbuja de saludo solo cuando NO hay no leídos reales y el FAB está
-// colapsado (ni menú ni panel abiertos).
+// disponible y el panel está cerrado.
 const teaserOpen = computed(
   () =>
     teaserAllowed.value &&
     teaserVisible.value &&
     unread.value === 0 &&
-    !menuOpen.value &&
     !panelOpen.value,
 )
 
@@ -282,7 +238,7 @@ watch(unread, (v) => { if (v > 0) teaser.suppressForSession() }, { immediate: tr
 
 // SCEN-322-A02: Escape cierra menú/panel; foco al panel al abrir.
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') closeAll()
+  if (e.key === 'Escape') closePanel()
 }
 watch(panelOpen, async (open) => {
   if (open) {
@@ -312,13 +268,12 @@ onBeforeUnmount(() => {
   teaser.stop()
 })
 
-function toggle() {
-  if (panelOpen.value) panelOpen.value = false
-  else menuOpen.value = !menuOpen.value
-}
-function closeAll() {
-  menuOpen.value = false
+function closePanel() {
   panelOpen.value = false
+}
+function toggleChat() {
+  if (panelOpen.value) closePanel()
+  else openChat()
 }
 function openChat() {
   if (!chatEnabled.value) return
@@ -330,7 +285,6 @@ function openChat() {
   // Abrir el chat (no el menú) es lo único que limpia la insignia — lo hace la
   // superficie al montar (onSurfaceMounted → markRead). Aquí solo el beacon.
   if (unread.value > 0) emitReopenedFromBadge()
-  menuOpen.value = false
   // Desktop: panel inline sobre la página (no navega). Móvil: /chat full-screen.
   if (isDesktop.value) {
     panelOpen.value = true
@@ -343,28 +297,12 @@ function openChat() {
 a,
 button { -webkit-tap-highlight-color: transparent; }
 
-/* Keep the default position byte-for-byte equivalent to bottom-6. In the
-   reservation funnels, both mobile CTA surfaces fit a 4.5rem bottom envelope:
-   WizardSummary is ~3.94rem, while alquilatucarro's fixed slideover footer uses
-   1rem bottom padding + a 3.5rem CTA (py-4 + text-base line box). Add a tap-safe
-   clearance plus the device safe area so the FAB never covers either CTA. */
+/* Posición flotante normal. Al abrir la reserva en móvil el stack se oculta, así
+   que no necesita elevarse para esquivar el CTA del slideover. */
 .contact-fab-stack { bottom: 1.5rem; }
-@media (max-width: 1023.98px) {
-  .contact-fab-stack--reservation {
-    --reservation-mobile-cta-height: 4.5rem;
-    --reservation-fab-clearance: 0.75rem;
-    bottom: calc(
-      var(--reservation-mobile-cta-height) +
-      var(--reservation-fab-clearance) +
-      env(safe-area-inset-bottom, 0px)
-    );
-  }
-  .contact-fab-stack--reservation .fab-label { display: none; }
-}
 
-/* --- Items del menú FAB --- */
-/* Stack anclado a la izquierda: círculo primero, etiqueta hacia adentro. */
-.fab-item { display: flex; flex-direction: row-reverse; align-items: center; gap: 0.75rem; border-radius: 9999px; }
+/* --- Botones directos de contacto --- */
+.fab-item { display: flex; align-items: center; gap: 0.75rem; border-radius: 9999px; }
 .fab-label {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
@@ -389,7 +327,6 @@ button { -webkit-tap-highlight-color: transparent; }
 /* Icono coloreado por canal sobre círculo blanco. */
 .fab-chat { color: var(--ui-primary, #cc022b); }
 .fab-whatsapp { color: var(--color-whatsapp, #25D366); }
-.fab-call { color: #2563eb; }
 /* Chip de disponibilidad (solo el Chat: verde con brillo pulsante = 24/7). */
 .fab-chip {
   position: absolute;
@@ -411,7 +348,7 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .fab-chip-glow { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
 }
-/* Insignia roja de no leídos sobre el FAB principal. */
+/* Insignia roja de mensajes sobre el botón Chat. */
 .fab-badge {
   position: absolute;
   top: -0.25rem;
@@ -432,8 +369,7 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Mismo lenguaje visual que .fab-badge, reubicado en el círculo (3rem) de una
-   opción del menú (Chat con no leídos reales, WhatsApp con conteo sintético). */
+/* Ajuste para el círculo de 3rem del botón Chat. */
 .fab-badge-option {
   top: -0.3rem;
   right: -0.3rem;
@@ -505,7 +441,7 @@ button { -webkit-tap-highlight-color: transparent; }
 /* --- Panel inline (desktop) --- */
 .chat-panel {
   position: absolute;
-  bottom: 6rem;
+  bottom: 9rem;
   left: 1.5rem;
   width: 24rem;
   max-width: calc(100vw - 2rem);
@@ -516,11 +452,4 @@ button { -webkit-tap-highlight-color: transparent; }
   overflow: hidden;
 }
 
-/* Pulso de atención del FAB (respeta reduce-motion) */
-@keyframes pulse-attention {
-  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(37, 211, 102, 0.45); }
-  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px rgba(37, 211, 102, 0); }
-}
-.animate-pulse-attention { animation: pulse-attention 2.4s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .animate-pulse-attention { animation: none; } }
 </style>

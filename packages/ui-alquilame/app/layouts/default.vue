@@ -26,8 +26,7 @@
         color: 'neutral',
         variant: 'ghost',
         size: 'xl',
-        class: 'text-gray-800 hover:text-gray-900',
-        'aria-label': 'Abrir menú de navegación'
+        class: 'text-gray-800 hover:text-gray-900'
       }"
       :ui="{
         root: 'h-16 lg:h-20',
@@ -61,15 +60,6 @@
       </template>
       <!-- Menú móvil (slideover blanco) -->
       <template #body>
-        <UButton
-          icon="lucide:x"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-          class="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-          aria-label="Cerrar menú"
-          @click="mobileMenuOpen = false"
-        />
         <div class="flex flex-col items-center justify-center gap-6 flex-1 pt-12">
           <NuxtLink
             v-for="item in items"
@@ -255,7 +245,9 @@
 
       <!-- Bottom Bar -->
       <div class="bg-black">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <!-- En móvil el espacio negro final reserva el área ocupada por los
+             canales flotantes para que no tapen créditos ni enlaces legales. -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-40 md:py-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <!-- Legales -->
           <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-start">
             <li v-for="legal in legalLinks" :key="legal.link">

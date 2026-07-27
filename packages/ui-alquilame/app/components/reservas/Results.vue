@@ -72,7 +72,7 @@
       <CategorySelectionSection />
     </UPageSection>
 
-    <HomeContact reserve-anchor="#hero" />
+    <HomeContact />
   </div>
 </template>
 

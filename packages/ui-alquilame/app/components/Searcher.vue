@@ -361,12 +361,19 @@
             <u-button
                 :to="searchDestination"
                 @click="onSearchClick"
-                :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied || !isSelectionWithinSchedule"
+                :disabled="!isSearchButtonEnabled"
                 :loading="pendingSearching"
-                :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
+                :class="{'search-button': true, 'search-button-ready': isSearchButtonEnabled}"
                 size="xl"
             >
-                BUSCAR VEHÍCULOS
+                <span class="search-button-content">
+                    <span>BUSCAR VEHÍCULOS</span>
+                    <span
+                        v-if="isSearchButtonEnabled"
+                        class="search-button-arrow"
+                        aria-hidden="true"
+                    >→</span>
+                </span>
             </u-button>
         </div>
     </u-form>
@@ -484,6 +491,15 @@ const searchDisabledGuardSatisfied = computed(() => {
   const params = searchLinkParams.value ?? {};
   return Boolean(params.lugar_recogida && params.fecha_recogida && params.fecha_devolucion);
 });
+
+// Single source of truth for the CTA's interactive state. The light sweep and
+// arrow are rendered only while the same conditions that allow a click hold.
+const isSearchButtonEnabled = computed(() =>
+  !pendingSearching.value &&
+  animateSearchButton.value &&
+  searchDisabledGuardSatisfied.value &&
+  isSelectionWithinSchedule.value
+);
 
 // Desktop popover y móvil slideover usan refs SEPARADOS: comparten estado haría
 // que abrir el slideover móvil también dispare el popover desktop, cuyo contenido

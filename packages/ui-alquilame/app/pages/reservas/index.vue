@@ -33,10 +33,7 @@
       id="hero"
       class="relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to [--ctx-text-primary:#fff]"
     >
-      <!--
-        In-page anchor for HomeContact's "Reserva Ahora" CTA (reserveAnchor="#hero")
-        and any scroll-to-search affordance. Kept independent from the engine.
-      -->
+      <!-- Dedicated in-page anchor for scroll-to-search affordances. -->
       <div id="searcher" aria-hidden="true" class="absolute scroll-mt-20" />
 
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
@@ -120,12 +117,12 @@
       results — same intent as SCEN-001 on CityPage. Gate on the route query
       (`hasResultsQuery`, derived from route.query.lugar_recogida) which is
       SSR-stable, so the sections don't paint in SSR and vanish on hydrate (no
-      flash/CLS). HomeContact stays rendered (its CTA anchors back to #hero).
+      flash/CLS). HomeContact stays rendered as the closing contact CTA.
     -->
     <HomeHowItWorks v-if="!hasResultsQuery" />
     <HomeRequirements v-if="!hasResultsQuery" />
     <HomeStats v-if="!hasResultsQuery" />
-    <HomeContact reserve-anchor="#hero" />
+    <HomeContact />
   </div>
 </template>
 

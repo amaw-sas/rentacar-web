@@ -6,9 +6,9 @@
  *   - SCEN-F1-03: the home has a dismissible announcement bar, a contact CTA
  *     section, and a floating contact FAB — in the design's style.
  *   - Contact CTA is BUTTONS, not a form (golden 10-contact.html paridad visual):
- *     "Reserva Ahora" + WhatsApp. The WhatsApp CTA is CONFIG-DRIVEN
- *     (franchise.whatsapp full URL, never re-wrapped); the FAB additionally drives
- *     franchise.phone. Neither hardcodes the mockup's number.
+ *     Llamar + WhatsApp. Both CTAs are CONFIG-DRIVEN (franchise.phone and
+ *     franchise.whatsapp full URL, never re-wrapped). Neither hardcodes the
+ *     mockup's number.
  *   - WhatsApp green guard (brand hard rule): the contact WhatsApp surface is the
  *     shared bg-whatsapp token (#25D366) + black text — no free-form green-N.
  *   - The announcement bar dismiss state is CLIENT-ONLY (onMounted + v-if guard /
@@ -44,6 +44,14 @@ describe('F1 step07a — Contact.vue', () => {
   it('binds the WhatsApp CTA to franchise.whatsapp (full URL, not re-wrapped)', () => {
     expect(contact).toMatch(/:href="franchise\.whatsapp"/)
     expect(contact).toMatch(/target="_blank"/)
+    expect(contact).toMatch(/>\s*WhatsApp\s*<\/a>/)
+  })
+
+  it('binds the Llamar CTA to the configured phone as a normalized tel: URL', () => {
+    expect(contact).toMatch(/:href="`tel:\$\{franchise\.phone\.replace\(\/\\s\/g, ''\)\}`"/)
+    expect(contact).toMatch(/:aria-label="`Llamar al \$\{franchise\.phone\}`"/)
+    expect(contact).toMatch(/<PhoneIcon\b/)
+    expect(contact).toMatch(/>\s*Llamar\s*<\/a>/)
   })
 
   it('uses the shared bg-whatsapp token + black text for the WhatsApp CTA', () => {
@@ -83,14 +91,15 @@ describe('F1 step07a — Contact.vue', () => {
     expect(contact).toMatch(/id="contact"/)
   })
 
-  it('makes the "Reserva Ahora" anchor configurable via a reserveAnchor prop (default #hero)', () => {
-    // F2 step01: the reserve CTA must anchor to a per-page target. The default
-    // keeps the home intact (#hero); the city landing passes '#searcher'.
-    expect(contact).toMatch(/defineProps<\{\s*reserveAnchor\?: string\s*\}>/)
-    expect(contact).toMatch(/reserveAnchor:\s*'#hero'/)
-    // The CTA binds the prop, never the old hardcoded home id.
-    expect(contact).toMatch(/:href="reserveAnchor"/)
-    expect(contact).not.toMatch(/href="#hero"/)
+  it('uses the approved contact copy and removes the former reservation CTA', () => {
+    expect(contact).toMatch(/Cancela gratis cuando quieras\./)
+    expect(contact).toMatch(/Sin anticipos/)
+    expect(contact).toMatch(/Cancela gratis/)
+    expect(contact).toMatch(/Chat 24\/7/)
+    expect(contact).not.toMatch(/Reserva Ahora/)
+    expect(contact).not.toMatch(/reserveAnchor/)
+    expect(contact).not.toMatch(/Sin cargos ocultos/)
+    expect(contact).not.toMatch(/24 horas antes/)
   })
 })
 
@@ -143,11 +152,10 @@ describe('F1 step07a — AnnouncementBar.vue', () => {
 describe('F1 step07a — ChatWidget.vue (FAB restyle in place)', () => {
   const fab = read('app/components/ChatWidget.vue')
 
-  it('drives both contacts from config (franchise.whatsapp full URL + franchise.phone)', () => {
+  it('drives WhatsApp from config and removes the former floating call action', () => {
     expect(fab).toMatch(/:href="franchise\.whatsapp"/)
-    // El tel: se deriva de franchise.phone pero limpiando espacios (paridad con
-    // el footer) → tel:+573002436677 marcable, no "+57 300 243 6677".
-    expect(fab).toMatch(/:href="`tel:\$\{franchise\.phone\.replace\(\/\\s\/g, ''\)\}`"/)
+    expect(fab).toMatch(/v-if="whatsappVisible"/)
+    expect(fab).not.toMatch(/fab-call|Llámanos|`tel:/)
     expect(fab).toMatch(/useAppConfig\(\)/)
   })
 

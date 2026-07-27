@@ -46,29 +46,55 @@ header .text-highlighted {
     --ui-text-highlighted: #1f2937;
 }
 
-/* WhatsApp green (#25D366) with black text: white on #25D366 fails WCAG AA
-   (~2:1), black is ~10.6:1 — same rule the header WhatsApp button follows. */
+/* Mismo cierre visual que "Solicitar este vehículo": 56px de alto (py-4),
+   verde institucional oscuro y texto blanco con contraste AA. El overflow
+   recorta el barrido de luz dentro de la forma del botón. */
 .search-button {
-    @apply w-full bg-whatsapp hover:bg-whatsapp-hover text-black font-bold justify-center;
+    @apply relative overflow-hidden w-full py-4 bg-green-700 hover:bg-green-800 text-white font-bold justify-center;
 }
 
-/* "Breathing" scale animation for the active search button — subtly grows and
-   shrinks to draw attention (operator pick B). Kept small (1.04) so it never
-   overflows the grid cell. */
-@keyframes search-breathe {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.04); }
+/* El contenido queda sobre el reflejo decorativo. */
+.search-button-content {
+    @apply relative z-10 inline-flex items-center justify-center gap-2;
 }
 
-.search-button-glow {
-    animation: search-breathe 1.6s ease-in-out infinite;
-    transform-origin: center;
-    will-change: transform;
+/* Al habilitarse, un reflejo interior cruza el botón dos veces. */
+.search-button-ready::after {
+    position: absolute;
+    inset: -20% auto -20% -35%;
+    width: 22%;
+    content: "";
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.32), transparent);
+    transform: skewX(-18deg);
+    animation: search-shine-pass 1200ms ease-in-out 2;
+    will-change: left;
+}
+
+@keyframes search-shine-pass {
+    0%          { left: -35%; }
+    55%, 100%   { left: 118%; }
+}
+
+/* La flecha existe únicamente en el estado habilitado y hace dos impulsos
+   breves; después permanece quieta hasta que el botón vuelva a habilitarse. */
+.search-button-arrow {
+    display: inline-flex;
+    font-size: 20px;
+    line-height: 1;
+    animation: search-arrow-nudge 800ms ease-in-out 2;
+    will-change: opacity, transform;
+}
+
+@keyframes search-arrow-nudge {
+    0%, 100% { opacity: 0.72; transform: translateX(0); }
+    50%      { opacity: 1; transform: translateX(5px); }
 }
 
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-    .search-button-glow {
+    .search-button-ready::after,
+    .search-button-arrow {
         animation: none;
     }
 }

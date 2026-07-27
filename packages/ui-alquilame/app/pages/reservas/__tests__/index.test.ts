@@ -93,9 +93,9 @@ describe('F3 — /reservas Searcher engine + #109 CLS guard', () => {
     expect(page).not.toMatch(/\btoday\(/)
   })
 
-  it('keeps an in-page #hero anchor for the HomeContact reserve CTA', () => {
+  it('keeps the hero and dedicated searcher anchors', () => {
     expect(page).toMatch(/id="hero"/)
-    expect(page).toMatch(/reserve-anchor="#hero"/)
+    expect(page).toMatch(/id="searcher"/)
   })
 })
 
@@ -145,7 +145,7 @@ describe('SCEN-003 — trust marketing hides on a results query (SSR-stable gate
   })
 
   it('keeps HomeContact unconditionally rendered (no v-if gate)', () => {
-    expect(page).toMatch(/<HomeContact\b(?:(?!v-if)[^>])*reserve-anchor/)
+    expect(page).toMatch(/<HomeContact\s*\/>/)
   })
 })
 

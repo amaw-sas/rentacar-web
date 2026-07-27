@@ -284,6 +284,7 @@ const storeForm = useStoreReservationForm();
 const {
   pending: pendingSearch,
   selectedCategory,
+  reservationOverlayOpen,
   filteredCategories,
   error: searchError,
 } = storeToRefs(storeSearch);
@@ -407,6 +408,15 @@ const slideoverOpen = ref<boolean>(false);
 const slideoverStep = ref<'resumen' | 'datos'>('resumen');
 const reservationFormComponent = ref(null);
 const linkCopied = ref(false);
+
+// ChatWidget vive en el layout y este estado es local al grid. Reflejarlo en el
+// store permite ocultar sus dos accesos flotantes sólo en móvil mientras el
+// slideover de reserva está abierto, y restaurarlos al cerrar o volver atrás.
+watch(
+  slideoverOpen,
+  (open) => { reservationOverlayOpen.value = open; },
+  { immediate: true, flush: 'sync' },
+);
 
 // Issue #65: reka-ui Dialog (vía @nuxt/ui Slideover) no setea aria-modal y su
 // tipo `content` (DialogContentProps) no expone el atributo, aunque el elemento
@@ -695,6 +705,7 @@ onMounted(() => {
   if (import.meta.client) window.addEventListener('popstate', handleSlideoverPopState);
 });
 onBeforeUnmount(() => {
+  reservationOverlayOpen.value = false;
   if (import.meta.client) window.removeEventListener('popstate', handleSlideoverPopState);
 });
 
