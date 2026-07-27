@@ -285,6 +285,10 @@ useSeoMeta({ robots: 'noindex, nofollow', title: 'Lab · resumen de reserva' })
 </script>
 
 <style scoped>
+/* Tailwind v4: @apply in a scoped block resolves utilities only when the theme
+   is referenced explicitly; without this line `nuxt build` fails on rounded-xl. */
+@reference "~/assets/css/main.css";
+
 /* Chrome del slideover, solo para que la comparación se vea en su ancho real. */
 .lab-panel {
   @apply flex flex-col overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-gray-200;
