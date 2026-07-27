@@ -41,11 +41,12 @@ la categoría los perdería en cada cambio de gama sin decirlo.
 | # | Decisión | Por qué |
 |---|---|---|
 | D1 | Los campos van en el paso de datos, dentro de `ReservationForm.vue` | Es donde ya vive el `UForm` que bloquea el envío; las otras superficies no tienen formulario y exigirían un gate aparte |
-| D2 | Obligatorios cuando el adicional está marcado | El dato a medias no le sirve a Localiza. Recomendación del epic, decisión abierta #2 |
+| D2 | Obligatorios cuando el adicional está marcado | El dato a medias no le sirve a Localiza. Decisión abierta #2 del epic, confirmada el 2026-07-27 |
 | D3 | Nota informativa, sin declaración expresa de autorización | Decisión de directiva. Ver deuda declarada |
 | D4 | Un solo campo de documento, alfanumérico 6-15 más blocklist | El contrato con dashboard#293 no tiene campo de tipo; el rango acepta cédula y pasaporte |
 | D5 | El flag se refleja en el `formState` como campo derivado | Mantiene la validación pura y probable con `safeParse`, sin acoplar el módulo a Pinia |
 | D6 | Las claves del payload solo existen si el adicional está marcado | Sin adicional, el body queda idéntico al de hoy — no «vacío», idéntico |
+| D7 | Exactamente un conductor adicional | Decisión abierta #3 del epic, confirmada el 2026-07-27. El adicional es un booleano y el contrato son dos campos escalares. Si Localiza acaba admitiendo varios, esto pasa a lista y cambia el contrato con dashboard#293 |
 
 ## Diseño
 
