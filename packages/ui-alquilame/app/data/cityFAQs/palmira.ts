@@ -1,32 +1,31 @@
 import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 
-export const cityName = "Palmira"
-export const citySlug = "palmira"
+export const cityName = 'Palmira'
+export const citySlug = 'palmira'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
-        {
-            label: '¿Dónde puedo recoger mi carro en Palmira?',
-            content: getCityPickupAnswer('Palmira')
-        },
-        {
-            label: '¿Qué vehículo recomiendan para Palmira?',
-            content: 'Un compacto es perfecto para Palmira y el Valle del Cauca. Si planeas visitar el Lago Calima, Buga o hacer rutas por la cordillera, un sedán te dará mayor comodidad.'
-        },
-        {
-            label: '¿Cuánto cuesta alquilar un carro en Palmira?',
-            content: getCityPriceAnswer('Palmira')
-        },
-        {
-            label: '¿Hay pico y placa en Palmira?',
-            content: 'Palmira tiene pico y placa según el último dígito de la placa en días hábiles. Te informamos la restricción vigente al entregar el vehículo. Fines de semana sin restricción vehicular.'
-        },
-        {
-            label: '¿Hay diferencia entre alquilar en Palmira o Cali?',
-            content: 'Las tarifas son similares. Palmira está más cerca del aeropuerto (25min vs 45min a Cali centro). Si tu destino es el norte del Valle o el Eje Cafetero, Palmira puede ser más conveniente.'
-        },
-        {
-            label: '¿Qué lugares puedo visitar con carro desde Palmira?',
-            content: 'Destinos del Valle: Buga y el Señor de los Milagros (30min), Lago Calima (1.5h), Cali (30min), Parque Natural Farallones (1h), Hacienda El Paraíso de María (40min). Historia y naturaleza.'
-        }
-    ]
+  {
+    label: '¿En qué lugar puedo recibir un carro de alquiler en Palmira?',
+    content: getCityPickupAnswer('Palmira'),
+  },
+  {
+    label: '¿Qué carro conviene para manejar desde Palmira?',
+    content: 'Un compacto resulta práctico para los trayectos por Palmira y el Valle del Cauca. Si tu itinerario sigue hacia el Lago Calima, Buga o las carreteras de la cordillera, un sedán te dará más comodidad durante las distancias largas.',
+  },
+  {
+    label: '¿Cómo puedo cotizar el alquiler de un vehículo en Palmira?',
+    content: getCityPriceAnswer('Palmira'),
+  },
+  {
+    label: '¿Cómo opera el pico y placa para carros en Palmira?',
+    content: 'La restricción se aplica durante los días hábiles y depende del último dígito de la matrícula. Al momento de entregarte el vehículo te confirmaremos cuál medida está vigente. Los fines de semana no hay limitación vehicular.',
+  },
+  {
+    label: '¿Me conviene alquilar el carro en Palmira o en Cali?',
+    content: 'Las tarifas son parecidas. Desde Palmira llegas al aeropuerto en 25 minutos, mientras que desde el centro de Cali el trayecto toma 45 minutos. Palmira también ofrece una salida más conveniente cuando el viaje continúa hacia el norte del Valle o el Eje Cafetero.',
+  },
+  {
+    label: '¿A dónde puedo viajar en carro desde Palmira?',
+    content: 'Buga y la Basílica del Señor de los Milagros quedan a 30 minutos; Cali también está a media hora. La Hacienda El Paraíso, vinculada con María, se encuentra a 40 minutos. Calcula una hora para el Parque Natural Farallones y una hora y media para el Lago Calima. Así puedes alternar historia y naturaleza.',
+  },
+]

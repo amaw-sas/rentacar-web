@@ -1,32 +1,31 @@
 import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 
-export const cityName = "Villavicencio"
-export const citySlug = "villavicencio"
+export const cityName = 'Villavicencio'
+export const citySlug = 'villavicencio'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
-        {
-            label: '¿Dónde puedo recoger mi carro en Villavicencio?',
-            content: getCityPickupAnswer('Villavicencio')
-        },
-        {
-            label: '¿Qué vehículo recomiendan para los Llanos?',
-            content: 'Un sedán es suficiente para Villavicencio y vías principales. Si planeas explorar fincas llaneras, rutas rurales o ir hacia Caño Cristales (La Macarena), una camioneta 4x4 es indispensable.'
-        },
-        {
-            label: '¿Cuánto cuesta alquilar un carro en Villavicencio?',
-            content: getCityPriceAnswer('Villavicencio')
-        },
-        {
-            label: '¿Hay pico y placa en Villavicencio?',
-            content: 'Villavicencio no tiene restricción de pico y placa para vehículos particulares. Puedes circular libremente cualquier día de la semana por toda la ciudad y el departamento.'
-        },
-        {
-            label: '¿Cómo es la vía Bogotá-Villavicencio?',
-            content: 'La vía Bogotá-Villavicencio es moderna y pavimentada (2.5h). Pasas por el túnel de Buenavista. Recomendamos viajar de día para disfrutar el paisaje del piedemonte llanero.'
-        },
-        {
-            label: '¿Qué lugares puedo visitar con carro desde Villavicencio?',
-            content: 'Destinos llaneros: Bioparque Los Ocarros (15min), Puerto López y el Obelisco (1h), Caño Cristales en La Macarena (requiere vuelo), fincas con coleo y mamona. Vive la cultura llanera.'
-        }
-    ]
+  {
+    label: '¿Dónde recojo el carro reservado en Villavicencio?',
+    content: getCityPickupAnswer('Villavicencio'),
+  },
+  {
+    label: '¿Necesito camioneta para hacer una ruta por los Llanos?',
+    content: 'Un sedán basta para desplazarte por Villavicencio y por las vías principales. Si piensas entrar a fincas, recorrer caminos rurales o dirigirte hacia La Macarena para el plan de Caño Cristales, necesitas una camioneta 4x4.',
+  },
+  {
+    label: '¿Cómo averiguo la tarifa de un carro de alquiler en Villavicencio?',
+    content: getCityPriceAnswer('Villavicencio'),
+  },
+  {
+    label: '¿Puedo circular cualquier día en Villavicencio?',
+    content: 'Sí. Los vehículos particulares no tienen restricción de pico y placa en Villavicencio, así que pueden moverse cualquier día de la semana tanto en la ciudad como en el departamento.',
+  },
+  {
+    label: '¿Cuánto demora el viaje por carretera entre Bogotá y Villavicencio?',
+    content: 'El recorrido toma cerca de dos horas y media por una vía moderna y pavimentada. En el trayecto cruzas el túnel de Buenavista. Hazlo de día si quieres apreciar el paisaje del piedemonte llanero durante la llegada.',
+  },
+  {
+    label: '¿Qué planes se pueden hacer en carro saliendo de Villavicencio?',
+    content: 'El Bioparque Los Ocarros está a 15 minutos y Puerto López, con su Obelisco, a una hora. También puedes visitar fincas que ofrecen coleo y mamona. Caño Cristales queda en La Macarena y exige tomar un vuelo, por lo que no corresponde a una ruta directa en carro.',
+  },
+]
