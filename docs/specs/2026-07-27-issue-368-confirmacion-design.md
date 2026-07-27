@@ -13,38 +13,47 @@ La variante confirmada tampoco tiene `role="status"` (solo la de `unavailable`).
 
 El endpoint `/api/reservations/{code}/exists` devuelve **solo** `{ exists: boolean }`. Los datos de la reserva nunca llegan al navegador ni al payload de Nuxt — es deliberado: el código de reserva es un valor tipo bearer en la URL y servir los datos degradaría su seguridad (`useReservationConfirmation.ts:45-49`).
 
-Por tanto el recap (qué/fechas/sede/precio) **no puede salir del servidor**. Su única fuente son los stores Pinia en sesión, que retienen todo tras el submit (ninguno se resetea al navegar a `/reservado/{code}`). Consecuencia: el recap es **efímero**. Vive justo después de reservar y desaparece en un refresh (Pinia es memoria) o en un link compartido. La página debe ser 100% funcional sin él; el correo de confirmación es el registro durable.
+Por tanto el recap (qué/fechas/sede/precio) **no puede salir del servidor**. Su única fuente es el estado Pinia en sesión. Consecuencia: el recap es **efímero** — vive justo después de reservar y desaparece en un refresh (Pinia es memoria) o en un link compartido. La página debe ser 100% funcional sin él; el correo de confirmación es el registro durable.
 
 Alcance aprobado: página completa con recap efímero (precio incluido), más los arreglos que no dependen de datos.
 
-## Dos stores, no uno
+## Por qué un snapshot congelado, y no lectura en vivo (dos rondas de revisión)
 
-El recap se arma de **dos** stores distintos, y confundirlos es el error natural de implementación:
+El diseño pasó por dos rondas de revisión de spec que tumbaron dos enfoques ingenuos. Vale la pena dejarlo escrito porque el error es sutil:
 
-- `useStoreReservationForm` — campos del formulario, listos para pintar vía sus computeds: fechas y horas (`humanFormatted*`), sedes (`selectedPickupLocation`/`selectedReturnLocation`), días (`selectedDays`), seguro (`haveTotalInsurance`), plan de km (`selectedMonthlyMileage`, `haveMonthlyReservation`), y el **código de gama** reservado (`vehiculo`, un `CategoryType` como `"C"`). NO tiene ni el nombre amable de la gama ni precio alguno.
-- `useStoreSearchData` — su `selectedCategory` es la **instancia viva de `useCategory`** (`useStoreSearchData.ts:51`), la misma de la que `useRecordReservationForm` lee el total al enviar. De ahí salen el **nombre** (`categoryDescription`) y el **total** (`currencyTotalToPayWithAdditionals`, el canónico de #373). Pinia sobrevive la navegación SPA, así que sigue vivo en la confirmación en sesión.
+1. **Gatear con `lastSubmittedCode` no sirve.** Es un nombre engañoso: guarda `vehiculo.value` (el código de GAMA, "C"), como marcador one-shot del slideover al retroceder (`useStoreReservationForm.ts:292`). NO es el código de la reserva, que hoy no se persiste en ningún lado.
+2. **Leer el recap en vivo de los stores drifta.** El precio y el nombre viven en `useStoreSearchData.selectedCategory` (la instancia viva de `useCategory`), y los campos de fecha/sede en `useStoreReservationForm`. Todos son **campos vivos que mutan** con cualquier interacción posterior. Reservar C → atrás → nueva búsqueda → elegir D deja `selectedCategory` y `vehiculo` en D **en lockstep** (simetría intencional, `ReservationWizard.vue:172-175`); un forward a `/reservado/C` pintaría los datos de D sobre la reserva C. Un gate que compare `selectedCategory.categoryCode` contra el `vehiculo` vivo es tautológico y no cierra el hueco. Incluso re-elegir la MISMA gama con otras fechas driftaría el precio.
 
-## El código de la reserva no se persiste hoy (corrección de gating)
+La única fuente de verdad de lo que se reservó es el instante del envío. **El recap se congela ahí.**
 
-Mi diseño previo gateaba con `lastSubmittedCode`. **Es un nombre engañoso**: se escribe una sola vez (`useStoreReservationForm.ts:292`) con `vehiculo.value` (el código de GAMA), y su único consumidor es el guard one-shot del slideover al retroceder. NO es el código de la reserva. El código real (`dataRecord.value.reserveCode`) hoy solo se usa para analytics/routing y **nunca se guarda**. Reusar `lastSubmittedCode` rompería a su consumidor vivo y el gate jamás dispararía (un código de 1 char nunca pasa `normalizeReservationCode`, que exige 4-64).
+## Cambio en el store: `lastReservationSummary`
 
-**Cambio de store requerido:** añadir `lastReservationCode` a `useStoreReservationForm`, setearlo a `dataRecord.value.reserveCode` en la rama `/reservado/` de `submitForm` (`:329-334`), exponerlo. El gate del recap compara contra ese campo, no contra `lastSubmittedCode`.
+`submitForm` (`useStoreReservationForm.ts:302`) es el único punto donde coexisten el código real de la reserva (`dataRecord.value.reserveCode`) y todos los valores de display, aún sin driftar. En su rama de éxito `/reservado/` (`:328-334`, antes del `navigateTo` de `:347`) se captura un snapshot **inmutable, de marca-neutral**:
+
+```
+lastReservationSummary = {
+  code,            // dataRecord.value.reserveCode (el bearer de la URL)
+  categoryName,    // useStoreSearchData().selectedCategory?.categoryDescription.value
+  total,           // ...selectedCategory?.currencyTotalToPayWithAdditionals.value  (canónico #373)
+  pickupDate, pickupTime, returnDate, returnTime,   // computeds humanFormatted* del form store
+  pickupBranch, returnBranch,                        // selectedPickupLocation / selectedReturnLocation
+  days,            // selectedDays
+  haveTotalInsurance, haveMonthlyReservation, monthlyMileage,  // flags crudos → el brand los etiqueta
+}
+```
+
+Todos disponibles y ya formateados en ese punto. El objeto es genérico "qué se reservó" — no lleva presentación de alquicarros, así que vivir en el store compartido es defendible (las tres marcas comparten el flujo de submit). `lastSubmittedCode` NO se toca — sigue con su consumidor vivo del slideover.
+
+Una vez congelado, **nada drifta**: el refresh lo borra (Pinia) y el recap se oculta; un segundo envío lo sobrescribe con el código nuevo, así que `/reservado/{códigoViejo}` no coincide y se oculta. El gate se reduce a una sola comparación.
 
 ## Arquitectura
 
 ### 1. `useReservationRecap()` — composable brand-local nuevo (ui-alquicarros)
 
-Casi puro. Lee los dos stores + el `reserveCode` de la ruta; devuelve `{ show: boolean, recap: ReservationRecap | null }`.
+Trivial y sin dependencia de estado vivo. Lee `lastReservationSummary` + el `reserveCode` de la ruta; devuelve `{ show, recap }`.
 
-`show` es `true` **solo si las tres condiciones se cumplen** (gate de tres vías):
-
-1. `lastReservationCode === normalizeReservationCode(route.params.reserveCode)` — el store describe la reserva de ESTA URL.
-2. `useStoreSearchData().selectedCategory` no es `null` — hay instancia viva de la que sacar nombre y precio.
-3. `selectedCategory.categoryCode === vehiculo` (el código de gama reservado) — la instancia viva describe la MISMA gama que se reservó, no otra que una búsqueda posterior haya dejado en su lugar.
-
-La condición 3 cierra el hueco de desacople: submit → atrás → nueva búsqueda (reasigna `selectedCategory`) → adelante a `/reservado/{códigoViejo}` pintaría el precio/nombre de otra gama. Con el match de código, el recap se oculta en vez de mentir.
-
-`recap` viene ya formateado para pintar: nombre del vehículo (`categoryDescription`), fechas + horas de recogida y devolución, sedes, días, etiqueta de seguro (Total / Básico), etiqueta del plan de kilometraje si es mensual, y el total (`currencyTotalToPayWithAdditionals`). Aislar gating y formato del template lo hace testeable sin montar.
+- `show = summary != null && summary.code === normalizeReservationCode(route.params.reserveCode)`. Una sola condición: el snapshot describe la reserva de ESTA URL. `normalizeReservationCode` valida sin transformar (`reservationCode.ts:8-14`), así que comparar el código crudo persistido contra el param normalizado es sólido.
+- `recap` mapea el snapshot a lo pintable: etiqueta de seguro (Total/Básico desde `haveTotalInsurance`), etiqueta de km si `haveMonthlyReservation`, y el resto tal cual (nombre, fechas, sedes, días, total). Sin refs vivos, sin `.value` de instancias, sin gate de gama.
 
 ### 2. La página `reservado/[reserveCode]/index.vue`
 
@@ -60,37 +69,38 @@ Variante `unavailable` gana: reintento (recargar) + los mismos enlaces de contac
 
 ### 3. Constante compartida de requisitos (brand-local)
 
-Los 3 strings de requisitos hoy están inline en `packages/ui-alquicarros/app/components/ReservationForm.vue:17-19` ("Contar con una tarjeta de crédito", "Ser mayor de edad con cédula o pasaporte", "Contar con licencia de conducción vigente."). Salen a una constante que consume el checklist de confirmación, y se re-apunta `ReservationForm.vue` a ella. El issue pide "repetir los requisitos como checklist"; una sola fuente evita que diverjan. Sin cambio de comportamiento en el formulario. (El 4º string intro de la línea 13, "titular de la tarjeta de crédito", es distinto — se queda en el form, no es un requisito "qué llevar".)
+Los 3 strings de requisitos hoy están inline en `packages/ui-alquicarros/app/components/ReservationForm.vue:17-19` ("Contar con una tarjeta de crédito", "Ser mayor de edad con cédula o pasaporte", "Contar con licencia de conducción vigente."). Salen a una constante que consume el checklist de confirmación, y se re-apunta `ReservationForm.vue` a ella. Una sola fuente evita que diverjan. Sin cambio de comportamiento en el formulario. (La intro de la línea 13, "titular de la tarjeta de crédito", es distinta — se queda en el form.)
 
 ## Fuentes de datos
 
 - Contacto: `useAppConfig().franchise` → `whatsapp` (URL `wa.me` completa), `email` (`alquicarros@gmail.com`), `phone`. SoT de marca; nada hardcodeado.
-- Recap: `useStoreReservationForm` (fechas, sedes, días, flags, código de gama) **+** `useStoreSearchData.selectedCategory` (nombre + total) **+** `useReservationConfirmation` (existente) para el gate found/unavailable.
+- Recap: `lastReservationSummary` (snapshot congelado en el submit) + `useReservationConfirmation` (existente) para el gate found/unavailable. Sin lectura de stores vivos en la confirmación.
 
 ## Flujo
 
-1. Monta → `useReservationConfirmation()` (red: booleano) decide `found` / `unavailable`.
-2. Si `found` → `useReservationRecap()` aplica el gate de tres vías sobre los dos stores + la ruta.
-3. En sesión, con match de código y gama → recap con valores exactos. En refresh / link compartido / código o gama distintos → `show=false`, la página degrada a código + copiar + checklist + contactos.
-4. Confetti se mantiene, solo en `found`.
+1. Al enviar, en la rama `/reservado/` → se congela `lastReservationSummary` con el código y los valores de display, y se navega.
+2. La confirmación monta → `useReservationConfirmation()` (red: booleano) decide `found` / `unavailable`.
+3. Si `found` → `useReservationRecap()` compara `summary.code` con el código de la URL.
+4. En sesión, mismo código → recap con los valores exactos congelados. En refresh / link compartido / código distinto → `show=false`, la página degrada a código + copiar + checklist + contactos.
+5. Confetti se mantiene, solo en `found`.
 
 ## Bordes
 
-- `lastReservationCode` no coincide → sin recap. No pintar datos ajenos ni rancios.
-- `selectedCategory` null o de otra gama → sin recap (regla 2/3 del gate). Nunca renderizar `undefined` de nombre o precio.
+- `lastReservationSummary` null (refresh, cold-load, entrada directa a la URL) → sin recap. Página funcional igual.
+- `summary.code` no coincide (segundo envío, link de otra reserva) → sin recap. No pintar datos ajenos.
 - Clipboard no disponible / falla → el botón no rompe; degrada a código seleccionable.
 
 ## Pruebas y escenarios observables (holdout SDD)
 
-1. Ambos stores sembrados (form con `lastReservationCode` = código de URL y `vehiculo="C"`; searchData con `selectedCategory` de código "C") → recap con valores exactos: vehículo (nombre), fechas+horas, sedes, días, seguro, total = el canónico de #373.
-2. `lastReservationCode` distinto o ausente → recap ausente; checklist y enlaces presentes.
-3. `lastReservationCode` coincide pero `selectedCategory` es null (refresh parcial) → recap ausente, sin `undefined`; checklist y enlaces presentes.
-4. `lastReservationCode` coincide pero `selectedCategory` es de OTRA gama (búsqueda posterior) → recap ausente (no pinta precio/nombre ajenos).
-5. Enlaces: `href` de WhatsApp = `franchise.whatsapp`; correo = `mailto:franchise.email`.
-6. Botón copiar (clipboard mockeado) → escribe el código al portapapeles y anuncia "Código copiado".
-7. Clipboard no disponible / rechaza → el botón no lanza; el código queda seleccionable; sin excepción.
-8. Variante `unavailable` → reintento + contacto presentes, `role="status"`.
-9. Contraste AA de los textos nuevos.
+1. `lastReservationSummary` sembrado con `code` = código de la URL → recap con los valores exactos del snapshot: nombre de vehículo, fechas+horas, sedes, días, etiqueta de seguro, total.
+2. `lastReservationSummary` null (refresh / cold-load) → recap ausente, sin `undefined`; checklist y enlaces presentes.
+3. `lastReservationSummary` presente pero `code` distinto al de la URL (segunda reserva, o link compartido de otra) → recap ausente; no pinta datos ajenos.
+4. Enlaces: `href` de WhatsApp = `franchise.whatsapp`; correo = `mailto:franchise.email`.
+5. Botón copiar (clipboard mockeado) → escribe el código al portapapeles y anuncia "Código copiado".
+6. Clipboard no disponible / rechaza → el botón no lanza; el código queda seleccionable; sin excepción.
+7. Variante `unavailable` → reintento + contacto presentes, `role="status"`.
+8. Contraste AA de los textos nuevos.
+9. (Store) Tras un submit exitoso a `/reservado/`, `lastReservationSummary.code === dataRecord.reserveCode` y el total = `currencyTotalToPayWithAdditionals` de la gama enviada — el snapshot se congela antes de navegar.
 
 ## Fuera de alcance
 
