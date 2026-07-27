@@ -77,3 +77,50 @@ describe('reservation summary discount badge gate (monthly NaN bug)', () => {
     ).toBe(true)
   })
 })
+
+/**
+ * SCEN-W1: the struck base price must never render when there is no real
+ * discount. getDailyBasePrice falls back to vehicleDayCharge +
+ * coverageUnitCharge when hasDiscount() is false — the exact figure already
+ * printed right below it — so an ungated struck price paints a phantom "$ X"
+ * crossed out over an identical "$ X". This also protects the price-anchor
+ * pilot, where capping discountAmount below coverageUnitCharge flips
+ * hasDiscount() to false on live quotes.
+ *
+ * Anchored on the currencyDailyBasePrice interpolation rather than on
+ * getDiscount so this describe never overlaps the badge guard above.
+ */
+const STRUCK_PRICE_SURFACES = [
+  ['ui-alquilame', 'app/components/CategoryCard.vue'],
+  ['ui-alquilatucarro', 'app/components/CategoryCard.vue'],
+  ['ui-alquilame', 'app/components/ReservationResume.vue'],
+  ['ui-alquilatucarro', 'app/components/ReservationResume.vue'],
+] as const
+
+describe('struck base price gate', () => {
+  for (const [brand, rel] of STRUCK_PRICE_SURFACES) {
+    it(`${brand} ${rel.split('/').pop()} gates the struck base price`, () => {
+      const vue = readBrandFile(brand, rel)
+      const idx = vue.indexOf('{{ currencyDailyBasePrice }}')
+      expect(
+        idx,
+        `${brand}/${rel}: struck base price interpolation not found`,
+      ).toBeGreaterThan(-1)
+
+      // The interpolation's OWN enclosing element must carry the guard, not a
+      // sibling: walk back to the nearest '<' and read that opening tag alone.
+      const tagStart = vue.lastIndexOf('<', idx)
+      const openingTag = vue.slice(tagStart, vue.indexOf('>', tagStart) + 1)
+
+      // Both discount predicates are accepted. hasDiscount() is what the shared
+      // composable exposes today; hasDiscountToShow is the monthly-aware
+      // successor landing with the alquilame reskin. The invariant under test is
+      // that SOME discount gate is present — pinning one predicate would make
+      // this guard fight that in-flight work instead of protecting SCEN-W1.
+      expect(
+        /v-if="hasDiscount(\(\)|ToShow)"/.test(openingTag),
+        `${brand}/${rel}: struck base price renders unconditionally (opening tag: ${openingTag})`,
+      ).toBe(true)
+    })
+  }
+})

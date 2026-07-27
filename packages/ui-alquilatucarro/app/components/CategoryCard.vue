@@ -77,7 +77,11 @@
           </template>
           <template v-else>
             <p class="text-sm">Tarifa Diaria</p>
-            <p class="precio-base-diario">$ {{ currencyDailyBasePrice }}</p>
+            <!-- Sin descuento getDailyBasePrice devuelve el precio diario real,
+                 así que el tachado saldría idéntico a la cifra de abajo. Se gatea
+                 igual que la píldora hermana; "Tarifa Diaria" pasa a rotular el
+                 precio real, que es lo que corresponde. -->
+            <p class="precio-base-diario" v-if="hasDiscount()">$ {{ currencyDailyBasePrice }}</p>
             <div class="porcentaje-descuento" v-if="hasDiscount()">
               Dto hoy {{ getDiscount }}%
             </div>
