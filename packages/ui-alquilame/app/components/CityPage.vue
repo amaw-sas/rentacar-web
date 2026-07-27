@@ -51,7 +51,7 @@
 
     <HomeRequirements v-if="mode !== 'results'" />
 
-    <!-- Reseñas city (useCityTestimonials, #322 PR10) -->
+    <!-- Reseñas reales de Google con selección determinística por ciudad -->
     <CityTestimonios :city="city" />
 
     <!-- Separator 3 — the closing line, between Opiniones (Google) and Ventajas.

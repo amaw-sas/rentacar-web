@@ -271,9 +271,9 @@ describe('Alquilame-only wiring and auto-import guard', () => {
     expect(violations).toEqual([])
   })
 
-  it('leaves W5 review selection deterministic and empty for current fallback', () => {
-    expect(googleReviews).toEqual([])
-    expect(pickCityReviews('bogota')).toEqual([])
+  it('exposes W5 real reviews through a deterministic city selection', () => {
+    expect(googleReviews.length).toBeGreaterThanOrEqual(20)
+    expect(pickCityReviews('bogota')).toHaveLength(3)
     expect(pickCityReviews('bogota')).toEqual(pickCityReviews('bogota'))
   })
 })
