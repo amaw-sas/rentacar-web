@@ -198,6 +198,32 @@ con una nota informativa, sin declaración expresa de autorización: no queda co
 autorizó ese tratamiento. Si más adelante se quiere cerrar, el cambio es una frase condicional en la
 casilla de consentimiento que ya existe, o una segunda casilla obligatoria.
 
+## Dependencia con el dashboard y orden de despliegue
+
+La migración de la tabla `reservations` no va aquí — es de dashboard#293, otro repo. Lo que sí va
+aquí es qué le pasa al payload por el camino, porque de eso depende si esta rama se puede desplegar
+sola. Verificado extremo a extremo:
+
+| Salto | Qué hace con una clave que no conoce |
+|---|---|
+| `server/api/reservations/record.post.ts` (las 3 marcas) | Reenvía el body verbatim, sin lista blanca. Solo añade la API key y la IP real |
+| `app/api/reservations/route.ts` (dashboard) | No usa zod. Comprueba que estén 16 campos requeridos y sigue |
+| `createReservation` → `reservation-service.ts:352` | El `.insert({...})` enumera columna por columna. Lo que no esté mapeado ahí no llega a Supabase |
+
+Las dos claves nuevas son inertes hasta que el dashboard las mapee: no hay error, no hay 400, no hay
+columna que falte. Así que no hace falta desplegar en lockstep.
+
+Pero el orden importa. El estado malo es **web desplegada y dashboard no**: el formulario exige los
+datos, el cliente los teclea, y se pierden en silencio. Al revés no pasa nada — las columnas nuevas
+se quedan nulas hasta que la web empiece a mandarlas. Así que dashboard#293 primero, esta rama
+después. Revertir la web es seguro en cualquier momento; las columnas quedan nulables.
+
+Un aviso para quien recoja dashboard#293: su cambio 2 (schema zod en `lib/schemas/reservation.ts`) y
+su tercer escenario dan por hecho que el payload de la web pasa por ese schema. No pasa. Ese schema
+lo importan las server actions del alta manual, la tabla de reservas y los tipos del MCP; el funnel
+de la web no lo toca. Lo que de verdad persiste es el `.insert` de `reservation-service.ts:352`, y el
+issue no lo menciona.
+
 ## Fuera de alcance
 
 La persistencia y el correo a Localiza van en dashboard#293. El proxy que crea la reserva
