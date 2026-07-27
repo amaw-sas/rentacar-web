@@ -6,7 +6,7 @@ export interface FAQ {
 }
 
 export const getCityPriceAnswer = (cityName: string): string =>
-  `Las tarifas de alquiler en ${cityName} dependen de las fechas, la duración, la categoría y la disponibilidad. Busca tus fechas para comparar las opciones disponibles.`
+  `El valor cambia según las fechas del viaje, el número de días, la categoría elegida y los carros disponibles en ${cityName}. Ingresa el periodo de tu reserva en el buscador para ver y comparar las tarifas vigentes.`
 
 export const getCityPickupAnswer = (
   cityName: string,
@@ -21,13 +21,13 @@ export const getCityPickupAnswer = (
   )]
 
   if (names.length === 0) {
-    return `Consulta en el buscador los puntos de recogida activos para ${cityName}. Las opciones disponibles se muestran al seleccionar la ciudad.`
+    return `Selecciona ${cityName} en el buscador y allí verás los lugares de recogida habilitados para tu reserva.`
   }
 
   if (names.length === 1) {
-    return `El punto de recogida activo en ${cityName} es ${names[0]}. Confirma la disponibilidad para tus fechas en el buscador.`
+    return `Puedes recoger el carro en ${names[0]}, el punto habilitado en ${cityName}. Revisa en el buscador que esté disponible durante las fechas de tu viaje.`
   }
 
   const formattedNames = `${names.slice(0, -1).join(', ')} y ${names.at(-1)}`
-  return `Los puntos de recogida activos en ${cityName} son ${formattedNames}. Confirma la disponibilidad para tus fechas en el buscador.`
+  return `En ${cityName} puedes elegir entre estos lugares de recogida: ${formattedNames}. El buscador te indicará cuáles tienen disponibilidad para las fechas seleccionadas.`
 }

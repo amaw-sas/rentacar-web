@@ -3,30 +3,29 @@ import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 export const cityName = "Medellín"
 export const citySlug = "medellin"
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
         {
-            label: '¿Dónde puedo recoger mi carro en Medellín?',
+            label: '¿Dónde puedo recoger el carro que reserve en Medellín?',
             content: getCityPickupAnswer('Medellín')
         },
         {
-            label: '¿Qué vehículo recomiendan para Medellín y alrededores?',
-            content: 'Para Medellín ciudad un compacto es ideal. Si planeas visitar Guatapé, Santa Fe de Antioquia o el Eje Cafetero, recomendamos sedán o camioneta para mayor comodidad en las carreteras de montaña.'
+            label: '¿Cuál vehículo funciona mejor en Medellín y sus carreteras?',
+            content: 'Para los desplazamientos dentro de la ciudad suele bastar un compacto. Si vas a conducir hasta Guatapé, Santa Fe de Antioquia o el Eje Cafetero, un sedán o una camioneta te dará mayor comodidad en las vías de montaña.'
         },
         {
-            label: '¿Aplica pico y placa en Medellín?',
-            content: 'Sí, Medellín tiene pico y placa según el último dígito de la placa. Te informamos la restricción al entregar el vehículo. Los sábados, domingos y festivos no hay restricción.'
+            label: '¿Debo tener en cuenta el pico y placa de Medellín?',
+            content: 'Sí. La restricción se asigna con el último número de la placa y te explicaremos cuál corresponde cuando entreguemos el vehículo. La medida no rige los sábados, domingos ni días festivos.'
         },
         {
-            label: '¿Cuánto cuesta alquilar un carro en Medellín?',
+            label: '¿Dónde veo la tarifa de un carro de alquiler en Medellín?',
             content: getCityPriceAnswer('Medellín')
         },
         {
-            label: '¿Puedo devolver el carro en otra ciudad diferente a Medellín?',
-            content: 'Sí, ofrecemos devolución en cualquiera de nuestras 19 ciudades. Destinos frecuentes desde Medellín: Cartagena, Santa Marta y el Eje Cafetero. El cargo por traslado varía según la distancia.'
+            label: '¿Puedo entregar el vehículo fuera de Medellín?',
+            content: 'Sí. Puedes elegir como punto de devolución cualquiera de nuestras 19 ciudades. Cartagena, Santa Marta y las ciudades del Eje Cafetero son destinos frecuentes desde Medellín; el valor adicional del traslado cambia según la distancia.'
         },
         {
-            label: '¿Qué lugares puedo visitar con carro desde Medellín?',
-            content: 'Destinos imperdibles: Guatapé y El Peñol (2h), Santa Fe de Antioquia (1.5h), Jardín (3h), y San Rafael (2.5h). Un carro te da libertad para explorar pueblos y paisajes a tu ritmo.'
+            label: '¿Qué recorridos por carretera salen de Medellín?',
+            content: 'Puedes llegar a Guatapé y El Peñol en 2 horas, a Santa Fe de Antioquia en 1.5 horas, a Jardín en 3 horas y a San Rafael en 2.5 horas. Al ir en carro decides tus paradas y el tiempo que pasas en cada pueblo.'
         }
     ]

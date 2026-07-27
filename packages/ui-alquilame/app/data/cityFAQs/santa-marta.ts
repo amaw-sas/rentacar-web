@@ -3,30 +3,29 @@ import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 export const cityName = "Santa Marta"
 export const citySlug = "santa-marta"
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
         {
-            label: '¿Dónde puedo recoger mi carro en Santa Marta?',
+            label: '¿Dónde puedo recoger mi carro de alquiler en Santa Marta?',
             content: getCityPickupAnswer('Santa Marta')
         },
         {
-            label: '¿Qué vehículo recomiendan para Santa Marta?',
-            content: 'Un compacto con aire acondicionado es ideal para la ciudad y playas cercanas. Para visitar el Parque Tayrona o Minca, recomendamos camioneta por los caminos de montaña.'
+            label: '¿Qué vehículo es adecuado para viajar por Santa Marta?',
+            content: 'Para la ciudad y las playas más próximas, elige un compacto con aire acondicionado. Si quieres conocer el Parque Tayrona o subir a Minca, recomendamos una camioneta por los caminos montañosos.'
         },
         {
-            label: '¿Cuánto cuesta alquilar un carro en Santa Marta?',
+            label: '¿Cómo consulto el precio de alquiler de carro en Santa Marta?',
             content: getCityPriceAnswer('Santa Marta')
         },
         {
-            label: '¿Puedo entrar al Parque Tayrona con carro?',
-            content: 'Puedes llegar en carro hasta el parqueadero de El Zaino (entrada principal) o Calabazo. Desde allí el acceso es a pie o en transporte interno del parque. El carro queda seguro en los parqueaderos.'
+            label: '¿Hasta qué punto del Parque Tayrona se permite llegar en carro?',
+            content: 'Puedes conducir hasta los estacionamientos de El Zaino, la entrada principal, o de Calabazo. A partir de allí debes continuar caminando o usar el transporte interno del parque; el vehículo queda seguro en el parqueadero.'
         },
         {
-            label: '¿Hay pico y placa en Santa Marta?',
-            content: 'Santa Marta no tiene restricción de pico y placa para vehículos particulares. Puedes circular libremente cualquier día de la semana por toda la ciudad.'
+            label: '¿Existe pico y placa para particulares en Santa Marta?',
+            content: 'No. Los carros particulares no tienen esa limitación en Santa Marta y pueden circular por la ciudad cualquier día de la semana.'
         },
         {
-            label: '¿Qué lugares puedo visitar con carro desde Santa Marta?',
-            content: 'Destinos imperdibles: Parque Tayrona (45min), Minca y sus cascadas (45min), Taganga (15min), Palomino (1.5h), y Cartagena (4h). Un carro te da libertad para explorar la Sierra Nevada.'
+            label: '¿Qué destinos puedo conectar por carretera desde Santa Marta?',
+            content: 'Tayrona y Minca con sus cascadas quedan a 45 minutos; Taganga, a 15 minutos; Palomino, a 1.5 horas; y Cartagena, a 4 horas. El carro te permite organizar a tu manera la exploración de la Sierra Nevada.'
         }
     ]

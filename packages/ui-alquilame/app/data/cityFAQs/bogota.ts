@@ -3,30 +3,29 @@ import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 export const cityName = "Bogotá"
 export const citySlug = "bogota"
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
         {
-            label: '¿Dónde puedo recoger mi carro en Bogotá?',
+            label: '¿Dónde puedo recoger un carro alquilado en Bogotá?',
             content: getCityPickupAnswer('Bogotá')
         },
         {
-            label: '¿Qué vehículo recomiendan para moverse en Bogotá?',
-            content: 'Para Bogotá recomendamos carros compactos por su maniobrabilidad en el tráfico y facilidad de parqueo. Si planeas salir hacia Villa de Leyva o el Eje Cafetero, un sedán ofrece más comodidad para viajes largos.'
+            label: '¿Qué clase de carro conviene para conducir en Bogotá?',
+            content: 'Un compacto facilita los movimientos entre el tráfico y ocupa menos espacio al parquear. Si en tus planes están Villa de Leyva o el Eje Cafetero, considera un sedán para viajar con más comodidad durante los trayectos largos.'
         },
         {
-            label: '¿Aplica pico y placa al carro alquilado en Bogotá?',
-            content: 'Sí, los vehículos de alquiler están sujetos al pico y placa de Bogotá según el último dígito de la placa. Te informamos la restricción al momento de la entrega para que puedas planificar tu día.'
+            label: '¿Los carros de alquiler tienen pico y placa en Bogotá?',
+            content: 'Sí. La medida también cobija a los vehículos alquilados y depende del último dígito de su placa. Cuando recibas el carro te diremos cuál es la restricción correspondiente para que organices tus recorridos.'
         },
         {
-            label: '¿Cuánto cuesta alquilar un carro en Bogotá?',
+            label: '¿Cómo consulto el precio de alquiler de un carro en Bogotá?',
             content: getCityPriceAnswer('Bogotá')
         },
         {
-            label: '¿Puedo viajar a otras ciudades con el carro alquilado en Bogotá?',
-            content: 'Sí, puedes viajar a cualquier ciudad de Colombia. Destinos populares desde Bogotá incluyen Villa de Leyva (3h), Girardot (2.5h) y el Eje Cafetero (7h). Ofrecemos devolución en otra ciudad con cargo adicional.'
+            label: '¿Está permitido salir de Bogotá con el vehículo?',
+            content: 'Sí, puedes conducirlo hacia cualquier ciudad del país. Entre los recorridos habituales están Villa de Leyva, a 3 horas; Girardot, a 2.5 horas; y el Eje Cafetero, a 7 horas. También puedes solicitar la devolución en otra ciudad pagando el cargo adicional.'
         },
         {
-            label: '¿Qué documentos necesito para alquilar en Bogotá?',
-            content: 'Necesitas: licencia de conducción vigente, cédula o pasaporte (mayores de 21 años), y tarjeta de crédito con cupo disponible. Para extranjeros, la licencia de su país es válida durante su estadía como turista.'
+            label: '¿Qué debo presentar para rentar un carro en Bogotá?',
+            content: 'Debes tener más de 21 años y presentar una licencia de conducción vigente, cédula o pasaporte y una tarjeta de crédito con cupo disponible. Si vienes del exterior, puedes usar la licencia de tu país mientras permanezcas en Colombia como turista.'
         }
     ]

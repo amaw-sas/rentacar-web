@@ -3,41 +3,38 @@ import type { CityExpandedContent } from './types'
 export const cityName = "Cali"
 export const citySlug = "cali"
 
-// W1 placeholder: copied from the current city catalog so rendering stays unchanged.
-export const metaDescription = "Cali no solo es la capital mundial de la salsa: es gastronomía valluna, atardeceres desde el Cristo Rey y una vida nocturna que no para. Recoge tu carro en el Aeropuerto Alfonso Bonilla Aragón y recorre el Barrio San Antonio, el Zoológico de Cali, la Iglesia La Ermita y, si te animas, escápate al Lago Calima o a Buga en el mismo viaje. Sin anticipos, con hasta 60% de descuento por reserva anticipada y disponibilidad los 7 días. La Sucursal del Cielo se disfruta mejor cuando tú decides el ritmo."
+export const metaDescription = "Alquiler de carros en Cali para recorrer la capital de la salsa y salir a Buga, Lago Calima, San Cipriano o las haciendas del Valle."
 
-// Keep this independent from the short SEO meta so all three editorial separators survive.
-export const pullQuoteSource = "Cali no solo es la capital mundial de la salsa: es gastronomía valluna, atardeceres desde el Cristo Rey y una vida nocturna que no para. Recoge tu carro en el Aeropuerto Alfonso Bonilla Aragón y recorre el Barrio San Antonio, el Zoológico de Cali, la Iglesia La Ermita y, si te animas, escápate al Lago Calima o a Buga en el mismo viaje. Sin anticipos, con hasta 60% de descuento por reserva anticipada y disponibilidad los 7 días. La Sucursal del Cielo se disfruta mejor cuando tú decides el ritmo."
+export const pullQuoteSource = "Cali se mueve al compás de la salsa, pero sus rutas también llevan al Pacífico, a la montaña y a la historia del Valle. Con carro puedes ver caer la tarde desde Cristo Rey y al día siguiente cambiar la ciudad por el Lago Calima. Tú marcas el ritmo, incluso cuando la música ya empezó."
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const content: CityExpandedContent = {
-        intro: `Cali, la capital mundial de la salsa, te invita a explorar el suroccidente colombiano con total libertad. Con un carro de alquiler puedes moverte por esta vibrante ciudad de más de 2.5 millones de habitantes y escapar fácilmente a destinos cercanos como San Cipriano, Buga o la costa del Pacífico. El Aeropuerto Internacional Alfonso Bonilla Aragón te conecta con las principales ciudades del país, siendo el punto de partida ideal para descubrir el Valle del Cauca. Ya sea que vengas a bailar salsa, por negocios o turismo, contar con vehículo propio te permite visitar el Zoológico de Cali, subir a Cristo Rey al atardecer y explorar barrios emblemáticos como San Antonio o Granada a tu propio ritmo, sin depender del transporte público.`,
+        intro: `En Cali la noche tiene ritmo de salsa y el día abre caminos por todo el Valle del Cauca. La ciudad supera los 2.5 millones de habitantes, así que disponer de carro ayuda a enlazar una reunión, una visita al Zoológico y un atardecer en Cristo Rey sin someter el itinerario al transporte público. También puedes recorrer con calma sectores reconocidos como San Antonio y Granada. El Aeropuerto Internacional Alfonso Bonilla Aragón recibe vuelos desde las principales ciudades colombianas y sirve como inicio práctico para recoger el vehículo. Desde allí, el alquiler de carros en Cali te permite pensar más allá del perímetro urbano: Buga, el Lago Calima, San Cipriano y la costa del Pacífico quedan al alcance de una ruta organizada por ti. Si vienes a bailar, trabajar o pasear, puedes llevar lo necesario y moverte de un plan al siguiente en el mismo carro.`,
         destinations: [
             {
                 name: 'San Cipriano',
                 time: '2 horas',
-                description: 'Reserva natural accesible en brujitas (carros sobre rieles). Ríos cristalinos, cascadas y naturaleza virgen del Pacífico. Experiencia única que combina aventura y ecoturismo.'
+                description: 'La llegada a esta reserva natural incluye las “brujitas”, carros que avanzan sobre rieles. Después aparecen la vegetación del Pacífico, los ríos transparentes y las cascadas, en una salida que mezcla aventura con ecoturismo.'
             },
             {
                 name: 'Basílica del Señor de los Milagros - Buga',
                 time: '1.5 horas',
-                description: 'El santuario más visitado de Colombia. Ciudad colonial con arquitectura histórica, dulces típicos y una fe que atrae millones de peregrinos cada año.'
+                description: 'La ciudad reúne arquitectura colonial, dulces tradicionales y el santuario más visitado del país. Millones de peregrinos llegan cada año a la Basílica del Señor de los Milagros movidos por su fe.'
             },
             {
                 name: 'Lago Calima',
                 time: '2 horas',
-                description: 'Destino de deportes náuticos y vientos perfectos para kitesurf y windsurf. Paisajes de montaña, fincas de descanso y clima templado ideal para escapadas de fin de semana.'
+                description: 'Sus vientos favorecen la práctica de kitesurf y windsurf, además de otros deportes náuticos. El paisaje montañoso, el clima templado y las fincas de descanso hacen del lago una buena escapada de fin de semana.'
             },
             {
                 name: 'Haciendas del Valle del Cauca',
                 time: '1 hora',
-                description: 'Recorre las históricas haciendas azucareras como El Paraíso (inspiración de María de Jorge Isaacs) o Piedechinche. Historia, arquitectura colonial y cultura vallecaucana.'
+                description: 'Acércate a la historia azucarera y la arquitectura colonial de la región en haciendas como Piedechinche y El Paraíso. Esta última inspiró la novela María, escrita por Jorge Isaacs.'
             }
         ],
         drivingTips: {
-            picoPlaca: 'Cali tiene pico y placa de lunes a viernes según rotación del último dígito de la placa, en horario de 6:00 AM a 7:00 PM. Los sábados, domingos y festivos no hay restricción.',
-            tolls: 'Hacia Buga hay un peaje (~$10.500 COP). Hacia el Lago Calima encontrarás el peaje de Mediacanoa (~$10.500 COP). Las vías están en buen estado general.',
-            parking: 'En el centro y San Antonio los parqueaderos cuestan entre $3.000-5.000 COP/hora. En centros comerciales como Chipichape o Jardín Plaza suele ser gratis con consumo mínimo.'
+            picoPlaca: 'Consulta la rotación del último dígito antes de salir. En Cali, la restricción funciona de lunes a viernes entre las 6:00 AM y las 7:00 PM. Los sábados, domingos y festivos no hay restricción.',
+            tolls: 'La salida hacia Buga tiene un peaje de unos $10.500 COP. Camino al Lago Calima pasarás por el de Mediacanoa, también cercano a $10.500 COP. En términos generales, ambas carreteras se encuentran en buen estado.',
+            parking: 'Si estacionas en el centro o San Antonio, una hora cuesta aproximadamente entre $3.000 y $5.000 COP. Chipichape y Jardín Plaza suelen ofrecer parqueo gratis cuando alcanzas el consumo mínimo.'
         },
-        bestSeason: 'Cali tiene clima cálido todo el año (25-32°C). La Feria de Cali en diciembre es el evento más importante, pero también la época de mayor demanda. Para evitar multitudes, visita entre febrero y mayo o agosto y noviembre. Si planeas ir a San Cipriano, la temporada seca (diciembre-marzo y julio-agosto) es ideal para disfrutar los ríos cristalinos.'
+        bestSeason: 'El ambiente cálido de Cali, con temperaturas entre 25 y 32 °C, se mantiene durante todo el año. Diciembre trae la Feria de Cali, su evento principal, y también concentra la mayor demanda. Si prefieres menos gente, organiza el viaje de febrero a mayo o de agosto a noviembre. Para apreciar mejor las aguas cristalinas de San Cipriano, apunta a sus periodos secos: de diciembre a marzo o entre julio y agosto.'
     }
