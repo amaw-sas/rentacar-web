@@ -15,7 +15,7 @@ Eliminar la duplicación de contenido entre alquilame y alquilatucarro ANTES de 
 
 | # | Escenario | Cómo se verifica |
 |---|---|---|
-| S1 | Coincidencia de secuencias de 8 palabras con `alquilatucarro.com/{ciudad}` **< 15%** en cada una de las 19 ciudades | `docs/seo/alquilame/tools/shingle-check.mjs` contra la página renderizada (SSR) en dev y la página prod de alquilatucarro |
+| S1 | Coincidencia de secuencias de 8 palabras con `alquilatucarro.com/{ciudad}` **< 15%** en cada una de las 19 ciudades, página completa. Gate parcial por worker: **< 15% en el bloque de contenido de ciudad** (modo `--region` de la herramienta), porque ~24% del solape viene del chrome del sitio y lo resuelve W7, no W2-W4 | `docs/seo/alquilame/tools/shingle-check.mjs` contra la página renderizada (SSR) en dev y la página prod de alquilatucarro |
 | S2 | **Cero testimonios inventados**: cada reseña mostrada existe textualmente en el perfil de Google (CID 11824841242913553901) | Diff contra `docs/seo/alquilame/data/gmaps-reviews-2026-07-27.json` — citas VERBATIM, nombres reales |
 | S3 | El schema `FAQPage` emite exactamente las preguntas/respuestas visibles en pantalla | Test automatizado que compara schema vs render |
 | S4 | Los 58 tests existentes de ui-alquilame siguen pasando + tests nuevos de los cambios | `vitest run` en el worktree de integración |
@@ -34,7 +34,7 @@ Eliminar la duplicación de contenido entre alquilame y alquilatucarro ANTES de 
 
 - Texto largo → `packages/ui-alquilame/app/data/cityContent/{slug}.ts` (un archivo por ciudad + `index.ts` con la misma forma que `CityExpandedContent` de `packages/logic/src/composables/useCityContent.ts`)
 - FAQs → `packages/ui-alquilame/app/data/cityFAQs/{slug}.ts` + índice con la misma interfaz `FAQ` (las respuestas dinámicas de precio/sedes siguen viniendo de datos vivos, solo cambia la redacción)
-- Meta descripciones → cada archivo de ciudad exporta también `metaDescription` (≤155 chars, única); un override en la capa alquilame la aplica donde hoy se usa `city.description` (alimenta meta y pull-quotes)
+- Meta descripciones → cada archivo de ciudad exporta `metaDescription` (≤155 chars, única) **y** `pullQuoteSource` (texto largo propio del que salen los pull-quotes editoriales). Son campos SEPARADOS desde W1.1: si la meta baja a 155 chars sin campo aparte, los separadores editoriales de las 19 páginas colapsan
 - Testimonios → `packages/ui-alquilame/app/data/googleReviews.ts`: reseñas reales curadas + `pickCityReviews(slug)` determinística
 - Los componentes de alquilame (`CityPage.vue`, `city/Testimonios.vue`, `home/Reviews.vue`, el componente de FAQs) cambian su import del composable compartido al módulo local. Un import por frente.
 
@@ -81,14 +81,22 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 - **W3 (6):** pereira, manizales, armenia, ibague, cucuta, monteria
 - **W4 (6):** neiva, valledupar, villavicencio, palmira, soledad, floridablanca
 (Verificar slugs reales en los datos; si alguno difiere, usar el real y anotarlo.)
-**Gate por ciudad:** `shingle-check.mjs --city {slug}` **< 15%** con el dev server local corriendo, o en su defecto comparación del texto nuevo del archivo contra el HTML prod de alquilatucarro. Anotar el % logrado por ciudad en el reporte final.
-**Aceptación:** S1 (por sus ciudades), S8, voz de marca, extensión conservada.
+**Gate por ciudad:** `shingle-check.mjs --city {slug}` en modo `--region` (bloque de contenido de ciudad) **< 15%**, con el dev server local corriendo, o en su defecto comparación del texto nuevo del archivo contra el HTML prod de alquilatucarro. Anotar el % logrado por ciudad en el reporte final. El % de página completa NO es su gate (el chrome lo resuelve W7).
+**Cada ciudad reescribe:** contenido largo, FAQs, `metaDescription` (≤155, nueva) y `pullQuoteSource` (texto largo propio).
+**Solo W2 además:** reescribe la redacción de las respuestas dinámicas compartidas en `app/data/cityFAQs/shared.ts` (precio y recogida — salen en las 19 páginas y hoy son texto de alquilatucarro). W3/W4 NO tocan ese archivo.
+**Los asserts de paridad** local==compartido ya fueron convertidos a estructurales en W1.1 — si un test de igualdad textual se pone rojo al reescribir, el error es del test heredado, no del contenido: repórtalo, no "arregles" revirtiendo texto.
+**Aceptación:** S1 (por sus ciudades, modo región), S8, voz de marca, extensión conservada.
 
 ### W5 — Testimonios reales · Codex · depende de W1
 **Fuente:** `docs/seo/alquilame/data/gmaps-reviews-2026-07-27.json` (56 entradas extraídas del perfil real el 2026-07-27).
 **Curaduría:** incluir solo reseñas 5★ CON texto del cliente. OJO: en ~14 entradas el campo `text` capturó la RESPUESTA del propietario (empiezan tipo "¡Gracias por…", "¡Hola, {nombre}!…") — esas son reseñas sin texto: EXCLUIR. La de 3★ y la de 1★ no se muestran (pero no se borran del JSON). Resultado esperado: ~20-25 reseñas utilizables.
 **Entregables:** `googleReviews.ts` poblado (nombre real, cita verbatim, fecha relativa opcional); `pickCityReviews` con trío distinto por ciudad, pins: santa-marta → reseña de Gael Joaquín Vargas Moreno; monteria → reseña de Daniela Madrid; `city/Testimonios.vue` (encabezado honesto, ver Arquitectura) y `home/Reviews.vue` pasan a esta fuente; tests (S2, S7).
 **Aceptación:** S2, S7, render correcto de las tarjetas, link al CID intacto.
+
+### W7 — Chrome del sitio (secciones compartidas de marketing) · Codex · depende de W1
+**Por qué existe:** la revisión adversarial de W1 midió que ~24% del solape de página completa con alquilatucarro NO está en el contenido de ciudad sino en el chrome de alquilame: requisitos, secciones de marketing, formularios, microcopy de header/footer. Sin este frente, S1 página completa es inalcanzable (piso ~23-27%).
+**Entregables:** identificar con `shingle-check.mjs` qué componentes de `packages/ui-alquilame` comparten texto con alquilatucarro.com (comparar la home y una ciudad de cada marca), y reescribir ese copy con la voz de marca de la misión. NO tocar `app/data/cityContent/` ni `app/data/cityFAQs/{slug}.ts` (territorio de W2-W4; `shared.ts` es de W2). NO cambiar estructura/diseño de componentes: solo el texto.
+**Aceptación:** el solape del chrome (página completa menos bloque de ciudad) baja a <10%; render sin cambios de layout; S5 intacto; tests pasan.
 
 ### W6 — Integración y verificación final · Orquestador + agentes de revisión frescos
 1. Revisión adversarial de cada entrega ANTES de mergear (agentes Claude frescos: code-reviewer para W1/W5; jueces de contenido para W2-W4 contra S1/S8/voz/es-CO).
@@ -103,12 +111,15 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 | Fecha/hora | Evento |
 |---|---|
 | 2026-07-27 | Misión creada. Rama de integración y worktree de control listos. Reseñas de Google extraídas (56) y commiteadas en `data/`. |
+| 2026-07-27 12:10 | W1 entregado en 13 min (commit a5b021f, worktree alquilame-w1-infra): 38 placeholders + wiring + shingle-check. Baseline Bogotá 47,7% (consistente con auditoría). Vitest 905/912; los 7 rojos son preexistentes (el revisor verificó que no leen archivos tocados). |
+| 2026-07-27 12:35 | Revisión adversarial de W1: 7/7 puntos CONFIRMED (fidelidad 19/19 por igualdad profunda, S5 en cero archivos fuera de alcance). Hallazgo ALTO: ~24% del solape vive en el chrome del sitio → S1 página completa inalcanzable solo con W2-W4. Se crea el frente W7-chrome, se refina S1 (gate por región para workers) y se despacha W1.1 con los 4 hallazgos medios (asserts-trampa, split metaDescription/pullQuoteSource, paridad JSON-LD FAQPage, guard de auto-import, mejoras de la herramienta). |
 
 ### Bloqueos / errores
-_(ninguno aún)_
+- 12:10 — A/B de baseline en worktree de integración falló por entorno (faltaba `.nuxt/` copiado). Corregido, relanzado. No afecta a los workers.
 
 ### Hitos
-- [ ] W1 entregado y revisado
+- [ ] W1 entregado y revisado — entregado ✔, revisado ✔, pendiente W1.1 + merge
+- [ ] W7 (chrome) entregado y revisado
 - [ ] W2 entregado y revisado
 - [ ] W3 entregado y revisado
 - [ ] W4 entregado y revisado
