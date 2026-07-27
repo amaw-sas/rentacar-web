@@ -3,12 +3,12 @@ import type { CityExpandedContent } from './types'
 export const cityName = 'Montería'
 export const citySlug = 'monteria'
 
-export const metaDescription = 'Alquiler de carros en Montería para recorrer la Ronda del Sinú, Lorica y las playas del Golfo. Compara vehículos y reserva en línea.'
+export const metaDescription = 'De la Ronda del Sinú a Lorica y las playas del Golfo: compara carros de alquiler en Montería y arma tu recorrido.'
 
 export const pullQuoteSource = 'Montería acompaña el curso del Sinú y lleva la cultura ganadera de la sabana hasta una ciudad verde y tranquila. Al salir de Los Garzones puedes recorrer la Ronda, buscar la arquitectura de Lorica o continuar hacia las playas del Golfo de Morrosquillo. En Córdoba las fincas, los pueblos y el mar quedan separados por carretera, así que manejar abre muchas más posibilidades.'
 
 export const content: CityExpandedContent = {
-  intro: `El río Sinú le pone sombra, brisa y ritmo a Montería, una capital ganadera que ha crecido sin soltar sus costumbres sabaneras. La ciudad sorprende por su desarrollo y calidad de vida, y el Aeropuerto Los Garzones la comunica con las principales ciudades del país. Con un alquiler de carros en Montería puedes acompañar la Ronda del Sinú, cruzar hacia Lorica o San Antero y continuar hasta el Golfo de Morrosquillo. También tienes la libertad de entrar a la sabana cordobesa, conocer fincas ganaderas o apuntar hacia los paisajes del Alto Sinú. Las distancias entre pueblos, playas y zonas rurales hacen que el vehículo sea parte central del viaje, no solo un medio para moverse dentro de la ciudad. Al regresar, la cocina basada en carne de res de primera calidad y un paseo al atardecer junto al río completan una ruta que mezcla modernidad, naturaleza y tradición.`,
+  intro: `El río Sinú le pone sombra, brisa y ritmo a Montería, una capital ganadera que ha crecido sin soltar sus costumbres sabaneras. La ciudad sorprende por su desarrollo y calidad de vida, y el Aeropuerto Los Garzones la comunica con las principales ciudades del país. Alquilar carro en Montería abre el mapa: puedes acompañar la Ronda del Sinú, cruzar hacia Lorica o San Antero y continuar hasta el Golfo de Morrosquillo. También tienes la libertad de entrar a la sabana cordobesa, conocer fincas ganaderas o apuntar hacia los paisajes del Alto Sinú. Las distancias entre pueblos, playas y zonas rurales hacen que el vehículo sea parte central del viaje, no solo un medio para moverse dentro de la ciudad. Al regresar, la cocina basada en carne de res de primera calidad y un paseo al atardecer junto al río completan la jornada. La ciudad es moderna, pero la naturaleza y la tradición siguen al alcance de la carretera.`,
   destinations: [
     {
       name: 'Santa Cruz de Lorica',

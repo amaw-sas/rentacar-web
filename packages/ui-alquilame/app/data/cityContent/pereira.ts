@@ -3,7 +3,7 @@ import type { CityExpandedContent } from './types'
 export const cityName = 'Pereira'
 export const citySlug = 'pereira'
 
-export const metaDescription = 'Alquiler de carros en Pereira para recorrer Matecaña, Santa Rosa, Salento y el Eje Cafetero a tu ritmo. Compara opciones y reserva en línea.'
+export const metaDescription = 'Recorre Pereira y el Eje Cafetero en carro: Matecaña, Santa Rosa y Salento quedan en tu ruta. Compara opciones de alquiler y reserva en línea.'
 
 export const pullQuoteSource = 'En Pereira, la cordillera se abre entre cafetales y conecta en poco tiempo las rutas de Risaralda, Caldas y Quindío. Desde Matecaña puedes tomar el volante hacia Santa Rosa de Cabal, Salento o Ukumarí, haciendo las paradas que te provoquen. La ciudad funciona como una base práctica para combinar pueblos, fincas y miradores del Eje Cafetero sin amarrarte a un itinerario ajeno.'
 
@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'De lunes a viernes, Pereira aplica pico y placa por el último número de la matrícula. Las franjas son de 7:00 a 8:30 AM y de 5:30 a 7:00 PM; la medida no opera sábados, domingos ni festivos.',
+    picoPlaca: 'De lunes a viernes, Pereira aplica pico y placa por el último número de la placa. Las franjas son de 7:00 a 8:30 AM y de 5:30 a 7:00 PM; la medida no opera sábados, domingos ni festivos.',
     tolls: 'La ruta hacia Salento incluye un peaje de aproximadamente $8.700 COP. No pagas peaje para ir a Santa Rosa de Cabal, y las carreteras principales del Eje Cafetero se encuentran en excelente estado.',
     parking: 'Calcula entre $2.500 y $4.500 COP por hora para un parqueadero en el centro o la Circunvalar. En temporada alta hay pocos cupos en Salento, así que conviene llegar temprano.',
   },

@@ -22,7 +22,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Puedo llegar en carro al Parque del Café?',
-    content: 'Sí. Desde Armenia son 20 minutos y el parque cuenta con bastante espacio para estacionar. En la misma jornada también puedes incluir PANACA, a 30 minutos, y el Parque Los Arrieros.',
+    content: 'Sí. Desde Armenia son 20 minutos y el parque cuenta con bastante espacio para parquear. En la misma jornada también puedes incluir PANACA, a 30 minutos, y el Parque Los Arrieros.',
   },
   {
     label: '¿Qué lugares del Quindío quedan cerca de Armenia en carro?',
