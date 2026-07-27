@@ -183,8 +183,14 @@ function prunePricingRows(prices: CategoryMonthPriceData[], todayIso: string): C
 /**
  * `monthlyAnchors` (monthly struck-price pilot): gross p95 per category code,
  * already validated by buildMonthlyAnchorMap. A code with no entry gets `null`
- * and the client shows the unchanged `one_day_price`. Defaulting to `{}` keeps
- * every existing caller — and the flag-off payload — byte-identical.
+ * and the client shows the unchanged `one_day_price`.
+ *
+ * Note what defaulting to `{}` does and does not buy (R-WEB-M H-W3): every
+ * existing caller keeps working, and DISPLAY and BEHAVIOUR are identical with
+ * the flag off — but the payload is NOT byte-identical to the pre-pilot one.
+ * `month_anchor_gross: null` is emitted for every category of all three brands,
+ * flag or no flag. That is deliberate: an explicit null tells "no anchor" apart
+ * from "old build", which is worth the handful of bytes.
  */
 export function transformCategories(
   rows: SupabaseCategory[],

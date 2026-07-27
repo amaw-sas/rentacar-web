@@ -12,9 +12,11 @@
 
 /**
  * A refresh older than this is not trusted. The dashboard cron refreshes the
- * anchors weekly, so two missed runs are still inside the window; a table that
- * silently stopped refreshing falls out of it and the cap disappears instead of
- * quietly striking prices against months-old market data.
+ * anchors DAILY (`0 7 * * *`, vercel.json), so the window tolerates fourteen
+ * missed runs in a row — deliberately generous, because the failure it guards
+ * against is a table that silently stopped refreshing, not a single bad night.
+ * Past the window the cap disappears rather than striking today's prices
+ * against months-old market data.
  */
 export const MONTHLY_ANCHOR_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000
 

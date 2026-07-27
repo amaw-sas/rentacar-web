@@ -23,4 +23,16 @@ describe('nuxt.config.ts hygiene', () => {
       expect(content).not.toContain('rentacarApiReservasDataEndpoint')
     })
   }
+
+  // R-WEB-M H-W2. Nuxt only honours NUXT_PUBLIC_* for keys that already exist in
+  // runtimeConfig, so a brand missing this one ignores
+  // NUXT_PUBLIC_PRICE_ANCHOR_MONTHLY=on in silence: no wrong price, but the
+  // pilot measures as if it were switched off. The alquilame reskin is due to
+  // land on these same three files (plan risk R1), which is exactly how a line
+  // like this disappears.
+  for (const brand of BRANDS) {
+    it(`${brand}: declares priceAnchorMonthly so the env var can switch the pilot on`, () => {
+      expect(readBrandConfig(brand)).toContain('priceAnchorMonthly')
+    })
+  }
 })

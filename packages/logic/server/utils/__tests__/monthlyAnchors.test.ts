@@ -142,7 +142,7 @@ describe('buildMonthlyAnchorMap', () => {
     ).toEqual({})
   })
 
-  it('the staleness window is 14 days (two missed weekly refreshes)', () => {
+  it('the staleness window is 14 days (fourteen missed daily refreshes)', () => {
     expect(MONTHLY_ANCHOR_MAX_AGE_MS).toBe(14 * 24 * 60 * 60 * 1000)
   })
 })
