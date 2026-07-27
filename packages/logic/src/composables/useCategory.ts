@@ -198,9 +198,21 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
          return vehicleDayCharge.value + (discountAmount.value ?? 0) + coverageUnitCharge.value;
       else
          return vehicleDayCharge.value + coverageUnitCharge.value;
-      
+
    });
-   
+
+   /**
+    * Is there a struck base price worth showing? Compares the two figures the
+    * card actually paints, so it is agnostic to where the base price came from:
+    * a real daily discount, or the monthly one_day_price anchor. When there is
+    * nothing to strike, getDailyBasePrice collapses onto getDailyPrice and this
+    * is false — that collapse is the phantom "$ X" struck over an identical
+    * "$ X". Do NOT gate the struck price on hasDiscount(): it only looks at
+    * discountAmount, a daily field the monthly price ignores, so it hides the
+    * legitimate monthly anchor.
+    */
+   const hasStruckBasePrice = computed<boolean>(() => getDailyBasePrice.value > getDailyPrice.value);
+
    const getTotalCoveragePrice = computed<number>(() => effectiveTotalCoverageUnitCharge.value * coverageQuantity.value);
    
    const getSubtotal = computed<number>(() => {
@@ -502,6 +514,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       getIVAFeePrice,
       getDailyBasePrice,
       getDailyPrice,
+      hasStruckBasePrice,
       getDiscount,
       getFormattedDays,
       hasAdditionalServices,

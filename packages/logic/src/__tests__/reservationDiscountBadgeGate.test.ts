@@ -79,27 +79,43 @@ describe('reservation summary discount badge gate (monthly NaN bug)', () => {
 })
 
 /**
- * SCEN-W1: the struck base price must never render when there is no real
- * discount. getDailyBasePrice falls back to vehicleDayCharge +
- * coverageUnitCharge when hasDiscount() is false — the exact figure already
- * printed right below it — so an ungated struck price paints a phantom "$ X"
- * crossed out over an identical "$ X". This also protects the price-anchor
- * pilot, where capping discountAmount below coverageUnitCharge flips
- * hasDiscount() to false on live quotes.
+ * SCEN-W1: the struck base price must never render when there is nothing to
+ * strike. When no anchor applies, getDailyBasePrice collapses onto
+ * getDailyPrice — the exact figure already printed right below it — so an
+ * ungated struck price paints a phantom "$ X" crossed out over an identical
+ * "$ X". This also protects the price-anchor pilot, where capping
+ * discountAmount collapses the two figures on live quotes.
+ *
+ * Each surface declares the predicate it must carry. The result cards use
+ * hasStruckBasePrice, which compares the two rendered figures and is therefore
+ * agnostic to where the base price came from — a daily discount or the monthly
+ * one_day_price anchor. hasDiscount() is NOT acceptable there: it only reads
+ * discountAmount, a daily field the monthly price ignores, so it swallows the
+ * legitimate monthly anchor (R-WEB D-W1, characterised in
+ * useCategory.monthlyStruckPrice.adversarial.test.ts).
+ *
+ * The reservation summaries keep the gate they already shipped with. They carry
+ * the same monthly blind spot; widening them is a behaviour change tracked as a
+ * follow-up, not part of this fix.
+ *
+ * Note for the alquilame reskin landing on preview/alquilame-todo: it must
+ * migrate its cards to hasStruckBasePrice too. Its hasDiscountToShow does not
+ * exist on main and is not accepted here — this guard pins one predicate on
+ * purpose so a silent regression to a discount-only gate cannot pass.
  *
  * Anchored on the currencyDailyBasePrice interpolation rather than on
  * getDiscount so this describe never overlaps the badge guard above.
  */
 const STRUCK_PRICE_SURFACES = [
-  ['ui-alquilame', 'app/components/CategoryCard.vue'],
-  ['ui-alquilatucarro', 'app/components/CategoryCard.vue'],
-  ['ui-alquilame', 'app/components/ReservationResume.vue'],
-  ['ui-alquilatucarro', 'app/components/ReservationResume.vue'],
+  ['ui-alquilame', 'app/components/CategoryCard.vue', 'hasStruckBasePrice'],
+  ['ui-alquilatucarro', 'app/components/CategoryCard.vue', 'hasStruckBasePrice'],
+  ['ui-alquilame', 'app/components/ReservationResume.vue', 'hasDiscount()'],
+  ['ui-alquilatucarro', 'app/components/ReservationResume.vue', 'hasDiscount()'],
 ] as const
 
 describe('struck base price gate', () => {
-  for (const [brand, rel] of STRUCK_PRICE_SURFACES) {
-    it(`${brand} ${rel.split('/').pop()} gates the struck base price`, () => {
+  for (const [brand, rel, predicate] of STRUCK_PRICE_SURFACES) {
+    it(`${brand} ${rel.split('/').pop()} gates the struck base price on ${predicate}`, () => {
       const vue = readBrandFile(brand, rel)
       const idx = vue.indexOf('{{ currencyDailyBasePrice }}')
       expect(
@@ -112,15 +128,23 @@ describe('struck base price gate', () => {
       const tagStart = vue.lastIndexOf('<', idx)
       const openingTag = vue.slice(tagStart, vue.indexOf('>', tagStart) + 1)
 
-      // Both discount predicates are accepted. hasDiscount() is what the shared
-      // composable exposes today; hasDiscountToShow is the monthly-aware
-      // successor landing with the alquilame reskin. The invariant under test is
-      // that SOME discount gate is present — pinning one predicate would make
-      // this guard fight that in-flight work instead of protecting SCEN-W1.
       expect(
-        /v-if="hasDiscount(\(\)|ToShow)"/.test(openingTag),
-        `${brand}/${rel}: struck base price renders unconditionally (opening tag: ${openingTag})`,
+        openingTag.includes(`v-if="${predicate}"`),
+        `${brand}/${rel}: struck base price must be gated by v-if="${predicate}" (opening tag: ${openingTag})`,
       ).toBe(true)
     })
   }
+
+  // The composable must actually expose what the cards destructure, otherwise
+  // the templates above would silently gate on undefined (always falsy) and
+  // hide every struck price without a single test going red.
+  it('useCategory exposes hasStruckBasePrice comparing the two rendered figures', () => {
+    expect(logicSource).toMatch(
+      /const hasStruckBasePrice = computed<boolean>\(\(\) => getDailyBasePrice\.value > getDailyPrice\.value\)/,
+    )
+    expect(
+      /^\s*hasStruckBasePrice,\s*$/m.test(logicSource),
+      'hasStruckBasePrice is computed but never returned from useCategory',
+    ).toBe(true)
+  })
 })
