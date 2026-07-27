@@ -404,6 +404,51 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     await page.locator('[data-testid="wizard-step-2-test"]').click();
     await expect(page.getByRole('heading', { name: 'Elige tu vehículo' })).toBeVisible();
     await expect(page.locator('[data-testid="wizard-unknown-status-test"]')).toBeVisible();
+
+    // …y DESAPARECE al lanzar una búsqueda nueva. La otra mitad del Evidence del escenario:
+    // "visibilidad del bloque antes y DESPUÉS de una búsqueda nueva". Se prueba en el DOM,
+    // no solo en el store. Debe ser una búsqueda IN-SPA (no un page.goto, que recargaría el
+    // documento y bajaría el lock trivialmente por reinicio de Pinia): así el reset recae de
+    // verdad en useStoreSearchData.search() con el lock AÚN en alto. La transición visible→
+    // oculto en esta misma corrida es su propio rojo→verde: si search() no limpiara el lock,
+    // el bloque seguiría visible.
+    //
+    // Para relanzar hay que cambiar la firma de búsqueda: BUSCAR se deshabilita mientras los
+    // resultados cargados siguen vigentes (`animateSearchButton`, Searcher.vue), y solo se
+    // re-habilita al tocar una fecha (`onReturnDateSelect`). Se abre el calendario de
+    // devolución y se elige el primer día disponible distinto del actual —selectores del
+    // spec estable searcher-calendar-autoclose—. Eso cambia hora/fecha, re-habilita BUSCAR y,
+    // al pulsarlo, corre search().
+    await page.locator('[data-testid="wizard-step-1-test"]').click();
+    // El #searcher solo existe cuando el Paso 1 lo monta; un click en vuelo puede rebotar por
+    // la red de seguridad de deep-links. Reintentar hasta que monte (patrón max-rental-days).
+    await expect
+      .poll(async () => {
+        if ((await page.locator('#searcher').count()) === 0) {
+          await page.locator('[data-testid="wizard-step-1-test"]').click({ timeout: 5_000 }).catch(() => {});
+        }
+        return page.locator('#searcher').count();
+      }, { timeout: 30_000 })
+      .toBeGreaterThan(0);
+
+    const returnTrigger = page
+      .locator('button[aria-label="Seleccione una día de devolución"]')
+      .locator('visible=true')
+      .first();
+    await returnTrigger.click();
+    await page
+      .locator(
+        '[data-reka-calendar-cell-trigger]:not([data-disabled]):not([data-unavailable]):not([data-outside-view]):not([data-selected])',
+      )
+      .first()
+      .click();
+
+    const buscar = page.getByRole('link', { name: /BUSCAR VEHÍCULOS/i }).locator('visible=true').first();
+    await expect(buscar).toBeEnabled({ timeout: 10_000 });
+    await buscar.click();
+
+    await expect(page.getByRole('heading', { name: 'Elige tu vehículo' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[data-testid="wizard-unknown-status-test"]')).toBeHidden();
   });
 
   test('SCEN-W-14: elegir la gama C por UI lleva al Paso 3 con la gama fijada', async ({ page }) => {
