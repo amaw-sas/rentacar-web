@@ -78,27 +78,27 @@
       class="bg-white/10 rounded-2xl p-6 mb-6 text-left"
     >
       <h2 class="heading-sub mb-4 text-center">Tu reserva</h2>
-      <p class="body-sm text-white/90 mb-2">
-        <span class="text-white/60">Vehículo:</span> {{ recap.categoryName }}
+      <p class="text-sm text-white/90 mb-2">
+        <span class="text-white/80">Vehículo:</span> {{ recap.categoryName }}
       </p>
-      <p class="body-sm text-white/90 mb-2">
-        <span class="text-white/60">Recogida:</span>
+      <p class="text-sm text-white/90 mb-2">
+        <span class="text-white/80">Recogida:</span>
         {{ recapBranchLine(recap.pickupBranch, recap.pickupCity, recap.pickupDate, recap.pickupTime) }}
       </p>
-      <p class="body-sm text-white/90 mb-2">
-        <span class="text-white/60">Devolución:</span>
+      <p class="text-sm text-white/90 mb-2">
+        <span class="text-white/80">Devolución:</span>
         {{ recapBranchLine(recap.returnBranch, recap.returnCity, recap.returnDate, recap.returnTime) }}
       </p>
-      <p v-if="recap.days" class="body-sm text-white/90 mb-2">
-        <span class="text-white/60">Duración:</span> {{ recap.days }} días
+      <p v-if="recap.days" class="text-sm text-white/90 mb-2">
+        <span class="text-white/80">Duración:</span> {{ recap.days }} días
       </p>
-      <p class="body-sm text-white/90 mb-2">
-        <span class="text-white/60">Cobertura:</span> {{ recap.insuranceLabel }}
+      <p class="text-sm text-white/90 mb-2">
+        <span class="text-white/80">Cobertura:</span> {{ recap.insuranceLabel }}
       </p>
-      <p v-if="recap.mileageLabel" class="body-sm text-white/90 mb-2">
-        <span class="text-white/60">Kilometraje:</span> {{ recap.mileageLabel }}
+      <p v-if="recap.mileageLabel" class="text-sm text-white/90 mb-2">
+        <span class="text-white/80">Kilometraje:</span> {{ recap.mileageLabel }}
       </p>
-      <p class="body-md font-semibold text-white mt-3">Total: {{ recap.total }}</p>
+      <p class="text-base font-semibold text-white mt-3">Total: {{ recap.total }}</p>
     </div>
 
     <!-- Qué llevar: requisitos estáticos, no dependen de datos de la reserva. -->
@@ -108,7 +108,7 @@
         <li
           v-for="req in requirements"
           :key="req"
-          class="flex items-start gap-2 body-sm text-white/90"
+          class="flex items-start gap-2 text-sm text-white/90"
         >
           <span aria-hidden="true" class="shrink-0">✅</span><span>{{ req }}</span>
         </li>
@@ -121,13 +121,13 @@
         <div class="flex items-center gap-2"><span class="text-2xl" aria-hidden="true">📱</span><span>WhatsApp</span></div>
         <div class="flex items-center gap-2"><span class="text-2xl" aria-hidden="true">📧</span><span>Correo electrónico</span></div>
       </div>
-      <p class="text-sm text-white/60 mt-4">Revisa tu bandeja de entrada y carpeta de spam</p>
+      <p class="text-sm text-white/80 mt-4">Revisa tu bandeja de entrada y carpeta de spam</p>
     </div>
 
     <!-- Modificar/Cancelar: ahora enlaza contactos reales. -->
     <div class="bg-white/10 rounded-2xl p-6 mb-6">
       <h2 class="heading-sub mb-2">¿Necesitas modificar o cancelar?</h2>
-      <p class="text-white/70 mb-4">Escríbenos y te respondemos en horario laboral.</p>
+      <p class="text-white/80 mb-4">Escríbenos y te respondemos en horario laboral.</p>
       <div class="flex flex-wrap justify-center gap-3">
         <a
           v-for="c in contactLinks"
