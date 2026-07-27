@@ -34,6 +34,7 @@ export { isBeyondPricingHorizon, allRenderableBeyondHorizon } from './pricingHor
 export { pickRepresentativeDailyPrice } from './pickRepresentativeDailyPrice';
 export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
+export { applyMonthlyAnchorCap } from './applyMonthlyAnchorCap';
 export { IVA_PERCENTAGE } from './ivaRate';
 export { pickTotalCoverageChargeForDate } from './pickTotalCoverageCharge';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';

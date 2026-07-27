@@ -9,7 +9,7 @@ import useMoneyFormat from './useMoneyFormat';
 import useStoreReservationForm from '../stores/useStoreReservationForm';
 
 // Internal dependencies - utils
-import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge, resolvePicoyPlacaExempt, IVA_PERCENTAGE } from '@rentacar-main/logic/utils';
+import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge, resolvePicoyPlacaExempt, applyMonthlyAnchorCap, IVA_PERCENTAGE } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -65,6 +65,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const categoryDescription = ref<string>(categoryAvailableData.categoryDescription);
    const categoryModels = ref<CategoryModelData[] | undefined>(categoryAvailableData.categoryModels);
    const categoryMonthPrices = ref<CategoryMonthPriceData[] | undefined>(categoryAvailableData.categoryMonthPrices);
+   // Market ceiling for the monthly STRUCK price only. null = no cap.
+   const monthAnchorGross = ref<number | null>(categoryAvailableData.monthAnchorGross ?? null);
    const referenceToken = ref<string>(categoryAvailableData.referenceToken);
    const rateQualifier = ref<string>(categoryAvailableData.rateQualifier);
    
@@ -192,8 +194,10 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       const monthPrice = getCategoryMonthPrice();
       
       if(haveMonthlyReservation.value && monthPrice)
-         // one monthly day price
-         return monthPrice["one_day_price"]
+         // one monthly day price, capped at the market anchor so the strike
+         // never claims a discount off a price nobody pays. Display only —
+         // getDailyPrice below is untouched, and so are the totals.
+         return applyMonthlyAnchorCap(monthPrice["one_day_price"], monthAnchorGross.value)
       else if(hasDiscount())
          return vehicleDayCharge.value + (discountAmount.value ?? 0) + coverageUnitCharge.value;
       else
@@ -475,6 +479,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       categoryDescription,
       categoryModels,
       categoryMonthPrices,
+      monthAnchorGross,
       referenceToken,
       rateQualifier,
       

@@ -236,6 +236,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
           
           categoryAvailability['categoryModels'] = categoryAdmin.models;
           categoryAvailability["categoryMonthPrices"] = categoryAdmin.month_prices;
+          categoryAvailability["monthAnchorGross"] = categoryAdmin.month_anchor_gross ?? null;
           categoryAvailability["categoryDescription"] = categoryAdmin.category.replace(categoryAdmin.name, "");
           categoryAvailability["totalCoverageUnitCharge"] = coverageChargeFor(categoryAdmin);
           categoryAvailability["picoyplacaExempt"] = categoryAdmin.picoyplaca_exempt;
@@ -354,6 +355,10 @@ const createCategoryAvailability = (
     categoryDescription: category.description,
     categoryModels: category.models,
     categoryMonthPrices: category.month_prices,
+    // Also set by the availability merge, which assigns onto these same
+    // objects — but only for cards that HAVE an availability row. This is the
+    // only path for a card that does not: the LLNRAG009 gray grid.
+    monthAnchorGross: category.month_anchor_gross ?? null,
     picoyplacaExempt: category.picoyplaca_exempt,
     visibilityMode: category.visibility_mode,
     allowedCities: category.allowed_cities,
