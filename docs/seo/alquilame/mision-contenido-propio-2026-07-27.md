@@ -129,6 +129,8 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 
 | 2026-07-27 13:55 | Veredictos: W5 APTO (citas byte a byte; W5.1 despachado: rating real 4,9, curaduría sin quejas-5★ ni mención de competidor, pins tipados). W4 APTO (control 59-61% vs ~1%; W4.1 despachado: plantilla de cierres, repetición de tiempos, frases largas). W3 APTO (control 65-68% vs ~1-2%; W3.1 despachado: placa/parqueadero + moldes). Los H2 de SeoContent.vue los cubrió W7 (verificándose). Pendientes: veredictos de W2 y W7. Para W6: test de ≤155/unicidad de metas + envelope de extensión en vivo. |
 
+| 2026-07-27 14:10 | Veredictos completos: 5/5 APTOS con verificación independiente (controles positivos 49-68% en texto viejo vs 0-2,9% en el nuevo; matrices cruzadas limpias; S8 sin invenciones salvo 1 calificador regulatorio en cali → W2.1). Rondas de pulido despachadas a los 5 (W2.1 S8-cali+epítetos+pasajes, W3.1 placa/parqueadero+moldes, W4.1 plantilla retórica+frases, W5.1 rating 4,9+curaduría+pins tipados, W7.1 keyword en H2s+prosa). Tickets para el dueño: contradicciones factuales HEREDADAS entre bloques y FAQs (pico y placa y tiempos en ~8 ciudades) — preexistentes en producción de alquilatucarro, documentadas por los jueces de W2/W3/W4. |
+
 ### Bloqueos / errores
 - 12:10 — A/B de baseline en worktree de integración falló por entorno (faltaba `.nuxt/` copiado). Corregido, relanzado. No afecta a los workers.
 - 12:47 — La corrida completa de vitest en background quedó colgada (vitest no sale en worktrees); se reemplazó por A/B dirigido a las suites rojas. Resuelto.
