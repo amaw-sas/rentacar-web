@@ -70,6 +70,10 @@ const conductorAdicionalNombre = ref<string | null>(null);
 const conductorAdicionalIdentificacion = ref<string | null>(null);
 ```
 
+Van también en el `return` del store y en el `storeToRefs` que `useRecordReservationForm` desestructura
+al principio. Olvidar cualquiera de los dos sitios da `undefined` en silencio: sin error de tipos y sin
+error en runtime, el payload sale sin los campos.
+
 ### Payload
 
 En `useRecordReservationForm.ts`, insertados condicionalmente con el mismo patrón que ya usa
@@ -119,6 +123,12 @@ conductorAdicional: computed(() => selectedCategory.value?.withExtraDriver === t
 dos reglas. `selectedCategory` ya está en el `storeToRefs` de los tres componentes, así que no hay
 import nuevo.
 
+Este espejo es la pieza que sostiene todo el diseño, y falla callado. Si una marca se queda sin él,
+`v.nullish(..., false)` rellena el hueco con `false`, las dos reglas nunca disparan, y esa marca
+acepta reservas con conductor adicional sin nombre ni cédula. No hay error de tipos que lo delate.
+Por eso lleva su propio test de contrato por marca, hermano de `ReservationForm.noFlightTrap.test.ts`,
+que lee el fuente y exige el campo en `baseForm`.
+
 El bloque de campos va antes de la casilla de privacidad, bajo `v-if="formState.conductorAdicional"`,
 con los `data-testid` que necesita la QA y la nota de tratamiento debajo. El estilo lo heredan de
 `inputUi`, que ya define el look por marca.
@@ -156,10 +166,20 @@ Las dos cosas se mueven juntas.
 |---|---|
 | 01-04 | `packages/logic/src/utils/validation/__tests__/` con `safeParse`, hermano de `userInformationForm.test.ts` |
 | 05-07 | `useRecordReservationForm.extraDriver.test.ts`, siguiendo los cinco `.<topic>.test.ts` que ya existen |
-| 01, 08 | `ReservationForm.test.ts` de cada marca |
+| 01, 08 | `ReservationForm.test.ts` de cada marca, más el test de contrato del espejo en las tres |
 | Runtime | `/agent-browser` + `/dogfood` sobre el wizard de alquicarros — es la única marca donde el flag y los campos viven en pasos distintos |
 
 ## Riesgos
+
+**El CTA del wizard sigue habilitado con los campos vacíos, y así se queda.** `formValid` en
+`ReservationWizard.vue:472` es `Boolean(politicaPrivacidad.value)`: mira la casilla de privacidad y
+nada más. Con el adicional marcado y el nombre vacío, «Confirmar reserva» se ve pulsable, el usuario
+lo pulsa y valibot bloquea. A diferencia de `vehiculo` —que no tiene `UFormField` y por eso falla
+mudo, como documenta `ReservationWizard.vue:325-327`— estos campos sí lo tienen, así que el error se
+pinta al lado del campo, en el mismo paso. Esa es exactamente la observable de SCEN-396-02.
+
+No se toca `formValid` ni `ctaDisabled`. Meter ahí los campos nuevos reabre #366, y #313 depende del
+mismo camino.
 
 **Error rancio al desmarcar.** `UForm` puede conservar el error de un campo que ya se ocultó. No
 bloquea nada: el submit revalida el schema completo y pasa. Pero jsdom no lo ve; es cosa de la QA en
