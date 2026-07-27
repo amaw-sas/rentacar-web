@@ -13,7 +13,7 @@ export const faqs: FAQ[] = [
             content: 'Un compacto responde bien para trayectos dentro de Cali. Si vas hacia Buenaventura, en el Pacífico, o a San Cipriano, una camioneta ofrece mejor desempeño en esas rutas. Para viajar al Eje Cafetero, la opción indicada es un sedán.'
         },
         {
-            label: '¿Cómo funciona el pico y placa para un carro rentado en Cali?',
+            label: '¿Cómo funciona el pico y placa en Cali?',
             content: 'La medida sí aplica y se determina con el último número de la placa. Al entregarte el carro te indicaremos el día que le corresponde. Los fines de semana y los festivos no tienen esta restricción.'
         },
         {

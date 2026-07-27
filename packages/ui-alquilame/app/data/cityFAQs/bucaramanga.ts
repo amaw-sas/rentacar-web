@@ -17,7 +17,7 @@ export const faqs: FAQ[] = [
             content: getCityPriceAnswer('Bucaramanga')
         },
         {
-            label: '¿Un vehículo rentado debe cumplir pico y placa en Bucaramanga?',
+            label: '¿Cómo funciona el pico y placa en Bucaramanga?',
             content: 'Sí. La rotación se establece con el último dígito de la placa y te indicaremos la limitación cuando recibas el carro. Durante los fines de semana puedes manejar sin esa restricción.'
         },
         {
