@@ -21,5 +21,6 @@ export interface CityContentEntry {
   cityName: string
   citySlug: string
   metaDescription: string
+  pullQuoteSource: string
   content: CityExpandedContent
 }

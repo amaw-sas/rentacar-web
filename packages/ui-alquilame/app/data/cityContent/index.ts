@@ -63,3 +63,6 @@ export const hasCityExpandedContent = (cityName: string): boolean =>
 
 export const getCityMetaDescription = (cityNameOrSlug: string): string | null =>
   getCityContentEntry(cityNameOrSlug)?.metaDescription ?? null
+
+export const getCityPullQuoteSource = (cityNameOrSlug: string): string | null =>
+  getCityContentEntry(cityNameOrSlug)?.pullQuoteSource ?? null

@@ -1,4 +1,5 @@
 import type { BranchData, ReservasApiData } from '@rentacar-main/logic/utils'
+import { defineQuestion } from '@unhead/schema-org'
 
 import * as armenia from './armenia'
 import * as barranquilla from './barranquilla'
@@ -96,26 +97,19 @@ export const getCityFAQs = (cityName: string, branches: BranchData[] = []): FAQ[
 
 export interface CityFAQSchema {
   '@type': 'FAQPage'
-  mainEntity: Array<{
-    '@type': 'Question'
-    name: string
-    acceptedAnswer: {
-      '@type': 'Answer'
-      text: string
-    }
-  }>
+  mainEntity: ReturnType<typeof defineQuestion>[]
 }
 
 /** Pure builder used by both the schema composable and the S3 parity test. */
-export const buildCityFAQSchema = (faqs: FAQ[]): CityFAQSchema => ({
+export const buildCityFAQSchema = (
+  faqs: FAQ[],
+  canonicalUrl: string,
+): CityFAQSchema => ({
   '@type': 'FAQPage',
-  mainEntity: faqs.map((faq) => ({
-    '@type': 'Question',
+  mainEntity: faqs.map((faq, index) => defineQuestion({
+    '@id': `${canonicalUrl.replace(/\/+$/, '')}#/schema/question/faq-${index + 1}`,
     name: faq.label,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: faq.content,
-    },
+    acceptedAnswer: faq.content,
   })),
 })
 
@@ -124,8 +118,8 @@ export const useCityFAQs = (cityName: string): FAQ[] => {
   return getCityFAQs(cityName, data.value?.branches ?? [])
 }
 
-export const useCityFAQSchema = (cityName: string) => {
+export const useCityFAQSchema = (cityName: string, canonicalUrl: string) => {
   const faqs = useCityFAQs(cityName)
-  useSchemaOrg([buildCityFAQSchema(faqs)])
+  useSchemaOrg([buildCityFAQSchema(faqs, canonicalUrl)])
   return { faqs }
 }

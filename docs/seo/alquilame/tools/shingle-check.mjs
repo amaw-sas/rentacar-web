@@ -8,43 +8,72 @@ import { fileURLToPath } from 'node:url'
 const DEFAULT_SIZE = 8
 const LOCAL_CITY_BASE = 'http://localhost:4002'
 const REFERENCE_CITY_BASE = 'https://alquilatucarro.com'
+const REGION_START_ID = 'introduccion'
+const REGION_END_ID = 'faqs'
 
 function usage() {
   return `Usage:
   node shingle-check.mjs <file-or-url-a> <file-or-url-b>
   node shingle-check.mjs --city <slug>
+  node shingle-check.mjs --region <file-or-url-a> <file-or-url-b>
+  node shingle-check.mjs --city <slug> --region
 
+--region limits both HTML inputs to section#${REGION_START_ID} through section#${REGION_END_ID}.
 The percentage is the share of ${DEFAULT_SIZE}-word sequences from A that are also present in B.`
 }
 
-function decodeEntities(text) {
+export function decodeEntities(text) {
   const named = {
+    Aacute: 'Á',
+    Eacute: 'É',
+    Iacute: 'Í',
+    Iexcl: '¡',
+    Iquest: '¿',
+    Ntilde: 'Ñ',
+    Oacute: 'Ó',
+    Uacute: 'Ú',
+    Uuml: 'Ü',
+    aacute: 'á',
     amp: '&',
     apos: "'",
+    bull: '•',
+    copy: '©',
+    deg: '°',
+    eacute: 'é',
     gt: '>',
     hellip: '…',
+    iacute: 'í',
+    iexcl: '¡',
+    iquest: '¿',
     laquo: '«',
     lt: '<',
+    mdash: '—',
+    middot: '·',
     nbsp: ' ',
     ndash: '–',
+    ntilde: 'ñ',
+    oacute: 'ó',
     quot: '"',
     raquo: '»',
+    reg: '®',
+    uacute: 'ú',
+    uuml: 'ü',
   }
 
-  return text.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (entity, code) => {
+  return text.replace(/&(#x[\da-fA-F]+|#\d+|[A-Za-z][A-Za-z\d]+);/g, (entity, code) => {
     if (code.startsWith('#x') || code.startsWith('#X')) {
       return String.fromCodePoint(Number.parseInt(code.slice(2), 16))
     }
     if (code.startsWith('#')) {
       return String.fromCodePoint(Number.parseInt(code.slice(1), 10))
     }
-    return named[code.toLowerCase()] ?? entity
+    return named[code] ?? named[code.toLowerCase()] ?? entity
   })
 }
 
 /** Extract visible text without a DOM dependency. */
 export function extractVisibleText(input) {
-  if (!/<(?:!doctype|html|head|body|main|section|div|p|h[1-6])\b/i.test(input)) {
+  if (!/<\/?[A-Za-z][\w:-]*(?:\s[^<>]*|\s*\/?)>/i.test(input)) {
     return input
   }
 
@@ -53,6 +82,56 @@ export function extractVisibleText(input) {
     .replace(/<head\b[^>]*>[\s\S]*?<\/head\s*>/gi, ' ')
     .replace(/<(script|style|template|noscript|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
     .replace(/<[^>]+>/g, ' '))
+}
+
+function openingTagById(html, id, fromIndex = 0) {
+  const tags = /<([A-Za-z][\w:-]*)\b[^>]*>/g
+  tags.lastIndex = fromIndex
+  let match
+  while ((match = tags.exec(html)) !== null) {
+    const idMatch = match[0].match(/\bid\s*=\s*(["'])([^"']+)\1/i)
+    if (idMatch?.[2] === id) {
+      return {
+        end: tags.lastIndex,
+        index: match.index,
+        tagName: match[1],
+      }
+    }
+  }
+  return null
+}
+
+function matchingElementEnd(html, opening) {
+  const escapedTag = opening.tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const tags = new RegExp(`<\\/?${escapedTag}\\b[^>]*>`, 'gi')
+  tags.lastIndex = opening.end
+  let depth = 1
+  let match
+
+  while ((match = tags.exec(html)) !== null) {
+    if (/^<\//.test(match[0])) depth -= 1
+    else if (!/\/\s*>$/.test(match[0])) depth += 1
+    if (depth === 0) return tags.lastIndex
+  }
+
+  throw new Error(`Could not find closing <${opening.tagName}> for #${REGION_END_ID}`)
+}
+
+/**
+ * City-owned region in rendered CityPage HTML: section#introduccion starts the
+ * expanded city copy and section#faqs closes the local FAQ block.
+ */
+export function extractCityContentRegion(html) {
+  const start = openingTagById(html, REGION_START_ID)
+  if (!start || start.tagName.toLowerCase() !== 'section') {
+    throw new Error(`Could not find region start marker section#${REGION_START_ID}`)
+  }
+  const end = openingTagById(html, REGION_END_ID, start.end)
+  if (!end || end.tagName.toLowerCase() !== 'section') {
+    throw new Error(`Could not find region end marker section#${REGION_END_ID}`)
+  }
+
+  return html.slice(start.index, matchingElementEnd(html, end))
 }
 
 export function tokenize(input) {
@@ -70,9 +149,11 @@ export function createShingles(words, size = DEFAULT_SIZE) {
   )
 }
 
-export function compareTexts(textA, textB, size = DEFAULT_SIZE) {
-  const wordsA = tokenize(textA)
-  const wordsB = tokenize(textB)
+export function compareTexts(textA, textB, size = DEFAULT_SIZE, options = {}) {
+  const selectedA = options.region ? extractCityContentRegion(textA) : textA
+  const selectedB = options.region ? extractCityContentRegion(textB) : textB
+  const wordsA = tokenize(selectedA)
+  const wordsB = tokenize(selectedB)
   const shinglesA = createShingles(wordsA, size)
   const shinglesB = new Set(createShingles(wordsB, size))
   const matches = shinglesA.filter((shingle) => shinglesB.has(shingle)).length
@@ -85,6 +166,7 @@ export function compareTexts(textA, textB, size = DEFAULT_SIZE) {
     shinglesB: shinglesB.size,
     matches,
     percentage: shinglesA.length === 0 ? 0 : (matches / shinglesA.length) * 100,
+    region: options.region === true,
   }
 }
 
@@ -111,27 +193,34 @@ async function loadSource(source) {
 }
 
 function parseArguments(args) {
-  if (args[0] === '--city') {
-    const slug = args[1]
-    if (!slug || args.length !== 2) throw new Error(usage())
-    return [
-      `${LOCAL_CITY_BASE}/${slug}`,
-      `${REFERENCE_CITY_BASE}/${slug}`,
-    ]
+  const region = args.includes('--region')
+  const positional = args.filter((argument) => argument !== '--region')
+
+  if (positional[0] === '--city') {
+    const slug = positional[1]
+    if (!slug || positional.length !== 2) throw new Error(usage())
+    return {
+      region,
+      sources: [
+        `${LOCAL_CITY_BASE}/${slug}`,
+        `${REFERENCE_CITY_BASE}/${slug}`,
+      ],
+    }
   }
 
-  if (args.length !== 2) throw new Error(usage())
-  return args
+  if (positional.length !== 2) throw new Error(usage())
+  return { region, sources: positional }
 }
 
 async function main() {
-  const [sourceA, sourceB] = parseArguments(process.argv.slice(2))
+  const { region, sources: [sourceA, sourceB] } = parseArguments(process.argv.slice(2))
   const [textA, textB] = await Promise.all([
     loadSource(sourceA),
     loadSource(sourceB),
   ])
-  const result = compareTexts(textA, textB)
+  const result = compareTexts(textA, textB, DEFAULT_SIZE, { region })
 
+  console.log(`Scope: ${region ? `section#${REGION_START_ID} through section#${REGION_END_ID}` : 'full page'}`)
   console.log(`A: ${sourceA} (${result.wordsA} words, ${result.shinglesA} shingles)`)
   console.log(`B: ${sourceB} (${result.wordsB} words, ${result.shinglesB} unique shingles)`)
   console.log(

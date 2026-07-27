@@ -3,7 +3,10 @@ import {
   truncateForSEO,
 } from '@rentacar-main/logic/composables/useCityPageSEO'
 
-import { getCityMetaDescription } from '~/data/cityContent'
+import {
+  getCityMetaDescription,
+  getCityPullQuoteSource,
+} from '~/data/cityContent'
 import { useCityFAQSchema } from '~/data/cityFAQs'
 
 /** Alquilame-only city SEO wiring, including local meta copy and local FAQ schema. */
@@ -15,15 +18,18 @@ export const useAlquilameCityPageSEO = () => {
   const route = useRoute()
   const cityParam = route.params.city
   const catalogCity = cityParam ? getCityById(cityParam as string) : undefined
-  const localDescription = catalogCity
+  const metaDescription = catalogCity
     ? getCityMetaDescription(catalogCity.id) ?? catalogCity.description
     : null
-  const city = catalogCity && localDescription
-    ? { ...catalogCity, description: localDescription }
+  const pullQuoteSource = catalogCity
+    ? getCityPullQuoteSource(catalogCity.id) ?? catalogCity.description
+    : null
+  const city = catalogCity && pullQuoteSource
+    ? { ...catalogCity, description: pullQuoteSource }
     : catalogCity
 
-  const cityDescription = localDescription
-    ? truncateForSEO(localDescription, 155)
+  const cityDescription = metaDescription
+    ? truncateForSEO(metaDescription, 155)
     : franchise.description
   const cityTitle = city ? getCityPageTitle(city.name) : franchise.title
   const cityShareImageAlt = city
@@ -51,7 +57,7 @@ export const useAlquilameCityPageSEO = () => {
 
   if (city) {
     useCityBreadcrumbs(city.name, cityParam as string)
-    useCityFAQSchema(city.name)
+    useCityFAQSchema(city.name, `${franchise.website}/${cityParam}`)
   }
 
   return { city }
