@@ -104,6 +104,12 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 3. Dev server: crawl de las 19 ciudades, shingle-check completo, consola/network limpias (S6).
 4. Actualizar este archivo con resultados; limpiar worktrees mergeados.
 
+**Huecos de medición conocidos (cubrir en W6, hallados en re-revisión W1.1):**
+- Las RESPUESTAS del acordeón de FAQs no salen en el HTML SSR (solo las preguntas) → `--region` no las mide. En W6 comparar aparte el texto del JSON-LD `FAQPage` de alquilame dev vs alquilatucarro prod.
+- La región empieza en `#introduccion` → deja fuera `#ventajas` y los 3 pull-quotes. Se cubren con el shingle de página completa tras W7.
+- La fidelidad de placeholders ya no la cubre ningún test (asserts ahora estructurales); quedó certificada por la re-revisión de b12779f. Tras W2-W4 deja de ser relevante.
+- Dato de calibración: piso region-scoped entre ciudades de la misma marca = 10,5%; el gate <15% tiene ~4,5 puntos de margen.
+
 ---
 
 ## Registro de progreso (lo escribe el orquestador)
