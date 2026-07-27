@@ -33,16 +33,21 @@ La única fuente de verdad de lo que se reservó es el instante del envío. **El
 ```
 lastReservationSummary = {
   code,            // dataRecord.value.reserveCode (el bearer de la URL)
-  categoryName,    // useStoreSearchData().selectedCategory?.categoryDescription.value
-  total,           // ...selectedCategory?.currencyTotalToPayWithAdditionals.value  (canónico #373)
-  pickupDate, pickupTime, returnDate, returnTime,   // computeds humanFormatted* del form store
-  pickupBranch, returnBranch,                        // selectedPickupLocation / selectedReturnLocation
-  days,            // selectedDays
-  haveTotalInsurance, haveMonthlyReservation, monthlyMileage,  // flags crudos → el brand los etiqueta
+  categoryName,    // useStoreSearchData().selectedCategory?.categoryDescription    (SIN .value — ver nota)
+  total,           // ...selectedCategory?.currencyTotalToPayWithAdditionals         (SIN .value)  (canónico #373)
+  pickupDate, pickupTime, returnDate, returnTime,   // form store: humanFormatted*.value
+  pickupBranch, returnBranch,   // selectedPickupLocation.value?.name / selectedReturnLocation.value?.name
+  pickupCity, returnCity,       // ...selectedPickupLocation.value?.city / ...returnLocation.value?.city
+  days,            // selectedDays.value
+  haveTotalInsurance, haveMonthlyReservation, monthlyMileage,  // .value; flags crudos → el brand los etiqueta
 }
 ```
 
-Todos disponibles y ya formateados en ese punto. El objeto es genérico "qué se reservó" — no lleva presentación de alquicarros, así que vivir en el store compartido es defendible (las tres marcas comparten el flujo de submit). `lastSubmittedCode` NO se toca — sigue con su consumidor vivo del slideover.
+**Nota sobre `.value` — asimetría real que muerde si se ignora.** `selectedCategory` es un *deep ref* (`useStoreSearchData.ts:51`), así que `selectedCategory.value` es un proxy reactivo que **auto-desenvuelve** los refs anidados: `selectedCategory.value.categoryDescription` YA es el string, y ponerle `.value` da `undefined`. El código real lo confirma — nadie los lee con `.value` (`WizardSummary.vue:290,296`, `analyticsItemFromSelection` usa `unref`). En cambio los computeds del **form store** se capturan en el scope local de `submitForm` y SÍ son refs → necesitan `.value`. Los dos campos cross-store (nombre, total) van sin `.value` (o con `unref()` por seguridad); todo lo demás con `.value`.
+
+Las sedes NO son strings: `selectedPickupLocation`/`selectedReturnLocation` resuelven a `BranchData` (`{ id, code, name, city, … }`). El snapshot extrae `name` y `city` en la captura, no guarda el objeto.
+
+El objeto es genérico "qué se reservó" — no lleva presentación de alquicarros, así que vivir en el store compartido es defendible (las tres marcas comparten el flujo de submit). `lastSubmittedCode` NO se toca — sigue con su consumidor vivo del slideover.
 
 Una vez congelado, **nada drifta**: el refresh lo borra (Pinia) y el recap se oculta; un segundo envío lo sobrescribe con el código nuevo, así que `/reservado/{códigoViejo}` no coincide y se oculta. El gate se reduce a una sola comparación.
 
@@ -52,7 +57,7 @@ Una vez congelado, **nada drifta**: el refresh lo borra (Pinia) y el recap se oc
 
 Trivial y sin dependencia de estado vivo. Lee `lastReservationSummary` + el `reserveCode` de la ruta; devuelve `{ show, recap }`.
 
-- `show = summary != null && summary.code === normalizeReservationCode(route.params.reserveCode)`. Una sola condición: el snapshot describe la reserva de ESTA URL. `normalizeReservationCode` valida sin transformar (`reservationCode.ts:8-14`), así que comparar el código crudo persistido contra el param normalizado es sólido.
+- `show = summary != null && summary.code === normalizeReservationCode(route.params.reserveCode) && !!summary.categoryName && !!summary.total`. El match de código identifica la reserva (`normalizeReservationCode` valida sin transformar, `reservationCode.ts:8-14`, así que crudo === normalizado es sólido); la completitud de nombre y total evita que un snapshot a medias pinte `undefined`. `selectedCategory` está poblado en el camino normal de submit, pero el código de alrededor no lo asume (usa optional chaining, `useRecordReservationForm.ts:71`), así que el gate tampoco: si el nombre o el total faltan, el recap se oculta en vez de mentir.
 - `recap` mapea el snapshot a lo pintable: etiqueta de seguro (Total/Básico desde `haveTotalInsurance`), etiqueta de km si `haveMonthlyReservation`, y el resto tal cual (nombre, fechas, sedes, días, total). Sin refs vivos, sin `.value` de instancias, sin gate de gama.
 
 ### 2. La página `reservado/[reserveCode]/index.vue`
@@ -88,6 +93,7 @@ Los 3 strings de requisitos hoy están inline en `packages/ui-alquicarros/app/co
 
 - `lastReservationSummary` null (refresh, cold-load, entrada directa a la URL) → sin recap. Página funcional igual.
 - `summary.code` no coincide (segundo envío, link de otra reserva) → sin recap. No pintar datos ajenos.
+- Snapshot a medias (`categoryName` o `total` ausentes, p.ej. `selectedCategory` null al capturar) → sin recap por la regla de completitud del gate. Nunca `undefined` en el DOM.
 - Clipboard no disponible / falla → el botón no rompe; degrada a código seleccionable.
 
 ## Pruebas y escenarios observables (holdout SDD)
@@ -95,12 +101,13 @@ Los 3 strings de requisitos hoy están inline en `packages/ui-alquicarros/app/co
 1. `lastReservationSummary` sembrado con `code` = código de la URL → recap con los valores exactos del snapshot: nombre de vehículo, fechas+horas, sedes, días, etiqueta de seguro, total.
 2. `lastReservationSummary` null (refresh / cold-load) → recap ausente, sin `undefined`; checklist y enlaces presentes.
 3. `lastReservationSummary` presente pero `code` distinto al de la URL (segunda reserva, o link compartido de otra) → recap ausente; no pinta datos ajenos.
-4. Enlaces: `href` de WhatsApp = `franchise.whatsapp`; correo = `mailto:franchise.email`.
-5. Botón copiar (clipboard mockeado) → escribe el código al portapapeles y anuncia "Código copiado".
-6. Clipboard no disponible / rechaza → el botón no lanza; el código queda seleccionable; sin excepción.
-7. Variante `unavailable` → reintento + contacto presentes, `role="status"`.
-8. Contraste AA de los textos nuevos.
-9. (Store) Tras un submit exitoso a `/reservado/`, `lastReservationSummary.code === dataRecord.reserveCode` y el total = `currencyTotalToPayWithAdditionals` de la gama enviada — el snapshot se congela antes de navegar.
+4. `lastReservationSummary` con `code` coincidente pero `categoryName` o `total` ausentes → recap ausente (regla de completitud), nunca `undefined` en el DOM; checklist y enlaces presentes.
+5. Enlaces: `href` de WhatsApp = `franchise.whatsapp`; correo = `mailto:franchise.email`.
+6. Botón copiar (clipboard mockeado) → escribe el código al portapapeles y anuncia "Código copiado".
+7. Clipboard no disponible / rechaza → el botón no lanza; el código queda seleccionable; sin excepción.
+8. Variante `unavailable` → reintento + contacto presentes, `role="status"`.
+9. Contraste AA de los textos nuevos.
+10. (Store, **end-to-end obligatorio**) Manejando el `submitForm` REAL con un `useStoreSearchData().selectedCategory` poblado (instancia real de `useCategory`, no sembrada ni stubeada), tras la rama `/reservado/`: `lastReservationSummary.code === dataRecord.reserveCode`, `categoryName === selectedCategory.categoryDescription` y `total === selectedCategory.currencyTotalToPayWithAdditionals` (ambos SIN `.value`). Es el único escenario que ejercita la captura; sembrar el snapshot dejaría pasar el bug de `.value` en verde.
 
 ## Fuera de alcance
 
