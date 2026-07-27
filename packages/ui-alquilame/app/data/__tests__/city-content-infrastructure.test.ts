@@ -1,7 +1,11 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
-import { createSchemaOrgGraph } from '@unhead/schema-org'
+import {
+  createSchemaOrgGraph,
+  type IdReference,
+  type Thing,
+} from '@unhead/schema-org'
 import { cityPullQuotes, type BranchData } from '@rentacar-main/logic/utils'
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
@@ -33,6 +37,16 @@ const branches: BranchData[] = [
 const expectNonEmptyString = (value: unknown) => {
   expect(typeof value).toBe('string')
   expect((value as string).trim().length).toBeGreaterThan(0)
+}
+
+type ResolvedQuestionNode = IdReference & {
+  '@type': string
+  inLanguage: string
+  name: string
+  acceptedAnswer: {
+    '@type': string
+    text: string
+  }
 }
 
 describe('Alquilame city content structure', () => {
@@ -123,16 +137,20 @@ describe('Alquilame city FAQ structure and emitted schema parity (S3)', () => {
       const visibleFAQs = getCityFAQs(entry.cityName, branches)
       const canonicalUrl = `https://alquilame.co/${entry.citySlug}`
       const graph = createSchemaOrgGraph()
-      graph.push(buildCityFAQSchema(visibleFAQs, canonicalUrl))
+      graph.push(buildCityFAQSchema(visibleFAQs, canonicalUrl) as Thing)
       const [resolvedSchema] = graph.resolveGraph({
         host: 'https://alquilame.co',
         path: `/${entry.citySlug}`,
         inLanguage: 'es',
       })
-      const questions = resolvedSchema?.mainEntity ?? []
+      const mainEntity = resolvedSchema?.mainEntity
+      const questions = (mainEntity == null
+        ? []
+        : Array.isArray(mainEntity) ? mainEntity : [mainEntity]
+      ) as ResolvedQuestionNode[]
 
       expect(questions).toHaveLength(visibleFAQs.length)
-      expect(questions.map((question: Record<string, any>) => ({
+      expect(questions.map((question) => ({
         label: question.name,
         content: question.acceptedAnswer.text,
       }))).toEqual(visibleFAQs)
