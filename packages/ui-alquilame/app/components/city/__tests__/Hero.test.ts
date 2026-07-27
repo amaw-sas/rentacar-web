@@ -84,6 +84,12 @@ describe('F2/F3 — city/Hero.vue restyle (shared, both modes)', () => {
     expect(hero).toMatch(/Alquiler de carros en \{\{ city\?\.name \}\}/)
   })
 
+  it('uses Alquílame-specific supporting copy instead of the sibling-brand wording', () => {
+    expect(hero).toContain('Cuéntanos las fechas y los horarios de tu viaje.')
+    expect(hero).toContain('encontrar un carro para los días que tienes en mente.')
+    expect(hero).not.toContain('renta un vehículo por días, semanas o el tiempo que necesites')
+  })
+
   it('keeps the #searcher scroll target (UnableCategoryCard / reserveAnchor CTAs) in both modes', () => {
     // The empty #searcher anchor is rendered above the mode switch, so it exists
     // in landing AND results (harmless in landing — see SCEN-F3-03 design note).

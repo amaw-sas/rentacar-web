@@ -27,8 +27,8 @@
           Preguntas frecuentes sobre alquiler en {{ city?.name }}
         </h2>
         <p class="mt-4 body-lg">
-          Resolvemos tus dudas más comunes sobre el alquiler de carros en
-          {{ city?.name }}.
+          Aquí encuentras respuestas claras sobre el alquiler de carros en
+          {{ city?.name }} para que reserves con confianza y prepares tu viaje.
         </p>
       </div>
 
