@@ -125,6 +125,8 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 
 | 2026-07-27 13:27 | W3 (88b5b78), W4 (6907fa3) y W5 (18468f4) entregados en 8-10 min c/u. Auto-reportes: shingles 0,4-2%, metas ≤155 únicas, vitest verde, S5 intacto. Cifras tan bajas que exigen verificación: 3 jueces adversariales frescos (Claude) lanzados en paralelo para re-medir shingles con extracción propia, buscar template-reuse interno, verificar S8 (datos factuales) y S2/S7 (citas verbatim, tríos y pins). W2 y W7 siguen trabajando. |
 
+| 2026-07-27 13:36 | W2 (72031b2, incl. shared.ts, contradicción de Barranquilla conservada por S8) y W7 (b0b00d1, chrome: 4 componentes, solo copy, 98/98 tests) entregados. LOS 5 WORKERS COMPLETOS en <15 min c/u. Jueces adversariales de W2 y W7 lanzados; los de W3/W4/W5 siguen deliberando. Nota de integración: W5 y W7 tocaron ambos faq-testimonios.test.ts → posible conflicto de merge, resolver en integración. |
+
 ### Bloqueos / errores
 - 12:10 — A/B de baseline en worktree de integración falló por entorno (faltaba `.nuxt/` copiado). Corregido, relanzado. No afecta a los workers.
 - 12:47 — La corrida completa de vitest en background quedó colgada (vitest no sale en worktrees); se reemplazó por A/B dirigido a las suites rojas. Resuelto.
