@@ -2,10 +2,10 @@
  * Reviews (issue #112) — GOLDEN PARITY contract.
  *
  * Updated from the F1 "no marketing numbers" stance: the directive confirmed the
- * Google rating block (5,0 · 43 reseñas) is REAL data — alquilame's actual Google
+ * Google rating block (4,9) is REAL data — alquilame's actual Google
  * Business profile (cid=11824841242913553901). The golden #google-reviews section
  * therefore surfaces it, and these assertions encode that golden contract:
- *   - The REAL Google rating block: "5,0", "43 reseñas verificadas en Google",
+ *   - The REAL Google rating block: "4,9", without a stale review count,
  *     the multicolor Google logo, and the "Ver reseñas en Google" CTA → the
  *     google.com/maps CID link is the legitimate brand destination.
  *   - The 3 featured cards render the audited, verbatim Google review source.
@@ -51,13 +51,14 @@ describe('Reviews.vue — golden #google-reviews parity', () => {
 
   it('headlines the Google block WITHOUT a review count', () => {
     // The count left the heading: it only ever grows, so a hardcoded literal
-    // goes stale and reads as neglect. The 5,0 rating and the verification line
+    // goes stale and reads as neglect. The 4,9 rating and the verification line
     // carry the credibility on their own.
     expect(rating).toMatch(/>\s*\{\{ heading \}\}\s*</)
     expect(rating).toMatch(/heading\?:\s*string/)
     expect(rating).toContain("'Reseñas verificadas en Google'")
     expect(rating).not.toMatch(/\d+\s+reseñas/i)
-    expect(rating).toContain('5,0')
+    expect(rating).toContain('4,9')
+    expect(rating).not.toContain('5,0')
     expect(rating).toMatch(/Verificadas con autor y fecha/)
   })
 

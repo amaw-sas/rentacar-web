@@ -44,10 +44,10 @@ export const googleReviews = [
     relativeDate: 'Hace 3 meses',
   },
   {
-    name: 'Cindy Perez',
-    quote: 'El servicio es excelente sin embargo deben informar de las condiciones del servicio porque no me informaron de la hora de entrega y me tocó pagar un día más',
+    name: 'James Mina Mina A',
+    quote: 'Una buena atención y prestación del servicio',
     rating: 5,
-    relativeDate: 'Hace 5 meses',
+    relativeDate: 'Hace 6 meses',
   },
   {
     name: 'Juan Fernando Castellanos villa',
@@ -92,10 +92,10 @@ export const googleReviews = [
     relativeDate: 'Hace 6 meses',
   },
   {
-    name: 'Jesús Arias',
-    quote: 'Buena experiencia un poco caro pero estuvo bien',
+    name: 'Julio Palomino',
+    quote: 'Buenos carros, buen servicio',
     rating: 5,
-    relativeDate: 'Hace un mes',
+    relativeDate: 'Hace 6 meses',
   },
   {
     name: 'BRAYAN SANCHEZ',
@@ -104,10 +104,10 @@ export const googleReviews = [
     relativeDate: 'Hace 4 meses',
   },
   {
-    name: 'Roberto Liguori',
-    quote: 'Alquile un carro , con qlquilame EN la agencia localiza...y todo Pasa bien , carro nuevo y limpio...super',
+    name: 'john correa',
+    quote: 'Excelentes precios y vehículos nuevos',
     rating: 5,
-    relativeDate: 'Hace un mes',
+    relativeDate: 'Hace 6 meses',
   },
   {
     name: 'Julio Parra',
@@ -146,10 +146,10 @@ export const googleReviews = [
     relativeDate: 'Hace 6 meses',
   },
   {
-    name: 'Jorge MAL',
-    quote: 'Es un complique no llevar el la TC física, pero por lo demás espectacular. Sería bueno que permitan la tarjeta de crédito digital',
+    name: 'Diego Forero',
+    quote: 'Una buena experiencia con ustedes en el alquiler del auto.',
     rating: 5,
-    relativeDate: 'Hace 5 meses',
+    relativeDate: 'Hace 3 meses',
   },
   {
     name: 'Yuri Cadena',
@@ -165,12 +165,38 @@ export const googleReviews = [
   },
 ] as const satisfies readonly GoogleReview[]
 
-const PINNED_REVIEW_BY_CITY: Readonly<Record<string, GoogleReview['name']>> = {
+type CuratedGoogleReviewName = (typeof googleReviews)[number]['name']
+
+const PINNED_REVIEW_BY_CITY = {
   'santa-marta': 'Gael Joaquín Vargas Moreno',
   monteria: 'Daniela Madrid',
-}
+} as const satisfies Readonly<Record<string, CuratedGoogleReviewName>>
 
-const citySpecificReviewNames = new Set(Object.values(PINNED_REVIEW_BY_CITY))
+const citySpecificReviewNames = new Set<CuratedGoogleReviewName>(
+  Object.values(PINNED_REVIEW_BY_CITY),
+)
+
+const CITY_SELECTION_INDEX = {
+  armenia: 0,
+  barranquilla: 1,
+  bogota: 2,
+  bucaramanga: 3,
+  cali: 4,
+  cartagena: 5,
+  cucuta: 6,
+  floridablanca: 7,
+  ibague: 8,
+  manizales: 9,
+  medellin: 10,
+  monteria: 11,
+  neiva: 12,
+  palmira: 13,
+  pereira: 14,
+  'santa-marta': 15,
+  soledad: 16,
+  valledupar: 17,
+  villavicencio: 18,
+} as const
 
 function stableHash(value: string): number {
   let hash = 2166136261
@@ -198,15 +224,27 @@ export const pickCityReviews = (
     ? googleReviews.find((review) => review.name === pinnedName)
     : undefined
 
-  const rankedReviews = googleReviews
-    .filter((review) => !citySpecificReviewNames.has(review.name))
-    .map((review, index) => ({
-      index,
-      review,
-      rank: stableHash(`${normalizedSlug}\u0000${review.name}`),
-    }))
-    .sort((left, right) => left.rank - right.rank || left.index - right.index)
-    .map(({ review }) => review)
+  const reviewPool = googleReviews.filter(
+    (review) => !citySpecificReviewNames.has(review.name),
+  )
+  const knownCityIndex = CITY_SELECTION_INDEX[
+    normalizedSlug as keyof typeof CITY_SELECTION_INDEX
+  ]
+  const startIndex = knownCityIndex
+    ?? stableHash(normalizedSlug) % reviewPool.length
+  // The first three offsets form a cyclic difference set: known city trios
+  // share at most one reviewer. Remaining offsets only serve custom counts.
+  const selectionOffsets = [
+    0,
+    1,
+    3,
+    ...reviewPool.map((_, index) => index).filter(
+      (index) => index !== 0 && index !== 1 && index !== 3,
+    ),
+  ]
+  const rankedReviews = selectionOffsets.map(
+    (offset) => reviewPool[(startIndex + offset) % reviewPool.length]!,
+  )
 
   return [...(pinnedReview ? [pinnedReview] : []), ...rankedReviews].slice(0, limit)
 }
