@@ -61,7 +61,7 @@
       <!-- Cobertura nacional — listado tipográfico de TODAS las ciudades -->
       <div class="flex items-center gap-4 mb-6 max-w-4xl mx-auto">
         <span class="h-px flex-1 bg-gray-300"></span>
-        <span class="text-sm font-semibold uppercase tracking-wide text-gray-500">Cobertura nacional</span>
+        <span class="text-sm font-semibold uppercase tracking-wide text-gray-600">Cobertura nacional</span>
         <span class="h-px flex-1 bg-gray-300"></span>
       </div>
 
@@ -70,9 +70,9 @@
           <NuxtLink
             :to="`/${city.id}`"
             :aria-label="`Alquiler de carros en ${city.name}`"
-            class="group/city inline-flex items-center gap-2 text-gray-700 hover:text-brand-700 transition-colors"
+            class="group/city inline-flex items-center gap-2 text-gray-700 hover:text-brand-800 transition-colors"
           >
-            <UIcon name="i-lucide-map-pin" class="size-4 shrink-0 text-brand-600" />
+            <UIcon name="i-lucide-map-pin" class="size-4 shrink-0 text-brand-700" />
             <span class="text-sm font-medium group-hover/city:underline underline-offset-4">{{ city.name }}</span>
           </NuxtLink>
         </li>

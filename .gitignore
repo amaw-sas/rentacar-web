@@ -132,3 +132,6 @@ docs/seo/data/.tokens/
 /.claude/metrics.jsonl
 /.claude/metrics.jsonl.*
 .vercel
+
+# Production row pre-image dumped by scripts/fix-blog-cross-brand-mentions.ts
+blog-cross-brand-snapshot.*.json

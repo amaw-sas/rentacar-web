@@ -5,7 +5,9 @@
  *   - SCEN-F2-01/02: diseño nuevo (font-heading, max-w-3xl, eyebrow de fecha).
  *   - SCEN-F2-03: contenido legal preservado (AMAW S.A.S + NIT), contacto de
  *     marca config-driven (franchise.*), sin literal "Alquilame".
- *   - SCEN-F2-04: accents de marca naranjas (brand-600/700), sin rojos.
+ *   - SCEN-F2-04: accents de marca naranjas, sin rojos. El shade concreto subió
+ *     a brand-800 en #364 (brand-600 como texto es 2.32:1); el escenario sigue
+ *     siendo "naranja de marca, no rojo ajeno".
  *   - SCEN-F2-06: SEO por página config-driven (title + canonical).
  */
 import { describe, it, expect } from 'vitest'
@@ -38,8 +40,14 @@ describe('F2 legales — diseño nuevo, sin marca ajena, sin rojo', () => {
       expect(src).toMatch(/font-heading/)
       expect(src).toMatch(/max-w-3xl/)
     })
-    it(`${name}: accent de marca naranja (brand-600/700)`, () => {
-      expect(src).toMatch(/text-brand-600/)
+    // El escenario es "hay accent naranja de marca, no rojo de alquilame". El
+    // tono concreto era detalle de implementación, y desde #364 brand-600 está
+    // prohibido como texto: da 2.32:1 sobre blanco. Estas páginas usan brand-800
+    // (5.56:1). Se comprueba la escala de marca, no un shade fijo — el guard
+    // anti-rojo son las dos aserciones de arriba, que no cambian.
+    it(`${name}: accent de marca naranja (escala brand, legible)`, () => {
+      expect(src).toMatch(/text-brand-[89]00/)
+      expect(src).not.toMatch(/text-brand-[56]00/)
     })
     it(`${name}: contenido legal preservado (AMAW S.A.S + NIT)`, () => {
       expect(src).toContain('AMAW S.A.S')

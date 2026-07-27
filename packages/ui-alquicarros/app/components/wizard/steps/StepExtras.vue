@@ -6,6 +6,11 @@
     Botón "Omitir" avanza sin marcar nada (SCEN-W-07).
   -->
   <div>
+    <!-- Cotización rancia (issue #401): el aviso SUSTITUYE los toggles. Con la gama
+         anulada `priceOf` devuelve '' → tres filas "$ " con checkboxes cuyo setter
+         no-opea. El v-if va DENTRO del componente por la misma razón que StepCoverage. -->
+    <WizardStaleNotice v-if="searchStale" @adjust-search="emit('adjust-search')" />
+    <template v-else>
     <header class="mb-5">
       <h2 class="heading-card text-gray-900">Servicios adicionales</h2>
       <p class="mt-1 body-base text-gray-500">
@@ -27,7 +32,7 @@
             <span class="block body-sm text-gray-500">{{ opt.hint }}</span>
           </div>
         </div>
-        <span class="shrink-0 price-md font-heading text-brand-700">$ {{ opt.price.value }}</span>
+        <span class="shrink-0 price-md font-heading text-brand-800">$ {{ opt.price.value }}</span>
       </label>
     </div>
 
@@ -39,6 +44,7 @@
     >
       Omitir — continuar sin adicionales
     </button>
+    </template>
   </div>
 </template>
 
@@ -47,7 +53,16 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
-const emit = defineEmits<{ (e: 'skip'): void }>()
+defineProps<{
+  /** Issue #401: el tramo cambió sin re-buscar → sustituye los toggles por el aviso. */
+  searchStale?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'skip'): void
+  /** El usuario pide volver a la búsqueda desde el aviso de rancia. */
+  (e: 'adjust-search'): void
+}>()
 
 const search = useStoreSearchData()
 const { selectedCategory } = storeToRefs(search)

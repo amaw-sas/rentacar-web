@@ -129,16 +129,27 @@ export default async function useRecordReservationForm() {
   // reserva regular
   else {
     total_price_to_pay = selectedCategory.value?.getActualTotalPrice ?? 0;
-    total_price =
-      (selectedCategory.value?.getSubtotal ?? 0) +
-      (selectedCategory.value?.getTaxFeePrice ?? 0);
+    // Issue #376: round to whole pesos, same as the monthly branch above.
+    // Without Seguro Total the getters return the raw upstream amounts (see
+    // useCategory getTaxFeePrice/getIVAFeePrice/getSubtotal `else` paths), which
+    // can carry sub-peso decimals; persisting them risks cent-level mismatches
+    // downstream (dashboard, Localiza, reconciliation). COP has no subunit.
+    //
+    // Round each component, then derive total_price from the rounded parts so
+    // the persisted fields keep an exact peso-level identity: here total_price
+    // is subtotal + tax (this branch's total excludes IVA, unchanged). Rounding
+    // the sum independently could drift ±1 COP from tax_fee, breaking any
+    // downstream reconciliation of total_price − tax_fee.
+    const roundedSubtotal = Math.round(selectedCategory.value?.getSubtotal ?? 0);
+    const roundedTaxFee = Math.round(selectedCategory.value?.getTaxFeePrice ?? 0);
+    total_price = roundedSubtotal + roundedTaxFee;
 
     formData = {
       ...partialData,
       extra_hours: selectedCategory.value?.extraHoursQuantity,
       extra_hours_price: selectedCategory.value?.extraHoursTotalAmount,
-      tax_fee: selectedCategory.value?.getTaxFeePrice,
-      iva_fee: selectedCategory.value?.getIVAFeePrice,
+      tax_fee: roundedTaxFee,
+      iva_fee: Math.round(selectedCategory.value?.getIVAFeePrice ?? 0),
       total_price,
       total_price_to_pay,
       //TODO add user field

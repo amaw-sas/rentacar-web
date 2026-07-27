@@ -538,11 +538,14 @@ button { -webkit-tap-highlight-color: transparent; }
   overflow: hidden;
 }
 
-/* Pulso de atención del FAB (respeta reduce-motion) */
+/* Pulso de atención del FAB. Color por marca vía --ui-primary (evita fijar el
+   rojo de una marca). Acotado a 2 ciclos (4.8s < 5s de WCAG 2.2.2: contenido
+   que parpadea sin pausa) con `forwards` para quedar en reposo; respeta
+   reduce-motion. El spread animado de box-shadow no compone, por eso es finito. */
 @keyframes pulse-attention {
-  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(204, 2, 43, 0.4); }
-  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px rgba(204, 2, 43, 0); }
+  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 color-mix(in srgb, var(--ui-primary, transparent) 40%, transparent); }
+  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px transparent; }
 }
-.animate-pulse-attention { animation: pulse-attention 2.4s ease-in-out infinite; }
+.animate-pulse-attention { animation: pulse-attention 2.4s ease-in-out 2 forwards; }
 @media (prefers-reduced-motion: reduce) { .animate-pulse-attention { animation: none; } }
 </style>

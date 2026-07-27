@@ -26,16 +26,30 @@
     background-image:none against custom @theme tokens). The brand footer-from /
     footer-to tokens drive the orange ramp. Typography uses the font-heading
     utility, as the design does.
+
+    Contrast (issue #364, R1): this was the worst ratio in the app at 1.90:1, and
+    the hover state was worse still than the resting one (2.36:1). Both are gone.
+
+    Two things here are load-bearing and easy to undo by accident:
+
+    1. NO transparency of any kind on this text — not text-white/75, and not an
+       opacity utility either, which composites the same way. This ramp ends at
+       #e35d0a, where even solid --color-on-brand only reaches 4.93:1; at 80%
+       it drops to 3.93:1 and fails. Measure against the END of the gradient,
+       never the start.
+    2. The ally names lost their hover colour change rather than gaining a
+       darker one. The marquee already pauses on hover — that is the real
+       affordance, and it costs no contrast.
   -->
   <section
     id="partners"
-    class="py-12 md:py-16 bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]"
+    class="context-brand py-12 md:py-16 bg-linear-to-b from-footer-from to-footer-to"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <p class="text-center text-sm font-medium uppercase tracking-wider text-white/80 mb-2">
+      <p class="text-center text-sm font-medium uppercase tracking-wider text-on-brand mb-2">
         Empresas Aliadas
       </p>
-      <p class="mx-auto mb-10 max-w-2xl text-center text-base text-white/75">
+      <p class="mx-auto mb-10 max-w-2xl text-center text-base text-on-brand">
         Nos apoyamos en una red de aliados para darte más vehículos disponibles,
         en más ciudades y fechas.
       </p>
@@ -53,7 +67,7 @@
           <!-- Real copy -->
           <div v-for="ally in allies" :key="`a-${ally}`" class="flex-shrink-0">
             <span
-              class="whitespace-nowrap font-heading text-2xl font-extrabold tracking-tight text-white/75 transition-colors duration-300 hover:text-white md:text-3xl"
+              class="whitespace-nowrap font-heading text-2xl font-extrabold tracking-tight text-on-brand md:text-3xl"
             >
               {{ ally }}
             </span>
@@ -66,7 +80,7 @@
             aria-hidden="true"
           >
             <span
-              class="whitespace-nowrap font-heading text-2xl font-extrabold tracking-tight text-white/75 transition-colors duration-300 hover:text-white md:text-3xl"
+              class="whitespace-nowrap font-heading text-2xl font-extrabold tracking-tight text-on-brand md:text-3xl"
             >
               {{ ally }}
             </span>
