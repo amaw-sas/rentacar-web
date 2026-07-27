@@ -18,11 +18,11 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Puedo circular cualquier día en Villavicencio?',
-    content: 'Sí. Los vehículos particulares no tienen restricción de pico y placa en Villavicencio, así que pueden moverse cualquier día de la semana tanto en la ciudad como en el departamento.',
+    content: 'Sí. Los vehículos particulares no tienen pico y placa en Villavicencio. Pueden moverse cualquier día de la semana, tanto en la ciudad como en el departamento.',
   },
   {
     label: '¿Cuánto demora el viaje por carretera entre Bogotá y Villavicencio?',
-    content: 'El recorrido toma cerca de dos horas y media por una vía moderna y pavimentada. En el trayecto cruzas el túnel de Buenavista. Hazlo de día si quieres apreciar el paisaje del piedemonte llanero durante la llegada.',
+    content: 'El recorrido toma cerca de dos horas y media por una vía moderna y pavimentada. En el trayecto cruzas el túnel de Buenavista. De día se aprecia mejor el paisaje del piedemonte llanero durante la llegada.',
   },
   {
     label: '¿Qué planes se pueden hacer en carro saliendo de Villavicencio?',

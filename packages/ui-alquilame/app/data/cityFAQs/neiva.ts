@@ -10,7 +10,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Qué tipo de carro sirve para viajar por Neiva y el Huila?',
-    content: 'Para conducir por Neiva, un sedán con buen aire acondicionado responde bien al clima cálido. Si tu ruta incluye el Desierto de la Tatacoa o San Agustín, elige una camioneta: tendrás una opción más adecuada para las carreteras de montaña de esos recorridos.',
+    content: 'Para conducir por Neiva, un sedán con buen aire acondicionado responde bien al clima cálido. En las rutas a la Tatacoa o San Agustín, una camioneta resulta más adecuada. Es una ventaja en las carreteras de montaña.',
   },
   {
     label: '¿Cómo consulto el precio del alquiler de un carro en Neiva?',
@@ -26,6 +26,6 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Qué recorridos puedo armar desde Neiva con un carro alquilado?',
-    content: 'Puedes ir al Desierto de la Tatacoa en 45 minutos, a los termales de Rivera en 30 minutos o a la represa de Betania en una hora. Para viajes más largos, calcula tres horas hasta Pitalito y cuatro hasta San Agustín y su parque arqueológico. La mezcla de arqueología y naturaleza permite organizar varios días distintos.',
+    content: 'El Desierto de la Tatacoa está a 45 minutos. Los termales de Rivera quedan a 30 minutos y la represa de Betania, a una hora. Para viajes más largos, calcula tres horas hasta Pitalito y cuatro hasta San Agustín y su parque arqueológico. La mezcla de arqueología y naturaleza permite organizar varios días distintos.',
   },
 ]

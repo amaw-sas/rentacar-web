@@ -26,6 +26,6 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿A dónde puedo viajar en carro desde Palmira?',
-    content: 'Buga y la Basílica del Señor de los Milagros quedan a 30 minutos; Cali también está a media hora. La Hacienda El Paraíso, vinculada con María, se encuentra a 40 minutos. Calcula una hora para el Parque Natural Farallones y una hora y media para el Lago Calima. Así puedes alternar historia y naturaleza.',
+    content: 'Buga y la Basílica del Señor de los Milagros quedan a 30 minutos; Cali también está a media hora. La Hacienda El Paraíso, vinculada con María, se encuentra a 40 minutos. Calcula una hora para el Parque Natural Farallones y una hora y media para el Lago Calima. El conjunto permite alternar historia y naturaleza.',
   },
 ]

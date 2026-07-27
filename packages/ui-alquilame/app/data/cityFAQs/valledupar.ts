@@ -10,7 +10,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Cuál categoría de vehículo conviene para recorrer Valledupar?',
-    content: 'Un compacto con buen aire acondicionado es una elección práctica para manejar dentro de Valledupar. Si vas a subir a la Sierra Nevada o entrar por caminos rurales hacia pueblos indígenas, escoge una camioneta para afrontar mejor ese tipo de ruta.',
+    content: 'Un compacto con buen aire acondicionado es una elección práctica para manejar dentro de Valledupar. Para subir a la Sierra Nevada o entrar por caminos rurales, una camioneta responde mejor. Esto también aplica en rutas hacia pueblos indígenas.',
   },
   {
     label: '¿Dónde veo cuánto vale rentar un carro en Valledupar?',
@@ -22,7 +22,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Se puede llegar al Guatapurí en un carro alquilado?',
-    content: 'Sí. El río Guatapurí cruza Valledupar y cuenta con diferentes accesos a balnearios. El más conocido es el Balneario Hurtado, ubicado a 10 minutos del centro; puedes ir en carro y pasar allí una parte del día para descansar del calor.',
+    content: 'Sí. El río Guatapurí cruza Valledupar y cuenta con diferentes accesos a balnearios. El más conocido es el Balneario Hurtado, ubicado a 10 minutos del centro. Allí puedes pasar parte del día y descansar del calor.',
   },
   {
     label: '¿Qué lugares del Cesar quedan al alcance desde Valledupar?',
