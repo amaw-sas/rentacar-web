@@ -94,9 +94,12 @@ describe('reservation summary discount badge gate (monthly NaN bug)', () => {
  * legitimate monthly anchor (R-WEB D-W1, characterised in
  * useCategory.monthlyStruckPrice.adversarial.test.ts).
  *
- * The reservation summaries keep the gate they already shipped with. They carry
- * the same monthly blind spot; widening them is a behaviour change tracked as a
- * follow-up, not part of this fix.
+ * The reservation summaries carried the same monthly blind spot and now use
+ * hasStruckBasePrice too (SCEN-M7): a monthly booking reached the summary with
+ * its one_day_price anchor silently dropped, so the customer saw the struck
+ * price on the card and not on the page where they commit. Only the struck
+ * price's own div moved; the "Dto Hoy" badge beside it keeps hasDiscount(),
+ * which is the right predicate for a daily-discount badge.
  *
  * Note for the alquilame reskin landing on preview/alquilame-todo: it must
  * migrate its cards to hasStruckBasePrice too. Its hasDiscountToShow does not
@@ -109,8 +112,8 @@ describe('reservation summary discount badge gate (monthly NaN bug)', () => {
 const STRUCK_PRICE_SURFACES = [
   ['ui-alquilame', 'app/components/CategoryCard.vue', 'hasStruckBasePrice'],
   ['ui-alquilatucarro', 'app/components/CategoryCard.vue', 'hasStruckBasePrice'],
-  ['ui-alquilame', 'app/components/ReservationResume.vue', 'hasDiscount()'],
-  ['ui-alquilatucarro', 'app/components/ReservationResume.vue', 'hasDiscount()'],
+  ['ui-alquilame', 'app/components/ReservationResume.vue', 'hasStruckBasePrice'],
+  ['ui-alquilatucarro', 'app/components/ReservationResume.vue', 'hasStruckBasePrice'],
 ] as const
 
 describe('struck base price gate', () => {
