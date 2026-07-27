@@ -1,32 +1,31 @@
 import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 
-export const cityName = "Montería"
-export const citySlug = "monteria"
+export const cityName = 'Montería'
+export const citySlug = 'monteria'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
-        {
-            label: '¿Dónde puedo recoger mi carro en Montería?',
-            content: getCityPickupAnswer('Montería')
-        },
-        {
-            label: '¿Qué vehículo recomiendan para Montería y Córdoba?',
-            content: 'Un compacto con buen aire acondicionado es ideal para el clima cálido de Montería. Para visitar fincas ganaderas o la zona costera, recomendamos camioneta para caminos rurales.'
-        },
-        {
-            label: '¿Cuánto cuesta alquilar un carro en Montería?',
-            content: getCityPriceAnswer('Montería')
-        },
-        {
-            label: '¿Hay pico y placa en Montería?',
-            content: 'Montería no tiene restricción de pico y placa para vehículos particulares actualmente. Puedes circular libremente cualquier día de la semana por toda la ciudad y el departamento.'
-        },
-        {
-            label: '¿Puedo viajar a las playas desde Montería?',
-            content: 'Sí, las playas de Coveñas y Tolú están a 1.5 horas de Montería por carretera pavimentada. También puedes ir a San Antero (1h) o tomar lanchas a las Islas de San Bernardo.'
-        },
-        {
-            label: '¿Qué lugares puedo visitar con carro desde Montería?',
-            content: 'Destinos de Córdoba: Coveñas y Tolú playas (1.5h), Lorica pueblo patrimonio (1h), Ciénaga de Ayapel (2h), Tierralta y Nudo de Paramillo (2h). Ganadería, playas y naturaleza.'
-        }
-    ]
+  {
+    label: '¿Dónde puedo recoger mi carro de alquiler en Montería?',
+    content: getCityPickupAnswer('Montería'),
+  },
+  {
+    label: '¿Qué vehículo conviene para viajar por Montería y Córdoba?',
+    content: 'Un compacto con aire acondicionado funciona bien frente al calor de Montería. Si el recorrido incluye fincas ganaderas, caminos rurales o la zona costera, te recomendamos escoger una camioneta.',
+  },
+  {
+    label: '¿Cómo consulto una tarifa de alquiler de carros en Montería?',
+    content: getCityPriceAnswer('Montería'),
+  },
+  {
+    label: '¿Los carros particulares tienen pico y placa en Montería?',
+    content: 'No hay una restricción vigente para vehículos particulares. Puedes conducir cualquier día de la semana tanto dentro de Montería como por el resto del departamento.',
+  },
+  {
+    label: '¿Cuánto tarda el viaje desde Montería hasta las playas?',
+    content: 'Por carretera pavimentada llegas a Coveñas y Tolú en 1.5 horas. San Antero queda a 1 hora, y desde la costa también salen lanchas con destino a las Islas de San Bernardo.',
+  },
+  {
+    label: '¿Qué destinos de Córdoba puedo recorrer en carro desde Montería?',
+    content: 'Lorica, pueblo patrimonio, está a 1 hora; Coveñas y Tolú, a 1.5 horas; la Ciénaga de Ayapel, a 2 horas; y Tierralta con el Nudo de Paramillo, a 2 horas. La región reúne ganadería, playas y naturaleza.',
+  },
+]

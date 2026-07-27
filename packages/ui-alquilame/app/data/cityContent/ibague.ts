@@ -1,43 +1,40 @@
 import type { CityExpandedContent } from './types'
 
-export const cityName = "Ibagué"
-export const citySlug = "ibague"
+export const cityName = 'Ibagué'
+export const citySlug = 'ibague'
 
-// W1 placeholder: copied from the current city catalog so rendering stays unchanged.
-export const metaDescription = "Ibagué, la Capital Musical de Colombia, está rodeada de naturaleza que pide ser explorada en carro. Desde el Aeropuerto Perales llegas rápido al Cañón del Combeima — puerta al Nevado del Tolima —, al Jardín Botánico San Jorge o a cascadas escondidas en la cordillera. Si vienes durante el Festival Folclórico, tener vehículo propio te permite moverte entre sedes y eventos sin perder un solo compás. Reserva sin anticipos, elige tu vehículo y aprovecha descuentos de hasta el 60%. Ibagué suena mejor cuando la recorres a tu manera."
+export const metaDescription = 'Alquiler de carros en Ibagué para recorrer la ciudad, el Cañón del Combeima y las rutas del Tolima. Elige tu vehículo y reserva en línea.'
 
-// Keep this independent from the short SEO meta so all three editorial separators survive.
-export const pullQuoteSource = "Ibagué, la Capital Musical de Colombia, está rodeada de naturaleza que pide ser explorada en carro. Desde el Aeropuerto Perales llegas rápido al Cañón del Combeima — puerta al Nevado del Tolima —, al Jardín Botánico San Jorge o a cascadas escondidas en la cordillera. Si vienes durante el Festival Folclórico, tener vehículo propio te permite moverte entre sedes y eventos sin perder un solo compás. Reserva sin anticipos, elige tu vehículo y aprovecha descuentos de hasta el 60%. Ibagué suena mejor cuando la recorres a tu manera."
+export const pullQuoteSource = 'En Ibagué, la música convive con el calor del valle y con la cordillera que se levanta hacia el Cañón del Combeima. Desde Perales puedes organizar un día entre jardines y festivales o tomar carretera hacia cascadas, pueblos agrícolas y senderos de alta montaña. La Capital Musical se disfruta mejor cuando tú marcas el compás de cada parada.'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const content: CityExpandedContent = {
-        intro: `Ibagué, la Capital Musical de Colombia, es el corazón del Tolima y la puerta de entrada a destinos naturales espectaculares. Con un carro de alquiler puedes explorar esta ciudad de tradición musical y aventurarte hacia el Cañón del Combeima, nevados y pueblos cafeteros. El Aeropuerto Perales tiene vuelos limitados, pero la ciudad está estratégicamente ubicada entre Bogotá y el Eje Cafetero. Tener vehículo propio te permite subir al Cañón del Combeima con sus cascadas, visitar Cajamarca antes de la minería, explorar el Parque Nacional Los Nevados desde el lado tolimense y disfrutar de la gastronomía típica. Ibagué combina música, naturaleza de montaña y el espíritu festivo del Tolima Grande.`,
-        destinations: [
-            {
-                name: 'Cañón del Combeima',
-                time: '45 minutos',
-                description: 'Valle espectacular con el río Combeima, cascadas, restaurantes de trucha y senderos hacia el Nevado del Tolima. Juntas es el pueblo más conocido, base para ascensos al nevado.'
-            },
-            {
-                name: 'Nevado del Tolima',
-                time: '3 horas (hasta base)',
-                description: 'Volcán de 5.215 metros, hermano del Ruiz. Ascenso de 2-3 días desde Juntas. Para no escaladores, el camino hasta El Silencio ofrece vistas impresionantes del nevado y páramo.'
-            },
-            {
-                name: 'Cajamarca',
-                time: '1.5 horas',
-                description: 'La despensa agrícola de Colombia, famosa por sus arvejas y paisajes de montaña. Pueblo tranquilo con arquitectura tradicional y mirador hacia el valle. Antes del proyecto minero, conócelo.'
-            },
-            {
-                name: 'Honda',
-                time: '2 horas',
-                description: 'Ciudad colonial a orillas del Magdalena, el puerto más importante de la colonia. Puentes históricos, arquitectura única, subienda de peces y un pasado glorioso por descubrir.'
-            }
-        ],
-        drivingTips: {
-            picoPlaca: 'Ibagué tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 8:00 AM y de 6:00 a 7:30 PM. Solo una hora en la mañana.',
-            tolls: 'Hacia Bogotá por la Línea hay peajes (~COP 32.000 total). Hacia el Cañón del Combeima no hay peajes. Hacia Armenia hay un peaje (~$15.500 COP).',
-            parking: 'En el centro y zonas comerciales los parqueaderos cuestan entre $2.000-4.000 COP/hora. En La Estación y centros comerciales hay tarifas con consumo.'
-        },
-        bestSeason: 'Ibagué tiene clima cálido (22-32°C) pero el Cañón del Combeima es más fresco. La temporada seca de junio a agosto es ideal para el Nevado del Tolima (aunque requiere guía y equipo especializado). El Festival Folclórico en junio es la época más festiva. Para el Cañón, cualquier época funciona.'
-    }
+  intro: `Ibagué suena a festivales y tradición, pero basta mirar hacia la cordillera para entender que también es una ciudad de rutas naturales. La Capital Musical de Colombia ocupa el corazón del Tolima y abre el camino al Cañón del Combeima, a los nevados y a pueblos cafeteros. El Aeropuerto Perales recibe vuelos limitados; por carretera, la ubicación entre Bogotá y el Eje Cafetero la convierte en una parada estratégica. Con un alquiler de carros en Ibagué puedes subir entre cascadas hasta el Cañón, acercarte al Parque Nacional Los Nevados por el costado tolimense, conocer Cajamarca y reservar tiempo para probar la cocina local. El carro también facilita moverse entre sedes cuando la ciudad celebra su tradición musical. La mezcla cambia en pocos kilómetros: del clima cálido urbano pasas a paisajes frescos de montaña y luego a caminos que acompañan el río Combeima.`,
+  destinations: [
+    {
+      name: 'Cañón del Combeima',
+      time: '45 minutos',
+      description: 'El río Combeima guía la ruta entre cascadas, restaurantes de trucha y senderos que conducen hacia el Nevado del Tolima. Juntas es el poblado más conocido y funciona como punto de partida para los ascensos.',
+    },
+    {
+      name: 'Nevado del Tolima',
+      time: '3 horas (hasta base)',
+      description: 'El volcán alcanza 5.215 metros y es hermano del Ruiz. Llegar a la cima implica una expedición de 2 a 3 días desde Juntas; sin escalar, puedes avanzar hasta El Silencio para contemplar el páramo y el nevado.',
+    },
+    {
+      name: 'Cajamarca',
+      time: '1.5 horas',
+      description: 'Conocida como la despensa agrícola de Colombia, esta población cultiva arvejas entre montañas. Su arquitectura tradicional, la tranquilidad del casco urbano y un mirador hacia el valle justifican conocerla antes del proyecto minero.',
+    },
+    {
+      name: 'Honda',
+      time: '2 horas',
+      description: 'A orillas del Magdalena permanece el que fue el puerto más importante de la colonia. Puentes históricos, construcciones singulares y la subienda de peces ayudan a leer el pasado de esta ciudad colonial.',
+    },
+  ],
+  drivingTips: {
+    picoPlaca: 'La medida de pico y placa funciona de lunes a viernes por el último número de la placa. En la mañana va de 7:00 a 8:00 AM y, en la tarde, de 6:00 a 7:30 PM.',
+    tolls: 'El recorrido hacia Bogotá por la Línea suma peajes por cerca de COP 32.000. No hay cobros en el camino al Cañón del Combeima; hacia Armenia encuentras uno de aproximadamente $15.500 COP.',
+    parking: 'Una hora en los estacionamientos del centro o de las áreas comerciales está entre $2.000 y $4.000 COP. La Estación y otros centros comerciales manejan opciones ligadas al consumo.',
+  },
+  bestSeason: 'En la zona urbana de Ibagué la temperatura suele estar entre 22 y 32 °C, mientras el Cañón del Combeima ofrece un ambiente más fresco. De junio a agosto, la temporada seca favorece el acceso al Nevado del Tolima, una salida que requiere guía y equipo especializado. Junio también trae el Festival Folclórico y la agenda más animada de la ciudad. Para visitar el Cañón puedes escoger cualquier época del año.',
+}

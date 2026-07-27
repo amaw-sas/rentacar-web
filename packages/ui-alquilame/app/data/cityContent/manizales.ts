@@ -1,43 +1,40 @@
 import type { CityExpandedContent } from './types'
 
-export const cityName = "Manizales"
-export const citySlug = "manizales"
+export const cityName = 'Manizales'
+export const citySlug = 'manizales'
 
-// W1 placeholder: copied from the current city catalog so rendering stays unchanged.
-export const metaDescription = "Entre volcanes nevados y fincas cafeteras, Manizales ofrece una experiencia única en el Eje Cafetero. Recorre la ciudad en carro y aventúrate hacia el Parque Nacional Los Nevados, sube al mirador de Chipre, visita el Recinto del Pensamiento o baja a los termales de Santa Rosa de Cabal. Reserva en línea sin anticipos y con descuentos de hasta el 60%. La Ciudad de las Puertas Abiertas tiene carreteras de montaña que premian a quien se anima a recorrerlas con calma y libertad."
+export const metaDescription = 'Alquiler de carros en Manizales para recorrer sus laderas y viajar al Nevado del Ruiz, termales y fincas cafeteras. Reserva en línea.'
 
-// Keep this independent from the short SEO meta so all three editorial separators survive.
-export const pullQuoteSource = "Entre volcanes nevados y fincas cafeteras, Manizales ofrece una experiencia única en el Eje Cafetero. Recorre la ciudad en carro y aventúrate hacia el Parque Nacional Los Nevados, sube al mirador de Chipre, visita el Recinto del Pensamiento o baja a los termales de Santa Rosa de Cabal. Reserva en línea sin anticipos y con descuentos de hasta el 60%. La Ciudad de las Puertas Abiertas tiene carreteras de montaña que premian a quien se anima a recorrerlas con calma y libertad."
+export const pullQuoteSource = 'Manizales trepa por la cordillera entre barrios inclinados, fincas de café y la silueta de los volcanes nevados. Un carro te permite enlazar Chipre, el Recinto del Pensamiento, los termales y las rutas de páramo con tiempo para manejar cada ascenso sin prisa. La Ciudad de las Puertas Abiertas recompensa a quien mira el paisaje, planea las curvas y se deja sorprender por la montaña.'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const content: CityExpandedContent = {
-        intro: `Manizales, la Ciudad de las Puertas Abiertas, te recibe entre volcanes nevados y el mejor café del mundo. Con un carro de alquiler puedes explorar esta ciudad universitaria de montaña y aventurarte hacia el Parque Nacional Los Nevados, una experiencia única en Colombia. El Aeropuerto La Nubia tiene vuelos limitados, pero el Aeropuerto de Pereira está a solo 45 minutos, ampliando tus opciones. Tener vehículo propio es casi indispensable aquí: las empinadas calles de Manizales y los accesos a volcanes y páramos requieren movilidad propia. Descubre la Catedral Basílica, sube al Nevado del Ruiz, visita el Recinto del Pensamiento y explora los Termales del Otoño. Manizales combina naturaleza extrema, cultura cafetera y espíritu universitario.`,
-        destinations: [
-            {
-                name: 'Nevado del Ruiz',
-                time: '2 horas',
-                description: 'Volcán activo de 5.321 metros con paisajes de páramo lunar. Las Brisas te lleva hasta 4.800 msnm en vehículo. Aguas termales naturales y frailejones gigantes. Experiencia única.'
-            },
-            {
-                name: 'Termales del Otoño',
-                time: '1 hora',
-                description: 'Complejo termal de lujo en medio del bosque de niebla. Piscinas naturales, spa y conexión con la naturaleza. El escape perfecto del clima frío de Manizales.'
-            },
-            {
-                name: 'Recinto del Pensamiento',
-                time: '20 minutos',
-                description: 'Parque ecológico con mariposario, orquideario y bosque de niebla. Telesillas con vista al Nevado del Ruiz y senderos interpretativos. Café de exportación incluido.'
-            },
-            {
-                name: 'Hacienda Venecia',
-                time: '45 minutos',
-                description: 'Una de las fincas cafeteras más premiadas del mundo. Tour completo del café, desde el cultivo hasta la catación profesional. Hospedaje disponible para experiencia completa.'
-            }
-        ],
-        drivingTips: {
-            picoPlaca: 'Manizales tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 8:30 AM y de 5:30 a 7:00 PM. Las calles son muy empinadas, usa freno de motor.',
-            tolls: 'Hacia el Nevado del Ruiz no hay peajes pero sí entrada al parque (~$23.000 COP extranjeros, $18.000 COP colombianos). Hacia Pereira hay un peaje (~$9.400 COP).',
-            parking: 'Las calles empinadas de Manizales complican el parqueo en la calle. Usa parqueaderos (entre $2.500-5.000 COP/hora). En Cable Plaza y centros comerciales hay más opciones.'
-        },
-        bestSeason: 'Manizales tiene clima frío de montaña (14-22°C), trae ropa abrigada. Para ver el Nevado sin nubes, madruga en temporada seca (diciembre a febrero y junio a agosto). La Feria de Manizales en enero es espectacular pero con alta demanda. Para Los Nevados, verifica el acceso ya que cierra por actividad volcánica ocasionalmente.'
-    }
+  intro: `En Manizales casi ninguna calle parece plana: la ciudad universitaria se acomoda sobre la montaña y mira hacia volcanes, cafetales y bosques de niebla. Por eso, el alquiler de carros en Manizales resulta útil tanto para cruzar sus laderas como para salir hacia el Parque Nacional Los Nevados. El Aeropuerto La Nubia ofrece vuelos limitados; el de Pereira, a solo 45 minutos, amplía las alternativas para llegar a la región. Con vehículo propio puedes organizar una mañana en la Catedral Basílica, subir después hacia el Nevado del Ruiz y cerrar el día entre las aguas de los Termales del Otoño. Otra ruta une el Recinto del Pensamiento con una finca cafetera. Las pendientes exigen atención y buen manejo, pero a cambio aparecen vistas que no se ven desde las vías principales. La Ciudad de las Puertas Abiertas mezcla naturaleza extrema, tradición cafetera y ambiente universitario en muy pocos kilómetros.`,
+  destinations: [
+    {
+      name: 'Nevado del Ruiz',
+      time: '2 horas',
+      description: 'Este volcán activo alcanza 5.321 metros y está rodeado por frailejones, aguas termales y un paisaje de páramo que parece lunar. Por el sector de Las Brisas es posible avanzar en vehículo hasta los 4.800 msnm.',
+    },
+    {
+      name: 'Termales del Otoño',
+      time: '1 hora',
+      description: 'En medio del bosque de niebla encuentras piscinas de agua termal, spa y una propuesta de descanso de lujo. El contraste entre el clima frío de Manizales y el agua caliente hace parte del plan.',
+    },
+    {
+      name: 'Recinto del Pensamiento',
+      time: '20 minutos',
+      description: 'Este parque ecológico reúne mariposario, orquideario, caminos interpretativos y bosque de niebla. Las telesillas abren la vista hacia el Nevado del Ruiz, y el recorrido incluye café de exportación.',
+    },
+    {
+      name: 'Hacienda Venecia',
+      time: '45 minutos',
+      description: 'Una de las fincas cafeteras más premiadas del mundo muestra el proceso completo, desde el cultivo hasta una catación profesional. Puedes alargar la visita porque también dispone de hospedaje.',
+    },
+  ],
+  drivingTips: {
+    picoPlaca: 'La restricción por último dígito rige de lunes a viernes, entre 7:00 y 8:30 AM y nuevamente de 5:30 a 7:00 PM. En las calles muy empinadas de Manizales, apóyate en el freno de motor.',
+    tolls: 'Para ir al Nevado del Ruiz no cruzas peajes, aunque debes pagar la entrada al parque: cerca de $23.000 COP para extranjeros y $18.000 COP para colombianos. El trayecto a Pereira sí tiene un peaje de unos $9.400 COP.',
+    parking: 'Parquear sobre una calle inclinada puede ser incómodo. Es preferible usar estacionamientos, con valores de $2.500 a $5.000 COP por hora; Cable Plaza y otros centros comerciales concentran más alternativas.',
+  },
+  bestSeason: 'La temperatura habitual de Manizales está entre 14 y 22 °C, de modo que una chaqueta siempre es buena compañía. Para encontrar el Nevado con menos nubes, madruga durante los periodos secos de diciembre a febrero o de junio a agosto. Enero trae la Feria de Manizales y también una demanda alta. Antes de emprender la subida a Los Nevados, confirma que el acceso esté habilitado: la actividad volcánica puede ocasionar cierres.',
+}
