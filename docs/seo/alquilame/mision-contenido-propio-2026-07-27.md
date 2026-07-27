@@ -114,8 +114,12 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 | 2026-07-27 12:10 | W1 entregado en 13 min (commit a5b021f, worktree alquilame-w1-infra): 38 placeholders + wiring + shingle-check. Baseline Bogotá 47,7% (consistente con auditoría). Vitest 905/912; los 7 rojos son preexistentes (el revisor verificó que no leen archivos tocados). |
 | 2026-07-27 12:35 | Revisión adversarial de W1: 7/7 puntos CONFIRMED (fidelidad 19/19 por igualdad profunda, S5 en cero archivos fuera de alcance). Hallazgo ALTO: ~24% del solape vive en el chrome del sitio → S1 página completa inalcanzable solo con W2-W4. Se crea el frente W7-chrome, se refina S1 (gate por región para workers) y se despacha W1.1 con los 4 hallazgos medios (asserts-trampa, split metaDescription/pullQuoteSource, paridad JSON-LD FAQPage, guard de auto-import, mejoras de la herramienta). |
 
+| 2026-07-27 12:45 | W1.1 entregado (b12779f): asserts estructurales, split metaDescription/pullQuoteSource ×19, paridad JSON-LD restaurada + test, guard AST de auto-imports, shingle-check con --region/entidades/fragmentos. 13 tests nuevos verdes. Re-revisión de deltas despachada al mismo revisor. |
+| 2026-07-27 12:47 | A/B confirmado por el orquestador: las 4 suites rojas (7 tests) fallan idéntico en la base SIN cambios de W1 → preexistentes, no regresiones. |
+
 ### Bloqueos / errores
 - 12:10 — A/B de baseline en worktree de integración falló por entorno (faltaba `.nuxt/` copiado). Corregido, relanzado. No afecta a los workers.
+- 12:47 — La corrida completa de vitest en background quedó colgada (vitest no sale en worktrees); se reemplazó por A/B dirigido a las suites rojas. Resuelto.
 
 ### Hitos
 - [ ] W1 entregado y revisado — entregado ✔, revisado ✔, pendiente W1.1 + merge
