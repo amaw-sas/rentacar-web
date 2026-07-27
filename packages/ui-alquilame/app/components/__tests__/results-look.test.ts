@@ -176,18 +176,29 @@ describe('SCEN-L05 — "Grupo C (Económico)" es texto gris de párrafo, no titu
     expect(kicker).toContain('font-normal')
   })
 
-  /**
-   * El tamaño está anclado al de "Tarjeta de crédito en sede"
-   * (.metodo-pago-valor) — el texto más chico de la card. Si aquel cambia, este
-   * test falla en vez de dejar los dos tamaños separándose sin que nadie lo vea.
-   */
-  it('mide lo mismo que "Tarjeta de crédito en sede"', () => {
-    const anclaInicio = categoryCss.indexOf('.metodo-pago-valor {')
-    const ancla = categoryCss.slice(anclaInicio, categoryCss.indexOf('}', anclaInicio))
-    const tamaño = ancla.match(/\btext-(xs|sm|base|lg|xl)\b/)?.[0]
+  it('conserva el tamaño pequeño de metadato', () => {
+    expect(kicker).toContain('text-sm')
+  })
+})
 
-    expect(tamaño, '.metodo-pago-valor debe declarar un tamaño explícito').toBeTruthy()
-    expect(kicker).toContain(tamaño)
+describe('SCEN-L21 — la franja gris de solicitud contiene únicamente el CTA', () => {
+  const inicio = categoryCard.indexOf('<div class="seccion-boton-seleccion">')
+  const cierre = categoryCard.indexOf('</div>', categoryCard.indexOf('</UButton>', inicio))
+  const seccion = categoryCard.slice(inicio, cierre)
+
+  it('retira el mensaje de método de pago de todas las tarjetas', () => {
+    expect(seccion).not.toContain('Único método de pago')
+    expect(seccion).not.toContain('Tarjeta de crédito en sede')
+    expect(seccion).not.toContain('metodo-pago')
+  })
+
+  it('conserva el botón de solicitud y su fondo gris', () => {
+    expect(seccion).toContain('class="boton-seleccion"')
+    const estilos = categoryCss.slice(
+      categoryCss.indexOf('.seccion-boton-seleccion {'),
+      categoryCss.indexOf('.form-radio {'),
+    )
+    expect(estilos).toContain('bg-surface-softest')
   })
 })
 
@@ -380,11 +391,9 @@ describe('SCEN-L12 — el bloque de precios es "concepto a la izquierda, cifra a
     expect(valores.length).toBeGreaterThanOrEqual(3)
   })
 
-  it('la protección va a lo ancho, bajo un separador, y no en una segunda columna', () => {
-    expect(bloque).toContain('contenedor-protecciones')
-    const proteccion = bloque.indexOf('Escoge protección')
-    const separadores = bloque.slice(0, proteccion).match(/separador-tarifa/g) ?? []
-    expect(separadores.length, 'un separador antes de la protección').toBeGreaterThanOrEqual(1)
+  it('las decisiones opcionales salen del bloque de precio y no forman una segunda columna', () => {
+    expect(bloque).not.toContain('contenedor-protecciones')
+    expect(categoryCard).toContain('contenedor-adicionales-carro')
     expect(bloque).not.toContain('pl-5 flex flex-col justify-center')
   })
 
@@ -422,7 +431,10 @@ describe('SCEN-L16 — la card surge el desglose "todo incluido" (opción C)', (
   it('el Seguro Total aparece como línea "+ ..." con su sobrecosto, gatillada por la selección', () => {
     expect(bloque).toContain('+ Seguro Total')
     expect(bloque).toContain('currencyTotalCoveragePrice')
-    expect(bloque).toContain('v-if="withTotalCoverage && !haveMonthlyReservation"')
+    // Sin el veto a mensual: allí el diario NO incluye la cobertura, así que el
+    // recargo movía el total $ 476.000 sin una línea que lo explicara.
+    expect(bloque).toContain('v-if="withTotalCoverage"')
+    expect(bloque).not.toContain('!haveMonthlyReservation')
   })
 
   it('surge tasa + IVA en una sola línea, con el monto real del composable', () => {
@@ -473,8 +485,11 @@ describe('SCEN-L17 — Seguro Total se elige en "Servicios adicionales", no en "
     expect(adicionales).toMatch(/v-if="canQuoteTotalCoverage"[\s\S]*?withTotalCoverage/)
   })
 
-  it('el selector de kilometraje mensual se conserva', () => {
-    expect(categoryCard).toContain('Escoge kilometraje')
+  it('el kilometraje mensual pasa a ser una ampliación dentro de adicionales', () => {
+    const adicionales = categoryCard.slice(categoryCard.indexOf('adicionales-contenido'))
+    expect(adicionales).toMatch(/v-model="withMileageUpgrade"[\s\S]*?1\.000 km adicionales/)
+    expect(adicionales).toContain('(2.000 km en total)')
+    expect(categoryCard).not.toContain('Escoge kilometraje')
   })
 })
 
@@ -500,15 +515,26 @@ describe('SCEN-L18 — Conductor/Silla/Lavado se inyectan en el desglose (sin IV
   })
 
   it('los adicionales NO pasan por el subtotal (van sin IVA): el total prominente los suma aparte', () => {
-    expect(bloque).toContain('hasSelectedAdditionals ? currencyTotalToPayWithAdditionals : currencyActualTotalPrice')
+    // Los adicionales mandan sobre la compuerta de impuestos: antes iban dentro
+    // de ella y en mensual —donde no hay impuestos que surgir— el total los
+    // ignoraba aunque estuvieran marcados.
+    expect(bloque).toContain('hasSelectedAdditionals ? currencyTotalToPayWithAdditionals')
+    expect(bloque).toContain('hasSurfacedTaxes ? currencyActualTotalPrice : currencyTotalPrice')
+    expect(bloque).not.toContain('hasSurfacedTaxes ? (hasSelectedAdditionals')
   })
 
-  it('la sección de adicionales ya no muestra "$" cuando se inyecta en la escalera', () => {
-    // Los precios de la sección solo se ven en el caso mensual (!hasSurfacedTaxes),
-    // donde la escalera no inyecta.
-    for (const w of ['withExtraDriver', 'withBabySeat', 'withWash', 'withTotalCoverage']) {
-      expect(adicionales).toMatch(new RegExp(`v-show="${w} && !hasSurfacedTaxes"`))
+  it('la sección de adicionales no muestra "$": el precio vive en la escalera', () => {
+    // Antes sobrevivían en el caso mensual (!hasSurfacedTaxes), donde la escalera
+    // no inyectaba. Ahora la escalera inyecta siempre, así que la sección no
+    // vuelve a tener precio propio: dos sitios con la misma cifra es como se
+    // llega a que digan cosas distintas.
+    // Se prohíbe el PATRÓN del precio junto al selector (span .ml-4), no la
+    // mención: el modal que explica las tarifas de lavado sigue citando su
+    // precio con todo derecho.
+    for (const precio of ['currencyExtraDriverPrice', 'currencyBabySeatPrice', 'currencyWashPrice', 'currencyTotalCoveragePrice']) {
+      expect(adicionales).not.toMatch(new RegExp(`ml-4"[\\s\\S]{0,40}${precio}`))
     }
+    expect(adicionales).not.toMatch(/!hasSurfacedTaxes/)
   })
 })
 
@@ -588,5 +614,64 @@ describe('SCEN-L10 — el total de la reserva se lee en negro, no en rojo', () =
 
   it('usa un negro/gris oscuro explícito', () => {
     expect(total).toMatch(/text-(black|gray-900)/)
+  })
+})
+
+describe('CategoryCard — el kilometraje mensual se explica en el desglose', () => {
+  it('muestra la base de 1.000 kilómetros como incluida', () => {
+    expect(categoryCard).toMatch(/1\.000 kilómetros[\s\S]{0,120}incluidos/)
+  })
+
+  it('al marcarla muestra el recargo limpio junto al cambio de plan', () => {
+    expect(categoryCard).toMatch(/v-if="haveMonthlyReservation && withMileageUpgrade"[\s\S]{0,180}\+ 1\.000 kilómetros adicionales/)
+    expect(categoryCard).toContain('currencyMileageUpgradePrice')
+  })
+})
+
+/**
+ * `hasSurfacedTaxes` decidía DOS cosas a la vez: si se desglosan impuestos y si
+ * los adicionales entran en la escalera y en el total. En mensual la primera
+ * respuesta es "no" —el total ya los incluye— y arrastraba a la segunda: marcar
+ * "Conductor adicional 30 días $ 360.000" dejaba el total en $ 4.166.000, con el
+ * precio a la vista junto al checkbox. Dos cifras que no cuadraban.
+ */
+describe('CategoryCard — los adicionales entran en el total también en mensual', () => {
+  const resume = read('../ReservationResume.vue')
+
+  it('el bloque de adicionales ya no cuelga de hasSurfacedTaxes', () => {
+    for (const vista of [categoryCard, resume]) {
+      // El desglose de impuestos sigue gateado por hasSurfacedTaxes...
+      expect(vista).toMatch(/v-if="hasSurfacedTaxes"[\s\S]{0,400}Tasa administrativa \+ IVA/)
+      // ...pero "Total renta" + las líneas de extras cuelgan solo de que haya
+      // adicionales marcados, sin anidarse dentro del gate de impuestos.
+      const bloque = vista.match(/<template v-if="hasSelectedAdditionals">([\s\S]*?)<\/template>/)?.[1] ?? ''
+      expect(bloque).toMatch(/Total renta/)
+      expect(bloque).toMatch(/\+ Conductor adicional/)
+    }
+  })
+
+  it('el total prominente suma los adicionales aunque no haya impuestos que surgir', () => {
+    const expresion = /hasSelectedAdditionals\s*\?\s*currencyTotalToPayWithAdditionals\s*:\s*\(hasSurfacedTaxes\s*\?\s*currencyActualTotalPrice\s*:\s*currencyTotalPrice\)/
+    expect(categoryCard).toMatch(expresion)
+    expect(resume).toMatch(expresion)
+  })
+
+  it('los precios dejan de vivir junto al checkbox', () => {
+    // Vivían ahí solo cuando !hasSurfacedTaxes, que en la práctica era "mensual".
+    expect(categoryCard).not.toMatch(/v-show="[^"]*!hasSurfacedTaxes"/)
+  })
+})
+
+describe('CategoryCard — el Seguro Total tiene línea también en mensual', () => {
+  const resume = read('../ReservationResume.vue')
+
+  it('la línea no está vetada en reservas mensuales', () => {
+    // El veto venía de cuando el diario mensual incluía la cobertura y la línea
+    // duplicaba. Hoy no la incluye (el diario no cambia al marcarla) y el
+    // recargo movía el total $ 476.000 sin una sola línea que lo explicara.
+    for (const vista of [categoryCard, resume]) {
+      expect(vista).toMatch(/v-if="withTotalCoverage"[\s\S]{0,120}\+ Seguro Total/)
+      expect(vista).not.toMatch(/withTotalCoverage && !haveMonthlyReservation/)
+    }
   })
 })

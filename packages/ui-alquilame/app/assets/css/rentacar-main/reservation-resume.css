@@ -1,166 +1,185 @@
 .reservation-resume {
-    @apply scheme-light;
+    /* Columna de alto completo: es lo que permite que el cierre baje a pegarse
+       a los botones cuando el contenido no llena el panel. */
+    @apply scheme-light flex flex-col min-h-full;
 
+    /* Eslabón intermedio de la cadena flex — sin él, el `mt-auto` del cierre no
+       tiene contra qué empujar. */
+    .resumen-cuerpo {
+        @apply flex flex-col grow;
+    }
+
+    /* El chrome de la foto (nombre del modelo + contador) lo define category.css
+       en una regla compartida con `.categoria`: el Resumen debe ser un espejo
+       fiel de la card de resultados, no una variante. */
+    /* Sangra hasta el mismo filete blanco de 8px que usa la franja del total:
+       con los 24px de padding del cuerpo la foto se veía más estrecha que el
+       resto del panel.
+
+       La proporción baja de 5/3 a 9/5 para que ensanchar NO suba el alto: a
+       448px de panel, 400px con 5/3 daban 240; 432px con 9/5 dan los mismos
+       240. El object-cover del Carrusel recorta, no estira. */
     .carrusel-container {
-        @apply relative mb-3;
+        @apply relative mb-3 -mx-2 sm:-mx-4;
 
-        .nombre-modelo {
-            @apply absolute top-5 left-5 bg-black/75 rounded-lg text-white text-xs py-1 px-3;
+        img {
+            @apply aspect-[9/5];
         }
     }
-    
-    .reservation-data {
-        @apply flex flex-col text-sm text-black;
 
-        /* Brand: the template owns Plus Jakarta + red; this rule is the single
-           source for the Gama title's 14px/700 visual and bottom margin. */
+    /* Esquina superior derecha de la foto: la única que el chrome deja libre
+       (el nombre del modelo cuelga arriba al centro, el contador abajo). */
+    .acciones-compartir {
+        @apply absolute top-3 right-3 z-10 flex gap-1.5;
+    }
+
+    /* Monocromas a propósito. El verde de WhatsApp y el azul de Facebook eran
+       lo más saturado del panel y competían con el CTA; el negro es el mismo
+       del chip del modelo y del contador, así que leen como parte de la foto. */
+    .ficha-compartir {
+        @apply flex items-center justify-center size-8 rounded-full cursor-pointer;
+        @apply bg-black/75 text-white transition-colors hover:bg-black active:bg-black;
+    }
+
+    /* Encabezado sobre blanco, fuera del bloque gris: en la card el nombre del
+       vehículo y el grupo también van sobre el fondo del panel y el gris
+       empieza en los precios. El px-2 lo alinea con el resto (8px por dentro
+       del borde de contenido del cuerpo). */
+    .resumen-encabezado {
+        @apply px-2 mb-2 text-sm text-gray-800;
+
+        /* Descripción y gama en una línea, alineadas por su base para que el
+           texto chico no flote respecto al grande. */
+        .category-heading {
+            @apply flex flex-wrap items-baseline gap-x-2;
+        }
+
+        /* Gama: metadato, no titular. Peso normal y gris, como el kicker
+           .categoria-carro de la card. Antes iba rojo, en negrita y por encima
+           del vehículo, que es lo que el cliente realmente reconoce. */
         .category-name {
-            @apply mb-0 text-sm font-bold;
+            @apply mb-0 text-sm font-normal text-gray-600;
         }
 
         .category-description {
-            @apply lowercase first-letter:uppercase leading-tight font-bold;
+            @apply font-heading text-xl font-extrabold text-gray-900;
+            @apply lowercase first-letter:uppercase leading-snug;
         }
 
+        /* Amarillo, el mismo token que .etiqueta-sin-pico-placa en la card. En
+           verde (#a3f78b) coincidía con el pill de descuento y con el CTA: tres
+           cosas distintas compartiendo código de color. */
         .category-picoyplaca {
             @apply lowercase leading-tight;
-        }
 
-        .pickup-info {
-            @apply my-2;
-
-            .pickup-location-label {
-                @apply font-bold text-red-700;
-            }
-
-            .pickup-date, .pickup-hour {
-                @apply flex flex-row gap-1;
-            }
-        }
-
-        .return-info {
-            @apply mb-3;
-
-            .return-location-label {
-                @apply font-bold text-red-700;
-            }
-
-            .return-date, .return-hour {
-                @apply flex flex-row gap-1;
-            }
-        }
-
-        .renting {
-            .renting-label {
-                @apply font-bold text-red-700;
+            span {
+                @apply inline-block px-2 py-0.5 text-xs rounded-full;
+                @apply bg-yellow-300/50 text-black;
             }
         }
     }
 
+    .reservation-data {
+        /* Bloque relleno, como la zona de precios de la card: el gris agrupa
+           los datos de la reserva y el marco blanco lo da el padding del cuerpo
+           del slideover. Antes iban sobre blanco y hacía falta un filete debajo
+           para separarlos de la escalera; con relleno ese filete sobra.
 
-    .prices {
-        @apply flex flex-col flex-1 pl-0 text-sm;
+           Gris-800, la tinta de cuerpo de la card. En negro puro los datos
+           salían más oscuros que las cifras de dinero. */
+        @apply flex flex-col text-sm text-gray-800;
+        /* El padding supera al sangrado en 8px: así el texto arranca 8px por
+           dentro del borde de contenido del cuerpo, que es el sangrado que ya
+           tenía "Total a pagar" y el que se eligió para todo el panel. */
+        @apply bg-surface-softest rounded-xl py-3 mb-3;
+        @apply -mx-2 px-4 sm:-mx-4 sm:px-6;
 
-        .discount {
-            @apply text-end text-gray-400 text-xs; /* ≥#969696 for dark bg contrast */
-
-            div:first-child {
-                @apply flex items-center justify-end;
-
-                span:first-child {
-                    @apply text-xs;
-                }
-            }
+        /* Dos columnas de ancho igual. Recogida y Entrega tienen la misma
+           estructura y enfrentadas se comparan de un vistazo; en una sola
+           columna (probado y descartado) el panel se alarga y se pierde esa
+           lectura en paralelo. */
+        .pickup-return-grid {
+            @apply grid grid-cols-2 gap-x-4 my-2 leading-snug;
         }
 
-        .discount-percentage {
-            @apply text-end;
-
-            span {
-                @apply light:bg-yellow-500 dark:bg-green-700 font-medium rounded-none px-1 py-0.5 text-xs;
-            }
+        /* Negrilla para marcar la cabecera de cada tramo, pero en gris-600: lo
+           que las volvía el texto más pesado del panel era el gris-900, no el
+           peso. Así encabezan sin competir con el nombre del vehículo. */
+        .pickup-info .pickup-location-label,
+        .return-info .return-location-label {
+            @apply font-bold text-gray-600;
         }
 
-        .daily-price {
-            @apply text-end font-bold text-xl;
+        .renting {
+            @apply flex flex-wrap items-baseline gap-x-1.5 mb-3;
 
-            div:first-child {
-                @apply flex items-center justify-end;
+            .renting-label {
+                @apply font-normal text-gray-600;
+            }
 
-                span:first-child {
-                    @apply text-sm;
-                }
+            .renting-separador {
+                @apply text-gray-400;
             }
         }
+    }
 
-        .extra-hours {
-            .extra-hours-label {
-                @apply text-end mt-3;
-            }
-            .extra-hours-text {
-                @apply text-end flex items-center justify-end -mr-[0.75]; /* TODO revisar si esta bien esto */
+    /* El desglose (.contenedor-precios-tarifa, .fila-tarifa, .precio-total…) lo
+       sirve category.css en la regla que comparte con `.categoria`. Aquí solo va
+       el color del cuerpo: la card lo hereda de .contenedor-tarifas, que es
+       chrome suyo (fondo y padding) y no viaja al slideover. */
+    .contenedor-precios-tarifa {
+        @apply text-gray-800 flex flex-col grow px-2;
+    }
 
-                span {
-                    @apply text-xs;
-                }
-            }
-        }
-        
-        .return-fee {
-            .return-fee-label {
-                @apply text-end;
-            }
-            .return-fee-text {
-                @apply text-end flex items-center justify-end -mr-[0.75]; /* TODO revisar si esta bien esto */
+    /* El "Total a pagar" anclado al fondo del cuerpo del slideover, que es el
+       contenedor que scrollea (flex-1 overflow-y-auto p-4 sm:p-6).
 
-                span:first-child {
-                    @apply text-xs;
-                }
-            }
-        }
+       Es la mitad de arriba de UNA franja gris que sigue por debajo de los
+       botones: el footer del paso Resumen (CategorySelectionSection) repite
+       este mismo sangrado y cierra las esquinas de abajo. Si cambias los
+       márgenes aquí, cámbialos allá o el filete blanco da un escalón.
 
-        .total-price {
-            .total-price-label {
-                @apply text-end font-bold mt-3;
-            }
+       El sangrado lateral deja 8px de blanco a cada lado en vez de ir a sangre:
+       el cuerpo pone 16px de padding (24 en sm) y se recupera uno menos. Es el
+       mismo marco blanco que enmarca la zona de precios en la card.
 
-            .total-price-text {
-                @apply text-end font-bold text-xl mb-0;
+       El `mt-auto` es lo que baja el bloque a pegarse a los botones cuando el
+       contenido no llena el panel: sin overflow, `sticky` queda inerte y el
+       cierre se quedaba flotando a media altura.
 
-                span:first-child {
-                    @apply text-sm;
-                }
-            }
-        }
+       Cada margen negativo va con su padding igual: el margen extiende la caja
+       PINTADA hasta donde toca, el padding devuelve el aire para que el
+       contenido no se mueva.
 
-        .not-included {
-            @apply text-end text-[10px] text-gray-500 mb-2;
-        }
+       El `bottom` negativo NO es decorativo. Chrome ancla el sticky al borde de
+       CONTENIDO del scroller, no al de padding, así que con `bottom-0` la caja
+       se detenía 24px antes del fondo y por esa franja —el padding inferior del
+       cuerpo— asomaban las filas del desglose entre el total y los botones.
+       Bajar el anclaje esos mismos 24px la cierra.
 
-        .included {
-            @apply text-end;
-            
-            .included-label {
-                @apply text-end mt-4 font-bold;
-            }
+       Ritmo vertical copiado de .seccion-boton-seleccion en la card: 16px sobre
+       el total (pt-4), 12px hasta los botones y 16px debajo —esos dos los pone
+       el footer—. Sin `pb` propio: sumaba al del footer y daban 36px de hueco.
+       La cobertura del borde inferior no depende de ese padding, sino del
+       `-bottom` negativo, que es quien baja la caja pintada. */
+    .cierre-precio {
+        /* text-gray-800 explícito: al colgar de la raíz dejó de heredar el de
+           .contenedor-precios-tarifa y su "Total a pagar" quedaba un tono más
+           oscuro que el mismo label en la card. */
+        /* Borde superior BLANCO y grueso, no un filete: es el aire entre la
+           última fila del desglose y la franja. Va como borde y no como margen
+           porque el margen es transparente y dejaría ver las filas pasando por
+           debajo al scrollear; el borde las tapa. */
+        @apply sticky mt-auto bg-surface-softest rounded-t-xl pt-4 text-gray-800;
+        @apply border-t-8 border-white;
+        @apply -mx-2 px-2 -mb-4 -bottom-4;
+        @apply sm:-mx-4 sm:px-4 sm:-mb-6 sm:-bottom-6;
+    }
 
-            .included-text {
-                @apply ps-3 leading-tight text-end list-none;
-
-                .mileage, .unlimited-km, .coverage  {
-                   @apply text-current text-end;     
-                }
-                
-                
-            }
-        }
-
-        .extra-services {
-            @apply text-end mt-2;
-
-            .extra-services-label {
-                @apply font-bold;
-            }
-        }
+    /* El envoltorio cancela su propio sangrado, así que estos 8px son los que
+       meten "Total a pagar" por dentro del borde de contenido. Es el sangrado
+       de referencia: el resto de bloques del panel se alinearon a él. */
+    .cierre-precio-panel {
+        @apply px-2;
     }
 }

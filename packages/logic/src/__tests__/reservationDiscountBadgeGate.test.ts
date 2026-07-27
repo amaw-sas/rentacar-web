@@ -33,11 +33,25 @@ const logicSource = readFileSync(
 describe('reservation summary discount badge gate (monthly NaN bug)', () => {
   // SCEN-D01: the badge must be gated so it does not appear when there is no
   // daily discount (which includes every monthly reservation).
+  // La compuerta esperada por marca. alquilame pasó a `hasDiscountToShow`, que
+  // se DERIVA de getDiscount (`getDiscount.value !== "0"`): es estrictamente más
+  // fuerte que `hasDiscount()`, porque ata la compuerta al mismo valor que se
+  // pinta en vez de a un campo independiente (`discountAmount`) — que era justo
+  // la separación que dejó pasar el NaN. Además permite que la píldora aparezca
+  // en mensual, donde el ahorro es real y `discountAmount` llega nulo.
+  const GATE_POR_MARCA: Record<string, string> = {
+    'ui-alquilatucarro': 'v-if="hasDiscount()"',
+    'ui-alquilame': 'v-if="hasDiscountToShow"',
+  }
+
   for (const brand of BRANDS) {
-    it(`${brand} ReservationResume gates the "Dto Hoy" badge with hasDiscount()`, () => {
+    it(`${brand} ReservationResume gates the "Dto Hoy" badge`, () => {
       const vue = readBrandFile(brand, 'app/components/ReservationResume.vue')
-      const idx = vue.indexOf('Dto Hoy')
-      expect(idx, `${brand}: "Dto Hoy" badge not found`).toBeGreaterThan(-1)
+      // Ancla en el VALOR, no en el copy: alquilame pasó de "Dto Hoy {{ x }} %"
+      // a "Hoy con {{ x }}% Dto." al espejar la card, y el invariante no es cómo
+      // se redacta la píldora sino que la cifra nunca se pinte sin compuerta.
+      const idx = vue.indexOf('{{ getDiscount }}')
+      expect(idx, `${brand}: badge de descuento no encontrado`).toBeGreaterThan(-1)
 
       // The badge's OWN wrapping element must carry the hasDiscount() guard —
       // not a sibling. Scope the window to just the badge's enclosing element by
@@ -48,10 +62,13 @@ describe('reservation summary discount badge gate (monthly NaN bug)', () => {
         vue.lastIndexOf('</span>', idx),
       )
       const badgeElement = vue.slice(prevClose, idx)
+      const gateEsperada = GATE_POR_MARCA[brand] as string
       expect(
-        badgeElement.includes('v-if="hasDiscount()"'),
-        `${brand}: "Dto Hoy" badge is rendered unconditionally — must be gated by v-if="hasDiscount()"`,
+        badgeElement.includes(gateEsperada),
+        `${brand}: "Dto Hoy" badge must be gated by ${gateEsperada}`,
       ).toBe(true)
+      // Nunca sin compuerta: es la condición que originó el bug del NaN.
+      expect(badgeElement).toMatch(/v-if="/)
     })
   }
 

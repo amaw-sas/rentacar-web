@@ -1,32 +1,11 @@
-/* El marco es el mismo de las tarjetas de "Nuestra Flota" en el home
-   (home/Fleet.vue): borde blanco de 7px + radio 22 + la misma sombra suave.
-   Solo lee como marco porque la sección de resultados va sobre bg-surface-soft
-   — si ese fondo cambia a blanco, el borde desaparece. */
-.categoria {
-    @apply bg-white rounded-[22px] md:col-span-1 relative text-black p-0 sm:p-0 lg:p-0;
-    @apply border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] overflow-hidden;
-    
-    /* .agotado {
-      opacity: 0.28 !important;
-    }
-    
-    .agotado .text-azul {
-      color: grey !important;
-    }
-    
-    .agotado .anuncio {
-      background-color: ghostwhite;
-    }
-    
-    .agotado h5 {
-      color: grey !important;
-    }
-    
-    .agotado a {
-      background-color: grey !important;
-      border-color: grey !important;
-    } */
-
+/* Chrome del carrusel de fotos: nombre del modelo arriba y contador abajo.
+   Vive FUERA de `.categoria` porque el mismo Carrusel.vue se monta en dos
+   superficies —la card de resultados y el slideover "Resumen"— y las dos deben
+   leerse idénticas. Cuando estas reglas estaban anidadas en `.categoria`, el
+   Resumen se quedaba sin `.contador-fotos` y el "Fotos 1 de N" caía en flujo
+   normal, encima de la foto en vez de colgado de su borde inferior. */
+.categoria,
+.reservation-resume .carrusel-container {
     /* Cuelga del borde superior de la foto, centrada: esquinas de arriba rectas
        (continúan el borde de la imagen) y de abajo en cápsula. */
     .nombre-modelo {
@@ -58,6 +37,98 @@
     .contador-texto {
       @apply flex items-center px-2 py-1;
     }
+}
+
+/* Escalera de precios, compartida por la card de resultados y el slideover
+   "Resumen". El Resumen es un espejo de la card, no una variante: mismas filas,
+   mismo orden, mismas cifras del mismo useCategory. Tener las clases aquí
+   —y no duplicadas en reservation-resume.css— es lo que garantiza que un
+   retoque a la card arrastre al Resumen. */
+.categoria,
+.reservation-resume {
+    /* Ya no alinea todo a la derecha: los conceptos anclan a la izquierda y solo
+       las cifras (.valor-tarifa) van al margen derecho. La línea vertical
+       difuminada que separaba las dos columnas se eliminó con ellas. */
+    .contenedor-precios-tarifa{
+      @apply flex flex-col gap-1;
+    }
+
+    .fila-tarifa {
+      @apply flex items-baseline gap-3;
+    }
+
+    /* La cifra se empuja al margen derecho por sí sola, NO con justify-between:
+       la fila del descuento no tiene concepto cuando no hay descuento, y con
+       justify-between su cifra se iría a la izquierda. */
+    .valor-tarifa {
+      @apply ms-auto text-right;
+    }
+
+    .separador-tarifa {
+      @apply my-3 border-gray-300/70;
+    }
+
+    /* Solo el fondo verde queda como realce del descuento. El texto se iguala al
+       resto del desglose (2026-07-24): text-sm, peso normal y sin color propio,
+       hereda el text-gray-800 del contenedor. Antes iba negro/negrita/xs y
+       rompía la uniformidad de las filas de la tarifa diaria. */
+    .porcentaje-descuento{
+      @apply bg-green-500/30 text-sm px-1.5 py-0.5 rounded-full;
+    }
+
+    .precio-base-diario {
+      @apply text-sm line-through;
+    }
+
+    /* Igual que el resto del desglose: sin tamaño ni peso propios. El precio que
+       destaca es el TOTAL (.precio-total), no la tarifa diaria. */
+    .precio-diario {
+      @apply text-sm;
+    }
+
+    /* Sin mt-2: el aire entre filas lo pone .separador-tarifa, y dentro de una
+       fila flex ese margen desalineaba el concepto respecto a su cifra. */
+    .dias-reservados {
+      @apply text-sm;
+    }
+
+    .precio-total {
+      @apply font-heading text-black font-extrabold text-xl whitespace-nowrap;
+    }
+
+    .texto-no-incluye {
+      @apply text-[10px] text-gray-500;
+    }
+}
+
+/* El marco es el mismo de las tarjetas de "Nuestra Flota" en el home
+   (home/Fleet.vue): borde blanco de 7px + radio 22 + la misma sombra suave.
+   Solo lee como marco porque la sección de resultados va sobre bg-surface-soft
+   — si ese fondo cambia a blanco, el borde desaparece. */
+.categoria {
+    @apply bg-white rounded-[22px] md:col-span-1 relative text-black p-0 sm:p-0 lg:p-0;
+    @apply border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] overflow-hidden;
+
+    /* .agotado {
+      opacity: 0.28 !important;
+    }
+
+    .agotado .text-azul {
+      color: grey !important;
+    }
+
+    .agotado .anuncio {
+      background-color: ghostwhite;
+    }
+
+    .agotado h5 {
+      color: grey !important;
+    }
+
+    .agotado a {
+      background-color: grey !important;
+      border-color: grey !important;
+    } */
 
     .contenedor-descripcion-carro {
       @apply bg-white;
@@ -88,9 +159,8 @@
       transform: rotate(180deg);
     }
 
-    /* Kicker de gama: es metadato, no titular. Gris y al tamaño del texto más
-       chico de la card (.metodo-pago-valor, "Tarjeta de crédito en sede") para
-       que el nombre del vehículo (.descripcion-corta) sea lo que manda. */
+    /* Kicker de gama: es metadato, no titular. Gris y pequeño para que el nombre
+       del vehículo (.descripcion-corta) sea lo que manda. */
     .categoria-carro {
       @apply font-normal text-gray-600 text-sm leading-snug block;
     }
@@ -143,63 +213,8 @@
       @apply flex flex-col px-5 py-4 relative text-gray-800 rounded-b-lg;
     }
 
-    .fila-tarifa {
-      @apply flex items-baseline gap-3;
-    }
-
-    /* La cifra se empuja al margen derecho por sí sola, NO con justify-between:
-       la fila del descuento no tiene concepto cuando no hay descuento, y con
-       justify-between su cifra se iría a la izquierda. */
-    .valor-tarifa {
-      @apply ms-auto text-right;
-    }
-
-    .separador-tarifa {
-      @apply my-3 border-gray-300/70;
-    }
-
     .contenedor-protecciones {
       @apply flex flex-col justify-center;
-    }
-
-
-    /* Ya no alinea todo a la derecha: los conceptos anclan a la izquierda y solo
-       las cifras (.valor-tarifa) van al margen derecho. La línea vertical
-       difuminada que separaba las dos columnas se eliminó con ellas. */
-    .contenedor-precios-tarifa{
-      @apply flex flex-col gap-1;
-    }
-
-    /* Solo el fondo verde queda como realce del descuento. El texto se iguala al
-       resto del desglose (2026-07-24): text-sm, peso normal y sin color propio,
-       hereda el text-gray-800 del contenedor. Antes iba negro/negrita/xs y
-       rompía la uniformidad de las filas de la tarifa diaria. */
-    .porcentaje-descuento{
-      @apply bg-green-500/30 text-sm px-1.5 py-0.5 rounded-full;
-    }
-
-    .precio-base-diario {
-      @apply text-sm line-through;
-    }
-
-    /* Igual que el resto del desglose: sin tamaño ni peso propios. El precio que
-       destaca es el TOTAL (.precio-total), no la tarifa diaria. */
-    .precio-diario {
-      @apply text-sm;
-    }
-
-    /* Sin mt-2: el aire entre filas lo pone .separador-tarifa, y dentro de una
-       fila flex ese margen desalineaba el concepto respecto a su cifra. */
-    .dias-reservados {
-      @apply text-sm;
-    }
-
-    .precio-total {
-      @apply font-heading text-black font-extrabold text-xl whitespace-nowrap;
-    }
-
-    .texto-no-incluye {
-      @apply text-[10px] text-gray-500;
     }
 
     .opcion-seleccionable {
@@ -212,18 +227,6 @@
 
     .seccion-boton-seleccion {
       @apply rounded-b-lg p-4 bg-surface-softest;
-
-      .metodo-pago {
-        @apply text-center mb-3;
-      }
-
-      .metodo-pago-label {
-        @apply inline-flex items-center justify-center gap-1 text-sm font-bold text-gray-800;
-      }
-
-      .metodo-pago-valor {
-        @apply block text-sm text-gray-800;
-      }
 
       .boton-seleccion {
         @apply w-full justify-center text-white bg-green-700 py-4 hover:bg-green-800 transition-colors;

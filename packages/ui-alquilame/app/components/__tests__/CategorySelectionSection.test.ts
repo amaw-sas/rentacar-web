@@ -22,9 +22,13 @@ describe('CategorySelectionSection — Solicitar reserva button loading state', 
     expect(submitButtonBlock).toContain('Solicitar reserva')
   })
 
-  it('preserves brand-600 background during loading (overrides Nuxt UI neutral+solid disabled:bg-inverted)', () => {
-    expect(submitButtonBlock).toMatch(/disabled:bg-brand-600/)
-    expect(submitButtonBlock).toMatch(/aria-disabled:bg-brand-600/)
+  it('preserves its green background during loading (overrides Nuxt UI neutral+solid disabled:bg-inverted)', () => {
+    // El verde es el de .boton-seleccion en la card: el avance es una sola
+    // cadena verde —"Solicitar este vehículo" → "Siguiente" → "Solicitar
+    // reserva"— y el rojo en el último paso leía como alerta justo al enviar.
+    expect(submitButtonBlock).toMatch(/disabled:bg-green-700/)
+    expect(submitButtonBlock).toMatch(/aria-disabled:bg-green-700/)
+    expect(submitButtonBlock).not.toMatch(/bg-brand-600/)
   })
 
   it('dims the button subtly while loading so users perceive the state', () => {

@@ -97,7 +97,7 @@
             <!-- Sin descuento la fila queda sin concepto: la cifra se alinea
                  igual a la derecha porque `valor-tarifa` usa `ms-auto`. -->
             <div class="fila-tarifa">
-              <span class="porcentaje-descuento" v-if="hasDiscount()">
+              <span class="porcentaje-descuento" v-if="hasDiscountToShow">
                 Hoy con {{ getDiscount }}% Dto.
               </span>
               <!-- Diario SIEMPRE con Seguro Básico: no cambia al marcar Total (que
@@ -143,11 +143,26 @@
               </span>
               <span class="valor-tarifa text-sm text-gray-500">incluido</span>
             </div>
+            <!-- En mensual, 1.000 km forman parte de la tarifa base. El desglose
+                 conserva esa base aunque se marque la ampliación, para que el
+                 recargo de la siguiente fila se lea como una suma. -->
+            <div v-if="haveMonthlyReservation" class="fila-tarifa" data-testid="monthly-mileage-included-test">
+              <span class="text-sm">1.000 kilómetros</span>
+              <span class="valor-tarifa text-sm text-gray-500">incluidos</span>
+            </div>
+            <!-- La cifra es solo el delta 2k − 1k que explica por qué subió
+                 el total. No se vuelve a sumar: withMileage ya seleccionó la
+                 tarifa completa de 2.000 km en el composable. -->
+            <div v-if="haveMonthlyReservation && withMileageUpgrade" class="fila-tarifa" data-testid="monthly-mileage-upgrade-line-test">
+              <span class="text-sm">+ 1.000 kilómetros adicionales</span>
+              <span class="valor-tarifa text-sm">$ {{ currencyMileageUpgradePrice }}</span>
+            </div>
             <!-- Seguro Total: extra opcional que se marca en "Servicios
                  adicionales". Aquí aparece su sobrecosto (pre-impuestos), que es
-                 justo lo que sube el subtotal. Gate a por-día: en mensual el
-                 diario ya lo incluye y duplicaría. -->
-            <div v-if="withTotalCoverage && !haveMonthlyReservation" class="fila-tarifa">
+                 justo lo que sube el subtotal. También en mensual: ahí el
+                 diario NO lo incluye (no cambia al marcarlo), así que sin esta
+                 línea el recargo movía el total sin explicación. -->
+            <div v-if="withTotalCoverage" class="fila-tarifa">
               <span class="text-sm">+ Seguro Total {{ getFormattedDays }}</span>
               <span class="valor-tarifa text-sm">$ {{ currencyTotalCoveragePrice }}</span>
             </div>
@@ -183,15 +198,21 @@
               </div>
 
               <hr class="separador-tarifa">
+            </template>
 
-              <!--
-                Adicionales SIN IVA (Conductor/Silla/Lavado): se suman tras el
-                "Total renta", no en el subtotal, porque no se les aplica IVA
-                (getTotalToPayWithAdditionals = total renta + adicionales). Cada
-                línea aparece al marcar su selector abajo; su precio ya no vive en
-                la sección de adicionales, se inyecta aquí.
-              -->
-              <template v-if="hasSelectedAdditionals">
+            <!--
+              Adicionales SIN IVA (Conductor/Silla/Lavado): se suman tras el
+              "Total renta", no en el subtotal, porque no se les aplica IVA
+              (getTotalToPayWithAdditionals = total renta + adicionales). Cada
+              línea aparece al marcar su selector abajo; su precio ya no vive en
+              la sección de adicionales, se inyecta aquí.
+
+              Cuelga de `hasSelectedAdditionals` a secas, NO de `hasSurfacedTaxes`:
+              anidado ahí, en mensual —donde el total ya trae IVA y tasa, así que
+              no hay impuestos que surgir— los extras desaparecían de la escalera
+              y del total. El cliente marcaba $ 360.000 y la cifra no se movía.
+            -->
+            <template v-if="hasSelectedAdditionals">
                 <div class="fila-tarifa">
                   <span class="text-sm">Total renta</span>
                   <span class="valor-tarifa text-sm">$ {{ currencyActualTotalPrice }}</span>
@@ -210,7 +231,6 @@
                 </div>
 
                 <hr class="separador-tarifa">
-              </template>
             </template>
 
             <div class="fila-tarifa">
@@ -228,7 +248,7 @@
                     IVA: $ {{ ivaFeePriceTooltip }} <br />
                     Total: $ {{ actualTotalPriceTooltip }} <br />
                   </template>
-                  <ULink raw class="precio-total"> $ <span>{{ hasSurfacedTaxes ? (hasSelectedAdditionals ? currencyTotalToPayWithAdditionals : currencyActualTotalPrice) : currencyTotalPrice }}</span></ULink>
+                  <ULink raw class="precio-total" data-testid="category-total-price-test"> $ <span>{{ hasSelectedAdditionals ? currencyTotalToPayWithAdditionals : (hasSurfacedTaxes ? currencyActualTotalPrice : currencyTotalPrice) }}</span></ULink>
                 </UTooltip>
               </span>
             </div>
@@ -241,171 +261,6 @@
           </template>
         </div>
 
-        <!--
-          "Escoge protección" desapareció: el Seguro Básico va siempre incluido
-          (se ve en el desglose) y el Seguro Total pasó a ser un extra opcional en
-          "Servicios adicionales". Esta sección ahora solo aloja el selector de
-          kilometraje, que es exclusivo de la reserva mensual — por eso el
-          contenedor entero se muestra solo en ese caso.
-        -->
-        <div v-if="haveMonthlyReservation" class="contenedor-protecciones">
-          <div>
-            <p class="font-bold my-1">
-              Escoge kilometraje:
-            </p>
-
-            <div
-              v-if="haveMonthlyReservation"
-              class="grid grid-cols-2 gap-x-2"
-            >
-              <!-- <URadioGroup
-                  v-model="withMileage" 
-                  size="sm"
-                  :items="[{label: 'Kilometraje 1000 kms', value: '1k_kms'}, {label: 'Kilometraje 2000 kms', value: '2k_kms'}]"
-                /> -->
-              <div class="opcion-seleccionable">
-                <input
-                  :id="oneKmMileageCheckboxID"
-                  v-model="withMileage"
-                  type="radio"
-                  class="form-radio"
-                  :name="mileageCheckboxName"
-                  value="1k_kms"
-                />
-
-                <label :for="oneKmMileageCheckboxID">1000 kms</label>
-
-                <UModal :ui="modalUIConfig" title="1000 Kilómetros">
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    aria-label="informacion sobre kilometraje"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      Con nuestro plan de 1000 kilómetros incluidos, disfruta de
-                      la libertad de recorrer largas distancias durante tu
-                      viaje. Este plan es perfecto para explorar múltiples
-                      destinos o realizar trayectos interurbanos cómodamente.
-                    </p>
-                    <b class="text-sm mb-4"> Ideal para viajes largos:</b>
-                    <p class="text-sm mb-4">
-                      1000 kilómetros te permiten moverte con tranquilidad y
-                      aprovechar al máximo el vehículo.
-                    </p>
-                    <b class="text-sm mb-4">Kilómetros adicionales:</b>
-                    <p class="text-sm mb-4">
-                      Si superas el límite, el costo por kilómetro adicional es
-                      de $2,300, que se cobrará al momento de retornar el auto.
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-
-              <div class="opcion-seleccionable">
-                <input
-                  :id="twoKmsMileageCheckboxID"
-                  v-model="withMileage"
-                  type="radio"
-                  class="form-radio"
-                  :name="mileageCheckboxName"
-                  value="2k_kms"
-                />
-
-                <label :for="twoKmsMileageCheckboxID">2000 kms</label>
-
-                <UModal :ui="modalUIConfig" title="2000 Kilómetros">
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    aria-label="informacion sobre kilometraje"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      Con nuestro plan de 2000 kilómetros incluidos, disfruta de
-                      la libertad de recorrer largas distancias durante tu
-                      viaje. Este plan es perfecto para explorar múltiples
-                      destinos o realizar trayectos interurbanos cómodamente.
-                    </p>
-                    <b class="text-sm mb-4"> Ideal para viajes largos:</b>
-                    <p class="text-sm mb-4">
-                      2000 kilómetros te permiten moverte con tranquilidad y
-                      aprovechar al máximo el vehículo.
-                    </p>
-                    <b class="text-sm mb-4">Kilómetros adicionales:</b>
-                    <p class="text-sm mb-4">
-                      Si superas el límite, el costo por kilómetro adicional es
-                      de $2,300, que se cobrará al momento de retornar el auto.
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-
-              <div v-if="false" class="opcion-seleccionable">
-                <input
-                  :id="threeKmsMileageCheckboxID"
-                  v-model="withMileage"
-                  type="radio"
-                  class="form-radio"
-                  :name="mileageCheckboxName"
-                  value="3k_kms"
-                />
-
-                <label :for="threeKmsMileageCheckboxID">3000 kms</label>
-
-                <UModal :ui="modalUIConfig" title="2000 Kilómetros">
-                  <UButton
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                    aria-label="informacion sobre kilometraje"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      Con nuestro plan de 2000 kilómetros incluidos, disfruta de
-                      la libertad de recorrer largas distancias durante tu
-                      viaje. Este plan es perfecto para explorar múltiples
-                      destinos o realizar trayectos interurbanos cómodamente.
-                    </p>
-                    <b class="text-sm mb-4"> Ideal para viajes largos:</b>
-                    <p class="text-sm mb-4">
-                      2000 kilómetros te permiten moverte con tranquilidad y
-                      aprovechar al máximo el vehículo.
-                    </p>
-                    <b class="text-sm mb-4">Kilómetros adicionales:</b>
-                    <p class="text-sm mb-4">
-                      Si superas el límite, el costo por kilómetro adicional es
-                      de $2,300, que se cobrará al momento de retornar el auto.
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- adicionales cabezera t1-->
@@ -434,6 +289,58 @@
         </UButton>
         <template #content>
           <div class="flex flex-col gap-1 px-5 pt-3 pb-4 adicionales-contenido">
+            <!-- La mensualidad incluye 1.000 km. Esta casilla no crea una suma
+                 paralela: escribe 2k_kms en withMileage, la misma selección que
+                 determina el total y el payload de la reserva. -->
+            <div v-if="canUpgradeMonthlyMileage" class="flex items-center justify-between">
+              <div class="flex">
+                <UCheckbox
+                  v-model="withMileageUpgrade"
+                  color="success"
+                  class="opcion-seleccionable"
+                  data-testid="monthly-mileage-upgrade-test"
+                >
+                  <template #label>
+                    <span>
+                      1.000 km adicionales
+                      <span class="text-gray-500">(2.000 km en total)</span>
+                    </span>
+                  </template>
+                </UCheckbox>
+
+                <UModal
+                  :ui="modalUIConfig"
+                  title="Ampliación a 2.000 kilómetros"
+                  description="1.000 kilómetros adicionales"
+                >
+                  <UButton
+                    variant="ghost"
+                    color="neutral"
+                    size="xs"
+                    aria-label="Más información sobre el kilometraje"
+                    class="cursor-pointer"
+                    :ui="questionButtonUIConfig"
+                  >
+                    <template #leading>
+                      <InfoQuestionIcon cls="size-3 text-gray-400" />
+                    </template>
+                  </UButton>
+
+                  <template #body>
+                    <p class="text-sm mb-4">
+                      Tu mensualidad incluye 1.000 kilómetros. Al seleccionar
+                      esta ampliación dispondrás de 2.000 kilómetros en total
+                      durante los 30 días de alquiler.
+                    </p>
+                    <b class="text-sm mb-4">Kilómetros adicionales al plan:</b>
+                    <p class="text-sm mb-4">
+                      Si superas los 2.000 kilómetros, cada kilómetro adicional
+                      se cobrará al momento de retornar el vehículo.
+                    </p>
+                  </template>
+                </UModal>
+              </div>
+            </div>
             <!--
               Seguro Total como extra opcional (antes vivía en "Escoge
               protección"). Reusa withTotalCoverage: al marcarlo, el diario sigue
@@ -488,7 +395,6 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withTotalCoverage && !hasSurfacedTaxes" class="ml-4">$ {{ currencyTotalCoveragePrice }}</span>
             </div>
             <div class="flex items-center justify-between">
               <div class="flex">
@@ -533,9 +439,6 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withExtraDriver && !hasSurfacedTaxes" class="ml-4"
-                >$ {{ currencyExtraDriverPrice }}</span
-              >
             </div>
 
             <div class="flex items-center justify-between">
@@ -585,9 +488,6 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withBabySeat && !hasSurfacedTaxes" id="precio4" class="ml-4"
-                >$ {{ currencyBabySeatPrice }}</span
-              >
             </div>
 
             <div class="flex items-center justify-between">
@@ -641,42 +541,12 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withWash && !hasSurfacedTaxes" id="precio3" class="ml-4"
-                >$ {{ currencyWashPrice }}</span
-              >
             </div>
           </div>
         </template>
       </UCollapsible>
 
       <div class="seccion-boton-seleccion">
-        <!-- Único método de pago (issue #124): info sobre el CTA, mismo fondo difuminado -->
-        <div class="metodo-pago">
-          <span class="metodo-pago-label">
-            Único método de pago
-            <UPopover :ui="{ content: 'bg-white ring-1 ring-gray-200' }">
-              <UButton
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                aria-label="Más información sobre el método de pago"
-                class="cursor-pointer p-0 -my-1"
-                :ui="questionButtonUIConfig"
-              >
-                <template #leading>
-                  <InfoQuestionIcon cls="size-3.5 text-gray-400" />
-                </template>
-              </UButton>
-              <template #content>
-                <p class="max-w-[280px] p-3 text-sm font-normal text-gray-700">
-                  El pago se realiza al recoger el vehículo en la sede, únicamente con tarjeta de crédito. No se acepta efectivo, Nequi u otros medios de pago.
-                </p>
-              </template>
-            </UPopover>
-          </span>
-          <span class="metodo-pago-valor">Tarjeta de crédito en sede</span>
-        </div>
-
         <UButton
           class="boton-seleccion"
           size="xl"
@@ -726,13 +596,10 @@ const { haveMonthlyReservation } = storeToRefs(useStoreReservationForm());
 /** category composable */
 const category: ReturnType<typeof useCategory> = useCategory(props.category);
 const {
-  mileageCheckboxName,
-  oneKmMileageCheckboxID,
-  twoKmsMileageCheckboxID,
-  threeKmsMileageCheckboxID,
   canQuoteTotalCoverage,
   withTotalCoverage,
-  withMileage,
+  withMileageUpgrade,
+  canUpgradeMonthlyMileage,
   withExtraDriver,
   withBabySeat,
   withWash,
@@ -747,6 +614,7 @@ const {
   currencyTotalToPayWithAdditionals,
   currencyIvaAndTax,
   currencyTotalCoveragePrice,
+  currencyMileageUpgradePrice,
   currencyBasicDailyPrice,
   getTotalPrice,
   getActualTotalPrice,
@@ -758,6 +626,7 @@ const {
   getFormattedDays,
   isPicoyPlacaExempt,
   hasDiscount,
+  hasDiscountToShow,
   hasExtraHours,
   hasReturnFee,
   currencyExtraDriverPrice,

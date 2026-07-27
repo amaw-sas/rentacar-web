@@ -122,7 +122,13 @@
         <template v-else>Resumen</template>
       </template>
       <template #body>
-        <reservation-resume v-if="slideoverStep === 'resumen'" :category="selectedCategory"></reservation-resume>
+        <reservation-resume
+          v-if="slideoverStep === 'resumen'"
+          :category="selectedCategory"
+          :link-copied="linkCopied"
+          @share-whatsapp="shareWhatsApp"
+          @copy-link="copyReservationLink"
+        ></reservation-resume>
         <reservation-form
           v-else
           ref="reservationFormComponent"
@@ -130,42 +136,19 @@
         />
       </template>
       <template #footer>
-        <!-- Paso "Resumen": cápsula de compartir + Volver/Siguiente. -->
-        <div v-if="slideoverStep === 'resumen'" class="w-full flex flex-col gap-3">
-          <!-- Share Capsule -->
-          <div class="flex justify-center">
-            <div class="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2">
-              <span class="text-sm text-gray-600 font-medium">Compartir</span>
-              <button
-                @click="shareWhatsApp"
-                class="flex items-center justify-center w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors"
-                aria-label="Compartir en WhatsApp"
-              >
-                <WhatsappIcon cls="size-4 text-white" />
-              </button>
-              <button
-                @click="shareFacebook"
-                class="flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
-                aria-label="Compartir en Facebook"
-              >
-                <FacebookIcon cls="size-4 text-white" />
-              </button>
-              <button
-                @click="shareTwitter"
-                class="flex items-center justify-center w-8 h-8 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
-                aria-label="Compartir en X"
-              >
-                <XIcon cls="size-4 text-white" />
-              </button>
-              <button
-                @click="copyReservationLink"
-                class="flex items-center justify-center w-8 h-8 bg-gray-500 hover:bg-gray-600 text-white rounded-full transition-colors"
-                aria-label="Copiar enlace"
-              >
-                <UIcon :name="linkCopied ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
-              </button>
-            </div>
-          </div>
+        <!-- Paso "Resumen": Volver/Siguiente. La cápsula de compartir se movió
+             sobre la foto, dentro de ReservationResume: era una acción
+             secundaria plantada en la zona de decisión, y sus colores de marcas
+             ajenas le disputaban la atención al CTA y al precio. -->
+        <!-- Mitad de abajo de la franja gris que arranca en el bloque del total
+             (ReservationResume): mismo relleno y MISMO sangrado lateral (8px de
+             blanco a cada lado), más el vertical para tapar el padding del
+             footer. Si cambias esos márgenes allá, cámbialos aquí o el filete
+             blanco da un escalón a media franja. -->
+        <div
+          v-if="slideoverStep === 'resumen'"
+          class="w-full flex flex-col gap-3 bg-surface-softest rounded-b-xl -mx-2 px-4 -mt-4 pt-3 -mb-2 pb-4 sm:-mx-4 sm:px-6 grow"
+        >
           <!-- Action Buttons -->
           <div class="flex gap-2">
             <u-button
@@ -178,12 +161,17 @@
               @click="backFromResume"
             />
             <!-- "Siguiente" cambia el paso a "datos" SIN cerrar/reabrir el
-                 diálogo (issue #65): no hay swap de capas modales. -->
+                 diálogo (issue #65): no hay swap de capas modales.
+
+                 Verde de .boton-seleccion (el "Solicitar este vehículo" de la
+                 card), no el rojo de marca: el avance es una sola cadena verde
+                 de punta a punta y el rojo en medio leía como alerta justo
+                 donde el cliente continúa. -->
             <u-button
               label="Siguiente"
               color="neutral"
               size="xl"
-              class="flex-1 py-4 justify-center bg-brand-600 hover:bg-brand-700 text-white"
+              class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 text-white"
               data-testid="reservation-next-test"
               @click="goToForm"
             >
@@ -207,7 +195,7 @@
           <u-button
             color="neutral"
             size="xl"
-            class="flex-1 py-4 justify-center whitespace-nowrap bg-brand-600 hover:bg-brand-700 disabled:bg-brand-600 aria-disabled:bg-brand-600 disabled:opacity-80 aria-disabled:opacity-80 text-white"
+            class="flex-1 py-4 justify-center whitespace-nowrap bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
             :loading="isSubmittingForm"
             :disabled="isSubmittingForm || formSubmitLocked"
             @click="reservationFormComponent?.submit()"
@@ -237,10 +225,7 @@ import {
   CategoryCard,
   ReservationResume,
   ReservationForm,
-  IconsChevronRightIcon as ChevronRightIcon,
-  IconsWhatsappIcon as WhatsappIcon,
-  IconsFacebookIcon as FacebookIcon,
-  IconsXIcon as XIcon
+  IconsChevronRightIcon as ChevronRightIcon
 } from "#components";
 
 /** utils */
@@ -384,17 +369,9 @@ function shareWhatsApp() {
   window.open(`https://wa.me/?text=${text}`, '_blank');
 }
 
-function shareFacebook() {
-  const url = encodeURIComponent(getReservationShareUrl());
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400');
-}
-
-function shareTwitter() {
-  const url = encodeURIComponent(getReservationShareUrl());
-  const text = encodeURIComponent('¡Mira esta opción de alquiler de carro!');
-  window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'width=600,height=400');
-}
-
+// Facebook y X se eliminaron: no son canal para una cotización de alquiler en
+// Colombia y ocupaban media cápsula. Quedan WhatsApp —el canal real— y copiar
+// enlace, que sirve para pegarlo donde sea.
 async function copyReservationLink() {
   try {
     await navigator.clipboard.writeText(getReservationShareUrl());

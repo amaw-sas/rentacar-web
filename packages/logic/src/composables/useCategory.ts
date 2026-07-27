@@ -201,7 +201,63 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       
    });
    
-   const getTotalCoveragePrice = computed<number>(() => effectiveTotalCoverageUnitCharge.value * coverageQuantity.value);
+   /**
+    * Recargo del Seguro Total.
+    *
+    * En mensual sale de `month_prices.total_insurance_price` — la MISMA fuente
+    * que ya usaba getActualTotalPrice—, no de la fórmula diaria: en una reserva
+    * mensual los campos por día llegan en 0 (coverageQuantity, coverageUnitCharge
+    * y vehicleDayCharge) porque el precio vive en month_prices, así que
+    * `unitCharge * quantity` daba 0. La línea decía "Seguro Total 30 días $ 0"
+    * mientras el total subía $ 476.000: un extra gratis que sí se cobraba.
+    */
+   const getTotalCoveragePrice = computed<number>(() => {
+      if(haveMonthlyReservation.value){
+         const monthPrice = getCategoryMonthPrice();
+         if(monthPrice) return monthPrice["total_insurance_price"] ?? 0;
+      }
+
+      return effectiveTotalCoverageUnitCharge.value * coverageQuantity.value;
+   });
+
+   /**
+    * Ampliacion mensual de 1.000 a 2.000 km.
+    *
+    * `withMileage` sigue siendo la unica fuente de verdad del plan que se cobra
+    * y que viaja en el payload. Este booleano escrito solo adapta ese enum a la
+    * casilla de "Servicios adicionales": nunca suma dinero por su cuenta.
+    */
+   const withMileageUpgrade = computed<boolean>({
+      get: () => withMileage.value === "2k_kms",
+      set: (enabled) => {
+         withMileage.value = enabled ? "2k_kms" : "1k_kms";
+      },
+   });
+
+   /** La opcion solo se ofrece cuando la fila mensual cotiza ambos planes. */
+   const canUpgradeMonthlyMileage = computed<boolean>(() => {
+      if(!haveMonthlyReservation.value) return false;
+
+      const monthPrice = getCategoryMonthPrice();
+      return !!monthPrice
+         && (monthPrice["1k_kms"] ?? 0) > 0
+         && (monthPrice["2k_kms"] ?? 0) > 0;
+   });
+
+   /**
+    * Diferencia informativa que reconcilia el cambio visible del total.
+    * El total mensual ya lee directamente `monthPrice[withMileage]`, por lo que
+    * este valor NO entra en getSubtotal/getTotalPrice/getActualTotalPrice.
+    */
+   const getMileageUpgradePrice = computed<number>(() => {
+      const monthPrice = getCategoryMonthPrice();
+      if(!monthPrice) return 0;
+
+      return Math.max(
+         0,
+         (monthPrice["2k_kms"] ?? 0) - (monthPrice["1k_kms"] ?? 0),
+      );
+   });
 
    /**
     * Precio diario CON Seguro Básico, estable: no cambia al marcar Seguro Total.
@@ -333,12 +389,27 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    
    const getDiscount = computed<string>(() => {
       let initial: number = 0, final: number = 0;
-      initial = ((hasDiscount()) ? vehicleDayCharge.value + (discountAmount.value ?? 0) : vehicleDayCharge.value) + coverageUnitCharge.value;
-      final = vehicleDayCharge.value + coverageUnitCharge.value;
 
-      // Base nula (p.ej. reserva mensual: vehicleDayCharge y coverageUnitCharge
-      // son 0, el precio vive en month_prices) → no hay descuento diario que
-      // mostrar. Sin esta guarda el cálculo hace 100 * (0 / |0|) = NaN.
+      // Mensual: la base diaria llega en 0 (el precio vive en month_prices), así
+      // que el ahorro se mide entre el precio de un día suelto y el día que sale
+      // de la mensualidad elegida — que es justo el par que la card muestra
+      // tachado y en limpio. Antes la guarda de abajo lo daba por inexistente y
+      // el tachado aparecía sin explicación.
+      if(haveMonthlyReservation.value && withMileage.value){
+         const monthPrice = getCategoryMonthPrice();
+         if(monthPrice){
+            initial = monthPrice["one_day_price"] ?? 0;
+            final = (monthPrice[withMileage.value] ?? 0) / 30;
+         }
+      }
+      else {
+         initial = ((hasDiscount()) ? vehicleDayCharge.value + (discountAmount.value ?? 0) : vehicleDayCharge.value) + coverageUnitCharge.value;
+         final = vehicleDayCharge.value + coverageUnitCharge.value;
+      }
+
+      // Base nula (más allá del horizonte de tarifas, o sin fila mensual) → no
+      // hay descuento que mostrar. Sin esta guarda el cálculo hace
+      // 100 * (0 / |0|) = NaN.
       if (initial <= 0) return "0";
 
       const formatter = new Intl.NumberFormat("es-CO", {
@@ -350,6 +421,13 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       )
    });
    
+   /**
+    * ¿Hay ahorro que anunciar? Se decide por el descuento CALCULADO, no por
+    * `discountAmount`: en mensual ese campo llega nulo, así que la card pintaba
+    * el precio tachado y se comía la píldora que lo explica.
+    */
+   const hasDiscountToShow = computed<boolean>(() => getDiscount.value !== "0");
+
    /**
     * Get the extra driver price, current daily price is 100.000 COP
     */
@@ -422,6 +500,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const currencyCoverageDailyPrice = computed<string>(() => getFormattedPrice(coverageUnitCharge.value));
    const currencyCoveragePrice = computed<string>(() => getFormattedPrice(coverageTotalAmount.value));
    const currencyTotalCoveragePrice = computed<string>(() => getFormattedPrice(getTotalCoveragePrice.value));
+   const currencyMileageUpgradePrice = computed<string>(() => getFormattedPrice(getMileageUpgradePrice.value));
    const currencyBasicDailyPrice = computed<string>(() => getFormattedPrice(getBasicDailyPrice.value));
    const currencyReturnFee = computed<string>(() => getFormattedPrice(returnFeeAmount.value));
    const currencySubtotal = computed<string>(() => getFormattedPrice(getSubtotal.value));
@@ -480,6 +559,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       canQuoteTotalCoverage,
       withTotalCoverage,
       withMileage,
+      withMileageUpgrade,
+      canUpgradeMonthlyMileage,
       withExtraDriver,
       withBabySeat,
       withWash,
@@ -513,11 +594,13 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       getDailyBasePrice,
       getDailyPrice,
       getDiscount,
+      hasDiscountToShow,
       getFormattedDays,
       hasAdditionalServices,
       getAdditionalsTotal,
       getTotalWithAdditionals,
       getTotalToPayWithAdditionals,
+      getMileageUpgradePrice,
 
       // currency formatted prices
       currencyTotalPrice,
@@ -530,6 +613,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       currencyCoverageDailyPrice,
       currencyCoveragePrice,
       currencyTotalCoveragePrice,
+      currencyMileageUpgradePrice,
       currencyBasicDailyPrice,
       currencyDailyPrice,
       currencyDailyBasePrice,
