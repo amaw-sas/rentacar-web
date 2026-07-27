@@ -1,32 +1,31 @@
 import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 
-export const cityName = "Pereira"
-export const citySlug = "pereira"
+export const cityName = 'Pereira'
+export const citySlug = 'pereira'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
-        {
-            label: '¿Dónde puedo recoger mi carro en Pereira?',
-            content: getCityPickupAnswer('Pereira')
-        },
-        {
-            label: '¿Qué vehículo recomiendan para el Eje Cafetero?',
-            content: 'Un sedán es ideal para recorrer el Eje Cafetero con comodidad. Si planeas visitar fincas cafeteras por caminos destapados o el Valle del Cocora, una camioneta te dará mejor desempeño.'
-        },
-        {
-            label: '¿Cuánto cuesta alquilar un carro en Pereira?',
-            content: getCityPriceAnswer('Pereira')
-        },
-        {
-            label: '¿Aplica pico y placa en Pereira?',
-            content: 'Sí, Pereira tiene pico y placa según el último dígito de la placa de lunes a viernes. Te informamos la restricción al entregar el vehículo. Los fines de semana y festivos no hay restricción.'
-        },
-        {
-            label: '¿Puedo visitar Salento y el Valle del Cocora con el carro?',
-            content: 'Sí, Salento está a 45 minutos de Pereira. Puedes llegar en carro hasta el pueblo y tomar un Willys al Valle del Cocora, o si tienes camioneta, subir directamente. La ruta es pavimentada hasta Salento.'
-        },
-        {
-            label: '¿Qué lugares puedo visitar con carro desde Pereira?',
-            content: 'Destinos del Eje Cafetero: Salento y Valle del Cocora (45min), Filandia (40min), Santa Rosa de Cabal y termales (30min), Manizales (1h), y Armenia (45min). Paisaje Cultural Cafetero Patrimonio UNESCO.'
-        }
-    ]
+  {
+    label: '¿Dónde puedo recoger el carro que alquile en Pereira?',
+    content: getCityPickupAnswer('Pereira'),
+  },
+  {
+    label: '¿Me sirve un sedán para recorrer el Eje Cafetero desde Pereira?',
+    content: 'Sí. Un sedán permite viajar con comodidad por las carreteras principales del Eje Cafetero. Elige una camioneta si vas a entrar a fincas por vías destapadas o planeas subir al Valle del Cocora.',
+  },
+  {
+    label: '¿De qué depende la tarifa de alquiler de carros en Pereira?',
+    content: getCityPriceAnswer('Pereira'),
+  },
+  {
+    label: '¿Cuándo debo tener en cuenta el pico y placa de Pereira?',
+    content: 'La restricción aplica de lunes a viernes y rota según el último dígito de la placa. Al entregarte el carro te contamos cuál medida le corresponde. Sábados, domingos y festivos puedes circular sin esa limitación.',
+  },
+  {
+    label: '¿Cómo visito Salento y el Valle del Cocora desde Pereira?',
+    content: 'Salento queda a 45 minutos de Pereira por una carretera pavimentada. Puedes estacionar en el pueblo y continuar al valle en un Willys; si viajas en camioneta, también puedes subir directamente.',
+  },
+  {
+    label: '¿Qué ruta puedo armar en carro por los alrededores de Pereira?',
+    content: 'Desde Pereira puedes enlazar Filandia en 40 minutos, Santa Rosa de Cabal y sus termales en 30 minutos, Salento y el Valle del Cocora en 45 minutos, Armenia en 45 minutos y Manizales en 1 hora. Todos hacen parte del Paisaje Cultural Cafetero, reconocido por la UNESCO.',
+  },
+]

@@ -1,32 +1,31 @@
 import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 
-export const cityName = "Manizales"
-export const citySlug = "manizales"
+export const cityName = 'Manizales'
+export const citySlug = 'manizales'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
-        {
-            label: '¿Dónde puedo recoger mi carro en Manizales?',
-            content: getCityPickupAnswer('Manizales')
-        },
-        {
-            label: '¿Qué vehículo recomiendan para Manizales?',
-            content: 'Manizales es ciudad de montaña con calles empinadas. Un carro con buen torque es importante. Para visitar el Nevado del Ruiz o termales por carreteras rurales, recomendamos camioneta.'
-        },
-        {
-            label: '¿Cuánto cuesta alquilar un carro en Manizales?',
-            content: getCityPriceAnswer('Manizales')
-        },
-        {
-            label: '¿Aplica pico y placa en Manizales?',
-            content: 'Sí, Manizales tiene pico y placa según el último dígito de la placa en días hábiles. Te informamos la restricción al entregar el vehículo. Fines de semana y festivos sin restricción.'
-        },
-        {
-            label: '¿Puedo subir al Nevado del Ruiz en carro?',
-            content: 'Puedes llegar en carro hasta el sector de Las Brisas (4.050 msnm). El acceso al Parque Nacional requiere registro previo. Recomendamos camioneta y salir temprano para evitar neblina.'
-        },
-        {
-            label: '¿Qué lugares puedo visitar con carro desde Manizales?',
-            content: 'Destinos de Caldas: Nevado del Ruiz (2h), Termales de Santa Rosa (1.5h), Salamina pueblo patrimonio (2h), Recinto del Pensamiento (20min), y Chinchiná zona cafetera (30min).'
-        }
-    ]
+  {
+    label: '¿Dónde puedo recoger mi carro alquilado en Manizales?',
+    content: getCityPickupAnswer('Manizales'),
+  },
+  {
+    label: '¿Qué tipo de carro conviene para las lomas de Manizales?',
+    content: 'Busca un vehículo con buen torque para las calles empinadas de la ciudad. Una camioneta es la opción recomendada cuando el itinerario incluye el Nevado del Ruiz, los termales o carreteras rurales.',
+  },
+  {
+    label: '¿Cómo se calcula el precio de un alquiler de carros en Manizales?',
+    content: getCityPriceAnswer('Manizales'),
+  },
+  {
+    label: '¿El pico y placa de Manizales afecta a los carros alquilados?',
+    content: 'Sí. En días hábiles la medida cambia de acuerdo con el último número de la placa. Revisamos la restricción contigo en el momento de la entrega; no aplica durante fines de semana ni festivos.',
+  },
+  {
+    label: '¿Hasta dónde puedo subir en carro rumbo al Nevado del Ruiz?',
+    content: 'Puedes avanzar hasta el sector de Las Brisas, ubicado a 4.050 msnm. El ingreso al Parque Nacional exige registro previo. Sal temprano para reducir el riesgo de neblina y, para esta ruta, prefiere una camioneta.',
+  },
+  {
+    label: '¿Qué paseos por Caldas puedo hacer desde Manizales?',
+    content: 'Puedes ir al Recinto del Pensamiento en 20 minutos, a Chinchiná y su zona cafetera en 30 minutos, a los Termales de Santa Rosa en 1.5 horas, o dedicar 2 horas al Nevado del Ruiz y 2 horas a Salamina, pueblo patrimonio.',
+  },
+]
