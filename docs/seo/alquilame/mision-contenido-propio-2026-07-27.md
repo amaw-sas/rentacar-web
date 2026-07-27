@@ -123,6 +123,8 @@ Cada worker reescribe SUS ciudades: contenido largo + FAQs + metaDescription, en
 | 2026-07-27 12:45 | W1.1 entregado (b12779f): asserts estructurales, split metaDescription/pullQuoteSource ×19, paridad JSON-LD restaurada + test, guard AST de auto-imports, shingle-check con --region/entidades/fragmentos. 13 tests nuevos verdes. Re-revisión de deltas despachada al mismo revisor. |
 | 2026-07-27 12:47 | A/B confirmado por el orquestador: las 4 suites rojas (7 tests) fallan idéntico en la base SIN cambios de W1 → preexistentes, no regresiones. |
 
+| 2026-07-27 13:27 | W3 (88b5b78), W4 (6907fa3) y W5 (18468f4) entregados en 8-10 min c/u. Auto-reportes: shingles 0,4-2%, metas ≤155 únicas, vitest verde, S5 intacto. Cifras tan bajas que exigen verificación: 3 jueces adversariales frescos (Claude) lanzados en paralelo para re-medir shingles con extracción propia, buscar template-reuse interno, verificar S8 (datos factuales) y S2/S7 (citas verbatim, tríos y pins). W2 y W7 siguen trabajando. |
+
 ### Bloqueos / errores
 - 12:10 — A/B de baseline en worktree de integración falló por entorno (faltaba `.nuxt/` copiado). Corregido, relanzado. No afecta a los workers.
 - 12:47 — La corrida completa de vitest en background quedó colgada (vitest no sale en worktrees); se reemplazó por A/B dirigido a las suites rojas. Resuelto.
