@@ -24,11 +24,11 @@
           aria-hidden="true"
         />
         <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-          Preguntas frecuentes sobre alquiler en {{ city?.name }}
+          Respuestas útiles para alquilar en {{ city?.name }}
         </h2>
         <p class="mt-4 body-lg">
-          Resolvemos tus dudas más comunes sobre el alquiler de carros en
-          {{ city?.name }}.
+          Aquí aclaramos lo esencial del alquiler de carros en {{ city?.name }},
+          para que reserves con confianza y prepares tu recorrido.
         </p>
       </div>
 

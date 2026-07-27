@@ -25,8 +25,8 @@
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-            <span class="text-red-700">Ventajas de alquilar carro</span>
-            <span class="text-gray-900"> en {{ city?.name }}</span>
+            <span class="text-red-700">Razones para moverte en carro</span>
+            <span class="text-gray-900"> por {{ city?.name }}</span>
           </h2>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -94,8 +94,8 @@
         <div class="order-1 lg:order-2">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
           <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-5">
-            <span class="text-red-700">Explora {{ city?.name }}</span>
-            <span class="text-gray-900"> con tu carro de alquiler</span>
+            <span class="text-red-700">Conoce {{ city?.name }}</span>
+            <span class="text-gray-900"> a tu ritmo y en carro</span>
           </h2>
           <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
             <p>{{ expandedContent.intro }}</p>
@@ -114,7 +114,7 @@
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-            <span class="text-red-700">Destinos para recorrer con carro rentado</span>
+            <span class="text-red-700">Planes para salir por carretera</span>
             <span class="text-gray-900"> desde {{ city?.name }}</span>
           </h2>
         </div>
@@ -146,8 +146,8 @@
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-            <span class="text-red-700">Consejos</span>
-            <span class="text-gray-900"> para alquilar carro en {{ city?.name }}</span>
+            <span class="text-red-700">Claves para conducir</span>
+            <span class="text-gray-900"> un carro alquilado en {{ city?.name }}</span>
           </h2>
         </div>
         <!-- Three per row, matching Ventajas/Destinos: stacked, each tip card
@@ -186,8 +186,8 @@
         <div>
           <div class="h-1 w-10 rounded-full bg-red-600 mb-5"></div>
           <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-5">
-            <span class="text-red-700">Mejor época</span>
-            <span class="text-gray-900"> para alquilar carro y viajar a {{ city?.name }}</span>
+            <span class="text-red-700">Cuándo conviene recorrer</span>
+            <span class="text-gray-900"> {{ city?.name }} en carro</span>
           </h2>
           <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
             <p>{{ expandedContent.bestSeason }}</p>
@@ -219,11 +219,11 @@
         <div class="text-center mb-8">
           <div class="h-1 w-10 rounded-full bg-red-600 mb-4 mx-auto"></div>
           <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-            <span class="text-red-700">Alquiler de carros</span>
-            <span class="text-gray-900"> en ciudades cercanas</span>
+            <span class="text-red-700">Continúa el viaje</span>
+            <span class="text-gray-900"> por otras ciudades</span>
           </h2>
           <p class="text-gray-600 mt-4">
-            ¿Planeas un viaje más largo? También ofrecemos alquiler de vehículos en estas ciudades cercanas a {{ city?.name }}.
+            ¿Tu ruta sigue después de {{ city?.name }}? Mira estas opciones para continuar el recorrido en carro.
           </p>
         </div>
         <div
@@ -250,7 +250,7 @@
           v-if="relatedCities.length > 0"
           class="text-center text-sm font-medium text-gray-500 mt-10 mb-4"
         >
-          O explora el alquiler de carros en todas nuestras ciudades:
+          También puedes revisar el alquiler de carros en las demás ciudades:
         </p>
         <div class="flex flex-wrap justify-center gap-3">
           <NuxtLink
@@ -318,23 +318,23 @@ const dioramaSrc = computed(() => {
 const benefits = computed(() => [
   {
     emoji: '💰',
-    title: 'Precios transparentes',
-    body: `Sin cargos ocultos ni sorpresas. El precio que ves incluye seguro básico, impuestos y kilometraje ilimitado para recorrer ${props.city?.name} y sus alrededores.`,
+    title: 'Cuenta clara desde el inicio',
+    body: `El valor mostrado ya reúne seguro básico, impuestos y kilometraje ilimitado. Así puedes recorrer ${props.city?.name} y sus alrededores con la cuenta clara.`,
   },
   {
     emoji: '🚗',
-    title: 'Flota variada',
-    body: `Desde económicos hasta SUVs y camionetas. Encuentra el vehículo perfecto para tu viaje en ${props.city?.name}, ya sea por negocios, turismo o familia.`,
+    title: 'Una categoría para cada viaje',
+    body: `Hay opciones económicas, SUVs y camionetas para trabajo, vacaciones o planes en familia. Escoge el carro que mejor se ajuste a tu recorrido por ${props.city?.name}.`,
   },
   {
     emoji: '📍',
-    title: 'Puntos de recogida',
-    body: `Consulta en el buscador los puntos de recogida activos en ${props.city?.name}. Las opciones disponibles se actualizan con el inventario de sedes.`,
+    title: 'Recogida según sedes activas',
+    body: `Revisa en el buscador cuáles puntos de recogida están activos en ${props.city?.name}. La lista se ajusta al inventario disponible de cada sede.`,
   },
   {
     emoji: '⭐',
-    title: 'Atención personalizada',
-    body: `Soporte en español las 24 horas. Te asesoramos sobre rutas, destinos y todo lo que necesites saber para moverte en ${props.city?.name}.`,
+    title: 'Ayuda cuando la necesites',
+    body: `Te atendemos en español las 24 horas. Si tienes dudas sobre el alquiler o el recorrido por ${props.city?.name}, estamos para ayudarte.`,
   },
 ])
 
