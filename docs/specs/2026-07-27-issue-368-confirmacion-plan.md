@@ -8,7 +8,7 @@ Diseño fuente: `docs/specs/2026-07-27-issue-368-confirmacion-design.md` (aproba
 |---|---|---|
 | `packages/logic/src/stores/useStoreReservationForm.ts` | MODIFICAR | Tipo `ReservationSummary` + ref `lastReservationSummary`; congelarlo en la rama `/reservado/` de `submitForm` (leyendo `useStoreSearchData().selectedCategory` **dentro del cuerpo de la acción**, lazy, para no crear ciclo de init de módulos ES); exponerlo en el return. |
 | `packages/ui-alquicarros/app/composables/useReservationRecap.ts` | NUEVO | Lee el snapshot + `reserveCode` de la ruta; gate de tres partes (`code` match + `categoryName` + `total`); mapea a display (etiquetas de seguro/km). Devuelve `{ show, recap }`. Sin estado vivo. |
-| `packages/ui-alquicarros/app/constants/reservationRequirements.ts` | NUEVO | Los 3 strings de requisitos "qué llevar" como constante única. |
+| `packages/ui-alquicarros/app/config/reservationRequirements.ts` | NUEVO | Los 3 strings de requisitos "qué llevar" como constante única. |
 | `packages/ui-alquicarros/app/components/ReservationForm.vue` | MODIFICAR | Re-apuntar el `<ul>` de requisitos (`:17-19`) a la constante. Sin cambio de comportamiento. |
 | `packages/ui-alquicarros/app/pages/reservado/[reserveCode]/index.vue` | MODIFICAR | `role="status"`; botón copiar; bloque recap (`v-if="show"`); checklist; enlaces reales de contacto; variante `unavailable` con reintento + contacto. |
 | `packages/logic/src/stores/__tests__/useStoreReservationForm.recap.test.ts` | NUEVO | SCEN-10: submit real congela el snapshot con nombre+total correctos (sin `.value`). |
@@ -33,7 +33,7 @@ La confirmación necesita saber si pintar el recap y con qué valores → el com
 - **Aceptación:** los cuatro casos observables; el mapeo de etiquetas cubre Total/Básico y mensual/no-mensual.
 
 ### Paso 3 — Constante de requisitos + re-apuntar el form (Fundación) · S · dep: ninguna
-Los requisitos "qué llevar" deben tener una sola fuente → extraer los 3 strings a `reservationRequirements.ts` y re-apuntar `ReservationForm.vue`.
+Los requisitos "qué llevar" deben tener una sola fuente → extraer los 3 strings a `app/config/reservationRequirements.ts` y re-apuntar `ReservationForm.vue`.
 - **Escenario:** el formulario sigue renderizando los 3 requisitos textualmente iguales (sin cambio de comportamiento) — verificado por el mount/DOM existente del form o una aserción de que el `<li>` sale de la constante.
 - **Aceptación:** cero delta visual en el form; la constante es la única fuente.
 
