@@ -1,43 +1,40 @@
 import type { CityExpandedContent } from './types'
 
-export const cityName = "Palmira"
-export const citySlug = "palmira"
+export const cityName = 'Palmira'
+export const citySlug = 'palmira'
 
-// W1 placeholder: copied from the current city catalog so rendering stays unchanged.
-export const metaDescription = "Palmira, la Capital Agrícola de Colombia, tiene una ubicación clave junto al Aeropuerto Alfonso Bonilla Aragón. Desde la ciudad puedes recorrer las haciendas azucareras del Valle del Cauca, visitar la Basílica del Señor de los Milagros en Buga, explorar Cali a 30 minutos o subir al Lago Calima. Reserva sin anticipos y con descuentos de hasta el 60%. Palmira es un punto de partida práctico para descubrir todo el Valle con la comodidad de un vehículo propio."
+export const metaDescription = 'Alquiler de carros en Palmira para salir del aeropuerto y recorrer Cali, Buga, Amaime y las haciendas del Valle del Cauca.'
 
-// Keep this independent from the short SEO meta so all three editorial separators survive.
-export const pullQuoteSource = "Palmira, la Capital Agrícola de Colombia, tiene una ubicación clave junto al Aeropuerto Alfonso Bonilla Aragón. Desde la ciudad puedes recorrer las haciendas azucareras del Valle del Cauca, visitar la Basílica del Señor de los Milagros en Buga, explorar Cali a 30 minutos o subir al Lago Calima. Reserva sin anticipos y con descuentos de hasta el 60%. Palmira es un punto de partida práctico para descubrir todo el Valle con la comodidad de un vehículo propio."
+export const pullQuoteSource = 'En Palmira, los cultivos de caña acompañan la carretera y recuerdan el carácter agrícola del Valle del Cauca. Su cercanía al Aeropuerto Alfonso Bonilla Aragón permite comenzar pronto una ruta hacia Cali, Buga, Amaime o las haciendas históricas. Con un carro defines si el día será urbano, de campo o de viaje por el corredor vallecaucano.'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const content: CityExpandedContent = {
-        intro: `Palmira, la Villa de las Palmas y Capital Agrícola de Colombia, es una ciudad pujante en el corazón del Valle del Cauca. Con un carro de alquiler puedes explorar esta ciudad de más de 300.000 habitantes y acceder fácilmente a destinos cercanos como Buga, Cali o el Lago Calima. El Aeropuerto Alfonso Bonilla Aragón de Cali está a solo 20 minutos, facilitando el inicio de tu viaje. Tener vehículo propio te permite recorrer la zona agroindustrial más importante del país, visitar haciendas azucareras históricas, conocer la Basílica de Buga y explorar el corredor turístico del Valle. Palmira combina tradición agrícola, ubicación estratégica y la calidez de la gente vallecaucana.`,
-        destinations: [
-            {
-                name: 'Basílica del Señor de los Milagros (Buga)',
-                time: '40 minutos',
-                description: 'El santuario más visitado de Colombia, a corta distancia desde Palmira. Millones de peregrinos al año, arquitectura impresionante y dulces típicos de Buga.'
-            },
-            {
-                name: 'Cali',
-                time: '30 minutos',
-                description: 'La capital de la salsa está a minutos. Zoológico, Cristo Rey, Gato de Tejada, barrios bohemios y la mejor rumba salsera del mundo. Perfecta para un día completo.'
-            },
-            {
-                name: 'Haciendas del Valle del Cauca',
-                time: '30 minutos',
-                description: 'Recorre haciendas históricas como El Paraíso (de la novela María) o Piedechinche con su museo de la caña. Historia azucarera y arquitectura colonial vallecaucana.'
-            },
-            {
-                name: 'Amaime y zona rural',
-                time: '25 minutos',
-                description: 'Corregimiento con balnearios en el río Amaime. Restaurantes de campo, sancocho valluno y paisajes de caña de azúcar hasta el horizonte. Domingo típico vallecaucano.'
-            }
-        ],
-        drivingTips: {
-            picoPlaca: 'Palmira tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 9:00 AM y de 5:00 a 7:00 PM. Los fines de semana sin restricción.',
-            tolls: 'Hacia Buga hay un peaje (~$10.500 COP). Hacia Cali no hay peajes por la vía principal. Las vías del Valle están en excelente estado, planas y bien señalizadas.',
-            parking: 'En el centro y zonas comerciales los parqueaderos cuestan entre $2.000-4.000 COP/hora. En Llanogrande y Unicentro hay tarifa con consumo.'
-        },
-        bestSeason: 'Palmira tiene clima cálido agradable todo el año (23-32°C). Las fiestas patronales en enero y la Feria de la Agricultura en agosto son épocas festivas. La temporada seca de diciembre a marzo es ideal para viajes por carretera. Para Buga, cualquier época es buena aunque domingos y festivos hay más peregrinos.'
-    }
+  intro: `Palmira está rodeada por los cultivos que le dan forma a la Capital Agrícola de Colombia. La ciudad supera los 300.000 habitantes. Entre sus calles y las carreteras del Valle aparecen cañaduzales, haciendas y salidas hacia planes urbanos, religiosos y rurales. El Aeropuerto Alfonso Bonilla Aragón de Cali queda a solo 20 minutos. Puedes recibir el vehículo sin cruzar primero toda la capital vallecaucana. El alquiler de carros en Palmira abre rutas hacia Buga, Cali y el río Amaime. También permite conocer el legado azucarero en haciendas históricas y continuar por el corredor turístico de la región. Las vías principales son planas y están bien señalizadas. Palmira sirve como base para varias jornadas. Una puede girar alrededor de la historia; otra, de la salsa; y una tercera, del descanso en la zona rural.`,
+  destinations: [
+    {
+      name: 'Basílica del Señor de los Milagros (Buga)',
+      time: '40 minutos',
+      description: 'La Basílica del Señor de los Milagros es el santuario más visitado de Colombia. Buga recibe millones de peregrinos cada año y suma a la visita su arquitectura y sus dulces tradicionales. En los días concurridos también se llenan los alrededores del templo.',
+    },
+    {
+      name: 'Cali',
+      time: '30 minutos',
+      description: 'Cali ofrece un cambio completo de plan. Una jornada puede reunir el Zoológico, Cristo Rey, el Gato de Tejada y los barrios de ambiente bohemio. Otra puede concentrarse en la rumba salsera sin mover la base del viaje fuera de Palmira.',
+    },
+    {
+      name: 'Haciendas del Valle del Cauca',
+      time: '30 minutos',
+      description: 'Las haciendas conservan la memoria azucarera y la arquitectura colonial vallecaucana. El Paraíso está ligado a la novela María; Piedechinche alberga el museo de la caña. La carretera entre ambas muestra el cambio del paisaje urbano al campo.',
+    },
+    {
+      name: 'Amaime y zona rural',
+      time: '25 minutos',
+      description: 'Amaime propone un domingo de sabor vallecaucano. En el corregimiento hay balnearios sobre el río, restaurantes campestres y sancocho valluno. El trayecto atraviesa un horizonte de caña de azúcar. Al final espera un entorno rural, lejos del ruido urbano.',
+    },
+  ],
+  drivingTips: {
+    picoPlaca: 'Palmira restringe la circulación de lunes a viernes con base en el último número de la placa. La medida funciona de 7:00 a 9:00 AM y de 5:00 a 7:00 PM. Los fines de semana quedan por fuera de la restricción.',
+    tolls: 'La carretera hacia Buga tiene un peaje cercano a $10.500 COP. Por la vía principal entre Palmira y Cali no se paga ninguno. En general, las rutas del Valle están en excelente estado, son planas y cuentan con buena señalización, condiciones cómodas para enlazar varios municipios.',
+    parking: 'Una hora de estacionamiento en el centro o en los sectores comerciales vale entre $2.000 y $4.000 COP. Llanogrande y Unicentro ofrecen tarifa asociada al consumo.',
+  },
+  bestSeason: 'El clima de Palmira es cálido y agradable durante todo el año, con temperaturas entre 23 y 32 °C. De diciembre a marzo, la época seca favorece los viajes por carretera. Enero trae las fiestas patronales y agosto, la Feria de la Agricultura. Ambos momentos le ponen otro ritmo a la ciudad. Buga se puede visitar en cualquier mes, aunque los domingos y festivos reúnen más peregrinos.',
+}

@@ -1,32 +1,31 @@
 import { getCityPickupAnswer, getCityPriceAnswer, type FAQ } from './shared'
 
-export const cityName = "Valledupar"
-export const citySlug = "valledupar"
+export const cityName = 'Valledupar'
+export const citySlug = 'valledupar'
 
-// W1 placeholder: copied verbatim from the shared logic layer.
 export const faqs: FAQ[] = [
-        {
-            label: '¿Dónde puedo recoger mi carro en Valledupar?',
-            content: getCityPickupAnswer('Valledupar')
-        },
-        {
-            label: '¿Qué vehículo recomiendan para Valledupar?',
-            content: 'Un compacto con buen aire acondicionado es ideal para el clima cálido de Valledupar. Para visitar la Sierra Nevada o pueblos indígenas, recomendamos camioneta por los caminos rurales.'
-        },
-        {
-            label: '¿Cuánto cuesta alquilar un carro en Valledupar?',
-            content: getCityPriceAnswer('Valledupar')
-        },
-        {
-            label: '¿Hay pico y placa en Valledupar?',
-            content: 'Valledupar no tiene restricción de pico y placa para vehículos particulares. Puedes circular libremente cualquier día de la semana por toda la ciudad.'
-        },
-        {
-            label: '¿Puedo visitar el Río Guatapurí con carro?',
-            content: 'Sí, el Río Guatapurí atraviesa la ciudad y hay varios balnearios accesibles en carro. El más famoso es el Balneario Hurtado a 10 minutos del centro. Ideal para refrescarse del calor.'
-        },
-        {
-            label: '¿Qué lugares puedo visitar con carro desde Valledupar?',
-            content: 'Destinos del Cesar: Río Guatapurí y balnearios (10min), Manaure Balcón del Cesar (1h), Pueblo Bello y Sierra Nevada (1.5h), La Mina pueblo patrimonio (2h). Cuna del vallenato y naturaleza.'
-        }
-    ]
+  {
+    label: '¿Dónde me entregan el carro de alquiler en Valledupar?',
+    content: getCityPickupAnswer('Valledupar'),
+  },
+  {
+    label: '¿Cuál categoría de vehículo conviene para recorrer Valledupar?',
+    content: 'Un compacto con buen aire acondicionado es una elección práctica para manejar dentro de Valledupar. Para subir a la Sierra Nevada o entrar por caminos rurales, una camioneta responde mejor. Esto también aplica en rutas hacia pueblos indígenas.',
+  },
+  {
+    label: '¿Dónde veo cuánto vale rentar un carro en Valledupar?',
+    content: getCityPriceAnswer('Valledupar'),
+  },
+  {
+    label: '¿Los carros particulares tienen pico y placa en Valledupar?',
+    content: 'No hay pico y placa para vehículos particulares en Valledupar. Puedes circular por la ciudad cualquier día de la semana sin depender del número final de la placa.',
+  },
+  {
+    label: '¿Se puede llegar al Guatapurí en un carro alquilado?',
+    content: 'Sí. El río Guatapurí cruza Valledupar y cuenta con diferentes accesos a balnearios. El más conocido es el Balneario Hurtado, ubicado a 10 minutos del centro. Allí puedes pasar parte del día y descansar del calor.',
+  },
+  {
+    label: '¿Qué lugares del Cesar quedan al alcance desde Valledupar?',
+    content: 'El Guatapurí y sus balnearios están a 10 minutos, mientras que Manaure Balcón del Cesar queda a una hora. Para conocer Pueblo Bello y la Sierra Nevada calcula una hora y media. La Mina, un pueblo patrimonio, está a dos horas. Con estas distancias puedes combinar naturaleza y cultura vallenata en varios recorridos.',
+  },
+]
