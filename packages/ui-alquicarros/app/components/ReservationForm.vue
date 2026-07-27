@@ -237,19 +237,11 @@ const onSubmit = (event) => {
 const onValidationError = (event) => {
   if (typeof document === 'undefined') return;
 
-  const fields = (event?.errors ?? [])
-    // VueTelInput no usa useFormField, así que el id que UFormField registra para
-    // `telefono` no existe en el DOM; usePhoneField fija `id: "telefono"` de forma
-    // determinista. Sin este caso el scroll falla en silencio en el campo más frágil.
-    .map((err) => (err?.name === 'telefono' ? 'telefono' : err?.id))
-    .map((id) => (id ? document.getElementById(id) : null))
-    .filter((el) => el !== null);
-
-  if (!fields.length) return;
-
-  const first = fields.reduce((earliest, el) =>
-    earliest.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING ? el : earliest
-  );
+  // La resolución del primer campo inválido EN ORDEN DE DOM (con el caso especial de
+  // `telefono`) vive en un util puro para poder testearla sin montar el formulario ni
+  // depender del e2e gateado por Supabase — ver firstInvalidFieldEl y su test.
+  const first = firstInvalidFieldEl(event?.errors, document);
+  if (!first) return;
 
   // Se espera al siguiente frame a propósito, y no es cosmético. Mientras UForm valida
   // mantiene `loading` en true (`loadingAuto` viene activado por defecto) y ese estado se
