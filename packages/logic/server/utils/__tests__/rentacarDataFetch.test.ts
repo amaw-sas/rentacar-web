@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { fetchRentacarData, RentacarDataTimeoutError } from '../rentacarDataFetch'
 
+/** The six queries every request makes, in tuple order. */
 const TABLES = ['vehicle_categories', 'locations', 'rental_companies', 'cities', 'franchises', 'faqs'] as const
+
+/**
+ * The 7th slot: only travelled when the monthly anchor pilot is on for a known
+ * brand. Kept out of TABLES so the shared-abort assertions keep meaning "the
+ * always-on queries", which is what the deadline contract is about.
+ */
+const ANCHOR_TABLE = 'price_anchors' as const
 
 function abortError() {
   return Object.assign(new Error('The operation was aborted'), { name: 'AbortError' })
@@ -38,12 +46,14 @@ function makeQuery(resolveWith?: { data: unknown; error: unknown }) {
   return q
 }
 
-function makeSupabase(perTable: Partial<Record<(typeof TABLES)[number], { data: unknown; error: unknown }>>) {
+type AnyTable = (typeof TABLES)[number] | typeof ANCHOR_TABLE
+
+function makeSupabase(perTable: Partial<Record<AnyTable, { data: unknown; error: unknown }>>) {
   const builders = Object.fromEntries(
-    TABLES.map((t) => [t, makeQuery(perTable[t] ?? (t in perTable ? perTable[t] : undefined))]),
-  ) as Record<(typeof TABLES)[number], ReturnType<typeof makeQuery>>
+    [...TABLES, ANCHOR_TABLE].map((t) => [t, makeQuery(perTable[t] ?? (t in perTable ? perTable[t] : undefined))]),
+  ) as Record<AnyTable, ReturnType<typeof makeQuery>>
   return {
-    supabase: { from: (table: string) => builders[table as (typeof TABLES)[number]] } as never,
+    supabase: { from: (table: string) => builders[table as AnyTable] } as never,
     builders,
   }
 }
@@ -55,9 +65,9 @@ afterEach(() => {
 })
 
 describe('fetchRentacarData', () => {
-  it('SCEN-1: resolves the 6-result tuple and clears the timeout timer (happy path)', async () => {
+  it('SCEN-1: resolves the 7-result tuple and clears the timeout timer (happy path)', async () => {
     vi.useFakeTimers()
-    const { supabase } = makeSupabase({
+    const { supabase, builders } = makeSupabase({
       vehicle_categories: OK,
       locations: OK,
       rental_companies: OK,
@@ -68,7 +78,11 @@ describe('fetchRentacarData', () => {
 
     const results = await fetchRentacarData(supabase, 8000)
 
-    expect(results).toHaveLength(6)
+    // The 7th slot always exists so the tuple shape never depends on a flag;
+    // with the pilot off it is the stub, not a query (see the SCEN-M1 case).
+    expect(results).toHaveLength(7)
+    expect(results[6]).toEqual({ data: null, error: null })
+    expect(builders.price_anchors.__state.signal).toBeUndefined()
     expect(vi.getTimerCount()).toBe(0) // timer cleared, no dangling handle
   })
 
@@ -131,5 +145,58 @@ describe('fetchRentacarData', () => {
     await fetchRentacarData(supabase, 8000)
 
     expect(builders.franchises.__state.eqCalls).toEqual([['status', 'active']])
+  })
+
+  // Monthly struck-price anchor pilot.
+  const SIX_OK = {
+    vehicle_categories: OK, locations: OK, rental_companies: OK, cities: OK, franchises: OK, faqs: OK,
+  } as const
+
+  it('SCEN-M2: reads price_anchors scoped to the brand, on the shared deadline, when the pilot is on', async () => {
+    vi.useFakeTimers()
+    const anchors = { data: [{ category_code: 'GC', anchor_day_price_gross: 280607, computed_at: '2026-07-26T00:00:00Z' }], error: null }
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_anchors: anchors })
+
+    const results = await fetchRentacarData(supabase, 8000, 'alquilame', true)
+
+    expect(results[6]).toEqual(anchors)
+    expect(builders.price_anchors.__state.eqCalls).toEqual([['franchise', 'alquilame']])
+    // Same AbortController as the rest: the accessory query cannot outlive the
+    // deadline and keep a pooled connection busy.
+    expect(builders.price_anchors.__state.signal).toBe(builders.cities.__state.signal)
+  })
+
+  it('SCEN-M1: makes no anchors round trip when the pilot is off (default)', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_anchors: OK })
+
+    const off = await fetchRentacarData(supabase, 8000, 'alquilame', false)
+    const omitted = await fetchRentacarData(supabase, 8000, 'alquilame')
+
+    expect(off[6]).toEqual({ data: null, error: null })
+    expect(omitted[6]).toEqual({ data: null, error: null })
+    expect(builders.price_anchors.__state.eqCalls).toEqual([])
+    expect(builders.price_anchors.__state.signal).toBeUndefined()
+  })
+
+  it('SCEN-M4: makes no anchors round trip without a brand — anchors are per franchise', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_anchors: OK })
+
+    const results = await fetchRentacarData(supabase, 8000, undefined, true)
+
+    expect(results[6]).toEqual({ data: null, error: null })
+    expect(builders.price_anchors.__state.eqCalls).toEqual([])
+  })
+
+  it('SCEN-M4: passes an anchors { error } through instead of throwing (the handler fails open)', async () => {
+    vi.useFakeTimers()
+    const anchorsError = { data: null, error: { message: 'relation "price_anchors" does not exist' } }
+    const { supabase } = makeSupabase({ ...SIX_OK, price_anchors: anchorsError })
+
+    const results = await fetchRentacarData(supabase, 8000, 'alquilame', true)
+
+    expect(results[6]).toEqual(anchorsError)
+    expect(results[0]).toEqual(OK)
   })
 })

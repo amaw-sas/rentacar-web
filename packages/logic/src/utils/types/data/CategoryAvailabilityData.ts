@@ -7,6 +7,13 @@ export default interface CategoryAvailabilityData {
   categoryDescription: string;
   categoryModels?: CategoryModelData[];
   categoryMonthPrices?: CategoryMonthPriceData[];
+  /**
+   * Gross p95 day price for this category (CategoryData.month_anchor_gross,
+   * carried across the admin→availability merge). Caps the MONTHLY struck price
+   * only; the real price, the totals and the checkout never see it.
+   * `null`/absent → no cap.
+   */
+  monthAnchorGross?: number | null;
   totalAmount: number;
   estimatedTotalAmount: number;
   vehicleDayCharge: number;

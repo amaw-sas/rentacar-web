@@ -180,7 +180,17 @@ function prunePricingRows(prices: CategoryMonthPriceData[], todayIso: string): C
   return prices.filter((p) => keep.has(p))
 }
 
-export function transformCategories(rows: SupabaseCategory[], todayIso: string = todayIsoUtc()): CategoryData[] {
+/**
+ * `monthlyAnchors` (monthly struck-price pilot): gross p95 per category code,
+ * already validated by buildMonthlyAnchorMap. A code with no entry gets `null`
+ * and the client shows the unchanged `one_day_price`. Defaulting to `{}` keeps
+ * every existing caller — and the flag-off payload — byte-identical.
+ */
+export function transformCategories(
+  rows: SupabaseCategory[],
+  todayIso: string = todayIsoUtc(),
+  monthlyAnchors: Record<string, number> = {},
+): CategoryData[] {
   // Issue #313: avisa una vez por rebuild si el horizonte de tarifas está cerca.
   // Sobre las filas crudas, antes del pruning.
   warnIfPricingHorizonNear(rows)
@@ -234,6 +244,9 @@ export function transformCategories(rows: SupabaseCategory[], todayIso: string =
       ad: '',
       models,
       month_prices: monthPrices,
+      // Ceiling for the MONTHLY struck price (display only). `null` = no usable
+      // anchor for this code → the client keeps showing one_day_price.
+      month_anchor_gross: monthlyAnchors[row.code as string] ?? null,
       extra_km_charge: Number(row.extra_km_charge ?? 0),
       // null (not false) when the column is absent, so the client can tell
       // "unset → fall back to the hardcoded list" from an explicit false.

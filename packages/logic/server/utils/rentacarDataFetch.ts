@@ -16,7 +16,7 @@ export class RentacarDataTimeoutError extends Error {
 }
 
 /**
- * Runs the 6 rentacar-data Supabase queries in parallel with a hard deadline.
+ * Runs the rentacar-data Supabase queries in parallel with a hard deadline.
  * A shared AbortController cancels the underlying fetches on timeout so they
  * stop consuming the connection pool — Promise.race alone would leave them
  * running. Returns the raw PostgREST results in fixed order; per-result
@@ -26,11 +26,18 @@ export class RentacarDataTimeoutError extends Error {
  * the franchises query is scoped to it — shipping all 3 brands' testimonials
  * on every page was pure cross-brand payload bloat. Omitted/empty = no filter
  * (standalone logic-layer runs without brand runtimeConfig).
+ *
+ * `includeMonthlyAnchors`: the monthly struck-price pilot. The 7th slot always
+ * exists so the tuple shape never depends on a flag, but it costs a round trip
+ * only when the pilot is on AND the deploy knows its brand — anchors are stored
+ * per franchise, and an unscoped read would mix another brand's market into
+ * this one's prices.
  */
 export async function fetchRentacarData(
   supabase: SupabaseClient,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
   franchiseCode?: string,
+  includeMonthlyAnchors: boolean = false,
 ) {
   const controller = new AbortController()
   const signal = controller.signal
@@ -81,6 +88,14 @@ export async function fetchRentacarData(
         .eq('status', 'active')
         .order('display_order')
         .abortSignal(signal),
+
+      includeMonthlyAnchors && franchiseCode
+        ? supabase
+            .from('price_anchors')
+            .select('category_code, anchor_day_price_gross, computed_at')
+            .eq('franchise', franchiseCode)
+            .abortSignal(signal)
+        : Promise.resolve({ data: null, error: null }),
     ])
 
     if (signal.aborted) throw new RentacarDataTimeoutError(timeoutMs)
