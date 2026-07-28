@@ -93,6 +93,7 @@
             size="lg"
             class="mt-4 justify-center rounded-full bg-brand-600 hover:bg-brand-700 text-gray-900 font-bold disabled:opacity-50"
             :disabled="ctaDisabled"
+            :loading="isSubmittingForm"
             data-testid="wizard-continue-desktop-test"
             @click="$emit('next')"
           >
@@ -208,6 +209,7 @@
             size="lg"
             class="flex-1 justify-center rounded-full bg-brand-600 hover:bg-brand-700 text-gray-900 font-bold disabled:opacity-50"
             :disabled="ctaDisabled"
+            :loading="isSubmittingForm"
             data-testid="wizard-continue-mobile-test"
             @click="$emit('next')"
           >
@@ -242,8 +244,6 @@ const props = defineProps<{
 }>()
 
 defineEmits<{ (e: 'next'): void }>()
-
-const ctaLabel = computed(() => props.ctaLabel ?? 'Continuar')
 
 // Issue #401: una sola fuente para el motivo de rancia. Escrito en desktop y móvil;
 // que el texto viva aquí evita la deriva entre superficies que este issue combate.
@@ -293,6 +293,17 @@ onBeforeUnmount(() => {
 // El CTA se deshabilita mientras la reserva está en vuelo (evita el doble-submit
 // que registraría reservas duplicadas — el CTA de datos dispara el envío).
 const ctaDisabled = computed(() => !props.canAdvance || isSubmittingForm.value || formSubmitLocked.value)
+
+/**
+ * Issue #366 (D2) — durante el round-trip de registro el CTA decía lo mismo de siempre y
+ * solo se ponía gris, así que "enviando" y "roto" se veían igual. Con el label propio (y
+ * el `:loading` del botón, que añade el spinner) la espera queda explicada.
+ *
+ * Va después del storeToRefs a propósito: lee `isSubmittingForm`.
+ */
+const ctaLabel = computed(() =>
+  isSubmittingForm.value ? 'Confirmando…' : (props.ctaLabel ?? 'Continuar'),
+)
 
 /** Nombre humano del segmento de la gama elegida (Económicos, Sedanes…). */
 function segmentLabel(code: string): string {

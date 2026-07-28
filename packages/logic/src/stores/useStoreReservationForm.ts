@@ -138,6 +138,11 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   // Issue 322 SCEN-322-E03: respuesta 200 con status desconocido — la reserva
   // pudo crearse; bloquear reenvío para no duplicar.
   const formSubmitLocked = ref<boolean>(false);
+  // Issue #366 D4: el código que el servidor devolvió con ese status desconocido.
+  // Vive exactamente lo que vive el lock (useStoreSearchData lo limpia junto a él):
+  // es el único identificador con el que el usuario puede reclamar una reserva que
+  // quizá se creó, y el toast que lo llevaba muere a los 25 s.
+  const unknownStatusReserveCode = ref<string | null>(null);
   // Tras enviar, el código del vehículo cuya entrada `/categoria/X` puede quedar
   // en el historial (el slideover empuja entradas; ver CategorySelectionSection).
   // El watcher de auto-apertura lo consulta para NO reabrir el slideover si el
@@ -353,6 +358,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
         // SCEN-322-E03: status desconocido — no navegar; toast + lock reenvío.
         // Clear loading spinner (releaseSubmit) but formSubmitLocked blocks retry.
         formSubmitLocked.value = true;
+        // Issue #366 D4: el `?? null` no es cosmético — el tipo lo declara `string`
+        // pero la respuesta real no siempre lo trae, y el bloque persistente hace
+        // v-if sobre este ref.
+        unknownStatusReserveCode.value = dataRecord.value.reserveCode ?? null;
         trackAnalyticsEvent('reservation_error', {
           brand: analyticsBrand(),
           reason: 'unknown_status',
@@ -419,6 +428,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     selectedMonthlyMileage,
     isSubmittingForm,
     formSubmitLocked,
+    unknownStatusReserveCode,
     haveTotalInsurance,
     haveMonthlyReservation,
     // functions

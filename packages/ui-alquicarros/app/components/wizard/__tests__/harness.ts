@@ -270,6 +270,12 @@ export async function mountWizard(options: MountWizardOptions = {}): Promise<Wiz
   // `useToast()` sin guard: sin este stub el store revienta antes de montar nada.
   vi.stubGlobal('useToast', () => ({ add: vi.fn(), remove: vi.fn() }))
   vi.stubGlobal('useRuntimeConfig', () => ({ public: { rentacarFranchise: 'alquicarros' } }))
+  // Issue #366 D5: ReservationWizard.vue deriva el contacto del bloque de estado
+  // desconocido desde franchise (app.config). Sin este stub el shell lanza
+  // `useAppConfig is not defined` al montar.
+  vi.stubGlobal('useAppConfig', () => ({
+    franchise: { phone: '+57 318 770 3670', whatsapp: 'https://wa.me/573187703670' },
+  }))
   vi.stubGlobal('useRoute', () => ({
     // Los seis parámetros de búsqueda. Sin `lugar_recogida` el shell entra en el
     // Paso 1 y no hay DOM que assertar.
