@@ -21,11 +21,17 @@ describe('GA4 integration wiring', () => {
 
     for (const [brand, measurementId] of integrations) {
       const config = read(`packages/${brand}/nuxt.config.ts`);
+      const analyticsSources = [
+        config,
+        ...(brand === 'ui-alquilame'
+          ? [read('packages/ui-alquilame/utils/deferred-gtag.ts')]
+          : []),
+      ].join('\n');
       const plugin = read(`packages/${brand}/app/plugins/page-view.client.ts`);
-      expect(config).toContain(
-        `gtag('config','${measurementId}',{send_page_view:false})`,
-      );
-      expect(config.match(/googletagmanager\.com\/gtag\/js\?id=/g)).toHaveLength(1);
+      expect(analyticsSources).toContain(measurementId);
+      expect(analyticsSources).toContain("gtag('config'");
+      expect(analyticsSources).toContain('send_page_view:false');
+      expect(analyticsSources.match(/googletagmanager\.com\/gtag\/js\?id=/g)).toHaveLength(1);
       expect(plugin).toContain(
         "import { createSpaPageViewTracker } from '@rentacar-main/logic/utils'",
       );

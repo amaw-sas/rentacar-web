@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
+import { DEFERRED_GTAG_BOOTSTRAP } from './utils/deferred-gtag';
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -194,6 +195,13 @@ export default defineNuxtConfig({
             .h-6 { height: 1.5rem; }
             .h-8 { height: 2rem; }
             .h-10 { height: 2.5rem; }
+            .h-14 { height: 3.5rem; }
+            .h-full { height: 100%; }
+            @media (min-width: 506px) { .min-\\[506px\\]\\:h-9 { height: 2.25rem; } }
+            @media (max-width: 359px) {
+              .max-\\[359px\\]\\:h-auto { height: auto; }
+              .max-\\[359px\\]\\:py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            }
             .w-auto { width: auto; }
             /*
               Tailwind v4 translate: usar la PROPIEDAD CSS translate (no
@@ -218,6 +226,8 @@ export default defineNuxtConfig({
             .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
             .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
             .px-4 { padding-left: 1rem; padding-right: 1rem; }
+            .px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }
+            .font-medium { font-weight: 500; }
             /*
               Reskin hero (F1/F2/F3, #112) above-the-fold utilities — keep in
               sync with components/{home,city}/Hero.vue. Omitted here they ship
@@ -570,15 +580,11 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       ],
       script: [
-        // Google Analytics 4 — manual sanitized SPA page views are emitted by
-        // the shared tracker, so config must not auto-send an initial view.
+        // Define gtag during HTML parsing so page views and contact events queue
+        // immediately, but keep the 148 KiB vendor script off the critical path.
+        // The bootstrap loads it on first interaction or 4s after window.load.
         {
-          src: 'https://www.googletagmanager.com/gtag/js?id=G-ZPZC1TP9T0',
-          async: true,
-        },
-        {
-          innerHTML:
-            "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-ZPZC1TP9T0',{send_page_view:false});",
+          innerHTML: DEFERRED_GTAG_BOOTSTRAP,
         },
       ],
     },
