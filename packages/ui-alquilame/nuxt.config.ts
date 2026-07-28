@@ -674,6 +674,9 @@ export default defineNuxtConfig({
       '/registratuflota': { redirect: { to: '/aliados', statusCode: 301 } },
       '/aviso-proteccion-de-datos': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
       '/terminos-condiciones.html': { redirect: { to: '/terminos-condiciones', statusCode: 301 } },
+      // Variantes con impresiones reales vistas en GSC tras el lanzamiento.
+      '/aviso-proteccion-de-datos.html': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
+      '/AVISO-DE-PROTECCIÓN-DE-DATOS-ALQUILAME.CO.pdf': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
 
       // Issue 322 SCEN-322-S04 — baseline security headers (all responses).
       // CSP is limited to frame-ancestors so we don't break Nuxt inline assets;
