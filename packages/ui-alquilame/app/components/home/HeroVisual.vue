@@ -13,9 +13,9 @@
     Autoplay policy:
       - default paint is the POSTER only, so reduced-motion and data-saver users
         never trigger a 4MB download;
-      - the muted preview starts only once the block is on screen, the user has
-        interacted with the page, AND the browser is idle;
-      - the audio track is a separate <video preload="none"> that downloads only
+      - the muted preview starts automatically once the block is on screen and
+        the browser is idle;
+      - the audio track is a separate video with preload="none" that downloads only
         when the user clicks "Activar sonido" — autoplay WITH audio is blocked by
         browsers anyway, so the click is what unlocks it.
   -->
@@ -49,7 +49,7 @@
         loading="eager"
         class="absolute inset-0 w-full h-full object-cover"
       />
-      <!-- Muted preview loop. Created after intent + visibility + idle. -->
+      <!-- Muted preview loop. Created after visibility + idle. -->
       <video
         v-if="videoActive && !audioActive"
         ref="previewVideo"
@@ -117,25 +117,10 @@ const audioActive = ref(false)
 let idleId: number | undefined
 let io: IntersectionObserver | undefined
 let heroVisible = false
-let userInteracted = false
 let previewScheduled = false
 
-const interactionEvents = ['pointerdown', 'touchstart', 'wheel', 'keydown'] as const
-
-function removeInteractionListeners() {
-  for (const eventName of interactionEvents) {
-    window.removeEventListener(eventName, onUserInteraction)
-  }
-}
-
-function onUserInteraction() {
-  userInteracted = true
-  removeInteractionListeners()
-  schedulePreview()
-}
-
 function schedulePreview() {
-  if (!heroVisible || !userInteracted || previewScheduled || audioActive.value) return
+  if (!heroVisible || previewScheduled || audioActive.value) return
   previewScheduled = true
 
   const activate = () => {
@@ -191,10 +176,6 @@ onMounted(() => {
   const el = visualBox.value
   if (!el) return
 
-  for (const eventName of interactionEvents) {
-    window.addEventListener(eventName, onUserInteraction, { passive: true })
-  }
-
   io = new IntersectionObserver(
     (entries) => {
       const entry = entries.find((candidate) => candidate.target === el) ?? entries[0]
@@ -208,7 +189,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   io?.disconnect()
-  removeInteractionListeners()
   if (idleId !== undefined) {
     const cic = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback
     if (cic) cic(idleId)

@@ -21,12 +21,12 @@ const nuxtConfig = readFileSync(
 )
 const { defaultQuality, allowedQualities } = parseImageQualityConfig(nuxtConfig)
 
-describe('SCEN-322-P01 — hero default paint is poster, not multi-MB autoplay', () => {
+describe('SCEN-322-P01 — hero default paint is poster, not eager media', () => {
   // Redesign 2026-07: the hero is a car cutout IMAGE (webp, alpha) with a small
   // corner video. The scenario's invariant is unchanged — the first paint must
   // never trigger a multi-MB media download — but the mechanism now lives in
-  // HeroVisual.vue: static poster first, muted preview only after user intent,
-  // visibility AND idle (preload="metadata"), audio only on click.
+  // HeroVisual.vue: static poster first, muted preview after visibility + idle
+  // (preload="metadata"), audio only on click.
   const visual = readFileSync(
     fileURLToPath(new URL('../app/components/home/HeroVisual.vue', import.meta.url)),
     'utf8',
@@ -39,11 +39,14 @@ describe('SCEN-322-P01 — hero default paint is poster, not multi-MB autoplay',
     expect(visual).toMatch(/v-if="!videoActive && !audioActive"/)
   })
 
-  it('the muted preview never downloads on paint: gated + preload metadata', () => {
+  it('conditionally mounts the muted preview after visibility + idle, without an interaction gate', () => {
     expect(visual).toMatch(/v-if="videoActive && !audioActive"/)
     expect(visual).not.toMatch(/<video\s+[\s\S]*?v-show=/)
-    expect(visual).toMatch(/userInteracted/)
-    expect(visual).toMatch(/interactionEvents/)
+    expect(visual).toMatch(/IntersectionObserver/)
+    expect(visual).toMatch(/requestIdleCallback/)
+    expect(visual).toMatch(/timeout: 2500/)
+    expect(visual).not.toMatch(/userInteracted|interactionEvents/)
+    expect(visual).not.toMatch(/window\.addEventListener/)
     expect(visual).toMatch(/preload="metadata"/)
     // The heavy audio track only downloads on explicit click.
     expect(visual).toMatch(/preload="none"/)

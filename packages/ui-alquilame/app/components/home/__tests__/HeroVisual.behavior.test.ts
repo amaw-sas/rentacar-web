@@ -2,8 +2,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { defineComponent, h, nextTick } from 'vue'
+import { createSSRApp, defineComponent, h, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
+import { renderToString } from 'vue/server-renderer'
 import HeroVisual from '../HeroVisual.vue'
 import { parseImageQualityConfig } from '../../../../tests/nuxt-image-quality'
 
@@ -50,6 +51,12 @@ function mountVisual() {
   })
 }
 
+function renderVisualSsr() {
+  const app = createSSRApp(HeroVisual)
+  app.component('NuxtImg', NuxtImgStub)
+  return renderToString(app)
+}
+
 beforeEach(() => {
   idleCallback = undefined
   vi.stubGlobal('IntersectionObserver', IntersectionObserverMock)
@@ -72,7 +79,15 @@ afterEach(() => {
 })
 
 describe('HeroVisual.vue media loading', () => {
-  it('renders only responsive images on first paint, with no video request URL in the DOM', () => {
+  it('renders poster-only SSR and mounted first paint with no eager media URL', async () => {
+    const html = await renderVisualSsr()
+
+    expect(html).toContain('/videos/hero-poster.jpg')
+    expect(html).not.toMatch(/<video\b/)
+    expect(html).not.toMatch(/<source\b/)
+    expect(html).not.toContain('/videos/hero.mp4')
+    expect(html).not.toContain('/videos/hero-audio.mp4')
+
     const wrapper = mountVisual()
     const carAttributes = wrapper.get('img[src="/images/carro_hero.webp"]').attributes()
 
@@ -93,17 +108,14 @@ describe('HeroVisual.vue media loading', () => {
     expect(wrapper.html()).not.toContain('/videos/hero-audio.mp4')
   })
 
-  it('creates the muted autoplay source only after visibility, interaction and idle', async () => {
+  it('creates the muted autoplay source after visibility and idle without interaction', async () => {
     const wrapper = mountVisual()
 
     observerCallback([{ isIntersecting: true }])
     await nextTick()
     expect(wrapper.find('video').exists()).toBe(false)
-    expect(idleCallback).toBeUndefined()
-
-    window.dispatchEvent(new Event('pointerdown'))
-    await nextTick()
-    expect(wrapper.find('video').exists()).toBe(false)
+    expect(idleCallback).toBeTypeOf('function')
+    expect(window.requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), { timeout: 2500 })
 
     idleCallback?.()
     await nextTick()
@@ -116,6 +128,8 @@ describe('HeroVisual.vue media loading', () => {
       playsinline: '',
       preload: 'metadata',
     })
+    expect((preview.element as HTMLVideoElement).muted).toBe(true)
+    expect((preview.element as HTMLVideoElement).autoplay).toBe(true)
     expect(preview.get('source').attributes('src')).toBe('/videos/hero.mp4')
   })
 

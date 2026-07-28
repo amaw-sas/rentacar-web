@@ -6,8 +6,8 @@
     video loops muted and plays WITH audio on click.
 
     Perf: the car webp reserves space via width/height (no CLS). The muted preview
-    is off the critical path — it activates after user intent + hero visibility
-    + browser idle (skipped under prefers-reduced-motion / data-saver). The full
+    is off the critical path — it activates after hero visibility + browser idle
+    (skipped under prefers-reduced-motion / data-saver). The full
     audio video is preload="none" → it downloads only on "Activar sonido".
   -->
   <section
