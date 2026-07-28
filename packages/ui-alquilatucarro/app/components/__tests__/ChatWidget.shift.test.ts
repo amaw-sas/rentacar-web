@@ -118,8 +118,24 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
     expect(brandWidgets[2]).toBe(brandWidgets[0])
   })
 
+  // 2026-07-27, decisión del dueño: el acceso tel: 'Llámanos' SE QUEDA en las
+  // dos marcas vivas y alquilame es la única sin él. El <li> del teléfono es un
+  // delta ESTRUCTURAL declarado: se retira de la copia base antes de comparar
+  // línea a línea, así cualquier OTRA deriva sigue enrojeciendo esta prueba.
+  const stripPhoneEntry = (src: string): string => {
+    const tel = src.indexOf(':href="`tel:')
+    if (tel === -1) return src
+    const start = src.lastIndexOf('<li class="flex">', tel)
+    const end = src.indexOf('</li>', tel) + '</li>'.length
+    return src.slice(0, src.lastIndexOf('\n', start)) + src.slice(end)
+  }
+
   it('SCEN-5a — alquilame sólo difiere en el delta de marca declarado', () => {
-    const base = (brandWidgets[0] ?? '').split('\n')
+    // La parte estructural del delta: las vivas llevan tel:, alquilame no.
+    expect(brandWidgets[0]).toContain(':href="`tel:')
+    expect(brandWidgets[1]).not.toContain(':href="`tel:')
+
+    const base = stripPhoneEntry(brandWidgets[0] ?? '').split('\n')
     const alq = (brandWidgets[1] ?? '').split('\n')
     expect(alq.length, 'alquilame cambió el número de líneas del widget').toBe(base.length)
 

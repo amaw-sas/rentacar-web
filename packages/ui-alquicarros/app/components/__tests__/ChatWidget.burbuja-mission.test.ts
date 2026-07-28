@@ -24,7 +24,7 @@ const searchHydratorSource = readFileSync(
 )
 
 describe('Burbuja chat mission E1–E4 — widget integration', () => {
-  it('E10 — all three brand widgets keep the same two-channel behavior', () => {
+  it('E10 — shared widget behavior; tel: is the declared live-brand extra', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain(
         'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
@@ -32,7 +32,10 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
       expect(source, brand).toContain('<li v-if="chatEnabled"')
       expect(source, brand).toContain('<li v-if="whatsappVisible"')
       expect(source, brand).not.toContain('menuOpen')
-      expect(source, brand).not.toContain('fab-call')
+      // 2026-07-27, decisión del dueño: el canal tel: se queda en las marcas
+      // vivas; alquilame es la única sin teléfono.
+      if (brand === 'ui-alquilame') expect(source, brand).not.toContain('fab-call')
+      else expect(source, brand).toContain('fab-call')
     }
   })
 
@@ -99,7 +102,9 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
       expect(source, brand).toContain('<li v-if="chatEnabled"')
       expect(source, brand).toContain('<li v-if="whatsappVisible"')
       expect(source, brand).toContain('aria-label="Abrir WhatsApp"')
-      expect(source, brand).not.toContain('class="fab-circle fab-call"')
+      if (brand === 'ui-alquilame')
+        expect(source, brand).not.toContain('class="fab-circle fab-call"')
+      else expect(source, brand).toContain('class="fab-circle fab-call"')
       expect(source, brand).not.toContain('contact-fab-menu')
       expect(source, brand).toMatch(
         /teaser\.start\(\{[\s\S]*allowed: \(\) => teaserAllowed\.value/,
