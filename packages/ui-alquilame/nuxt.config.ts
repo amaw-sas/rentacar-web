@@ -125,7 +125,11 @@ export default defineNuxtConfig({
               line-gap-override: 0%;
             }
             @layer base {
-            *, *::before, *::after { box-sizing: border-box; }
+            *, *::before, *::after {
+              box-sizing: border-box;
+              border-style: solid;
+              border-width: 0;
+            }
             body {
               margin: 0;
               font-family: 'DM Sans', 'DM Sans Fallback: BlinkMacSystemFont', 'DM Sans Fallback: Segoe UI', 'DM Sans Fallback: Helvetica Neue', 'DM Sans Fallback: Arial', 'DM Sans Fallback: Noto Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -193,6 +197,7 @@ export default defineNuxtConfig({
             .w-32 { width: 8rem; }
             .h-32 { height: 8rem; }
             .h-6 { height: 1.5rem; }
+            .h-7 { height: 1.75rem; }
             .h-8 { height: 2rem; }
             .h-10 { height: 2.5rem; }
             .h-14 { height: 3.5rem; }
@@ -227,6 +232,7 @@ export default defineNuxtConfig({
             .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
             .px-4 { padding-left: 1rem; padding-right: 1rem; }
             .px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }
+            .py-3\\.5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
             .font-medium { font-weight: 500; }
             /*
               Reskin hero (F1/F2/F3, #112) above-the-fold utilities — keep in
@@ -238,6 +244,7 @@ export default defineNuxtConfig({
               city CLS after the card fix. These reserve the above-the-fold hero
               geometry from the first paint.
             */
+            .py-5 { padding-top: 1.25rem; padding-bottom: 1.25rem; }
             .py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
             @media (min-width: 768px) { .md\\:py-12 { padding-top: 3rem; padding-bottom: 3rem; } }
             .gap-10 { gap: 2.5rem; }
@@ -246,6 +253,8 @@ export default defineNuxtConfig({
             .gap-y-2 { row-gap: 0.5rem; }
             .aspect-\\[16\\/10\\] { aspect-ratio: 16 / 10; }
             .aspect-\\[16\\/9\\] { aspect-ratio: 16 / 9; }
+            .min-h-\\[16rem\\] { min-height: 16rem; }
+            .max-w-xl { max-width: 36rem; }
             .leading-\\[1\\.1\\] { line-height: 1.1; }
             /* SEO Dashboard Critical CSS */
             .bg-gray-900 { background-color: #111827; }
@@ -314,6 +323,7 @@ export default defineNuxtConfig({
               /* UPageHero padding */
               .sm\\:py-32 { padding-top: 8rem; padding-bottom: 8rem; }
               .sm\\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+              .sm\\:px-7 { padding-left: 1.75rem; padding-right: 1.75rem; }
               .sm\\:gap-y-16 { row-gap: 4rem; }
               .sm\\:gap-y-24 { row-gap: 6rem; }
               .sm\\:gap-16 { gap: 4rem; }
@@ -323,6 +333,8 @@ export default defineNuxtConfig({
               /* CityPage Searcher visibility - CRÍTICO para CLS */
               .lg\\:hidden { display: none; }
               .lg\\:flex { display: flex; }
+              .lg\\:h-9 { height: 2.25rem; }
+              .lg\\:h-20 { height: 5rem; }
               .lg\\:flex-col { flex-direction: column; }
               .lg\\:flex-row { flex-direction: row; }
               .lg\\:items-center { align-items: center; }
@@ -570,6 +582,99 @@ export default defineNuxtConfig({
             .heading-hero { font-size: 2.25rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.025em; }
             @media (min-width: 768px) { .heading-hero { font-size: 3rem; } }
             @media (min-width: 1024px) { .heading-hero { font-size: 4.5rem; } }
+
+            /*
+              Home first-paint geometry. The entry stylesheet is intentionally
+              deferred, so these element contracts must be complete here rather
+              than arriving with the same request that starts the web fonts.
+            */
+            .home-hero-title {
+              font-size: 1.875rem;
+              line-height: 1.1;
+            }
+            .hero-review-row { height: 19.984375px; }
+            .hero-review-label {
+              display: block;
+              width: 122.765625px;
+              overflow: visible;
+              white-space: nowrap;
+            }
+            .hero-contact-label {
+              display: block;
+              width: 81.6875px;
+              overflow: visible;
+              white-space: nowrap;
+            }
+            .fleet-tab-daily-stable { width: 142.609375px; }
+            .fleet-tab-monthly-stable { width: 134.15625px; }
+
+            @media (min-width: 640px) {
+              .home-hero-title { font-size: 2.25rem; }
+            }
+
+            @media (min-width: 1024px) {
+              .home-hero-grid { gap: 2.5rem; }
+              .home-hero-copy { text-align: left; }
+              .home-hero-review-row,
+              .home-hero-cta-row {
+                justify-content: flex-start;
+              }
+              .home-hero-title { font-size: 3rem; }
+              header [data-slot="container"] {
+                display: flex;
+                height: 100%;
+                align-items: center;
+                justify-content: space-between;
+              }
+              header [data-slot="left"],
+              header [data-slot="right"] {
+                flex: 1 1 0%;
+              }
+              header [data-slot="right"] {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+              }
+              header [data-slot="right"] > div:first-child {
+                display: flex !important;
+              }
+              header [data-slot="right"] > button {
+                display: none !important;
+              }
+              .font-stable-nav [data-slot="list"] {
+                width: 407.328125px;
+                flex: none;
+              }
+              .font-stable-nav [data-slot="link"] {
+                display: flex;
+                width: 100%;
+                align-items: center;
+                padding: 0.375rem 0.625rem;
+                font-size: 0.875rem;
+                line-height: 1.25rem;
+                font-weight: 500;
+              }
+              .font-stable-nav [data-slot="linkLabel"] {
+                display: block;
+                overflow: visible;
+                text-overflow: clip;
+              }
+              .font-stable-nav [data-slot="item"]:nth-child(1) [data-slot="linkLabel"] { width: 35.234375px; }
+              .font-stable-nav [data-slot="item"]:nth-child(2) [data-slot="linkLabel"] { width: 32.46875px; }
+              .font-stable-nav [data-slot="item"]:nth-child(3) [data-slot="linkLabel"] { width: 62.71875px; }
+              .font-stable-nav [data-slot="item"]:nth-child(4) [data-slot="linkLabel"] { width: 68.46875px; }
+              .font-stable-nav [data-slot="item"]:nth-child(5) [data-slot="linkLabel"] { width: 26.375px; }
+              .font-stable-nav [data-slot="item"]:nth-child(6) [data-slot="linkLabel"] { width: 62.0625px; }
+              .header-reservation-cta {
+                width: 136.8125px;
+                height: 35.984375px;
+              }
+            }
+
+            @media (min-width: 1280px) {
+              .home-hero-title { font-size: 3.75rem; }
+              .xl\\:whitespace-nowrap { white-space: nowrap; }
+            }
             }
           `,
         },
