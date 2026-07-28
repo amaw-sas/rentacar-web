@@ -329,7 +329,7 @@ const benefits = computed(() => [
   {
     emoji: '📍',
     title: 'Elige tu punto de recogida',
-    body: `Revisa en el buscador cuáles puntos de recogida están activos en ${props.city?.name}. La lista se ajusta al inventario disponible de cada sede.`,
+    body: `Revisa en el buscador los puntos de recogida activos en ${props.city?.name}. La lista se ajusta al inventario disponible de cada sede.`,
   },
   {
     emoji: '⭐',

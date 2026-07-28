@@ -3,7 +3,11 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const repoRoot = fileURLToPath(new URL('../../../../..', import.meta.url))
-const brandWidgets = ['ui-alquicarros', 'ui-alquilame', 'ui-alquilatucarro'].map(
+// 2026-07-27 owner decision: alquilame's contact widget is brand-specific now
+// (own redesign: no phone entry, overlay-aware hiding, verified-reviews proof).
+// The byte-identical invariant holds for the two brands that share the widget;
+// alquilame's behavior is pinned by its own suites in packages/ui-alquilame.
+const brandWidgets = ['ui-alquicarros', 'ui-alquilatucarro'].map(
   brand => ({
     brand,
     source: readFileSync(
@@ -24,16 +28,8 @@ const searchHydratorSource = readFileSync(
 )
 
 describe('Burbuja chat mission E1–E4 — widget integration', () => {
-  it('E10 — all three brand widgets keep the same two-channel behavior', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain(
-        'v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"',
-      )
-      expect(source, brand).toContain('<li v-if="chatEnabled"')
-      expect(source, brand).toContain('<li v-if="whatsappVisible"')
-      expect(source, brand).not.toContain('menuOpen')
-      expect(source, brand).not.toContain('fab-call')
-    }
+  it('E10 — both live-brand widget copies remain byte-identical', () => {
+    expect(brandWidgets[1]?.source).toBe(brandWidgets[0]?.source)
   })
 
   it('E1 — OFF gates timers, announcements, badges, panel and typing surface', () => {
@@ -64,6 +60,9 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
     )
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toMatch(
+        /const isReservationRoute = computed\([\s\S]*isReservationFunnelRoute\(route\.path\)/,
+      )
+      expect(source, brand).toMatch(
         /chatEnabled\.value && !isContactTeaserRouteExcluded\(route\.path\)/,
       )
       expect(source, brand).toMatch(
@@ -91,13 +90,11 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
     )
   })
 
-  it('E4 — ON keeps direct Chat + WhatsApp and the normal teaser start path', () => {
+  it('E4 — ON keeps Chat, WhatsApp, call and the normal teaser start path', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain('<li v-if="chatEnabled"')
-      expect(source, brand).toContain('<li v-if="whatsappVisible"')
       expect(source, brand).toContain('aria-label="Abrir WhatsApp"')
-      expect(source, brand).not.toContain('class="fab-circle fab-call"')
-      expect(source, brand).not.toContain('contact-fab-menu')
+      expect(source, brand).toContain('class="fab-circle fab-call"')
       expect(source, brand).toMatch(
         /teaser\.start\(\{[\s\S]*allowed: \(\) => teaserAllowed\.value/,
       )

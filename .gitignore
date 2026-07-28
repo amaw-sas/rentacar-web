@@ -132,3 +132,6 @@ docs/seo/data/.tokens/
 /.claude/metrics.jsonl
 /.claude/metrics.jsonl.*
 .vercel
+
+# Orchestration mission logs (screenshots, security notes) — never publish; repo is public
+.mission/

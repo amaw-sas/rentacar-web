@@ -58,7 +58,8 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
     expect(SEO).toContain('Una categoría para cada viaje')
     expect(SEO).toContain('opciones económicas, SUVs y camionetas')
     expect(SEO).toContain('Elige tu punto de recogida')
-    expect(SEO).toContain('puntos de recogida están activos en')
+    // The shared seoContentHygiene suite pins this exact canonical phrase.
+    expect(SEO).toContain('puntos de recogida activos en')
     expect(SEO).not.toContain('Aeropuerto, centro de la ciudad o donde te resulte más cómodo')
     expect(SEO).toContain('Ayuda cuando la necesites')
     expect(SEO).toContain('Te atendemos en español las 24 horas.')

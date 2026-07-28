@@ -1,6 +1,5 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const STATUS_REFRESH_MS = 60_000
 const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000
 const DAY_BY_UTC_INDEX = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 const SCHEDULE_RANGE_RE = /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-4]):([0-5]\d)$/
@@ -112,19 +111,23 @@ export async function fetchChatEnabled(apiBase: string, brand: string): Promise<
 }
 
 /**
- * Per-brand visibility for the two direct floating buttons. Both start hidden
- * until the first authoritative response, preserve their last-known-good state
- * across transient errors, and revalidate on focus and every minute.
+ * Per-brand visibility for the two direct floating buttons.
+ *
+ * WhatsApp fails OPEN: a wa.me link works with the dashboard down, so it shows
+ * from the first paint and only an authoritative OFF hides it (F0 review: the
+ * previous fail-closed start made the main conversion channel depend on a
+ * remote fetch). Chat fails CLOSED — its panel needs the backend to function.
+ * Both preserve last-known-good state across transient errors and revalidate
+ * on mount and window focus (no background polling).
  */
 export function useChatStatus(brand: string) {
   const enabled = ref(false)
-  const whatsappEnabled = ref(false)
+  const whatsappEnabled = ref(true)
   const whatsappSchedule = ref<WhatsappSchedule | null>(null)
-  const whatsappVisible = ref(false)
+  const whatsappVisible = ref(true)
   const resolved = ref(false)
   const { rentacarPublicApiBase } = useRuntimeConfig().public
   let refreshGeneration = 0
-  let refreshTimer: number | undefined
 
   function updateWhatsappVisibility() {
     whatsappVisible.value =
@@ -156,16 +159,11 @@ export function useChatStatus(brand: string) {
     void refresh()
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', onFocus)
-      refreshTimer = window.setInterval(() => {
-        updateWhatsappVisibility()
-        void refresh()
-      }, STATUS_REFRESH_MS)
     }
   })
   onBeforeUnmount(() => {
     if (typeof window !== 'undefined') {
       window.removeEventListener('focus', onFocus)
-      if (refreshTimer !== undefined) window.clearInterval(refreshTimer)
     }
   })
 

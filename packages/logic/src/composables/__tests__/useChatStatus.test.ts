@@ -110,6 +110,56 @@ describe('useChatStatus — focus revalidation keeps last-known-good state', () 
   })
 })
 
+describe('useChatStatus — WhatsApp fails OPEN (F0 gate for live brands)', () => {
+  it('shows WhatsApp from the first paint, before any status response', () => {
+    const fetchMock = vi.fn().mockReturnValue(new Promise(() => {}))
+    vi.stubGlobal('$fetch', fetchMock)
+    vi.stubGlobal('useRuntimeConfig', () => ({
+      public: { rentacarPublicApiBase: 'https://dashboard.test' },
+    }))
+    stubFocusListener()
+    const status = useChatStatus('alquilame')
+
+    // A wa.me link works with the dashboard down; only an authoritative OFF
+    // may hide the main conversion channel. Chat stays fail-closed (it needs
+    // the backend to function at all).
+    expect(status.whatsappVisible.value).toBe(true)
+    expect(status.whatsappEnabled.value).toBe(true)
+    expect(status.enabled.value).toBe(false)
+  })
+
+  it('keeps WhatsApp visible when the status endpoint never succeeds', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error('dashboard down'))
+    vi.stubGlobal('$fetch', fetchMock)
+    vi.stubGlobal('useRuntimeConfig', () => ({
+      public: { rentacarPublicApiBase: 'https://dashboard.test' },
+    }))
+    stubFocusListener()
+    const status = useChatStatus('alquilame')
+    await flushMicrotasks()
+
+    expect(status.whatsappVisible.value).toBe(true)
+    expect(status.resolved.value).toBe(false)
+  })
+
+  it('arms no polling interval — refresh runs on mount and focus only', () => {
+    const setIntervalSpy = vi.fn().mockReturnValue(1)
+    vi.stubGlobal('$fetch', vi.fn().mockReturnValue(new Promise(() => {})))
+    vi.stubGlobal('useRuntimeConfig', () => ({
+      public: { rentacarPublicApiBase: 'https://dashboard.test' },
+    }))
+    vi.stubGlobal('window', {
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      setInterval: setIntervalSpy,
+      clearInterval: () => undefined,
+    })
+    useChatStatus('alquilame')
+
+    expect(setIntervalSpy).not.toHaveBeenCalled()
+  })
+})
+
 describe('evaluateWhatsappVisibility — Bogotá schedule gate', () => {
   it('treats no schedule as always visible and {} as always hidden', () => {
     const noonBogota = new Date('2026-07-27T17:00:00.000Z')
