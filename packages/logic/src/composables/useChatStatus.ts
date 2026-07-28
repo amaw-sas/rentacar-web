@@ -108,26 +108,33 @@ export function evaluateWhatsappVisibility(schedule: unknown, nowUtc: Date): boo
 
 interface ChatStatusResult {
   enabled: boolean | null
+  whatsappEnabled: boolean
   whatsappSchedule: unknown
 }
 
 /**
  * Single source-of-truth fetch for the dashboard chat switch:
- * `GET {apiBase}/api/chat/status?brand=` → `{ enabled, whatsappSchedule? }`.
+ * `GET {apiBase}/api/chat/status?brand=` → `{ enabled, whatsappEnabled?, whatsappSchedule? }`.
  * Returns `null` when the request fails or has no usable brand, letting callers
  * distinguish a transient error from an authoritative response. `enabled` is
  * `null` when the payload omits a boolean; `whatsappSchedule` is passed through
  * untyped and validated downstream by {@link evaluateWhatsappVisibility}.
+ *
+ * `whatsappEnabled` is the master switch the operator flips in /chat-knowledge,
+ * independent of the schedule (rentacar-dashboard 3727afd). It defaults to `true`
+ * when the payload omits it, so a deploy that predates the dashboard field keeps
+ * the button visible instead of hiding it everywhere.
  */
 export async function fetchChatStatus(apiBase: string, brand: string): Promise<ChatStatusResult | null> {
   if (!brand) return null
   try {
-    const res = await $fetch<{ brand: string; enabled: boolean; whatsappSchedule?: unknown }>(
+    const res = await $fetch<{ brand: string; enabled: boolean; whatsappEnabled?: unknown; whatsappSchedule?: unknown }>(
       `${apiBase}/api/chat/status`,
       { query: { brand } },
     )
     return {
       enabled: typeof res?.enabled === 'boolean' ? res.enabled : null,
+      whatsappEnabled: typeof res?.whatsappEnabled === 'boolean' ? res.whatsappEnabled : true,
       whatsappSchedule: res?.whatsappSchedule,
     }
   } catch {
@@ -154,17 +161,21 @@ export async function fetchChatEnabled(apiBase: string, brand: string): Promise<
  * `enabled` starts `false` and only flips `true` when the backend confirms it. Never
  * throws.
  *
- * `whatsappVisible` gates the FAB's WhatsApp option against per-brand visibility
- * windows returned in the same response. It is fail-OPEN (opposite of `enabled`):
- * it starts `true` and stays `true` until an authoritative schedule says otherwise,
- * so a network error never makes the WhatsApp button disappear. It re-evaluates on
- * a 60s timer and on the existing focus revalidation.
+ * `whatsappVisible` gates the FAB's WhatsApp option against the brand's master
+ * switch AND the per-brand visibility windows returned in the same response. It is
+ * fail-OPEN (opposite of `enabled`): it starts `true` and stays `true` until an
+ * authoritative response says otherwise, so a network error never makes the
+ * WhatsApp button disappear. It re-evaluates on a 60s timer and on the existing
+ * focus revalidation.
  */
 export function useChatStatus(brand: string) {
   const enabled = ref(false)
   const resolved = ref(false)
   const whatsappVisible = ref(true)
   const { rentacarPublicApiBase } = useRuntimeConfig().public
+  // Exposed so a surface can tell "the operator switched WhatsApp off" apart from
+  // "we are outside today's window", which `whatsappVisible` alone collapses.
+  const whatsappEnabled = ref(true)
   let refreshGeneration = 0
   let whatsappSchedule: unknown
   let scheduleResolved = false
@@ -174,7 +185,10 @@ export function useChatStatus(brand: string) {
     // fail-open (visible). Afterwards the timer keeps visibility in sync as the
     // active window opens/closes without another network round-trip.
     if (!scheduleResolved) return
-    whatsappVisible.value = evaluateWhatsappVisibility(whatsappSchedule, new Date())
+    // The master switch short-circuits the schedule: OFF hides the button at any
+    // hour. Only the schedule is time-dependent, so the timer still matters.
+    whatsappVisible.value =
+      whatsappEnabled.value && evaluateWhatsappVisibility(whatsappSchedule, new Date())
   }
 
   async function refresh() {
@@ -191,6 +205,7 @@ export function useChatStatus(brand: string) {
       resolved.value = true
     }
     whatsappSchedule = status.whatsappSchedule
+    whatsappEnabled.value = status.whatsappEnabled
     scheduleResolved = true
     reevaluateWhatsapp()
   }
@@ -233,5 +248,5 @@ export function useChatStatus(brand: string) {
     if (whatsappTimer !== undefined) clearInterval(whatsappTimer)
   })
 
-  return { enabled, resolved, whatsappVisible, refresh }
+  return { enabled, resolved, whatsappEnabled, whatsappVisible, refresh }
 }

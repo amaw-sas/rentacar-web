@@ -15,12 +15,23 @@
     in onMounted (post-hydration, so the server never observes it) and set on
     dismiss. A returning user who dismissed it sees the bar collapse just after
     mount; everyone else sees no shift.
+
+    Stacking: claim NO z-index. The bar renders BEFORE the header in the layout,
+    so document order alone keeps the sticky header on top. The explicit z it
+    used to carry (needed back when the bar sat inside <main>, AFTER the header)
+    is not merely redundant now — it broke the mobile menu: the slideover paints
+    at z-index:auto, so a z-30 bar beat it and the bar's close button showed
+    through the open menu as a second X. `relative` stays, because the close
+    button is positioned against this box.
   -->
   <div
     v-if="!dismissed"
-    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative z-50"
+    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative transition-all duration-300"
+    :class="leaving ? '-translate-y-full opacity-0' : ''"
   >
-    <div class="relative max-w-7xl mx-auto flex items-center justify-center gap-2">
+    <!-- px-10 reserves room for the absolute close button on both sides so the
+         (centered) copy never runs under the X when it wraps on mobile. -->
+    <div class="relative max-w-7xl mx-auto flex items-center justify-center gap-2 px-10">
       <p class="text-sm font-medium">
         Reserva con anticipación — Precios sujetos a disponibilidad
       </p>
@@ -58,11 +69,30 @@ const STORAGE_KEY = 'announcement-dismissed'
 // client-side — restored in onMounted, set on dismiss.
 const dismissed = ref(false)
 
+// Exit animation (ported from the design): flipping `dismissed` straight to
+// true unmounts the node in a single frame, so no transition can play and the
+// page snaps upward. `leaving` applies the exit classes while the node is still
+// mounted; `dismissed` flips only once the 300ms slide has finished.
+const leaving = ref(false)
+const EXIT_MS = 300
+
 onMounted(() => {
   if (sessionStorage.getItem(STORAGE_KEY) === 'true') dismissed.value = true
 })
 
 function dismiss(): void {
+  // Reduced-motion users get the instant removal — an unrequested slide is the
+  // exact kind of movement the preference asks us to drop.
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  if (reduced) {
+    remove()
+    return
+  }
+  leaving.value = true
+  setTimeout(remove, EXIT_MS)
+}
+
+function remove(): void {
   dismissed.value = true
   sessionStorage.setItem(STORAGE_KEY, 'true')
 }

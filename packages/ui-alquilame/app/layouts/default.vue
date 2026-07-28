@@ -5,6 +5,14 @@
        background (e.g. the red hero). Flipping to a light surface here would make
        that white text invisible. -->
   <div class="min-h-screen bg-linear-to-b from-brand-900 to-brand-950 font-sans text-gray-800">
+    <!-- Announcement bar — top chrome, ABOVE the logo/menu row (design parity).
+         It lives here rather than in index.vue because the layout is the only
+         place that renders the header, and the bar must precede it. Gated to
+         the home route: /reservas, city pages and /gana stay clean. Rendered in
+         SSR (no client-only gate) so it occupies its space from first paint and
+         does not shift the hero. -->
+    <HomeAnnouncementBar v-if="isHome" />
+
     <!-- Header — golden parity: fondo BLANCO sticky, logo rojo, nav oscuro,
          CTA rojo "Reserva Ahora" + círculo WhatsApp (token bg-whatsapp / #25D366).
          Toggle icon color is owned by base.css (.iconify background-color, scoped
@@ -18,8 +26,7 @@
         color: 'neutral',
         variant: 'ghost',
         size: 'xl',
-        class: 'text-gray-800 hover:text-gray-900',
-        'aria-label': 'Abrir menú de navegación'
+        class: 'text-gray-800 hover:text-gray-900'
       }"
       :ui="{
         root: 'h-16 lg:h-20',
@@ -49,29 +56,10 @@
           >
             Reserva Ahora
           </NuxtLink>
-          <!-- WhatsApp — token bg-whatsapp (#25D366) + text-black (WCAG AA) -->
-          <a
-            :href="franchise.whatsapp"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Contactar por WhatsApp"
-            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover transition-all duration-200"
-          >
-            <Icon name="lucide:message-circle" class="w-5 h-5" />
-          </a>
         </div>
       </template>
       <!-- Menú móvil (slideover blanco) -->
       <template #body>
-        <UButton
-          icon="lucide:x"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-          class="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-          aria-label="Cerrar menú"
-          @click="mobileMenuOpen = false"
-        />
         <div class="flex flex-col items-center justify-center gap-6 flex-1 pt-12">
           <NuxtLink
             v-for="item in items"
@@ -111,10 +99,15 @@
       <slot></slot>
     </main>
 
-    <!-- Footer — golden parity: fondo navy #1A1A2E, 4 columnas + barra negra.
-         Conserva el wiring real: cities (v-for + deep-link), franchise.footerLinks,
-         whatsapp/phone/email/socialmedia. -->
-    <footer class="bg-[#1A1A2E] text-white">
+    <!-- Footer — golden parity: 4 columnas + barra negra. Conserva el wiring
+         real: cities (v-for + deep-link), franchise.footerLinks,
+         whatsapp/phone/email/socialmedia.
+
+         Surface is #231015 (deep warm brown), the reference footer colour. The
+         port had shipped #1A1A2E navy — the one thing that still differed from
+         the reference below the partners band. The black bottom bar is
+         unchanged. -->
+    <footer class="bg-[#231015] text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
         <div class="grid grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-8">
           <!-- Col 1: Logo + Quiénes somos + badge Google -->
@@ -129,13 +122,13 @@
               Empresa colombiana de alquiler de carros con más de 10 años de experiencia y presencia en
               {{ cityCount }} ciudades. Flota nueva, sin anticipos y atención cercana para que viajes tranquilo.
             </p>
-            <!-- Badge de confianza: rating de Google. Valores fijos 5,0 / 43 — reviewed 2026-06; sync con Reviews.vue -->
+            <!-- Badge de confianza: rating de Google 4,9 — revisado 2026-07; sincronizado con GoogleRating.vue -->
             <a
               href="https://www.google.com/maps?cid=11824841242913553901"
               target="_blank"
               rel="noopener noreferrer"
               class="mt-6 inline-flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10 transition-colors"
-              aria-label="Calificación 5,0 sobre 5 con 43 reseñas en Google"
+              aria-label="Calificación 4,9 sobre 5, verificada en Google"
             >
               <svg class="w-7 h-7 flex-shrink-0" viewBox="0 0 48 48" aria-hidden="true">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -145,14 +138,14 @@
               </svg>
               <div>
                 <div class="flex items-center gap-1.5">
-                  <span class="text-white font-bold font-heading text-lg leading-none">5,0</span>
+                  <span class="text-white font-bold font-heading text-lg leading-none">4,9</span>
                   <div class="flex gap-0.5">
                     <svg v-for="n in 5" :key="`star-${n}`" class="w-3 h-3 fill-yellow-400" viewBox="0 0 24 24" aria-hidden="true">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                   </div>
                 </div>
-                <p class="text-gray-400 text-xs mt-1">43 reseñas en Google</p>
+                <p class="text-gray-400 text-xs mt-1">Verificadas en Google</p>
               </div>
             </a>
           </div>
@@ -181,7 +174,7 @@
             </h3>
             <ul class="space-y-2">
               <li>
-                <NuxtLink to="/#hero" class="text-gray-400 hover:text-white text-sm transition-colors">Inicio</NuxtLink>
+                <NuxtLink :to="heroTo" class="text-gray-400 hover:text-white text-sm transition-colors">Inicio</NuxtLink>
               </li>
               <li>
                 <NuxtLink :to="fleetTo" class="text-gray-400 hover:text-white text-sm transition-colors">Flota</NuxtLink>
@@ -216,7 +209,7 @@
               <li>
                 <a :href="`mailto:${franchise.email}`" class="flex items-center gap-3 text-gray-400 hover:text-white text-sm transition-colors">
                   <Icon name="lucide:mail" class="w-4 h-4 flex-shrink-0" />
-                  {{ franchise.email }}
+                  Correo
                 </a>
               </li>
               <li>
@@ -252,7 +245,9 @@
 
       <!-- Bottom Bar -->
       <div class="bg-black">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <!-- En móvil el espacio negro final reserva el área ocupada por los
+             canales flotantes para que no tapen créditos ni enlaces legales. -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-40 md:py-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <!-- Legales -->
           <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-start">
             <li v-for="legal in legalLinks" :key="legal.link">
@@ -260,12 +255,18 @@
             </li>
           </ul>
           <!-- Créditos -->
-          <div class="text-center md:text-right">
+          <div class="text-center text-footer-credit md:text-right">
             <p class="text-gray-400 text-sm">
               © 2026 {{ franchise.name }}. Todos los derechos reservados.
             </p>
-            <p class="text-gray-500 text-sm mt-1">
-              Elaborado por <span class="text-gray-300 font-medium">Estrategias</span>
+            <p class="text-sm mt-1">
+              Elaborado por
+                <a
+                  href="https://www.estrategias.us/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-gray-300 font-medium hover:text-white underline-offset-4 hover:underline transition-colors"
+                >Estrategias</a>
             </p>
           </div>
         </div>
@@ -290,11 +291,21 @@ const mobileMenuOpen = ref(false);
 // en el resto caemos a /#... (home). #sedes vive en el layout → siempre presente.
 const hasInPageSections = computed(() => route.path === '/' || !!route.params.city);
 
+// The announcement bar is home-only chrome (see the template comment above).
+const isHome = computed(() => route.path === '/');
+
 // Anclas en página: relativas en home/[city] (scroll sin perder ciudad),
 // si no caen a /#... (home). Las secciones existen en el home Nuxt con estos ids.
 const heroTo = computed(() => hasInPageSections.value ? '#hero' : '/#hero');
 const fleetTo = computed(() => hasInPageSections.value ? '#fleet' : '/#fleet');
-const citiesTo = computed(() => hasInPageSections.value ? '#cities' : '/#cities');
+// "Ciudades" needs a per-page target: the home has #cities (Cities.vue) but a
+// city landing does NOT — its equivalent block is #ciudades-cercanas, in
+// city/SeoContent.vue. Pointing both at #cities left the button dead on all 19
+// city pages. Every other nav anchor resolves on both.
+const citiesTo = computed(() => {
+  if (route.params.city) return '#ciudades-cercanas';
+  return route.path === '/' ? '#cities' : '/#cities';
+});
 const requisitosTo = computed(() => hasInPageSections.value ? '#requisitos' : '/#requisitos');
 const faqsTo = computed(() => hasInPageSections.value ? '#faqs' : '/#faqs');
 const contactTo = computed(() => hasInPageSections.value ? '#contact' : '/#contact');
@@ -311,7 +322,7 @@ const linkClass = (active: boolean) =>
 const items = computed<NavigationMenuItem[]>(() => {
   const heroActive = route.path === '/' && (route.hash === '#hero' || route.hash === '');
   const fleetActive = route.hash === '#fleet';
-  const citiesActive = route.hash === '#cities';
+  const citiesActive = route.hash === '#cities' || route.hash === '#ciudades-cercanas';
   const requisitosActive = route.hash === '#requisitos';
   const faqsActive = route.hash === '#faqs';
   const contactActive = route.hash === '#contact';

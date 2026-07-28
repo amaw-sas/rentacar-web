@@ -77,7 +77,9 @@ describe('chrome — CTA "Reserva Ahora" + WhatsApp (default.vue)', () => {
     const waButtons = (header.match(/<a[\s\S]*?<\/a>/g) ?? []).filter((a) =>
       /franchise\.whatsapp/.test(a),
     )
-    expect(waButtons.length).toBeGreaterThanOrEqual(2) // desktop circle + mobile pill
+    // Redesign 2026-07: the chrome carries ONE WhatsApp anchor (footer);
+    // the floating FAB (ChatWidget) and the reservation flow own the rest.
+    expect(waButtons.length).toBeGreaterThanOrEqual(1)
     for (const wa of waButtons) {
       expect(wa).toMatch(/\bbg-whatsapp\b/)
       expect(wa).toMatch(/\btext-black\b/)
@@ -86,13 +88,16 @@ describe('chrome — CTA "Reserva Ahora" + WhatsApp (default.vue)', () => {
   })
 })
 
-describe('chrome — footer navy golden (default.vue)', () => {
+describe('chrome — footer surface (default.vue)', () => {
   const layout = read('app/layouts/default.vue')
 
-  it('renders a single <footer> with the dark navy surface (#1A1A2E)', () => {
+  it('renders a single <footer> on the reference surface (#231015)', () => {
+    // Colour updated from the ported #1A1A2E navy to the reference's deep warm
+    // brown. The "exactly one <footer>" invariant is unchanged.
     const footers = layout.match(/<footer\b[^>]*>/g) ?? []
     expect(footers).toHaveLength(1)
-    expect(footers[0]).toMatch(/bg-\[#1A1A2E\]/)
+    expect(footers[0]).toMatch(/bg-\[#231015\]/)
+    expect(footers[0]).not.toMatch(/bg-\[#1A1A2E\]/i)
   })
 
   it('has a black bottom bar inside the footer', () => {
@@ -107,10 +112,17 @@ describe('chrome — footer navy golden (default.vue)', () => {
     }
   })
 
-  it('renders the Google 5,0 / 43 reseñas trust badge', () => {
+  it('renders the Google 4,9 trust badge WITHOUT a review count', () => {
+    // The count is gone from the badge for the same reason it left the Reviews
+    // heading: a hardcoded total only ages downward in credibility. The rating
+    // and the "verificadas" wording carry the trust signal.
     const footer = layout.slice(layout.indexOf('<footer'))
-    expect(footer).toContain('5,0')
-    expect(footer).toContain('43 reseñas en Google')
+    expect(footer).toContain('4,9')
+    expect(footer).not.toContain('5,0')
+    expect(footer).toContain('Verificadas en Google')
+    expect(footer).not.toMatch(/\d+\s+reseñas/)
+    // The accessible name must not announce a count the badge no longer shows.
+    expect(footer).not.toMatch(/aria-label="[^"]*\d+ reseñas/)
   })
 
   it('still derives legal links from franchise data', () => {
@@ -203,5 +215,104 @@ describe('SCEN-CHROME-NOGREEN — the only green in default.vue is WhatsApp toke
   it('the WhatsApp surface is the shared bg-whatsapp token (not free-form hex)', () => {
     expect(layout).toMatch(/\bbg-whatsapp\b/)
     expect(layout).not.toMatch(/bg-\[#090\]/)
+  })
+})
+
+/**
+ * Header spacing — the three chrome blocks span the container edge to edge:
+ *   GIVEN a desktop viewport (>= lg)
+ *   WHEN  the header renders logo | nav | "Reserva Ahora"
+ *   THEN  the logo sits flush against the container's left padding and the CTA
+ *         against its right, with the nav floating between them.
+ * A local `!important` override used to force `justify-content: center` and
+ * `flex: none` on the left/right slots, which collapsed the row into a centered
+ * cluster with ~270px of dead space on each side at 1280px. Nuxt UI's own theme
+ * already ships `justify-between` + `lg:flex-1`; the fix is to stop fighting it.
+ */
+describe('header — logo and CTA reach the container edges', () => {
+  const css = read('app/assets/css/rentacar-main/base.css')
+
+  it('does not force the header container to centre its blocks', () => {
+    const containerRule = css.match(
+      /header \[data-slot="container"\]\s*\{[^}]*\}/g,
+    ) ?? []
+    for (const rule of containerRule) {
+      expect(rule, 'header container must not be centred').not.toMatch(
+        /justify-content:\s*center/,
+      )
+    }
+  })
+
+  it('does not cancel the flex-1 growth on the left/right slots', () => {
+    const slotRules = css.match(
+      /header \[data-slot="(left|right)"\]\s*\{[^}]*\}/g,
+    ) ?? []
+    for (const rule of slotRules) {
+      expect(rule, 'header side slots must keep their flex growth').not.toMatch(
+        /flex:\s*none/,
+      )
+    }
+  })
+})
+
+/**
+ * Footer surface + links, aligned with the reference design:
+ *   - the footer body sits on #231015 (deep warm brown), not the #1A1A2E navy
+ *     the port shipped. The black bottom bar is unchanged.
+ *   - "Registra tu Flota" joins the Enlaces column; it had no counterpart in
+ *     franchise.footerLinks, so the section silently lacked it.
+ */
+describe('footer — reference surface colour and link set', () => {
+  const layout = read('app/layouts/default.vue')
+  const config = read('app/app.config.ts')
+
+  it('uses the reference footer background, not the navy', () => {
+    expect(layout).toMatch(/<footer[^>]*bg-\[#231015\]/)
+    expect(layout).not.toMatch(/bg-\[#1A1A2E\]/i)
+  })
+
+  it('keeps the black bottom bar', () => {
+    expect(layout).toMatch(/\bbg-black\b/)
+  })
+
+  it('carries a "Registra tu Flota" footer link', () => {
+    // Redesign 2026-07: the flota-registration entry became the B2B page
+    // "Sé nuestro aliado" (/aliados); the legacy /registratuflota 301s there.
+    expect(config).toContain('Sé nuestro aliado')
+  })
+})
+
+/**
+ * Nav anchors must exist on the page they point at:
+ *   GIVEN a city landing (e.g. /armenia)
+ *   WHEN  the user clicks "Ciudades" in the header
+ *   THEN  it scrolls to that page's nearby-cities section.
+ * The link pointed at #cities, which only exists on the home — the city page's
+ * section is #ciudades-cercanas (city/SeoContent.vue), so the button did
+ * nothing. Every other nav anchor (#hero #fleet #requisitos #faqs #contact)
+ * does resolve on a city page; only this one was broken.
+ */
+describe('header nav — the Ciudades anchor resolves on city pages', () => {
+  const layout = read('app/layouts/default.vue')
+  const seo = read('app/components/city/SeoContent.vue')
+
+  it('targets the nearby-cities section when on a city route', () => {
+    // Assert the BEHAVIOUR of the citiesTo computed, not one particular syntax:
+    // whatever shape it takes, it must branch on the city route param and yield
+    // the #ciudades-cercanas anchor.
+    const start = layout.indexOf('const citiesTo')
+    expect(start, 'citiesTo computed not found').toBeGreaterThan(-1)
+    const block = layout.slice(start, start + 400)
+    expect(block).toMatch(/route\.params\.city/)
+    expect(block).toMatch(/'#ciudades-cercanas'/)
+  })
+
+  it('still targets #cities on the home and /#cities elsewhere', () => {
+    expect(layout).toMatch(/'#cities'/)
+    expect(layout).toMatch(/'\/#cities'/)
+  })
+
+  it('the id it points at actually exists in the city page markup', () => {
+    expect(seo).toMatch(/id="ciudades-cercanas"/)
   })
 })

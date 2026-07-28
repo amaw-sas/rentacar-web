@@ -8,27 +8,29 @@
   >
       <!-- Requisitos para reservar: texto plano, sin recuadro ni modal anidado
            (el slideover ya es un diálogo; anidar otro reintroduce el bug #65). -->
-      <div class="mb-5 text-gray-700">
+      <div class="mb-5 text-gray-800">
         <p class="text-sm">
           Completa el formulario con los datos del <strong>titular de la tarjeta de crédito</strong>, incluso si el conductor será otra persona.
         </p>
-        <p class="text-sm font-semibold text-gray-900 mt-3 mb-1">Requisitos para alquilar:</p>
+        <p class="font-heading text-base font-bold text-gray-900 mt-3 mb-1">Requisitos para alquilar:</p>
         <ul class="space-y-1 text-sm">
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con una tarjeta de crédito</span></li>
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Ser mayor de edad con cédula o pasaporte</span></li>
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con licencia de conducción vigente.</span></li>
+          <li class="flex items-start gap-2"><span class="vineta-requisito" aria-hidden="true"></span><span>Contar con una tarjeta de crédito</span></li>
+          <li class="flex items-start gap-2"><span class="vineta-requisito" aria-hidden="true"></span><span>Ser mayor de edad con cédula o pasaporte</span></li>
+          <li class="flex items-start gap-2"><span class="vineta-requisito" aria-hidden="true"></span><span>Contar con licencia de conducción vigente.</span></li>
         </ul>
       </div>
 
       <!-- Brand section header (alquilame): red accent bar + Jakarta heading.
            Lives inside the white .light form card → dark heading text is correct;
            no [--ctx-text-primary:#fff] override (that is for dark/red surfaces). -->
+      <!-- Sin raya de acento y sin rojo: el Resumen reserva el rojo para la
+           marca y usa gris-900 en los títulos. Los dos pasos viven en el mismo
+           slideover y deben leerse igual. -->
       <div class="mb-4">
-        <div class="h-1 w-10 rounded-full bg-red-600 mb-2"></div>
-        <h3 class="heading-card text-red-700">Tus datos</h3>
+        <h3 class="font-heading text-gray-900 text-base font-bold">Tus datos</h3>
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <u-form-field name="nombreCompleto" label="Nombres">
+        <u-form-field name="nombreCompleto" :ui="formFieldUi" label="Nombres">
           <u-input
             v-model="formState.nombreCompleto"
             class="w-full"
@@ -38,7 +40,7 @@
             :ui="inputUi"
           ></u-input>
         </u-form-field>
-        <u-form-field name="apellidos" label="Apellidos">
+        <u-form-field name="apellidos" :ui="formFieldUi" label="Apellidos">
           <u-input
             v-model="formState.apellidos"
             class="w-full"
@@ -48,7 +50,7 @@
             :ui="inputUi"
           ></u-input>
         </u-form-field>
-        <u-form-field name="tipoIdentificacion" label="Tipo de identificación">
+        <u-form-field name="tipoIdentificacion" :ui="formFieldUi" label="Tipo de identificación">
           <u-select
             v-model="formState.tipoIdentificacion"
             class="w-full"
@@ -58,7 +60,7 @@
             :ui="selectUi"
           ></u-select>
         </u-form-field>
-        <u-form-field name="identificacion" label="Número de identificación">
+        <u-form-field name="identificacion" :ui="formFieldUi" label="Número de identificación">
           <u-input
             v-model="formState.identificacion"
             class="w-full"
@@ -67,7 +69,7 @@
             :ui="inputUi"
           ></u-input>
         </u-form-field>
-        <u-form-field class="col-span-2" name="email" label="Correo electrónico">
+        <u-form-field class="col-span-2" name="email" :ui="formFieldUi" label="Correo electrónico">
           <u-input
             v-model="formState.email"
             class="w-full"
@@ -82,7 +84,7 @@
                UFormField (for=useId()) no asocia su <input>. Label propio con
                for="telefono" ↔ inputOptions.id="telefono" → nombre accesible
                "Teléfono" determinista (issue #65 SCEN-008). -->
-          <label for="telefono" class="block font-medium text-sm text-gray-900 mb-1.5">Teléfono</label>
+          <label for="telefono" class="block font-medium text-sm text-gray-800 mb-1.5">Teléfono</label>
           <VueTelInput
             v-model="formState.telefono"
             mode="international"
@@ -111,16 +113,16 @@
               aria-label="Acepto los términos y el tratamiento de datos personales"
               data-testid="privacy-consent-checkbox-test"
             />
-            <p class="text-sm text-black">
+            <p class="text-sm text-gray-800">
               He leído y estoy de acuerdo con los
               <nuxt-link
-                class="underline font-medium text-red-700 hover:text-red-800"
+                class="underline font-medium text-blue-700 hover:text-blue-800"
                 to="/terminos-condiciones"
                 target="_blank"
               >términos y condiciones</nuxt-link>
               y con la
               <nuxt-link
-                class="underline font-medium text-red-700 hover:text-red-800"
+                class="underline font-medium text-blue-700 hover:text-blue-800"
                 to="/politica-privacidad"
                 target="_blank"
               >política de tratamiento de la información</nuxt-link>
@@ -165,13 +167,19 @@ const identificationTypeOptions = [
   { value: "Pasaporte", label: "Pasaporte" },
 ];
 
+// El label de UFormField sale en zinc-700 por defecto: otra rampa de gris que
+// convivía con el gris-800 del resto del cuerpo. Se fuerza la tinta del Resumen.
+const formFieldUi = {
+  label: 'text-gray-800',
+};
+
 const inputUi = {
-  base: 'bg-gray-100 border border-gray-300 text-black py-3',
+  base: 'bg-gray-100 border border-gray-300 text-gray-800 py-3',
 };
 
 const selectUi = {
   base: 'bg-gray-100 border border-gray-300 py-3',
-  value: '!text-black',
+  value: '!text-gray-800',
   placeholder: '!text-gray-500',
 };
 
@@ -222,3 +230,19 @@ const onSubmit = (event) => {
 }
 
 </script>
+
+<style scoped>
+/* Punto neutro en vez del emoji de chulo: su verde era el mismo del CTA y del
+   pill de descuento, tres señales distintas compartiendo color. `currentColor`
+   lo ata a la tinta de cuerpo (gris-800), así que sigue al texto si cambia.
+   CSS plano y no @apply: en un <style scoped> las utilidades de Tailwind v4
+   necesitan @reference y no vale la pena para tres reglas. */
+.vineta-requisito {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  border-radius: 9999px;
+  background: currentColor;
+}
+</style>

@@ -22,9 +22,13 @@ describe('CategorySelectionSection — Solicitar reserva button loading state', 
     expect(submitButtonBlock).toContain('Solicitar reserva')
   })
 
-  it('preserves brand-600 background during loading (overrides Nuxt UI neutral+solid disabled:bg-inverted)', () => {
-    expect(submitButtonBlock).toMatch(/disabled:bg-brand-600/)
-    expect(submitButtonBlock).toMatch(/aria-disabled:bg-brand-600/)
+  it('preserves its green background during loading (overrides Nuxt UI neutral+solid disabled:bg-inverted)', () => {
+    // El verde es el de .boton-seleccion en la card: el avance es una sola
+    // cadena verde —"Solicitar este vehículo" → "Siguiente" → "Solicitar
+    // reserva"— y el rojo en el último paso leía como alerta justo al enviar.
+    expect(submitButtonBlock).toMatch(/disabled:bg-green-700/)
+    expect(submitButtonBlock).toMatch(/aria-disabled:bg-green-700/)
+    expect(submitButtonBlock).not.toMatch(/bg-brand-600/)
   })
 
   it('dims the button subtly while loading so users perceive the state', () => {
@@ -36,5 +40,33 @@ describe('CategorySelectionSection — Solicitar reserva button loading state', 
     expect(submitButtonBlock).toMatch(/<ChevronRightIcon[^>]*v-if="!isSubmittingForm"[^>]*\/>/)
     expect(submitButtonBlock).toMatch(/cls="size-5"/)
     expect(submitButtonBlock).not.toMatch(/animate-spin/)
+  })
+})
+
+describe('CategorySelectionSection — explicit heading utilities', () => {
+  it('keeps both service-error headings at their written text-3xl size', () => {
+    expect(source).toMatch(
+      /class="font-heading text-3xl">Servicio temporalmente no disponible<\/div>/,
+    )
+    expect(source).toMatch(/class="font-heading text-3xl">¡Oops!<\/div>/)
+  })
+
+  it('keeps the pricing and availability headings on their explicit responsive ramps', () => {
+    expect(source).toMatch(
+      /class="font-heading text-xl md:text-2xl font-extrabold">\s*Las tarifas para tu fecha aún no están disponibles/,
+    )
+    expect(source).toMatch(
+      /class="font-heading text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!<\/div>/,
+    )
+  })
+
+  it('keeps the slideover title in Plus Jakarta at the explicit 2xl/extrabold treatment', () => {
+    expect(source).toContain(
+      "title: 'font-heading text-gray-900 text-2xl font-extrabold'",
+    )
+  })
+
+  it('does not reintroduce unlayered heading tokens on these titles', () => {
+    expect(source).not.toMatch(/\bheading-(section|card)\b/)
   })
 })

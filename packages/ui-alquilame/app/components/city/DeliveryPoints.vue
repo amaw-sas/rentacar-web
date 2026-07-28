@@ -21,22 +21,24 @@
     id="puntos-entrega"
     class="relative overflow-hidden bg-[#EDF0F5] py-12 md:py-16 px-4 sm:px-6 lg:px-8"
   >
-    <div class="max-w-4xl mx-auto relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <!-- Header: red accent bar + heading + subtitle -->
       <div class="mb-8">
         <div class="h-1 w-10 rounded-full bg-red-600 mb-4" aria-hidden="true" />
-        <h2 class="heading-section text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
-          Entrega del vehículo en {{ city?.name }}
+        <h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
+          Sedes en {{ city?.name }}
         </h2>
-        <p class="mt-3 text-base md:text-lg text-gray-600 max-w-2xl">
+        <p class="mt-3 text-base md:body-lg max-w-2xl">
           {{ cityBranches.length }}
           {{ cityBranches.length === 1 ? 'punto físico de entrega' : 'puntos físicos de entrega' }}
           en la ciudad. Elige el que te quede más cómodo.
         </p>
       </div>
 
-      <!-- Branch cards -->
-      <div class="flex flex-col gap-4">
+      <!-- Branch cards, two per row on desktop. Stacked in a single column each
+           card spanned the whole 1280px container, which made this section read
+           far wider than every other card block on the page. -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
           v-for="branch in cityBranches"
           :key="branch.code"
@@ -51,7 +53,7 @@
               >
                 <LocationIcon cls="size-4" />
               </span>
-              <h3 class="heading-card text-lg sm:text-xl font-bold text-gray-900 leading-snug pt-0.5">
+              <h3 class="font-heading text-xl font-bold text-gray-900 leading-snug pt-0.5">
                 {{ branch.name }}
               </h3>
             </div>
@@ -89,7 +91,7 @@
           </svg>
           <div class="sm:contents">
             <p class="font-heading font-bold text-sm text-gray-900">Seguridad y confianza</p>
-            <p class="text-[13px] text-gray-500 leading-snug">
+            <p class="text-sm text-gray-700 leading-snug">
               Protocolos de bioseguridad en todos nuestros puntos.
             </p>
           </div>
@@ -100,7 +102,7 @@
           <ClockIcon cls="shrink-0 size-6 text-red-600" />
           <div class="sm:contents">
             <p class="font-heading font-bold text-sm text-gray-900">Entregas rápidas</p>
-            <p class="text-[13px] text-gray-500 leading-snug">
+            <p class="text-sm text-gray-700 leading-snug">
               Proceso ágil para que empieces tu viaje.
             </p>
           </div>
@@ -123,7 +125,7 @@
           </svg>
           <div class="sm:contents">
             <p class="font-heading font-bold text-sm text-gray-900">Soporte 24/7</p>
-            <p class="text-[13px] text-gray-500 leading-snug">
+            <p class="text-sm text-gray-700 leading-snug">
               Estamos contigo en cada paso del alquiler.
             </p>
           </div>

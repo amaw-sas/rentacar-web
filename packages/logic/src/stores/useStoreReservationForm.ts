@@ -206,6 +206,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     () => selectedReturnDate.value ? formatHumanDate(selectedReturnDate.value) : ''
   );
 
+  const humanFormattedReturnDateShort = computed<string | undefined>(
+    () => selectedReturnDate.value ? formatHumanDateShort(selectedReturnDate.value) : ''
+  );
+
   const humanFormattedPickupHour = computed<string | undefined>(
     () => selectedPickupHour.value ? formatHumanTime(toDatetime(createCurrentDateObject(), selectedPickupHour.value)) : ''
   );
@@ -446,6 +450,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     humanFormattedPickupDate,
     humanFormattedPickupDateShort,
     humanFormattedReturnDate,
+    humanFormattedReturnDateShort,
     humanFormattedPickupHour,
     humanFormattedReturnHour,
   };

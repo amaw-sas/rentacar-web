@@ -36,6 +36,12 @@ function stubNuxtGlobals() {
   vi.stubGlobal('defineAsyncComponent', defineAsyncComponent)
   vi.stubGlobal('useAppConfig', () => ({ franchise }))
   vi.stubGlobal('useRoute', () => ({ path: '/blog' }))
+  // El rediseño de alquilame añadió este par: el widget lee del store si el
+  // resumen de reserva está abierto para ocultarse en móvil. Sin stub el setup
+  // muere con `storeToRefs is not defined` y los 8 casos caen por montaje, no
+  // por el horario. El stub ya devuelve refs, así que storeToRefs es identidad.
+  vi.stubGlobal('useStoreSearchData', () => ({ reservationOverlayOpen: ref(false) }))
+  vi.stubGlobal('storeToRefs', (store: Record<string, unknown>) => store)
   vi.stubGlobal('useState', (_key: string, init: () => unknown) => ref(init()))
   vi.stubGlobal('navigateTo', vi.fn())
   vi.stubGlobal('useRuntimeConfig', () => ({
@@ -77,9 +83,15 @@ async function mountWidget(payload: unknown, nowIso: string) {
   return wrapper
 }
 
-/** Labels of the contact-menu options currently in the DOM, in render order. */
+// El rediseño de alquilame quitó el menú desplegable (#contact-fab-menu) y el
+// canal "Llámanos": quedan dos accesos directos colgando de un <ul>. Lo que esta
+// prueba vigila —la compuerta de horario sobre WhatsApp— no cambió; sólo cambió
+// dónde mirar y cuántos hermanos tiene la opción.
+const MENU = 'ul[aria-label="Canales de contacto"]'
+
+/** Labels of the contact options currently in the DOM, in render order. */
 function menuLabels(): string[] {
-  return Array.from(document.querySelectorAll('#contact-fab-menu li'))
+  return Array.from(document.querySelectorAll(`${MENU} li`))
     .map(li => li.querySelector('.fab-label')?.textContent?.trim() ?? '')
 }
 
@@ -100,10 +112,12 @@ describe('ChatWidget — WhatsApp option is gated by the schedule (mounted DOM)'
       { brand: 'alquicarros', enabled: true, whatsappSchedule: STANDARD },
       TUE_10H,
     )
+    // 2026-07-27 owner decision: live brands keep the tel: 'Llámanos' entry;
+    // the schedule gate only governs WhatsApp.
     expect(menuLabels()).toEqual(['Chat 24 horas', 'WhatsApp', 'Llámanos'])
   })
 
-  it('removes the WhatsApp option outside the window, keeping Chat and Llámanos', async () => {
+  it('removes the WhatsApp option outside the window, keeping Chat', async () => {
     await mountWidget(
       { brand: 'alquicarros', enabled: true, whatsappSchedule: STANDARD },
       TUE_20H,
@@ -112,7 +126,7 @@ describe('ChatWidget — WhatsApp option is gated by the schedule (mounted DOM)'
     expect(labels).not.toContain('WhatsApp')
     expect(labels).toEqual(['Chat 24 horas', 'Llámanos'])
     // The wa.me link itself is gone from the FAB, not merely hidden by CSS.
-    expect(document.querySelectorAll('#contact-fab-menu a[href*="wa.me"]')).toHaveLength(0)
+    expect(document.querySelectorAll(`${MENU} a[href*="wa.me"]`)).toHaveLength(0)
   })
 
   it('hides WhatsApp all week for an empty schedule {} (canonical semantics)', async () => {
@@ -155,26 +169,21 @@ describe('ChatWidget — WhatsApp option is gated by the schedule (mounted DOM)'
   })
 })
 
-describe('ChatWidget — the gate does not disturb the rest of the menu', () => {
-  it('leaves the Call option ungated and the menu accessible with WhatsApp absent', async () => {
+describe('ChatWidget — the gate does not disturb the rest of the list', () => {
+  it('keeps the list accessible and Chat present with WhatsApp absent', async () => {
     await mountWidget(
       { brand: 'alquicarros', enabled: true, whatsappSchedule: STANDARD },
       TUE_20H,
     )
-    const menu = document.querySelector('#contact-fab-menu')
-    expect(menu?.getAttribute('aria-label')).toBe('Opciones de contacto')
-
-    // Call survives untouched, with its tel: href and aria-label intact.
-    const call = document.querySelector<HTMLAnchorElement>('#contact-fab-menu a[href^="tel:"]')
-    expect(call).not.toBeNull()
-    expect(call?.getAttribute('aria-label')).toBe(`Llamar al ${franchise.phone}`)
+    const menu = document.querySelector(MENU)
+    expect(menu?.getAttribute('aria-label')).toBe('Canales de contacto')
 
     // Chat keeps its own independent gate and stays present.
-    expect(document.querySelector('#contact-fab-menu .fab-chat')).not.toBeNull()
+    expect(document.querySelector(`${MENU} .fab-chat`)).not.toBeNull()
   })
 
   it('still hides Chat via its own gate while WhatsApp follows the schedule', async () => {
-    // Chat OFF (fail-closed) + inside the WhatsApp window: only WhatsApp + Call.
+    // Chat OFF (fail-closed) + inside the WhatsApp window: only WhatsApp.
     await mountWidget(
       { brand: 'alquicarros', enabled: false, whatsappSchedule: STANDARD },
       TUE_10H,

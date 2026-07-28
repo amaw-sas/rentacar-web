@@ -1,27 +1,31 @@
 <template>
-  <div v-if="isServerError && !pendingSearch" class="text-center [--ctx-text-primary:#fff]">
-    <div class="text-white text-center">
-      <div class="heading-section text-3xl">Servicio temporalmente no disponible</div>
+  <!-- Los estados de esta sección van sobre bg-surface-soft (gris claro), no
+       sobre el degradado oscuro del layout: el texto es oscuro y el acento es
+       brand-600, no blanco/amarillo. Si el fondo vuelve a ser oscuro hay que
+       revertir estos colores. -->
+  <div v-if="isServerError && !pendingSearch" class="text-center">
+    <div class="text-gray-900 text-center">
+      <div class="font-heading text-3xl">Servicio temporalmente no disponible</div>
       <p class="text-lg mt-2">
         Estamos experimentando problemas técnicos. Por favor, intenta de nuevo en unos minutos.
       </p>
       <p class="text-lg mt-2">Si deseas hacer una reserva, contáctanos:</p>
       <p class="text-lg mt-1">
-        <a :href="`https://wa.me/57${whatsappContact.phone}`" target="_blank" rel="noopener" data-analytics-placement="error" class="text-yellow-400 underline">
+        <a :href="`https://wa.me/57${whatsappContact.phone}`" target="_blank" rel="noopener" data-analytics-placement="error" class="text-brand-600 font-semibold underline">
           WhatsApp {{ whatsappContact.display }}
         </a>
       </p>
       <p class="text-base mt-2 font-semibold">Horario de atención</p>
-      <p class="text-sm text-gray-300">
+      <p class="text-sm text-gray-600">
         Lunes a viernes: 07:00am - 07:00pm<br>
         Sábados: 07:00am - 04:00pm<br>
         Domingos y festivos: Cerrado
       </p>
     </div>
   </div>
-  <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center [--ctx-text-primary:#fff]">
-    <div class="text-white text-center">
-      <div class="heading-section text-3xl">¡Oops!</div>
+  <div v-else-if="!hasRenderableAvailable && !pendingSearch && isInventoryEmpty" class="text-center">
+    <div class="text-gray-900 text-center">
+      <div class="font-heading text-3xl">¡Oops!</div>
       <div class="text-lg">
         Nos quedamos sin carritos en {{pickupCityName}} para el {{ humanFormattedPickupDate }}.
       </div>
@@ -36,11 +40,11 @@
          tarifas (caso 2027). Fail-closed: no se cotiza, se ofrece contacto. -->
     <div
       v-if="allBeyondHorizon"
-      class="text-center [--ctx-text-primary:#fff] mb-6"
+      class="text-center mb-6"
       data-testid="pricing-horizon-unavailable-test"
     >
-      <div class="text-white text-center rounded-2xl bg-black/30 px-6 py-6 max-w-2xl mx-auto">
-        <div class="heading-section text-xl md:text-2xl font-extrabold">
+      <div class="text-gray-900 text-center rounded-[22px] border-[7px] border-white bg-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] px-6 py-6 max-w-2xl mx-auto">
+        <div class="font-heading text-xl md:text-2xl font-extrabold">
           Las tarifas para tu fecha aún no están disponibles
         </div>
         <p class="text-base mt-2">Escríbenos y te cotizamos.</p>
@@ -50,18 +54,18 @@
             target="_blank"
             rel="noopener"
             data-analytics-placement="error"
-            class="text-yellow-400 underline"
+            class="text-brand-600 font-semibold underline"
           >
             WhatsApp {{ whatsappContact.display }}
           </a>
         </p>
       </div>
     </div>
-    <div v-if="hasRenderableAvailable" class="text-white text-center [--ctx-text-primary:#fff] mb-6">
-      <span class="inline-block h-1 w-10 rounded-full bg-white/80 mb-3" aria-hidden="true"></span>
-      <div class="heading-section text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!</div>
-      <div class="text-sm md:text-base mt-1">
-        <span>En <span class="text-yellow-400 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
+    <div v-if="hasRenderableAvailable" class="text-gray-900 text-center mb-6">
+      <span class="inline-block h-1 w-10 rounded-full bg-brand-600 mb-3" aria-hidden="true"></span>
+      <div class="font-heading text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!</div>
+      <div class="text-sm md:text-base mt-1 text-gray-700">
+        <span>En <span class="text-brand-600 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-brand-600 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
     </div>
@@ -104,7 +108,7 @@
       :ui="{
         content: 'bg-white',
         header: 'bg-white border-b-2 border-red-600/15',
-        title: 'heading-card font-heading text-gray-900 text-2xl font-extrabold',
+        title: 'font-heading text-gray-900 text-2xl font-extrabold',
         description: 'text-gray-600',
         body: 'bg-white text-gray-900',
         footer: 'bg-white gap-2 border-t-0',
@@ -118,7 +122,13 @@
         <template v-else>Resumen</template>
       </template>
       <template #body>
-        <reservation-resume v-if="slideoverStep === 'resumen'" :category="selectedCategory"></reservation-resume>
+        <reservation-resume
+          v-if="slideoverStep === 'resumen'"
+          :category="selectedCategory"
+          :link-copied="linkCopied"
+          @share-whatsapp="shareWhatsApp"
+          @copy-link="copyReservationLink"
+        ></reservation-resume>
         <reservation-form
           v-else
           ref="reservationFormComponent"
@@ -126,42 +136,19 @@
         />
       </template>
       <template #footer>
-        <!-- Paso "Resumen": cápsula de compartir + Volver/Siguiente. -->
-        <div v-if="slideoverStep === 'resumen'" class="w-full flex flex-col gap-3">
-          <!-- Share Capsule -->
-          <div class="flex justify-center">
-            <div class="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2">
-              <span class="text-sm text-gray-600 font-medium">Compartir</span>
-              <button
-                @click="shareWhatsApp"
-                class="flex items-center justify-center w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors"
-                aria-label="Compartir en WhatsApp"
-              >
-                <WhatsappIcon cls="size-4 text-white" />
-              </button>
-              <button
-                @click="shareFacebook"
-                class="flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
-                aria-label="Compartir en Facebook"
-              >
-                <FacebookIcon cls="size-4 text-white" />
-              </button>
-              <button
-                @click="shareTwitter"
-                class="flex items-center justify-center w-8 h-8 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
-                aria-label="Compartir en X"
-              >
-                <XIcon cls="size-4 text-white" />
-              </button>
-              <button
-                @click="copyReservationLink"
-                class="flex items-center justify-center w-8 h-8 bg-gray-500 hover:bg-gray-600 text-white rounded-full transition-colors"
-                aria-label="Copiar enlace"
-              >
-                <UIcon :name="linkCopied ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
-              </button>
-            </div>
-          </div>
+        <!-- Paso "Resumen": Volver/Siguiente. La cápsula de compartir se movió
+             sobre la foto, dentro de ReservationResume: era una acción
+             secundaria plantada en la zona de decisión, y sus colores de marcas
+             ajenas le disputaban la atención al CTA y al precio. -->
+        <!-- Mitad de abajo de la franja gris que arranca en el bloque del total
+             (ReservationResume): mismo relleno y MISMO sangrado lateral (8px de
+             blanco a cada lado), más el vertical para tapar el padding del
+             footer. Si cambias esos márgenes allá, cámbialos aquí o el filete
+             blanco da un escalón a media franja. -->
+        <div
+          v-if="slideoverStep === 'resumen'"
+          class="w-full flex flex-col gap-3 bg-surface-softest rounded-b-xl -mx-2 px-4 -mt-4 pt-3 -mb-2 pb-4 sm:-mx-4 sm:px-6 grow"
+        >
           <!-- Action Buttons -->
           <div class="flex gap-2">
             <u-button
@@ -174,12 +161,17 @@
               @click="backFromResume"
             />
             <!-- "Siguiente" cambia el paso a "datos" SIN cerrar/reabrir el
-                 diálogo (issue #65): no hay swap de capas modales. -->
+                 diálogo (issue #65): no hay swap de capas modales.
+
+                 Verde de .boton-seleccion (el "Solicitar este vehículo" de la
+                 card), no el rojo de marca: el avance es una sola cadena verde
+                 de punta a punta y el rojo en medio leía como alerta justo
+                 donde el cliente continúa. -->
             <u-button
               label="Siguiente"
               color="neutral"
               size="xl"
-              class="flex-1 py-4 justify-center bg-brand-600 hover:bg-brand-700 text-white"
+              class="flex-1 py-4 justify-center bg-green-700 hover:bg-green-800 text-white"
               data-testid="reservation-next-test"
               @click="goToForm"
             >
@@ -203,7 +195,7 @@
           <u-button
             color="neutral"
             size="xl"
-            class="flex-1 py-4 justify-center whitespace-nowrap bg-brand-600 hover:bg-brand-700 disabled:bg-brand-600 aria-disabled:bg-brand-600 disabled:opacity-80 aria-disabled:opacity-80 text-white"
+            class="flex-1 py-4 justify-center whitespace-nowrap bg-green-700 hover:bg-green-800 disabled:bg-green-700 aria-disabled:bg-green-700 disabled:opacity-80 aria-disabled:opacity-80 text-white"
             :loading="isSubmittingForm"
             :disabled="isSubmittingForm || formSubmitLocked"
             @click="reservationFormComponent?.submit()"
@@ -233,10 +225,7 @@ import {
   CategoryCard,
   ReservationResume,
   ReservationForm,
-  IconsChevronRightIcon as ChevronRightIcon,
-  IconsWhatsappIcon as WhatsappIcon,
-  IconsFacebookIcon as FacebookIcon,
-  IconsXIcon as XIcon
+  IconsChevronRightIcon as ChevronRightIcon
 } from "#components";
 
 /** utils */
@@ -252,6 +241,7 @@ const storeForm = useStoreReservationForm();
 const {
   pending: pendingSearch,
   selectedCategory,
+  reservationOverlayOpen,
   filteredCategories,
   error: searchError,
 } = storeToRefs(storeSearch);
@@ -356,6 +346,16 @@ watch(slideoverOpen, (open) => { chatShouldShiftLeft.value = open; });
 const reservationFormComponent = ref(null);
 const linkCopied = ref(false);
 
+// ChatWidget vive en el layout y este estado es local al grid. Reflejarlo en el
+// store permite ocultar sus dos accesos flotantes mientras el slideover de
+// reserva está abierto (en todo viewport: el pie del slideover ya trae su propio
+// CTA de WhatsApp), y restaurarlos al cerrar o volver atrás.
+watch(
+  slideoverOpen,
+  (open) => { reservationOverlayOpen.value = open; },
+  { immediate: true, flush: 'sync' },
+);
+
 // Issue #65: reka-ui Dialog (vía @nuxt/ui Slideover) no setea aria-modal y su
 // tipo `content` (DialogContentProps) no expone el atributo, aunque el elemento
 // sí lo acepta. Lo inyectamos por la prop `content`; el cast cubre el hueco de
@@ -387,17 +387,9 @@ function shareWhatsApp() {
   window.open(`https://wa.me/?text=${text}`, '_blank');
 }
 
-function shareFacebook() {
-  const url = encodeURIComponent(getReservationShareUrl());
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400');
-}
-
-function shareTwitter() {
-  const url = encodeURIComponent(getReservationShareUrl());
-  const text = encodeURIComponent('¡Mira esta opción de alquiler de carro!');
-  window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'width=600,height=400');
-}
-
+// Facebook y X se eliminaron: no son canal para una cotización de alquiler en
+// Colombia y ocupaban media cápsula. Quedan WhatsApp —el canal real— y copiar
+// enlace, que sirve para pegarlo donde sea.
 async function copyReservationLink() {
   try {
     await navigator.clipboard.writeText(getReservationShareUrl());
@@ -661,6 +653,7 @@ onMounted(() => {
   if (import.meta.client) window.addEventListener('popstate', handleSlideoverPopState);
 });
 onBeforeUnmount(() => {
+  reservationOverlayOpen.value = false;
   if (import.meta.client) window.removeEventListener('popstate', handleSlideoverPopState);
   // Evita un FAB pegado a la izquierda si la sección se desmonta con el resumen
   // abierto (navegación, cambio de params → re-montaje de NuxtPage).

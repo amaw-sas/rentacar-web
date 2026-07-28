@@ -32,9 +32,103 @@ export default defineNuxtConfig({
         {
           key: 'critical-cls',
           innerHTML: `@layer theme, base, components, utilities;
+            /*
+              @nuxt/fonts adds these metric-compatible fallback faces to the
+              deferred entry stylesheet. They must also exist in the critical
+              stylesheet: otherwise the first paint uses raw system metrics and
+              the DM Sans swap moves <main>. Keep these values aligned with the
+              generated @nuxt/fonts 0.12.1/fontaine output.
+
+              @font-face stays outside the cascade layers because it does not
+              participate in selector precedence. The selectors that consume
+              the faces remain in their proper Tailwind layers below.
+            */
+            @font-face {
+              font-family: 'DM Sans Fallback: BlinkMacSystemFont';
+              src: local('BlinkMacSystemFont');
+              size-adjust: 111.8837%;
+              ascent-override: 88.6635%;
+              descent-override: 27.7073%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'DM Sans Fallback: Segoe UI';
+              src: local('Segoe UI');
+              size-adjust: 105.1066%;
+              ascent-override: 94.3804%;
+              descent-override: 29.4939%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'DM Sans Fallback: Helvetica Neue';
+              src: local('Helvetica Neue');
+              size-adjust: 103.5556%;
+              ascent-override: 95.794%;
+              descent-override: 29.9356%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'DM Sans Fallback: Arial';
+              src: local('Arial');
+              size-adjust: 104.531%;
+              ascent-override: 94.9001%;
+              descent-override: 29.6563%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'DM Sans Fallback: Noto Sans';
+              src: local('Noto Sans');
+              size-adjust: 98.3122%;
+              ascent-override: 100.903%;
+              descent-override: 31.5322%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: BlinkMacSystemFont';
+              src: local('BlinkMacSystemFont');
+              size-adjust: 112.3639%;
+              ascent-override: 92.3784%;
+              descent-override: 19.7572%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: Segoe UI';
+              src: local('Segoe UI');
+              size-adjust: 105.5577%;
+              ascent-override: 98.3348%;
+              descent-override: 21.0311%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: Helvetica Neue';
+              src: local('Helvetica Neue');
+              size-adjust: 104%;
+              ascent-override: 99.8077%;
+              descent-override: 21.3462%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: Arial';
+              src: local('Arial');
+              size-adjust: 104.9796%;
+              ascent-override: 98.8763%;
+              descent-override: 21.147%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: Noto Sans';
+              src: local('Noto Sans');
+              size-adjust: 98.7342%;
+              ascent-override: 105.1308%;
+              descent-override: 22.4846%;
+              line-gap-override: 0%;
+            }
             @layer base {
             *, *::before, *::after { box-sizing: border-box; }
-            body { margin: 0; font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif; }
+            body {
+              margin: 0;
+              font-family: 'DM Sans', 'DM Sans Fallback: BlinkMacSystemFont', 'DM Sans Fallback: Segoe UI', 'DM Sans Fallback: Helvetica Neue', 'DM Sans Fallback: Arial', 'DM Sans Fallback: Noto Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            }
             /* Preflight block-margin reset — sin esto, al primer paint (solo crítico)
                el <h1> del hero carga su margen UA (0.67em ≈ 24px) y el <p> 1em (16px);
                al aterrizar el CSS inyectado (trae Preflight → margin:0) colapsan y la
@@ -46,7 +140,15 @@ export default defineNuxtConfig({
             svg { max-width: 100%; height: auto; }
             header svg { max-height: 3.5rem !important; max-width: 10rem !important; }
             }
+            @layer components {
+            .heading-hero, .heading-page, .heading-section, .heading-card, .heading-sub, .heading-label {
+              font-family: 'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback: BlinkMacSystemFont', 'Plus Jakarta Sans Fallback: Segoe UI', 'Plus Jakarta Sans Fallback: Helvetica Neue', 'Plus Jakarta Sans Fallback: Arial', 'Plus Jakarta Sans Fallback: Noto Sans', ui-sans-serif, system-ui, sans-serif;
+            }
+            }
             @layer utilities {
+            .font-heading {
+              font-family: 'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback: BlinkMacSystemFont', 'Plus Jakarta Sans Fallback: Segoe UI', 'Plus Jakarta Sans Fallback: Helvetica Neue', 'Plus Jakarta Sans Fallback: Arial', 'Plus Jakarta Sans Fallback: Noto Sans', ui-sans-serif, system-ui, sans-serif;
+            }
             .w-2\\.5 { width: 0.625rem; } .h-2\\.5 { height: 0.625rem; }
             .w-4 { width: 1rem; } .h-4 { height: 1rem; }
             .w-5 { width: 1.25rem; } .h-5 { height: 1.25rem; }
@@ -484,6 +586,13 @@ export default defineNuxtConfig({
 
   modules: ['@nuxtjs/seo', '@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-llms', 'nuxt-vitalizer', '@nuxtjs/mdc'],
 
+  // Blog prose: headings keep their `id` (the TOC still deep-links) but are no
+  // longer wrapped in a self-referencing <a> — the wrapper also painted them
+  // with the primary link color, making titles compete with real body links.
+  mdc: {
+    headings: { anchorLinks: false },
+  },
+
   // Fuentes de marca self-hosted (@nuxt/fonts, bundled con @nuxt/ui).
   // configKey top-level `fonts` — NO se añade a `modules[]`.
   // Self-hosted: @nuxt/fonts descarga y sirve local (sin <link> a Google).
@@ -564,12 +673,30 @@ export default defineNuxtConfig({
     // Override with NUXT_RENTACAR_ADMIN_URL and NUXT_RENTACAR_ADMIN_API_KEY
     rentacarAdminUrl: '',
     rentacarAdminApiKey: '',
+    // Formularios públicos (quejas y reclamos, registro de flota) — server-only.
+    // Override con NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO / NUXT_CONTACT_EMAIL_FROM.
+    // `from` debe ser un dominio verificado en Resend; si no, el envío es rechazado.
+    // El remitente es el sandbox de Resend (onboarding@resend.dev): NO requiere
+    // dominio verificado, pero Resend sólo entrega al correo dueño de la cuenta.
+    // Por eso el destino es info@artesyweb.com. Si algún día se verifica
+    // alquilame.co en Resend, basta cambiar estas dos variables por entorno.
+    // Nota: NO se envía copia a quien llena el formulario — el correo es una
+    // notificación interna; su dirección viaja en reply-to para poder responder.
+    resendApiKey: '',
+    contactEmailTo: 'info@artesyweb.com',
+    contactEmailFrom: 'Alquilame <onboarding@resend.dev>',
     // Public config (exposed to client)
     public: {
       rentacarFranchise: "alquilame",
       rentacarApiReservasFormRecordEndpoint: "/api/reservations/record",
       rentacarApiReservasCategoriesAvailabilityEndpoint: "/api/reservations/availability",
       isTest: process.env.NODE_ENV === "test",
+      // Monthly struck-price anchor pilot. Read ONLY server-side, in
+      // /api/rentacar-data — the value never reaches the browser. Off unless
+      // the deploy sets NUXT_PUBLIC_PRICE_ANCHOR_MONTHLY=on, and declared in
+      // all three brands so the key exists to override (Nuxt ignores env vars
+      // for keys absent from runtimeConfig).
+      priceAnchorMonthly: '',
     },
   },
 
@@ -643,6 +770,16 @@ export default defineNuxtConfig({
       }
     },
     routeRules: {
+      // Publication F1 — legacy alquilame.co landing URLs with Search Console
+      // history must survive the domain cutover (/registratuflota alone had
+      // 437 impressions at position 3.1). 301: authority moves permanently.
+      '/registratuflota': { redirect: { to: '/aliados', statusCode: 301 } },
+      '/aviso-proteccion-de-datos': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
+      '/terminos-condiciones.html': { redirect: { to: '/terminos-condiciones', statusCode: 301 } },
+      // Variantes con impresiones reales vistas en GSC tras el lanzamiento.
+      '/aviso-proteccion-de-datos.html': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
+      '/AVISO-DE-PROTECCIÓN-DE-DATOS-ALQUILAME.CO.pdf': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
+
       // Issue 322 SCEN-322-S04 — baseline security headers (all responses).
       // CSP is limited to frame-ancestors so we don't break Nuxt inline assets;
       // full script-src CSP would need a separate hardening pass.

@@ -277,6 +277,8 @@ describe('transformExtras', () => {
     const result = transformExtras({
       extra_driver_day_price: 12000,
       baby_seat_day_price: 12000,
+      extra_driver_month_price: 100000,
+      baby_seat_month_price: 100000,
       wash_price: 20000,
       wash_onsite_price: 30000,
       wash_deep_price: 150000,
@@ -286,6 +288,8 @@ describe('transformExtras', () => {
     expect(result).toEqual({
       extraDriverDayPrice: 12000,
       babySeatDayPrice: 12000,
+      extraDriverMonthPrice: 100000,
+      babySeatMonthPrice: 100000,
       washPrice: 20000,
       washOnsitePrice: 30000,
       washDeepPrice: 150000,
@@ -328,6 +332,56 @@ describe('transformExtras', () => {
     expect(result.washOnsitePrice).toBeNull()
     expect(result.washDeepPrice).toBeNull()
     expect(result.washDeepUpholsteryPrice).toBeNull()
+  })
+
+  // SCEN-X5: the monthly columns arrive missing (a database that predates
+  // migration 109) or NULL. Both must reach useCategory as null so the 100.000
+  // fallback fires. Number(undefined) is NaN and Number(null) is 0 — either one
+  // leaking through would quote a nonsense monthly extra.
+  it('turns absent monthly columns into null, not NaN or 0', () => {
+    const result = transformExtras({
+      extra_driver_day_price: 12000,
+      baby_seat_day_price: 12000,
+      wash_price: 20000,
+      wash_onsite_price: 30000,
+      wash_deep_price: 150000,
+      wash_deep_upholstery_price: 225000,
+    })
+
+    expect(result.extraDriverMonthPrice).toBeNull()
+    expect(result.babySeatMonthPrice).toBeNull()
+  })
+
+  it('propagates explicit NULL monthly columns as null', () => {
+    const result = transformExtras({
+      extra_driver_day_price: 12000,
+      baby_seat_day_price: 12000,
+      extra_driver_month_price: null,
+      baby_seat_month_price: null,
+      wash_price: 20000,
+      wash_onsite_price: 30000,
+      wash_deep_price: 150000,
+      wash_deep_upholstery_price: 225000,
+    })
+
+    expect(result.extraDriverMonthPrice).toBeNull()
+    expect(result.babySeatMonthPrice).toBeNull()
+  })
+
+  it('coerces the monthly numeric strings Supabase returns', () => {
+    const result = transformExtras({
+      extra_driver_day_price: 12000,
+      baby_seat_day_price: 12000,
+      extra_driver_month_price: '100000' as unknown as number,
+      baby_seat_month_price: '100000.00' as unknown as number,
+      wash_price: 20000,
+      wash_onsite_price: 30000,
+      wash_deep_price: 150000,
+      wash_deep_upholstery_price: 225000,
+    })
+
+    expect(result.extraDriverMonthPrice).toBe(100000)
+    expect(result.babySeatMonthPrice).toBe(100000)
   })
 })
 

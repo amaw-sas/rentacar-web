@@ -410,6 +410,12 @@ export default defineNuxtConfig({
       rentacarApiReservasFormRecordEndpoint: "/api/reservations/record",
       rentacarApiReservasCategoriesAvailabilityEndpoint: "/api/reservations/availability",
       isTest: process.env.NODE_ENV === "test",
+      // Monthly struck-price anchor pilot. Read ONLY server-side, in
+      // /api/rentacar-data — the value never reaches the browser. Off unless
+      // the deploy sets NUXT_PUBLIC_PRICE_ANCHOR_MONTHLY=on, and declared in
+      // all three brands so the key exists to override (Nuxt ignores env vars
+      // for keys absent from runtimeConfig).
+      priceAnchorMonthly: '',
     },
   },
 

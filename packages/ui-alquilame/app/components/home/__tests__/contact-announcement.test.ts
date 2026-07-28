@@ -6,9 +6,9 @@
  *   - SCEN-F1-03: the home has a dismissible announcement bar, a contact CTA
  *     section, and a floating contact FAB — in the design's style.
  *   - Contact CTA is BUTTONS, not a form (golden 10-contact.html paridad visual):
- *     "Reserva Ahora" + WhatsApp. The WhatsApp CTA is CONFIG-DRIVEN
- *     (franchise.whatsapp full URL, never re-wrapped); the FAB additionally drives
- *     franchise.phone. Neither hardcodes the mockup's number.
+ *     Llamar + WhatsApp. Both CTAs are CONFIG-DRIVEN (franchise.phone and
+ *     franchise.whatsapp full URL, never re-wrapped). Neither hardcodes the
+ *     mockup's number.
  *   - WhatsApp green guard (brand hard rule): the contact WhatsApp surface is the
  *     shared bg-whatsapp token (#25D366) + black text — no free-form green-N.
  *   - The announcement bar dismiss state is CLIENT-ONLY (onMounted + v-if guard /
@@ -44,6 +44,14 @@ describe('F1 step07a — Contact.vue', () => {
   it('binds the WhatsApp CTA to franchise.whatsapp (full URL, not re-wrapped)', () => {
     expect(contact).toMatch(/:href="franchise\.whatsapp"/)
     expect(contact).toMatch(/target="_blank"/)
+    expect(contact).toMatch(/>\s*WhatsApp\s*<\/a>/)
+  })
+
+  it('binds the Llamar CTA to the configured phone as a normalized tel: URL', () => {
+    expect(contact).toMatch(/:href="`tel:\$\{franchise\.phone\.replace\(\/\\s\/g, ''\)\}`"/)
+    expect(contact).toMatch(/:aria-label="`Llamar al \$\{franchise\.phone\}`"/)
+    expect(contact).toMatch(/<PhoneIcon\b/)
+    expect(contact).toMatch(/>\s*Llamar\s*<\/a>/)
   })
 
   it('uses the shared bg-whatsapp token + black text for the WhatsApp CTA', () => {
@@ -83,14 +91,15 @@ describe('F1 step07a — Contact.vue', () => {
     expect(contact).toMatch(/id="contact"/)
   })
 
-  it('makes the "Reserva Ahora" anchor configurable via a reserveAnchor prop (default #hero)', () => {
-    // F2 step01: the reserve CTA must anchor to a per-page target. The default
-    // keeps the home intact (#hero); the city landing passes '#searcher'.
-    expect(contact).toMatch(/defineProps<\{\s*reserveAnchor\?: string\s*\}>/)
-    expect(contact).toMatch(/reserveAnchor:\s*'#hero'/)
-    // The CTA binds the prop, never the old hardcoded home id.
-    expect(contact).toMatch(/:href="reserveAnchor"/)
-    expect(contact).not.toMatch(/href="#hero"/)
+  it('uses the approved contact copy and removes the former reservation CTA', () => {
+    expect(contact).toMatch(/Cancela gratis cuando quieras\./)
+    expect(contact).toMatch(/Sin anticipos/)
+    expect(contact).toMatch(/Cancela gratis/)
+    expect(contact).toMatch(/Chat 24\/7/)
+    expect(contact).not.toMatch(/Reserva Ahora/)
+    expect(contact).not.toMatch(/reserveAnchor/)
+    expect(contact).not.toMatch(/Sin cargos ocultos/)
+    expect(contact).not.toMatch(/24 horas antes/)
   })
 })
 
@@ -143,9 +152,10 @@ describe('F1 step07a — AnnouncementBar.vue', () => {
 describe('F1 step07a — ChatWidget.vue (FAB restyle in place)', () => {
   const fab = read('app/components/ChatWidget.vue')
 
-  it('drives both contacts from config (franchise.whatsapp full URL + franchise.phone)', () => {
+  it('drives WhatsApp from config and removes the former floating call action', () => {
     expect(fab).toMatch(/:href="franchise\.whatsapp"/)
-    expect(fab).toMatch(/:href="`tel:\$\{franchise\.phone\}`"/)
+    expect(fab).toMatch(/v-if="whatsappVisible"/)
+    expect(fab).not.toMatch(/fab-call|Llámanos|`tel:/)
     expect(fab).toMatch(/useAppConfig\(\)/)
   })
 
@@ -184,5 +194,122 @@ describe('F1 step07a — single FAB invariant', () => {
 
     const index = read('app/pages/index.vue')
     expect(index).not.toMatch(/<(Lazy)?ChatWidget\b/)
+  })
+})
+
+/**
+ * Stacking contract (runtime bug):
+ *   GIVEN the home scrolled a few px past the top
+ *   WHEN  the sticky header (layouts/default.vue → UHeader `sticky top-0 z-50`)
+ *         overlaps the announcement bar, which lives inside <main> and therefore
+ *         AFTER the header in the DOM
+ *   THEN  the header paints ON TOP — the bar slides underneath.
+ * With an equal z-index the later DOM node wins the tie, so the bar painted over
+ * the header and clipped the logo + the menu toggle. The bar's z MUST be
+ * strictly lower than the header's.
+ */
+describe('AnnouncementBar — stays under the sticky header', () => {
+  const zOf = (cls: string): number | null => {
+    const m = cls.match(/\bz-(\d+)\b/)
+    return m ? Number(m[1]) : null
+  }
+
+  it('claims NO z-index, so nothing it should sit under gets out-stacked', () => {
+    // The bar carried z-30 from when it lived INSIDE <main>, after the header:
+    // back then an explicit lower z was the only way to keep the sticky header
+    // on top. Now the bar precedes the header in the DOM, so document order
+    // already does that — and the leftover z-30 actively broke things: the
+    // mobile menu slideover paints at z-index:auto, so 30 beat it and the bar's
+    // close button showed through the open menu as a second X.
+    const bar = read('app/components/home/AnnouncementBar.vue')
+    const barRoot = bar.match(/<div\s+v-if="!dismissed"\s+class="([^"]+)"/)
+    expect(barRoot, 'announcement bar root should carry a class list').not.toBeNull()
+    expect(zOf(barRoot![1]!), 'the bar must not declare a z-index').toBeNull()
+
+    // It still precedes the header, which is what keeps the header on top.
+    const layout = read('app/layouts/default.vue')
+    expect(layout.indexOf('AnnouncementBar')).toBeLessThan(layout.indexOf('<UHeader'))
+
+    // The header keeps its own explicit z.
+    const headerRoot = layout.match(/<UHeader[\s\S]{0,400}?\bclass="([^"]+)"/)
+    expect(zOf(headerRoot![1]!), 'header must declare an explicit z-index').not.toBeNull()
+  })
+
+  it('keeps the bar in normal flow so it scrolls away (never sticky/fixed)', () => {
+    const bar = read('app/components/home/AnnouncementBar.vue')
+    const barRoot = bar.match(/<div\s+v-if="!dismissed"\s+class="([^"]+)"/)!
+    expect(barRoot[1]).not.toMatch(/\b(sticky|fixed)\b/)
+  })
+})
+
+/**
+ * Dismiss behaviour ported from the Astro design:
+ *   GIVEN the announcement bar is visible
+ *   WHEN  the user taps the close button
+ *   THEN  the bar slides up and fades over ~300ms, and only then leaves the
+ *         layout — it does not vanish in a single frame, which reads as a
+ *         glitch and snaps the whole page upward.
+ * Reduced-motion users get the instant removal instead of the slide.
+ */
+/**
+ * Placement — the bar is top chrome, above the header:
+ *   GIVEN the home page
+ *   WHEN  it renders
+ *   THEN  the announcement bar sits ABOVE the logo/menu row, matching the
+ *         reference design, and appears on the home route ONLY — /reservas,
+ *         city pages and /gana must not carry it.
+ * It therefore lives in the layout (the only place that renders the header),
+ * behind a home-route guard, instead of being the first child of index.vue.
+ */
+describe('AnnouncementBar — top chrome, home route only', () => {
+  const layout = read('app/layouts/default.vue')
+
+  it('renders in the layout BEFORE the header, not inside the page', () => {
+    const barAt = layout.indexOf('AnnouncementBar')
+    const headerAt = layout.indexOf('<UHeader')
+    expect(barAt, 'layout must mount the announcement bar').toBeGreaterThan(-1)
+    expect(headerAt).toBeGreaterThan(-1)
+    expect(barAt).toBeLessThan(headerAt)
+  })
+
+  it('is gated to the home route so inner pages stay clean', () => {
+    const line = layout.split('\n').find((l) => l.includes('AnnouncementBar'))
+    expect(line, 'announcement bar mount line not found').toBeDefined()
+    expect(line!).toMatch(/v-if="[^"]*isHome[^"]*"/)
+    expect(layout).toMatch(/const isHome\s*=\s*computed\(/)
+    expect(layout).toMatch(/route\.path === '\/'/)
+  })
+
+  it('no longer mounts the bar from the home page itself (no double bar)', () => {
+    const index = read('app/pages/index.vue')
+    expect(index).not.toMatch(/<HomeAnnouncementBar\b/)
+  })
+})
+
+describe('AnnouncementBar — animated dismissal', () => {
+  const bar = read('app/components/home/AnnouncementBar.vue')
+
+  it('animates out over 300ms before leaving the layout', () => {
+    expect(bar).toMatch(/duration-300|300/)
+    expect(bar).toMatch(/-translate-y-full/)
+    expect(bar).toMatch(/opacity-0/)
+    expect(bar).toMatch(/transition/)
+  })
+
+  it('drives the exit from a leaving flag, so the node survives the animation', () => {
+    // A bare `dismissed = true` unmounts the node instantly and no transition
+    // can play. The component needs a separate "leaving" state that applies the
+    // exit classes first and flips `dismissed` when the animation ends.
+    expect(bar).toMatch(/leaving/)
+    expect(bar).toMatch(/setTimeout|onTransitionend|transitionend/)
+  })
+
+  it('persists the dismissal only after the animation, keeping it per-session', () => {
+    expect(bar).toMatch(/sessionStorage\.setItem/)
+    expect(bar).toMatch(/STORAGE_KEY/)
+  })
+
+  it('respects prefers-reduced-motion by skipping the slide', () => {
+    expect(bar).toMatch(/prefers-reduced-motion/)
   })
 })

@@ -13,6 +13,13 @@ export default interface CategoryData {
   models: CategoryModelData[];
   month_prices: CategoryMonthPriceData[];
   /**
+   * Gross (tax + IVA included) p95 day price for this category, from the
+   * dashboard's price_anchors. Caps the MONTHLY struck price so it cannot claim
+   * a discount off a manual one_day_price the market never charges. Display
+   * only — see applyMonthlyAnchorCap. `null`/absent → no cap.
+   */
+  month_anchor_gross?: number | null;
+  /**
    * @deprecated Issue #322 PR10 — the server no longer emits this scalar: it
    * came from `activePricing[0] ?? allPricing[0]` (undefined Postgres order,
    * inactive-legacy fallback). The charge now travels per pricing row in

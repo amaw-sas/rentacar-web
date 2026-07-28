@@ -56,6 +56,25 @@
           <!-- Main Content -->
           <article ref="articleRef" class="lg:w-2/3 prose prose-lg prose-gray max-w-none">
             <MDCRenderer v-if="post.body" :body="post.body" :data="post" />
+
+            <!-- FAQ del post. Se renderiza SOLO si el post trae faq_items, y el
+                 schema FAQPage del script se construye desde este MISMO array:
+                 texto visible y datos estructurados no pueden divergir (regla
+                 anti-penalización). Texto plano en el DOM SSR a propósito — un
+                 acordeón dejaría las respuestas fuera del HTML servido. -->
+            <section
+              v-if="post.faqItems?.length"
+              id="preguntas-frecuentes"
+              class="not-prose mt-12 border-t border-gray-200 pt-8"
+            >
+              <h2 class="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
+              <dl class="space-y-6">
+                <div v-for="faq in post.faqItems" :key="faq.question">
+                  <dt class="font-bold text-gray-900 mb-1">{{ faq.question }}</dt>
+                  <dd class="text-gray-700 leading-relaxed">{{ faq.answer }}</dd>
+                </div>
+              </dl>
+            </section>
           </article>
 
           <!-- Sidebar -->
@@ -214,7 +233,7 @@
                 <h3 class="font-bold font-heading text-gray-900 group-hover:text-brand-700 transition-colors line-clamp-2">
                   {{ related.title }}
                 </h3>
-                <p class="text-sm text-gray-500 mt-2">{{ related.readingTime }} min de lectura</p>
+                <p class="body-sm mt-2">{{ related.readingTime }} min de lectura</p>
               </div>
             </article>
           </NuxtLink>
@@ -289,6 +308,7 @@
 <script setup lang="ts">
 import type { BlogPosting, BreadcrumbList } from 'schema-dts'
 import type { MDCRoot, Toc } from '@nuxtjs/mdc'
+import { defineQuestion } from '@unhead/schema-org'
 import type { BlogPost } from '@rentacar-main/logic/src'
 
 // The post-detail endpoint augments BlogPost with the parsed MDC `body`
@@ -464,6 +484,23 @@ if (post.value) {
     twitterDescription: post.value.description,
     twitterImage: post.value.image
   })
+
+  // FAQPage del post — construido desde el MISMO post.faqItems que renderiza
+  // la sección visible "Preguntas frecuentes" del template, con el mismo patrón
+  // defineQuestion de las FAQs de ciudad (inLanguage + @id por pregunta).
+  // Condicional: un post sin faq_items no emite ningún nodo FAQPage.
+  if (post.value.faqItems?.length) {
+    useSchemaOrg([
+      {
+        '@type': 'FAQPage',
+        mainEntity: post.value.faqItems.map((faq, index) => defineQuestion({
+          '@id': `${canonicalUrl.replace(/\/+$/, '')}#/schema/question/blog-faq-${index + 1}`,
+          name: faq.question,
+          acceptedAnswer: faq.answer,
+        })),
+      },
+    ])
+  }
 
   // BlogPosting schema
   useSchemaOrg([

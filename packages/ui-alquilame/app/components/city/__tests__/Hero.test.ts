@@ -49,8 +49,10 @@ const RESULTS_BRANCH = (() => {
   const m = hero.match(/v-if="mode === 'results'"[\s\S]*?(?=<!-- landing)/)
   return m ? m[0] : ''
 })()
+// The landing branch is now the shared visual component, not a photo card plus
+// a link — slice from the `<!-- landing` note to the end of that element.
 const LANDING_BRANCH = (() => {
-  const m = hero.match(/<!-- landing[\s\S]*?<NuxtLink[\s\S]*?<\/NuxtLink>[\s\S]*?<\/div>/)
+  const m = hero.match(/<!-- landing[\s\S]*?<HomeHeroVisual[\s\S]*?\/>/)
   return m ? m[0] : ''
 })()
 
@@ -68,13 +70,24 @@ describe('F2/F3 — city/Hero.vue restyle (shared, both modes)', () => {
     expect(hero).toMatch(/\[--ctx-text-primary:#fff\]/)
   })
 
-  it('adopts the .heading-hero utility (Plus Jakarta) for the headline', () => {
-    expect(hero).toMatch(/heading-hero/)
+  it('sizes the headline with the same explicit ramp as the home hero', () => {
+    // `.heading-hero` is deliberately NOT used: its @apply lg:text-7xl +
+    // leading-tight silently overrode the declared size and leading, the exact
+    // bug fixed on the home hero. Spelling the ramp out keeps the markup honest.
+    expect(hero).not.toMatch(/heading-hero/)
+    expect(hero).toMatch(/<h1[\s\S]{0,200}text-3xl sm:text-4xl lg:text-5xl xl:text-6xl/)
+    expect(hero).toMatch(/font-extrabold/)
   })
 
   it('renders a city-targeted <h1> bound to city.name (both modes)', () => {
-    expect(hero).toMatch(/<h1[^>]*heading-hero/)
+    expect(hero).toMatch(/<h1\b/)
     expect(hero).toMatch(/Alquiler de carros en \{\{ city\?\.name \}\}/)
+  })
+
+  it('uses Alquílame-specific supporting copy instead of the sibling-brand wording', () => {
+    expect(hero).toContain('Cuéntanos las fechas y los horarios de tu viaje.')
+    expect(hero).toContain('encontrar un carro para los días que tienes en mente.')
+    expect(hero).not.toContain('renta un vehículo por días, semanas o el tiempo que necesites')
   })
 
   it('keeps the #searcher scroll target (UnableCategoryCard / reserveAnchor CTAs) in both modes', () => {
@@ -83,14 +96,14 @@ describe('F2/F3 — city/Hero.vue restyle (shared, both modes)', () => {
     expect(hero).toMatch(/id="searcher"/)
   })
 
-  it('preserves the #41 pin as an INERT <span aria-hidden> (never a <button>) in both modes', () => {
-    // The copy-to-WhatsApp pin must stay a non-focusable, aria-hidden span that
-    // carries the @click handler within the SAME opening tag (no `>` between
-    // aria-hidden and @click). [^>] spans newlines, so multiline attrs are ok.
-    expect(hero).toMatch(/<span[^>]*aria-hidden="true"[^>]*@click="copySearchToWhatsapp"[^>]*>/)
-    expect(hero).toMatch(/copySearchToWhatsapp/)
-    // No <button> may be reintroduced for the secret operator action.
-    expect(hero).not.toMatch(/<button\b/)
+  it('no longer carries the #41 location pin nor its hidden click action', () => {
+    // Removed by request. The pin was an aria-hidden <span> inside the h1 whose
+    // @click copied the search into WhatsApp — unreachable by keyboard, so its
+    // loss costs no accessible functionality. Reinstate on a REAL control if the
+    // operator still wants it.
+    expect(hero).not.toMatch(/LocationIcon/)
+    expect(hero).not.toMatch(/copySearchToWhatsapp/)
+    // Still no ad-hoc controls smuggled into the headline area.
     expect(hero).not.toMatch(/<UButton\b/)
   })
 
@@ -144,9 +157,12 @@ describe('F3 — mode="landing" drops the engine for a /reservas CTA (SCEN-F3-03
     expect(LANDING_BRANCH.length).toBeGreaterThan(0)
   })
 
-  it('renders a "Reservar ahora" CTA navigating (SPA) to /reservas', () => {
-    expect(LANDING_BRANCH).toMatch(/<NuxtLink\b[^>]*to="\/reservas"/)
-    expect(LANDING_BRANCH).toMatch(/Reservar ahora/)
+  it('replaces the "Reservar ahora" CTA with the home hero WhatsApp button', () => {
+    // Single CTA, matching the home: WhatsApp, config-driven, new tab.
+    expect(hero).not.toMatch(/Reservar ahora/)
+    expect(hero).toMatch(/:href="franchise\.whatsapp"/)
+    expect(hero).toMatch(/\bbg-whatsapp\b/)
+    expect(hero).toMatch(/\btext-black\b/)
   })
 
   it('does NOT mount the Searcher engine in the landing branch (zero pickup-location engine)', () => {
@@ -155,8 +171,9 @@ describe('F3 — mode="landing" drops the engine for a /reservas CTA (SCEN-F3-03
     expect(LANDING_BRANCH).not.toMatch(/<PlaceholdersSearcher\b/)
   })
 
-  it('uses a plain SPA <NuxtLink> for the CTA, not a raw <a href> page reload', () => {
-    expect(LANDING_BRANCH).not.toMatch(/<a\b/)
+  it('shows the WhatsApp CTA only outside results mode', () => {
+    // In results mode the Searcher is the action; a second CTA would compete.
+    expect(hero).toMatch(/v-if="mode !== 'results'"[\s\S]{0,400}franchise\.whatsapp/)
   })
 })
 
@@ -165,11 +182,12 @@ describe('Hero redesign — richer landing (vehicle card + trust chips + depth)'
   // The redesign mirrors the home hero's visual-card language: a vehicle photo
   // card beside the text, trust chips in the text column, and soft glow blobs
   // for depth — all WITHOUT touching the preserved invariants asserted above.
-  it('renders a vehicle-photo visual card in the landing branch (fills the column)', () => {
-    expect(LANDING_BRANCH).toMatch(/<NuxtImg\b/)
-    expect(LANDING_BRANCH).toMatch(/\/images\/vehicles\//)
-    // aspect-ratio box reserves the image footprint → no CLS (no fixed Date).
-    expect(LANDING_BRANCH).toMatch(/aspect-\[\d+\/\d+\]/)
+  it('renders the SHARED hero visual (car + corner video) in the landing branch', () => {
+    // The lone vehicle photo card is gone: the landing now mounts the same
+    // component the home hero uses, so the two can no longer drift apart.
+    expect(hero).toMatch(/<HomeHeroVisual\b/)
+    expect(hero).not.toMatch(/\/images\/vehicles\//)
+    expect(hero).toMatch(/:car-alt=/)
   })
 
   // SCEN-CLS-01: the aspect-[16/10] utility alone does NOT reserve the box before
@@ -180,28 +198,46 @@ describe('Hero redesign — richer landing (vehicle card + trust chips + depth)'
   // (measured CLS 0.839, Lighthouse mobile). An INLINE aspect-ratio on the card
   // container reserves the box in the SSR HTML regardless of stylesheet timing.
   // See docs/specs/city-hero-cls.
-  it('reserves the image card with an inline aspect-ratio so it survives pre-CSS (CLS fix)', () => {
-    expect(LANDING_BRANCH).toMatch(/style="[^"]*aspect-ratio:\s*16\s*\/\s*10/)
+  it('keeps the visual CLS-safe via the shared component intrinsic dimensions', () => {
+    // The car <img> carries width/height in HeroVisual.vue, which reserves its
+    // box from the SSR HTML — the reason the old inline aspect-ratio existed.
+    const visual = read('app/components/home/HeroVisual.vue')
+    expect(visual).toMatch(/width="1199"/)
+    expect(visual).toMatch(/height="678"/)
   })
 
   it('gives the vehicle image an alt bound to the city name (SEO/a11y)', () => {
-    expect(LANDING_BRANCH).toMatch(/:alt="`[^`]*\$\{city\?\.name\}/)
+    expect(hero).toMatch(/:car-alt="`[^`]*\$\{city\?\.name\}/)
   })
 
   it('prioritizes the landing hero image for LCP (eager + high fetchpriority)', () => {
-    expect(LANDING_BRANCH).toMatch(/loading="eager"/)
-    expect(LANDING_BRANCH).toMatch(/fetchpriority="high"/)
+    const visual = read('app/components/home/HeroVisual.vue')
+    expect(visual).toMatch(/loading="eager"/)
+    expect(visual).toMatch(/fetchpriority="high"/)
   })
 
-  it('renders trust chips from a static (Date-free) list in the text column', () => {
-    expect(hero).toMatch(/trustChips\s*=\s*\[/)
-    expect(hero).toMatch(/v-for="chip in trustChips"/)
-    expect(hero).toContain('Sin anticipos')
+  it('drops the trust chips — the home hero has none', () => {
+    // Removed by request: the chip row sat between the subtitle and the CTA and
+    // has no counterpart on the home, which the city hero now mirrors.
+    expect(hero).not.toMatch(/trustChips/)
+    expect(hero).not.toMatch(/v-for="chip in/)
+    expect(hero).not.toContain('Hasta 60% de descuento')
   })
 
-  it('adds decorative background-glow blobs (inert, aria-hidden, non-interactive)', () => {
-    expect(hero).toMatch(/blur-3xl/)
+  it('matches the home hero spacing so the two heroes breathe the same', () => {
+    // Both marked gaps in the operator screenshot: the band's top padding and
+    // the text-to-visual gap. City used py-10 / gap-10, home uses py-5 / gap-3
+    // on mobile — twice and three times the space respectively.
+    expect(hero).toMatch(/py-5 md:py-12/)
+    expect(hero).not.toMatch(/py-10 md:py-12/)
+    expect(hero).toMatch(/gap-3 lg:gap-10/)
+  })
+
+  it('overlays the textured fondo-banner pattern, inert and non-interactive', () => {
+    // The glow blobs gave way to the home hero's banner texture, same as index.
+    expect(hero).toMatch(/fondo-banner\.webp/)
     expect(hero).toMatch(/pointer-events-none[^>]*absolute|absolute[^>]*pointer-events-none/)
+    expect(hero).toMatch(/aria-hidden="true"/)
   })
 
   it('keeps the vehicle card decorations inert (the scrim/pill add no controls)', () => {

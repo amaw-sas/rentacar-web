@@ -5,79 +5,36 @@
  * runtime/visual check (rendered text on the preview, contrast, CLS) is
  * deferred to the preview pass; here we pin the CONTRACT that matters for SEO:
  *
- *   - every original indexable section is present (descripcion / introduccion /
+ *   - every original indexable section is present (introduccion /
  *     ventajas / destinos / consejos-conduccion / mejor-temporada /
- *     ciudades-cercanas) with its key heading + key copy VERBATIM.
+ *     ciudades-cercanas) with its key heading + factual copy intact.
  *   - no SEO copy was dropped (benefit blurbs, driving-tip labels,
  *     related-cities prompt all still present).
  *   - design styling lessons: headings use a .heading-* utility (Plus Jakarta),
  *     gradients never use the broken v3 bg-gradient-to- alias.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-const INTRO = readFileSync(join(__dirname, '..', 'Intro.vue'), 'utf-8')
+const CITY = join(__dirname, '..')
 const SEO = readFileSync(join(__dirname, '..', 'SeoContent.vue'), 'utf-8')
-const CHICA = readFileSync(
-  join(__dirname, '..', '..', 'Images', 'Ciudades', 'Chica.vue'),
-  'utf-8',
-)
 
-describe('F2 city Intro — #descripcion + #introduccion preserved (SCEN-F2-02)', () => {
-  it('keeps both section ids', () => {
-    expect(INTRO).toContain('id="descripcion"')
-    expect(INTRO).toContain('id="introduccion"')
+describe('city intro removed — #descripcion gone, #introduccion lives in the SEO block', () => {
+  it('no longer renders the #descripcion poster (the section was removed)', () => {
+    // The poster + city illustration were replaced by the editorial pull-quote
+    // separators (see PullQuote.vue + cityPullQuotes). Its indexable text now
+    // surfaces as those quotes, derived from the same city.description.
+    expect(SEO).not.toContain('id="descripcion"')
+    expect(SEO).not.toContain('muévete')
   })
 
-  it('keeps the #descripcion poster copy verbatim', () => {
-    expect(INTRO).toContain('En {{ franchise.shortname }}')
-    // alquilame-specific tagline (deliberately differs from alquilatucarro's
-    // "la libertad / de moverte / a tu manera / es realidad" — same message,
-    // distinct wording so the city page no longer mirrors the sister brand).
-    expect(INTRO).toContain('muévete')
-    expect(INTRO).toContain('a tu ritmo')
-    expect(INTRO).toContain('sin')
-    expect(INTRO).toContain('límites')
-    // and must NOT regress to the shared alquilatucarro phrasing
-    expect(INTRO).not.toContain('a tu manera')
-    // city.description still rendered (indexable per-city copy)
-    expect(INTRO).toMatch(/v-text="city\?\.description"/)
-  })
-
-  it('keeps the #introduccion heading + intro paragraph, guarded by expandedContent', () => {
-    expect(INTRO).toContain('Explora {{ city?.name }}')
-    expect(INTRO).toContain('con tu carro de alquiler')
-    expect(INTRO).toContain('expandedContent.intro')
-    expect(INTRO).toMatch(/v-if="expandedContent"/)
-  })
-
-  it('renders the city illustration (CLS-safe reserved box)', () => {
-    expect(INTRO).toContain('LazyImagesCiudadesChica')
-    expect(INTRO).toMatch(/aspect-square/)
-  })
-})
-
-describe('City #descripcion illustration — brand-specific (not the shared chica.webp)', () => {
-  // The #descripcion illustration used to be /images/ciudades/chica.webp, served
-  // from the logic layer and IDENTICAL across the three brands — which made the
-  // alquilame city page look like alquilatucarro. alquilame now ships its own
-  // illustration. These assertions are the regression sentinel: never revert to
-  // the shared asset.
-  it('points at the alquilame-owned image, not the shared logic-layer asset', () => {
-    expect(CHICA).toContain('/images/cities/descripcion.webp')
-    expect(CHICA).not.toContain('/images/ciudades/chica.webp')
-  })
-
-  it('keeps the SEO alt text per-city (city name + alquiler keyword)', () => {
-    expect(CHICA).toMatch(/alt="`[^`]*\$\{cityName\}/)
-    expect(CHICA).toContain('carro de alquiler')
-  })
-
-  it('keeps the CLS-safe 800x800 NuxtImg contract', () => {
-    expect(CHICA).toContain('width="800"')
-    expect(CHICA).toContain('height="800"')
-    expect(CHICA).toMatch(/aspect-square/)
+  it('keeps #introduccion (moved here earlier) with its own heading + paragraph', () => {
+    expect(SEO).toContain('id="introduccion"')
+    expect(SEO).toContain('Conoce {{ city?.name }}')
+    expect(SEO).toContain('con un carro de alquiler')
+    expect(SEO).toContain('expandedContent.intro')
+    expect(SEO).toMatch(/v-if="expandedContent"/)
   })
 })
 
@@ -95,20 +52,21 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
   })
 
   it('keeps the #ventajas heading + factual inventory-backed benefit blurbs', () => {
-    expect(SEO).toContain('Ventajas de alquilar carro')
-    expect(SEO).toContain('Precios transparentes')
-    expect(SEO).toContain('Sin cargos ocultos ni sorpresas.')
-    expect(SEO).toContain('Flota variada')
-    expect(SEO).toContain('Desde económicos hasta SUVs y camionetas.')
-    expect(SEO).toContain('Puntos de recogida')
+    expect(SEO).toContain('Qué incluye alquilar carro')
+    expect(SEO).toContain('Cuenta clara desde el inicio')
+    expect(SEO).toContain('seguro básico, impuestos y kilometraje ilimitado')
+    expect(SEO).toContain('Una categoría para cada viaje')
+    expect(SEO).toContain('opciones económicas, SUVs y camionetas')
+    expect(SEO).toContain('Elige tu punto de recogida')
+    // The shared seoContentHygiene suite pins this exact canonical phrase.
     expect(SEO).toContain('puntos de recogida activos en')
     expect(SEO).not.toContain('Aeropuerto, centro de la ciudad o donde te resulte más cómodo')
-    expect(SEO).toContain('Atención personalizada')
-    expect(SEO).toContain('Soporte en español las 24 horas.')
+    expect(SEO).toContain('Ayuda cuando la necesites')
+    expect(SEO).toContain('Te atendemos en español las 24 horas.')
   })
 
   it('keeps the #destinos heading + the destination data binding', () => {
-    expect(SEO).toContain('Destinos para recorrer con carro rentado')
+    expect(SEO).toContain('Rutas para disfrutar con un carro alquilado')
     expect(SEO).toContain('desde {{ city?.name }}')
     expect(SEO).toContain('expandedContent.destinations')
     expect(SEO).toContain('destination.name')
@@ -117,7 +75,7 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
   })
 
   it('keeps the #consejos-conduccion heading + the 3 driving-tip labels/bindings', () => {
-    expect(SEO).toContain('para alquilar carro en {{ city?.name }}')
+    expect(SEO).toContain('un carro alquilado en {{ city?.name }}')
     expect(SEO).toContain('Pico y Placa')
     expect(SEO).toContain('Peajes')
     expect(SEO).toContain('Parqueaderos')
@@ -127,34 +85,243 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
   })
 
   it('keeps the #mejor-temporada heading + bestSeason binding', () => {
-    expect(SEO).toContain('Mejor época')
-    expect(SEO).toContain('para alquilar carro y viajar a {{ city?.name }}')
+    expect(SEO).toContain('Cuándo alquilar carro')
+    expect(SEO).toContain('para viajar por {{ city?.name }}')
     expect(SEO).toContain('expandedContent.bestSeason')
   })
 
   it('keeps the #ciudades-cercanas heading, prompt + internal links', () => {
-    expect(SEO).toContain('Alquiler de carros')
-    expect(SEO).toContain('en ciudades cercanas')
-    expect(SEO).toContain('¿Planeas un viaje más largo?')
+    expect(SEO).toContain('Alquila carro también')
+    expect(SEO).toContain('en estas ciudades')
+    expect(SEO).toContain('¿Tu ruta sigue después de')
     expect(SEO).toContain('relatedCities')
     expect(SEO).toMatch(/:to="`\/\$\{related\.id\}`"/)
     expect(SEO).toContain('related.distance')
   })
+
+  it('does not reintroduce the sibling-brand headings or benefit blurbs', () => {
+    for (const sharedCopy of [
+      'Destinos para recorrer con carro rentado',
+      'Mejor época para alquilar carro y viajar a',
+      '¿Planeas un viaje más largo?',
+      'Sin cargos ocultos ni sorpresas.',
+      'Desde económicos hasta SUVs y camionetas.',
+    ]) {
+      expect(SEO).not.toContain(sharedCopy)
+    }
+  })
+
+  it('uses precise customer-facing benefit copy without repetitive wording', () => {
+    expect(SEO).toContain('El valor mostrado ya incluye seguro básico')
+    expect(SEO).not.toContain('ya reúne')
+    expect(SEO).not.toContain('Recogida según sedes activas')
+    expect(SEO.match(/cuenta clara/gi) ?? []).toHaveLength(1)
+    expect(SEO.match(/\brecorr(?:er|ido|iendo)\b/gi) ?? []).toHaveLength(0)
+  })
+})
+
+/**
+ * Section titles are unified to one size across the whole city page:
+ *   GIVEN the SEO block's section headings
+ *   THEN  every <h2> uses the big treatment (text-3xl md:text-4xl font-extrabold),
+ *         matching the home/DeliveryPoints titles — no smaller heading-section-
+ *         only titles left, so the page has no size jump between sections.
+ */
+describe('city SEO headings — unified big title size', () => {
+  const h2s = SEO.match(/<h2\b[^>]*>/g) ?? []
+
+  it('has the expected number of section titles', () => {
+    expect(h2s.length).toBe(6)
+  })
+
+  it('every section <h2> is text-3xl md:text-4xl font-extrabold', () => {
+    for (const tag of h2s) {
+      expect(tag, tag).toMatch(/text-3xl/)
+      expect(tag, tag).toMatch(/md:text-4xl/)
+      expect(tag, tag).toMatch(/font-extrabold/)
+    }
+  })
+
+  it('every card <h3> sub-title is text-xl font-bold (one size/weight)', () => {
+    const h3s = SEO.match(/<h3\b[^>]*>/g) ?? []
+    expect(h3s.length).toBeGreaterThan(0)
+    for (const tag of h3s) {
+      expect(tag, tag).toMatch(/text-xl/)
+      expect(tag, tag).toMatch(/font-bold/)
+    }
+  })
 })
 
 describe('F2 city SEO content — design styling lessons', () => {
-  it('headings adopt a .heading-* utility (Plus Jakarta, F0-03)', () => {
-    expect(INTRO).toMatch(/heading-(section|sub|card)/)
-    expect(SEO).toMatch(/heading-section/)
+  it('headings adopt a brand heading utility (Plus Jakarta, F0-03)', () => {
+    // Both section <h2> titles and card <h3> sub-titles use font-heading — off
+    // the heading-* tokens, whose applied weight/size lost to stacked utilities.
+    expect(SEO).toMatch(/font-heading/)
   })
 
   it('never uses the broken v3 bg-gradient-to- alias', () => {
-    expect(INTRO).not.toContain('bg-gradient-to-')
     expect(SEO).not.toContain('bg-gradient-to-')
   })
 
   it('uses the design red accent bar on the SEO sections', () => {
-    expect(INTRO).toMatch(/h-1 w-10 rounded-full bg-red-600/)
+    // (accent bar assertions for #descripcion removed with the section)
     expect(SEO).toMatch(/h-1 w-10 rounded-full bg-red-600/)
+  })
+})
+
+/**
+ * SUPERSEDED by the two-width rule (see section-widths.test.ts).
+ *
+ * This block briefly matched #introduccion to its neighbours at 1024px to kill
+ * a narrow-wide-narrow jump. The operator then chose a rule that decides width
+ * by CONTENT instead: grids full width, running prose capped. Under that rule
+ * the intro is deliberately narrower than the card sections around it — the
+ * consistency comes from every grid agreeing on 1280px, not from prose
+ * stretching to meet them. What remains here is the part that still holds:
+ * the intro is prose and must stay capped.
+ */
+describe('SEO block — #introduccion width is content-driven', () => {
+  const widthOf = (id: string): string | null => {
+    const at = SEO.indexOf(`id="${id}"`)
+    if (at < 0) return null
+    const m = SEO.slice(at, at + 600).match(/max-w-(\w+)\s+mx-auto/)
+    return m ? m[1]! : null
+  }
+
+  it('caps the intro at the reading width when it has no diorama', () => {
+    const seg = SEO.slice(SEO.indexOf('id="introduccion"'), SEO.indexOf('id="introduccion"') + 900)
+    expect(seg).toMatch(/max-w-3xl/)
+  })
+
+  it('but expands to the grid width when a diorama is present', () => {
+    const seg = SEO.slice(SEO.indexOf('id="introduccion"'), SEO.indexOf('id="introduccion"') + 900)
+    expect(seg).toMatch(/dioramaSrc[\s\S]*max-w-7xl grid/)
+  })
+
+  it('its neighbouring CARD sections are the ones that run full width', () => {
+    expect(widthOf('ventajas')).toBe('7xl')
+    expect(widthOf('destinos')).toBe('7xl')
+  })
+
+  it('mejor-temporada is now full width (it gained an accompanying image)', () => {
+    // No longer pure prose: text + road photo side by side, so it matches the
+    // card sections' width instead of the narrow reading cap.
+    expect(widthOf('mejor-temporada')).toBe('7xl')
+  })
+})
+
+/**
+ * All-cities pill grid on a city page:
+ *   GIVEN a city landing
+ *   WHEN  the nearby-cities section renders
+ *   THEN  below the featured nearby cards it lists EVERY active city as a pill
+ *         button, the same treatment the home uses — internal links that help
+ *         both the visitor and search crawlers reach every city page.
+ * The current city is excluded (no self-link), and the section now shows even
+ * when a city has no curated "nearby" mapping, so all 19 pages get the grid.
+ */
+describe('city nearby section — all-cities pill grid, like the home', () => {
+  it('sources every active city from useData()', () => {
+    expect(SEO).toMatch(/useData\(\)/)
+    expect(SEO).toMatch(/const\s*\{\s*cities\s*\}\s*=\s*useData\(\)/)
+  })
+
+  it('renders a wrapping pill grid over the cities, excluding the current one', () => {
+    expect(SEO).toMatch(/flex flex-wrap/)
+    expect(SEO).toMatch(/rounded-full/)
+    // Iterates a list that filters out the current city id.
+    expect(SEO).toMatch(/otherCities|c\.id !== city\?\.id|city\.id !== props\.city/)
+  })
+
+  it('links each pill internally to /{city.id}', () => {
+    expect(SEO).toMatch(/:to="`\/\$\{[a-z]+\.id\}`"/)
+  })
+
+  it('shows the section even without curated nearby cities', () => {
+    // The section no longer hides when relatedCities is empty — the all-cities
+    // pills are always worth rendering for internal linking.
+    const at = SEO.indexOf('id="ciudades-cercanas"')
+    const openTag = SEO.slice(SEO.lastIndexOf('<section', at), at + 200)
+    expect(openTag).not.toMatch(/v-if="relatedCities\.length > 0"\s*\n?\s*id="ciudades-cercanas"/)
+  })
+})
+
+/**
+ * "Mejor época" gets an accompanying image:
+ *   GIVEN a desktop viewport
+ *   WHEN  the best-season section renders
+ *   THEN  a small road photo sits BESIDE the paragraph, not above it, so it does
+ *         not add to the section's height. The image is object-cover (zoom-crop)
+ *         inside a fixed box, lazy, and webp.
+ * The photo is decorative and generic (a car on a scenic road), shared across
+ * all city pages — mejor-temporada is one component for all 19 cities.
+ */
+describe('best-season section — accompanying road image', () => {
+  const at = SEO.indexOf('id="mejor-temporada"')
+  const seg = SEO.slice(at, at + 2400)
+
+  it('renders the road photo as a lazy NuxtImg (webp)', () => {
+    expect(seg).toMatch(/<NuxtImg\b/)
+    expect(seg).toContain('/images/cities/carretera-viaje.webp')
+    expect(seg).toMatch(/loading="lazy"/)
+    expect(seg).toMatch(/format="webp"|\.webp/)
+  })
+
+  it('lays text and image side by side on desktop, so height is unchanged', () => {
+    expect(seg).toMatch(/lg:grid-cols-/)
+  })
+
+  it('zoom-crops the image with object-cover in a reserved box', () => {
+    expect(seg).toMatch(/object-cover/)
+    expect(seg).toMatch(/aspect-\[|h-full/)
+  })
+
+  it('ships the referenced asset', () => {
+    const asset = join(CITY, '..', '..', '..', 'public/images/cities/carretera-viaje.webp')
+    expect(existsSync(asset), 'carretera-viaje.webp missing').toBe(true)
+  })
+})
+
+/**
+ * "Explora {ciudad}" gets a per-city diorama — EVERY active city:
+ *   GIVEN any of the 19 active cities
+ *   THEN  the intro shows text + that city's transparent diorama beside it,
+ *         served from /images/ciudades/dioramas/{city.id}.webp, wider than the
+ *         prose cap. A city id with no artwork keeps the narrow prose intro.
+ * The diorama is a transparent cutout: no card, no rounded box — object-contain.
+ */
+const CITY_SLUGS = [
+  'armenia', 'barranquilla', 'bogota', 'bucaramanga', 'cali', 'cartagena',
+  'cucuta', 'floridablanca', 'ibague', 'manizales', 'medellin', 'monteria',
+  'neiva', 'palmira', 'pereira', 'santa-marta', 'soledad', 'valledupar',
+  'villavicencio',
+]
+
+describe('#introduccion — per-city diorama (all 19 cities)', () => {
+  it('derives the src from city.id at the reference path, guarded by a Set', () => {
+    expect(SEO).toMatch(/CITIES_WITH_DIORAMA\s*=\s*new Set\(/)
+    expect(SEO).toMatch(/\/images\/ciudades\/dioramas\/\$\{id\}\.webp/)
+    // Every active city slug is listed as shipping a diorama.
+    for (const slug of CITY_SLUGS) {
+      expect(SEO, `missing diorama slug: ${slug}`).toContain(`'${slug}'`)
+    }
+  })
+
+  it('renders the diorama as a transparent, lazy NuxtImg (no card box)', () => {
+    const at = SEO.indexOf('id="introduccion"')
+    const seg = SEO.slice(at, at + 1600)
+    expect(seg).toMatch(/<NuxtImg\b/)
+    expect(seg).toMatch(/dioramaSrc/)
+    expect(seg).toMatch(/loading="lazy"/)
+    expect(seg).toMatch(/object-contain/)
+    // A transparent cutout, not a framed card.
+    expect(seg).not.toMatch(/rounded-2xl[^"]*shadow|border-\[7px\]/)
+  })
+
+  it('ships a diorama asset for every active city', () => {
+    const dir = join(CITY, '..', '..', '..', 'public/images/ciudades/dioramas')
+    for (const slug of CITY_SLUGS) {
+      expect(existsSync(join(dir, `${slug}.webp`)), `${slug}.webp missing`).toBe(true)
+    }
   })
 })

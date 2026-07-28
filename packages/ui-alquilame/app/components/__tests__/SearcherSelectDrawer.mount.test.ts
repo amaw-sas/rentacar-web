@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { ref, computed } from 'vue';

@@ -181,7 +181,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm sm:hidden">
             <span
                 v-if="rentalDays > 0"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-whatsapp text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <u-button
@@ -230,7 +230,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm hidden sm:block">
             <span
                 v-if="rentalDays > 0"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-whatsapp text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}</span>
             <u-form-field label="Día de devolución" size="xl">
                 <u-input-date
@@ -336,7 +336,7 @@
         <div class="relative bg-white rounded-xl p-2 shadow-sm hidden sm:block">
             <span
                 v-if="extraHoursLabel"
-                class="absolute -top-[3px] -right-[3px] z-10 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
+                class="absolute -top-[3px] -right-[3px] z-10 bg-whatsapp text-black text-xs px-2 py-0.5 rounded-full shadow-sm pointer-events-none"
             >{{ extraHoursLabel }}</span>
             <u-form-field label="Hora de devolución" size="xl">
                 <u-select-menu
@@ -361,12 +361,19 @@
             <u-button
                 :to="searchDestination"
                 @click="onSearchClick"
-                :disabled="pendingSearching || !animateSearchButton || !searchDisabledGuardSatisfied || !isSelectionWithinSchedule"
+                :disabled="!isSearchButtonEnabled"
                 :loading="pendingSearching"
-                :class="{'search-button': true, 'search-button-glow': animateSearchButton}"
+                :class="{'search-button': true, 'search-button-ready': isSearchButtonEnabled}"
                 size="xl"
             >
-                BUSCAR VEHÍCULOS
+                <span class="search-button-content">
+                    <span>BUSCAR VEHÍCULOS</span>
+                    <span
+                        v-if="isSearchButtonEnabled"
+                        class="search-button-arrow"
+                        aria-hidden="true"
+                    >→</span>
+                </span>
             </u-button>
         </div>
     </u-form>
@@ -484,6 +491,15 @@ const searchDisabledGuardSatisfied = computed(() => {
   const params = searchLinkParams.value ?? {};
   return Boolean(params.lugar_recogida && params.fecha_recogida && params.fecha_devolucion);
 });
+
+// Single source of truth for the CTA's interactive state. The light sweep and
+// arrow are rendered only while the same conditions that allow a click hold.
+const isSearchButtonEnabled = computed(() =>
+  !pendingSearching.value &&
+  animateSearchButton.value &&
+  searchDisabledGuardSatisfied.value &&
+  isSelectionWithinSchedule.value
+);
 
 // Desktop popover y móvil slideover usan refs SEPARADOS: comparten estado haría
 // que abrir el slideover móvil también dispare el popover desktop, cuyo contenido

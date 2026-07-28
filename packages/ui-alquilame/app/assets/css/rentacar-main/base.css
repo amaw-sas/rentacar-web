@@ -6,6 +6,14 @@ html {
   color-scheme: light;
 }
 
+/* In-page anchors clear the 80px sticky header. Without this, jumping to a
+   section (#ventajas, #puntos-entrega, #por-que, …) lands its title hidden
+   beneath the header. 6rem = header height + a small breathing gap. Every
+   in-page anchor is a <section id>, so this covers them all. */
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
 /* Hide the native clear (✕) button on date inputs. The searcher's date fields
    are always populated (store defaults + the mobile clamp), so a clear action
    would only let users empty a required field. Note: the Android OS date-picker
@@ -13,27 +21,6 @@ html {
    removed from the web side — this only hides the field-level control. */
 input[type="date"]::-webkit-clear-button {
   display: none;
-}
-
-/* ============================================
-   CRITICAL CSS - Previene FOUC en hero section
-   Estos estilos deben coincidir con los de Nuxt UI
-   ============================================ */
-
-/* H1 - Forzar tracking-tight desde el inicio */
-.hero-section h1 {
-    letter-spacing: -0.025em !important; /* tracking-tight */
-}
-
-/* Form fields - Forzar tamaño xl desde el inicio */
-.hero-section [data-slot="label"] {
-    font-size: 0.75rem !important; /* text-xs para size xl */
-    line-height: 1rem !important;
-}
-
-/* UFormField size xl - altura mínima consistente */
-.hero-section .bg-white {
-    min-height: 4.5rem;
 }
 
 /* Header SVGs - prevenir FOUC de banderas/logos enormes */
@@ -49,9 +36,7 @@ header svg {
 }
 
 /* Override highlighted text color to white - only for header/navigation */
-header .text-highlighted,
-.hero-section h1.text-highlighted,
-.hero-section h2.text-highlighted {
+header .text-highlighted {
     color: white !important;
     --color-highlighted: white !important;
 }
@@ -61,51 +46,68 @@ header .text-highlighted,
     --ui-text-highlighted: #1f2937;
 }
 
+/* Mismo cierre visual que "Solicitar este vehículo": 56px de alto (py-4),
+   verde institucional oscuro y texto blanco con contraste AA. El overflow
+   recorta el barrido de luz dentro de la forma del botón. */
 .search-button {
-    @apply w-full bg-red-600 hover:bg-red-700 text-white font-bold justify-center;
+    @apply relative overflow-hidden w-full py-4 bg-green-700 hover:bg-green-800 text-white font-bold justify-center;
 }
 
-/* Glow pulse animation for active search button */
-@keyframes glow-pulse {
-    0%, 100% {
-        box-shadow: 0 0 8px rgba(220, 38, 38, 0.6),
-                    0 0 16px rgba(220, 38, 38, 0.4),
-                    0 0 24px rgba(220, 38, 38, 0.2);
-    }
-    50% {
-        box-shadow: 0 0 16px rgba(220, 38, 38, 0.9),
-                    0 0 32px rgba(220, 38, 38, 0.7),
-                    0 0 48px rgba(220, 38, 38, 0.4);
-    }
+/* El contenido queda sobre el reflejo decorativo. */
+.search-button-content {
+    @apply relative z-10 inline-flex items-center justify-center gap-2;
 }
 
-.search-button-glow {
-    animation: glow-pulse 1.5s ease-in-out infinite;
+/* Al habilitarse, un reflejo interior cruza el botón dos veces. */
+.search-button-ready::after {
+    position: absolute;
+    inset: -20% auto -20% -35%;
+    width: 22%;
+    content: "";
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.32), transparent);
+    transform: skewX(-18deg);
+    animation: search-shine-pass 1200ms ease-in-out 2;
+    will-change: left;
+}
+
+@keyframes search-shine-pass {
+    0%          { left: -35%; }
+    55%, 100%   { left: 118%; }
+}
+
+/* La flecha existe únicamente en el estado habilitado y hace dos impulsos
+   breves; después permanece quieta hasta que el botón vuelva a habilitarse. */
+.search-button-arrow {
+    display: inline-flex;
+    font-size: 20px;
+    line-height: 1;
+    animation: search-arrow-nudge 800ms ease-in-out 2;
+    will-change: opacity, transform;
+}
+
+@keyframes search-arrow-nudge {
+    0%, 100% { opacity: 0.72; transform: translateX(0); }
+    50%      { opacity: 1; transform: translateX(5px); }
 }
 
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-    .search-button-glow {
+    .search-button-ready::after,
+    .search-button-arrow {
         animation: none;
-        box-shadow: 0 0 16px rgba(220, 38, 38, 0.7),
-                    0 0 32px rgba(220, 38, 38, 0.5);
     }
 }
 
-/* UHeader - reduce gap between logo and navigation (desktop) */
-@media (min-width: 1024px) {
-    header [data-slot="container"] {
-        justify-content: center !important;
-        gap: 1rem !important;
-    }
-    header [data-slot="left"] {
-        flex: none !important;
-    }
-    header [data-slot="right"] {
-        flex: none !important;
-        justify-content: flex-start !important;
-    }
-}
+/* UHeader spacing is Nuxt UI's own: the container is `justify-between` and the
+   left/right slots are `lg:flex-1`, so the logo sits flush left and the CTA
+   flush right with the nav floating between them.
+
+   A previous override forced `justify-content: center` + `flex: none` here to
+   "reduce the gap between logo and navigation". It collapsed the whole row into
+   a centred cluster — at 1280px the three blocks occupied 286→994 with ~270px
+   of dead space on each side, while the design has them spanning edge to edge.
+   Don't reintroduce it; adjust the container's max-width or padding instead. */
 
 /* UPageHero - reduce top padding to bring content closer to header */
 /* Only target hero (no ID), not regular sections */
@@ -172,30 +174,6 @@ header [role="dialog"] [data-slot="close"] {
 }
 header [role="dialog"] [data-slot="close"]:hover {
     background-color: #f3f4f6 !important;
-}
-
-/* City Page - Reduce hero section internal container padding */
-.hero-section div[class*="max-w-"][class*="mx-auto"] {
-    padding-top: 2rem !important;
-    padding-bottom: 1rem !important;
-}
-@media (min-width: 1024px) {
-    .hero-section div[class*="max-w-"][class*="mx-auto"] {
-        padding-top: 3rem !important;
-        padding-bottom: 1.5rem !important;
-    }
-}
-
-/* City Page - Reduce description section internal container padding */
-#descripcion div[class*="max-w-"][class*="mx-auto"] {
-    padding-top: 1rem !important;
-    padding-bottom: 2rem !important;
-}
-@media (min-width: 1024px) {
-    #descripcion div[class*="max-w-"][class*="mx-auto"] {
-        padding-top: 1.5rem !important;
-        padding-bottom: 3rem !important;
-    }
 }
 
 /* Animated gradient background - blue to cyan shift */
@@ -272,79 +250,22 @@ header [role="dialog"] [data-slot="close"]:hover {
 }
 
 /* Searcher form - Force dark text on white background fields */
-.hero-section .bg-white {
-    color: #1f2937 !important;
-}
 
-.hero-section .bg-white button,
-.hero-section .bg-white button span,
-.hero-section .bg-white input,
-.hero-section .bg-white span,
-.hero-section .bg-white div {
-    color: #1f2937 !important;
-}
 
 /* Bold text for selected city in select-menu */
-.hero-section .bg-white [data-slot="value"],
-.hero-section .bg-white button > span:first-child,
-.hero-section .bg-white select {
-    font-weight: 600 !important;
-}
 
 /* Align select-menu content to the left */
-.hero-section .bg-white button[data-slot="base"] {
-    justify-content: flex-start !important;
-    text-align: left !important;
-}
 
-.hero-section .bg-white [data-slot="container"],
-.hero-section .bg-white [data-slot="wrapper"] {
-    text-align: left !important;
-}
 
-.hero-section .bg-white button {
-    justify-content: flex-start !important;
-}
 
-.hero-section .bg-white [data-slot="value"] {
-    text-align: left !important;
-    margin-right: auto !important;
-}
 
 /* Compact select-menu and date inputs on desktop */
-@media (min-width: 640px) {
-    .hero-section .bg-white button[data-slot="base"],
-    .hero-section .bg-white [data-slot="base"]:not(button) {
-        padding-top: 0.375rem !important;
-        padding-bottom: 0.375rem !important;
-    }
-}
 
 /* Ensure date input segments are visible and bold */
-.hero-section .bg-white [data-segment],
-.hero-section .bg-white [class*="segment"],
-.hero-section .bg-white input[type="date"] {
-    color: #1f2937 !important;
-    font-weight: 600 !important;
-}
 
 /* Force date input segments to display horizontally */
-.hero-section .bg-white [data-slot="base"] {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-}
 
-.hero-section .bg-white [data-segment] {
-    display: inline-block !important;
-    width: auto !important;
-    min-width: 1.25rem !important;
-    padding: 0 !important;
-}
 
-.hero-section .bg-white [data-segment="year"] {
-    min-width: 2.5rem !important;
-}
 
 /* Fix dropdown/listbox - force white background and dark text for contrast */
 /* Override the highlighted text variable for dropdowns/popovers */
@@ -391,9 +312,7 @@ body [aria-selected="true"] {
 
 /* Exclude header elements from the dark text rule */
 header [data-highlighted] *,
-header [data-highlighted],
-.hero-section h1 [data-highlighted],
-.hero-section h2 [data-highlighted] {
+header [data-highlighted] {
     color: white !important;
 }
 
@@ -595,47 +514,45 @@ section[id] > [data-slot="container"] {
 
 /* Fix: UCarousel arrows — Tailwind v4 scanner doesn't detect responsive */
 /* classes (hidden, lg:block, translate) passed dynamically via :ui prop. */
-/* Handle arrow visibility, positioning and styling via explicit CSS. */
+/* Handle arrow positioning and styling via explicit CSS. */
+/* Visibles en TODOS los anchos: al quitar los puntos del carrusel (ahora hay */
+/* un contador informativo), las flechas son el único control que no es swipe. */
 [data-slot="arrows"] {
-    display: none !important;
+    display: block !important;
 }
 
-@media (min-width: 1024px) {
-    [data-slot="arrows"] {
-        display: block !important;
-    }
+[data-slot="arrows"] button {
+    cursor: pointer;
+    border-radius: 9999px;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000;
+    color: white;
+    border: none;
+    box-shadow: none;
+    --tw-ring-color: transparent;
+    --tw-ring-shadow: none;
+    z-index: 10;
+}
 
-    [data-slot="arrows"] button {
-        cursor: pointer;
-        border-radius: 9999px;
-        width: 2.5rem;
-        height: 2.5rem;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: rgba(0, 0, 0, 0.45);
-        color: white;
-        border: none;
-        box-shadow: none;
-        --tw-ring-color: transparent;
-        --tw-ring-shadow: none;
-        z-index: 10;
-    }
+[data-slot="arrows"] button:hover {
+    /* Sin alfa: sobre foto, un negro translúcido cambia de tono según la
+       imagen. El hover se marca aclarando a gris oscuro. */
+    background-color: #2b2b2b;
+}
 
-    [data-slot="arrows"] button:hover {
-        background-color: rgba(0, 0, 0, 0.65);
-    }
+[data-slot="arrows"] button:first-child {
+    inset-inline-start: 0.5rem;
+    inset-inline-end: auto;
+}
 
-    [data-slot="arrows"] button:first-child {
-        inset-inline-start: 0.5rem;
-        inset-inline-end: auto;
-    }
-
-    [data-slot="arrows"] button:last-child {
-        inset-inline-start: auto;
-        inset-inline-end: 0.5rem;
-    }
+[data-slot="arrows"] button:last-child {
+    inset-inline-start: auto;
+    inset-inline-end: 0.5rem;
 }
 
 /* Fix: Blog ToC — Tailwind v4 scanner doesn't generate lg:block */

@@ -7,10 +7,14 @@
  *   - SCEN-W-02:  tras next() desde busqueda con búsqueda ejecutada → vehiculo;
  *                 deriveStepFromRoute con paso=vehiculo → 2.
  *   - SCEN-W-05:  canAdvance('vehiculo') requiere gama seleccionada.
- *   - SCEN-W-07:  canAdvance('adicionales') siempre true (paso opcional).
+ *   - SCEN-W-07:  los pasos posteriores a Vehículo (seguro/adicionales/datos) no
+ *                 imponen requisitos PROPIOS, pero ninguno avanza con la gama
+ *                 anulada — precondición del flujo, no del paso (enmendado por #401).
  *   - SCEN-W-09:  deep-link de ciudad (search en path params) → Paso 2.
  *   - SCEN-W-10:  goTo hacia atrás preserva maxReachedStep (no resetea el avance).
  *   - SCEN-W-14:  deep-link con `categoria` en el path → Paso 3 (seguro).
+ *   - SCEN-401:   computeStaleTransition — invalidación de la cotización por deriva
+ *                 del tramo (captura, adopción, pestillo, idempotencia).
  */
 import { describe, it, expect } from 'vitest'
 import {
@@ -19,6 +23,7 @@ import {
   deriveStepFromRoute,
   createWizardMachine,
   canAdvance,
+  computeStaleTransition,
 } from '~/composables/useReservationWizard'
 
 describe('WIZARD_STEPS — order + numbering', () => {
@@ -176,25 +181,172 @@ describe('canAdvance — per-step gating', () => {
     expect(canAdvance('vehiculo', { hasSelectedCategory: true })).toBe(true)
   })
 
-  it('seguro always advances (Básico preseleccionado)', () => {
-    expect(canAdvance('seguro', {})).toBe(true)
+  // SCEN-W-07 (enmendado por #401): seguro/adicionales no imponen requisitos
+  // PROPIOS, pero ninguno avanza con la gama anulada — es una precondición del
+  // flujo. La formulación vieja ("siempre true") dejaba llegar a un "Confirmar
+  // reserva" mudo cuando la cotización se anulaba bajo los pies del usuario.
+  it('seguro requires a live gama — no impone requisito propio pero no avanza sin gama (SCEN-W-07)', () => {
+    expect(canAdvance('seguro', {})).toBe(false)
+    expect(canAdvance('seguro', { hasSelectedCategory: true })).toBe(true)
   })
 
-  it('adicionales always advances (paso opcional — SCEN-W-07)', () => {
-    expect(canAdvance('adicionales', {})).toBe(true)
+  it('adicionales requires a live gama — opcional pero no avanza sin gama (SCEN-W-07)', () => {
+    expect(canAdvance('adicionales', {})).toBe(false)
+    expect(canAdvance('adicionales', { hasSelectedCategory: true })).toBe(true)
   })
 
-  // Issue #366: `datos` ya NO gatea. El consentimiento era el único campo que apagaba
-  // el CTA, y valibot ya bloquea el submit sin él (no emite @submit → cero POST), igual
-  // que en la marca hermana. Gatearlo aquí además producía un botón mudo: el usuario no
-  // podía pulsar y nada explicaba por qué. La validez del formulario tiene UNA fuente de
-  // verdad —el schema— y el paso es terminal, así que este valor solo gobierna el
-  // `:disabled` del sidebar.
-  it('datos never gates: valibot owns form validity (issue #366)', () => {
-    expect(canAdvance('datos', {})).toBe(true)
-    // Ni siquiera un estado que diga lo contrario lo apaga: el campo ya no existe y un
-    // extra desconocido no debe reintroducir el gate por la puerta de atrás.
-    expect(canAdvance('datos', { searchExecuted: false })).toBe(true)
-    expect(canAdvance('datos', { hasSelectedCategory: false })).toBe(true)
+  // Reconciliación #366 × #401: `datos` NO gatea por consentimiento (el único campo que
+  // #366 quitó, porque valibot ya bloquea el submit sin él — no emite @submit → cero POST,
+  // y gatearlo además producía un botón mudo), pero SÍ exige gama viva (#401: la deriva del
+  // tramo anula la gama, y sin ella «Confirmar reserva» quedaba mudo — SCEN-W-07 enmendado).
+  // En el Paso 5 real hasSelectedCategory siempre es true (se eligió en el Paso 2), así que
+  // el CTA es pulsable salvo que la cotización se haya invalidado bajo los pies del usuario.
+  it('datos no gatea por consentimiento (#366) pero exige gama viva (#401)', () => {
+    // #366: el consentimiento ya no lo apaga. `formValid` salió del interface; un extra
+    // desconocido no debe reintroducir el gate por la puerta de atrás.
+    expect(canAdvance('datos', { hasSelectedCategory: true })).toBe(true)
+    // #401: sin gama viva (deriva del tramo → gama anulada) no avanza.
+    expect(canAdvance('datos', {})).toBe(false)
+    expect(canAdvance('datos', { hasSelectedCategory: false })).toBe(false)
+  })
+})
+
+describe('computeStaleTransition — invalidación por deriva del tramo (#401)', () => {
+  const AABOT = 'BOG-A|BOG-A|2026-08-01|2026-08-05|10:00|10:00'
+  const MED = 'BOG-A|MED-P|2026-08-01|2026-08-05|10:00|10:00'
+
+  it('guard 1 — búsqueda nueva (pending false→true) captura el tramo, baja el pestillo y descarta la gama', () => {
+    const r = computeStaleTransition({
+      isPending: true,
+      wasPending: false,
+      liveSignature: AABOT,
+      quotedSignature: null,
+      stale: false,
+    })
+    expect(r.quotedSignature).toBe(AABOT)
+    expect(r.stale).toBe(false)
+    expect(r.clearSelection).toBe(true)
+  })
+
+  it('guard 1 — una búsqueda nueva baja un pestillo ya encendido (recuperación tras rancia — SCEN-401-08)', () => {
+    const r = computeStaleTransition({
+      isPending: true,
+      wasPending: false,
+      liveSignature: MED,
+      quotedSignature: AABOT,
+      stale: true,
+    })
+    expect(r.quotedSignature).toBe(MED)
+    expect(r.stale).toBe(false)
+    expect(r.clearSelection).toBe(true)
+  })
+
+  it('guard 2 — la búsqueda RESUELVE sin captura previa (montaje con pending=true) adopta el tramo vivo (SCEN-401-13)', () => {
+    const r = computeStaleTransition({
+      isPending: false,
+      wasPending: true,
+      liveSignature: AABOT,
+      quotedSignature: null,
+      stale: false,
+    })
+    expect(r.quotedSignature).toBe(AABOT)
+    expect(r.stale).toBe(false)
+    // No anula la gama: adoptar es best-effort, no una invalidación.
+    expect(r.clearSelection).toBe(false)
+  })
+
+  it('guard 2 — una segunda búsqueda sin flanco (true sobre true) adopta el tramo al RESOLVER, no latchea sobre resultados frescos (edge-case gate)', () => {
+    // quoted apunta a la búsqueda #1 (AABOT); la #2 se arrancó sin flanco y trae
+    // resultados de MED. Al resolver, adoptamos MED y bajamos el pestillo: los
+    // resultados en pantalla son del tramo vivo, no rancios.
+    const r = computeStaleTransition({
+      isPending: false,
+      wasPending: true,
+      liveSignature: MED,
+      quotedSignature: AABOT,
+      stale: false,
+    })
+    expect(r.quotedSignature).toBe(MED)
+    expect(r.stale).toBe(false)
+    expect(r.clearSelection).toBe(false)
+  })
+
+  it('guard 6 (in-flight) — reescritura de refs con una búsqueda EN VUELO no latchea (isPending true) — evita ocultar resultados que vienen en camino (edge-case gate)', () => {
+    const r = computeStaleTransition({
+      isPending: true,
+      wasPending: true,
+      liveSignature: MED,
+      quotedSignature: AABOT,
+      stale: false,
+    })
+    // Sin latch, sin anular gama: la resolución (guard 2) adoptará el tramo.
+    expect(r.stale).toBe(false)
+    expect(r.clearSelection).toBe(false)
+    expect(r.quotedSignature).toBe(AABOT)
+  })
+
+  it('guard 3 — nada consultado (quoted=null) y sin flanco de pending → nada rancio', () => {
+    const r = computeStaleTransition({
+      isPending: false,
+      wasPending: false,
+      liveSignature: MED,
+      quotedSignature: null,
+      stale: false,
+    })
+    expect(r.quotedSignature).toBeNull()
+    expect(r.stale).toBe(false)
+    expect(r.clearSelection).toBe(false)
+  })
+
+  it('guard 4 — ya latcheado: idempotente, no vuelve a anular ni togglea (SCEN-401-08b)', () => {
+    const r = computeStaleTransition({
+      isPending: false,
+      wasPending: false,
+      liveSignature: MED,
+      quotedSignature: AABOT,
+      stale: true,
+    })
+    expect(r.stale).toBe(true)
+    expect(r.clearSelection).toBe(false)
+    expect(r.quotedSignature).toBe(AABOT)
+  })
+
+  it('guard 5 — el tramo vivo sigue siendo el consultado → no invalida (camino feliz, SCEN-401-05)', () => {
+    const r = computeStaleTransition({
+      isPending: false,
+      wasPending: false,
+      liveSignature: AABOT,
+      quotedSignature: AABOT,
+      stale: false,
+    })
+    expect(r.stale).toBe(false)
+    expect(r.clearSelection).toBe(false)
+  })
+
+  it('guard 6 — el tramo vivo dejó de coincidir → enciende el pestillo y anula la gama (SCEN-401-01/-03/-03b)', () => {
+    const r = computeStaleTransition({
+      isPending: false,
+      wasPending: false,
+      liveSignature: MED,
+      quotedSignature: AABOT,
+      stale: false,
+    })
+    expect(r.stale).toBe(true)
+    expect(r.clearSelection).toBe(true)
+    expect(r.quotedSignature).toBe(AABOT)
+  })
+
+  it('pestillo asimétrico — deshacer la edición NO baja el pestillo (SCEN-401-11)', () => {
+    // Vuelvo a la firma consultada, pero ya latcheado: sigue rancio (no hay
+    // disponibilidad que recuperar sin re-buscar). Guard 4 gana antes que guard 5.
+    const r = computeStaleTransition({
+      isPending: false,
+      wasPending: false,
+      liveSignature: AABOT,
+      quotedSignature: AABOT,
+      stale: true,
+    })
+    expect(r.stale).toBe(true)
+    expect(r.clearSelection).toBe(false)
   })
 })

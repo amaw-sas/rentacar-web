@@ -18,6 +18,7 @@ export * from './useValidateFunctions';
 // String Functions
 // ============================================================================
 export { slugify } from './slugify';
+export { cityPullQuotes, splitSentences } from './cityPullQuotes';
 export { renderChatMarkdown } from './renderChatMarkdown';
 export { splitBubbles } from './splitBubbles';
 export { extractChatActions } from './extractChatActions';
@@ -32,13 +33,17 @@ export { normalizeReservationCode } from './reservationCode';
 export { pickPriceForDate } from './pickPriceForDate';
 export { isBeyondPricingHorizon, allRenderableBeyondHorizon } from './pricingHorizon';
 export { pickRepresentativeDailyPrice } from './pickRepresentativeDailyPrice';
+export { lowSeasonMonthly1k, lowSeasonDailyFrom30 } from './lowSeasonDailyPrice';
 export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
+export { applyMonthlyAnchorCap } from './applyMonthlyAnchorCap';
 export { IVA_PERCENTAGE } from './ivaRate';
 export { pickTotalCoverageChargeForDate } from './pickTotalCoverageCharge';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
 export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';
+export { SEARCH_PARAM_NOTICE_KEY, SEARCH_PARAM_NOTICES, readNoticeCodes, withNoticeCode } from './searchParamNotices';
+export type { SearchParamNoticeCode } from './searchParamNotices';
 export { openRangesForDate, isDayOpen, bookableSlotsForDate, nearestOpenDay, latestOpenDayOnOrBefore, nearestSlotByTime, returnDateForPickupChange } from './scheduleAvailability';
 export { colombianHolidays, isHoliday } from './colombianHolidays';
 export { buildCityReservationURL } from './buildCityReservationURL';
@@ -99,6 +104,8 @@ export {
 export { isBlockingSearchError } from './helpers/isBlockingSearchError';
 export { pickupTimingIssue } from './helpers/pickupTimingIssue';
 export type { PickupTimingIssue } from './helpers/pickupTimingIssue';
+export { resolveReturnBranch } from './helpers/resolveReturnBranch';
+export type { ReturnBranchResolution } from './helpers/resolveReturnBranch';
 
 // ============================================================================
 // Type Definitions - Data

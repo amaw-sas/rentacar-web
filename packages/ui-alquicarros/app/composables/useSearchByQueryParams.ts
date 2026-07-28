@@ -19,6 +19,7 @@ import {
   formatTime,
   toDatetime,
   createCurrentDateObject,
+  resolveReturnBranch,
 } from '@rentacar-main/logic/utils';
 
 // Vue Router query values are `string | string[] | null` — a duplicated key
@@ -28,7 +29,13 @@ import {
 // branch → silent empty results).
 function firstQueryValue(v: unknown): string | undefined {
   const raw = Array.isArray(v) ? v[0] : v;
-  return raw == null ? undefined : String(raw);
+  if (raw == null) return undefined;
+  // Trim, and treat blank as absent — matching `firstQ` in ReservationWizard and
+  // the `hasPickup` guard in pages/reservas/index.vue, both of which already
+  // defend against blank params. Without this, `?lugar_devolucion=%20` is truthy
+  // and gets reported to the user as an unrecognised branch (#402).
+  const trimmed = String(raw).trim();
+  return trimmed === '' ? undefined : trimmed;
 }
 
 type ReservationSearchSignatureInput = {
@@ -63,6 +70,7 @@ export default function useSearchByQueryParams() {
     const storeAdminData = useStoreAdminData();
     const storeSearch = useStoreSearchData();
     const { doSearch } = useSearch();
+    const { createMessage } = useMessages();
 
     const {
       lugarRecogida,
@@ -97,7 +105,24 @@ export default function useSearchByQueryParams() {
 
       // Convert slugs to branch codes (mirrors the route-param driver).
       const branchRecogida = storeAdminData.searchBranchBySlug(slugRecogida ?? '');
-      const branchDevolucion = storeAdminData.searchBranchBySlug(slugDevolucion ?? '');
+      // Slug OR legacy code, matching the PATH surface (validateSearchParams uses
+      // searchBranchBySlugOrCode). Resolving the return end by slug alone turned
+      // `?lugar_devolucion=AAMDE` into a round trip plus a "not recognised"
+      // notice, quoting the wrong itinerary for a link the other surface honours.
+      const branchDevolucion = storeAdminData.searchBranchBySlugOrCode(slugDevolucion ?? '');
+
+      // A link without `lugar_devolucion` is a legitimate short link: return the
+      // car where it was picked up instead of leaving the branch null, which used
+      // to kill the search in `missing_parameters` (#402). Resolve BEFORE the
+      // reuse signature below — comparing the raw `branchDevolucion?.code` against
+      // the already-mirrored store value never matches, so every remount would
+      // re-search and wipe the user's chosen category.
+      const pickupCode = branchRecogida?.code ?? null;
+      const returnBranch = resolveReturnBranch(
+        slugDevolucion,
+        branchDevolucion?.code,
+        pickupCode,
+      );
 
       // Parse times (12h from the URL or 24h), normalize to the store's 24h format.
       const pickupTime = parseTime12hOr24h(hora_recogida ?? '');
@@ -116,12 +141,17 @@ export default function useSearchByQueryParams() {
       // the user's category and rewinding the funnel. Reuse only when both the
       // normalized six-field signature and usable results/selection are present;
       // any changed date, branch or time still performs the normal fresh search.
+      // A corrected return branch is a REAL change to what the URL asked for, but
+      // the correction makes the new signature match what the store already holds
+      // — so the reuse shortcut would swallow it: no search, no notice, and the
+      // screen keeps showing round-trip prices for a link that promised one-way.
       const canReuseExistingSearch =
+        !returnBranch.corrected &&
         hasAvailableCategories.value &&
         selectedCategory.value !== null &&
         reservationSearchSignature({
-          pickup: branchRecogida?.code,
-          dropoff: branchDevolucion?.code,
+          pickup: pickupCode,
+          dropoff: returnBranch.code,
           pickupDate: fecha_recogida,
           dropoffDate: fecha_devolucion,
           pickupTime: normalizedPickupTime,
@@ -136,16 +166,39 @@ export default function useSearchByQueryParams() {
             dropoffTime: horaDevolucion.value,
           });
 
-      lugarRecogida.value = branchRecogida?.code ?? null;
-      lugarDevolucion.value = branchDevolucion?.code ?? null;
+      lugarRecogida.value = pickupCode;
+      lugarDevolucion.value = returnBranch.code;
       fechaRecogida.value = fecha_recogida ?? null;
       fechaDevolucion.value = fecha_devolucion ?? null;
       horaRecogida.value = normalizedPickupTime;
       horaDevolucion.value = normalizedReturnTime;
       referido.value = firstQueryValue(route.query.referido) ?? null;
 
-      if (canReuseExistingSearch) return;
-      doSearch();
+      // The notice comes AFTER the search decision and is conditioned on it:
+      // doSearch opens with flushMessages(), so a message created earlier dies in
+      // the same tick; and when doSearch bails through one of its guards (past
+      // date, inverted range) the user already has a message explaining why there
+      // is no quote — adding the branch one would give two competing notices.
+      const searchDispatched = canReuseExistingSearch ? false : doSearch();
+
+      if (returnBranch.corrected && !searchDispatched) {
+        // The search bailed, so the notice stays silent — which means the
+        // correction must be rolled back too. Leaving the pickup branch written
+        // in has the user re-search from the store (the Searcher builds its URL
+        // from there, not from the address bar) and book a round trip when they
+        // asked for a one-way, with nothing having said so. Failing loudly on
+        // the next attempt beats quoting the wrong itinerary.
+        lugarDevolucion.value = branchDevolucion?.code ?? null;
+      }
+
+      if (returnBranch.corrected && searchDispatched) {
+        createMessage({
+          type: 'info',
+          title: 'Sede de devolución no reconocida',
+          message:
+            'No encontramos esa sede de devolución; ajustamos la entrega a la sede de recogida.',
+        });
+      }
     };
 
     // Run on mount (handles direct load / refresh on a shared /reservas?... link)…

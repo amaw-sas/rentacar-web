@@ -27,7 +27,7 @@
 
     <!-- Código de reserva -->
     <p class="text-lg text-white/80 mb-2">Código de reserva:</p>
-    <h2 class="heading-hero text-4xl mb-2">{{ reserveCode }}</h2>
+    <h2 class="font-heading font-extrabold tracking-tight text-4xl mb-2">{{ reserveCode }}</h2>
     <div class="h-1 w-10 rounded-full bg-red-600 mb-8 mx-auto" aria-hidden="true" />
 
     <!-- Notificaciones -->

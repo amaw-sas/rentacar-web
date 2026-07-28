@@ -33,20 +33,20 @@ describe('ReservationForm — a failed submit brings the first invalid field int
     expect(uFormOpenTag![0]).not.toMatch(/=>/)
   })
 
-  it('falls back to #telefono, whose UFormField id never lands in the DOM', () => {
-    // VueTelInput no usa useFormField (ver el comentario de ese campo), así que el id
-    // que viaja en el evento no corresponde a ningún elemento y getElementById devuelve
-    // null. usePhoneField fija `id: "telefono"` de forma determinista.
-    expect(source).toMatch(/telefono['"]\s*\?\s*['"]telefono['"]/)
+  it('delega la resolución del primer campo inválido al util puro (S1)', () => {
+    // La resolución (orden-de-DOM vía compareDocumentPosition + caso especial `telefono`)
+    // se extrajo a firstInvalidFieldEl y se prueba en reservation-form-error-focus.test.ts.
+    // El componente solo debe DELEGAR en ese util: si volviera a resolver inline, la S1
+    // quedaría a medias y el foco podría romperse en silencio sin que ese test lo cazara.
+    expect(source).toMatch(/firstInvalidFieldEl\(\s*event\?\.errors\s*,\s*document\s*\)/)
+    // Y no debe volver a leer errors[0] por su cuenta: el orden es de DOM, no de lista.
+    expect(source).not.toMatch(/errors\[0\]/)
   })
 
-  it('focuses the first invalid field in DOM order, not errors[0]', () => {
-    // Medido: valibot devuelve los issues en orden de declaración del schema, que NO es
-    // el del DOM. `vehiculo` encabeza la lista y no tiene campo en el formulario (se
-    // elige en el Paso 2), así que errors[0] resolvería a null y el submit no tendría
-    // efecto visible — el mismo defecto que #366 viene a cerrar. Y email/telefono están
-    // cruzados entre ambos órdenes.
-    expect(source).toMatch(/compareDocumentPosition/)
-    expect(source).not.toMatch(/errors\[0\]/)
+  it('espera un frame (requestAnimationFrame) antes de enfocar — loadingAuto deshabilita los campos', () => {
+    // Lo único de D6 que se queda en el componente: `loadingAuto` mantiene los campos
+    // deshabilitados en el tick del evento `error`, así que enfocar ahí cae en un
+    // <input disabled> y el navegador lo ignora. El foco espera al frame siguiente.
+    expect(source).toMatch(/requestAnimationFrame/)
   })
 })

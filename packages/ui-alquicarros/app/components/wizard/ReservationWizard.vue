@@ -82,16 +82,27 @@
 
             <WizardStepsStepVehicle
               v-if="isStep('vehiculo')"
+              :search-stale="searchStale"
               @adjust-search="onGoTo('busqueda')"
             />
-            <WizardStepsStepCoverage v-else-if="isStep('seguro')" />
-            <WizardStepsStepExtras v-else-if="isStep('adicionales')" @skip="wizard.next" />
+            <WizardStepsStepCoverage
+              v-else-if="isStep('seguro')"
+              :search-stale="searchStale"
+              @adjust-search="onGoTo('busqueda')"
+            />
+            <WizardStepsStepExtras
+              v-else-if="isStep('adicionales')"
+              :search-stale="searchStale"
+              @skip="onSkipExtras"
+              @adjust-search="onGoTo('busqueda')"
+            />
             <WizardStepsStepData v-else-if="isStep('datos')" ref="stepDataRef" />
           </div>
           <div class="lg:col-span-4">
             <WizardSummary
               :can-advance="canAdvanceCurrent"
               :cta-label="ctaLabel"
+              :search-stale="searchStale"
               @next="onNext"
             />
           </div>
@@ -103,15 +114,23 @@
 
 <script setup lang="ts">
 // External
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
 // composables (wizard machine — Fase 1)
 import useReservationWizard, {
   canAdvance,
+  computeStaleTransition,
   stepNumber,
   type WizardStep,
 } from '~/composables/useReservationWizard'
+// Firma del tramo (seis campos de búsqueda) — la primitiva de comparación de #401,
+// reutilizada de canReuseExistingSearch.
+import { reservationSearchSignature } from '~/composables/useSearchByQueryParams'
+
+// composables (import explícito, no auto-import: así el shell es montable en tests
+// sin el runtime de Nuxt)
+import { useWizardNotice } from '~/composables/useWizardNotice'
 
 const props = withDefaults(
   defineProps<{
@@ -141,6 +160,9 @@ useSearchByQueryParams()
 
 const search = useStoreSearchData()
 const form = useStoreReservationForm()
+
+/** Ranura del aviso del wizard (#368 B1). El shell escribe; el Paso 2 lee. */
+const { setNotice } = useWizardNotice()
 const {
   pending,
   hasAvailableCategories,
@@ -157,11 +179,40 @@ const {
   haveTotalInsurance,
   haveMonthlyReservation,
   selectedMonthlyMileage,
+  // Tramo vivo (issue #401): los seis campos con los que el resumen y el submit
+  // describen la reserva. Su firma se compara contra la del tramo cotizado.
+  lugarRecogida,
+  lugarDevolucion,
+  fechaRecogida,
+  fechaDevolucion,
+  horaRecogida,
+  horaDevolucion,
 } = storeToRefs(form)
 
 // Contacto humano del bloque de estado desconocido (D3/D5): misma fuente que error.vue,
 // no un literal. `whatsapp` es el href, `phone` el texto visible.
 const { franchise } = useAppConfig()
+
+// ── Invalidación de cotización por deriva del tramo (issue #401) ───────────────
+// El resumen y el payload mezclan tramo VIVO (form) con precio CONGELADO
+// (selectedCategory). Si el tramo vivo deja de coincidir con el que pidió la
+// disponibilidad en pantalla, la cotización se descarta y se registra que la
+// búsqueda quedó rancia, para que ningún paso avance con un precio que no aplica.
+const liveSearchSignature = computed(() =>
+  reservationSearchSignature({
+    pickup: lugarRecogida.value,
+    dropoff: lugarDevolucion.value,
+    pickupDate: fechaRecogida.value,
+    dropoffDate: fechaDevolucion.value,
+    pickupTime: horaRecogida.value,
+    dropoffTime: horaDevolucion.value,
+  }),
+)
+
+/** Tramo con el que se pidió la disponibilidad que hay ahora en pantalla. */
+const quotedSearchSignature = ref<string | null>(null)
+/** Pestillo: la disponibilidad en pantalla ya no corresponde al tramo vivo. */
+const searchStale = ref(false)
 
 /**
  * Fuente única de los flags que viajan en el payload (useRecordReservationForm).
@@ -204,20 +255,79 @@ const searchSettled = computed(
     (hasAvailableCategories.value || !!error.value || noAvailableCategories.value),
 )
 
-// Al ARRANCAR una búsqueda nueva (pending false→true), descarta la gama elegida.
-// useCategory congela los precios (totalAmount, cobertura, IVA, returnFee) en refs
-// al construirse, y el store NO resetea selectedCategory en search(). Sin esto,
-// re-buscar con otras fechas/sede SIN re-elegir gama dejaría el sidebar y el submit
-// con la cotización VIEJA (fechas nuevas, precio viejo) — el re-tap de la misma
-// gama es no-op y la red de seguridad solo rescata selectedCategory===null. Forzar
-// re-elegir contra las filas frescas. Sin gate: cubre /reservas y city (que remonta
-// por navegación); en city el preselect de /categoria vuelve a fijarla tras asentar.
-watch(pending, (isPending, wasPending) => {
-  if (isPending && !wasPending) {
-    selectedCategory.value = null
-    vehiculo.value = null
+// Adopción inicial de la firma cotizada (issue #401). Un montaje que hereda estado
+// del store sin arrancar una búsqueda —volver de /chat a la misma URL reutiliza la
+// cotización sin togglear `pending` (canReuseExistingSearch)— no dispararía la guarda
+// 1, y la guarda 3 dejaría pasar cualquier cambio de tramo posterior sin invalidar.
+// Capturamos aquí el tramo ya hidratado. Se condiciona a `searchSettled` O a que haya
+// gama: si en pantalla hay filas o un banner de error heredados del store, también
+// pueden quedar rancios (hecho 3), no solo una gama elegida.
+//
+// En onMounted y no en el setup a propósito: en la superficie query
+// (useSearchByQueryParams corre en el setup del wizard) su onMounted va antes y deja
+// el tramo hidratado; en la superficie path (useSearchByRouteParams lo llama el padre
+// Results.vue) el onMounted del hijo va antes y captura el tramo persistido, que la
+// guarda 1 re-captura microsegundos después al re-buscar.
+onMounted(() => {
+  if (searchSettled.value || selectedCategory.value) {
+    quotedSearchSignature.value = liveSearchSignature.value
   }
 })
+
+// Máquina de invalidación (issue #401). Un solo watcher sobre `[pending, firma]`
+// con precedencia explícita, en vez de dos watchers cuyo orden lo decidiría la cola
+// de Vue: el mismo tick que arranca una búsqueda cambia la firma, así que "capturar"
+// e "invalidar" se pisarían. `computeStaleTransition` decide (seis guards); aquí solo
+// se cablean los refs y las acciones.
+//
+// `flush: 'sync'` es obligatorio: search() pone `pending = true` y a continuación,
+// en el mismo tick antes de su primer await, useFetchCategoriesAvailabilityData arma
+// su body leyendo los refs del tramo, que useSearch muta en flush `pre`. Con `sync`
+// la firma se captura en el instante exacto en que `pending` bascula, así que la
+// firma capturada ES la consultada. Corre después del watcher de derivación de flags
+// (registrado antes, mismo `sync`), que apaga seguro/kilometraje al quedar sin gama.
+//
+// El flanco `false→true` (guard 1) descarta la gama vieja: useCategory congela los
+// precios en refs al construirse y el store no resetea selectedCategory en search(),
+// así que re-buscar sin re-elegir dejaría la cotización VIEJA (fechas nuevas, precio
+// viejo). Sin `immediate`: un disparo inmediato con `wasPending === undefined` haría
+// verdadera la guarda 1 y capturaría/anularía durante un montaje con búsqueda en
+// vuelo; la guarda 2 cubre ese montaje cuando la búsqueda resuelve.
+//
+// Aviso (issue #368 B1, plegado aquí al fusionar): la ranura de `useWizardNotice`
+// siempre queda en su estado correcto —escritura incondicional, nunca armada—.
+//  · Guard 1 (arranca búsqueda, `isPending && !wasPending`): anuncia el reset si había
+//    selección que descartar, `null` si no. El descarte lo hace `clearSelection`; el
+//    aviso explica por qué la gama desapareció con filas frescas en pantalla.
+//  · Guard 6 (el tramo derivó sin re-buscar, `stale && clearSelection`): la superficie
+//    `searchStale` (WizardStaleNotice + motivo en el resumen) es el único mensaje;
+//    limpiar la ranura evita que un «elige de nuevo» armado antes se solape con un
+//    «pulsa BUSCAR» que dice lo contrario.
+watch(
+  [pending, liveSearchSignature],
+  ([isPending], [wasPending]) => {
+    const hadSelection = !!selectedCategory.value
+    const next = computeStaleTransition({
+      isPending,
+      wasPending,
+      liveSignature: liveSearchSignature.value,
+      quotedSignature: quotedSearchSignature.value,
+      stale: searchStale.value,
+    })
+    quotedSearchSignature.value = next.quotedSignature
+    searchStale.value = next.stale
+    if (next.clearSelection) {
+      selectedCategory.value = null
+      vehiculo.value = null
+    }
+    if (isPending && !wasPending) {
+      setNotice(hadSelection ? { kind: 'search-reset' } : null)
+    } else if (next.stale && next.clearSelection) {
+      setNotice(null)
+    }
+  },
+  { flush: 'sync' },
+)
 
 function isStep(step: WizardStep): boolean {
   return wizard.currentStep.value === step
@@ -436,6 +546,17 @@ function onNext(): void {
     stepDataRef.value?.submit()
     return
   }
+  if (canAdvanceCurrent.value) wizard.next()
+}
+
+/**
+ * "Omitir — continuar sin adicionales". `next()` avanza SIN consultar `canAdvance`,
+ * así que es la única puerta hacia adelante sin gate (issue #401): la ruteamos por el
+ * mismo control que `onNext` para que, con la gama anulada por rancia, Omitir tampoco
+ * lleve al "Confirmar reserva" mudo. En el camino feliz es no-op (con gama viva
+ * canAdvance('adicionales') es true).
+ */
+function onSkipExtras(): void {
   if (canAdvanceCurrent.value) wizard.next()
 }
 </script>

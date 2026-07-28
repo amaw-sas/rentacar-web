@@ -49,6 +49,12 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   const error = ref<ErrorMessage | null>(null);
   
   const selectedCategory = ref<ReturnType<typeof useCategory> | null >(null);
+  // Shared UI signal for the reservation summary/data slideover used by
+  // Alquilame and Alquila Tu Carro. ChatWidget lives at layout level, so it
+  // cannot observe the section-local `slideoverOpen` directly. Keeping the
+  // mirrored state here lets the floating contact controls yield the mobile
+  // viewport while the customer completes the reservation.
+  const reservationOverlayOpen = ref<boolean>(false);
   const noAvailableCategories = ref<boolean>(false);
 
   // Whether a category is offered for monthly rental is derived from its
@@ -239,6 +245,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
           
           categoryAvailability['categoryModels'] = categoryAdmin.models;
           categoryAvailability["categoryMonthPrices"] = categoryAdmin.month_prices;
+          categoryAvailability["monthAnchorGross"] = categoryAdmin.month_anchor_gross ?? null;
           categoryAvailability["categoryDescription"] = categoryAdmin.category.replace(categoryAdmin.name, "");
           categoryAvailability["totalCoverageUnitCharge"] = coverageChargeFor(categoryAdmin);
           categoryAvailability["picoyplacaExempt"] = categoryAdmin.picoyplaca_exempt;
@@ -329,6 +336,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     pending,
     error,
     selectedCategory,
+    reservationOverlayOpen,
     noAvailableCategories,
     trackVehicleSelection,
     trackCheckoutStarted,
@@ -357,6 +365,10 @@ const createCategoryAvailability = (
     categoryDescription: category.description,
     categoryModels: category.models,
     categoryMonthPrices: category.month_prices,
+    // Also set by the availability merge, which assigns onto these same
+    // objects — but only for cards that HAVE an availability row. This is the
+    // only path for a card that does not: the LLNRAG009 gray grid.
+    monthAnchorGross: category.month_anchor_gross ?? null,
     picoyplacaExempt: category.picoyplaca_exempt,
     visibilityMode: category.visibility_mode,
     allowedCities: category.allowed_cities,
