@@ -120,7 +120,7 @@ describe('Home hero — golden parity', () => {
     expect(visual).toMatch(/NuxtImg/)
     expect(visual).toMatch(/hero-poster\.jpg/)
     expect(visual).toMatch(/v-if="!videoActive && !audioActive"/)
-    // Deferred muted-preview branch (activated after intent/visibility/idle).
+    // Deferred muted-preview branch (activated after visibility/idle).
     expect(visual).toMatch(/<video\b/)
     expect(visual).toMatch(/autoplay/)
     expect(visual).toMatch(/\bmuted\b/)

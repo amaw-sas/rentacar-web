@@ -9,7 +9,7 @@
  *     full audio video — and the audio one is preload="none" so it downloads
  *     only after the user asks for sound;
  *   - autoplay of the muted preview is opt-OUT for reduced-motion and data-saver
- *     users and waits for both visibility and user interaction;
+ *     users and waits for both visibility and browser idle time;
  *   - both heroes consume this component; neither keeps its own copy.
  */
 import { describe, it, expect } from 'vitest'
@@ -63,13 +63,14 @@ describe('HeroVisual.vue — shared car + corner video', () => {
     expect(visual).not.toMatch(/<video\s+[\s\S]*?v-show=/)
   })
 
-  it('gates preview autoplay on motion, data-saver, visibility and user interaction', () => {
+  it('autoplays after visibility and idle, while respecting motion and data-saver preferences', () => {
     expect(visual).toMatch(/prefers-reduced-motion/)
     expect(visual).toMatch(/saveData/)
     expect(visual).toMatch(/IntersectionObserver/)
-    expect(visual).toMatch(/pointerdown/)
-    expect(visual).toMatch(/keydown/)
-    expect(visual).toMatch(/userInteracted/)
+    expect(visual).toMatch(/requestIdleCallback/)
+    expect(visual).toMatch(/timeout: 2500/)
+    expect(visual).not.toMatch(/userInteracted|interactionEvents/)
+    expect(visual).not.toMatch(/window\.addEventListener/)
     expect(visual).toMatch(/onBeforeUnmount/)
   })
 
