@@ -255,11 +255,11 @@
             </li>
           </ul>
           <!-- Créditos -->
-          <div class="text-center md:text-right">
+          <div class="text-center text-footer-credit md:text-right">
             <p class="text-gray-400 text-sm">
               © 2026 {{ franchise.name }}. Todos los derechos reservados.
             </p>
-            <p class="text-gray-500 text-sm mt-1">
+            <p class="text-sm mt-1">
               Elaborado por
                 <a
                   href="https://www.estrategias.us/"

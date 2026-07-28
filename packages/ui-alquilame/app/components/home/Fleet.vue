@@ -102,7 +102,7 @@
                             else). No extrabold, no semibold.
                  · colors → gray-900 (title) / gray-600 (ALL support copy —
                             gray-500 is gone) / brand-600 (price) /
-                            emerald-600 (the single accent, "IVA incluido").
+                            tax-note (the single green accent, "IVA incluido").
           -->
           <div class="p-6 flex flex-col flex-1">
             <!-- Category + transmission -->
@@ -120,7 +120,7 @@
                 <p class="text-sm text-gray-600">Precio x día en alquiler de 30 días</p>
                 <p class="flex items-baseline gap-2 flex-wrap">
                   <span class="text-2xl font-bold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}</span>
-                  <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
+                  <span class="text-xs font-medium text-tax-note">IVA incluido</span>
                 </p>
                 <p class="text-sm font-medium text-gray-600">Temporada Baja</p>
               </div>
@@ -130,7 +130,7 @@
               >
                 <span class="text-sm text-gray-600">Desde</span>
                 <span class="text-2xl font-bold font-heading text-brand-600">${{ moneyFormat(card.monthlyPrice) }}/mes</span>
-                <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
+                <span class="text-xs font-medium text-tax-note">IVA incluido</span>
               </p>
             </div>
 
