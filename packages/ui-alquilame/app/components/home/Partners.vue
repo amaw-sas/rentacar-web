@@ -1,72 +1,59 @@
 <template>
   <!--
-    F1 step07b — Partners "Empresas Aliadas" (issue #112). Port of the design's
-    #partners section to Vue.
+    Partners "Empresas Aliadas" — aligned with the reference design.
 
-    CRITICAL fidelity note: the design renders each ally (Localiza / Avis /
-    Alquicarros / Alquilatucarro) as a STYLED TEXT span inside a CSS marquee —
-    there are NO logo image assets in the dist, and none exist in this repo.
-    So this section is text-only by design: no image tags, no asset sourcing.
+    History worth keeping: this section used to be a scrolling marquee of TEXT
+    wordmarks, because at port time the design shipped no logo assets. It does
+    now (public/images/partners/*.svg), so the section became what the reference
+    actually renders: a STATIC centred row of real logos. No marquee, no
+    duplicate copy — so no aria-hidden clone and no reduced-motion accommodation
+    to make, because nothing moves.
 
-    Marquee mechanics (matching the design):
-      - The ally list is rendered TWICE back-to-back in one flex track; the track
-        animates translateX(0 → -50%), so when the first copy scrolls fully out
-        the second copy sits exactly where the first started → a seamless loop.
-      - The first copy is the real content; the duplicate is aria-hidden so a
-        screen reader announces each ally once.
-      - Hover pauses the animation; prefers-reduced-motion disables it and centers
-        the (single visible) row — same accommodation as the design.
+    The logos are dark-on-transparent SVGs; `brightness-0 invert` flattens them
+    to pure white so they read over the red band, exactly as the reference does.
+    Each keeps its ally name as alt text — the names used to be literal text, and
+    turning them into images would otherwise drop them for screen readers.
 
-    Gradient guard (F0 lesson): the section + edge fades use the v4 bg-linear-to-*
-    utility, never the broken v3 gradient alias (which renders
-    background-image:none against custom @theme tokens). The design's
-    #CB032C → #A00425 maps exactly to our footer-from / footer-to tokens.
-    Typography uses the font-heading utility (Plus Jakarta), as the design does.
+    Gradient guard (F0 lesson): the section uses the v4 bg-linear-to-* utility,
+    never the broken v3 alias (which renders background-image:none against custom
+    @theme tokens). The design's #CB032C → #A00425 maps exactly to our
+    footer-from / footer-to tokens.
   -->
   <section
     id="partners"
     class="py-12 md:py-16 bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <p class="text-center text-sm font-medium uppercase tracking-wider text-white/80 mb-2">
+      <!-- A real heading element, at the same scale as every other section. This
+           used to be a small uppercase <p>, which left the section with no
+           heading element at all: assistive tech could not jump to it and
+           crawlers saw an untitled block. -->
+      <h2 class="text-center text-3xl md:text-4xl font-extrabold font-heading text-white">
         Empresas Aliadas
-      </p>
-      <p class="mx-auto mb-10 max-w-2xl text-center text-base text-white/75">
+      </h2>
+      <p class="mx-auto mt-4 mb-10 max-w-2xl text-center text-base text-white/80">
         Nos apoyamos en una red de aliados para darte más vehículos disponibles,
         en más ciudades y fechas.
       </p>
 
-      <div class="marquee group relative overflow-hidden">
-        <!-- Edge fades (v4 linear utility; footer tokens === design hex) -->
-        <div
-          class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-linear-to-r from-footer-from to-transparent md:w-28"
-        ></div>
-        <div
-          class="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l from-footer-to to-transparent md:w-28"
-        ></div>
-
-        <div class="marquee-track flex w-max items-center gap-10 md:gap-16">
-          <!-- Real copy -->
-          <div v-for="ally in allies" :key="`a-${ally}`" class="flex-shrink-0">
-            <span
-              class="whitespace-nowrap font-heading text-2xl font-extrabold tracking-tight text-white/75 transition-colors duration-300 hover:text-white md:text-3xl"
-            >
-              {{ ally }}
-            </span>
-          </div>
-          <!-- Seamless-loop duplicate (hidden from assistive tech) -->
-          <div
-            v-for="ally in allies"
-            :key="`b-${ally}`"
-            class="flex-shrink-0"
-            aria-hidden="true"
+      <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-6 md:gap-x-16">
+        <div v-for="ally in allies" :key="ally.name">
+          <a
+            :href="ally.href"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="ally.name"
+            class="block"
           >
-            <span
-              class="whitespace-nowrap font-heading text-2xl font-extrabold tracking-tight text-white/75 transition-colors duration-300 hover:text-white md:text-3xl"
+            <img
+              :src="ally.logo"
+              :alt="ally.name"
+              height="36"
+              loading="lazy"
+              decoding="async"
+              class="h-7 w-auto opacity-80 brightness-0 invert transition-opacity duration-300 hover:opacity-100 md:h-9"
             >
-              {{ ally }}
-            </span>
-          </div>
+          </a>
         </div>
       </div>
     </div>
@@ -74,43 +61,22 @@
 </template>
 
 <script setup lang="ts">
-// Ally names are TEXT only — the design ships no logo assets, so they live as a
-// local list here. Order matches the design's #partners marquee.
-const allies: readonly string[] = [
-  'Localiza',
-  'Avis',
-  'Alquicarros',
-  'Alquilatucarro',
+interface Ally {
+  name: string
+  logo: string
+  /**
+   * Destino de negocio al hacer clic. NO tiene por qué coincidir con el logo:
+   * Localiza y Avis dirigen a las marcas hermanas por decisión comercial.
+   */
+  href: string
+}
+
+// Ally logos vendored from the reference design. Display order is the
+// operator's, not the reference's.
+const allies: ReadonlyArray<Ally> = [
+  { name: 'Localiza', logo: '/images/partners/localiza.svg', href: 'https://alquilatucarro.com' },
+  { name: 'Alquilatucarro', logo: '/images/partners/alquilatucarro.svg', href: 'https://alquilatucarro.com' },
+  { name: 'Avis', logo: '/images/partners/avis.svg', href: 'https://alquicarros.com' },
+  { name: 'Alquicarros', logo: '/images/partners/alquicarros.svg', href: 'https://alquicarros.com' },
 ]
 </script>
-
-<style scoped>
-/*
-  Track holds two copies of the ally list; translating it by -50% advances it by
-  exactly one copy width, so the loop is seamless regardless of viewport.
-*/
-@keyframes partners-marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.marquee-track {
-  animation: partners-marquee 30s linear infinite;
-  will-change: transform;
-}
-
-.marquee:hover .marquee-track {
-  animation-play-state: paused;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
-    justify-content: center;
-  }
-}
-</style>

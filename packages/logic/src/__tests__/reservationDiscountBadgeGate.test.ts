@@ -33,11 +33,25 @@ const logicSource = readFileSync(
 describe('reservation summary discount badge gate (monthly NaN bug)', () => {
   // SCEN-D01: the badge must be gated so it does not appear when there is no
   // daily discount (which includes every monthly reservation).
+  // La compuerta esperada por marca. alquilame pasó a `hasDiscountToShow`, que
+  // se DERIVA de getDiscount (`getDiscount.value !== "0"`): es estrictamente más
+  // fuerte que `hasDiscount()`, porque ata la compuerta al mismo valor que se
+  // pinta en vez de a un campo independiente (`discountAmount`) — que era justo
+  // la separación que dejó pasar el NaN. Además permite que la píldora aparezca
+  // en mensual, donde el ahorro es real y `discountAmount` llega nulo.
+  const GATE_POR_MARCA: Record<string, string> = {
+    'ui-alquilatucarro': 'v-if="hasDiscount()"',
+    'ui-alquilame': 'v-if="hasDiscountToShow"',
+  }
+
   for (const brand of BRANDS) {
-    it(`${brand} ReservationResume gates the "Dto Hoy" badge with hasDiscount()`, () => {
+    it(`${brand} ReservationResume gates the "Dto Hoy" badge`, () => {
       const vue = readBrandFile(brand, 'app/components/ReservationResume.vue')
-      const idx = vue.indexOf('Dto Hoy')
-      expect(idx, `${brand}: "Dto Hoy" badge not found`).toBeGreaterThan(-1)
+      // Ancla en el VALOR, no en el copy: alquilame pasó de "Dto Hoy {{ x }} %"
+      // a "Hoy con {{ x }}% Dto." al espejar la card, y el invariante no es cómo
+      // se redacta la píldora sino que la cifra nunca se pinte sin compuerta.
+      const idx = vue.indexOf('{{ getDiscount }}')
+      expect(idx, `${brand}: badge de descuento no encontrado`).toBeGreaterThan(-1)
 
       // The badge's OWN wrapping element must carry the hasDiscount() guard —
       // not a sibling. Scope the window to just the badge's enclosing element by
@@ -48,10 +62,13 @@ describe('reservation summary discount badge gate (monthly NaN bug)', () => {
         vue.lastIndexOf('</span>', idx),
       )
       const badgeElement = vue.slice(prevClose, idx)
+      const gateEsperada = GATE_POR_MARCA[brand] as string
       expect(
-        badgeElement.includes('v-if="hasDiscount()"'),
-        `${brand}: "Dto Hoy" badge is rendered unconditionally — must be gated by v-if="hasDiscount()"`,
+        badgeElement.includes(gateEsperada),
+        `${brand}: "Dto Hoy" badge must be gated by ${gateEsperada}`,
       ).toBe(true)
+      // Nunca sin compuerta: es la condición que originó el bug del NaN.
+      expect(badgeElement).toMatch(/v-if="/)
     })
   }
 
@@ -101,10 +118,12 @@ describe('reservation summary discount badge gate (monthly NaN bug)', () => {
  * price's own div moved; the "Dto Hoy" badge beside it keeps hasDiscount(),
  * which is the right predicate for a daily-discount badge.
  *
- * Note for the alquilame reskin landing on preview/alquilame-todo: it must
- * migrate its cards to hasStruckBasePrice too. Its hasDiscountToShow does not
- * exist on main and is not accepted here — this guard pins one predicate on
- * purpose so a silent regression to a discount-only gate cannot pass.
+ * The alquilame reskin has landed and its two surfaces were migrated here: they
+ * render the struck figure inside a `.fila-tarifa` row, so the row carries the
+ * same v-if AND the span keeps its own — the span's is the one this guard reads.
+ * hasDiscountToShow stays on the reskin's discount PILL and is not accepted for
+ * the struck price: this guard pins one predicate on purpose so a silent
+ * regression to a discount-only gate cannot pass.
  *
  * Anchored on the currencyDailyBasePrice interpolation rather than on
  * getDiscount so this describe never overlaps the badge guard above.

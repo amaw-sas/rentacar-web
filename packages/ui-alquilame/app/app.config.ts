@@ -50,10 +50,10 @@ export default defineAppConfig({
     whatsapp: "https://wa.me/573002436677",
     email: "alquilame@gmail.com",
     socialmedia: [
-      "https://www.facebook.com/alquilamecom",
-      "https://www.instagram.com/alquilame.com",
+      "https://www.facebook.com/alquilameco",
+      "https://www.instagram.com/alquilamecol",
       "https://twitter.com/alquilame",
-      "https://www.youtube.com/@alquilame",
+      "https://www.youtube.com/@alquilameco",
       "https://www.tiktok.com/@alquilame",
       "https://co.pinterest.com/alquilame/",
     ],
@@ -67,12 +67,17 @@ export default defineAppConfig({
         label: "Política de privacidad",
       },
       {
-        link: "https://docs.google.com/forms/d/e/1FAIpQLSe5NLCil5hQNqsdPhwDM3DYe3wbGiUyr-2VK4RBTYE3YQbcug/viewform",
+        link: "/quejas-y-reclamos",
         label: "Quejas y reclamos",
       },
       {
         link: "/gana",
         label: "Gana comisiones",
+      },
+      {
+        // Convenios B2B con rentadoras (no es para un particular con un carro).
+        link: "/aliados",
+        label: "Sé nuestro aliado",
       },
       {
         link: "/blog",

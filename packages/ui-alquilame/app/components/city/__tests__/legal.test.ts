@@ -31,17 +31,21 @@ describe('F2 step07 — legal-document style (SCEN-F2-07)', () => {
     ['politica-privacidad', privacidad],
   ] as const) {
     describe(name, () => {
-      it('renders numbered h2 sections with font-heading', () => {
-        // every <h2> in the page carries font-heading
+      // Contrato actualizado: la fuente de marca ya no se pide con el token
+      // suelto `font-heading`. Llega dentro de las utilidades del sitio
+      // (heading-section / heading-page en typography.css), que además fijan la
+      // escala. Pedir el token suelto era justo lo que permitía que cada página
+      // inventara sus propios tamaños.
+      it('renders numbered h2 sections with the site heading utility', () => {
         const h2s = src.match(/<h2\b[^>]*>/g) ?? []
         expect(h2s.length).toBeGreaterThan(0)
         for (const h2 of h2s) {
-          expect(h2).toContain('font-heading')
+          expect(h2).toContain('heading-section')
         }
       })
 
-      it('uses the design heading family on the h1', () => {
-        expect(src).toMatch(/<h1\b[^>]*font-heading/)
+      it('uses the site heading utility on the h1', () => {
+        expect(src).toMatch(/<h1\b[^>]*heading-page/)
       })
 
       it('does not use the deprecated bg-gradient-to- utility', () => {

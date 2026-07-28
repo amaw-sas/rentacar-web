@@ -2,15 +2,13 @@
  * Reviews (issue #112) — GOLDEN PARITY contract.
  *
  * Updated from the F1 "no marketing numbers" stance: the directive confirmed the
- * Google rating block (5,0 · 43 reseñas) is REAL data — alquilame's actual Google
+ * Google rating block (4,9) is REAL data — alquilame's actual Google
  * Business profile (cid=11824841242913553901). The golden #google-reviews section
  * therefore surfaces it, and these assertions encode that golden contract:
- *   - The REAL Google rating block: "5,0", "43 reseñas verificadas en Google",
+ *   - The REAL Google rating block: "4,9", without a stale review count,
  *     the multicolor Google logo, and the "Ver reseñas en Google" CTA → the
  *     google.com/maps CID link is the legitimate brand destination.
- *   - The 3 featured cards STILL render the REAL testimonials
- *     (franchiseTestimonials[brandCode] via useFetchRentacarData), never a
- *     hardcoded testimonial array.
+ *   - The 3 featured cards render the audited, verbatim Google review source.
  *   - The section background is the golden's flat gray-100 (no gradient).
  *   - Issue #312: the AggregateRating SCHEMA (fabricated 4,9★/5★ markup) was
  *     removed site-wide — self-serving review markup is ineligible per Google's
@@ -33,35 +31,50 @@ const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 
 describe('Reviews.vue — golden #google-reviews parity', () => {
   const reviews = read('app/components/home/Reviews.vue')
+  const reviewData = read('app/data/googleReviews.ts')
+  // The rating/logo/CTA moved into the shared HomeGoogleRating so the city
+  // testimonials sections show the same proof. Same assertions, new subject.
+  const rating = read('app/components/home/GoogleRating.vue')
 
-  it('sources the featured cards from franchiseTestimonials[brandCode] via useFetchRentacarData (same as legacy)', () => {
-    expect(reviews).toMatch(/useFetchRentacarData\(\)/)
-    expect(reviews).toMatch(/franchiseTestimonials\[brandCode\]/)
-    expect(reviews).toMatch(/rentacarFranchise/)
+  it('sources the featured cards from the local audited Google reviews', () => {
+    expect(reviews).toMatch(/import\s*\{[^}]*googleReviews[^}]*\}\s*from\s*["']~\/data\/googleReviews["']/)
+    expect(reviews).toMatch(/googleReviews\.slice\(0,\s*3\)/)
+    expect(reviews).not.toMatch(/useFetchRentacarData|franchiseTestimonials|rentacarFranchise/)
   })
 
-  it('iterates the real testimonials — no hardcoded testimonial array', () => {
+  it('iterates the real Google reviews by reviewer name and verbatim quote', () => {
     expect(reviews).toMatch(/v-for="testimonio in testimonios"/)
     expect(reviews).toMatch(/testimonio\.quote/)
-    expect(reviews).toMatch(/testimonio\.user/)
+    expect(reviews).toMatch(/testimonio\.name/)
+    expect(reviews).not.toMatch(/testimonio\.user/)
   })
 
-  it('renders the REAL Google rating block (5,0 · 43 reseñas verificadas en Google)', () => {
-    expect(reviews).toContain('5,0')
-    expect(reviews).toMatch(/43 reseñas verificadas en Google/)
-    expect(reviews).toMatch(/Verificadas con autor y fecha/)
+  it('headlines the Google block WITHOUT a review count', () => {
+    // The count left the heading: it only ever grows, so a hardcoded literal
+    // goes stale and reads as neglect. The 4,9 rating and the verification line
+    // carry the credibility on their own.
+    expect(rating).toMatch(/>\s*\{\{ heading \}\}\s*</)
+    expect(rating).toMatch(/heading\?:\s*string/)
+    expect(rating).toContain("'Reseñas verificadas en Google'")
+    expect(rating).not.toMatch(/\d+\s+reseñas/i)
+    expect(rating).toContain('4,9')
+    expect(rating).not.toContain('5,0')
+    expect(rating).toMatch(/Verificadas con autor y fecha/)
   })
 
   it('links to the real Google Business reviews profile + CTA', () => {
-    expect(reviews).toMatch(/google\.com\/maps\?cid=11824841242913553901/)
-    expect(reviews).toMatch(/Ver reseñas en Google/)
+    expect(rating).toMatch(/google\.com\/maps\?cid=11824841242913553901/)
+    expect(rating).toMatch(/Ver reseñas en Google/)
+    // The testimonial cards still deep-link to the same profile.
+    expect(reviews).toMatch(/GOOGLE_REVIEWS_URL/)
+    expect(reviewData).toMatch(/google\.com\/maps\?cid=11824841242913553901/)
   })
 
   it('renders the multicolor Google logo (real brand colors, not a brand button)', () => {
-    expect(reviews).toContain('#EA4335') // red
-    expect(reviews).toContain('#4285F4') // blue
-    expect(reviews).toContain('#FBBC05') // yellow
-    expect(reviews).toContain('#34A853') // green
+    expect(rating).toContain('#EA4335') // red
+    expect(rating).toContain('#4285F4') // blue
+    expect(rating).toContain('#FBBC05') // yellow
+    expect(rating).toContain('#34A853') // green
   })
 
   it('surfaces no aggregate-rating SCHEMA composable here (removed site-wide, #312)', () => {
@@ -78,7 +91,9 @@ describe('Reviews.vue — golden #google-reviews parity', () => {
 
   it('uses the golden flat gray-100 background and the brand red token #CC022B (no gradient)', () => {
     expect(reviews).toMatch(/bg-gray-100/)
-    expect(reviews).toContain('#CC022B')
+    // The CTA moved to the shared block and now uses the brand TOKEN
+    // (bg-brand-600 === #CC022B) instead of the raw hex.
+    expect(rating).toMatch(/bg-brand-600/)
     expect(reviews).not.toMatch(BROKEN_V3_GRADIENT)
   })
 })

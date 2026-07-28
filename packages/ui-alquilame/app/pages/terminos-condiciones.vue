@@ -1,20 +1,24 @@
 <template>
   <main class="bg-white min-h-screen">
-    <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+  <!-- Banda de marca: las legales abrían en blanco bajo el header y no se
+       leían como parte del sitio. Mismo tratamiento que /aliados y /blog. -->
+    <section class="bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
+        <h1 class="heading-page text-white">Términos y Condiciones</h1>
+        <div class="h-1 w-10 rounded-full bg-white/70 my-6 mx-auto" aria-hidden="true" />
+        <p class="text-sm text-white/75">Última actualización: Enero 2025</p>
+      </div>
+    </section>
+    <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
       <!-- Header -->
-      <header class="mb-10">
-        <p class="text-sm text-gray-500 mb-2">Última actualización: Enero 2025</p>
-        <h1 class="text-4xl lg:text-5xl font-extrabold font-heading text-gray-900">
-          Términos y Condiciones
-        </h1>
-      </header>
+      
 
       <!-- Content -->
-      <div class="prose-custom space-y-8 text-gray-700 leading-relaxed">
+      <div class="legal-doc space-y-10 text-gray-700 leading-relaxed">
 
         <!-- Introducción -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">1. Introducción</h2>
+          <h2 class="heading-section text-gray-900 mb-3">1. Introducción</h2>
           <p>
             Bienvenido a <strong>{{ franchise.name }}</strong>, una plataforma operada por <strong>AMAW S.A.S</strong> (NIT 900.665.917-7). Al utilizar nuestro sitio web y servicios, usted acepta estos Términos y Condiciones en su totalidad.
           </p>
@@ -22,7 +26,7 @@
 
         <!-- Naturaleza del Servicio -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">2. Naturaleza del Servicio</h2>
+          <h2 class="heading-section text-gray-900 mb-3">2. Naturaleza del Servicio</h2>
           <p>
             <strong>{{ franchise.name }} es una plataforma de intermediación</strong> que conecta a usuarios con empresas de alquiler de vehículos (en adelante "Rentadoras"). Es importante que comprenda lo siguiente:
           </p>
@@ -35,7 +39,7 @@
 
         <!-- Proceso de Reserva -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">3. Proceso de Reserva</h2>
+          <h2 class="heading-section text-gray-900 mb-3">3. Proceso de Reserva</h2>
           <p>El proceso de reserva funciona de la siguiente manera:</p>
           <ol class="list-decimal pl-6 space-y-2">
             <li><strong>Búsqueda:</strong> Usted selecciona fechas, lugar de recogida y devolución.</li>
@@ -51,7 +55,7 @@
 
         <!-- Requisitos del Conductor -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">4. Requisitos del Conductor</h2>
+          <h2 class="heading-section text-gray-900 mb-3">4. Requisitos del Conductor</h2>
           <p>Para alquilar un vehículo se requiere:</p>
           <ul class="list-disc pl-6 space-y-2">
             <li>Edad mínima de 18 años</li>
@@ -63,7 +67,7 @@
 
         <!-- Precios y Pagos -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">5. Precios y Pagos</h2>
+          <h2 class="heading-section text-gray-900 mb-3">5. Precios y Pagos</h2>
           <p>
             Los precios mostrados en la plataforma son los mismos que ofrecen las Rentadoras directamente. <strong>No cobramos comisiones adicionales ni afectamos el precio del alquiler.</strong> Los precios incluyen:
           </p>
@@ -87,7 +91,7 @@
 
         <!-- Cancelaciones y Modificaciones -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">6. Cancelaciones y Modificaciones</h2>
+          <h2 class="heading-section text-gray-900 mb-3">6. Cancelaciones y Modificaciones</h2>
           <p>
             Las cancelaciones y modificaciones son gratuitas y sin penalidad:
           </p>
@@ -102,9 +106,9 @@
 
         <!-- Responsabilidades -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">7. Responsabilidades</h2>
+          <h2 class="heading-section text-gray-900 mb-3">7. Responsabilidades</h2>
 
-          <h3 class="text-xl font-semibold font-heading text-gray-900 mt-6 mb-3">Responsabilidades de AMAW S.A.S ({{ franchise.shortname }}):</h3>
+          <h3 class="heading-card text-gray-900 mt-6 mb-3">Responsabilidades de AMAW S.A.S ({{ franchise.shortname }}):</h3>
           <ul class="list-disc pl-6 space-y-2">
             <li>Mostrar información precisa proporcionada por las Rentadoras</li>
             <li>Facilitar la comunicación entre usuarios y Rentadoras</li>
@@ -112,7 +116,7 @@
             <li>Atender consultas relacionadas con el uso de la plataforma</li>
           </ul>
 
-          <h3 class="text-xl font-semibold font-heading text-gray-900 mt-6 mb-3">Responsabilidades de la Rentadora:</h3>
+          <h3 class="heading-card text-gray-900 mt-6 mb-3">Responsabilidades de la Rentadora:</h3>
           <ul class="list-disc pl-6 space-y-2">
             <li>Proporcionar el vehículo reservado o uno de categoría similar/superior</li>
             <li>Garantizar que el vehículo esté en condiciones óptimas de funcionamiento</li>
@@ -120,7 +124,7 @@
             <li>Atender reclamaciones relacionadas con el servicio de alquiler</li>
           </ul>
 
-          <h3 class="text-xl font-semibold font-heading text-gray-900 mt-6 mb-3">Responsabilidades del Usuario:</h3>
+          <h3 class="heading-card text-gray-900 mt-6 mb-3">Responsabilidades del Usuario:</h3>
           <ul class="list-disc pl-6 space-y-2">
             <li>Proporcionar información veraz y actualizada</li>
             <li>Cumplir con los requisitos de la Rentadora</li>
@@ -132,7 +136,7 @@
 
         <!-- Limitación de Responsabilidad -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">8. Limitación de Responsabilidad</h2>
+          <h2 class="heading-section text-gray-900 mb-3">8. Limitación de Responsabilidad</h2>
           <p>
             AMAW S.A.S <strong>no será responsable</strong> por:
           </p>
@@ -151,7 +155,7 @@
 
         <!-- Propiedad Intelectual -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">9. Propiedad Intelectual</h2>
+          <h2 class="heading-section text-gray-900 mb-3">9. Propiedad Intelectual</h2>
           <p>
             Todo el contenido de la plataforma (textos, imágenes, logotipos, diseño) es propiedad de AMAW S.A.S o de sus licenciantes. Queda prohibida su reproducción sin autorización expresa.
           </p>
@@ -159,7 +163,7 @@
 
         <!-- Modificaciones -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">10. Modificaciones</h2>
+          <h2 class="heading-section text-gray-900 mb-3">10. Modificaciones</h2>
           <p>
             AMAW S.A.S se reserva el derecho de modificar estos Términos y Condiciones en cualquier momento. Los cambios entrarán en vigencia desde su publicación en esta página. El uso continuado de la plataforma implica la aceptación de las modificaciones.
           </p>
@@ -167,7 +171,7 @@
 
         <!-- Ley Aplicable -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">11. Ley Aplicable y Jurisdicción</h2>
+          <h2 class="heading-section text-gray-900 mb-3">11. Ley Aplicable y Jurisdicción</h2>
           <p>
             Estos Términos y Condiciones se rigen por las leyes de la República de Colombia. Para cualquier controversia, las partes se someten a la jurisdicción de los tribunales de Cali, Valle del Cauca.
           </p>
@@ -175,7 +179,7 @@
 
         <!-- Contacto -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">12. Contacto</h2>
+          <h2 class="heading-section text-gray-900 mb-3">12. Contacto</h2>
           <p>Para cualquier consulta sobre estos Términos y Condiciones:</p>
           <ul class="list-disc pl-6 space-y-2">
             <li><strong>WhatsApp:</strong> {{ franchise.phone }}</li>
@@ -215,3 +219,21 @@ useSeoMeta({
   ogDescription: `Términos y condiciones de uso de ${franchise.name} para alquiler de vehículos en Colombia.`,
 })
 </script>
+
+<style scoped>
+/*
+  Marca de sección: una barra roja corta antes de cada h2, el mismo gesto que
+  usan las secciones del sitio. Se resuelve con ::before en vez de tocar el
+  markup de cada título — son 12 secciones por documento y el texto legal no
+  debe manosearse para un detalle visual.
+*/
+.legal-doc :deep(h2)::before {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  margin-bottom: 0.75rem;
+  border-radius: 9999px;
+  background-color: var(--color-brand-600);
+}
+</style>

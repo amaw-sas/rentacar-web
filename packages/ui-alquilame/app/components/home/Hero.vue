@@ -1,36 +1,56 @@
 <template>
   <!--
-    Hero — golden parity (astro-alquilame #hero). Red gradient bg via the v4
-    bg-linear-to-* utility.
+    Hero — textured red banner + car cutout (parity with astro-alquilame). Red
+    gradient via the v4 bg-linear-to-* utility, overlaid with the fondo-banner
+    pattern. The car (carro_hero.webp, alpha) is the main visual; a small corner
+    video loops muted and plays WITH audio on click.
 
-    Perf (issue 322 SCEN-322-P01): first paint is the poster image only (NuxtImg).
-    Multi-MB video is NOT autoplay on the critical path — it activates after the
-    hero is visible + browser idle (skipped when prefers-reduced-motion).
+    Perf: the car webp reserves space via width/height (no CLS). The muted preview
+    is off the critical path — it activates after the hero is visible + browser
+    idle (skipped under prefers-reduced-motion / data-saver). The full audio video
+    is preload="none" → it downloads only when the user clicks "Activar sonido".
   -->
   <section
     id="hero"
     class="relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to [--ctx-text-primary:#fff]"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
-      <div class="grid lg:grid-cols-2 gap-10 items-center">
+    <!-- Textured banner pattern over the red gradient. -->
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-0 bg-center bg-cover opacity-60"
+      style="background-image: url('/images/fondo-banner.webp')"
+    />
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 md:py-12 w-full">
+      <div class="grid lg:grid-cols-2 gap-3 lg:gap-10 items-center">
         <div class="text-center lg:text-left">
-          <h1
-            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-white leading-[1.1]"
+          <!-- Trust signal: Google reviews star badge (parity with the city hero). -->
+          <div
+            class="flex flex-row space-x-0.5 justify-center lg:justify-start items-center text-sm text-white mb-3"
           >
-            Alquiler de Carros en Colombia al Mejor Precio
+            <IconsStarIcon v-for="i in [1, 2, 3, 4, 5]" :key="i" cls="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span class="ml-2">Reseñas en Google</span>
+          </div>
+
+          <!-- The ramp is spelled out instead of leaning on `.heading-hero`:
+               that utility applies `text-4xl md:text-5xl lg:text-7xl
+               leading-tight`, which silently beat both the size ramp declared
+               here and `leading-[1.1]` — the headline rendered at 72px/90px
+               while the markup said 48px/1.1. Explicit wins are debuggable. -->
+          <h1
+            class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold font-heading text-white leading-[1.1]"
+          >
+            Alquiler de Carros en Colombia
           </h1>
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
             Sin anticipos, sin fila. Flota con menos de 2 años y mantenimiento incluido.
             Reserva por WhatsApp en {{ cityCount }} ciudades.
           </p>
 
+          <!-- Single CTA: WhatsApp. The former secondary pill only scrolled to
+               the fleet section — a destination the page already reaches by
+               scrolling — while competing for attention with the action that
+               actually converts. -->
           <div class="mt-6 flex flex-row items-stretch gap-3 justify-center lg:justify-start">
-            <a
-              href="#fleet"
-              class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-red-700 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
-            >
-              Ver Precios
-            </a>
             <a
               :href="franchise.whatsapp"
               target="_blank"
@@ -53,90 +73,13 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-center">
-          <div
-            ref="visualBox"
-            class="w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
-            style="aspect-ratio: 16 / 9"
-          >
-            <!-- Default paint: poster only (no multi-MB video on critical path). -->
-            <NuxtImg
-              v-if="!videoActive"
-              src="/videos/hero-poster.jpg"
-              alt="Flota Alquilame Colombia"
-              width="960"
-              height="540"
-              format="webp"
-              loading="eager"
-              fetchpriority="high"
-              class="w-full h-full object-cover"
-            />
-            <!-- Prefer mp4 (audit: webm was heavier). Activated post-idle when visible. -->
-            <video
-              v-else
-              class="w-full h-full object-cover"
-              poster="/videos/hero-poster.jpg"
-              autoplay
-              muted
-              loop
-              playsinline
-              preload="metadata"
-              aria-label="Video promocional de Alquilame Colombia"
-            >
-              <source src="/videos/hero.mp4" type="video/mp4" />
-            </video>
-          </div>
-        </div>
+        <HomeHeroVisual />
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
-
 const { franchise } = useAppConfig()
 const cityCount = useCityCount()
-
-const visualBox = ref<HTMLElement | null>(null)
-const videoActive = ref(false)
-let idleId: number | undefined
-let io: IntersectionObserver | undefined
-
-onMounted(() => {
-  if (typeof window === 'undefined') return
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  const el = visualBox.value
-  if (!el) return
-
-  const activate = () => {
-    videoActive.value = true
-  }
-
-  io = new IntersectionObserver(
-    (entries) => {
-      if (!entries.some((e) => e.isIntersecting)) return
-      io?.disconnect()
-      const ric = (window as Window & {
-        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
-      }).requestIdleCallback
-      if (ric) {
-        idleId = ric(activate, { timeout: 2500 })
-      } else {
-        idleId = window.setTimeout(activate, 1200) as unknown as number
-      }
-    },
-    { rootMargin: '80px' },
-  )
-  io.observe(el)
-})
-
-onBeforeUnmount(() => {
-  io?.disconnect()
-  if (idleId !== undefined) {
-    const cic = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback
-    if (cic) cic(idleId)
-    else clearTimeout(idleId)
-  }
-})
 </script>

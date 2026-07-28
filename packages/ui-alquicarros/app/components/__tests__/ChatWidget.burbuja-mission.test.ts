@@ -24,9 +24,19 @@ const searchHydratorSource = readFileSync(
 )
 
 describe('Burbuja chat mission E1–E4 — widget integration', () => {
-  it('E10 — all three widget copies remain byte-identical', () => {
-    expect(brandWidgets[1]?.source).toBe(brandWidgets[0]?.source)
-    expect(brandWidgets[2]?.source).toBe(brandWidgets[0]?.source)
+  it('E10 — shared widget behavior; tel: is the declared live-brand extra', () => {
+    for (const { brand, source } of brandWidgets) {
+      expect(source, brand).toContain(
+        'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
+      )
+      expect(source, brand).toContain('<li v-if="chatEnabled"')
+      expect(source, brand).toContain('<li v-if="whatsappVisible"')
+      expect(source, brand).not.toContain('menuOpen')
+      // 2026-07-27, decisión del dueño: el canal tel: se queda en las marcas
+      // vivas; alquilame es la única sin teléfono.
+      if (brand === 'ui-alquilame') expect(source, brand).not.toContain('fab-call')
+      else expect(source, brand).toContain('fab-call')
+    }
   })
 
   it('E1 — OFF gates timers, announcements, badges, panel and typing surface', () => {
@@ -56,9 +66,6 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
       /function isContactTeaserRouteExcluded\(path: string\)[\s\S]*return isReservationFunnelRoute\(path\)/,
     )
     for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toMatch(
-        /const isReservationRoute = computed\([\s\S]*isReservationFunnelRoute\(route\.path\)/,
-      )
       expect(source, brand).toMatch(
         /chatEnabled\.value && !isContactTeaserRouteExcluded\(route\.path\)/,
       )
@@ -90,11 +97,15 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
     )
   })
 
-  it('E4 — ON keeps Chat, WhatsApp, call and the normal teaser start path', () => {
+  it('E4 — ON keeps direct Chat + WhatsApp and the normal teaser start path', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain('<li v-if="chatEnabled"')
+      expect(source, brand).toContain('<li v-if="whatsappVisible"')
       expect(source, brand).toContain('aria-label="Abrir WhatsApp"')
-      expect(source, brand).toContain('class="fab-circle fab-call"')
+      if (brand === 'ui-alquilame')
+        expect(source, brand).not.toContain('class="fab-circle fab-call"')
+      else expect(source, brand).toContain('class="fab-circle fab-call"')
+      expect(source, brand).not.toContain('contact-fab-menu')
       expect(source, brand).toMatch(
         /teaser\.start\(\{[\s\S]*allowed: \(\) => teaserAllowed\.value/,
       )

@@ -38,6 +38,11 @@ describe('F2 delivery-points — real branches (SCEN-F2-04)', () => {
     expect(SRC).toMatch(/cityBranches:\s*BranchData\[\]/)
     expect(SRC).toMatch(/city\?:\s*City/)
   })
+
+  it('titles the section "Sedes en {city}"', () => {
+    expect(SRC).toContain('Sedes en {{ city?.name }}')
+    expect(SRC).not.toContain('Entrega del vehículo en')
+  })
 })
 
 describe('F2 delivery-points — length guard', () => {
@@ -56,9 +61,10 @@ describe('F2 delivery-points — F0/F1 styling lessons', () => {
     expect(SRC).not.toContain('bg-gradient-to-')
   })
 
-  it('headings adopt a .heading-* utility (Plus Jakarta, F0-03)', () => {
-    expect(SRC).toMatch(/heading-section/)
-    expect(SRC).toMatch(/heading-card/)
+  it('headings adopt a brand heading utility (Plus Jakarta, F0-03)', () => {
+    // Both the section <h2> title and the branch <h3> use font-heading — off the
+    // heading-* tokens, whose applied weight/size lost to stacked utilities.
+    expect(SRC).toMatch(/font-heading/)
   })
 
   it('is a light section — no forced white text override', () => {

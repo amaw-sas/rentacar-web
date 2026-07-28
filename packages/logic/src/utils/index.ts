@@ -18,6 +18,7 @@ export * from './useValidateFunctions';
 // String Functions
 // ============================================================================
 export { slugify } from './slugify';
+export { cityPullQuotes, splitSentences } from './cityPullQuotes';
 export { renderChatMarkdown } from './renderChatMarkdown';
 export { splitBubbles } from './splitBubbles';
 export { extractChatActions } from './extractChatActions';
@@ -32,6 +33,7 @@ export { normalizeReservationCode } from './reservationCode';
 export { pickPriceForDate } from './pickPriceForDate';
 export { isBeyondPricingHorizon, allRenderableBeyondHorizon } from './pricingHorizon';
 export { pickRepresentativeDailyPrice } from './pickRepresentativeDailyPrice';
+export { lowSeasonMonthly1k, lowSeasonDailyFrom30 } from './lowSeasonDailyPrice';
 export { categoryOffersMonthly } from './categoryOffersMonthly';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 export { applyMonthlyAnchorCap } from './applyMonthlyAnchorCap';

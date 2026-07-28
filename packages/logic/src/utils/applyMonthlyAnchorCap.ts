@@ -12,7 +12,10 @@
  * never raise one.
  *
  * DISPLAY ONLY. The real monthly price, the totals and the checkout never see
- * this; it feeds the `getDailyBasePrice` monthly branch and nothing else.
+ * this. Two display consumers, both in the monthly branch and both painting the
+ * same pair of figures: `getDailyBasePrice` (the struck price) and `getDiscount`
+ * (the percentage that explains it). They must share this base or the pill would
+ * advertise a saving measured against a number no longer on screen.
  *
  * Fails open on anything unusable (no anchor, NULL, non-finite, non-positive):
  * the customer sees today's `one_day_price` exactly as before.

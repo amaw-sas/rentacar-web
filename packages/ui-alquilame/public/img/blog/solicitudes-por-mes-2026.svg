@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" font-family="ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif">
+<rect width="1200" height="560" fill="#ffffff"/>
+<text x="70" y="42" font-size="28" font-weight="700" fill="#111827">Solicitudes de reserva por mes, 2026</text>
+<text x="70" y="70" font-size="17" fill="#6b7280">De abril a junio la demanda se multiplicó por 2,4</text>
+<line x1="70" y1="343" x2="1160" y2="343" stroke="#e5e7eb" stroke-width="1"/>
+<text x="60" y="348" font-size="14" fill="#6b7280" text-anchor="end">400</text>
+<line x1="70" y1="217" x2="1160" y2="217" stroke="#e5e7eb" stroke-width="1"/>
+<text x="60" y="222" font-size="14" fill="#6b7280" text-anchor="end">800</text>
+<line x1="70" y1="90" x2="1160" y2="90" stroke="#e5e7eb" stroke-width="1"/>
+<text x="60" y="95" font-size="14" fill="#6b7280" text-anchor="end">1200</text>
+<path d="M70.0,470.0 L70.0,350.81666666666666 Q70.0,346.81666666666666 74.0,346.81666666666666 L206.0,346.81666666666666 Q210.0,346.81666666666666 210.0,350.81666666666666 L210.0,470.0 Z" fill="#cc022b"/>
+<text x="140" y="337" font-size="22" font-weight="700" fill="#111827" text-anchor="middle">389</text>
+<text x="140" y="500" font-size="17" fill="#111827" text-anchor="middle">Abril</text>
+<path d="M386.66666666666663,470.0 L386.66666666666663,294.45000000000005 Q386.66666666666663,290.45000000000005 390.66666666666663,290.45000000000005 L522.6666666666666,290.45000000000005 Q526.6666666666666,290.45000000000005 526.6666666666666,294.45000000000005 L526.6666666666666,470.0 Z" fill="#cc022b"/>
+<text x="457" y="280" font-size="22" font-weight="700" fill="#111827" text-anchor="middle">567</text>
+<text x="457" y="500" font-size="17" fill="#111827" text-anchor="middle">Mayo</text>
+<path d="M703.3333333333333,470.0 L703.3333333333333,174.43333333333334 Q703.3333333333333,170.43333333333334 707.3333333333333,170.43333333333334 L839.3333333333333,170.43333333333334 Q843.3333333333333,170.43333333333334 843.3333333333333,174.43333333333334 L843.3333333333333,470.0 Z" fill="#cc022b"/>
+<text x="773" y="160" font-size="22" font-weight="700" fill="#111827" text-anchor="middle">946</text>
+<text x="773" y="500" font-size="17" fill="#111827" text-anchor="middle">Junio</text>
+<path d="M1019.9999999999999,470.0 L1019.9999999999999,101.28333333333336 Q1019.9999999999999,97.28333333333336 1023.9999999999999,97.28333333333336 L1156.0,97.28333333333336 Q1160.0,97.28333333333336 1160.0,101.28333333333336 L1160.0,470.0 Z" fill="#cc022b"/>
+<text x="1090" y="87" font-size="22" font-weight="700" fill="#111827" text-anchor="middle">1.177</text>
+<text x="1090" y="500" font-size="17" fill="#111827" text-anchor="middle">Julio*</text>
+<line x1="70" y1="470" x2="1160" y2="470" stroke="#6b7280" stroke-width="1"/>
+<text x="70" y="542" font-size="14" fill="#6b7280">*Julio con corte al 27. Fuente: reservas procesadas por Alquílame.</text>
+</svg>

@@ -1,31 +1,134 @@
+/* Chrome del carrusel de fotos: nombre del modelo arriba y contador abajo.
+   Vive FUERA de `.categoria` porque el mismo Carrusel.vue se monta en dos
+   superficies —la card de resultados y el slideover "Resumen"— y las dos deben
+   leerse idénticas. Cuando estas reglas estaban anidadas en `.categoria`, el
+   Resumen se quedaba sin `.contador-fotos` y el "Fotos 1 de N" caía en flujo
+   normal, encima de la foto en vez de colgado de su borde inferior. */
+.categoria,
+.reservation-resume .carrusel-container {
+    /* Cuelga del borde superior de la foto, centrada: esquinas de arriba rectas
+       (continúan el borde de la imagen) y de abajo en cápsula. */
+    .nombre-modelo {
+      @apply absolute top-0 left-1/2 -translate-x-1/2 bg-black text-white text-xs py-1 px-3;
+      @apply rounded-t-none rounded-b-[10px];
+      /* Una línea SIEMPRE: nombres largos (LU: "Suzuki Grand Vitara Híbrida
+         MHEV") partían la píldora en dos y rompían la simetría con la cápsula
+         de puntos. Acotada al ancho de la foto menos el aire lateral. */
+      @apply whitespace-nowrap max-w-[calc(100%-1rem)] overflow-hidden text-ellipsis;
+    }
+
+    /* Espejo de .nombre-modelo en el borde opuesto: cuelga del borde inferior
+       de la foto, recta abajo y curvada arriba. Solo informa la posición — la
+       navegación vive en las flechas. */
+    .contador-fotos {
+      @apply absolute bottom-0 left-1/2 -translate-x-1/2 bg-black text-white text-xs flex items-stretch gap-0.5 overflow-hidden;
+      @apply rounded-t-[10px] rounded-b-none whitespace-nowrap;
+    }
+
+    /* Flechas de navegación: cuadros negros a cada lado del texto, con realce al
+       pasar el cursor. Son <button> reales (accesibles); su clic no propaga al
+       tap de reserva del slide. */
+    /* Fondo gris SIEMPRE visible (el mismo tono del hover), con realce extra al
+       pasar el cursor. Los cuadros se leen como botones sin necesidad de hover. */
+    .contador-flecha {
+      @apply flex items-center justify-center px-1.5 cursor-pointer transition-colors bg-white/25 hover:bg-white/40 active:bg-white/55;
+    }
+
+    .contador-texto {
+      @apply flex items-center px-2 py-1;
+    }
+}
+
+/* Escalera de precios, compartida por la card de resultados y el slideover
+   "Resumen". El Resumen es un espejo de la card, no una variante: mismas filas,
+   mismo orden, mismas cifras del mismo useCategory. Tener las clases aquí
+   —y no duplicadas en reservation-resume.css— es lo que garantiza que un
+   retoque a la card arrastre al Resumen. */
+.categoria,
+.reservation-resume {
+    /* Ya no alinea todo a la derecha: los conceptos anclan a la izquierda y solo
+       las cifras (.valor-tarifa) van al margen derecho. La línea vertical
+       difuminada que separaba las dos columnas se eliminó con ellas. */
+    .contenedor-precios-tarifa{
+      @apply flex flex-col gap-1;
+    }
+
+    .fila-tarifa {
+      @apply flex items-baseline gap-3;
+    }
+
+    /* La cifra se empuja al margen derecho por sí sola, NO con justify-between:
+       la fila del descuento no tiene concepto cuando no hay descuento, y con
+       justify-between su cifra se iría a la izquierda. */
+    .valor-tarifa {
+      @apply ms-auto text-right;
+    }
+
+    .separador-tarifa {
+      @apply my-3 border-gray-300/70;
+    }
+
+    /* Solo el fondo verde queda como realce del descuento. El texto se iguala al
+       resto del desglose (2026-07-24): text-sm, peso normal y sin color propio,
+       hereda el text-gray-800 del contenedor. Antes iba negro/negrita/xs y
+       rompía la uniformidad de las filas de la tarifa diaria. */
+    .porcentaje-descuento{
+      @apply bg-green-500/30 text-sm px-1.5 py-0.5 rounded-full;
+    }
+
+    .precio-base-diario {
+      @apply text-sm line-through;
+    }
+
+    /* Igual que el resto del desglose: sin tamaño ni peso propios. El precio que
+       destaca es el TOTAL (.precio-total), no la tarifa diaria. */
+    .precio-diario {
+      @apply text-sm;
+    }
+
+    /* Sin mt-2: el aire entre filas lo pone .separador-tarifa, y dentro de una
+       fila flex ese margen desalineaba el concepto respecto a su cifra. */
+    .dias-reservados {
+      @apply text-sm;
+    }
+
+    .precio-total {
+      @apply font-heading text-black font-extrabold text-xl whitespace-nowrap;
+    }
+
+    .texto-no-incluye {
+      @apply text-[10px] text-gray-500;
+    }
+}
+
+/* El marco es el mismo de las tarjetas de "Nuestra Flota" en el home
+   (home/Fleet.vue): borde blanco de 7px + radio 22 + la misma sombra suave.
+   Solo lee como marco porque la sección de resultados va sobre bg-surface-soft
+   — si ese fondo cambia a blanco, el borde desaparece. */
 .categoria {
-    @apply bg-white rounded-lg md:col-span-1 relative text-black p-0 sm:p-0 lg:p-0;
-    @apply border border-red-600/12 shadow-[0_8px_24px_rgba(17,17,34,0.06)] overflow-hidden;
-    
+    @apply bg-white rounded-[22px] md:col-span-1 relative text-black p-0 sm:p-0 lg:p-0;
+    @apply border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] overflow-hidden;
+
     /* .agotado {
       opacity: 0.28 !important;
     }
-    
+
     .agotado .text-azul {
       color: grey !important;
     }
-    
+
     .agotado .anuncio {
       background-color: ghostwhite;
     }
-    
+
     .agotado h5 {
       color: grey !important;
     }
-    
+
     .agotado a {
       background-color: grey !important;
       border-color: grey !important;
     } */
-
-    .nombre-modelo {
-      @apply absolute top-5 left-5 bg-black/75 rounded-lg text-white text-xs py-1 px-3;
-    }
 
     .contenedor-descripcion-carro {
       @apply bg-white;
@@ -56,8 +159,10 @@
       transform: rotate(180deg);
     }
 
+    /* Kicker de gama: es metadato, no titular. Gris y pequeño para que el nombre
+       del vehículo (.descripcion-corta) sea lo que manda. */
     .categoria-carro {
-      @apply font-heading font-semibold text-red-600 text-lg leading-tight block;
+      @apply font-normal text-gray-600 text-sm leading-snug block;
     }
 
     .descripcion-corta {
@@ -79,53 +184,37 @@
       @apply font-normal text-black px-2 py-1 rounded-full text-xs bg-white border border-gray-300;
     }
 
+    /* Una sola línea bajo el nombre del vehículo: etiquetas + grupo, centrados
+       entre sí (la píldora es más alta que el texto). `flex-wrap` para que en
+       móvil el grupo baje en vez de desbordar. */
+    .fila-etiquetas-grupo {
+      @apply flex flex-wrap items-center gap-x-2 gap-y-1 mt-2;
+    }
+
+    /* `empty:hidden` es obligatorio: sin etiquetas, el gap de la fila dejaría un
+       hueco a la izquierda del grupo. El margen superior lo pone la fila. */
+    .etiquetas-categoria {
+      @apply flex flex-wrap gap-1 empty:hidden;
+    }
+
+    /* "sin pico y placa" es el diferenciador que más pesa en Bogotá: amarillo
+       para que se lea a distancia. Texto negro — el amarillo brillante no
+       sostiene texto blanco (misma regla que --color-whatsapp). */
+    /* text-sm para igualar el tamaño del kicker de gama (.categoria-carro); el
+       amarillo al 50% para bajarle intensidad sin perder el acento. Sin borde
+       (border-0 anula el `border` gris de .etiqueta-carro). */
+    .etiqueta-sin-pico-placa {
+      @apply bg-yellow-300/50 text-black font-semibold text-sm border-0;
+    }
+
+    /* Una sola columna: filas "concepto | cifra" y, bajo un separador, la
+       protección a lo ancho. Antes eran dos columnas (precios | protección). */
     .contenedor-tarifas{
-      @apply grid grid-cols-2 py-4 relative text-gray-800 rounded-b-lg;
+      @apply flex flex-col px-5 py-4 relative text-gray-800 rounded-b-lg;
     }
 
-    /* Fondo degradado sutil: blanco → gris claro → blanco */
-    .contenedor-tarifas.sutil-fondo {
-      background: linear-gradient(to right, white, #ededed 50%, white);
-    }
-
-    .contenedor-precios-tarifa{
-      @apply flex flex-col items-end pr-5 text-right;
-    }
-
-    /* Línea vertical difuminada entre las dos columnas */
-    .contenedor-precios-tarifa.con-borde-difuminado {
-      @apply relative min-h-[100px];
-    }
-
-    .contenedor-precios-tarifa.con-borde-difuminado::after {
-      content: '';
-      @apply absolute top-0 right-0 bottom-0 w-px pointer-events-none;
-      background: linear-gradient(to bottom, transparent, #d1d5db 30%, #d1d5db 70%, transparent);
-    }
-
-    .porcentaje-descuento{
-      @apply bg-red-600 text-white font-semibold text-xs px-1.5 py-0.5 rounded-full;
-    }
-
-    .precio-base-diario {
-      @apply text-xs line-through;
-    }
-
-    .precio-diario {
-      /* @apply roboto-bold text-xl */
-      @apply text-xl;
-    }
-
-    .dias-reservados {
-      @apply text-sm mt-2;
-    }
-
-    .precio-total {
-      @apply font-heading text-red-600 font-extrabold text-xl whitespace-nowrap;
-    }
-
-    .texto-no-incluye {
-      @apply text-[10px] text-gray-500;
+    .contenedor-protecciones {
+      @apply flex flex-col justify-center;
     }
 
     .opcion-seleccionable {
@@ -137,21 +226,7 @@
     }
 
     .seccion-boton-seleccion {
-      @apply rounded-b-lg p-4;
-      /* Fondo gris desvanecido compartido con la sección de precios (issue #124) */
-      background: linear-gradient(to right, white, #ededed 50%, white);
-
-      .metodo-pago {
-        @apply text-center mb-3;
-      }
-
-      .metodo-pago-label {
-        @apply inline-flex items-center justify-center gap-1 text-sm font-bold text-gray-800;
-      }
-
-      .metodo-pago-valor {
-        @apply block text-sm text-gray-800;
-      }
+      @apply rounded-b-lg p-4 bg-surface-softest;
 
       .boton-seleccion {
         @apply w-full justify-center text-white bg-green-700 py-4 hover:bg-green-800 transition-colors;
@@ -163,15 +238,19 @@
       @apply scheme-light accent-black;
     }
 
-    /* Fondo degradado sutil reutilizable */
+    /* Gris plano de las tarjetas de "Nuestra Flota" del home (bg-surface-softest
+       en home/Fleet.vue). Antes era un degradado horizontal blanco→#ededed→blanco
+       que hacía que el bloque cambiara de tono a lo ancho. */
     .sutil-fondo {
-      background: linear-gradient(to right, white, #ededed 50%, white);
+      @apply bg-surface-softest;
     }
 
-    /* Contenido abierto de "Servicios adicionales": tono blanco como la sección
-       cerrada, no el gris de la sección de precios */
+    /* Contenido abierto de "Servicios adicionales": blanco como la sección
+       cerrada, para que se distinga del gris de precios y del botón. Era un
+       degradado casi-blanco; plano cumple la misma intención sin cambiar de
+       tono a lo ancho. */
     .adicionales-contenido {
-      background: linear-gradient(to right, white, #fafafa 50%, white);
+      @apply bg-white;
     }
 }
 
@@ -186,8 +265,19 @@
        @apply opacity-50 grayscale;
     }
 
-    .contenedor-descripcion-carro {
-      @apply opacity-90;
+    /* Título, gama y descripción atenuados a gris 30%: la tarjeta está inactiva
+       y su texto no debe competir con las disponibles. */
+    .descripcion-corta,
+    .categoria-carro,
+    .descripcion-larga {
+      @apply text-gray-900/30;
+    }
+
+    /* Barras del carrusel (nombre del modelo y contador de fotos): gris PLANO
+       (sin transparencia) en vez del negro opaco, texto blanco plano. */
+    .nombre-modelo,
+    .contador-fotos {
+      @apply bg-gray-500;
     }
 }
 

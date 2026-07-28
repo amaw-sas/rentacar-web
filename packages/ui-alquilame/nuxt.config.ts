@@ -484,6 +484,13 @@ export default defineNuxtConfig({
 
   modules: ['@nuxtjs/seo', '@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-llms', 'nuxt-vitalizer', '@nuxtjs/mdc'],
 
+  // Blog prose: headings keep their `id` (the TOC still deep-links) but are no
+  // longer wrapped in a self-referencing <a> — the wrapper also painted them
+  // with the primary link color, making titles compete with real body links.
+  mdc: {
+    headings: { anchorLinks: false },
+  },
+
   // Fuentes de marca self-hosted (@nuxt/fonts, bundled con @nuxt/ui).
   // configKey top-level `fonts` — NO se añade a `modules[]`.
   // Self-hosted: @nuxt/fonts descarga y sirve local (sin <link> a Google).
@@ -564,6 +571,18 @@ export default defineNuxtConfig({
     // Override with NUXT_RENTACAR_ADMIN_URL and NUXT_RENTACAR_ADMIN_API_KEY
     rentacarAdminUrl: '',
     rentacarAdminApiKey: '',
+    // Formularios públicos (quejas y reclamos, registro de flota) — server-only.
+    // Override con NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO / NUXT_CONTACT_EMAIL_FROM.
+    // `from` debe ser un dominio verificado en Resend; si no, el envío es rechazado.
+    // El remitente es el sandbox de Resend (onboarding@resend.dev): NO requiere
+    // dominio verificado, pero Resend sólo entrega al correo dueño de la cuenta.
+    // Por eso el destino es info@artesyweb.com. Si algún día se verifica
+    // alquilame.co en Resend, basta cambiar estas dos variables por entorno.
+    // Nota: NO se envía copia a quien llena el formulario — el correo es una
+    // notificación interna; su dirección viaja en reply-to para poder responder.
+    resendApiKey: '',
+    contactEmailTo: 'info@artesyweb.com',
+    contactEmailFrom: 'Alquilame <onboarding@resend.dev>',
     // Public config (exposed to client)
     public: {
       rentacarFranchise: "alquilame",
@@ -649,6 +668,13 @@ export default defineNuxtConfig({
       }
     },
     routeRules: {
+      // Publication F1 — legacy alquilame.co landing URLs with Search Console
+      // history must survive the domain cutover (/registratuflota alone had
+      // 437 impressions at position 3.1). 301: authority moves permanently.
+      '/registratuflota': { redirect: { to: '/aliados', statusCode: 301 } },
+      '/aviso-proteccion-de-datos': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
+      '/terminos-condiciones.html': { redirect: { to: '/terminos-condiciones', statusCode: 301 } },
+
       // Issue 322 SCEN-322-S04 — baseline security headers (all responses).
       // CSP is limited to frame-ancestors so we don't break Nuxt inline assets;
       // full script-src CSP would need a separate hardening pass.

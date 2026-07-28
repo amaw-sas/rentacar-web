@@ -66,6 +66,15 @@ describe('ISSUE-001: mobile menu toggle icon stays visible on the white header',
     expect(base, 'unscoped (dark-header) toggle rule not found').not.toBeNull()
     expect(base![0]).toMatch(/color:\s*white/i)
   })
+
+  it('uses only the UHeader toggle as the close X', () => {
+    const src = readFileSync(LAYOUT, 'utf-8')
+    const mobileBody = src.slice(
+      src.indexOf('<template #body>'),
+      src.indexOf('</UHeader>'),
+    )
+    expect(mobileBody).not.toMatch(/<UButton[\s\S]*?icon="lucide:x"/)
+  })
 })
 
 describe('ISSUE-002: conversion CTAs hydrate before the tap, not on it', () => {

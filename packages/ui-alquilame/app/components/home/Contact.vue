@@ -2,10 +2,9 @@
   <!--
     contact — CTA "Reserva tu Carro Hoy", paridad visual con golden 10-contact.html.
 
-    Decisión de directiva: PARIDAD VISUAL → botones (Reserva Ahora + WhatsApp),
-    NO formulario. Conserva los links reales:
-      - "Reserva Ahora" → motor interno; el ancla es configurable por página
-        host (home: #hero / city landing: #searcher) vía reserveAnchor.
+    Decisión de directiva: PARIDAD VISUAL → botones (Llamar + WhatsApp),
+    NO formulario. Ambos contactos vienen de la configuración de la franquicia:
+      - Llamar → franchise.phone, normalizado como enlace tel:.
       - WhatsApp → franchise.whatsapp (URL completa, jamás re-envuelta).
 
     Background: réplica exacta del gradiente del golden (radiales naranjas +
@@ -63,17 +62,18 @@
           Reserva tu Carro Hoy
         </h2>
         <p class="text-lg md:text-xl text-white/85 mb-8">
-          Sin anticipos. Sin cargos ocultos. Cancela gratis hasta 24 horas antes.
+          Cancela gratis cuando quieras.
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start">
-          <!-- Reserve → internal engine; anchor is configurable per host page
-               (home: #hero / city landing: #searcher) via the reserveAnchor prop. -->
+          <!-- Phone → franchise.phone, normalized to a dialable tel: URL. -->
           <a
-            :href="reserveAnchor"
-            class="w-full sm:w-auto inline-flex items-center justify-center px-9 py-4 text-lg font-semibold rounded-full bg-white text-red-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
+            :href="`tel:${franchise.phone.replace(/\s/g, '')}`"
+            :aria-label="`Llamar al ${franchise.phone}`"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 text-lg font-semibold rounded-full bg-white text-red-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            Reserva Ahora
+            <PhoneIcon cls="size-5" />
+            Llamar
           </a>
 
           <!-- Contact via WhatsApp → franchise.whatsapp (full URL, not re-wrapped).
@@ -82,11 +82,11 @@
             :href="franchise.whatsapp"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Habla con un asesor por WhatsApp"
+            aria-label="Hablar por WhatsApp"
             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 text-lg font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
           >
             <WhatsappIcon cls="size-5" />
-            Habla con un Asesor
+            WhatsApp
           </a>
         </div>
 
@@ -126,7 +126,7 @@
               <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
               <path d="m9 12 2 2 4-4" />
             </svg>
-            Cancela gratis 24h
+            Cancela gratis
           </li>
           <li class="flex items-center gap-2 text-white/90 text-sm font-medium">
             <svg
@@ -144,7 +144,7 @@
               <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
               <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
             </svg>
-            Soporte 24/7
+            Chat 24/7
           </li>
         </ul>
       </div>
@@ -153,11 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { IconsWhatsappIcon as WhatsappIcon } from '#components'
-
-// "Reserva Ahora" anchor target. Defaults to the home's city-selector hero
-// (#hero); the city landing passes '#searcher' (its hero has no #hero id).
-withDefaults(defineProps<{ reserveAnchor?: string }>(), { reserveAnchor: '#hero' })
+import { IconsPhoneIcon as PhoneIcon, IconsWhatsappIcon as WhatsappIcon } from '#components'
 
 const { franchise } = useAppConfig()
 

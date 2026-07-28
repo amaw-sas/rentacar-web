@@ -1,20 +1,24 @@
 <template>
   <main class="bg-white min-h-screen">
-    <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+  <!-- Banda de marca: las legales abrían en blanco bajo el header y no se
+       leían como parte del sitio. Mismo tratamiento que /aliados y /blog. -->
+    <section class="bg-linear-to-b from-footer-from to-footer-to [--ctx-text-primary:#fff]">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
+        <h1 class="heading-page text-white">Política de Privacidad y Tratamiento de Datos Personales</h1>
+        <div class="h-1 w-10 rounded-full bg-white/70 my-6 mx-auto" aria-hidden="true" />
+        <p class="text-sm text-white/75">Última actualización: Enero 2025</p>
+      </div>
+    </section>
+    <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
       <!-- Header -->
-      <header class="mb-10">
-        <p class="text-sm text-gray-500 mb-2">Última actualización: Enero 2025</p>
-        <h1 class="text-4xl lg:text-5xl font-extrabold font-heading text-gray-900">
-          Política de Privacidad y Tratamiento de Datos Personales
-        </h1>
-      </header>
+      
 
       <!-- Content -->
-      <div class="prose-custom space-y-8 text-gray-700 leading-relaxed">
+      <div class="legal-doc space-y-10 text-gray-700 leading-relaxed">
 
         <!-- Responsable del Tratamiento -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">1. Responsable del Tratamiento</h2>
+          <h2 class="heading-section text-gray-900 mb-3">1. Responsable del Tratamiento</h2>
           <p>
             Para todos los efectos, será responsable de los datos <strong>AMAW S.A.S</strong>, identificada con NIT 900.665.917-7, con domicilio en Cali, Valle del Cauca, Colombia.
           </p>
@@ -25,7 +29,7 @@
 
         <!-- Marco Legal -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">2. Marco Legal</h2>
+          <h2 class="heading-section text-gray-900 mb-3">2. Marco Legal</h2>
           <p>
             Esta política se rige por la Constitución Política de Colombia, la Ley 1581 de 2012, el Decreto 1377 de 2013 y demás normas que las modifiquen, adicionen o complementen.
           </p>
@@ -33,7 +37,7 @@
 
         <!-- Finalidades -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">3. Finalidades del Tratamiento</h2>
+          <h2 class="heading-section text-gray-900 mb-3">3. Finalidades del Tratamiento</h2>
           <p>Los datos personales recopilados serán utilizados para las siguientes finalidades:</p>
           <ul class="list-disc pl-6 space-y-2">
             <li>Gestionar solicitudes de reserva de vehículos a través de nuestra plataforma</li>
@@ -49,7 +53,7 @@
 
         <!-- Información Recopilada -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">4. Información Recopilada</h2>
+          <h2 class="heading-section text-gray-900 mb-3">4. Información Recopilada</h2>
           <p>Recopilamos los siguientes tipos de datos personales:</p>
           <ul class="list-disc pl-6 space-y-2">
             <li><strong>Datos de identificación:</strong> nombre completo, tipo y número de documento de identidad</li>
@@ -60,7 +64,7 @@
 
         <!-- Derechos del Titular -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">5. Derechos del Titular</h2>
+          <h2 class="heading-section text-gray-900 mb-3">5. Derechos del Titular</h2>
           <p>De acuerdo con la Ley 1581 de 2012, usted tiene derecho a:</p>
           <ul class="list-disc pl-6 space-y-2">
             <li><strong>Conocer:</strong> acceder a sus datos personales que han sido objeto de tratamiento</li>
@@ -74,7 +78,7 @@
 
         <!-- Procedimiento -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">6. Procedimiento para Ejercer sus Derechos</h2>
+          <h2 class="heading-section text-gray-900 mb-3">6. Procedimiento para Ejercer sus Derechos</h2>
           <p>
             Para ejercer cualquiera de sus derechos, puede comunicarse con nosotros a través de:
           </p>
@@ -90,7 +94,7 @@
 
         <!-- Cookies -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">7. Cookies</h2>
+          <h2 class="heading-section text-gray-900 mb-3">7. Cookies</h2>
           <p>
             Nuestro sitio web utiliza cookies para mejorar su experiencia de navegación. Las cookies son pequeños archivos que se almacenan en su dispositivo y nos permiten:
           </p>
@@ -106,7 +110,7 @@
 
         <!-- Enlaces a Terceros -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">8. Enlaces a Terceros</h2>
+          <h2 class="heading-section text-gray-900 mb-3">8. Enlaces a Terceros</h2>
           <p>
             Nuestro sitio puede contener enlaces a sitios web de terceros, incluyendo las empresas rentadoras de vehículos. No somos responsables de las prácticas de privacidad de estos sitios. Le recomendamos revisar las políticas de privacidad de cada sitio que visite.
           </p>
@@ -114,7 +118,7 @@
 
         <!-- Seguridad -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">9. Medidas de Seguridad</h2>
+          <h2 class="heading-section text-gray-900 mb-3">9. Medidas de Seguridad</h2>
           <p>
             AMAW S.A.S implementa medidas técnicas, humanas y administrativas para proteger los datos personales contra acceso no autorizado, pérdida, alteración o destrucción. Utilizamos conexiones seguras (SSL/TLS) y sistemas actualizados para garantizar la seguridad de su información.
           </p>
@@ -122,7 +126,7 @@
 
         <!-- Vigencia -->
         <section>
-          <h2 class="text-2xl font-bold font-heading text-gray-900 mb-3">10. Vigencia</h2>
+          <h2 class="heading-section text-gray-900 mb-3">10. Vigencia</h2>
           <p>
             Esta política entra en vigencia a partir de enero de 2025. Los datos personales serán conservados mientras sean necesarios para las finalidades descritas o mientras exista una obligación legal de conservación.
           </p>
@@ -165,3 +169,21 @@ useSeoMeta({
   ogDescription: `Política de privacidad y tratamiento de datos personales de ${franchise.shortname} según la Ley 1581 de 2012.`,
 })
 </script>
+
+<style scoped>
+/*
+  Marca de sección: una barra roja corta antes de cada h2, el mismo gesto que
+  usan las secciones del sitio. Se resuelve con ::before en vez de tocar el
+  markup de cada título — son 12 secciones por documento y el texto legal no
+  debe manosearse para un detalle visual.
+*/
+.legal-doc :deep(h2)::before {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  margin-bottom: 0.75rem;
+  border-radius: 9999px;
+  background-color: var(--color-brand-600);
+}
+</style>

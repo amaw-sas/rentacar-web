@@ -133,5 +133,7 @@ docs/seo/data/.tokens/
 /.claude/metrics.jsonl.*
 .vercel
 
+# Orchestration mission logs (screenshots, security notes) — never publish; repo is public
+.mission/
 # Production row pre-image dumped by scripts/fix-blog-cross-brand-mentions.ts
 blog-cross-brand-snapshot.*.json

@@ -6,14 +6,27 @@
     (LazyChatWidget), the footer is the F0 chrome.
   -->
   <div>
-    <HomeAnnouncementBar />
+    <!-- The announcement bar moved to layouts/default.vue: it is top chrome and
+         must render ABOVE the header, which only the layout owns. -->
     <HomeHero />
     <HomeFleet />
+    <!--
+      Franjas separadoras: mismo componente y mismo ritmo que las landings de
+      ciudad (tras la flota, tras "por que", y tras las resenas). Alla el texto
+      sale de la descripcion de cada ciudad; la home no tiene equivalente, asi
+      que estas tres frases hablan del pais en general y evitan el tono
+      comercial, igual que el util de ciudad descarta las frases de oferta.
+    -->
+    <CityPullQuote :quote="pullQuotes[0]!" />
     <HomeHowItWorks />
-    <HomeValueProps />
-    <HomeCities />
-    <HomeReviews />
+    <!-- Stats sit high — right after "Cómo funciona" and before "¿Por qué?" —
+         matching the reference order (was previously buried below Reviews). -->
     <HomeStats />
+    <HomeValueProps />
+    <CityPullQuote :quote="pullQuotes[1]!" />
+    <HomeCities />
+    <CityPullQuote :quote="pullQuotes[2]!" lead="Colombia" />
+    <HomeReviews />
     <HomeRequirements />
     <HomeFaq />
     <HomeContact />
@@ -26,6 +39,16 @@
 import type { FAQPage } from "schema-dts";
 
 const { franchise } = useAppConfig();
+
+// Franjas separadoras: las tres hablan de Colombia (en ciudad el texto sale de
+// la descripcion de cada ciudad; la home no tiene equivalente). Tono editorial,
+// nada comercial. La tercera lleva "Colombia" como palabra destacada en rojo,
+// igual que en ciudad va el nombre de la ciudad.
+const pullQuotes = [
+  'Colombia se ve distinta desde la carretera. Lo bueno suele estar entre una ciudad y otra.',
+  'Del páramo al mar en el mismo día. Colombia es más grande de lo que cabe en un vuelo.',
+  'no se acaba: siempre hay un pueblo más adelante que vale la parada.',
+];
 const { faqs } = useData();
 const homeSEO = useHomeSEO();
 
@@ -42,7 +65,6 @@ useSeoMeta({
   ogImage: franchise.ogImage,
   ogImageAlt: `Familia colombiana disfrutando viaje en carro alquilado - ${franchise.name}`,
   ogImageType: "image/jpeg",
-  ogImageUrl: franchise.ogImage,
   ogImageWidth: "1200",
   ogImageHeight: "630",
   ogUrl: franchise.website,

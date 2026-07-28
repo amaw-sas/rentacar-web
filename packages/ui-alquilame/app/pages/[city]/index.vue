@@ -3,9 +3,11 @@
 </template>
 
 <script lang="ts" setup>
+import { useAlquilameCityPageSEO } from '~/composables/useAlquilameCityPageSEO'
+
 definePageMeta({ middleware: ['rentacar-data'] })
 
-const { city } = useCityPageSEO()
+const { city } = useAlquilameCityPageSEO()
 
 // Lanzar error 404 si la ciudad no existe. `fatal: true` es necesario para que
 // la página de error (error.vue) también se muestre en navegación client-side

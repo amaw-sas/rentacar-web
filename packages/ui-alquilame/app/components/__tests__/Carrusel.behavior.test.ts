@@ -33,7 +33,7 @@ function mountCarrusel() {
   return mount(Carrusel, {
     props: { category: 'C', vehicleModels: [{ nombre: 'Aveo', image: '/aveo.jpg' }] },
     global: {
-      stubs: { UCarousel: UCarouselStub, NuxtImg: true },
+      stubs: { UCarousel: UCarouselStub, NuxtImg: true, UIcon: true },
     },
   })
 }

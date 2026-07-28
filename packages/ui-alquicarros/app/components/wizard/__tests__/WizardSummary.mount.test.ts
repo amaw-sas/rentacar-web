@@ -11,6 +11,8 @@
 // producción (Intl es-CO, 0 decimales) para que las cadenas sean fieles.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { ref } from 'vue'
 
 vi.mock('pinia', () => ({
@@ -67,6 +69,9 @@ function buildCategory(opts: {
   }
 }
 
+/** Último stub del store de búsqueda, para poder observar lo que el resumen escribe. */
+let lastSearchStub: { reservationOverlayOpen: { value: boolean } } | null = null
+
 /** Sede de recogida por defecto de los stubs (Bogotá). */
 const PICKUP_BRANCH = { name: 'Bogotá Aeropuerto', city: 'bogota' }
 
@@ -90,7 +95,10 @@ function stubStores(category: unknown, monthly = false, trip: Record<string, unk
     haveMonthlyReservation: ref(monthly),
     ...Object.fromEntries(Object.entries(trip).map(([k, v]) => [k, ref(v)])),
   }
-  const search = { selectedCategory: ref(category) }
+  // Fiel al store real: `reservationOverlayOpen` existe en useStoreSearchData y
+  // el resumen lo escribe para que el FAB de contacto se aparte de su CTA.
+  const search = { selectedCategory: ref(category), reservationOverlayOpen: ref(false) }
+  lastSearchStub = search
   vi.stubGlobal('useStoreReservationForm', () => form)
   vi.stubGlobal('useStoreSearchData', () => search)
 }
@@ -395,5 +403,49 @@ describe('WizardSummary — la devolución en el resumen (#367)', () => {
     expect(w.get('[data-testid="wizard-return-branch-mobile"]').text()).toContain('Medellín Centro')
     expect(w.get('[data-testid="wizard-oneway-badge-mobile"]').text()).toBe('otra ciudad')
     expect(w.get('[data-testid="wizard-return-fee-line-mobile"]').text()).toContain('$ ' + money(TRANSFER))
+  })
+})
+
+/**
+ * El FAB de contacto (bottom-right, z-60) se pintaba ENCIMA del CTA de este
+ * resumen: su barra móvil es `fixed inset-x-0 bottom-0 z-40` a ancho completo.
+ * El ChatWidget de alquicarros LEÍA `reservationOverlayOpen` pero ninguna
+ * pantalla de la marca lo ESCRIBÍA — las otras dos lo publican desde el watch
+ * del slideover, componente que aquí no existe. Esto verifica el enlace real,
+ * no la presencia del texto en el fuente.
+ */
+describe('WizardSummary — aparta el FAB de contacto de su CTA', () => {
+  it('enciende la bandera compartida mientras el resumen está en pantalla', () => {
+    stubStores(buildCategory({ rentSubtotal: 881797, actualTotal: 1154272.73 }))
+    expect(lastSearchStub!.reservationOverlayOpen.value).toBe(false)
+
+    const w = mountSummary()
+    expect(lastSearchStub!.reservationOverlayOpen.value).toBe(true)
+
+    w.unmount()
+    expect(
+      lastSearchStub!.reservationOverlayOpen.value,
+      'al salir del flujo hay que devolver el FAB: si no, queda oculto para siempre',
+    ).toBe(false)
+  })
+
+  it('la compuerta del FAB no depende del viewport, así que cubre toda la barra', () => {
+    // La barra es `lg:hidden`: ancho completo hasta 1024px. El ChatWidget oculta
+    // el stack SIN condición de viewport, así que la cubre entera. Si alguien le
+    // vuelve a poner un breakpoint, hay que comprobar que no deja banda.
+    stubStores(buildCategory({ rentSubtotal: 881797, actualTotal: 1154272.73 }))
+    const w = mountSummary()
+
+    // La barra vive en el DOM renderizado y se esconde por CSS a partir de `lg`.
+    expect(w.html()).toContain('lg:hidden fixed inset-x-0 bottom-0')
+
+    // Ruta desde el cwd del paquete: bajo jsdom `import.meta.url` no es file://.
+    const widget = readFileSync(
+      resolve(process.cwd(), 'app/components/ChatWidget.vue'),
+      'utf8',
+    )
+    expect(widget).toMatch(
+      /const hideContactButtons = computed\(\(\) => reservationOverlayOpen\.value\)/,
+    )
   })
 })

@@ -221,7 +221,8 @@
 
 <script setup lang="ts">
 // External
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watchEffect } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 
 // config
@@ -266,7 +267,28 @@ const {
   formSubmitLocked,
   haveMonthlyReservation,
 } = storeToRefs(form)
-const { selectedCategory } = storeToRefs(search)
+const { selectedCategory, reservationOverlayOpen } = storeToRefs(search)
+
+// El FAB de contacto (bottom-right, z-60) se pintaba ENCIMA del CTA de este
+// wizard: la barra inferior de abajo es `fixed inset-x-0 bottom-0 z-40` y ocupa
+// todo el ancho, así que el FAB caía justo sobre "Continuar"/"Solicitar reserva".
+// alquicarros LEÍA `reservationOverlayOpen` en su ChatWidget pero ninguna
+// pantalla de la marca lo ESCRIBÍA — las otras dos lo publican desde el watch
+// del slideover de CategorySelectionSection, componente que aquí no existe.
+// La barra inferior es `lg:hidden`: sólo existe por debajo de 1024px. El
+// ChatWidget oculta el stack completo en TODO viewport mientras el flag esté
+// encendido, así que escribirlo sin condición dejaba a alquicarros escritorio
+// sin ningún canal de contacto durante todo el embudo, esquivando una barra
+// que a ese ancho no está en pantalla (hallazgo F0). El flag sigue al viewport
+// que sí muestra la barra, y reacciona a resize.
+const isWideViewport = useMediaQuery('(min-width: 1024px)')
+const stopOverlaySync = watchEffect(() => {
+  reservationOverlayOpen.value = !isWideViewport.value
+})
+onBeforeUnmount(() => {
+  stopOverlaySync()
+  reservationOverlayOpen.value = false
+})
 
 // El CTA se deshabilita mientras la reserva está en vuelo (evita el doble-submit
 // que registraría reservas duplicadas — el CTA de datos dispara el envío).

@@ -25,14 +25,21 @@ describe('SCEN-F4-01 — hero brand (blog/index.vue)', () => {
     SOURCE.indexOf('</h1>'),
   )
 
-  it('hero h1 keeps text-white and adds font-heading', () => {
+  it('hero h1 keeps text-white and takes the brand heading font', () => {
     expect(heroH1).toMatch(/class="[^"]*\btext-white\b/)
-    expect(heroH1).toMatch(/class="[^"]*\bfont-heading\b/)
+    // Contrato actualizado: la fuente de marca ya no se pide suelta con
+    // `font-heading` — llega dentro de `heading-page`, que además fija la escala
+    // del sitio. Pedir el token suelto invitaba a inventar tamaños por página.
+    expect(heroH1).toMatch(/class="[^"]*\bheading-page\b/)
   })
 
-  it('hero accent uses a brand tone, not the legacy text-red-500', () => {
-    expect(heroH1).toMatch(/text-brand-\d/)
+  it('hero title reads solid white over the brand band', () => {
+    // Contrato actualizado: el acento rosado se retiró. Sobre el degradado de
+    // marca (#cb032c) el tono claro quedaba en 2,76:1 — bajo el mínimo AA de
+    // 3:1 para texto grande; blanco da 5,85:1 y el título se lee de una pieza.
+    expect(heroH1).toMatch(/class="[^"]*\btext-white\b/)
     expect(heroH1).not.toMatch(/text-red-500/)
+    expect(heroH1).not.toMatch(/text-brand-[23]00/)
   })
 })
 

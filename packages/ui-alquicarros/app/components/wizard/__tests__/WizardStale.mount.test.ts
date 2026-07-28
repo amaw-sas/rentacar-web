@@ -59,7 +59,7 @@ function stubSummaryStores(trip: Record<string, unknown> = {}) {
     ...Object.fromEntries(Object.entries(trip).map(([k, v]) => [k, ref(v)])),
   }
   // Gama anulada: es la consecuencia observable de la rancia.
-  const search = { selectedCategory: ref(null) }
+  const search = { selectedCategory: ref(null), reservationOverlayOpen: ref(false) }
   vi.stubGlobal('useStoreReservationForm', () => form)
   vi.stubGlobal('useStoreSearchData', () => search)
 }
@@ -128,6 +128,7 @@ describe('WizardSummary rancio (#401) — el precio se va, la causa aparece', ()
       haveMonthlyReservation: ref(false),
     }
     const search = {
+      reservationOverlayOpen: ref(false),
       selectedCategory: ref({
         categoryCode: 'C',
         isMonthlyPriceUnavailable: false,
@@ -163,7 +164,7 @@ describe('WizardSummary rancio (#401) — el precio se va, la causa aparece', ()
 
 describe('StepCoverage rancio (#401) — el aviso sustituye al comparador', () => {
   function stub(monthly: boolean) {
-    vi.stubGlobal('useStoreSearchData', () => ({ selectedCategory: ref(null) }))
+    vi.stubGlobal('useStoreSearchData', () => ({ selectedCategory: ref(null), reservationOverlayOpen: ref(false) }))
     vi.stubGlobal('useStoreReservationForm', () => ({
       haveMonthlyReservation: ref(monthly),
       fechaRecogida: ref('2026-08-01'),
@@ -193,6 +194,7 @@ describe('StepCoverage rancio (#401) — el aviso sustituye al comparador', () =
 
   it('camino feliz (regresión): sin searchStale y con gama, el comparador se renderiza y no hay aviso', () => {
     vi.stubGlobal('useStoreSearchData', () => ({
+      reservationOverlayOpen: ref(false),
       selectedCategory: ref({
         withTotalCoverage: false,
         withMileage: '1k_kms',
@@ -218,7 +220,7 @@ describe('StepCoverage rancio (#401) — el aviso sustituye al comparador', () =
 
 describe('StepExtras rancio (#401) — el aviso sustituye los toggles', () => {
   it('SCEN-401-04c: con la gama anulada no hay filas "$ " ni checkboxes; muestra el aviso y la vuelta', () => {
-    vi.stubGlobal('useStoreSearchData', () => ({ selectedCategory: ref(null) }))
+    vi.stubGlobal('useStoreSearchData', () => ({ selectedCategory: ref(null), reservationOverlayOpen: ref(false) }))
     const w = mount(StepExtras, {
       props: { searchStale: true },
       global: { components: { WizardStaleNotice }, stubs: { UCheckbox: true } },
@@ -232,6 +234,7 @@ describe('StepExtras rancio (#401) — el aviso sustituye los toggles', () => {
 
   it('camino feliz (regresión): sin searchStale se renderizan los toggles y el botón Omitir', () => {
     vi.stubGlobal('useStoreSearchData', () => ({
+      reservationOverlayOpen: ref(false),
       selectedCategory: ref({
         withExtraDriver: false,
         withBabySeat: false,

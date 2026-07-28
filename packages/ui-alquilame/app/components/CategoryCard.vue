@@ -27,13 +27,20 @@
           }"
         >
           <template #leading>
+            <!-- Orden de lectura: nombre del vehículo y, debajo, una sola fila
+                 con las etiquetas ("sin pico y placa") seguidas del grupo. El
+                 código de gama es metadato de operación, así que cierra la
+                 línea. Sin etiquetas, .etiquetas-categoria se colapsa
+                 (empty:hidden) y el grupo queda solo en esa fila. -->
             <span class="text-left text-gray-700 items-center">
-              <span class="categoria-carro">
-                Grupo {{ categoryCode }} ({{ grupo }})
-                <CategoryTags :category />
-              </span>
               <span class="descripcion-corta">
                 {{ vehicleCategory?.descripcion_corta }}
+              </span>
+              <span class="fila-etiquetas-grupo">
+                <CategoryTags :category />
+                <span class="categoria-carro">
+                  Grupo {{ categoryCode }} ({{ grupo }})
+                </span>
               </span>
             </span>
           </template>
@@ -62,12 +69,19 @@
       </UCollapsible>
 
       <!--==== ini cuerpo t1 ====-->
+      <!--
+        Disposición "concepto | cifra" (patrón de recibo): el concepto ancla la
+        lectura a la izquierda y la cifra se alinea al margen derecho, así el ojo
+        baja por los conceptos y salta al número solo cuando le interesa. Antes
+        eran dos columnas (precios | protección) con TODO alineado a la derecha,
+        conceptos incluidos, así que nada anclaba la lectura y la protección
+        quedaba estrecha. La protección ahora va a lo ancho, bajo un separador.
+      -->
       <div class="contenedor-tarifas sutil-fondo">
-        <!--==== columna izq t1====-->
-        <div class="contenedor-precios-tarifa con-borde-difuminado">
+        <div class="contenedor-precios-tarifa">
           <!-- Issue #313: reserva mensual más allá del horizonte de tarifas no se
                cotiza (todas las cifras de precio son 0). Fail-closed: se reemplaza
-               TODA la columna de precio por el estado inline — nunca un "$ 0"
+               TODA la zona de precio por el estado inline — nunca un "$ 0"
                diario/total fabricado en una superficie visible. -->
           <template v-if="isMonthlyPriceUnavailable">
             <p class="precio-total" data-testid="category-unavailable-test">
@@ -76,343 +90,185 @@
             <p class="texto-no-incluye">Escríbenos y te cotizamos.</p>
           </template>
           <template v-else>
-            <p class="text-sm">Tarifa Diaria</p>
             <!-- Sin nada que tachar getDailyBasePrice se iguala al precio real de
-                 abajo, y el tachado saldría sobre una cifra idéntica. El gate mira
-                 esas dos cifras, NO hasDiscount(): en mensual el tachado es
-                 one_day_price y hasDiscount() lo ignoraría. "Tarifa Diaria" pasa a
-                 rotular el precio real, que es lo que corresponde. -->
-            <p class="precio-base-diario" v-if="hasStruckBasePrice">$ {{ currencyDailyBasePrice }}</p>
-            <div class="porcentaje-descuento" v-if="hasDiscount()">
-              Dto hoy {{ getDiscount }}%
+                 abajo y el tachado saldría sobre una cifra idéntica. La fila
+                 entera desaparece y "Tarifa Diaria" baja a rotular el precio
+                 real. El gate mira las dos cifras impresas, NO hasDiscount(): en
+                 mensual el tachado es one_day_price y hasDiscount() lo ignora.
+                 El `v-if` del span es el que lee la guardia estructural
+                 (reservationDiscountBadgeGate): no lo quites por redundante. -->
+            <div class="fila-tarifa" v-if="hasStruckBasePrice">
+              <span class="text-sm">Tarifa Diaria</span>
+              <span class="valor-tarifa precio-base-diario" v-if="hasStruckBasePrice">$ {{ currencyDailyBasePrice }}</span>
             </div>
-            <p class="precio-diario">$ {{ currencyDailyPrice }}</p>
-            <p v-if="hasExtraHours()" class="text-sm">
-              + {{ extraHoursQuantity }}
-              {{ extraHoursQuantity > 1 ? "Horas" : "Hora" }} extra
-            </p>
-            <p v-if="hasExtraHours()" class="text-sm">
-              $ {{ currencyExtraHoursPrice }}
-            </p>
-            <p v-if="hasReturnFee()" class="text-sm">+ Retorno otra sede</p>
-            <p v-if="hasReturnFee()" class="text-sm">$ {{ currencyReturnFee }}</p>
-            <p class="dias-reservados">
-              Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
-            </p>
+            <!-- Sin descuento la fila queda sin concepto: la cifra se alinea
+                 igual a la derecha porque `valor-tarifa` usa `ms-auto`. -->
+            <div class="fila-tarifa">
+              <span class="text-sm" v-if="!hasStruckBasePrice">Tarifa Diaria</span>
+              <span class="porcentaje-descuento" v-if="hasDiscountToShow">
+                Hoy con {{ getDiscount }}% Dto.
+              </span>
+              <!-- Diario SIEMPRE con Seguro Básico: no cambia al marcar Total (que
+                   ahora es un extra aparte). En mensual sí usa el diario del mes. -->
+              <span class="valor-tarifa precio-diario">$ {{ haveMonthlyReservation ? currencyDailyPrice : currencyBasicDailyPrice }}</span>
+            </div>
+            <!-- El Seguro Básico va siempre incluido en el diario. Su detalle de
+                 coberturas queda accesible en el "?". -->
+            <div class="fila-tarifa">
+              <span class="text-sm inline-flex items-center gap-1">
+                Seguro Básico
+                <UModal :ui="modalUIConfig" title="Seguro Básico" description="Protección Obligatoria">
+                  <UButton variant="ghost" color="neutral" size="xs" aria-label="Coberturas del Seguro Básico" class="cursor-pointer" :ui="questionButtonUIConfig">
+                    <template #leading>
+                      <InfoQuestionIcon cls="size-3 text-gray-400" />
+                    </template>
+                  </UButton>
+                  <template #body>
+                    <p class="text-sm mb-4">
+                      Está incluido en el valor de alquiler del vehículo y cubre lo siguiente:
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Daños a terceros</b>: Cubre los daños materiales causados a otras
+                      personas o propiedades en caso de un accidente.
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Lesiones personales a terceros</b>: Cubre las lesiones sufridas por
+                      otras personas involucradas en el accidente.
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Daños al vehículo alquilado</b>: En caso de daños o pérdida total,
+                      cubre la mayor parte del costo, dejando al arrendatario responsable solo
+                      de una participación obligatoria que varía según la gama (entre
+                      $3.570.000 y $4.760.000).
+                    </p>
+                    <b class="text-sm mb-4">Ningún seguro cubre</b>
+                    <p class="text-sm mb-4">
+                      Pérdida de accesorios removibles del vehículo, documentos, placas o
+                      llaves. Tampoco multas de tránsito o fotomultas.
+                    </p>
+                  </template>
+                </UModal>
+              </span>
+              <span class="valor-tarifa text-sm text-gray-500">incluido</span>
+            </div>
+            <!-- En mensual, 1.000 km forman parte de la tarifa base. El desglose
+                 conserva esa base aunque se marque la ampliación, para que el
+                 recargo de la siguiente fila se lea como una suma. -->
+            <div v-if="haveMonthlyReservation" class="fila-tarifa" data-testid="monthly-mileage-included-test">
+              <span class="text-sm">1.000 kilómetros</span>
+              <span class="valor-tarifa text-sm text-gray-500">incluidos</span>
+            </div>
+            <!-- La cifra es solo el delta 2k − 1k que explica por qué subió
+                 el total. No se vuelve a sumar: withMileage ya seleccionó la
+                 tarifa completa de 2.000 km en el composable. -->
+            <div v-if="haveMonthlyReservation && withMileageUpgrade" class="fila-tarifa" data-testid="monthly-mileage-upgrade-line-test">
+              <span class="text-sm">+ 1.000 kilómetros adicionales</span>
+              <span class="valor-tarifa text-sm">$ {{ currencyMileageUpgradePrice }}</span>
+            </div>
+            <!-- Seguro Total: extra opcional que se marca en "Servicios
+                 adicionales". Aquí aparece su sobrecosto (pre-impuestos), que es
+                 justo lo que sube el subtotal. También en mensual: ahí el
+                 diario NO lo incluye (no cambia al marcarlo), así que sin esta
+                 línea el recargo movía el total sin explicación. -->
+            <div v-if="withTotalCoverage" class="fila-tarifa">
+              <span class="text-sm">+ Seguro Total {{ getFormattedDays }}</span>
+              <span class="valor-tarifa text-sm">$ {{ currencyTotalCoveragePrice }}</span>
+            </div>
+            <div v-if="hasExtraHours()" class="fila-tarifa">
+              <span class="text-sm">
+                + {{ extraHoursQuantity }}
+                {{ extraHoursQuantity > 1 ? "Horas" : "Hora" }} extra
+              </span>
+              <span class="valor-tarifa text-sm">$ {{ currencyExtraHoursPrice }}</span>
+            </div>
+            <div v-if="hasReturnFee()" class="fila-tarifa">
+              <span class="text-sm">+ Retorno otra sede</span>
+              <span class="valor-tarifa text-sm">$ {{ currencyReturnFee }}</span>
+            </div>
 
-            <UTooltip :open="totalPriceTooltipOpen" :delay-duration="tooltipOpenDelayMs" :content="{ onEscapeKeyDown: forceTotalPriceTooltipClose, onPointerDownOutside: forceTotalPriceTooltipClose }" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
-              <template #content>
-                Día: $ {{ dayPriceTooltip }} <br />
-                Seguro día: $ {{ coverageDayPriceTooltip }} <br />
-                Tasa: $ {{ taxFeePriceTooltip }} <br />
-                IVA: $ {{ ivaFeePriceTooltip }} <br />
-                Total: $ {{ actualTotalPriceTooltip }} <br />
-              </template>
-              <ULink raw class="precio-total"> $ <span>{{currencyTotalPrice}}</span></ULink>
-            </UTooltip>
+            <hr class="separador-tarifa">
 
-            <!-- <div class="font-bold text-xl" style="white-space: nowrap;" v-text="currencyTotalPrice"></div> -->
-            <p class="texto-no-incluye" v-if="haveMonthlyReservation">
+            <!--
+              Opción C (2026-07-24): el precio "todo incluido" a la vista. Cuando
+              hay impuestos que mostrar (getActualTotalPrice > getTotalPrice, i.e.
+              NO mensual) se surge la escalera: subtotal + (tasa+IVA) → total a
+              pagar. En mensual el total ya los incluye ⇒ getIvaAndTax = 0 ⇒ se
+              cae al total único de siempre, sin una línea "+ $0".
+            -->
+            <template v-if="hasSurfacedTaxes">
+              <div class="fila-tarifa">
+                <span class="text-sm">Subtotal {{ getFormattedDays }}</span>
+                <span class="valor-tarifa text-sm">$ {{ currencyTotalPrice }}</span>
+              </div>
+              <div class="fila-tarifa">
+                <span class="text-sm">Tasa administrativa + IVA</span>
+                <span class="valor-tarifa text-sm">$ {{ currencyIvaAndTax }}</span>
+              </div>
+
+              <hr class="separador-tarifa">
+            </template>
+
+            <!--
+              Adicionales SIN IVA (Conductor/Silla/Lavado): se suman tras el
+              "Total renta", no en el subtotal, porque no se les aplica IVA
+              (getTotalToPayWithAdditionals = total renta + adicionales). Cada
+              línea aparece al marcar su selector abajo; su precio ya no vive en
+              la sección de adicionales, se inyecta aquí.
+
+              Cuelga de `hasSelectedAdditionals` a secas, NO de `hasSurfacedTaxes`:
+              anidado ahí, en mensual —donde el total ya trae IVA y tasa, así que
+              no hay impuestos que surgir— los extras desaparecían de la escalera
+              y del total. El cliente marcaba $ 360.000 y la cifra no se movía.
+            -->
+            <template v-if="hasSelectedAdditionals">
+                <div class="fila-tarifa">
+                  <span class="text-sm">Total renta</span>
+                  <span class="valor-tarifa text-sm">$ {{ currencyActualTotalPrice }}</span>
+                </div>
+                <div v-if="withExtraDriver" class="fila-tarifa">
+                  <span class="text-sm">+ Conductor adicional {{ getFormattedDays }}</span>
+                  <span class="valor-tarifa text-sm">$ {{ currencyExtraDriverPrice }}</span>
+                </div>
+                <div v-if="withBabySeat" class="fila-tarifa">
+                  <span class="text-sm">+ Silla para bebé {{ getFormattedDays }}</span>
+                  <span class="valor-tarifa text-sm">$ {{ currencyBabySeatPrice }}</span>
+                </div>
+                <div v-if="withWash" class="fila-tarifa">
+                  <span class="text-sm">+ Lavado del vehículo</span>
+                  <span class="valor-tarifa text-sm">$ {{ currencyWashPrice }}</span>
+                </div>
+
+                <hr class="separador-tarifa">
+            </template>
+
+            <div class="fila-tarifa">
+              <span class="dias-reservados" v-if="hasSurfacedTaxes">Total a pagar</span>
+              <span class="dias-reservados" v-else>
+                Total {{ haveMonthlyReservation ? "30 días" : getFormattedDays }}
+              </span>
+
+              <span class="valor-tarifa">
+                <UTooltip :open="totalPriceTooltipOpen" :delay-duration="tooltipOpenDelayMs" :content="{ onEscapeKeyDown: forceTotalPriceTooltipClose, onPointerDownOutside: forceTotalPriceTooltipClose }" :ui="{content: 'h-full select-text bg-white text-gray-900 shadow-lg border border-gray-200'}" @update:open="onTotalPriceTooltipOpenChange">
+                  <template #content>
+                    Día: $ {{ dayPriceTooltip }} <br />
+                    Seguro día: $ {{ coverageDayPriceTooltip }} <br />
+                    Tasa: $ {{ taxFeePriceTooltip }} <br />
+                    IVA: $ {{ ivaFeePriceTooltip }} <br />
+                    Total: $ {{ actualTotalPriceTooltip }} <br />
+                  </template>
+                  <ULink raw class="precio-total" data-testid="category-total-price-test"> $ <span>{{ hasSelectedAdditionals ? currencyTotalToPayWithAdditionals : (hasSurfacedTaxes ? currencyActualTotalPrice : currencyTotalPrice) }}</span></ULink>
+                </UTooltip>
+              </span>
+            </div>
+
+            <p class="texto-no-incluye" v-if="hasSurfacedTaxes">Precio final, todo incluido</p>
+            <p class="texto-no-incluye" v-else-if="haveMonthlyReservation">
               Incluye IVA y tasa admin
             </p>
             <p class="texto-no-incluye" v-else>No incluye IVA ni tasa admin</p>
           </template>
         </div>
 
-        <!--==== columna der t1 ====-->
-        <div class="pl-5 flex flex-col justify-center">
-          <div>
-            <p class="text-lg text-gray-700 mb-1">Escoge protección</p>
-
-            <div class="flex flex-col justify-start">
-              <div class="opcion-seleccionable">
-                <input
-                  :id="basicCoverageCheckboxID"
-                  v-model="withTotalCoverage"
-                  type="radio"
-                  class="form-radio"
-                  :name="coverageCheckboxName"
-                  :value="false"
-                />
-
-                <label :for="basicCoverageCheckboxID">Seguro Básico</label>
-
-                <UModal
-                  :ui="modalUIConfig"
-                  title="Seguro Básico"
-                  description="Protección Obligatoria"
-                >
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    aria-label="Más información"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      Esta incluido en el valor de alquiler del vehículo y cubre
-                      lo siguiente:
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>Daños a terceros</b>: Cubre los daños materiales
-                      causados a otras personas o propiedades en caso de un
-                      accidente, el vehículo de otra persona o propiedades
-                      dañadas.
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>Lesiones personales a terceros</b>: Cubre las lesiones
-                      sufridas por otras personas involucradas en el accidente,
-                      como peatones o ocupantes de otros vehículos.
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>Daños al vehículo alquilado</b>: En caso de daños o
-                      pérdida total del vehículo, el Seguro Básico cubre la
-                      mayor parte del costo de reparación o reposición, dejando
-                      al arrendatario responsable solo de una participación
-                      obligatoria que varía según la gama. entre $3.570.000 y
-                      $4.760.000. Si el costo de reparación es menor a la
-                      participación obligatoria, el arrendatario solo pagará el
-                      valor real de la reparación.
-                    </p>
-
-                    <b class="text-sm mb-4">Ningún seguro cubre</b>
-                    <p class="text-sm mb-4">
-                      Pérdida de accesorios removibles del vehículo (radios,
-                      espejos, farolas, entre otros), ni la pérdida documentos,
-                      placas o llaves. Tampoco cubre multas de tránsito o
-                      fotomultas generadas durante el período de alquiler
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-              <!-- Sin fila de pricing activa aplicable a la fecha no hay tarifa
-                   de Seguro Total: se omite la opción (fallo visible) en vez de
-                   cotizar una tarifa retirada o un upgrade $0. Issue #322 PR10. -->
-              <div v-if="canQuoteTotalCoverage" class="opcion-seleccionable">
-                <input
-                  :id="totalCoverageCheckboxID"
-                  v-model="withTotalCoverage"
-                  type="radio"
-                  class="form-radio"
-                  :name="coverageCheckboxName"
-                  :value="true"
-                />
-
-                <label :for="totalCoverageCheckboxID">Seguro Total</label>
-
-                <UModal
-                  :ui="modalUIConfig"
-                  title="Seguro Total"
-                  description="Protección Obligatoria"
-                >
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    aria-label="Más información"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      El Seguro Total es una opción adicional al Seguro Básico,
-                      pero con beneficios ampliados:
-                    </p>
-
-                    <p class="text-sm mb-4">
-                      <b>Daños a terceros Cobertura completa del vehículo</b>
-                      Cubre el 100% de los daños al vehículo alquilado, ya sean
-                      parciales o totales, por daño o robo.
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>Eliminación de la participación obligatoria</b> No
-                      tendrás que pagar ningún valor adicional en caso de un
-                      siniestro, ya que el seguro cubre la totalidad de los
-                      daños sin ningún cargo extra, Este seguro te ofrece una
-                      mayor tranquilidad al eliminar la responsabilidad
-                      económica en caso de siniestro, asegurando que los daños
-                      sean cubiertos completamente.
-                    </p>
-                    <p class="text-sm mb-4">
-                      <b>No cubre</b> perdida de accesorios removibles del
-                      vehículo (radios, espejos, farolas, entre otros), ni la
-                      pérdida de documentos, placas o llaves. Tampoco cubre
-                      multas de tránsito o fotomultas generadas durante el
-                      período de alquiler.
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-            </div>
-
-            <p v-if="haveMonthlyReservation" class="font-bold my-1">
-              Escoge kilometraje:
-            </p>
-
-            <div
-              v-if="haveMonthlyReservation"
-              class="flex flex-col justify-start"
-            >
-              <!-- <URadioGroup
-                  v-model="withMileage" 
-                  size="sm"
-                  :items="[{label: 'Kilometraje 1000 kms', value: '1k_kms'}, {label: 'Kilometraje 2000 kms', value: '2k_kms'}]"
-                /> -->
-              <div class="opcion-seleccionable">
-                <input
-                  :id="oneKmMileageCheckboxID"
-                  v-model="withMileage"
-                  type="radio"
-                  class="form-radio"
-                  :name="mileageCheckboxName"
-                  value="1k_kms"
-                />
-
-                <label :for="oneKmMileageCheckboxID">1000 kms</label>
-
-                <UModal :ui="modalUIConfig" title="1000 Kilómetros">
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    aria-label="informacion sobre kilometraje"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      Con nuestro plan de 1000 kilómetros incluidos, disfruta de
-                      la libertad de recorrer largas distancias durante tu
-                      viaje. Este plan es perfecto para explorar múltiples
-                      destinos o realizar trayectos interurbanos cómodamente.
-                    </p>
-                    <b class="text-sm mb-4"> Ideal para viajes largos:</b>
-                    <p class="text-sm mb-4">
-                      1000 kilómetros te permiten moverte con tranquilidad y
-                      aprovechar al máximo el vehículo.
-                    </p>
-                    <b class="text-sm mb-4">Kilómetros adicionales:</b>
-                    <p class="text-sm mb-4">
-                      Si superas el límite, el costo por kilómetro adicional es
-                      de $2,300, que se cobrará al momento de retornar el auto.
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-
-              <div class="opcion-seleccionable">
-                <input
-                  :id="twoKmsMileageCheckboxID"
-                  v-model="withMileage"
-                  type="radio"
-                  class="form-radio"
-                  :name="mileageCheckboxName"
-                  value="2k_kms"
-                />
-
-                <label :for="twoKmsMileageCheckboxID">2000 kms</label>
-
-                <UModal :ui="modalUIConfig" title="2000 Kilómetros">
-                  <UButton
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    aria-label="informacion sobre kilometraje"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      Con nuestro plan de 2000 kilómetros incluidos, disfruta de
-                      la libertad de recorrer largas distancias durante tu
-                      viaje. Este plan es perfecto para explorar múltiples
-                      destinos o realizar trayectos interurbanos cómodamente.
-                    </p>
-                    <b class="text-sm mb-4"> Ideal para viajes largos:</b>
-                    <p class="text-sm mb-4">
-                      2000 kilómetros te permiten moverte con tranquilidad y
-                      aprovechar al máximo el vehículo.
-                    </p>
-                    <b class="text-sm mb-4">Kilómetros adicionales:</b>
-                    <p class="text-sm mb-4">
-                      Si superas el límite, el costo por kilómetro adicional es
-                      de $2,300, que se cobrará al momento de retornar el auto.
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-
-              <div v-if="false" class="opcion-seleccionable">
-                <input
-                  :id="threeKmsMileageCheckboxID"
-                  v-model="withMileage"
-                  type="radio"
-                  class="form-radio"
-                  :name="mileageCheckboxName"
-                  value="3k_kms"
-                />
-
-                <label :for="threeKmsMileageCheckboxID">3000 kms</label>
-
-                <UModal :ui="modalUIConfig" title="2000 Kilómetros">
-                  <UButton
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                    aria-label="informacion sobre kilometraje"
-                    class="cursor-pointer"
-                    :ui="questionButtonUIConfig"
-                  >
-                    <template #leading>
-                      <InfoQuestionIcon cls="size-3 text-gray-400" />
-                    </template>
-                  </UButton>
-
-                  <template #body>
-                    <p class="text-sm mb-4">
-                      Con nuestro plan de 2000 kilómetros incluidos, disfruta de
-                      la libertad de recorrer largas distancias durante tu
-                      viaje. Este plan es perfecto para explorar múltiples
-                      destinos o realizar trayectos interurbanos cómodamente.
-                    </p>
-                    <b class="text-sm mb-4"> Ideal para viajes largos:</b>
-                    <p class="text-sm mb-4">
-                      2000 kilómetros te permiten moverte con tranquilidad y
-                      aprovechar al máximo el vehículo.
-                    </p>
-                    <b class="text-sm mb-4">Kilómetros adicionales:</b>
-                    <p class="text-sm mb-4">
-                      Si superas el límite, el costo por kilómetro adicional es
-                      de $2,300, que se cobrará al momento de retornar el auto.
-                    </p>
-                  </template>
-                </UModal>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- adicionales cabezera t1-->
@@ -441,6 +297,113 @@
         </UButton>
         <template #content>
           <div class="flex flex-col gap-1 px-5 pt-3 pb-4 adicionales-contenido">
+            <!-- La mensualidad incluye 1.000 km. Esta casilla no crea una suma
+                 paralela: escribe 2k_kms en withMileage, la misma selección que
+                 determina el total y el payload de la reserva. -->
+            <div v-if="canUpgradeMonthlyMileage" class="flex items-center justify-between">
+              <div class="flex">
+                <UCheckbox
+                  v-model="withMileageUpgrade"
+                  color="success"
+                  class="opcion-seleccionable"
+                  data-testid="monthly-mileage-upgrade-test"
+                >
+                  <template #label>
+                    <span>
+                      1.000 km adicionales
+                      <span class="text-gray-500">(2.000 km en total)</span>
+                    </span>
+                  </template>
+                </UCheckbox>
+
+                <UModal
+                  :ui="modalUIConfig"
+                  title="Ampliación a 2.000 kilómetros"
+                  description="1.000 kilómetros adicionales"
+                >
+                  <UButton
+                    variant="ghost"
+                    color="neutral"
+                    size="xs"
+                    aria-label="Más información sobre el kilometraje"
+                    class="cursor-pointer"
+                    :ui="questionButtonUIConfig"
+                  >
+                    <template #leading>
+                      <InfoQuestionIcon cls="size-3 text-gray-400" />
+                    </template>
+                  </UButton>
+
+                  <template #body>
+                    <p class="text-sm mb-4">
+                      Tu mensualidad incluye 1.000 kilómetros. Al seleccionar
+                      esta ampliación dispondrás de 2.000 kilómetros en total
+                      durante los 30 días de alquiler.
+                    </p>
+                    <b class="text-sm mb-4">Kilómetros adicionales al plan:</b>
+                    <p class="text-sm mb-4">
+                      Si superas los 2.000 kilómetros, cada kilómetro adicional
+                      se cobrará al momento de retornar el vehículo.
+                    </p>
+                  </template>
+                </UModal>
+              </div>
+            </div>
+            <!--
+              Seguro Total como extra opcional (antes vivía en "Escoge
+              protección"). Reusa withTotalCoverage: al marcarlo, el diario sigue
+              en Básico y sube el subtotal por su sobrecosto (la línea
+              "+ Seguro Total" del desglose). Solo si es cotizable a la fecha.
+            -->
+            <div v-if="canQuoteTotalCoverage" class="flex items-center justify-between">
+              <div class="flex">
+                <UCheckbox
+                  v-model="withTotalCoverage"
+                  color="success"
+                  class="opcion-seleccionable"
+                >
+                  <template #label>
+                    Seguro Total {{ getFormattedDays }}
+                  </template>
+                </UCheckbox>
+
+                <UModal :ui="modalUIConfig" title="Seguro Total" description="Protección ampliada">
+                  <UButton
+                    variant="ghost"
+                    color="neutral"
+                    size="xs"
+                    aria-label="Más información"
+                    class="cursor-pointer"
+                    :ui="questionButtonUIConfig"
+                  >
+                    <template #leading>
+                      <InfoQuestionIcon cls="size-3 text-gray-400" />
+                    </template>
+                  </UButton>
+
+                  <template #body>
+                    <p class="text-sm mb-4">
+                      El Seguro Total es una opción adicional al Seguro Básico,
+                      pero con beneficios ampliados:
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Cobertura completa del vehículo</b>: cubre el 100% de los
+                      daños al vehículo alquilado, parciales o totales, por daño o robo.
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>Eliminación de la participación obligatoria</b>: no pagas
+                      ningún valor adicional en caso de siniestro; el seguro cubre la
+                      totalidad de los daños sin cargo extra.
+                    </p>
+                    <p class="text-sm mb-4">
+                      <b>No cubre</b>: pérdida de accesorios removibles del vehículo
+                      (radios, espejos, farolas), documentos, placas o llaves. Tampoco
+                      multas de tránsito o fotomultas.
+                    </p>
+                  </template>
+                </UModal>
+              </div>
+            </div>
             <div class="flex items-center justify-between">
               <div class="flex">
                 <UCheckbox
@@ -484,9 +447,6 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withExtraDriver" class="ml-4"
-                >$ {{ currencyExtraDriverPrice }}</span
-              >
             </div>
 
             <div class="flex items-center justify-between">
@@ -536,9 +496,6 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withBabySeat" id="precio4" class="ml-4"
-                >$ {{ currencyBabySeatPrice }}</span
-              >
             </div>
 
             <div class="flex items-center justify-between">
@@ -592,42 +549,12 @@
                   </template>
                 </UModal>
               </div>
-              <span v-show="withWash" id="precio3" class="ml-4"
-                >$ {{ currencyWashPrice }}</span
-              >
             </div>
           </div>
         </template>
       </UCollapsible>
 
       <div class="seccion-boton-seleccion">
-        <!-- Único método de pago (issue #124): info sobre el CTA, mismo fondo difuminado -->
-        <div class="metodo-pago">
-          <span class="metodo-pago-label">
-            Único método de pago
-            <UPopover :ui="{ content: 'bg-white ring-1 ring-gray-200' }">
-              <UButton
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                aria-label="Más información sobre el método de pago"
-                class="cursor-pointer p-0 -my-1"
-                :ui="questionButtonUIConfig"
-              >
-                <template #leading>
-                  <InfoQuestionIcon cls="size-3.5 text-gray-400" />
-                </template>
-              </UButton>
-              <template #content>
-                <p class="max-w-[280px] p-3 text-sm font-normal text-gray-700">
-                  El pago se realiza al recoger el vehículo en la sede, únicamente con tarjeta de crédito. No se acepta efectivo, Nequi u otros medios de pago.
-                </p>
-              </template>
-            </UPopover>
-          </span>
-          <span class="metodo-pago-valor">Tarjeta de crédito en sede</span>
-        </div>
-
         <UButton
           class="boton-seleccion"
           size="xl"
@@ -677,16 +604,10 @@ const { haveMonthlyReservation } = storeToRefs(useStoreReservationForm());
 /** category composable */
 const category: ReturnType<typeof useCategory> = useCategory(props.category);
 const {
-  coverageCheckboxName,
-  basicCoverageCheckboxID,
-  totalCoverageCheckboxID,
-  mileageCheckboxName,
-  oneKmMileageCheckboxID,
-  twoKmsMileageCheckboxID,
-  threeKmsMileageCheckboxID,
   canQuoteTotalCoverage,
   withTotalCoverage,
-  withMileage,
+  withMileageUpgrade,
+  canUpgradeMonthlyMileage,
   withExtraDriver,
   withBabySeat,
   withWash,
@@ -697,6 +618,14 @@ const {
   categoryModels,
   isMonthlyPriceUnavailable,
   currencyTotalPrice,
+  currencyActualTotalPrice,
+  currencyTotalToPayWithAdditionals,
+  currencyIvaAndTax,
+  currencyTotalCoveragePrice,
+  currencyMileageUpgradePrice,
+  currencyBasicDailyPrice,
+  getTotalPrice,
+  getActualTotalPrice,
   currencyDailyPrice,
   currencyDailyBasePrice,
   hasStruckBasePrice,
@@ -706,6 +635,7 @@ const {
   getFormattedDays,
   isPicoyPlacaExempt,
   hasDiscount,
+  hasDiscountToShow,
   hasExtraHours,
   hasReturnFee,
   currencyExtraDriverPrice,
@@ -724,6 +654,18 @@ const {
 } = category;
 
 const { modelos, grupo } = props.vehicleCategory;
+
+// Opción C: ¿hay tasa/IVA que surgir? getIvaAndTax = actualTotal − subtotal, y
+// en mensual actualTotal === subtotal ⇒ 0. Compuerta de la escalera de precios.
+const hasSurfacedTaxes = computed(() => getActualTotalPrice.value > getTotalPrice.value);
+
+// Adicionales que se INYECTAN en el desglose (sin IVA, tras "Total renta"):
+// Conductor, Silla y Lavado. El Seguro Total NO cuenta aquí — ese va en el
+// subtotal (con IVA) como línea propia. Cuando hay alguno, el total prominente
+// pasa a currencyTotalToPayWithAdditionals.
+const hasSelectedAdditionals = computed(
+  () => withExtraDriver.value || withBabySeat.value || withWash.value,
+);
 
 // Test-only knob: in dev, ?e2eTooltipDelays=1 shrinks the open/close delays so
 // the tooltip contract can be driven deterministically in e2e (Reka's 3s

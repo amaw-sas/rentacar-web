@@ -34,6 +34,10 @@ const BROKEN_V3_GRADIENT = new RegExp(['bg', 'gradient', 'to-'].join('-'))
 
 describe('Home hero — golden parity', () => {
   const hero = read('app/components/home/Hero.vue')
+  // The car + corner video moved to the shared HomeHeroVisual component so the
+  // city hero renders the identical visual. The assertions below still hold —
+  // they just live where the markup now is.
+  const visual = read('app/components/home/HeroVisual.vue')
 
   it('renders the brand red gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
     expect(hero).toMatch(/bg-linear-to-[a-z]/)
@@ -62,43 +66,79 @@ describe('Home hero — golden parity', () => {
     expect(hero).not.toMatch(/<HeroHeadline\b/)
   })
 
-  it('uses the brand heading font (font-heading) for the headline', () => {
-    expect(hero).toMatch(/<h1[^>]*\bfont-heading\b/)
-    expect(hero).toContain('Alquiler de Carros en Colombia al Mejor Precio')
+  it('sizes the headline with explicit utilities, never the heading-hero class', () => {
+    // The h1 declared `lg:text-5xl leading-[1.1]` but rendered at 72px/90px:
+    // `.heading-hero` (@apply text-4xl md:text-5xl lg:text-7xl leading-tight)
+    // won the cascade and silently overrode BOTH the size ramp and the leading.
+    // Spelling the ramp out — and dropping heading-hero — makes the markup the
+    // single source of truth for the headline scale.
+    expect(hero).not.toMatch(/<h1[^>]*\bheading-hero\b/)
+    expect(hero).toMatch(/<h1[^>]*text-3xl sm:text-4xl lg:text-5xl xl:text-6xl/)
+    expect(hero).toMatch(/<h1[^>]*font-extrabold[^>]*font-heading|<h1[^>]*font-heading[^>]*font-extrabold/)
+    expect(hero).toMatch(/<h1[^>]*leading-\[1\.1\]/)
+    expect(hero).toContain('Alquiler de Carros en Colombia')
+    expect(hero).not.toMatch(/al Mejor Precio/)
+  })
+
+  it('shows the city-style star trust badge above the headline', () => {
+    // Global auto-import name is IconsStarIcon (Icons/ dir prefix); the bare
+    // <StarIcon> alias only exists where a file imports it explicitly.
+    expect(hero).toMatch(/<IconsStarIcon\b/)
+    expect(hero).toMatch(/Reseñas en Google/)
   })
 
   it('reserves visual space with an aspect-ratio card (CLS)', () => {
-    expect(hero).toMatch(/aspect-\[/)
+    expect(visual).toMatch(/aspect-\[/)
   })
 
-  // SCEN-CLS-04: the aspect-[16/9] utility rule is NOT in Nuxt's inlined critical
-  // CSS (it ships in the JS-injected stylesheet), and the <video> carries no
-  // width/height attrs, so pre-CSS the card falls back to the 300×150 video
-  // default and shifts when the real ratio applies (home CLS 0.129). An INLINE
-  // aspect-ratio reserves the 16:9 box in the SSR HTML regardless of stylesheet
-  // timing. See docs/specs/city-hero-cls.
-  it('reserves the video card with an inline aspect-ratio (survives pre-CSS — CLS)', () => {
-    expect(hero).toMatch(/style="[^"]*aspect-ratio:\s*16\s*\/\s*9/)
+  // The banner pattern overlays the red gradient (reference look).
+  it('overlays the textured fondo-banner pattern', () => {
+    expect(hero).toMatch(/fondo-banner\.webp/)
+  })
+
+  // The car cutout is the main visual; its intrinsic width/height reserve the
+  // box in the SSR HTML → no CLS from a late-loading image.
+  it('renders the car cutout with intrinsic dimensions (CLS)', () => {
+    expect(visual).toMatch(/carro_hero\.webp/)
+    expect(visual).toMatch(/<img[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
   })
 
   it('defaults to poster image; defers video (mp4) off the critical path (issue 322 P01)', () => {
     // First paint: NuxtImg poster, not multi-MB autoplay sources.
-    expect(hero).toMatch(/NuxtImg/)
-    expect(hero).toMatch(/hero-poster\.jpg/)
-    expect(hero).toMatch(/v-if="!videoActive"/)
-    // Deferred video branch (activated after idle/visible).
-    expect(hero).toMatch(/<video\b/)
-    expect(hero).toMatch(/autoplay/)
-    expect(hero).toMatch(/\bmuted\b/)
-    expect(hero).toMatch(/\bloop\b/)
-    expect(hero).toMatch(/\bplaysinline\b/)
-    expect(hero).toMatch(/hero\.mp4/)
-    expect(hero).not.toMatch(/hero\.webm/)
+    expect(visual).toMatch(/NuxtImg/)
+    expect(visual).toMatch(/hero-poster\.jpg/)
+    expect(visual).toMatch(/v-if="!videoActive && !audioActive"/)
+    // Deferred muted-preview branch (activated after idle/visible).
+    expect(visual).toMatch(/<video\b/)
+    expect(visual).toMatch(/autoplay/)
+    expect(visual).toMatch(/\bmuted\b/)
+    expect(visual).toMatch(/\bloop\b/)
+    expect(visual).toMatch(/\bplaysinline\b/)
+    expect(visual).toMatch(/hero\.mp4/)
+    expect(visual).not.toMatch(/hero\.webm/)
   })
 
-  it('has the "Ver Precios" CTA anchoring to #fleet (no WhatsApp-to-reserve)', () => {
-    expect(hero).toMatch(/href="#fleet"/)
-    expect(hero).toMatch(/Ver Precios/)
+  // SCEN-SND: muted preview loops for free; a user click loads the full video
+  // WITH audio (preload="none" → no cost until intent), the only way browsers
+  // allow audible playback. Audible playback itself is verified in the browser.
+  it('adds a click-to-enable-sound flow backed by a preload=none audio video', () => {
+    // The audio master is a SEPARATE, deferred asset — never on the critical path.
+    expect(visual).toMatch(/hero-audio\.mp4/)
+    expect(visual).toMatch(/preload="none"/)
+    // A real button (a11y label) toggles sound on; wired to enableSound.
+    expect(visual).toMatch(/@click="enableSound"/)
+    expect(visual).toMatch(/aria-label="[^"]*sonido[^"]*"/i)
+    // State + handler exist in the script.
+    expect(visual).toMatch(/audioActive/)
+    expect(visual).toMatch(/function enableSound|const enableSound/)
+  })
+
+  it('drops the "Ver Precios" CTA — WhatsApp is the single hero action', () => {
+    // Two CTAs of equal visual weight split the intent; the hero now commits to
+    // the one action that actually converts (WhatsApp). "Ver Precios" only
+    // scrolled to #fleet, which the page already reaches by scrolling.
+    expect(hero).not.toMatch(/Ver Precios/i)
+    expect(hero).not.toMatch(/href="#fleet"/)
   })
 
   it('keeps a CONTACT WhatsApp CTA bound to franchise.whatsapp, never a hardcoded number', () => {

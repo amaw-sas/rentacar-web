@@ -21,12 +21,16 @@ const alqSection = read('packages/ui-alquilame/app/components/CategorySelectionS
 // congela— y el estado se lee/escribe vía useState 'reservation-slideover-open'.
 // Tests source-assertion (convención del repo; evita el guard de *.scenarios.md).
 describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escritorio)', () => {
-  // SCEN-1: E8 congela el `:class`; el salto NO debe tocarlo. El ancla derecho
-  // sigue hardcodeado en la clase base; el salto llega por un atributo aparte.
-  it('SCEN-1 — preserva el :class/ancla de E8 y añade data-shift-left', () => {
-    expect(chatWidget).toContain(
-      `:class="{ 'contact-fab-stack--reservation': isReservationRoute }"`,
-    )
+  // SCEN-1: el ancla derecho sigue hardcodeado en la clase base y el salto llega
+  // por un atributo aparte, nunca por un `:class` dinámico.
+  //
+  // El `:class="{ 'contact-fab-stack--reservation': isReservationRoute }"` que
+  // esta prueba congelaba desapareció al integrar el rediseño de alquilame: ese
+  // lift móvil por RUTA fue sustituido por ocultar el stack entero mientras el
+  // resumen está abierto (`hideContactButtons`). El invariante de fondo
+  // —el FAB no puede tapar Volver/Siguiente/Solicitar reserva en móvil— lo
+  // cubre ahora SCEN-4 sobre el mecanismo nuevo.
+  it('SCEN-1 — mantiene el ancla derecho de base y añade data-shift-left', () => {
     expect(chatWidget).toMatch(
       /class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4/,
     )
@@ -58,29 +62,93 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
     expect(chatWidget).toMatch(
       /\.contact-fab-stack\[data-shift-left='true'\]\s*\{[^}]*right:\s*auto;[^}]*left:\s*1\.5rem;[^}]*align-items:\s*flex-start/,
     )
+    // El rediseño eliminó el menú desplegable y con él el id #contact-fab-menu:
+    // los dos canales cuelgan de un <ul> directo, que es lo que hay que realinear.
     expect(chatWidget).toMatch(
-      /\.contact-fab-stack\[data-shift-left='true'\]\s*#contact-fab-menu\s*\{[^}]*align-items:\s*flex-start/,
+      /\.contact-fab-stack\[data-shift-left='true'\]\s*ul\s*\{[^}]*align-items:\s*flex-start/,
     )
     expect(chatWidget).toMatch(
       /\.contact-fab-stack\[data-shift-left='true'\]\s*\.fab-item\s*\{[^}]*flex-direction:\s*row-reverse/,
     )
   })
 
-  // SCEN-4: el lift móvil de main se conserva intacto (no lo pisa el rework).
-  it('SCEN-4 — conserva contact-fab-stack--reservation (lift móvil de main)', () => {
+  // SCEN-4: en móvil el FAB no puede tapar los CTA del resumen. El mecanismo
+  // cambió al integrar el rediseño —antes se ELEVABA el stack en toda la ruta
+  // del funnel (`contact-fab-stack--reservation`), ahora se OCULTA entero
+  // mientras el resumen está abierto—, pero el invariante es el mismo y sigue
+  // vigilado. El stack conserva su posición de reposo abajo.
+  it('SCEN-4 — en móvil el stack se oculta con el resumen abierto', () => {
     expect(chatWidget).toContain('.contact-fab-stack { bottom: 1.5rem; }')
-    expect(chatWidget).toMatch(/@media \(max-width: 1023\.98px\)/)
+    expect(chatWidget).toContain(
+      'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
+    )
+    // Se oculta en TODO viewport mientras el overlay está abierto: el pie del
+    // slideover ya trae su propio CTA de WhatsApp. Sin condición de viewport no
+    // puede quedar ninguna banda con el FAB encima del CTA.
     expect(chatWidget).toMatch(
-      /const isReservationRoute = computed\([\s\S]*isReservationFunnelRoute\(route\.path\)/,
+      /const hideContactButtons = computed\(\(\) => reservationOverlayOpen\.value\)/,
+    )
+    // El puente lo publica el store compartido, no una ruta.
+    expect(chatWidget).toMatch(
+      /const \{ reservationOverlayOpen \} = storeToRefs\(useStoreSearchData\(\)\)/,
     )
   })
 
   // SCEN-5: las 3 copias del widget siguen byte-idénticas (mismo invariante que
   // E10 en ui-alquicarros, pero con feedback local rápido) y sin dejar rastro
   // del composable eliminado.
-  it('SCEN-5 — las 3 copias del ChatWidget son byte-idénticas', () => {
-    expect(brandWidgets[1]).toBe(brandWidgets[0])
+  //
+  // El rediseño de alquilame ancla su burbuja y su panel al lado contrario, así
+  // que la identidad byte a byte dejó de ser cierta para esa marca. En vez de
+  // borrar la guardia se ENUMERA la excepción: alquicarros y alquilatucarro
+  // siguen idénticos, y alquilame sólo puede diferir en estas líneas. Cualquier
+  // deriva nueva —un arreglo que aterrice en una copia y no en las otras, que es
+  // lo que E10 existe para atrapar— sigue enrojeciendo.
+  const DELTA_ALQUILAME: ReadonlyArray<readonly [string, string]> = [
+    ['  left: 0;', '  right: 0;'],
+    [
+      '  border-radius: 1rem 1rem 1rem 0.25rem; /* esquina hacia el FAB (abajo-izq) */',
+      '  border-radius: 1rem 1rem 0.25rem 1rem; /* esquina hacia el FAB */',
+    ],
+    ['  transform-origin: bottom left;', '  transform-origin: bottom right;'],
+    ['  left: 1.5rem;', '  right: 1.5rem;'],
+  ]
+
+  it('SCEN-5 — alquicarros y alquilatucarro siguen byte-idénticos', () => {
     expect(brandWidgets[2]).toBe(brandWidgets[0])
+  })
+
+  // 2026-07-27, decisión del dueño: el acceso tel: 'Llámanos' SE QUEDA en las
+  // dos marcas vivas y alquilame es la única sin él. El <li> del teléfono es un
+  // delta ESTRUCTURAL declarado: se retira de la copia base antes de comparar
+  // línea a línea, así cualquier OTRA deriva sigue enrojeciendo esta prueba.
+  const stripPhoneEntry = (src: string): string => {
+    const tel = src.indexOf(':href="`tel:')
+    if (tel === -1) return src
+    const start = src.lastIndexOf('<li class="flex">', tel)
+    const end = src.indexOf('</li>', tel) + '</li>'.length
+    return src.slice(0, src.lastIndexOf('\n', start)) + src.slice(end)
+  }
+
+  it('SCEN-5a — alquilame sólo difiere en el delta de marca declarado', () => {
+    // La parte estructural del delta: las vivas llevan tel:, alquilame no.
+    expect(brandWidgets[0]).toContain(':href="`tel:')
+    expect(brandWidgets[1]).not.toContain(':href="`tel:')
+
+    const base = stripPhoneEntry(brandWidgets[0] ?? '').split('\n')
+    const alq = (brandWidgets[1] ?? '').split('\n')
+    expect(alq.length, 'alquilame cambió el número de líneas del widget').toBe(base.length)
+
+    const differing = base
+      .map((line, i) => [alq[i] as string, line] as const)
+      .filter(([a, b]) => a !== b)
+
+    expect(
+      differing,
+      'divergencia NO declarada entre las copias del ChatWidget: un arreglo '
+      + 'aterrizó en una marca y no en las otras, o el delta de marca cambió. '
+      + 'Si es intencional, decláralo en DELTA_ALQUILAME.',
+    ).toEqual(DELTA_ALQUILAME.map(pair => [pair[0], pair[1]]))
   })
   it('SCEN-5b — el composable useReservationSlideover fue eliminado (inline useState)', () => {
     expect(chatWidget).not.toContain('useReservationSlideover')

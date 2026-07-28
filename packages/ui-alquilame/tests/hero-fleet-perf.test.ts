@@ -12,21 +12,33 @@ const fleet = readFileSync(
 )
 
 describe('SCEN-322-P01 — hero default paint is poster, not multi-MB autoplay', () => {
-  it('renders NuxtImg poster on the default path', () => {
-    expect(hero).toMatch(/NuxtImg/)
-    expect(hero).toMatch(/hero-poster\.jpg/)
+  // Redesign 2026-07: the hero is a car cutout IMAGE (webp, alpha) with a small
+  // corner video. The scenario's invariant is unchanged — the first paint must
+  // never trigger a multi-MB media download — but the mechanism now lives in
+  // HeroVisual.vue: static poster first, muted preview only when visible AND
+  // idle (preload="metadata"), audio track only on click (preload="none").
+  const visual = readFileSync(
+    fileURLToPath(new URL('../app/components/home/HeroVisual.vue', import.meta.url)),
+    'utf8',
+  )
+
+  it('first paint is static imagery with reserved dimensions (no CLS, no video)', () => {
+    expect(visual).toMatch(/carro_hero\.webp/)
+    expect(visual).toMatch(/hero-poster\.jpg/)
+    // The poster branch renders while no video mode is active.
+    expect(visual).toMatch(/v-if="!videoActive && !audioActive"/)
   })
 
-  it('does not autoplay video until videoActive is set', () => {
-    expect(hero).toMatch(/v-if="!videoActive"/)
-    expect(hero).toMatch(/v-else/)
-    // No bare autoplay outside the deferred branch as the only paint path.
-    expect(hero).toMatch(/videoActive/)
+  it('the muted preview never downloads on paint: gated + preload metadata', () => {
+    expect(visual).toMatch(/v-show="videoActive && !audioActive"/)
+    expect(visual).toMatch(/preload="metadata"/)
+    // The heavy audio track only downloads on explicit click.
+    expect(visual).toMatch(/preload="none"/)
   })
 
-  it('prefers mp4 over heavier webm as the deferred source', () => {
-    expect(hero).toMatch(/hero\.mp4/)
-    expect(hero).not.toMatch(/hero\.webm/)
+  it('the Hero shell itself embeds no <video> — media lives behind HeroVisual gates', () => {
+    expect(hero).not.toMatch(/<video/)
+    expect(visual).toMatch(/<video/)
   })
 })
 

@@ -10,7 +10,8 @@
  *   - Gradient guard (F0 lesson): the section MUST use the v4 `bg-linear-to-*`
  *     utility, NEVER the broken v3 gradient alias (asserted via BROKEN_V3_GRADIENT,
  *     assembled from fragments so this file never contains the forbidden literal).
- *   - Headings adopt the `.heading-*` utilities (Plus Jakarta).
+ *   - Headings use Plus Jakarta without unlayered `.heading-*` typography
+ *     tokens overriding their explicit size/weight/color utilities.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -61,11 +62,82 @@ describe('F1 step04 — Cities.vue', () => {
     expect(cities).not.toMatch(BROKEN_V3_GRADIENT)
   })
 
-  it('adopts the .heading-* utilities (Plus Jakarta) for its headings', () => {
-    expect(cities).toMatch(/heading-(section|card)/)
+  it('keeps the section h2 in Plus Jakarta while its explicit title utilities remain authoritative', () => {
+    expect(cities).toMatch(
+      /<h2 class="font-heading text-3xl md:text-4xl font-extrabold text-gray-900">/,
+    )
+    expect(cities).not.toMatch(/<h2[^>]*\bheading-section\b/)
+  })
+
+  it('keeps each city-name h3 in Plus Jakarta with its explicit card typography intact', () => {
+    expect(cities).toMatch(
+      /<h3 class="font-heading text-lg sm:text-xl font-bold text-white leading-tight drop-shadow-\[0_2px_6px_rgba\(0,0,0,0\.55\)\]">/,
+    )
+    expect(cities).not.toMatch(/<h3[^>]*\bheading-card\b/)
   })
 
   it('reserves image space with aspect-ratio (CLS) for the featured cards', () => {
     expect(cities).toMatch(/aspect-\[/)
+  })
+
+  it('adopts the reference title and keeps the pill grid untouched', () => {
+    expect(cities).toContain('Alquila tu carro en las principales ciudades de Colombia')
+    expect(cities).not.toContain('Presentes en más de')
+    // Pill grid still iterates the full data-source order, unchanged.
+    expect(cities).toMatch(/v-for="city in cities"/)
+  })
+
+  it('shows the featured cities as a STATIC grid, not a marquee', () => {
+    // The marquee is gone: the reference presents the featured cities as a fixed
+    // grid that reveals on scroll. No track, so no duplicated copy and no
+    // aria-hidden clone to maintain.
+    expect(cities).not.toMatch(/marquee-track/)
+    expect(cities).not.toMatch(/cities-marquee/)
+    expect(cities).toMatch(/lg:grid-cols-4/)
+  })
+
+  it('gives each featured card the tall 4:5 crop and the white frame', () => {
+    expect(cities).toMatch(/aspect-\[4\/5\]/)
+    expect(cities).toMatch(/\bborder-\[7px\]/)
+    expect(cities).toMatch(/\bborder-white\b/)
+    expect(cities).toMatch(/rounded-\[22px\]/)
+  })
+
+  it('derives the branch badge from REAL branch data, never a hardcoded count', () => {
+    // The reference hardcodes "4 puntos de entrega" for Bogotá; our data says 5.
+    // The badge must come from the branches already present in the shared
+    // rentacar-data state, matched on branch.city === city.id.
+    expect(cities).toMatch(/useStoreAdminData\(\)/)
+    expect(cities).toMatch(/branches/)
+    expect(cities).toMatch(/\.city\s*===\s*/)
+    expect(cities).toMatch(/sede/)
+    // No literal "N sedes" baked into the markup.
+    expect(cities).not.toMatch(/\d+\s+sedes?\b/)
+  })
+
+  it('pluralises the badge so a single-branch city never reads "1 sedes"', () => {
+    expect(cities).toMatch(/'sede'/)
+    expect(cities).toMatch(/'sedes'/)
+  })
+
+  it('reveals the cards on scroll and honours prefers-reduced-motion', () => {
+    expect(cities).toMatch(/IntersectionObserver/)
+    expect(cities).toMatch(/prefers-reduced-motion/)
+    expect(cities).toMatch(/\.city-reveal\s*\{[\s\S]*transition:/)
+    expect(cities).not.toMatch(
+      /class="city-reveal[^"]*\btransition-all\b[^"]*\bduration-300\b/,
+    )
+  })
+
+  it('shows a hover affordance on each card', () => {
+    expect(cities).toMatch(/group-hover/)
+  })
+
+  it('adds the reference trust row (confianza) below the cities', () => {
+    // Three reassurance items ported from the reference: seguridad, entregas
+    // rápidas, soporte 24/7.
+    expect(cities).toContain('Seguridad y confianza')
+    expect(cities).toContain('Entregas rápidas')
+    expect(cities).toContain('Soporte 24/7')
   })
 })
