@@ -131,7 +131,8 @@ describe('deferred GA4 bootstrap', () => {
     },
   )
 
-  it('uses an eight-second post-load fallback when there is no interaction', () => {
+  it('uses a four-second post-load fallback when there is no interaction', () => {
+    expect(GTAG_FALLBACK_DELAY_MS).toBe(4_000)
     const harness = createHarness()
 
     harness.emit('load')

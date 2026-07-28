@@ -1,5 +1,5 @@
 export const GTAG_MEASUREMENT_ID = 'G-ZPZC1TP9T0'
-export const GTAG_FALLBACK_DELAY_MS = 8_000
+export const GTAG_FALLBACK_DELAY_MS = 4_000
 
 /**
  * Inline GA4 bootstrap used in the SSR head.

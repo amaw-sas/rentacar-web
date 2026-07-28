@@ -197,7 +197,11 @@ export default defineNuxtConfig({
             .h-10 { height: 2.5rem; }
             .h-14 { height: 3.5rem; }
             .h-full { height: 100%; }
-            @media (min-width: 640px) { .sm\\:h-9 { height: 2.25rem; } }
+            @media (min-width: 506px) { .min-\\[506px\\]\\:h-9 { height: 2.25rem; } }
+            @media (max-width: 359px) {
+              .max-\\[359px\\]\\:h-auto { height: auto; }
+              .max-\\[359px\\]\\:py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            }
             .w-auto { width: auto; }
             /*
               Tailwind v4 translate: usar la PROPIEDAD CSS translate (no
@@ -578,7 +582,7 @@ export default defineNuxtConfig({
       script: [
         // Define gtag during HTML parsing so page views and contact events queue
         // immediately, but keep the 148 KiB vendor script off the critical path.
-        // The bootstrap loads it on first interaction or 8s after window.load.
+        // The bootstrap loads it on first interaction or 4s after window.load.
         {
           innerHTML: DEFERRED_GTAG_BOOTSTRAP,
         },

@@ -19,11 +19,12 @@
     Stable height (wave 2): at 360px the copy has 248px after the outer 32px and
     inner 80px horizontal padding; its measured lines are 234px and 156px. At
     430px it has 318px and measures 297px / 93px. h-14 therefore reserves two
-    20px lines plus 8px above and below across the target mobile widths. At the
-    sm breakpoint the 394px sentence has at least 528px and fits on one line, so
-    sm:h-9 reserves that line with the same breathing room. The metric-matched
-    fallback preserves those wraps, and the heights/padding/font weight also
-    live in critical CSS before the deferred Tailwind stylesheet arrives.
+    20px lines plus 8px above and below across the target mobile widths. From
+    506px the 394px sentence fits on one line, so min-[506px]:h-9 removes the
+    empty second-line space. Below 360px, where DM Sans needs three lines,
+    max-[359px]:h-auto and max-[359px]:py-2 restore natural growth instead of
+    clipping. The metric-matched fallback preserves those wraps, and every
+    geometry rule also lives in critical CSS before deferred Tailwind arrives.
 
     Stacking: claim NO z-index. The bar renders BEFORE the header in the layout,
     so document order alone keeps the sticky header on top. The explicit z it
@@ -35,7 +36,7 @@
   -->
   <div
     v-if="!dismissed"
-    class="h-14 sm:h-9 overflow-hidden bg-gray-900 text-white text-sm text-center px-4 relative transition-[transform,opacity] duration-300"
+    class="h-14 min-[506px]:h-9 max-[359px]:h-auto max-[359px]:py-2 overflow-hidden bg-gray-900 text-white text-sm text-center px-4 relative transition-[transform,opacity] duration-300"
     :class="leaving ? '-translate-y-full opacity-0' : ''"
   >
     <!-- px-10 reserves room for the absolute close button on both sides so the

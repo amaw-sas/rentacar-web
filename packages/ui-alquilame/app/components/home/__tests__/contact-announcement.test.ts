@@ -111,16 +111,19 @@ describe('F1 step07a — AnnouncementBar.vue', () => {
     expect(barRoot, 'announcement bar root should carry a class list').not.toBeNull()
     const rootClasses = barRoot![1]!.split(/\s+/)
 
-    // 360–430px viewports leave 248–318px for copy after horizontal padding.
-    // Browser measurement gives two 20px lines throughout that range; at
-    // 640px the 394px sentence fits the available 528px on one line.
+    // 360–430px viewports leave 248–318px for copy after horizontal padding,
+    // which needs two 20px lines. From 506px the 394px sentence fits one line;
+    // below 360px an auto-height escape prevents its third line from clipping.
     expect(rootClasses).toEqual(expect.arrayContaining([
       'h-14',
-      'sm:h-9',
+      'min-[506px]:h-9',
+      'max-[359px]:h-auto',
+      'max-[359px]:py-2',
       'overflow-hidden',
       'transition-[transform,opacity]',
     ]))
     expect(rootClasses).not.toContain('py-2')
+    expect(rootClasses).not.toContain('sm:h-9')
     expect(rootClasses).not.toContain('transition-all')
 
     // nuxt-vitalizer defers the entry stylesheet. These geometry-affecting
@@ -128,7 +131,9 @@ describe('F1 step07a — AnnouncementBar.vue', () => {
     const config = read('nuxt.config.ts')
     expect(config).toContain('.h-14 { height: 3.5rem; }')
     expect(config).toContain('.h-full { height: 100%; }')
-    expect(config).toContain('.sm\\\\:h-9 { height: 2.25rem; }')
+    expect(config).toContain('.min-\\\\[506px\\\\]\\\\:h-9 { height: 2.25rem; }')
+    expect(config).toContain('.max-\\\\[359px\\\\]\\\\:h-auto { height: auto; }')
+    expect(config).toContain('.max-\\\\[359px\\\\]\\\\:py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }')
     expect(config).toContain('.px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }')
     expect(config).toContain('.font-medium { font-weight: 500; }')
   })
@@ -163,14 +168,15 @@ describe('F1 step07a — AnnouncementBar.vue', () => {
   it('anchors the close button to the centered content container, not the full-bleed bar', () => {
     // Bug (runtime): on wide desktop the absolutely-positioned close button had
     // no positioned ancestor except the full-width bar, so it floated at the far
-    // viewport corner and rode above the bar's vertical center (top:50% measured
-    // against the bar's py-2 padding box). The inner max-w-7xl content container
-    // must be `relative` so the button anchors to the CENTERED content edge and
-    // its top-1/2 / -translate-y-1/2 centers within the content line.
+    // viewport corner and could not center against the bar's reserved height.
+    // The inner max-w-7xl content container must be `relative` and h-full so the
+    // button anchors to the CENTERED content edge and its top-1/2 /
+    // -translate-y-1/2 centers within the full bar.
     // SCEN-001 / SCEN-002 (announcement-close-button.scenarios.md).
     const containerEl = bar.match(/<div class="[^"]*\bmax-w-7xl\b[^"]*"/)
     expect(containerEl, 'max-w-7xl content container should exist').not.toBeNull()
     expect(containerEl![0]).toMatch(/\brelative\b/)
+    expect(containerEl![0]).toMatch(/\bh-full\b/)
     // The button keeps its absolute + vertical-centering recipe.
     expect(bar).toMatch(/class="[^"]*\babsolute\b[^"]*top-1\/2[^"]*-translate-y-1\/2/)
   })
