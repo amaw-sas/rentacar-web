@@ -105,8 +105,8 @@
              necesita saber a quién autorizar. El bloque entero cuelga del espejo
              de `withExtraDriver`, que vive en el store de búsqueda. -->
         <template v-if="formState.conductorAdicional">
-          <p class="col-span-2 text-sm font-semibold text-gray-900 mt-2">Conductor adicional</p>
-          <u-form-field class="col-span-2" name="conductorAdicionalNombre" label="Nombre del conductor adicional">
+          <p class="col-span-2 font-heading text-base font-bold text-gray-900 mt-2">Conductor adicional</p>
+          <u-form-field class="col-span-2" name="conductorAdicionalNombre" :ui="formFieldUi" label="Nombre del conductor adicional">
             <u-input
               v-model="formState.conductorAdicionalNombre"
               class="w-full"
@@ -116,7 +116,7 @@
               :ui="inputUi"
             ></u-input>
           </u-form-field>
-          <u-form-field class="col-span-2" name="conductorAdicionalIdentificacion" label="Cédula o documento del conductor adicional">
+          <u-form-field class="col-span-2" name="conductorAdicionalIdentificacion" :ui="formFieldUi" label="Cédula o documento del conductor adicional">
             <u-input
               v-model="formState.conductorAdicionalIdentificacion"
               class="w-full"
@@ -126,11 +126,11 @@
               :ui="inputUi"
             ></u-input>
           </u-form-field>
-          <p class="col-span-2 text-xs text-gray-600" data-testid="extra-driver-notice">
+          <p class="col-span-2 text-xs text-gray-800" data-testid="extra-driver-notice">
             Enviamos estos datos a Localiza para autorizar al conductor adicional. Avísale que sus
             datos se tratan según nuestra
             <nuxt-link
-              class="underline font-medium text-gray-700 hover:text-gray-900"
+              class="underline font-medium text-blue-700 hover:text-blue-800"
               to="/politica-privacidad"
               target="_blank"
             >política de tratamiento de la información</nuxt-link>.

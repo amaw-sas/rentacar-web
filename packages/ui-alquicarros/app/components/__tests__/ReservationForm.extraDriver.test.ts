@@ -65,6 +65,24 @@ describe('SCEN-396-01 — the fields appear only with the add-on contracted', ()
     expect(block![0]).toMatch(/Localiza/)
   })
 
+  // A rebase over a brand reskin merges cleanly and still leaves these two fields
+  // looking foreign: alquilame's #425-era restyle added `:ui="formFieldUi"` to every
+  // labelled field, and a block inserted before it inherits nothing. Nothing else in
+  // the suite notices — the testids and the v-if are untouched. So the rule is
+  // relative, not absolute: whatever the holder's `identificacion` field binds, the
+  // extra driver's two fields bind the same. Brands with no `:ui` stay unaffected.
+  it('styles both fields like the holder identification field of the same brand', () => {
+    const holder = form.match(/<u-form-field[^>]*name="identificacion"[^>]*>/)
+    expect(holder).not.toBeNull()
+    const holderUi = holder![0].match(/:ui="([^"]+)"/)?.[1] ?? null
+
+    for (const field of ['conductorAdicionalNombre', 'conductorAdicionalIdentificacion']) {
+      const tag = block![0].match(new RegExp(`<u-form-field[^>]*name="${field}"[^>]*>`))
+      expect(tag, `no <u-form-field> for ${field}`).not.toBeNull()
+      expect(tag![0].match(/:ui="([^"]+)"/)?.[1] ?? null, `${field} :ui binding`).toBe(holderUi)
+    }
+  })
+
   it('places the block before the privacy consent checkbox', () => {
     const blockIdx = form.indexOf('<template v-if="formState.conductorAdicional">')
     const consentIdx = form.indexOf('name="politicaPrivacidad"')
