@@ -106,6 +106,33 @@ describe('F1 step07a — Contact.vue', () => {
 describe('F1 step07a — AnnouncementBar.vue', () => {
   const bar = read('app/components/home/AnnouncementBar.vue')
 
+  it('reserves deterministic first-paint heights without transitioning layout properties', () => {
+    const barRoot = bar.match(/<div\s+v-if="!dismissed"\s+class="([^"]+)"/)
+    expect(barRoot, 'announcement bar root should carry a class list').not.toBeNull()
+    const rootClasses = barRoot![1]!.split(/\s+/)
+
+    // 360–430px viewports leave 248–318px for copy after horizontal padding.
+    // Browser measurement gives two 20px lines throughout that range; at
+    // 640px the 394px sentence fits the available 528px on one line.
+    expect(rootClasses).toEqual(expect.arrayContaining([
+      'h-14',
+      'sm:h-9',
+      'overflow-hidden',
+      'transition-[transform,opacity]',
+    ]))
+    expect(rootClasses).not.toContain('py-2')
+    expect(rootClasses).not.toContain('transition-all')
+
+    // nuxt-vitalizer defers the entry stylesheet. These geometry-affecting
+    // utilities must therefore exist in the SSR critical CSS as well.
+    const config = read('nuxt.config.ts')
+    expect(config).toContain('.h-14 { height: 3.5rem; }')
+    expect(config).toContain('.h-full { height: 100%; }')
+    expect(config).toContain('.sm\\\\:h-9 { height: 2.25rem; }')
+    expect(config).toContain('.px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }')
+    expect(config).toContain('.font-medium { font-weight: 500; }')
+  })
+
   it('renders the bar in SSR by default so it does not shift the hero on mount (CLS)', () => {
     // CLS fix (step10 runtime): the bar must occupy its space from first paint.
     // dismissed starts false (SSR-safe default) and the bar is shown under v-if,

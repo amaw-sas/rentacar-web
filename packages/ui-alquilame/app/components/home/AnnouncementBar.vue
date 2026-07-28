@@ -16,6 +16,15 @@
     dismiss. A returning user who dismissed it sees the bar collapse just after
     mount; everyone else sees no shift.
 
+    Stable height (wave 2): at 360px the copy has 248px after the outer 32px and
+    inner 80px horizontal padding; its measured lines are 234px and 156px. At
+    430px it has 318px and measures 297px / 93px. h-14 therefore reserves two
+    20px lines plus 8px above and below across the target mobile widths. At the
+    sm breakpoint the 394px sentence has at least 528px and fits on one line, so
+    sm:h-9 reserves that line with the same breathing room. The metric-matched
+    fallback preserves those wraps, and the heights/padding/font weight also
+    live in critical CSS before the deferred Tailwind stylesheet arrives.
+
     Stacking: claim NO z-index. The bar renders BEFORE the header in the layout,
     so document order alone keeps the sticky header on top. The explicit z it
     used to carry (needed back when the bar sat inside <main>, AFTER the header)
@@ -26,12 +35,12 @@
   -->
   <div
     v-if="!dismissed"
-    class="bg-gray-900 text-white text-sm text-center py-2 px-4 relative transition-all duration-300"
+    class="h-14 sm:h-9 overflow-hidden bg-gray-900 text-white text-sm text-center px-4 relative transition-[transform,opacity] duration-300"
     :class="leaving ? '-translate-y-full opacity-0' : ''"
   >
     <!-- px-10 reserves room for the absolute close button on both sides so the
          (centered) copy never runs under the X when it wraps on mobile. -->
-    <div class="relative max-w-7xl mx-auto flex items-center justify-center gap-2 px-10">
+    <div class="relative h-full max-w-7xl mx-auto flex items-center justify-center gap-2 px-10">
       <p class="text-sm font-medium">
         Reserva con anticipación — Precios sujetos a disponibilidad
       </p>
