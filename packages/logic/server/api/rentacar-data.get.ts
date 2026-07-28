@@ -1,5 +1,6 @@
 import { useSupabaseClient } from '../utils/supabase'
 import { fetchRentacarData, RentacarDataTimeoutError } from '../utils/rentacarDataFetch'
+import { buildMonthlyAnchorMap } from '../utils/monthlyAnchors'
 import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials, transformFAQs } from '../utils/transformers'
 
 // Catalog freshness has one cache clock: the one-hour ISR window declared by
@@ -15,8 +16,13 @@ export default defineEventHandler(async (event) => {
   // falls back to unfiltered, preserving the old behavior.
   const franchiseCode = useRuntimeConfig(event).public?.rentacarFranchise as string | undefined
 
-  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult, faqsResult] =
-    await fetchRentacarData(supabase, undefined, franchiseCode).catch((err) => {
+  // Monthly struck-price anchor pilot. This is the ONLY place the flag is read:
+  // the value never reaches the client, so a brand can be flipped on in its own
+  // Vercel project without shipping a different bundle.
+  const monthlyAnchorsEnabled = useRuntimeConfig(event).public?.priceAnchorMonthly === 'on'
+
+  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult, faqsResult, anchorsResult] =
+    await fetchRentacarData(supabase, undefined, franchiseCode, monthlyAnchorsEnabled).catch((err) => {
       if (err instanceof RentacarDataTimeoutError) {
         throw createError({ statusCode: 504, statusMessage: 'rentacar-data upstream timeout' })
       }
@@ -46,11 +52,25 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: `FAQs query failed: ${faqsResult.error.message}` })
   }
 
+  // DELIBERATE exception to the 500 pattern above: the anchors only cap a
+  // struck-through price. Throwing here would let one accessory table take the
+  // entire catalog — and with it the booking flow of all three brands — down.
+  // Warn, drop the cap, serve the catalog. Pinned by test so a refactor that
+  // "harmonises" the error handling above cannot quietly delete this.
+  if (anchorsResult?.error) {
+    console.warn('[rentacar-data] monthly price anchors unavailable; serving catalog without the monthly cap:', anchorsResult.error)
+  }
+  const monthlyAnchors = anchorsResult?.error
+    ? {}
+    : buildMonthlyAnchorMap(anchorsResult?.data as Parameters<typeof buildMonthlyAnchorMap>[0])
+
   return {
     // Coupled to the body (rather than client receipt time) so an ISR-restored
     // snapshot retains its real age throughout an open SPA session.
     catalogFetchedAt: Date.now(),
-    categories: transformCategories(categoriesResult.data),
+    // `undefined` keeps transformCategories' own todayIsoUtc() default — the
+    // handler has no business picking the pruning date.
+    categories: transformCategories(categoriesResult.data, undefined, monthlyAnchors),
     // Supabase infers the to-one `cities(slug)` embed as an array (the explicit-
     // column select yields a structured type, unlike the `*` selects), but the
     // FK is to-one, so at runtime `cities` is a single object|null — matching

@@ -77,7 +77,12 @@
           </template>
           <template v-else>
             <p class="text-sm">Tarifa Diaria</p>
-            <p class="precio-base-diario">$ {{ currencyDailyBasePrice }}</p>
+            <!-- Sin nada que tachar getDailyBasePrice se iguala al precio real de
+                 abajo, y el tachado saldría sobre una cifra idéntica. El gate mira
+                 esas dos cifras, NO hasDiscount(): en mensual el tachado es
+                 one_day_price y hasDiscount() lo ignoraría. "Tarifa Diaria" pasa a
+                 rotular el precio real, que es lo que corresponde. -->
+            <p class="precio-base-diario" v-if="hasStruckBasePrice">$ {{ currencyDailyBasePrice }}</p>
             <div class="porcentaje-descuento" v-if="hasDiscount()">
               Dto hoy {{ getDiscount }}%
             </div>
@@ -694,6 +699,7 @@ const {
   currencyTotalPrice,
   currencyDailyPrice,
   currencyDailyBasePrice,
+  hasStruckBasePrice,
   currencyExtraHoursPrice,
   currencyReturnFee,
   getDiscount,

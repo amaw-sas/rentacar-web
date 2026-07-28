@@ -1,14 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { isReservationFunnelRoute } from '../../../../logic/src/composables/useContactTeaser'
 
 const repoRoot = fileURLToPath(new URL('../../../../..', import.meta.url))
-// 2026-07-27 owner decision: alquilame's contact widget is brand-specific now
-// (own redesign: no phone entry, overlay-aware hiding, verified-reviews proof).
-// The byte-identical invariant holds for the two brands that share the widget;
-// alquilame's behavior is pinned by its own suites in packages/ui-alquilame.
-const brandWidgets = ['ui-alquicarros', 'ui-alquilatucarro'].map(
+const brandWidgets = ['ui-alquicarros', 'ui-alquilame', 'ui-alquilatucarro'].map(
   brand => ({
     brand,
     source: readFileSync(
@@ -17,75 +12,100 @@ const brandWidgets = ['ui-alquicarros', 'ui-alquilatucarro'].map(
     ),
   }),
 )
-const alquilatucarroFunnelSource = readFileSync(
-  `${repoRoot}/packages/ui-alquilatucarro/app/components/CategorySelectionSection.vue`,
+const searchStore = readFileSync(
+  `${repoRoot}/packages/logic/src/stores/useStoreSearchData.ts`,
   'utf8',
 )
 
-describe('FAB de contacto en reservas — Fase 3 E8–E10', () => {
-  it('E8 — both funnel route families add the mobile CTA offset', () => {
-    const funnelPaths = [
-      '/reservas',
-      '/reservas/lugar-recogida/bogota/categoria/CCAR',
-      '/bogota/buscar-vehiculos/lugar-recogida/aeropuerto/categoria/c',
-      '/cali/buscar-vehiculos/referido/aliado/lugar-recogida/norte/categoria/f',
-    ]
-    for (const path of funnelPaths) {
-      expect(isReservationFunnelRoute(path), path).toBe(true)
+// Toda la superficie `app/` de cada marca, para poder BUSCAR el escritor en vez
+// de darlo por sabido. La lista de escritores era fija —alquilame y
+// alquilatucarro— mientras la de lectores eran las tres marcas, así que
+// alquicarros leía `reservationOverlayOpen` sin que nadie lo escribiera y el
+// guardia no se enteraba: su FAB se pintaba sobre el CTA del wizard. Se deriva
+// del lector para que "lector sin escritor" no pueda volver en silencio.
+const readdirSync = (await import('node:fs')).readdirSync
+function brandSources(brand: string): { file: string, source: string }[] {
+  const out: { file: string, source: string }[] = []
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = `${dir}/${entry.name}`
+      if (entry.isDirectory()) {
+        if (entry.name === '__tests__' || entry.name === 'node_modules') continue
+        walk(full)
+      }
+      else if (entry.name.endsWith('.vue') || entry.name.endsWith('.ts')) {
+        out.push({ file: full.slice(repoRoot.length), source: readFileSync(full, 'utf8') })
+      }
     }
+  }
+  walk(`${repoRoot}/packages/${brand}/app`)
+  return out
+}
 
+describe('FAB de contacto móvil durante la solicitud', () => {
+  it('mantiene los canales abajo a la derecha sin elevarlos en reservas', () => {
+    for (const { brand, source } of brandWidgets) {
+      expect(source, brand).toMatch(
+        /class="contact-fab-stack absolute right-6 flex flex-col items-end/,
+      )
+      expect(source, brand).toContain('.contact-fab-stack { bottom: 1.5rem; }')
+      expect(source, brand).not.toContain('contact-fab-stack--reservation')
+    }
+  })
+
+  it('oculta ambos canales sólo en móvil mientras el overlay está abierto', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain(
-        `:class="{ 'contact-fab-stack--reservation': isReservationRoute }"`,
+        'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
       )
       expect(source, brand).toMatch(
-        /const isReservationRoute = computed\([\s\S]*isReservationFunnelRoute\(route\.path\)/,
+        /const \{ reservationOverlayOpen \} = storeToRefs\(useStoreSearchData\(\)\)/,
       )
+      // Se oculta en TODO viewport mientras el overlay está abierto: el pie del
+      // slideover ya trae su propio CTA de WhatsApp, y ocultar siempre cubre por
+      // definición la banda donde la barra inferior del wizard de alquicarros
+      // ocupa el ancho completo. Sin condición de viewport que pueda dejar hueco.
       expect(source, brand).toMatch(
-        /@media \(max-width: 1023\.98px\) \{[\s\S]*\.contact-fab-stack--reservation \{[\s\S]*--reservation-mobile-cta-height: 4\.5rem;[\s\S]*--reservation-fab-clearance: 0\.75rem;[\s\S]*env\(safe-area-inset-bottom, 0px\)/,
+        /const hideContactButtons = computed\(\(\) => reservationOverlayOpen\.value\)/,
       )
-    }
-
-    // Alquilatucarro's anchored slideover action is exactly 4.5rem from the
-    // viewport bottom: Nuxt UI footer p-4 (1rem) + CTA py-4/text-base (3.5rem).
-    expect(alquilatucarroFunnelSource).toContain("footer: 'bg-white gap-2 border-t-0'")
-    expect(alquilatucarroFunnelSource).toMatch(
-      /label="Siguiente"[\s\S]*size="xl"[\s\S]*class="flex-1 py-4/,
-    )
-    expect(alquilatucarroFunnelSource).toMatch(
-      /size="xl"[\s\S]*class="flex-1 py-4[^\n]*whitespace-nowrap[\s\S]*Solicitar reserva/,
-    )
-  })
-
-  it('E8 — the reservation menu is icon-only on mobile and remains accessible', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toMatch(
-        /@media \(max-width: 1023\.98px\) \{[\s\S]*\.contact-fab-stack--reservation \.fab-label \{ display: none; \}/,
-      )
-      expect(source, brand).toContain('aria-label="Abrir Chat 24 horas"')
+      expect(source, brand).toContain("'Abrir Chat 24 horas'")
       expect(source, brand).toContain('aria-label="Abrir WhatsApp"')
-      expect(source, brand).toContain(':aria-label="`Llamar al ${franchise.phone}`"')
     }
   })
 
-  it('E10 — normal pages and desktop retain the original bottom-6 position and labels', () => {
-    const normalPaths = [
-      '/',
-      '/bogota',
-      '/tarifas',
-      '/buscar-vehiculos',
-      '/bogota/buscar-vehiculos-extra',
-      '/reservado/ABC123',
-    ]
-    for (const path of normalPaths) {
-      expect(isReservationFunnelRoute(path), path).toBe(false)
-    }
-
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('.contact-fab-stack { bottom: 1.5rem; }')
-      expect(source, brand).toContain('<span class="fab-label">Chat 24 horas</span>')
-      expect(source, brand).toContain('<span class="fab-label">WhatsApp</span>')
-      expect(source, brand).toContain('<span class="fab-label">Llámanos</span>')
-    }
+  it('el store expone la bandera compartida', () => {
+    expect(searchStore).toContain('const reservationOverlayOpen = ref<boolean>(false)')
+    expect(searchStore).toMatch(/return \{[\s\S]*reservationOverlayOpen,/)
   })
+
+  // CADA marca que LEE la bandera tiene que tener quien la ESCRIBA. El mecanismo
+  // puede diferir —alquilame y alquilatucarro la publican desde el watch del
+  // slideover; alquicarros, desde el ciclo de vida del resumen del wizard, que
+  // es cuando su barra inferior está en pantalla— pero la pareja encender/apagar
+  // no es opcional: sin ella el FAB nunca se aparta y tapa el CTA.
+  for (const { brand } of brandWidgets) {
+    it(`${brand}: la bandera que su ChatWidget lee tiene escritor propio`, () => {
+      const sources = brandSources(brand).filter(
+        ({ file }) => !file.endsWith('ChatWidget.vue'),
+      )
+
+      const turnsOn = sources.filter(({ source }) =>
+        /reservationOverlayOpen\.value = (true|open)\b/.test(source),
+      )
+      expect(
+        turnsOn.map(({ file }) => file),
+        `${brand}: su ChatWidget LEE reservationOverlayOpen y ninguna pantalla de `
+        + `la marca la enciende. El FAB no se apartará del CTA de reserva.`,
+      ).not.toHaveLength(0)
+
+      const turnsOff = sources.filter(({ source }) =>
+        /reservationOverlayOpen\.value = false/.test(source),
+      )
+      expect(
+        turnsOff.map(({ file }) => file),
+        `${brand}: la enciende pero nunca la apaga — el FAB quedaría oculto para `
+        + `siempre al salir del flujo de reserva.`,
+      ).not.toHaveLength(0)
+    })
+  }
 })

@@ -142,21 +142,28 @@ describe('useChatStatus — WhatsApp fails OPEN (F0 gate for live brands)', () =
     expect(status.resolved.value).toBe(false)
   })
 
-  it('arms no polling interval — refresh runs on mount and focus only', () => {
-    const setIntervalSpy = vi.fn().mockReturnValue(1)
-    vi.stubGlobal('$fetch', vi.fn().mockReturnValue(new Promise(() => {})))
+  it('the 60s timer never hits the network — it only re-evaluates the schedule', () => {
+    let tick: (() => void) | undefined
+    const fetchMock = vi.fn().mockReturnValue(new Promise(() => {}))
+    vi.stubGlobal('$fetch', fetchMock)
     vi.stubGlobal('useRuntimeConfig', () => ({
       public: { rentacarPublicApiBase: 'https://dashboard.test' },
     }))
     vi.stubGlobal('window', {
       addEventListener: () => undefined,
       removeEventListener: () => undefined,
-      setInterval: setIntervalSpy,
+      setInterval: (cb: () => void) => { tick = cb; return 1 },
       clearInterval: () => undefined,
     })
     useChatStatus('alquilame')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
 
-    expect(setIntervalSpy).not.toHaveBeenCalled()
+    tick?.()
+    tick?.()
+
+    // The interval keeps schedule-window visibility fresh locally; polling the
+    // dashboard from every open tab was the F0 finding and must not return.
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })
 

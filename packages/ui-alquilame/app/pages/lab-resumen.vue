@@ -286,7 +286,8 @@ useSeoMeta({ robots: 'noindex, nofollow', title: 'Lab · resumen de reserva' })
 
 <style scoped>
 /* Tailwind v4: @apply in a scoped block resolves utilities only when the theme
-   is referenced explicitly; without this line `nuxt build` fails on rounded-xl. */
+   is referenced explicitly; without this line `nuxt build` fails on rounded-xl —
+   el de la marca ENTERA, no sólo el de esta página de laboratorio. */
 @reference "~/assets/css/main.css";
 
 /* Chrome del slideover, solo para que la comparación se vea en su ancho real. */

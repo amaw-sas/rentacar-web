@@ -132,11 +132,18 @@
             <p class="texto-no-incluye">Escríbenos y te cotizamos.</p>
           </template>
           <template v-else>
-            <div class="fila-tarifa">
+            <!-- SCEN-M7: gateado por las dos cifras impresas, no por hasDiscount():
+                 una reserva mensual tacha one_day_price, que hasDiscount() ignora,
+                 así que el tachado mensual legítimo nunca llegaba al resumen. Sin
+                 nada que tachar la fila entera desaparece y "Tarifa Diaria" baja a
+                 rotular el precio real, igual que en la card. El `v-if` del span es
+                 el que lee la guardia estructural: no lo quites por redundante. -->
+            <div class="fila-tarifa" v-if="hasStruckBasePrice">
               <span class="text-sm">Tarifa Diaria</span>
-              <span class="valor-tarifa precio-base-diario">$ {{ currencyDailyBasePrice }}</span>
+              <span class="valor-tarifa precio-base-diario" v-if="hasStruckBasePrice">$ {{ currencyDailyBasePrice }}</span>
             </div>
             <div class="fila-tarifa">
+              <span class="text-sm" v-if="!hasStruckBasePrice">Tarifa Diaria</span>
               <span class="porcentaje-descuento" v-if="hasDiscountToShow">
                 Hoy con {{ getDiscount }}% Dto.
               </span>
@@ -314,6 +321,7 @@ const {
   isPicoyPlacaExempt,
   hasDiscount,
   hasDiscountToShow,
+  hasStruckBasePrice,
   hasExtraHours,
   hasReturnFee,
   getDiscount,

@@ -405,6 +405,13 @@ const allBeyondHorizon = computed<boolean>(() =>
 // pegado en <body> (regresión SCEN-011).
 const slideoverOpen = ref<boolean>(false);
 const slideoverStep = ref<'resumen' | 'datos'>('resumen');
+
+// Puente hacia ChatWidget (vive en el layout, fuera de esta sección): con el
+// resumen abierto el FAB de chat salta a la izquierda para no tapar
+// Volver/Siguiente/Solicitar reserva (el slideover ancla a la derecha). useState
+// SSR-safe con la misma clave que lee el ChatWidget (byte-idéntico entre marcas).
+const chatShouldShiftLeft = useState<boolean>('reservation-slideover-open', () => false);
+watch(slideoverOpen, (open) => { chatShouldShiftLeft.value = open; });
 const reservationFormComponent = ref(null);
 const linkCopied = ref(false);
 
@@ -696,6 +703,9 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   if (import.meta.client) window.removeEventListener('popstate', handleSlideoverPopState);
+  // Evita un FAB pegado a la izquierda si la sección se desmonta con el resumen
+  // abierto (navegación, cambio de params → re-montaje de NuxtPage).
+  chatShouldShiftLeft.value = false;
 });
 
 /** functions */

@@ -156,8 +156,25 @@ describe('SEO content hygiene across brands (F5/F9)', () => {
 
     for (const [brand, path] of files) {
       const source = readBrandFile(brand, path)
-      expect(source).toContain('puntos de recogida activos')
+
+      // El invariante es el CONTENIDO, no la redacción: la superficie remite al
+      // buscador y habla de puntos de recogida ACTIVOS, en vez de prometer una
+      // sede concreta. El ancla literal anterior ('puntos de recogida activos')
+      // fijaba además el orden de las palabras, y enrojeció cuando el rediseño
+      // SEO de alquilame reescribió la misma promesa como "cuáles puntos de
+      // recogida están activos" — texto igual de honesto. Se pide la pareja
+      // recogida + activo/activos, que es lo que no se puede perder.
+      expect(
+        source,
+        `${brand}/${path}: la superficie debe remitir a los puntos de recogida `
+        + `ACTIVOS en vez de prometer una sede`,
+      ).toMatch(/puntos de recogida[^.]*activ/i)
       expect(source).not.toContain('Aeropuerto, centro de la ciudad o donde te resulte más cómodo')
+      // Y la promesa genérica no puede volver por otra redacción.
+      expect(
+        source,
+        `${brand}/${path}: promesa genérica de aeropuerto/centro reintroducida`,
+      ).not.toMatch(/[Aa]eropuerto,?\s*(el\s*)?centro de la ciudad/)
     }
   })
 

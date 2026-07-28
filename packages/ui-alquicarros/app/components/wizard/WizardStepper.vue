@@ -49,7 +49,7 @@
         <button
           v-if="current > 1"
           type="button"
-          class="-ml-1 inline-flex items-center gap-1 rounded-full px-2 py-1 body-sm font-semibold text-brand-700 hover:bg-brand-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/50"
+          class="-ml-1 inline-flex items-center gap-1 rounded-full px-2 py-1 body-sm font-semibold text-brand-800 hover:bg-brand-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/50"
           @click="onSelect(current - 1)"
         >
           <UIcon name="i-lucide-chevron-left" class="h-4 w-4" />
@@ -58,7 +58,7 @@
         <span v-else class="body-sm font-semibold text-gray-900">
           Paso {{ current }} de {{ STEP_LABELS.length }}
         </span>
-        <span class="body-sm font-semibold text-brand-700 truncate">
+        <span class="body-sm font-semibold text-brand-800 truncate">
           {{ current }}/{{ STEP_LABELS.length }} · {{ STEP_LABELS[current - 1] }}
         </span>
       </div>
@@ -129,7 +129,7 @@ function pillClass(step: number): string {
 }
 function badgeClass(step: number): string {
   if (step === props.current) return 'bg-gray-900 text-white'
-  if (isReached(step)) return 'bg-brand-200 text-brand-800'
+  if (isReached(step)) return 'bg-brand-200 text-brand-900'
   return 'bg-gray-100 text-gray-400'
 }
 </script>

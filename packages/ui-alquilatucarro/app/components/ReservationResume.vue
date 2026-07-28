@@ -72,7 +72,11 @@
         <!-- lado derecho -->
          <div class="prices">
             <div class="text-right text-sm font-bold">Tarifa Diaria</div>
-            <div class="text-right text-sm line-through text-black" v-if="hasDiscount()">
+            <!-- Gated on the two figures actually printed, not on hasDiscount():
+                 a monthly booking strikes one_day_price, which hasDiscount()
+                 ignores, so the legitimate monthly struck price never reached
+                 the summary. SCEN-M7. -->
+            <div class="text-right text-sm line-through text-black" v-if="hasStruckBasePrice">
               $ {{ currencyDailyBasePrice }}
             </div>
             <div class="text-right" v-if="hasDiscount()">
@@ -164,6 +168,7 @@ const {
   numberDays,
   isPicoyPlacaExempt,
   hasDiscount,
+  hasStruckBasePrice,
   hasExtraHours,
   hasReturnFee,
   getDiscount,

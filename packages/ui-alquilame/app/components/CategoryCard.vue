@@ -90,13 +90,21 @@
             <p class="texto-no-incluye">Escríbenos y te cotizamos.</p>
           </template>
           <template v-else>
-            <div class="fila-tarifa">
+            <!-- Sin nada que tachar getDailyBasePrice se iguala al precio real de
+                 abajo y el tachado saldría sobre una cifra idéntica. La fila
+                 entera desaparece y "Tarifa Diaria" baja a rotular el precio
+                 real. El gate mira las dos cifras impresas, NO hasDiscount(): en
+                 mensual el tachado es one_day_price y hasDiscount() lo ignora.
+                 El `v-if` del span es el que lee la guardia estructural
+                 (reservationDiscountBadgeGate): no lo quites por redundante. -->
+            <div class="fila-tarifa" v-if="hasStruckBasePrice">
               <span class="text-sm">Tarifa Diaria</span>
-              <span class="valor-tarifa precio-base-diario">$ {{ currencyDailyBasePrice }}</span>
+              <span class="valor-tarifa precio-base-diario" v-if="hasStruckBasePrice">$ {{ currencyDailyBasePrice }}</span>
             </div>
             <!-- Sin descuento la fila queda sin concepto: la cifra se alinea
                  igual a la derecha porque `valor-tarifa` usa `ms-auto`. -->
             <div class="fila-tarifa">
+              <span class="text-sm" v-if="!hasStruckBasePrice">Tarifa Diaria</span>
               <span class="porcentaje-descuento" v-if="hasDiscountToShow">
                 Hoy con {{ getDiscount }}% Dto.
               </span>
@@ -620,6 +628,7 @@ const {
   getActualTotalPrice,
   currencyDailyPrice,
   currencyDailyBasePrice,
+  hasStruckBasePrice,
   currencyExtraHoursPrice,
   currencyReturnFee,
   getDiscount,

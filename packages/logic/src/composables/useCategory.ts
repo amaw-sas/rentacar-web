@@ -9,7 +9,7 @@ import useMoneyFormat from './useMoneyFormat';
 import useStoreReservationForm from '../stores/useStoreReservationForm';
 
 // Internal dependencies - utils
-import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge, resolvePicoyPlacaExempt, IVA_PERCENTAGE } from '@rentacar-main/logic/utils';
+import { pickPriceForDate, pickEffectiveTotalCoverageUnitCharge, resolvePicoyPlacaExempt, applyMonthlyAnchorCap, IVA_PERCENTAGE } from '@rentacar-main/logic/utils';
 
 // Types
 import type {
@@ -31,6 +31,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const { extras } = useFetchRentacarData();
    const EXTRA_DRIVER_DAY_PRICE: number = extras?.extraDriverDayPrice ?? 12000;
    const BABY_SEAT_DAY_PRICE: number = extras?.babySeatDayPrice ?? 12000;
+   // Mensual: precio FIJO del mes, no 30 × el diario (migración 109).
+   const EXTRA_DRIVER_MONTH_PRICE: number = extras?.extraDriverMonthPrice ?? 100000;
+   const BABY_SEAT_MONTH_PRICE: number = extras?.babySeatMonthPrice ?? 100000;
    const WASH_PRICE: number = extras?.washPrice ?? 20000;
    const WASH_ONSITE_PRICE: number = extras?.washOnsitePrice ?? 30000;
    const WASH_DEEP_PRICE: number = extras?.washDeepPrice ?? 150000;
@@ -65,6 +68,8 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    const categoryDescription = ref<string>(categoryAvailableData.categoryDescription);
    const categoryModels = ref<CategoryModelData[] | undefined>(categoryAvailableData.categoryModels);
    const categoryMonthPrices = ref<CategoryMonthPriceData[] | undefined>(categoryAvailableData.categoryMonthPrices);
+   // Market ceiling for the monthly STRUCK price only. null = no cap.
+   const monthAnchorGross = ref<number | null>(categoryAvailableData.monthAnchorGross ?? null);
    const referenceToken = ref<string>(categoryAvailableData.referenceToken);
    const rateQualifier = ref<string>(categoryAvailableData.rateQualifier);
    
@@ -192,15 +197,29 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       const monthPrice = getCategoryMonthPrice();
       
       if(haveMonthlyReservation.value && monthPrice)
-         // one monthly day price
-         return monthPrice["one_day_price"]
+         // one monthly day price, capped at the market anchor so the strike
+         // never claims a discount off a price nobody pays. Display only —
+         // getDailyPrice below is untouched, and so are the totals.
+         return applyMonthlyAnchorCap(monthPrice["one_day_price"], monthAnchorGross.value)
       else if(hasDiscount())
          return vehicleDayCharge.value + (discountAmount.value ?? 0) + coverageUnitCharge.value;
       else
          return vehicleDayCharge.value + coverageUnitCharge.value;
-      
+
    });
-   
+
+   /**
+    * Is there a struck base price worth showing? Compares the two figures the
+    * card actually paints, so it is agnostic to where the base price came from:
+    * a real daily discount, or the monthly one_day_price anchor. When there is
+    * nothing to strike, getDailyBasePrice collapses onto getDailyPrice and this
+    * is false — that collapse is the phantom "$ X" struck over an identical
+    * "$ X". Do NOT gate the struck price on hasDiscount(): it only looks at
+    * discountAmount, a daily field the monthly price ignores, so it hides the
+    * legitimate monthly anchor.
+    */
+   const hasStruckBasePrice = computed<boolean>(() => getDailyBasePrice.value > getDailyPrice.value);
+
    /**
     * Recargo del Seguro Total.
     *
@@ -392,15 +411,14 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
 
       // Mensual: la base diaria llega en 0 (el precio vive en month_prices), así
       // que el ahorro se mide entre el precio de un día suelto y el día que sale
-      // de la mensualidad elegida — que es justo el par que la card muestra
-      // tachado y en limpio. Antes la guarda de abajo lo daba por inexistente y
-      // el tachado aparecía sin explicación.
+      // de la mensualidad elegida. Se leen los DOS computeds que la tarjeta
+      // imprime, no una copia de su aritmética: así la píldora y el tachado no
+      // pueden medir con varas distintas por construcción, ni siquiera con el
+      // Seguro Total marcado (ahí getDailyPrice suma la cobertura y una copia
+      // de `monthPrice[tier]/30` se habría quedado corta).
       if(haveMonthlyReservation.value && withMileage.value){
-         const monthPrice = getCategoryMonthPrice();
-         if(monthPrice){
-            initial = monthPrice["one_day_price"] ?? 0;
-            final = (monthPrice[withMileage.value] ?? 0) / 30;
-         }
+         initial = getDailyBasePrice.value;
+         final = getDailyPrice.value;
       }
       else {
          initial = ((hasDiscount()) ? vehicleDayCharge.value + (discountAmount.value ?? 0) : vehicleDayCharge.value) + coverageUnitCharge.value;
@@ -412,12 +430,19 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       // 100 * (0 / |0|) = NaN.
       if (initial <= 0) return "0";
 
+      // Una SUBIDA de precio no es un descuento. GY vende su mes a 562.133/día
+      // con un one_day_price de 550.000: el viejo Math.abs volteaba ese +2,2% a
+      // "2" y la tarjeta anunciaba "Hoy con 2% Dto." cobrando 2% MÁS, sin cifra
+      // tachada al lado porque hasStruckBasePrice sí lo veía. Con precios de hoy
+      // y el flag apagado, en los tres tiers de kilometraje de GY.
+      if (final >= initial) return "0";
+
       const formatter = new Intl.NumberFormat("es-CO", {
          style: "decimal",
       });
-      
+
       return formatter.format(
-         Math.round(Math.abs(100 * ((final - initial) / Math.abs(initial))))
+         Math.round(100 * ((initial - final) / initial))
       )
    });
    
@@ -425,21 +450,34 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
     * ¿Hay ahorro que anunciar? Se decide por el descuento CALCULADO, no por
     * `discountAmount`: en mensual ese campo llega nulo, así que la card pintaba
     * el precio tachado y se comía la píldora que lo explica.
+    *
+    * Gobierna la PÍLDORA de descuento, no el tachado: ese lo gobierna
+    * hasStruckBasePrice. Ya no pueden divergir: getDiscount mide sobre
+    * getDailyBasePrice/getDailyPrice —el mismo par que compara
+    * hasStruckBasePrice— y devuelve "0" cuando no hay ahorro real, así que la
+    * píldora no puede aparecer sin su tachado. Lo contrario sí es posible y es
+    * honesto: un ahorro que redondea a 0% deja el tachado sin píldora.
     */
    const hasDiscountToShow = computed<boolean>(() => getDiscount.value !== "0");
 
    /**
-    * Get the extra driver price, current daily price is 100.000 COP
+    * Extra driver: a flat monthly price on a monthly reservation, days × the
+    * daily price otherwise. The monthly figure is NOT a daily rate — it never
+    * gets multiplied (SCEN-X1, SCEN-X3).
     */
-   const getExtraDriverPrice = computed<number>(() => 
-       ((haveMonthlyReservation.value) ? 30 : numberDays.value) * EXTRA_DRIVER_DAY_PRICE
+   const getExtraDriverPrice = computed<number>(() =>
+      haveMonthlyReservation.value
+         ? EXTRA_DRIVER_MONTH_PRICE
+         : numberDays.value * EXTRA_DRIVER_DAY_PRICE
    );
 
    /**
-    * Get the baby seat price, current daily price is 100.000 COP
+    * Baby seat: same shape as the extra driver (SCEN-X2, SCEN-X3).
     */
-   const getBabySeatPrice = computed<number>(() => 
-      ((haveMonthlyReservation.value) ? 30 : numberDays.value) * BABY_SEAT_DAY_PRICE
+   const getBabySeatPrice = computed<number>(() =>
+      haveMonthlyReservation.value
+         ? BABY_SEAT_MONTH_PRICE
+         : numberDays.value * BABY_SEAT_DAY_PRICE
    );
 
    /**
@@ -552,6 +590,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       categoryDescription,
       categoryModels,
       categoryMonthPrices,
+      monthAnchorGross,
       referenceToken,
       rateQualifier,
       
@@ -593,6 +632,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       getIVAFeePrice,
       getDailyBasePrice,
       getDailyPrice,
+      hasStruckBasePrice,
       getDiscount,
       hasDiscountToShow,
       getFormattedDays,

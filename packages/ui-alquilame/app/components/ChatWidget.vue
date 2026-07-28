@@ -47,9 +47,13 @@
         <ChatConversation :active="panelOpen" variant="panel" @dismiss="panelOpen = false" />
       </div>
 
+      <!-- data-shift-left mueve el stack a la izquierda con el resumen de reserva
+           abierto en escritorio (>=1024px); ver CSS. En movil el rediseno oculta
+           el stack entero via hideContactButtons, asi que no hay lift. -->
       <div
         v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"
         class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4 pointer-events-none"
+        :data-shift-left="shiftLeft"
       >
         <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
              con transform/opacity sin cambiar la geometría del contenedor ni
@@ -161,9 +165,23 @@ const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
-// The reservation slideover carries its own WhatsApp CTA in the footer; the
-// floating stack sits exactly on top of it on desktop, so it hides on EVERY
-// viewport while the overlay is open (it used to hide only on mobile).
+
+// Desplazamiento a la izquierda de main (>=1024px), conservado tal cual.
+// OJO: hoy es INALCANZABLE — `hideContactButtons` de abajo desmonta el stack en
+// cuanto el overlay se abre, y la misma escritura enciende las dos banderas, así
+// que no queda ningún estado en el que este cálculo se pueda observar. Se deja
+// intacto porque es una feature certificada de main y su retirada no es de este
+// merge; va anotado como seguimiento.
+const reservationSummaryOpen = useState<boolean>('reservation-slideover-open', () => false)
+const isWideViewport = useMediaQuery('(min-width: 1024px)')
+const shiftLeft = computed(() => isWideViewport.value && reservationSummaryOpen.value)
+
+// El pie del slideover de reserva ya trae su propio CTA de WhatsApp y el stack
+// flotante se le montaba encima en escritorio, así que se oculta en TODO viewport
+// mientras el overlay está abierto. Absorbe la partición en 1024 que traíamos:
+// ocultar siempre cubre por definición la banda de 768 a 1023 donde la barra
+// inferior del wizard de alquicarros (`lg:hidden fixed inset-x-0 bottom-0`)
+// ocupa el ancho completo. `isDesktop` sigue vivo para el panel inline del chat.
 const hideContactButtons = computed(() => reservationOverlayOpen.value)
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
@@ -304,6 +322,14 @@ button { -webkit-tap-highlight-color: transparent; }
 
 /* --- Botones directos de contacto --- */
 .fab-item { display: flex; align-items: center; gap: 0.75rem; border-radius: 9999px; }
+/* Salto a la izquierda (resumen de reserva abierto en escritorio, ≥1024px).
+   Se activa por data-shift-left, NO por clase, para no tocar el `:class` que el
+   invariante E8 congela. Override del ancla right-6/items-end del stack y de las
+   filas del menú: [círculo][etiqueta] (row-reverse) alinea los círculos (ancho
+   fijo) al borde izquierdo, sin escalonarse por el ancho variable de etiquetas. */
+.contact-fab-stack[data-shift-left='true'] { right: auto; left: 1.5rem; align-items: flex-start; }
+.contact-fab-stack[data-shift-left='true'] ul { align-items: flex-start; }
+.contact-fab-stack[data-shift-left='true'] .fab-item { flex-direction: row-reverse; }
 .fab-label {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
@@ -453,4 +479,14 @@ button { -webkit-tap-highlight-color: transparent; }
   overflow: hidden;
 }
 
+/* Pulso de atención del FAB. Color por marca vía --ui-primary (evita fijar el
+   rojo de una marca). Acotado a 2 ciclos (4.8s < 5s de WCAG 2.2.2: contenido
+   que parpadea sin pausa) con `forwards` para quedar en reposo; respeta
+   reduce-motion. El spread animado de box-shadow no compone, por eso es finito. */
+@keyframes pulse-attention {
+  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 color-mix(in srgb, var(--ui-primary, transparent) 40%, transparent); }
+  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px transparent; }
+}
+.animate-pulse-attention { animation: pulse-attention 2.4s ease-in-out 2 forwards; }
+@media (prefers-reduced-motion: reduce) { .animate-pulse-attention { animation: none; } }
 </style>

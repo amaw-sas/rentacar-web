@@ -38,15 +38,18 @@ vi.mock('../../utils/transformers', () => ({
 }))
 
 import { fetchRentacarData } from '../../utils/rentacarDataFetch'
-import { transformExtras } from '../../utils/transformers'
+import { transformExtras, transformCategories } from '../../utils/transformers'
 
 type Result = { data: unknown; error: unknown }
 const ok = (data: unknown): Result => ({ data, error: null })
 const errResult = (error: unknown): Result => ({ data: null, error })
 
+// Mutated per test; read by the useRuntimeConfig stub below.
+let publicConfig: Record<string, unknown> = {}
+
 // Tuple order matches fetchRentacarData / handler destructuring:
-// [categories, locations, company, cities, franchises, faqs]
-function tuple(over: Partial<Record<0 | 1 | 2 | 3 | 4 | 5, Result>> = {}): Result[] {
+// [categories, locations, company, cities, franchises, faqs, anchors]
+function tuple(over: Partial<Record<0 | 1 | 2 | 3 | 4 | 5 | 6, Result>> = {}): Result[] {
   const base: Result[] = [
     ok([{ id: 'B' }]),
     ok([{ code: 'BOG' }]),
@@ -54,6 +57,7 @@ function tuple(over: Partial<Record<0 | 1 | 2 | 3 | 4 | 5, Result>> = {}): Resul
     ok([{ slug: 'bogota' }]),
     ok([{ code: 'localiza' }]),
     ok([{ label: 'q' }]),
+    { data: null, error: null }, // anchors: the pilot-off stub
   ]
   for (const [i, v] of Object.entries(over)) base[Number(i)] = v as Result
   return base
@@ -69,7 +73,8 @@ describe('server/api/rentacar-data.get — missing localiza fallback (#16)', () 
     vi.stubGlobal('defineEventHandler', (fn: unknown) => fn)
     // Issue #322 PR10: the handler scopes the franchises query to the deploy's
     // brand via runtimeConfig.
-    vi.stubGlobal('useRuntimeConfig', () => ({ public: { rentacarFranchise: 'alquilame' } }))
+    publicConfig = { rentacarFranchise: 'alquilame' }
+    vi.stubGlobal('useRuntimeConfig', () => ({ public: publicConfig }))
     vi.stubGlobal('createError', (opts: { message?: string; statusMessage?: string }) =>
       Object.assign(new Error(opts?.message ?? opts?.statusMessage ?? 'error'), opts),
     )
@@ -171,5 +176,139 @@ describe('server/api/rentacar-data.get — missing localiza fallback (#16)', () 
     expect(result.extras).toEqual({ extraDriverDayPrice: 999 })
     expect(vi.mocked(transformExtras)).toHaveBeenCalledTimes(1)
     expect(vi.mocked(transformExtras)).toHaveBeenCalledWith(companyRow)
+  })
+})
+
+/**
+ * Monthly struck-price anchor pilot (SCEN-M1/M2/M4).
+ *
+ * buildMonthlyAnchorMap is NOT mocked here: the point of these cases is that
+ * real rows travel from the query result into transformCategories, which is
+ * exactly the wiring a mock would hide.
+ */
+describe('server/api/rentacar-data.get — monthly anchors', () => {
+  let handler: () => Promise<Record<string, unknown>>
+  let warn: ReturnType<typeof vi.spyOn>
+
+  const freshRow = (code: string, gross: number | string) => ({
+    category_code: code,
+    anchor_day_price_gross: gross,
+    computed_at: new Date().toISOString(),
+  })
+
+  const anchorsArg = () => vi.mocked(transformCategories).mock.calls[0]?.[2]
+
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.stubGlobal('defineEventHandler', (fn: unknown) => fn)
+    publicConfig = { rentacarFranchise: 'alquilame' }
+    vi.stubGlobal('useRuntimeConfig', () => ({ public: publicConfig }))
+    vi.stubGlobal('createError', (opts: { message?: string; statusMessage?: string }) =>
+      Object.assign(new Error(opts?.message ?? opts?.statusMessage ?? 'error'), opts),
+    )
+    handler = (await import('../rentacar-data.get')).default as unknown as typeof handler
+  })
+
+  afterEach(() => {
+    warn.mockRestore()
+    vi.unstubAllGlobals()
+  })
+
+  it('SCEN-M1: pilot off (flag absent) → fetch asked NOT to read anchors, empty map, payload shape unchanged', async () => {
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+
+    const result = await handler()
+
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[3]).toBe(false)
+    expect(anchorsArg()).toEqual({})
+    // Byte-identical to the pre-pilot response: same keys, same values, and no
+    // anchor key smuggled in at the top level.
+    expect(Object.keys(result).sort()).toEqual(
+      ['branches', 'catalogFetchedAt', 'categories', 'cities', 'extras', 'faqs', 'franchiseTestimonials', 'vehicleCategories'],
+    )
+    expect(result.categories).toEqual(['CAT'])
+  })
+
+  it.each([
+    ['empty string', ''],
+    ['off', 'off'],
+    ['true', 'true'],
+    ['ON (wrong case)', 'ON'],
+    ['boolean true', true],
+  ] as const)('SCEN-M1: the flag only opens on the exact string "on" — %s keeps it closed', async (_label, value) => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceAnchorMonthly: value }
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+
+    await handler()
+
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[3]).toBe(false)
+  })
+
+  it('SCEN-M2: pilot on → anchors reach transformCategories keyed by category code', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceAnchorMonthly: 'on' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(
+      tuple({ 6: ok([freshRow('GC', '280607.50'), freshRow('C', 150000)]) }) as never,
+    )
+
+    await handler()
+
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[3]).toBe(true)
+    expect(anchorsArg()).toEqual({ GC: 280607.5, C: 150000 })
+  })
+
+  it('SCEN-M2: the anchors are the THIRD argument — todayIso keeps its own default', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceAnchorMonthly: 'on' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple({ 6: ok([freshRow('GC', 100)]) }) as never)
+
+    await handler()
+
+    expect(vi.mocked(transformCategories).mock.calls[0]?.[1]).toBeUndefined()
+  })
+
+  /**
+   * R5, the whole point of this file: price_anchors is an accessory table. If
+   * its failure ever produced a 500 like every other query above, one missing
+   * grant would take the catalog — and the booking flow — of all three brands
+   * down. This case is the lock on that.
+   */
+  it('SCEN-M4: an anchors query ERROR returns 200 with the catalog intact, warns, and drops the cap', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceAnchorMonthly: 'on' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(
+      tuple({ 6: errResult({ message: 'permission denied for table price_anchors' }) }) as never,
+    )
+
+    const result = await handler()
+
+    expect(result.categories).toEqual(['CAT'])
+    expect(result.branches).toEqual(['BRANCH'])
+    expect(result.faqs).toEqual(['FAQ'])
+    expect(anchorsArg()).toEqual({})
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0]?.[0])).toContain('price anchors unavailable')
+  })
+
+  it('SCEN-M4: unusable anchor rows (NULL gross, stale) are dropped without an error', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceAnchorMonthly: 'on' }
+    const stale = { category_code: 'C', anchor_day_price_gross: 100, computed_at: '2020-01-01T00:00:00Z' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(
+      tuple({ 6: ok([freshRow('GC', 100), { ...freshRow('LE', 0), anchor_day_price_gross: null }, stale]) }) as never,
+    )
+
+    const result = await handler()
+
+    expect(anchorsArg()).toEqual({ GC: 100 })
+    expect(result.categories).toEqual(['CAT'])
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('SCEN-M4: a stub anchors result (pilot off) yields an empty map, never a crash', async () => {
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple({ 6: { data: null, error: null } }) as never)
+
+    const result = await handler()
+
+    expect(anchorsArg()).toEqual({})
+    expect(result.categories).toEqual(['CAT'])
+    expect(warn).not.toHaveBeenCalled()
   })
 })

@@ -25,7 +25,7 @@
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-brand-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
-            <span class="text-brand-700">Ventajas de alquilar carro</span>
+            <span class="text-brand-800">Ventajas de alquilar carro</span>
             <span class="text-gray-900"> en {{ city?.name }}</span>
           </h2>
         </div>
@@ -57,7 +57,7 @@
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-brand-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
-            <span class="text-brand-700">Destinos para recorrer con carro rentado</span>
+            <span class="text-brand-800">Destinos para recorrer con carro rentado</span>
             <span class="text-gray-900"> desde {{ city?.name }}</span>
           </h2>
         </div>
@@ -69,7 +69,7 @@
           >
             <div class="flex items-start justify-between gap-3 mb-3">
               <h3 class="heading-sub text-gray-900">{{ destination.name }}</h3>
-              <span class="text-sm font-semibold text-brand-600 bg-brand-50 px-3 py-1 rounded-full whitespace-nowrap">
+              <span class="text-sm font-semibold text-brand-800 bg-brand-50 px-3 py-1 rounded-full whitespace-nowrap">
                 {{ destination.time }}
               </span>
             </div>
@@ -89,7 +89,7 @@
         <div class="text-center mb-10">
           <div class="h-1 w-10 rounded-full bg-brand-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
-            <span class="text-brand-700">Consejos</span>
+            <span class="text-brand-800">Consejos</span>
             <span class="text-gray-900"> para alquilar carro en {{ city?.name }}</span>
           </h2>
         </div>
@@ -100,7 +100,7 @@
             class="flex items-start gap-4 bg-[#F8F9FC] rounded-[22px] border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] transition-all duration-200 p-5"
           >
             <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
-              <span class="text-brand-600 font-bold text-lg" aria-hidden="true">{{ tip.emoji }}</span>
+              <span class="text-brand-800 font-bold text-lg" aria-hidden="true">{{ tip.emoji }}</span>
             </div>
             <div>
               <h3 class="heading-sub text-gray-900 mb-1">{{ tip.title }}</h3>
@@ -120,7 +120,7 @@
       <div class="max-w-3xl mx-auto">
         <div class="h-1 w-10 rounded-full bg-brand-600 mb-5"></div>
         <h2 class="heading-section text-gray-900 mb-5">
-          <span class="text-brand-700">Mejor época</span>
+          <span class="text-brand-800">Mejor época</span>
           <span class="text-gray-900"> para alquilar carro y viajar a {{ city?.name }}</span>
         </h2>
         <div class="space-y-4 text-base md:text-lg text-gray-600 leading-relaxed">
@@ -139,7 +139,7 @@
         <div class="text-center mb-8">
           <div class="h-1 w-10 rounded-full bg-brand-600 mb-4 mx-auto"></div>
           <h2 class="heading-section text-gray-900">
-            <span class="text-brand-700">Alquiler de carros</span>
+            <span class="text-brand-800">Alquiler de carros</span>
             <span class="text-gray-900"> en ciudades cercanas</span>
           </h2>
           <p class="text-gray-600 mt-4">
@@ -154,8 +154,8 @@
             :aria-label="`Alquiler de carros en ${related.name}`"
             class="group flex flex-col items-center bg-[#F8F9FC] rounded-[22px] border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(17,17,34,0.09)] transition-all duration-200 p-4"
           >
-            <LocationIcon cls="text-brand-600 size-8 mb-2 group-hover:scale-110 transition-transform" />
-            <span class="font-semibold text-gray-900 group-hover:text-brand-700">{{ related.name }}</span>
+            <LocationIcon cls="text-brand-700 size-8 mb-2 group-hover:scale-110 transition-transform" />
+            <span class="font-semibold text-gray-900 group-hover:text-brand-800">{{ related.name }}</span>
             <span class="text-sm text-gray-500">{{ related.distance }} en carro</span>
           </NuxtLink>
         </div>

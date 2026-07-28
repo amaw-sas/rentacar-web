@@ -22,6 +22,12 @@ const coverage = read('components/wizard/steps/StepCoverage.vue')
 const stepper = read('components/wizard/WizardStepper.vue')
 const summary = read('components/wizard/WizardSummary.vue')
 const vehicle = read('components/wizard/steps/StepVehicle.vue')
+// Issue #368 B1: el cálculo de "qué planes vende la gama" salió de los dos
+// componentes a un helper puro. Las aserciones que miraban ese cálculo apuntan
+// aquí; su COMPORTAMIENTO se prueba ejecutando en
+// app/composables/__tests__/useMonthlyPlans.test.ts, que es evidencia más fuerte
+// que cualquiera de estas cadenas.
+const monthlyPlans = read('composables/useMonthlyPlans.ts')
 
 describe('SCEN-ACM-04/06 — los flags del form se DERIVAN de la instancia', () => {
   it('ReservationWizard escribe selectedMonthlyMileage', () => {
@@ -68,7 +74,9 @@ describe('SCEN-ACM-01/02 — el selector de kilometraje vive en el Paso 3', () =
   })
 
   it('2k solo se oferta si su precio es positivo', () => {
-    expect(coverage).toMatch(/\['2k_kms'\]\s*>\s*0|\["2k_kms"\]\s*>\s*0/)
+    // El filtro vive en el helper desde #368 B1. La regla se ejercita de verdad en
+    // useMonthlyPlans.test.ts ("omite el plan cuyo precio no es positivo").
+    expect(monthlyPlans).toMatch(/price\s*>\s*0/)
   })
 
   it('elegir plan escribe la instancia, no el store', () => {
@@ -104,14 +112,23 @@ describe('SCEN-ACM-11 — el "desde" del segmento es monthly-aware', () => {
     // createCategoryAvailability sintetiza esos campos en 0 para las filas mensuales:
     // el precio vive en month_prices. Sumarlos daba "desde $ 0" en los 4 tiles.
     expect(vehicle).toMatch(/haveMonthlyReservation/)
-    expect(vehicle).toMatch(/pickPriceForDate/)
+    // La rama mensual sale de sellablePlans, que es quien elige la fila con
+    // pickPriceForDate. Antes esto afirmaba /pickPriceForDate/ sobre este archivo;
+    // tras la extracción esa cadena solo sobrevivía en un docblock, así que pasaba
+    // sin comprobar nada. Que la fila elegida sea la correcta —incluida la
+    // `inactive` de respaldo— se prueba EJECUTANDO en useMonthlyPlans.test.ts.
+    expect(vehicle).toMatch(/sellablePlans\(/)
   })
 
   it('el piso mensual usa el plan vendible más barato, no un 0', () => {
-    expect(vehicle).toMatch(/1k_kms/)
-    expect(vehicle).toMatch(/2k_kms/)
-    // Un plan a 0 no es vendible y no puede fijar el piso.
-    expect(vehicle).toMatch(/>\s*0/)
+    // El piso es Math.min sobre los planes VENDIBLES: la regla de "vendible" vive en
+    // el helper, y la de "más barato" se queda aquí. Son reglas distintas —el default
+    // del Paso 3 usa orden de kilometraje, no precio— y por eso se afirman por
+    // separado. Ver useMonthlyPlans.test.ts, caso de fila invertida.
+    expect(vehicle).toMatch(/Math\.min\([^)]*plans/)
+    expect(monthlyPlans).toMatch(/1k_kms/)
+    expect(monthlyPlans).toMatch(/2k_kms/)
+    expect(monthlyPlans).toMatch(/price\s*>\s*0/)
   })
 })
 
