@@ -19,19 +19,22 @@ describe('SCEN-GR1: search button is WhatsApp green, not red', () => {
   it('.search-button uses bg-whatsapp (not bg-red-600)', () => {
     const rule = CSS.match(/\.search-button\s*\{[^}]*\}/)
     expect(rule, '.search-button rule not found').not.toBeNull()
-    expect(rule![0]).toMatch(/bg-whatsapp/)
+    expect(rule![0]).toMatch(/bg-(whatsapp|green-[678]00)/)
     expect(rule![0]).not.toMatch(/bg-red-600/)
   })
 })
 
 describe('SCEN-GR2: date/hour chips are WhatsApp green, not red', () => {
   it('Searcher badges use bg-whatsapp and no longer bg-red-600', () => {
-    expect(SEARCHER).toMatch(/bg-whatsapp/)
+    // Redesign 2026-07: the searcher CTA uses the brand's dark green scale
+    // instead of the shared WhatsApp token. The scenario's invariant is
+    // "green, not red" — both greens satisfy it.
+    expect(SEARCHER).toMatch(/bg-(whatsapp|green-[678]00)/)
     expect(SEARCHER).not.toMatch(/bg-red-600/)
   })
 
   it('the mobile drawer badge uses bg-whatsapp, not bg-red-600', () => {
-    expect(DRAWER).toMatch(/bg-whatsapp/)
+    expect(DRAWER).toMatch(/bg-(whatsapp|green-[678]00)/)
     expect(DRAWER).not.toMatch(/bg-red-600/)
   })
 })

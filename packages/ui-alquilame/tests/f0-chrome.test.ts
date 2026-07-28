@@ -77,7 +77,9 @@ describe('chrome — CTA "Reserva Ahora" + WhatsApp (default.vue)', () => {
     const waButtons = (header.match(/<a[\s\S]*?<\/a>/g) ?? []).filter((a) =>
       /franchise\.whatsapp/.test(a),
     )
-    expect(waButtons.length).toBeGreaterThanOrEqual(2) // desktop circle + mobile pill
+    // Redesign 2026-07: the chrome carries ONE WhatsApp anchor (footer);
+    // the floating FAB (ChatWidget) and the reservation flow own the rest.
+    expect(waButtons.length).toBeGreaterThanOrEqual(1)
     for (const wa of waButtons) {
       expect(wa).toMatch(/\bbg-whatsapp\b/)
       expect(wa).toMatch(/\btext-black\b/)
@@ -274,7 +276,9 @@ describe('footer — reference surface colour and link set', () => {
   })
 
   it('carries a "Registra tu Flota" footer link', () => {
-    expect(config).toContain('Registra tu Flota')
+    // Redesign 2026-07: the flota-registration entry became the B2B page
+    // "Sé nuestro aliado" (/aliados); the legacy /registratuflota 301s there.
+    expect(config).toContain('Sé nuestro aliado')
   })
 })
 
