@@ -92,6 +92,41 @@
             <span id="telefono-error">{{ error }}</span>
           </template>
         </u-form-field>
+        <!-- Conductor adicional (#396): la tarifa lo incluye, así que Localiza
+             necesita saber a quién autorizar. El bloque entero cuelga del espejo
+             de `withExtraDriver`, que vive en el store de búsqueda. -->
+        <template v-if="formState.conductorAdicional">
+          <p class="col-span-2 text-sm font-semibold text-gray-900 mt-2">Conductor adicional</p>
+          <u-form-field class="col-span-2" name="conductorAdicionalNombre" label="Nombre del conductor adicional">
+            <u-input
+              v-model="formState.conductorAdicionalNombre"
+              class="w-full"
+              placeholder="Nombres y apellidos del conductor adicional*"
+              aria-label="Nombre del conductor adicional"
+              data-testid="extra-driver-name"
+              :ui="inputUi"
+            ></u-input>
+          </u-form-field>
+          <u-form-field class="col-span-2" name="conductorAdicionalIdentificacion" label="Cédula o documento del conductor adicional">
+            <u-input
+              v-model="formState.conductorAdicionalIdentificacion"
+              class="w-full"
+              placeholder="Cédula o pasaporte del conductor adicional*"
+              aria-label="Cédula o documento del conductor adicional"
+              data-testid="extra-driver-document"
+              :ui="inputUi"
+            ></u-input>
+          </u-form-field>
+          <p class="col-span-2 text-xs text-gray-600" data-testid="extra-driver-notice">
+            Enviamos estos datos a Localiza para autorizar al conductor adicional. Avísale que sus
+            datos se tratan según nuestra
+            <nuxt-link
+              class="underline font-medium text-gray-700 hover:text-gray-900"
+              to="/politica-privacidad"
+              target="_blank"
+            >política de tratamiento de la información</nuxt-link>.
+          </p>
+        </template>
         <u-form-field class="col-span-2" name="politicaPrivacidad">
           <!-- Checkbox y texto como hermanos (no usar el slot label): así clic en
                los enlaces navega sin marcar/desmarcar el checkbox. El cuadrito
@@ -149,8 +184,16 @@ const {
   telefono,
   email,
   politicaPrivacidad,
+  conductorAdicionalNombre,
+  conductorAdicionalIdentificacion,
   vehiculo,
 } = storeToRefs(storeForm);
+
+// Issue #396: el flag del conductor adicional vive en la categoría seleccionada,
+// fuera del formState que valida valibot. Se refleja como campo derivado de solo
+// lectura para que las reglas cruzadas puedan verlo. Sin este espejo el schema
+// recibe `false` por defecto y NUNCA exige los datos — fallo mudo.
+const conductorAdicional = computed(() => selectedCategory.value?.withExtraDriver === true);
 
 /** vars */
 const identificationTypeOptions = [
@@ -176,6 +219,9 @@ const baseForm = {
   telefono,
   email,
   politicaPrivacidad,
+  conductorAdicional,
+  conductorAdicionalNombre,
+  conductorAdicionalIdentificacion,
   vehiculo,
 };
 

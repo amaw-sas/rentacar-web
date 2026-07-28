@@ -31,6 +31,11 @@ export default interface FormFields {
   reference_token: string | undefined;
   rate_qualifier: string | undefined;
   extra_driver?: number | undefined;
+  // Identity of the extra driver (issue #396). Sent only while the add-on is
+  // contracted — Localiza authorises the person by name and ID document.
+  // Same field names in rentacar-dashboard#293.
+  extra_driver_name?: string | undefined;
+  extra_driver_document?: string | undefined;
   baby_seat?: number | undefined;
   wash?: number | undefined;
   // Always 0 — the flight branch was removed (issue #322 SCEN-322-X07); the
