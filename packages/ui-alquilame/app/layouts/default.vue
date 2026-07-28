@@ -122,13 +122,13 @@
               Empresa colombiana de alquiler de carros con más de 10 años de experiencia y presencia en
               {{ cityCount }} ciudades. Flota nueva, sin anticipos y atención cercana para que viajes tranquilo.
             </p>
-            <!-- Badge de confianza: rating de Google. Valores fijos 5,0 / 43 — reviewed 2026-06; sync con Reviews.vue -->
+            <!-- Badge de confianza: rating de Google 4,9 — revisado 2026-07; sincronizado con GoogleRating.vue -->
             <a
               href="https://www.google.com/maps?cid=11824841242913553901"
               target="_blank"
               rel="noopener noreferrer"
               class="mt-6 inline-flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:bg-white/10 transition-colors"
-              aria-label="Calificación 5,0 sobre 5, verificada en Google"
+              aria-label="Calificación 4,9 sobre 5, verificada en Google"
             >
               <svg class="w-7 h-7 flex-shrink-0" viewBox="0 0 48 48" aria-hidden="true">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -138,7 +138,7 @@
               </svg>
               <div>
                 <div class="flex items-center gap-1.5">
-                  <span class="text-white font-bold font-heading text-lg leading-none">5,0</span>
+                  <span class="text-white font-bold font-heading text-lg leading-none">4,9</span>
                   <div class="flex gap-0.5">
                     <svg v-for="n in 5" :key="`star-${n}`" class="w-3 h-3 fill-yellow-400" viewBox="0 0 24 24" aria-hidden="true">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />

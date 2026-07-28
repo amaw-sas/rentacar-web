@@ -49,9 +49,9 @@
 
       <!-- data-shift-left mueve el stack a la izquierda con el resumen de reserva
            abierto en escritorio (>=1024px); ver CSS. En movil el rediseno oculta
-           el stack entero via hideContactButtonsOnMobile, asi que no hay lift. -->
+           el stack entero via hideContactButtons, asi que no hay lift. -->
       <div
-        v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"
+        v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"
         class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4 pointer-events-none"
         :data-shift-left="shiftLeft"
       >
@@ -166,24 +166,23 @@ const panelEl = ref<HTMLElement | null>(null)
 const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
-// Resumen de reserva abierto → el FAB salta a la izquierda para no tapar
-// Volver/Siguiente/Solicitar reserva (el u-slideover ancla a la derecha, z<60).
-// Puente SSR-safe (useState) desde CategorySelectionSection, que vive en otro
-// subárbol y escribe esta misma clave.
+// Desplazamiento a la izquierda de main (>=1024px), conservado tal cual.
+// OJO: hoy es INALCANZABLE — `hideContactButtons` de abajo desmonta el stack en
+// cuanto el overlay se abre, y la misma escritura enciende las dos banderas, así
+// que no queda ningún estado en el que este cálculo se pueda observar. Se deja
+// intacto porque es una feature certificada de main y su retirada no es de este
+// merge; va anotado como seguimiento.
 const reservationSummaryOpen = useState<boolean>('reservation-slideover-open', () => false)
 const isWideViewport = useMediaQuery('(min-width: 1024px)')
 const shiftLeft = computed(() => isWideViewport.value && reservationSummaryOpen.value)
 
-// Los dos tratamientos parten EXACTO en 1024px, que es donde partía el
-// `@media (max-width: 1023.98px)` de main: por debajo se oculta el stack, por
-// encima se desplaza. Antes esto usaba el isDesktop de 768 y dejaba un hueco
-// entre 768 y 1023 sin ningún tratamiento — la barra inferior del wizard de
-// alquicarros (`lg:hidden fixed inset-x-0 bottom-0`, WizardSummary.vue) ocupa
-// justo esa banda a ancho completo, donde desplazar a la izquierda tampoco la
-// despeja. `isDesktop` sigue vivo para el panel inline del chat.
-const hideContactButtonsOnMobile = computed(
-  () => !isWideViewport.value && reservationOverlayOpen.value,
-)
+// El pie del slideover de reserva ya trae su propio CTA de WhatsApp y el stack
+// flotante se le montaba encima en escritorio, así que se oculta en TODO viewport
+// mientras el overlay está abierto. Absorbe la partición en 1024 que traíamos:
+// ocultar siempre cubre por definición la banda de 768 a 1023 donde la barra
+// inferior del wizard de alquicarros (`lg:hidden fixed inset-x-0 bottom-0`)
+// ocupa el ancho completo. `isDesktop` sigue vivo para el panel inline del chat.
+const hideContactButtons = computed(() => reservationOverlayOpen.value)
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
 // la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
@@ -317,8 +316,8 @@ function openChat() {
 a,
 button { -webkit-tap-highlight-color: transparent; }
 
-/* Posición flotante normal. Al abrir la reserva en móvil el stack se oculta, así
-   que no necesita elevarse para esquivar el CTA del slideover. */
+/* Posición flotante normal. Al abrir la reserva el stack se oculta en todos
+   los tamaños, así que no necesita elevarse para esquivar el CTA del slideover. */
 .contact-fab-stack { bottom: 1.5rem; }
 
 /* --- Botones directos de contacto --- */

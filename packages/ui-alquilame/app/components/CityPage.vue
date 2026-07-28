@@ -2,8 +2,8 @@
   <!--
     F2 city landing — orquestador. Las secciones city viven en app/components/city/*
     (hero/intro/seo/delivery/faq/testimonios, datos city-specific) y el marketing
-    puro se reusa de F1 (home/*). SEO (useCityProductSchema #68, useCityFAQSchema
-    vía useCityPageSEO) sin cambios de comportamiento. El schema de
+    puro se reusa de F1 (home/*). SEO (useCityProductSchema #68 y el FAQ schema
+    local vía useAlquilameCityPageSEO) sin cambios de comportamiento. El schema de
     aggregate-rating se eliminó (#312): calificaciones fabricadas + markup
     self-serving inelegible para Google.
 
@@ -51,7 +51,7 @@
 
     <HomeRequirements v-if="mode !== 'results'" />
 
-    <!-- Reseñas city (useCityTestimonials, #322 PR10) -->
+    <!-- Reseñas reales de Google con selección determinística por ciudad -->
     <CityTestimonios :city="city" />
 
     <!-- Separator 3 — the closing line, between Opiniones (Google) and Ventajas.
@@ -80,6 +80,7 @@
 /** types */
 import type { City } from '@rentacar-main/logic/utils';
 import { cityPullQuotes } from '@rentacar-main/logic/utils';
+import { useCityExpandedContent } from '~/data/cityContent';
 
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
 

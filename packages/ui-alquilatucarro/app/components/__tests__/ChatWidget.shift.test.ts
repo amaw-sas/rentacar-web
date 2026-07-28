@@ -27,7 +27,7 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
   // El `:class="{ 'contact-fab-stack--reservation': isReservationRoute }"` que
   // esta prueba congelaba desapareció al integrar el rediseño de alquilame: ese
   // lift móvil por RUTA fue sustituido por ocultar el stack entero mientras el
-  // resumen está abierto (`hideContactButtonsOnMobile`). El invariante de fondo
+  // resumen está abierto (`hideContactButtons`). El invariante de fondo
   // —el FAB no puede tapar Volver/Siguiente/Solicitar reserva en móvil— lo
   // cubre ahora SCEN-4 sobre el mecanismo nuevo.
   it('SCEN-1 — mantiene el ancla derecho de base y añade data-shift-left', () => {
@@ -80,14 +80,13 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
   it('SCEN-4 — en móvil el stack se oculta con el resumen abierto', () => {
     expect(chatWidget).toContain('.contact-fab-stack { bottom: 1.5rem; }')
     expect(chatWidget).toContain(
-      'v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"',
+      'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
     )
-    // Los dos tratamientos parten EXACTO en 1024, la misma frontera del
-    // `@media (max-width: 1023.98px)` de main. Con el isDesktop de 768 quedaba
-    // una banda de 768 a 1023 sin ocultar ni desplazar, y ahí la barra inferior
-    // del wizard de alquicarros ocupa el ancho completo sobre el CTA.
+    // Se oculta en TODO viewport mientras el overlay está abierto: el pie del
+    // slideover ya trae su propio CTA de WhatsApp. Sin condición de viewport no
+    // puede quedar ninguna banda con el FAB encima del CTA.
     expect(chatWidget).toMatch(
-      /const hideContactButtonsOnMobile = computed\(\s*\(\)\s*=>\s*!isWideViewport\.value\s*&&\s*reservationOverlayOpen\.value,?\s*\)/,
+      /const hideContactButtons = computed\(\(\) => reservationOverlayOpen\.value\)/,
     )
     // El puente lo publica el store compartido, no una ruta.
     expect(chatWidget).toMatch(

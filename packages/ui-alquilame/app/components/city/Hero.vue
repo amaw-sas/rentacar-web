@@ -50,12 +50,12 @@
       <div class="grid lg:grid-cols-2 gap-3 lg:gap-10 items-center">
         <!-- Text column -->
         <div class="text-center lg:text-left">
-          <!-- Trust signal: "4.9 reviews" star badge (design hero) -->
+          <!-- Trust signal: Google reviews star badge (design hero) -->
           <div
             class="flex flex-row space-x-0.5 justify-center lg:justify-start items-center text-sm text-white mb-3"
           >
             <StarIcon v-for="i in [1, 2, 3, 4, 5]" :key="i" cls="w-3.5 h-3.5 md:w-4 md:h-4" />
-            <span class="ml-2">4.9 reviews</span>
+            <span class="ml-2">Reseñas en Google</span>
           </div>
 
           <!--
@@ -73,8 +73,8 @@
           </h1>
 
           <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
-            Consulta disponibilidad y precios. Elige ciudad, fechas y horarios y
-            renta un vehículo por días, semanas o el tiempo que necesites.
+            Cuéntanos las fechas y los horarios de tu viaje. Te ayudamos a
+            encontrar un carro para los días que tienes en mente.
           </p>
 
           <!-- Single CTA: WhatsApp, same treatment as the home hero. Landing

@@ -56,21 +56,17 @@ describe('FAB de contacto móvil durante la solicitud', () => {
   it('oculta ambos canales sólo en móvil mientras el overlay está abierto', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain(
-        'v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"',
+        'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
       )
       expect(source, brand).toMatch(
         /const \{ reservationOverlayOpen \} = storeToRefs\(useStoreSearchData\(\)\)/,
       )
-      // Partición EXACTA en 1024px, la misma frontera del `max-width: 1023.98px`
-      // de main: por debajo se oculta el stack, por encima lo desplaza shiftLeft.
-      // Con el isDesktop de 768 quedaba un hueco entre 768 y 1023 sin ningún
-      // tratamiento, justo la banda donde la barra inferior del wizard de
-      // alquicarros ocupa el ancho completo.
+      // Se oculta en TODO viewport mientras el overlay está abierto: el pie del
+      // slideover ya trae su propio CTA de WhatsApp, y ocultar siempre cubre por
+      // definición la banda donde la barra inferior del wizard de alquicarros
+      // ocupa el ancho completo. Sin condición de viewport que pueda dejar hueco.
       expect(source, brand).toMatch(
-        /const hideContactButtonsOnMobile = computed\([\s\S]*!isWideViewport\.value && reservationOverlayOpen\.value/,
-      )
-      expect(source, brand).toMatch(
-        /const isWideViewport = useMediaQuery\('\(min-width: 1024px\)'\)/,
+        /const hideContactButtons = computed\(\(\) => reservationOverlayOpen\.value\)/,
       )
       expect(source, brand).toContain("'Abrir Chat 24 horas'")
       expect(source, brand).toContain('aria-label="Abrir WhatsApp"')

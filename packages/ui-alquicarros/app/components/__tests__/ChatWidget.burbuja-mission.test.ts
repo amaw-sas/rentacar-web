@@ -27,7 +27,7 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
   it('E10 — all three brand widgets keep the same two-channel behavior', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain(
-        'v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"',
+        'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
       )
       expect(source, brand).toContain('<li v-if="chatEnabled"')
       expect(source, brand).toContain('<li v-if="whatsappVisible"')

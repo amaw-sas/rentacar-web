@@ -84,7 +84,7 @@ describe('Home hero — golden parity', () => {
     // Global auto-import name is IconsStarIcon (Icons/ dir prefix); the bare
     // <StarIcon> alias only exists where a file imports it explicitly.
     expect(hero).toMatch(/<IconsStarIcon\b/)
-    expect(hero).toMatch(/4\.9 reviews/)
+    expect(hero).toMatch(/Reseñas en Google/)
   })
 
   it('reserves visual space with an aspect-ratio card (CLS)', () => {

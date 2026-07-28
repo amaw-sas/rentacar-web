@@ -1,6 +1,6 @@
 <template>
   <!--
-    Google trust block — the 5,0 rating, the star row, the multicolor Google
+    Google trust block — the 4,9 rating, the star row, the multicolor Google
     logo and the "Ver reseñas en Google" link.
 
     Extracted from the home reviews section so the CITY testimonials sections
@@ -9,7 +9,7 @@
     the strongest social proof we have was absent exactly where it works hardest.
 
     REAL data only — alquilame's actual Business profile
-    (cid=11824841242913553901). Reviewed 2026-06; re-verify the rating there and
+    (cid=11824841242913553901). Reviewed 2026-07; re-verify the rating there and
     keep it in sync with the footer badge in layouts/default.vue.
 
     No review COUNT here, deliberately: a hardcoded total only ages one way, and
@@ -30,7 +30,7 @@
       </svg>
 
       <div class="flex items-center gap-3">
-        <span class="font-heading font-extrabold leading-none text-brand-600 text-6xl sm:text-7xl">5,0</span>
+        <span class="font-heading font-extrabold leading-none text-brand-600 text-6xl sm:text-7xl">4,9</span>
         <!-- Star row (desktop) -->
         <div class="hidden lg:flex gap-1">
           <StarIcon v-for="i in 5" :key="i" cls="text-yellow-400 w-7 h-7" />

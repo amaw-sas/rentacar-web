@@ -347,8 +347,9 @@ const reservationFormComponent = ref(null);
 const linkCopied = ref(false);
 
 // ChatWidget vive en el layout y este estado es local al grid. Reflejarlo en el
-// store permite ocultar sus dos accesos flotantes sólo en móvil mientras el
-// slideover de reserva está abierto, y restaurarlos al cerrar o volver atrás.
+// store permite ocultar sus dos accesos flotantes mientras el slideover de
+// reserva está abierto (en todo viewport: el pie del slideover ya trae su propio
+// CTA de WhatsApp), y restaurarlos al cerrar o volver atrás.
 watch(
   slideoverOpen,
   (open) => { reservationOverlayOpen.value = open; },

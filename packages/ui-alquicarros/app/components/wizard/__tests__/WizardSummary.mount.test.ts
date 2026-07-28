@@ -429,10 +429,10 @@ describe('WizardSummary — aparta el FAB de contacto de su CTA', () => {
     ).toBe(false)
   })
 
-  it('la barra que tapa el CTA y la compuerta del FAB usan el MISMO breakpoint', () => {
-    // La barra es `lg:hidden` → visible por debajo de 1024px. El ChatWidget
-    // oculta el stack con `!isWideViewport` → min-width 1024px. Si alguien mueve
-    // uno de los dos, vuelve a abrirse una banda con el FAB sobre el CTA.
+  it('la compuerta del FAB no depende del viewport, así que cubre toda la barra', () => {
+    // La barra es `lg:hidden`: ancho completo hasta 1024px. El ChatWidget oculta
+    // el stack SIN condición de viewport, así que la cubre entera. Si alguien le
+    // vuelve a poner un breakpoint, hay que comprobar que no deja banda.
     stubStores(buildCategory({ rentSubtotal: 881797, actualTotal: 1154272.73 }))
     const w = mountSummary()
 
@@ -444,9 +444,8 @@ describe('WizardSummary — aparta el FAB de contacto de su CTA', () => {
       resolve(process.cwd(), 'app/components/ChatWidget.vue'),
       'utf8',
     )
-    expect(widget).toMatch(/const isWideViewport = useMediaQuery\('\(min-width: 1024px\)'\)/)
     expect(widget).toMatch(
-      /const hideContactButtonsOnMobile = computed\([\s\S]*!isWideViewport\.value && reservationOverlayOpen\.value/,
+      /const hideContactButtons = computed\(\(\) => reservationOverlayOpen\.value\)/,
     )
   })
 })

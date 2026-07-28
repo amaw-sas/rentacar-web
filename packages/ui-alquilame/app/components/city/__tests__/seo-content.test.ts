@@ -7,7 +7,7 @@
  *
  *   - every original indexable section is present (introduccion /
  *     ventajas / destinos / consejos-conduccion / mejor-temporada /
- *     ciudades-cercanas) with its key heading + key copy VERBATIM.
+ *     ciudades-cercanas) with its key heading + factual copy intact.
  *   - no SEO copy was dropped (benefit blurbs, driving-tip labels,
  *     related-cities prompt all still present).
  *   - design styling lessons: headings use a .heading-* utility (Plus Jakarta),
@@ -29,10 +29,10 @@ describe('city intro removed — #descripcion gone, #introduccion lives in the S
     expect(SEO).not.toContain('muévete')
   })
 
-  it('keeps #introduccion (moved here earlier) with its heading + paragraph', () => {
+  it('keeps #introduccion (moved here earlier) with its own heading + paragraph', () => {
     expect(SEO).toContain('id="introduccion"')
-    expect(SEO).toContain('Explora {{ city?.name }}')
-    expect(SEO).toContain('con tu carro de alquiler')
+    expect(SEO).toContain('Conoce {{ city?.name }}')
+    expect(SEO).toContain('con un carro de alquiler')
     expect(SEO).toContain('expandedContent.intro')
     expect(SEO).toMatch(/v-if="expandedContent"/)
   })
@@ -52,20 +52,20 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
   })
 
   it('keeps the #ventajas heading + factual inventory-backed benefit blurbs', () => {
-    expect(SEO).toContain('Ventajas de alquilar carro')
-    expect(SEO).toContain('Precios transparentes')
-    expect(SEO).toContain('Sin cargos ocultos ni sorpresas.')
-    expect(SEO).toContain('Flota variada')
-    expect(SEO).toContain('Desde económicos hasta SUVs y camionetas.')
-    expect(SEO).toContain('Puntos de recogida')
-    expect(SEO).toContain('puntos de recogida activos en')
+    expect(SEO).toContain('Qué incluye alquilar carro')
+    expect(SEO).toContain('Cuenta clara desde el inicio')
+    expect(SEO).toContain('seguro básico, impuestos y kilometraje ilimitado')
+    expect(SEO).toContain('Una categoría para cada viaje')
+    expect(SEO).toContain('opciones económicas, SUVs y camionetas')
+    expect(SEO).toContain('Elige tu punto de recogida')
+    expect(SEO).toContain('puntos de recogida están activos en')
     expect(SEO).not.toContain('Aeropuerto, centro de la ciudad o donde te resulte más cómodo')
-    expect(SEO).toContain('Atención personalizada')
-    expect(SEO).toContain('Soporte en español las 24 horas.')
+    expect(SEO).toContain('Ayuda cuando la necesites')
+    expect(SEO).toContain('Te atendemos en español las 24 horas.')
   })
 
   it('keeps the #destinos heading + the destination data binding', () => {
-    expect(SEO).toContain('Destinos para recorrer con carro rentado')
+    expect(SEO).toContain('Rutas para disfrutar con un carro alquilado')
     expect(SEO).toContain('desde {{ city?.name }}')
     expect(SEO).toContain('expandedContent.destinations')
     expect(SEO).toContain('destination.name')
@@ -74,7 +74,7 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
   })
 
   it('keeps the #consejos-conduccion heading + the 3 driving-tip labels/bindings', () => {
-    expect(SEO).toContain('para alquilar carro en {{ city?.name }}')
+    expect(SEO).toContain('un carro alquilado en {{ city?.name }}')
     expect(SEO).toContain('Pico y Placa')
     expect(SEO).toContain('Peajes')
     expect(SEO).toContain('Parqueaderos')
@@ -84,18 +84,38 @@ describe('F2 city SeoContent — sections preserved (SCEN-F2-02)', () => {
   })
 
   it('keeps the #mejor-temporada heading + bestSeason binding', () => {
-    expect(SEO).toContain('Mejor época')
-    expect(SEO).toContain('para alquilar carro y viajar a {{ city?.name }}')
+    expect(SEO).toContain('Cuándo alquilar carro')
+    expect(SEO).toContain('para viajar por {{ city?.name }}')
     expect(SEO).toContain('expandedContent.bestSeason')
   })
 
   it('keeps the #ciudades-cercanas heading, prompt + internal links', () => {
-    expect(SEO).toContain('Alquiler de carros')
-    expect(SEO).toContain('en ciudades cercanas')
-    expect(SEO).toContain('¿Planeas un viaje más largo?')
+    expect(SEO).toContain('Alquila carro también')
+    expect(SEO).toContain('en estas ciudades')
+    expect(SEO).toContain('¿Tu ruta sigue después de')
     expect(SEO).toContain('relatedCities')
     expect(SEO).toMatch(/:to="`\/\$\{related\.id\}`"/)
     expect(SEO).toContain('related.distance')
+  })
+
+  it('does not reintroduce the sibling-brand headings or benefit blurbs', () => {
+    for (const sharedCopy of [
+      'Destinos para recorrer con carro rentado',
+      'Mejor época para alquilar carro y viajar a',
+      '¿Planeas un viaje más largo?',
+      'Sin cargos ocultos ni sorpresas.',
+      'Desde económicos hasta SUVs y camionetas.',
+    ]) {
+      expect(SEO).not.toContain(sharedCopy)
+    }
+  })
+
+  it('uses precise customer-facing benefit copy without repetitive wording', () => {
+    expect(SEO).toContain('El valor mostrado ya incluye seguro básico')
+    expect(SEO).not.toContain('ya reúne')
+    expect(SEO).not.toContain('Recogida según sedes activas')
+    expect(SEO.match(/cuenta clara/gi) ?? []).toHaveLength(1)
+    expect(SEO.match(/\brecorr(?:er|ido|iendo)\b/gi) ?? []).toHaveLength(0)
   })
 })
 
