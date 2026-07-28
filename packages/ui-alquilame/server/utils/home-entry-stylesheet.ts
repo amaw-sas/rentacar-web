@@ -2,7 +2,7 @@ const LINK_TAG_RE = /<link\b[^>]*>/gi
 const STYLESHEET_REL_RE = /\brel=(["'])stylesheet\1/i
 const HREF_RE = /\bhref=(["'])([^"']+)\1/i
 const HOME_ENTRY_MARKER_RE = /\bdata-home-entry-css=/i
-const ENTRY_STYLESHEET_RE = /\/_nuxt\/entry\.[^/?#"']+\.css(?:[?#].*)?$/i
+const ENTRY_STYLESHEET_RE = /^\/_nuxt\/entry\.[^/?#"']+\.css(?:[?#].*)?$/i
 
 function appendAttributes(tag: string, attributes: string): string {
   return tag.replace(/\s*\/?>(?:\s*)$/, ` ${attributes}>`)
@@ -26,9 +26,9 @@ function asyncEntryStylesheetTags(stylesheet: string): string {
   return `${preload}${asyncStylesheet}<noscript>${fallback}</noscript>`
 }
 
-function rewriteEntryStylesheetLinks(headChunk: string): string {
+function rewriteEntryStylesheetLinks(headChunk: string, defer: boolean): string {
   return headChunk.replace(LINK_TAG_RE, (tag) => {
-    if (HOME_ENTRY_MARKER_RE.test(tag) || !STYLESHEET_REL_RE.test(tag)) {
+    if (!STYLESHEET_REL_RE.test(tag)) {
       return tag
     }
 
@@ -37,21 +37,24 @@ function rewriteEntryStylesheetLinks(headChunk: string): string {
       return tag
     }
 
-    return asyncEntryStylesheetTags(tag)
+    if (!defer) {
+      return ''
+    }
+
+    return HOME_ENTRY_MARKER_RE.test(tag) ? tag : asyncEntryStylesheetTags(tag)
   })
 }
 
 /**
- * Defers the global entry stylesheet only for the exact home pathname.
+ * Defers the global entry stylesheet on home and strips it everywhere else.
  *
- * Nuxt's generated head is an array of HTML chunks. Keeping the route gate in
- * this pure function makes the safety contract testable without a production
- * build or environment files.
+ * The non-home branch preserves nuxt-vitalizer's previous
+ * `disableStylesheets: 'entry'` output while the exact home route gets the
+ * early, non-render-blocking stylesheet. Nuxt's generated head is an array of
+ * HTML chunks, so keeping the route gate here makes both behaviors testable.
  */
 export function rewriteHomeEntryStylesheets(pathname: string, head: string[]): string[] {
-  if (pathname !== '/') {
-    return head
-  }
+  const defer = pathname === '/'
 
-  return head.map(rewriteEntryStylesheetLinks)
+  return head.map(chunk => rewriteEntryStylesheetLinks(chunk, defer))
 }

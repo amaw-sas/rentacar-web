@@ -780,9 +780,9 @@ export default defineNuxtConfig({
 
   // Optimización Core Web Vitals
   vitalizer: {
-    // Keep Nuxt's entry stylesheet in the manifest. A Nitro render hook defers
-    // it only on the home route; every other route needs the blocking sheet
-    // because its first viewport is not covered by the home critical CSS.
+    // Keep stylesheet mutation in the route-aware Nitro renderer: home defers
+    // entry CSS, while every other route preserves Vitalizer's previous entry
+    // CSS removal without a global build-manifest transformation.
     disableStylesheets: false,
     // Remueve prefetch links para mejorar FCP
     disablePrefetchLinks: true,
