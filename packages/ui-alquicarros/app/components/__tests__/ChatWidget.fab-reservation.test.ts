@@ -12,17 +12,35 @@ const brandWidgets = ['ui-alquicarros', 'ui-alquilame', 'ui-alquilatucarro'].map
     ),
   }),
 )
-const slideoverSections = ['ui-alquilame', 'ui-alquilatucarro'].map(brand => ({
-  brand,
-  source: readFileSync(
-    `${repoRoot}/packages/${brand}/app/components/CategorySelectionSection.vue`,
-    'utf8',
-  ),
-}))
 const searchStore = readFileSync(
   `${repoRoot}/packages/logic/src/stores/useStoreSearchData.ts`,
   'utf8',
 )
+
+// Toda la superficie `app/` de cada marca, para poder BUSCAR el escritor en vez
+// de darlo por sabido. La lista de escritores era fija —alquilame y
+// alquilatucarro— mientras la de lectores eran las tres marcas, así que
+// alquicarros leía `reservationOverlayOpen` sin que nadie lo escribiera y el
+// guardia no se enteraba: su FAB se pintaba sobre el CTA del wizard. Se deriva
+// del lector para que "lector sin escritor" no pueda volver en silencio.
+const readdirSync = (await import('node:fs')).readdirSync
+function brandSources(brand: string): { file: string, source: string }[] {
+  const out: { file: string, source: string }[] = []
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = `${dir}/${entry.name}`
+      if (entry.isDirectory()) {
+        if (entry.name === '__tests__' || entry.name === 'node_modules') continue
+        walk(full)
+      }
+      else if (entry.name.endsWith('.vue') || entry.name.endsWith('.ts')) {
+        out.push({ file: full.slice(repoRoot.length), source: readFileSync(full, 'utf8') })
+      }
+    }
+  }
+  walk(`${repoRoot}/packages/${brand}/app`)
+  return out
+}
 
 describe('FAB de contacto móvil durante la solicitud', () => {
   it('mantiene los canales abajo a la derecha sin elevarlos en reservas', () => {
@@ -43,25 +61,55 @@ describe('FAB de contacto móvil durante la solicitud', () => {
       expect(source, brand).toMatch(
         /const \{ reservationOverlayOpen \} = storeToRefs\(useStoreSearchData\(\)\)/,
       )
+      // Partición EXACTA en 1024px, la misma frontera del `max-width: 1023.98px`
+      // de main: por debajo se oculta el stack, por encima lo desplaza shiftLeft.
+      // Con el isDesktop de 768 quedaba un hueco entre 768 y 1023 sin ningún
+      // tratamiento, justo la banda donde la barra inferior del wizard de
+      // alquicarros ocupa el ancho completo.
       expect(source, brand).toMatch(
-        /const hideContactButtonsOnMobile = computed\([\s\S]*!isDesktop\.value && reservationOverlayOpen\.value/,
+        /const hideContactButtonsOnMobile = computed\([\s\S]*!isWideViewport\.value && reservationOverlayOpen\.value/,
+      )
+      expect(source, brand).toMatch(
+        /const isWideViewport = useMediaQuery\('\(min-width: 1024px\)'\)/,
       )
       expect(source, brand).toContain("'Abrir Chat 24 horas'")
       expect(source, brand).toContain('aria-label="Abrir WhatsApp"')
     }
   })
 
-  it('refleja la apertura y el cierre real del slideover en el store compartido', () => {
+  it('el store expone la bandera compartida', () => {
     expect(searchStore).toContain('const reservationOverlayOpen = ref<boolean>(false)')
     expect(searchStore).toMatch(/return \{[\s\S]*reservationOverlayOpen,/)
-
-    for (const { brand, source } of slideoverSections) {
-      expect(source, brand).toMatch(
-        /watch\(\s*slideoverOpen,[\s\S]*reservationOverlayOpen\.value = open/,
-      )
-      expect(source, brand).toMatch(
-        /onBeforeUnmount\(\(\) => \{[\s\S]*reservationOverlayOpen\.value = false/,
-      )
-    }
   })
+
+  // CADA marca que LEE la bandera tiene que tener quien la ESCRIBA. El mecanismo
+  // puede diferir —alquilame y alquilatucarro la publican desde el watch del
+  // slideover; alquicarros, desde el ciclo de vida del resumen del wizard, que
+  // es cuando su barra inferior está en pantalla— pero la pareja encender/apagar
+  // no es opcional: sin ella el FAB nunca se aparta y tapa el CTA.
+  for (const { brand } of brandWidgets) {
+    it(`${brand}: la bandera que su ChatWidget lee tiene escritor propio`, () => {
+      const sources = brandSources(brand).filter(
+        ({ file }) => !file.endsWith('ChatWidget.vue'),
+      )
+
+      const turnsOn = sources.filter(({ source }) =>
+        /reservationOverlayOpen\.value = (true|open)\b/.test(source),
+      )
+      expect(
+        turnsOn.map(({ file }) => file),
+        `${brand}: su ChatWidget LEE reservationOverlayOpen y ninguna pantalla de `
+        + `la marca la enciende. El FAB no se apartará del CTA de reserva.`,
+      ).not.toHaveLength(0)
+
+      const turnsOff = sources.filter(({ source }) =>
+        /reservationOverlayOpen\.value = false/.test(source),
+      )
+      expect(
+        turnsOff.map(({ file }) => file),
+        `${brand}: la enciende pero nunca la apaga — el FAB quedaría oculto para `
+        + `siempre al salir del flujo de reserva.`,
+      ).not.toHaveLength(0)
+    })
+  }
 })

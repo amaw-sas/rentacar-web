@@ -165,22 +165,25 @@ const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
-const hideContactButtonsOnMobile = computed(
-  () => !isDesktop.value && reservationOverlayOpen.value,
-)
 
 // Resumen de reserva abierto → el FAB salta a la izquierda para no tapar
 // Volver/Siguiente/Solicitar reserva (el u-slideover ancla a la derecha, z<60).
 // Puente SSR-safe (useState) desde CategorySelectionSection, que vive en otro
-// subárbol y escribe esta misma clave. Este widget es byte-idéntico entre las
-// tres marcas: donde no hay slideover que escriba la clave (p.ej. alquicarros),
-// queda en false → shiftLeft nunca se activa (dormante, sin regresión).
+// subárbol y escribe esta misma clave.
 const reservationSummaryOpen = useState<boolean>('reservation-slideover-open', () => false)
-// Gate a ≥1024px A PROPÓSITO (no el isDesktop de 768): por debajo de 1024 el
-// rediseño no desplaza nada, oculta el stack entero mientras el resumen está
-// abierto (hideContactButtonsOnMobile). Partición exacta, sin doble tratamiento.
 const isWideViewport = useMediaQuery('(min-width: 1024px)')
 const shiftLeft = computed(() => isWideViewport.value && reservationSummaryOpen.value)
+
+// Los dos tratamientos parten EXACTO en 1024px, que es donde partía el
+// `@media (max-width: 1023.98px)` de main: por debajo se oculta el stack, por
+// encima se desplaza. Antes esto usaba el isDesktop de 768 y dejaba un hueco
+// entre 768 y 1023 sin ningún tratamiento — la barra inferior del wizard de
+// alquicarros (`lg:hidden fixed inset-x-0 bottom-0`, WizardSummary.vue) ocupa
+// justo esa banda a ancho completo, donde desplazar a la izquierda tampoco la
+// despeja. `isDesktop` sigue vivo para el panel inline del chat.
+const hideContactButtonsOnMobile = computed(
+  () => !isWideViewport.value && reservationOverlayOpen.value,
+)
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
 // la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia

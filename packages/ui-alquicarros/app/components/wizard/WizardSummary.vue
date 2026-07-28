@@ -221,7 +221,7 @@
 
 <script setup lang="ts">
 // External
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
 // config
@@ -266,7 +266,19 @@ const {
   formSubmitLocked,
   haveMonthlyReservation,
 } = storeToRefs(form)
-const { selectedCategory } = storeToRefs(search)
+const { selectedCategory, reservationOverlayOpen } = storeToRefs(search)
+
+// El FAB de contacto (bottom-right, z-60) se pintaba ENCIMA del CTA de este
+// wizard: la barra inferior de abajo es `fixed inset-x-0 bottom-0 z-40` y ocupa
+// todo el ancho, así que el FAB caía justo sobre "Continuar"/"Solicitar reserva".
+// alquicarros LEÍA `reservationOverlayOpen` en su ChatWidget pero ninguna
+// pantalla de la marca lo ESCRIBÍA — las otras dos lo publican desde el watch
+// del slideover de CategorySelectionSection, componente que aquí no existe.
+// Mientras este resumen está montado la barra está en pantalla, así que el flag
+// sigue su ciclo de vida. El ChatWidget sólo lo honra por debajo de 1024px, que
+// es donde la barra se muestra (`lg:hidden`).
+onMounted(() => { reservationOverlayOpen.value = true })
+onBeforeUnmount(() => { reservationOverlayOpen.value = false })
 
 // El CTA se deshabilita mientras la reserva está en vuelo (evita el doble-submit
 // que registraría reservas duplicadas — el CTA de datos dispara el envío).

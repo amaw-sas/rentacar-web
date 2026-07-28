@@ -82,8 +82,12 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
     expect(chatWidget).toContain(
       'v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"',
     )
+    // Los dos tratamientos parten EXACTO en 1024, la misma frontera del
+    // `@media (max-width: 1023.98px)` de main. Con el isDesktop de 768 quedaba
+    // una banda de 768 a 1023 sin ocultar ni desplazar, y ahí la barra inferior
+    // del wizard de alquicarros ocupa el ancho completo sobre el CTA.
     expect(chatWidget).toMatch(
-      /const hideContactButtonsOnMobile = computed\(\s*\(\)\s*=>\s*!isDesktop\.value\s*&&\s*reservationOverlayOpen\.value,?\s*\)/,
+      /const hideContactButtonsOnMobile = computed\(\s*\(\)\s*=>\s*!isWideViewport\.value\s*&&\s*reservationOverlayOpen\.value,?\s*\)/,
     )
     // El puente lo publica el store compartido, no una ruta.
     expect(chatWidget).toMatch(
