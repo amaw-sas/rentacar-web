@@ -31,6 +31,10 @@
 - **F2 ✅** (2026-07-28): cerrada con evidencia E2E. Las 3 variables de correo en `rentacar-web-alquilame` (Production+Preview): key NUEVA de Resend (rotación hecha), TO/FROM. Prueba real: POST /api/contact → {"ok":true} 200 en el deployment fresco (verificado con build marker). Nota: la key vieja quedó en el proyecto legacy — borrarla en Resend y en Vercel post-lanzamiento.
 - **F3-checks ✅** (2026-07-28): PR #419 con TODO el tablero en verde (Quality Checks + E2E + 3 builds Vercel). Para llegar: los 7 tests que fijaban el diseño viejo de alquilame se alinearon al rediseño aprobado (939/939, primera corrida totalmente verde de la rama), y la suite jsdom que solo corre en CI (whatsappSchedule montado) se adaptó a la decisión del teléfono. El lint de CI es continue-on-error (ruido histórico: eslint no es dep de los paquetes de marca) — seguimiento, no bloqueo.
 
+- **F3 ✅** (2026-07-28 ~01:20): PR #419 MERGEADO a main (943d281) con tablero verde. Los 3 deploys de producción success. **Smoke P1 aprobado**: alquilatucarro.com (dominio real) home/bogotá/tarifas 200, widget con Chat+Llámanos visibles y WhatsApp oculto por horario nocturno (feature correcta), consola limpia, precios de tarifas sanos (sin tachados absurdos — el tope mensual operando); alquicarros (producción del proyecto) wizard monta, FAB visible en desktop 1487px (el fix F0 vivo), Llámanos presente, consola limpia. Notas: ATC /reservas 404 es correcto (esa ruta nunca existió ahí); tel: con espacios en ATC es preexistente (mejora menor futura).
+- **DESCUBRIMIENTO** (2026-07-28): `alquicarros.com` (www) sirve un sitio LEGACY ajeno al monorepo — su dominio real nunca apuntó al proyecto `rentacar-web-alquicarros`. Misma situación que alquilame: cutover de dominio propio pendiente, fuera del alcance de este plan. El único dominio real en la plataforma nueva es alquilatucarro.com.
+- **Pendiente: F4** (cutover del dominio alquilame.co, con el dueño, en ventana tranquila) y F5.
+
 ## Fases
 
 ### F0 — Revisión del paquete compartido (bloquea todo)
