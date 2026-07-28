@@ -44,6 +44,8 @@ export default async function useRecordReservationForm() {
     horaRecogida,
     horaDevolucion,
     referido,
+    conductorAdicionalNombre,
+    conductorAdicionalIdentificacion,
     selectedDays,
     haveTotalInsurance,
     haveMonthlyReservation,
@@ -86,6 +88,15 @@ export default async function useRecordReservationForm() {
   };
 
   if (referido.value) partialData["user"] = referido.value;
+
+  // Issue #396: the extra driver's identity travels only while the add-on is
+  // contracted. Keys absent — not empty — otherwise a customer who ticked the
+  // add-on, filled the fields and then unticked it would persist a phantom
+  // driver. Assigned before both branches so the `...partialData` spread keeps it.
+  if (selectedCategory.value?.withExtraDriver) {
+    partialData.extra_driver_name = conductorAdicionalNombre.value?.trim() ?? '';
+    partialData.extra_driver_document = conductorAdicionalIdentificacion.value?.trim() ?? '';
+  }
 
   // Marketing attribution: prefer the store's last-touch, fall back to storage
   // (e.g. store re-created mid-session). Always send an object — `{}` signals

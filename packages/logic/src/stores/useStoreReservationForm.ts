@@ -122,6 +122,13 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   // (userInformationForm) exige value(true) para poder enviar.
   const politicaPrivacidad = ref<boolean | undefined>(false);
 
+  // Conductor adicional (issue #396). Localiza necesita el nombre y el documento
+  // para autorizarlo; hasta ahora la reserva solo llevaba el booleano del adicional.
+  // El flag que decide si son obligatorios vive en `selectedCategory` (store de
+  // búsqueda), no aquí — el formulario lo refleja para que valibot pueda verlo.
+  const conductorAdicionalNombre = ref<string | null>(null);
+  const conductorAdicionalIdentificacion = ref<string | null>(null);
+
   // form states (currently unused, kept for future use)
   // const reservationFormState = reactive({
   //   nombreCompleto,
@@ -455,6 +462,8 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     fechaDevolucion,
     horaDevolucion,
     politicaPrivacidad,
+    conductorAdicionalNombre,
+    conductorAdicionalIdentificacion,
     referido,
     attribution,
     // other vars
