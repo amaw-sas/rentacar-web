@@ -70,5 +70,7 @@ describe('SCEN-322-P02 — fleet uses NuxtImg pipeline', () => {
   it('uses NuxtImg for vehicle cards, not raw img src JPEG', () => {
     expect(fleet).toMatch(/<NuxtImg/)
     expect(fleet).not.toMatch(/<img[\s\S]*:src="card\.image"/)
+    expect(fleet).toMatch(/<NuxtImg[\s\S]*?:src="card\.image"[\s\S]*?densities="x1"/)
+    expect(fleet).toMatch(/<NuxtImg[\s\S]*?:src="card\.image"[\s\S]*?loading="lazy"/)
   })
 })

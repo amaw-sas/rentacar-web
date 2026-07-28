@@ -63,13 +63,30 @@ describe('home first-paint geometry', () => {
   })
 
   it('keeps fleet row heights independent of the desktop fallback wrap', () => {
-    expect(config).toContain('.fleet-tab-daily-stable { width: 142.609375px; }')
-    expect(config).toContain('.fleet-tab-monthly-stable { width: 134.15625px; }')
+    expect(config).toContain('.fleet-tab-daily-stable { width: 142.609375px; height: 2.5rem; }')
+    expect(config).toContain('.fleet-tab-monthly-stable { width: 134.15625px; height: 2.5rem; }')
     expect(config).toContain('.xl\\\\:whitespace-nowrap { white-space: nowrap; }')
     expect(fleet).toContain('fleet-tab-daily-stable')
     expect(fleet).toContain('fleet-tab-monthly-stable')
     expect(fleet).toContain('leading-snug xl:whitespace-nowrap')
     expect(fleet).not.toContain('transition-all')
     expect(fleet).toContain('transition-[translate,box-shadow]')
+  })
+
+  it('reserves the visible fleet and contact control geometry before entry CSS', () => {
+    expect(config).toContain('.h-1 { height: 0.25rem; }')
+    expect(config).toContain('.p-1 { padding: 0.25rem; }')
+    expect(config).toContain('.py-2\\\\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }')
+    expect(config).toContain('.mt-3 { margin-top: 0.75rem; }')
+    expect(config).toContain('.mb-12 { margin-bottom: 3rem; }')
+    expect(config).toContain('.max-w-2xl { max-width: 42rem; }')
+    expect(config).toContain('.md\\\\:py-20 { padding-top: 5rem; padding-bottom: 5rem; }')
+    expect(config).toContain('.md\\\\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }')
+    expect(config).toContain('.md\\\\:text-lg { font-size: 1.125rem; line-height: 1.75rem; }')
+
+    const chatWidget = read('app/components/ChatWidget.vue')
+    expect(chatWidget).toContain('contact-fab-layer fixed inset-0')
+    expect(config).toMatch(/\.contact-fab-layer\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;/)
+    expect(config).toMatch(/\.contact-fab-stack\s*\{[^}]*right:\s*1\.5rem;[^}]*bottom:\s*1\.5rem;/)
   })
 })

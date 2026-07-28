@@ -201,6 +201,7 @@ export default defineNuxtConfig({
             .h-8 { height: 2rem; }
             .h-10 { height: 2.5rem; }
             .h-14 { height: 3.5rem; }
+            .h-1 { height: 0.25rem; }
             .h-full { height: 100%; }
             @media (min-width: 506px) { .min-\\[506px\\]\\:h-9 { height: 2.25rem; } }
             @media (max-width: 359px) {
@@ -232,6 +233,8 @@ export default defineNuxtConfig({
             .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
             .px-4 { padding-left: 1rem; padding-right: 1rem; }
             .px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }
+            .p-1 { padding: 0.25rem; }
+            .py-2\\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
             .py-3\\.5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
             .font-medium { font-weight: 500; }
             /*
@@ -284,7 +287,9 @@ export default defineNuxtConfig({
             .gap-16 { gap: 4rem; }
             /* Nuxt UI PageHero slot margins - CRÍTICO para CLS */
             .mt-10 { margin-top: 2.5rem; }
+            .mt-3 { margin-top: 0.75rem; }
             .mb-4 { margin-bottom: 1rem; }
+            .mb-12 { margin-bottom: 3rem; }
             /* Nuxt UI PageHero typography - CRÍTICO para CLS */
             .text-5xl { font-size: 3rem; line-height: 1; }
             .tracking-tight { letter-spacing: -0.025em; }
@@ -558,6 +563,7 @@ export default defineNuxtConfig({
             .w-24 { width: 6rem; }
             .max-w-md { max-width: 28rem; }
             .max-w-xs { max-width: 20rem; }
+            .max-w-2xl { max-width: 42rem; }
             .rounded { border-radius: 0.25rem; }
             .rounded-t { border-top-left-radius: 0.25rem; border-top-right-radius: 0.25rem; }
             .font-normal { font-weight: 400; }
@@ -605,11 +611,41 @@ export default defineNuxtConfig({
               overflow: visible;
               white-space: nowrap;
             }
-            .fleet-tab-daily-stable { width: 142.609375px; }
-            .fleet-tab-monthly-stable { width: 134.15625px; }
+            .fleet-tab-daily-stable { width: 142.609375px; height: 2.5rem; }
+            .fleet-tab-monthly-stable { width: 134.15625px; height: 2.5rem; }
+            .contact-fab-layer {
+              position: fixed;
+              inset: 0;
+              pointer-events: none;
+              z-index: 60;
+            }
+            .contact-fab-stack {
+              position: absolute;
+              right: 1.5rem;
+              bottom: 1.5rem;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 1rem;
+              pointer-events: none;
+            }
+            .contact-fab-stack > ul {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 0.75rem;
+              pointer-events: auto;
+            }
+            .contact-fab-stack > ul > li { display: flex; }
 
             @media (min-width: 640px) {
               .home-hero-title { font-size: 2.25rem; }
+            }
+
+            @media (min-width: 768px) {
+              .md\\:py-20 { padding-top: 5rem; padding-bottom: 5rem; }
+              .md\\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+              .md\\:text-lg { font-size: 1.125rem; line-height: 1.75rem; }
             }
 
             @media (min-width: 1024px) {
@@ -744,9 +780,10 @@ export default defineNuxtConfig({
 
   // Optimización Core Web Vitals
   vitalizer: {
-    // Diferir stylesheets para eliminar render-blocking CSS
-    // Requiere CSS crítico inline suficiente para evitar FOUC
-    disableStylesheets: 'entry',
+    // Keep Nuxt's entry stylesheet in the manifest. A Nitro render hook defers
+    // it only on the home route; every other route needs the blocking sheet
+    // because its first viewport is not covered by the home critical CSS.
+    disableStylesheets: false,
     // Remueve prefetch links para mejorar FCP
     disablePrefetchLinks: true,
   },

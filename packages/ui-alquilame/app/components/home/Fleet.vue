@@ -85,6 +85,7 @@
               height="400"
               format="webp"
               sizes="sm:100vw md:50vw lg:33vw"
+              densities="x1"
               loading="lazy"
               decoding="async"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
