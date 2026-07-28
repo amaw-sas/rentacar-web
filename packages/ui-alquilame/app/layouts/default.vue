@@ -256,7 +256,7 @@
           </ul>
           <!-- Créditos -->
           <div class="text-center text-footer-credit md:text-right">
-            <p class="text-sm">
+            <p class="text-gray-400 text-sm">
               © 2026 {{ franchise.name }}. Todos los derechos reservados.
             </p>
             <p class="text-sm mt-1">

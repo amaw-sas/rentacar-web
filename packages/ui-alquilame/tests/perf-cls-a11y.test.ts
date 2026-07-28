@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { generateFontFace, getMetricsForFamily } from 'fontaine'
 import { describe, expect, it } from 'vitest'
 
 const read = (relativePath: string) =>
@@ -37,40 +38,47 @@ function contrast(foreground: string, background: string): number {
 }
 
 describe('T2-G1 — first-paint brand font metrics', () => {
-  const fallbackMetrics = [
-    ['DM Sans Fallback: BlinkMacSystemFont', '111.8837', '88.6635', '27.7073'],
-    ['DM Sans Fallback: Segoe UI', '105.1066', '94.3804', '29.4939'],
-    ['DM Sans Fallback: Helvetica Neue', '103.5556', '95.794', '29.9356'],
-    ['DM Sans Fallback: Arial', '104.531', '94.9001', '29.6563'],
-    ['DM Sans Fallback: Noto Sans', '98.3122', '100.903', '31.5322'],
-    ['Plus Jakarta Sans Fallback: BlinkMacSystemFont', '112.3639', '92.3784', '19.7572'],
-    ['Plus Jakarta Sans Fallback: Segoe UI', '105.5577', '98.3348', '21.0311'],
-    ['Plus Jakarta Sans Fallback: Helvetica Neue', '104', '99.8077', '21.3462'],
-    ['Plus Jakarta Sans Fallback: Arial', '104.9796', '98.8763', '21.147'],
-    ['Plus Jakarta Sans Fallback: Noto Sans', '98.7342', '105.1308', '22.4846'],
+  const brandFonts = ['DM Sans', 'Plus Jakarta Sans'] as const
+  const fallbackFonts = [
+    'BlinkMacSystemFont',
+    'Segoe UI',
+    'Helvetica Neue',
+    'Arial',
+    'Noto Sans',
   ] as const
+
+  const normalizeCss = (css: string) => css.replaceAll('"', "'").replace(/\s+/g, ' ').trim()
+
+  async function metricsForFamily(family: string) {
+    const metrics = await getMetricsForFamily(family)
+    if (!metrics) throw new Error(`Missing fontaine metrics for ${family}`)
+    return metrics
+  }
 
   it('keeps both brand fonts configured through @nuxt/fonts', () => {
     expect(config).toMatch(/name:\s*'Plus Jakarta Sans',\s*weights:\s*\[700, 800\]/)
     expect(config).toMatch(/name:\s*'DM Sans',\s*weights:\s*\[400, 500, 600\]/)
   })
 
-  it('inlines every adjusted fallback face used by the delayed stylesheet', () => {
-    for (const [family, sizeAdjust, ascent, descent] of fallbackMetrics) {
-      const start = config.indexOf(`font-family: '${family}'`)
-      expect(start, `Missing critical fallback face ${family}`).toBeGreaterThan(-1)
+  it('inlines every fontaine fallback face used by the delayed stylesheet', async () => {
+    const normalizedConfig = normalizeCss(config)
 
-      const face = config.slice(start, config.indexOf('}', start) + 1)
-      expect(face).toContain(`size-adjust: ${sizeAdjust}%`)
-      expect(face).toContain(`ascent-override: ${ascent}%`)
-      expect(face).toContain(`descent-override: ${descent}%`)
-      expect(face).toContain('line-gap-override: 0%')
+    for (const family of brandFonts) {
+      const metrics = await metricsForFamily(family)
+
+      for (const fallback of fallbackFonts) {
+        const expectedFace = generateFontFace(metrics, {
+          name: `${family} Fallback: ${fallback}`,
+          font: fallback,
+          metrics: await metricsForFamily(fallback),
+        })
+
+        expect(
+          normalizedConfig,
+          `Missing critical fallback face for ${family} on ${fallback}`,
+        ).toContain(normalizeCss(expectedFace))
+      }
     }
-
-    expect(config.match(/size-adjust:/g)).toHaveLength(10)
-    expect(config.match(/ascent-override:/g)).toHaveLength(10)
-    expect(config.match(/descent-override:/g)).toHaveLength(10)
-    expect(config.match(/line-gap-override:/g)).toHaveLength(10)
   })
 
   it('uses adjusted DM Sans metrics on body from first paint', () => {
