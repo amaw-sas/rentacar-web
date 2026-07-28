@@ -105,6 +105,12 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
   // deriva nueva —un arreglo que aterrice en una copia y no en las otras, que es
   // lo que E10 existe para atrapar— sigue enrojeciendo.
   const DELTA_ALQUILAME: ReadonlyArray<readonly [string, string]> = [
+    // PageSpeed wave 4: ancla el CSS crítico del FAB desde el primer paint y
+    // elimina el desplazamiento de 226 px medido en producción.
+    [
+      '    <div class="contact-fab-layer fixed inset-0 pointer-events-none z-[60]">',
+      '    <div class="fixed inset-0 pointer-events-none z-[60]">',
+    ],
     ['  left: 0;', '  right: 0;'],
     [
       '  border-radius: 1rem 1rem 1rem 0.25rem; /* esquina hacia el FAB (abajo-izq) */',
