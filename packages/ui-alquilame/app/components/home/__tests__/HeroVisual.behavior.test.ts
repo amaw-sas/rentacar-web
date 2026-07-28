@@ -1,8 +1,16 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineComponent, h, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import HeroVisual from '../HeroVisual.vue'
+import { parseImageQualityConfig } from '../../../../tests/nuxt-image-quality'
+
+const ROOT = join(__dirname, '..', '..', '..', '..')
+const { defaultQuality, allowedQualities } = parseImageQualityConfig(
+  readFileSync(join(ROOT, 'nuxt.config.ts'), 'utf8'),
+)
 
 type ObserverCallback = (entries: Array<{ isIntersecting: boolean }>) => void
 
@@ -66,15 +74,19 @@ afterEach(() => {
 describe('HeroVisual.vue media loading', () => {
   it('renders only responsive images on first paint, with no video request URL in the DOM', () => {
     const wrapper = mountVisual()
+    const carAttributes = wrapper.get('img[src="/images/carro_hero.webp"]').attributes()
 
-    expect(wrapper.get('img[src="/images/carro_hero.webp"]').attributes()).toMatchObject({
+    expect(carAttributes).toMatchObject({
       alt: 'SUV disponible para alquilar en Colombia con Alquilame',
       width: '1199',
       height: '678',
       sizes: 'sm:100vw lg:50vw xl:576px',
-      quality: '75',
+      densities: 'x1',
       fetchpriority: 'high',
     })
+    expect(carAttributes).not.toHaveProperty('quality')
+    expect(carAttributes).not.toHaveProperty('format')
+    expect(allowedQualities).toContain(defaultQuality)
     expect(wrapper.get('img[src="/videos/hero-poster.jpg"]')).toBeTruthy()
     expect(wrapper.find('video').exists()).toBe(false)
     expect(wrapper.html()).not.toContain('/videos/hero.mp4')

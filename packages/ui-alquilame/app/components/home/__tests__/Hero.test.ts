@@ -21,6 +21,11 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import {
+  effectiveNuxtImgQuality,
+  findNuxtImgTag,
+  parseImageQualityConfig,
+} from '../../../../tests/nuxt-image-quality'
 
 const ROOT = join(__dirname, '..', '..', '..', '..') // → packages/ui-alquilame
 
@@ -38,6 +43,7 @@ describe('Home hero — golden parity', () => {
   // city hero renders the identical visual. The assertions below still hold —
   // they just live where the markup now is.
   const visual = read('app/components/home/HeroVisual.vue')
+  const { defaultQuality, allowedQualities } = parseImageQualityConfig(read('nuxt.config.ts'))
 
   it('renders the brand red gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
     expect(hero).toMatch(/bg-linear-to-[a-z]/)
@@ -102,7 +108,11 @@ describe('Home hero — golden parity', () => {
     expect(visual).toMatch(/carro_hero\.webp/)
     expect(visual).toMatch(/<NuxtImg[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
     expect(visual).toMatch(/sizes="sm:100vw lg:50vw xl:576px"/)
-    expect(visual).toMatch(/quality="75"/)
+    const carImage = findNuxtImgTag(visual, '/images/carro_hero.webp')
+    expect(carImage).toMatch(/\bdensities="x1"/)
+    expect(carImage).not.toMatch(/\bformat\s*=/)
+    expect(carImage).not.toMatch(/\b:?quality\s*=/)
+    expect(allowedQualities).toContain(effectiveNuxtImgQuality(carImage, defaultQuality))
   })
 
   it('defaults to poster image; defers video (mp4) off the critical path (issue 322 P01)', () => {

@@ -15,6 +15,11 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import {
+  effectiveNuxtImgQuality,
+  findNuxtImgTag,
+  parseImageQualityConfig,
+} from '../../../../tests/nuxt-image-quality'
 
 const ROOT = join(__dirname, '..', '..', '..', '..') // → packages/ui-alquilame
 
@@ -25,6 +30,7 @@ function read(rel: string): string {
 const visual = read('app/components/home/HeroVisual.vue')
 const homeHero = read('app/components/home/Hero.vue')
 const cityHero = read('app/components/city/Hero.vue')
+const { defaultQuality, allowedQualities } = parseImageQualityConfig(read('nuxt.config.ts'))
 
 describe('HeroVisual.vue — shared car + corner video', () => {
   it('renders the car cutout as a responsive, reserved, eager LCP image', () => {
@@ -36,7 +42,11 @@ describe('HeroVisual.vue — shared car + corner video', () => {
     expect(visual).toMatch(/width="1199"/)
     expect(visual).toMatch(/height="678"/)
     expect(visual).toMatch(/sizes="sm:100vw lg:50vw xl:576px"/)
-    expect(visual).toMatch(/quality="75"/)
+    const carImage = findNuxtImgTag(visual, '/images/carro_hero.webp')
+    expect(carImage).toMatch(/\bdensities="x1"/)
+    expect(carImage).not.toMatch(/\bformat\s*=/)
+    expect(carImage).not.toMatch(/\b:?quality\s*=/)
+    expect(allowedQualities).toContain(effectiveNuxtImgQuality(carImage, defaultQuality))
   })
 
   it('keeps the three video states, with audio behind preload="none"', () => {

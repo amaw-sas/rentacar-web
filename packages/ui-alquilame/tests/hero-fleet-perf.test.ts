@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import {
+  effectiveNuxtImgQuality,
+  findNuxtImgTag,
+  parseImageQualityConfig,
+} from './nuxt-image-quality'
 
 const hero = readFileSync(
   fileURLToPath(new URL('../app/components/home/Hero.vue', import.meta.url)),
@@ -14,6 +19,7 @@ const nuxtConfig = readFileSync(
   fileURLToPath(new URL('../nuxt.config.ts', import.meta.url)),
   'utf8',
 )
+const { defaultQuality, allowedQualities } = parseImageQualityConfig(nuxtConfig)
 
 describe('SCEN-322-P01 — hero default paint is poster, not multi-MB autoplay', () => {
   // Redesign 2026-07: the hero is a car cutout IMAGE (webp, alpha) with a small
@@ -43,10 +49,14 @@ describe('SCEN-322-P01 — hero default paint is poster, not multi-MB autoplay',
     expect(visual).toMatch(/preload="none"/)
   })
 
-  it('routes the hero car through NuxtImg with responsive widths and quality 75', () => {
+  it('routes the hero car through NuxtImg with responsive widths and an allowed quality', () => {
     expect(visual).toMatch(/<NuxtImg[\s\S]*?src="\/images\/carro_hero\.webp"/)
     expect(visual).toMatch(/sizes="sm:100vw lg:50vw xl:576px"/)
-    expect(visual).toMatch(/quality="75"/)
+    const carImage = findNuxtImgTag(visual, '/images/carro_hero.webp')
+    expect(carImage).toMatch(/\bdensities="x1"/)
+    expect(carImage).not.toMatch(/\bformat\s*=/)
+    expect(carImage).not.toMatch(/\b:?quality\s*=/)
+    expect(allowedQualities).toContain(effectiveNuxtImgQuality(carImage, defaultQuality))
     expect(nuxtConfig).toMatch(/image:\s*\{[\s\S]*?provider:\s*['"]vercel['"]/)
   })
 
