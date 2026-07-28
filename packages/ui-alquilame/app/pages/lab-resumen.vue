@@ -285,6 +285,13 @@ useSeoMeta({ robots: 'noindex, nofollow', title: 'Lab · resumen de reserva' })
 </script>
 
 <style scoped>
+/* Tailwind v4 no resuelve utilidades dentro de un <style scoped> sin esto: el
+   bloque se compila aislado y no ve el tema. Sin la línea, `@apply rounded-xl`
+   de abajo rompe el BUILD de la marca entera, no sólo esta página de laboratorio
+   (`Cannot apply unknown utility class`). Misma regla que documenta
+   ReservationForm.vue, que ahí se resolvió con CSS plano por ser tres reglas. */
+@reference "../assets/css/main.css";
+
 /* Chrome del slideover, solo para que la comparación se vea en su ancho real. */
 .lab-panel {
   @apply flex flex-col overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-gray-200;
