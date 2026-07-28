@@ -1,8 +1,14 @@
 <template>
   <!-- Foto full-bleed (carretera + llaves) compartida por ambos estados; el
        contenido va en cards blancas tipo tiquete. Diseño promovido de
-       lab-reservado-tiquete (concepto tiquete--gpt-image-2, 2026-07-28). -->
-  <div class="relative min-h-screen bg-cover bg-center bg-[url('/images/reservado/fondo-tiquete.webp')]">
+       lab-reservado-tiquete (concepto tiquete--gpt-image-2, 2026-07-28).
+       La foto va en style inline + preload (patrón del hero del home): es el
+       LCP y en rutas no-home la hoja de estilos llega tarde, así que una
+       utility de Tailwind retrasaría su descubrimiento. -->
+  <div
+    class="relative min-h-screen"
+    style="background-image:url('/images/reservado/fondo-tiquete.webp');background-size:cover;background-position:center"
+  >
     <div class="absolute inset-0 bg-black/10" aria-hidden="true" />
 
     <div
@@ -42,17 +48,30 @@
             <button
               type="button"
               class="inline-flex items-center gap-1.5 rounded-full border border-red-600 px-3 py-1.5 text-sm font-semibold transition-colors"
-              :class="copied ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50 active:bg-red-100'"
-              :aria-label="copied ? 'Código copiado' : 'Copiar código de reserva'"
+              :class="copyState === 'copied' ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50 active:bg-red-100'"
+              :aria-label="copyState === 'copied' ? 'Código copiado' : 'Copiar código de reserva'"
               @click="copyCode"
             >
-              <svg v-if="!copied" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <svg v-if="copyState !== 'copied'" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
               <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-              {{ copied ? '¡Copiado!' : 'Copiar' }}
+              {{ copyState === 'copied' ? '¡Copiado!' : 'Copiar' }}
             </button>
           </div>
           <p class="text-sm text-gray-500">
             Guárdalo: lo necesitas para recoger el vehículo.
+          </p>
+          <!-- Región viva: anuncia copiado/fallo a lectores de pantalla; el
+               fallo también se muestra en pantalla (Instagram/Facebook suelen
+               bloquear el portapapeles en su navegador embebido). -->
+          <p
+            role="status"
+            aria-live="polite"
+            class="text-sm mt-1"
+            :class="copyState === 'failed' ? 'text-red-600' : 'sr-only'"
+          >
+            {{ copyState === 'copied' ? 'Código copiado al portapapeles.'
+              : copyState === 'failed' ? 'No se pudo copiar automáticamente. Mantén presionado el código para copiarlo.'
+              : '' }}
           </p>
         </div>
 
@@ -91,8 +110,8 @@
             <a
               :href="whatsappHref"
               target="_blank"
-              rel="noopener"
-              class="inline-flex items-center justify-center gap-2 font-semibold rounded-full bg-[#1faa53] text-white hover:bg-[#178a44] px-6 py-2.5 text-base transition-all duration-200"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center gap-2 font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover px-6 py-2.5 text-base transition-all duration-200"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.69 8.24-8.23 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07s.89 2.4 1.01 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29"/></svg>
               Escribir por WhatsApp
@@ -109,30 +128,38 @@
 <script setup lang="ts">
 import useReservationConfirmation from '@rentacar-main/logic/composables/useReservationConfirmation'
 
+// Antes del await: tras un await de nivel superior algunos composables pueden
+// perder el contexto Nuxt en SSR (misma precaución que useReservationConfirmation).
+const { franchise } = useAppConfig()
+
 const validation = await useReservationConfirmation()
 const reserveCode = validation.reserveCode
 
-const { franchise } = useAppConfig()
 const whatsappHref = computed(() => {
   const text = encodeURIComponent(`Hola, mi código de reserva es ${reserveCode ?? ''}`)
   return `${franchise.whatsapp}?text=${text}`
 })
 
-const copied = ref(false)
+const copyState = ref<'idle' | 'copied' | 'failed'>('idle')
 let copiedTimer: ReturnType<typeof setTimeout> | undefined
 
 async function copyCode() {
   if (!reserveCode) return
+  if (copiedTimer) clearTimeout(copiedTimer)
   try {
     await navigator.clipboard.writeText(reserveCode)
-    copied.value = true
-    if (copiedTimer) clearTimeout(copiedTimer)
-    copiedTimer = setTimeout(() => { copied.value = false }, 2000)
+    copyState.value = 'copied'
+    copiedTimer = setTimeout(() => { copyState.value = 'idle' }, 2000)
   } catch {
-    // Clipboard bloqueado (permiso/contexto no seguro): el código sigue
-    // seleccionable a mano.
+    // Clipboard bloqueado (permiso, contexto no seguro o webview embebido):
+    // el mensaje de la región viva indica el copiado manual.
+    copyState.value = 'failed'
   }
 }
+
+onBeforeUnmount(() => {
+  if (copiedTimer) clearTimeout(copiedTimer)
+})
 
 useHead({
   title: validation.status === 'found'
@@ -140,6 +167,17 @@ useHead({
     : 'Verificando reserva',
   meta: [
     { name: 'robots', content: 'noindex, nofollow' }
+  ],
+  // La foto de fondo es el LCP: preload para que el scanner la encuentre en
+  // el HTML, sin esperar JS+CSS (en rutas no-home el stylesheet llega tarde).
+  link: [
+    {
+      rel: 'preload',
+      as: 'image',
+      href: '/images/reservado/fondo-tiquete.webp',
+      fetchpriority: 'high',
+      key: 'reservado-background'
+    }
   ]
 })
 
