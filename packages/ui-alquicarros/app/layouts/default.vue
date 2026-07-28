@@ -73,7 +73,7 @@
             v-for="item in items"
             :key="`m-${item.label}`"
             :to="item.to"
-            class="text-xl font-medium text-gray-800 hover:text-brand-600 transition-colors"
+            class="text-xl font-medium text-gray-800 hover:text-brand-800 transition-colors"
             @click="mobileMenuOpen = false"
           >
             {{ item.label }}
@@ -235,7 +235,11 @@
             <p class="text-gray-400 text-sm">
               © 2026 {{ franchise.name }}. Todos los derechos reservados.
             </p>
-            <p class="text-gray-500 text-sm mt-1">
+            <!-- #364: este párrafo era text-gray-500 y daba 4.34:1 sobre el
+                 footer negro. En superficie oscura la regla se invierte —hay que
+                 ACLARAR, no oscurecer—; gray-400 llega a 8.07:1. Medido con la
+                 sonda de estilos computados, no deducido de la clase. -->
+            <p class="text-gray-400 text-sm mt-1">
               Elaborado por <span class="text-gray-300 font-medium">Estrategias</span>
             </p>
           </div>
@@ -274,8 +278,8 @@ const contactTo = computed(() => hasInPageSections.value ? '#contact' : '/#conta
 // naranja de marca; estado por defecto gris oscuro.
 const linkClass = (active: boolean) =>
   active
-    ? "text-brand-600 hover:text-brand-600"
-    : "text-gray-800 hover:text-brand-600";
+    ? "text-brand-800 hover:text-brand-800"
+    : "text-gray-800 hover:text-brand-800";
 
 // Items de navegación (orden y copy del diseño): Inicio · Flota · Ciudades ·
 // Requisitos · FAQ · Contacto. Compartidos entre desktop y móvil.

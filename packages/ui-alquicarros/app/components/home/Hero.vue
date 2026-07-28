@@ -4,6 +4,18 @@
     bg-linear-to-* utility (custom @theme tokens render background-image:none
     with the v3 alias — F0 lesson). Headline left / visual card right.
 
+    Contrast (issue #364, R1): the orange gradient carries DARK text. White was
+    2.20:1 on #ff9500 and the subheading 1.95:1. The section declares
+    .context-brand — not [--ctx-text-primary:#fff], which claimed this was a
+    dark surface and is where the white came from. Copy uses text-on-brand, the
+    utility Tailwind derives from --color-on-brand, so the token stays the only
+    source of truth. No alpha: gray-900/90 already fails at the dark end of the
+    brand ramp. Hierarchy comes from size and weight instead.
+
+    The "Ver Precios" pill sits on white, so it follows R2 (brand-800 = 5.56:1);
+    brand-700 only reaches 3.74:1, which is what the old theme.css caveat wrongly
+    recommended.
+
     The visual column is a static vehicle image inside a card (max-w-lg,
     aspect-[16/9], rounded + shadow + ring). The aspect box reserves space so the
     image never shifts layout (no CLS). Asset from public/images/vehicles/.
@@ -14,18 +26,18 @@
   -->
   <section
     id="hero"
-    class="relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to [--ctx-text-primary:#fff]"
+    class="context-brand relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
       <div class="grid lg:grid-cols-2 gap-10 items-center">
         <!-- Text + CTA column -->
         <div class="text-center lg:text-left">
           <h1
-            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-white leading-[1.1]"
+            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-on-brand leading-[1.1]"
           >
             Alquiler de Carros en Colombia al Mejor Precio
           </h1>
-          <p class="mt-4 text-base md:text-lg text-white/85 max-w-2xl mx-auto lg:mx-0">
+          <p class="mt-4 text-base md:text-lg text-on-brand max-w-2xl mx-auto lg:mx-0">
             Sin anticipos, sin fila. Flota con menos de 2 años y mantenimiento incluido.
             Reserva por WhatsApp en {{ cityCount }} ciudades.
           </p>
@@ -34,7 +46,7 @@
           <div class="mt-6 flex flex-row items-stretch gap-3 justify-center lg:justify-start">
             <a
               href="#fleet"
-              class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-brand-700 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+              class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-brand-800 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
             >
               Ver Precios
             </a>

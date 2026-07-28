@@ -73,6 +73,24 @@
     --ctx-text-muted: var(--text-on-dark-muted);
 }
 
+/* Brand background context — superficies naranjas (issue #364).
+   Ni claro ni oscuro: el naranja institucional es un fondo medio que no admite
+   texto blanco (2.20:1 sobre #ff9500) pero tampoco es una superficie clara.
+
+   Antes las secciones naranjas ponían [--ctx-text-primary:#fff] inline, que
+   declara "esto es una superficie oscura". No lo es, y de ahí salió el texto
+   blanco: el sistema hizo lo que se le pidió.
+
+   Los tres valores son idénticos a propósito. Sobre naranja no hay margen para
+   un tono atenuado: en el peor punto del gradiente de aliados (#e35d0a) el
+   propio gray-900 da 4.93:1, y cualquier opacidad lo hunde por debajo de AA
+   (gray-900/90 = 4.48:1). La jerarquía sale de tamaño y peso. */
+.context-brand {
+    --ctx-text-primary: var(--color-on-brand);
+    --ctx-text-secondary: var(--color-on-brand);
+    --ctx-text-muted: var(--color-on-brand);
+}
+
 /* --------------------------------------------------------------------------
    Heading Classes
    -------------------------------------------------------------------------- */

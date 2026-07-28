@@ -1,179 +1,252 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const STATUS_REFRESH_MS = 60_000
+/**
+ * Per-brand visibility windows for the contact FAB's WhatsApp option. Keys are
+ * lowercase 3-letter weekdays; each value is a list of `'HH:MM-HH:MM'` ranges in
+ * Bogota civil time during which WhatsApp is SHOWN. A missing day (or `[]`) hides
+ * WhatsApp that day; a `null`/absent schedule keeps it always visible.
+ */
+export interface WhatsappSchedule {
+  mon?: string[]
+  tue?: string[]
+  wed?: string[]
+  thu?: string[]
+  fri?: string[]
+  sat?: string[]
+  sun?: string[]
+}
+
+// Index matches Date.prototype.getUTCDay(): 0 = Sunday … 6 = Saturday.
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
+
+// Colombia is UTC−5 all year (no DST), so a fixed offset is exact. Shifting the
+// epoch back 5h and then reading the UTC parts of the result yields Bogota wall
+// time — the same trick the reservation date code uses (see useDateFunctions).
 const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000
-const DAY_BY_UTC_INDEX = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
-const SCHEDULE_RANGE_RE = /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-4]):([0-5]\d)$/
 
-type WhatsappScheduleDay = (typeof DAY_BY_UTC_INDEX)[number]
-export type WhatsappSchedule = Partial<Record<WhatsappScheduleDay, string[]>>
-
-export interface ContactChannelStatus {
-  enabled: boolean
-  whatsappEnabled: boolean
-  whatsappSchedule: WhatsappSchedule | null
-}
-
-interface StatusResponse {
-  brand?: unknown
-  enabled?: unknown
-  whatsappEnabled?: unknown
-  whatsappSchedule?: unknown
-}
-
-function rangeToMinutes(range: string): [number, number] | null {
-  const match = SCHEDULE_RANGE_RE.exec(range)
+/**
+ * Parses a single `'HH:MM-HH:MM'` window into `[startMinute, endMinute)` of the
+ * day, or `null` when it is malformed. `24:00` is accepted only as an end (a
+ * midnight close). A window never wraps past midnight (start must precede end).
+ */
+function parseRangeToMinutes(range: unknown): [number, number] | null {
+  if (typeof range !== 'string') return null
+  const match = /^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/.exec(range.trim())
   if (!match) return null
-
-  const [, fromHour = '0', fromMinute = '0', toHour = '0', toMinute = '0'] = match
-  return [
-    Number(fromHour) * 60 + Number(fromMinute),
-    Number(toHour) * 60 + Number(toMinute),
-  ]
+  const startH = Number(match[1])
+  const startM = Number(match[2])
+  const endH = Number(match[3])
+  const endM = Number(match[4])
+  if (startM > 59 || endM > 59) return null
+  if (startH > 23) return null
+  // 24:00 is the only allowed 24-hour value, and only as an end-of-day close.
+  if (endH > 24 || (endH === 24 && endM !== 0)) return null
+  const start = startH * 60 + startM
+  const end = endH * 60 + endM
+  if (end <= start) return null
+  return [start, end]
 }
 
 /**
- * Treat malformed public payloads like an absent schedule (always visible).
- * The dashboard sanitizes too, but the anonymous response is still untrusted.
+ * Pure predicate: is WhatsApp visible at `nowUtc` given `schedule`?
+ *
+ * Canonical semantics (shared contract with the dashboard that serves the field):
+ *   - `null` / `undefined` (no schedule configured) → always visible.
+ *   - `{}` — a VALID but empty schedule → hidden all week. An operator who saves
+ *     a schedule with no windows means "never show", not "always show".
+ *   - day key absent, or an empty list → hidden that day.
+ *   - otherwise visible only inside one of that day's `[start, end)` windows.
+ *
+ * A malformed range inside an otherwise valid day is IGNORED — it simply opens no
+ * window — so one typo (`'8:00-16:00'`) cannot swing the whole day open.
+ *
+ * Fail-open is reserved for shape violations that mean "we could not read a
+ * schedule at all": a non-object payload, a NON-EMPTY object that names no
+ * weekday we recognize (`{monday: […]}`, `{lunes: […]}`, `{version: 2, days: {…}}`),
+ * a day whose value is not a list, or an unusable `nowUtc`. Those keep WhatsApp
+ * visible so a backend or decoding fault never silently removes the button.
+ *
+ * The empty object is the one case where "no recognizable weekday" still means
+ * hidden, because `{}` is what the producer stores for "saved, no windows". It is
+ * therefore checked before the readability rule.
  */
-function normalizeWhatsappSchedule(value: unknown): WhatsappSchedule | null {
-  if (value == null) return null
-  if (typeof value !== 'object' || Array.isArray(value)) return null
+export function evaluateWhatsappVisibility(schedule: unknown, nowUtc: Date): boolean {
+  if (schedule === null || schedule === undefined) return true
+  if (typeof schedule !== 'object' || Array.isArray(schedule)) return true
 
-  const schedule = value as Record<string, unknown>
-  if (Object.keys(schedule).some(key => !DAY_BY_UTC_INDEX.includes(key as WhatsappScheduleDay))) {
-    return null
-  }
+  const record = schedule as Record<string, unknown>
 
-  for (const ranges of Object.values(schedule)) {
-    if (!Array.isArray(ranges)) return null
-    for (const range of ranges) {
-      if (typeof range !== 'string') return null
-      const minutes = rangeToMinutes(range)
-      if (!minutes || minutes[0] >= minutes[1] || minutes[1] > 1440) return null
-    }
-  }
+  // Order matters here. `{}` is the canonical "saved with no windows" value and
+  // must hide all week, so it is settled BEFORE the readability check below —
+  // otherwise it would look like a schedule naming no weekday and fail open.
+  if (Object.keys(record).length === 0) return false
 
-  return schedule as WhatsappSchedule
-}
-
-/**
- * WhatsApp is schedule-visible at a UTC instant. Colombia is UTC-5 year-round.
- * null = no schedule = visible; {} or an absent/empty current day = hidden.
- */
-export function evaluateWhatsappVisibility(
-  schedule: WhatsappSchedule | null,
-  nowUtc: Date,
-): boolean {
-  if (schedule === null) return true
+  // A non-empty object that names no weekday we understand (`{monday: […]}`,
+  // `{lunes: […]}`, `{version: 2, days: {…}}`) is a shape we cannot read, not a
+  // schedule that closes every day. Reading it as "closed" would silently remove
+  // the button on a producer rename — the exact failure fail-open exists to stop.
+  if (!DAY_KEYS.some(key => key in record)) return true
 
   const bogota = new Date(nowUtc.getTime() - BOGOTA_OFFSET_MS)
-  const day = DAY_BY_UTC_INDEX[bogota.getUTCDay()]!
-  const ranges = schedule[day]
-  if (!ranges || ranges.length === 0) return false
+  const dayKey = DAY_KEYS[bogota.getUTCDay()]
+  // An unusable clock (Invalid Date → NaN) leaves no day to evaluate → fail-open.
+  if (!dayKey) return true
+  const nowMinutes = bogota.getUTCHours() * 60 + bogota.getUTCMinutes()
 
-  const minutes = bogota.getUTCHours() * 60 + bogota.getUTCMinutes()
-  return ranges.some((range: string) => {
-    const parsed = rangeToMinutes(range)
-    return parsed !== null && minutes >= parsed[0] && minutes < parsed[1]
-  })
+  const ranges = record[dayKey]
+  if (ranges === undefined) return false // no window configured today → hidden.
+  if (!Array.isArray(ranges)) return true // day is not a list → shape fault → fail-open.
+  if (ranges.length === 0) return false // explicit empty window → hidden today.
+
+  for (const range of ranges) {
+    const parsed = parseRangeToMinutes(range)
+    if (parsed === null) continue // malformed range opens nothing; other ranges still count.
+    if (nowMinutes >= parsed[0] && nowMinutes < parsed[1]) return true
+  }
+  return false
+}
+
+interface ChatStatusResult {
+  enabled: boolean | null
+  whatsappEnabled: boolean
+  whatsappSchedule: unknown
 }
 
 /**
- * Fetches the two independent contact-channel switches from the dashboard.
- * `whatsappEnabled` is additive: an older endpoint without it is treated as ON
- * after a successful response so a staggered deployment does not hide WhatsApp.
+ * Single source-of-truth fetch for the dashboard chat switch:
+ * `GET {apiBase}/api/chat/status?brand=` → `{ enabled, whatsappEnabled?, whatsappSchedule? }`.
+ * Returns `null` when the request fails or has no usable brand, letting callers
+ * distinguish a transient error from an authoritative response. `enabled` is
+ * `null` when the payload omits a boolean; `whatsappSchedule` is passed through
+ * untyped and validated downstream by {@link evaluateWhatsappVisibility}.
+ *
+ * `whatsappEnabled` is the master switch the operator flips in /chat-knowledge,
+ * independent of the schedule (rentacar-dashboard 3727afd). It defaults to `true`
+ * when the payload omits it, so a deploy that predates the dashboard field keeps
+ * the button visible instead of hiding it everywhere.
  */
-export async function fetchContactChannelStatus(
-  apiBase: string,
-  brand: string,
-): Promise<ContactChannelStatus | null> {
+export async function fetchChatStatus(apiBase: string, brand: string): Promise<ChatStatusResult | null> {
   if (!brand) return null
   try {
-    const res = await $fetch<StatusResponse>(
+    const res = await $fetch<{ brand: string; enabled: boolean; whatsappEnabled?: unknown; whatsappSchedule?: unknown }>(
       `${apiBase}/api/chat/status`,
       { query: { brand } },
     )
-    if (typeof res?.enabled !== 'boolean') return null
     return {
-      enabled: res.enabled,
-      whatsappEnabled:
-        typeof res.whatsappEnabled === 'boolean' ? res.whatsappEnabled : true,
-      whatsappSchedule: normalizeWhatsappSchedule(res.whatsappSchedule),
+      enabled: typeof res?.enabled === 'boolean' ? res.enabled : null,
+      whatsappEnabled: typeof res?.whatsappEnabled === 'boolean' ? res.whatsappEnabled : true,
+      whatsappSchedule: res?.whatsappSchedule,
     }
   } catch {
     return null
   }
 }
 
-/** Backwards-compatible single-value helper for callers/tests outside the FAB. */
+/**
+ * Asks the dashboard whether the chat is enabled for a brand. Awaitable, works
+ * on SSR and client. `apiBase` is passed in so `useRuntimeConfig()` is read in
+ * the caller's synchronous setup scope (never after an await). `null` means the
+ * request failed, allowing callers to distinguish a transient error from an
+ * authoritative OFF.
+ */
 export async function fetchChatEnabled(apiBase: string, brand: string): Promise<boolean | null> {
-  return (await fetchContactChannelStatus(apiBase, brand))?.enabled ?? null
+  const status = await fetchChatStatus(apiBase, brand)
+  return status ? status.enabled : null
 }
 
 /**
- * Per-brand visibility for the two direct floating buttons. Both start hidden
- * until the first authoritative response, preserve their last-known-good state
- * across transient errors, and revalidate on focus and every minute.
+ * Per-brand chat visibility for the contact FAB, driven by the dashboard's on/off
+ * switch (the dashboard toggle is the source of truth: on/off there shows/hides the
+ * chat with no redeploy). Client-only fetch (the widget is wrapped in <ClientOnly>);
+ * `enabled` starts `false` and only flips `true` when the backend confirms it. Never
+ * throws.
+ *
+ * `whatsappVisible` gates the FAB's WhatsApp option against the brand's master
+ * switch AND the per-brand visibility windows returned in the same response. It is
+ * fail-OPEN (opposite of `enabled`): it starts `true` and stays `true` until an
+ * authoritative response says otherwise, so a network error never makes the
+ * WhatsApp button disappear. It re-evaluates on a 60s timer and on the existing
+ * focus revalidation.
  */
 export function useChatStatus(brand: string) {
   const enabled = ref(false)
-  const whatsappEnabled = ref(false)
-  const whatsappSchedule = ref<WhatsappSchedule | null>(null)
-  const whatsappVisible = ref(false)
   const resolved = ref(false)
+  const whatsappVisible = ref(true)
   const { rentacarPublicApiBase } = useRuntimeConfig().public
+  // Exposed so a surface can tell "the operator switched WhatsApp off" apart from
+  // "we are outside today's window", which `whatsappVisible` alone collapses.
+  const whatsappEnabled = ref(true)
   let refreshGeneration = 0
-  let refreshTimer: number | undefined
+  let whatsappSchedule: unknown
+  let scheduleResolved = false
 
-  function updateWhatsappVisibility() {
+  function reevaluateWhatsapp() {
+    // Before the first authoritative response the schedule is unknown → stay
+    // fail-open (visible). Afterwards the timer keeps visibility in sync as the
+    // active window opens/closes without another network round-trip.
+    if (!scheduleResolved) return
+    // The master switch short-circuits the schedule: OFF hides the button at any
+    // hour. Only the schedule is time-dependent, so the timer still matters.
     whatsappVisible.value =
-      whatsappEnabled.value &&
-      evaluateWhatsappVisibility(whatsappSchedule.value, new Date())
+      whatsappEnabled.value && evaluateWhatsappVisibility(whatsappSchedule, new Date())
   }
 
   async function refresh() {
     const generation = ++refreshGeneration
-    const next = await fetchContactChannelStatus(
-      rentacarPublicApiBase as string,
-      brand,
-    )
-    if (generation !== refreshGeneration || next === null) return
-
-    enabled.value = next.enabled
-    whatsappEnabled.value = next.whatsappEnabled
-    whatsappSchedule.value = next.whatsappSchedule
-    updateWhatsappVisibility()
-    resolved.value = true
+    const status = await fetchChatStatus(rentacarPublicApiBase as string, brand)
+    // A slow earlier request must never overwrite a newer focus revalidation.
+    if (generation !== refreshGeneration) return
+    // A transient error preserves the last authoritative chat ON/OFF and the last
+    // known WhatsApp schedule instead of tearing down a live surface or hiding a
+    // button that was legitimately shown.
+    if (status === null) return
+    if (status.enabled !== null) {
+      enabled.value = status.enabled
+      resolved.value = true
+    }
+    whatsappSchedule = status.whatsappSchedule
+    whatsappEnabled.value = status.whatsappEnabled
+    scheduleResolved = true
+    reevaluateWhatsapp()
   }
 
+  // Revalidate when a visitor returns to an already-open tab. This makes an OFF
+  // toggle close an open surface instead of leaving stale chat UI alive forever,
+  // and picks up a schedule edit made while the tab sat in the background.
   function onFocus() {
-    updateWhatsappVisibility()
     void refresh()
   }
+
+  // Mobile browsers throttle background timers and do not reliably fire `focus`
+  // when a tab is restored, so a visitor could see up to a minute of stale state.
+  // `visibilitychange` covers that path: re-evaluate the window immediately on
+  // return, and refresh the schedule itself in the background.
+  function onVisibilityChange() {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+    reevaluateWhatsapp()
+    void refresh()
+  }
+
+  let whatsappTimer: ReturnType<typeof setInterval> | undefined
 
   onMounted(() => {
     void refresh()
-    if (typeof window !== 'undefined') {
-      window.addEventListener('focus', onFocus)
-      refreshTimer = window.setInterval(() => {
-        updateWhatsappVisibility()
-        void refresh()
-      }, STATUS_REFRESH_MS)
+    if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange)
     }
+    // Re-evaluate the active window each minute so WhatsApp appears/disappears at
+    // the boundary without a page reload. Unref so it never keeps a process alive.
+    whatsappTimer = setInterval(reevaluateWhatsapp, 60_000)
+    ;(whatsappTimer as { unref?: () => void })?.unref?.()
   })
   onBeforeUnmount(() => {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('focus', onFocus)
-      if (refreshTimer !== undefined) window.clearInterval(refreshTimer)
+    if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
+    if (whatsappTimer !== undefined) clearInterval(whatsappTimer)
   })
 
-  return {
-    enabled,
-    whatsappEnabled,
-    whatsappVisible,
-    resolved,
-    refresh,
-  }
+  return { enabled, resolved, whatsappEnabled, whatsappVisible, refresh }
 }

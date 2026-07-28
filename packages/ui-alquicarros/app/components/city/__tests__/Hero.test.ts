@@ -10,9 +10,14 @@
  *   - SCEN-F2-06: the #41 pin stays an INERT <span aria-hidden> (never a
  *     <button>), and no Date/today() is baked into the SSR/ISR markup (#109).
  *   - Gradient guard (F0/F1 lesson): the hero MUST use the v4 `bg-linear-to-*`
- *     utility from the hero-from/hero-to @theme tokens with
- *     [--ctx-text-primary:#fff] (so .heading-* renders white on red), NEVER the
- *     broken v3 `bg-gradient-to-*` alias.
+ *     utility from the hero-from/hero-to @theme tokens, NEVER the broken v3
+ *     `bg-gradient-to-*` alias. Since issue #364 the section declares
+ *     `.context-brand` (dark text on the orange) instead of forcing white.
+ *
+ * NOTE: this file began as a copy of the alquilame suite and its prose still
+ * described a RED gradient and Plus Jakarta. alquicarros is orange and uses
+ * Montserrat; the descriptions were corrected in #364 while replacing the
+ * contrast guard. The assertions themselves were always brand-agnostic.
  *   - SCEN-F3-03 (city landing sin engine inline): F3 made the hero `mode`-aware.
  *     In `mode="results"` the engine + #109 guard are preserved IDENTICAL to F2
  *     (they live under the `v-if="mode === 'results'"` branch and stay in the
@@ -29,7 +34,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const ROOT = join(__dirname, '..', '..', '..', '..') // → packages/ui-alquilame
+const ROOT = join(__dirname, '..', '..', '..', '..') // → packages/ui-alquicarros
 
 function read(rel: string): string {
   return readFileSync(join(ROOT, rel), 'utf-8')
@@ -55,7 +60,7 @@ const LANDING_BRANCH = (() => {
 })()
 
 describe('F2/F3 — city/Hero.vue restyle (shared, both modes)', () => {
-  it('renders the brand red gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
+  it('renders the brand orange gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
     expect(hero).toMatch(/bg-linear-to-[a-z]/)
     expect(hero).not.toMatch(BROKEN_V3_GRADIENT)
   })
@@ -64,11 +69,20 @@ describe('F2/F3 — city/Hero.vue restyle (shared, both modes)', () => {
     expect(hero).toMatch(/from-hero-from\s+to-hero-to/)
   })
 
-  it('sets [--ctx-text-primary:#fff] so .heading-* headings render white on red', () => {
-    expect(hero).toMatch(/\[--ctx-text-primary:#fff\]/)
+  // Issue #364. This assertion used to REQUIRE [--ctx-text-primary:#fff], which
+  // is how a WCAG failure ended up frozen as an invariant: white on #ff9500
+  // measures 2.20:1 against a 3:1 floor for large text. The inline override also
+  // told the type system this was a dark surface, which it is not — that is
+  // where the white came from in the first place.
+  //
+  // It is replaced, not deleted: the hero still needs a declared text context,
+  // it is just the right one now.
+  it('declares .context-brand so .heading-* resolves to --color-on-brand', () => {
+    expect(hero).toMatch(/class="context-brand/)
+    expect(hero).not.toMatch(/\[--ctx-text-primary:#fff\]/)
   })
 
-  it('adopts the .heading-hero utility (Plus Jakarta) for the headline', () => {
+  it('adopts the .heading-hero utility (Montserrat) for the headline', () => {
     expect(hero).toMatch(/heading-hero/)
   })
 

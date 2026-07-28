@@ -47,9 +47,13 @@
         <ChatConversation :active="panelOpen" variant="panel" @dismiss="panelOpen = false" />
       </div>
 
+      <!-- data-shift-left mueve el stack a la izquierda con el resumen de reserva
+           abierto en escritorio (>=1024px); ver CSS. En movil el rediseno oculta
+           el stack entero via hideContactButtonsOnMobile, asi que no hay lift. -->
       <div
         v-if="(chatEnabled || whatsappVisible) && !hideContactButtonsOnMobile"
         class="contact-fab-stack absolute right-6 flex flex-col items-end gap-4 pointer-events-none"
+        :data-shift-left="shiftLeft"
       >
         <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
              con transform/opacity sin cambiar la geometría del contenedor ni
@@ -164,6 +168,19 @@ const isDesktop = useMediaQuery('(min-width: 768px)')
 const hideContactButtonsOnMobile = computed(
   () => !isDesktop.value && reservationOverlayOpen.value,
 )
+
+// Resumen de reserva abierto → el FAB salta a la izquierda para no tapar
+// Volver/Siguiente/Solicitar reserva (el u-slideover ancla a la derecha, z<60).
+// Puente SSR-safe (useState) desde CategorySelectionSection, que vive en otro
+// subárbol y escribe esta misma clave. Este widget es byte-idéntico entre las
+// tres marcas: donde no hay slideover que escriba la clave (p.ej. alquicarros),
+// queda en false → shiftLeft nunca se activa (dormante, sin regresión).
+const reservationSummaryOpen = useState<boolean>('reservation-slideover-open', () => false)
+// Gate a ≥1024px A PROPÓSITO (no el isDesktop de 768): por debajo de 1024 el
+// rediseño no desplaza nada, oculta el stack entero mientras el resumen está
+// abierto (hideContactButtonsOnMobile). Partición exacta, sin doble tratamiento.
+const isWideViewport = useMediaQuery('(min-width: 1024px)')
+const shiftLeft = computed(() => isWideViewport.value && reservationSummaryOpen.value)
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
 // la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
@@ -303,6 +320,14 @@ button { -webkit-tap-highlight-color: transparent; }
 
 /* --- Botones directos de contacto --- */
 .fab-item { display: flex; align-items: center; gap: 0.75rem; border-radius: 9999px; }
+/* Salto a la izquierda (resumen de reserva abierto en escritorio, ≥1024px).
+   Se activa por data-shift-left, NO por clase, para no tocar el `:class` que el
+   invariante E8 congela. Override del ancla right-6/items-end del stack y de las
+   filas del menú: [círculo][etiqueta] (row-reverse) alinea los círculos (ancho
+   fijo) al borde izquierdo, sin escalonarse por el ancho variable de etiquetas. */
+.contact-fab-stack[data-shift-left='true'] { right: auto; left: 1.5rem; align-items: flex-start; }
+.contact-fab-stack[data-shift-left='true'] ul { align-items: flex-start; }
+.contact-fab-stack[data-shift-left='true'] .fab-item { flex-direction: row-reverse; }
 .fab-label {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
@@ -452,4 +477,14 @@ button { -webkit-tap-highlight-color: transparent; }
   overflow: hidden;
 }
 
+/* Pulso de atención del FAB. Color por marca vía --ui-primary (evita fijar el
+   rojo de una marca). Acotado a 2 ciclos (4.8s < 5s de WCAG 2.2.2: contenido
+   que parpadea sin pausa) con `forwards` para quedar en reposo; respeta
+   reduce-motion. El spread animado de box-shadow no compone, por eso es finito. */
+@keyframes pulse-attention {
+  0%, 100% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 0 color-mix(in srgb, var(--ui-primary, transparent) 40%, transparent); }
+  50% { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 0 0 0 14px transparent; }
+}
+.animate-pulse-attention { animation: pulse-attention 2.4s ease-in-out 2 forwards; }
+@media (prefers-reduced-motion: reduce) { .animate-pulse-attention { animation: none; } }
 </style>

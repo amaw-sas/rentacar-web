@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CONTRAST_PROBE } from './support/contrast-probe';
 
 test.describe('Accesibilidad', () => {
   test('debe tener estructura de encabezados correcta', async ({ page }) => {
@@ -56,15 +57,44 @@ test.describe('Accesibilidad', () => {
     expect(focusedElement).toBeTruthy();
   });
 
-  test('debe tener contraste adecuado en textos', async ({ page }) => {
+  /**
+   * Issue #364. Este test se llamaba igual y comprobaba que
+   * `getComputedStyle(body).color` fuera truthy. Estuvo en verde durante meses
+   * con la home pintando texto a 1.90:1 — no es que se le escapara un caso, es
+   * que no medía nada. Ahora mide.
+   *
+   * La medición vive en support/contrast-probe.ts, que documenta por qué es más
+   * complicada de lo que parece (oklch, gradientes, alpha, componentes
+   * inactivos, texto sobre foto). Cada punto de esa lista salió de un resultado
+   * falso real durante #364, incluido el del primer intento de ESTE test.
+   *
+   * Aquí solo se cubre "/" con datos reales. El barrido multi-ruta sin
+   * credenciales está en contrast-wcag-sweep.spec.ts.
+   */
+  test('el texto cumple el contraste mínimo de WCAG AA', async ({ page }) => {
+    // #364 remedió alquicarros. alquilame y alquilatucarro NO se han medido
+    // nunca: hasta ahora este test comprobaba que `color` fuera truthy, así que
+    // su verde no significaba nada para ninguna marca. Se omite en lugar de
+    // fingir cobertura, y en lugar de poner CI en rojo por trabajo que nadie ha
+    // hecho todavía. Cada marca necesita su propia remediación y su propio issue.
+    test.skip(process.env.BRAND !== 'alquicarros', 'Solo alquicarros está remediado (#364)');
+
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
 
-    // Verificar que el body tiene color de texto
-    const bodyColor = await page.locator('body').evaluate((el) => {
-      return window.getComputedStyle(el).color;
-    });
+    const { checked, failures, overImage } = await page.evaluate(CONTRAST_PROBE);
 
-    expect(bodyColor).toBeTruthy();
+    // Un "0 fallos" sobre una muestra vacía es exactamente el fraude que este
+    // test vino a corregir: la versión anterior medía seis elementos de ciento
+    // veintiuno y pasaba. Si la muestra se hunde, el test cae.
+    expect(checked, 'la sonda apenas midió nodos — revisa que la página cargara').toBeGreaterThan(40);
+
+    expect(
+      failures,
+      `Texto por debajo del mínimo AA (${overImage.length} nodos sobre imagen excluidos):\n${failures
+        .map((f) => `  ${f.tag} "${f.text}" → ${f.ratio}:1 (mínimo ${f.min}:1) sobre ${f.bg}`)
+        .join('\n')}`,
+    ).toEqual([]);
   });
 
   test('los formularios deben tener labels', async ({ page }) => {

@@ -18,7 +18,12 @@
                     <IconsLocationIcon v-if="iconType === 'location'" cls="size-4 text-gray-500" />
                     <IconsClockIcon v-else cls="size-4 text-gray-500" />
                 </template>
-                <span :class="{ 'text-gray-400 font-normal': !selectedLabel }">
+                <!-- #364: gray-400 daba 2.6:1 sobre el botón blanco. No es un
+               placeholder nativo sino texto renderizado, así que WCAG 1.4.3
+               aplica igual; gray-500 llega a 4.83:1 y sigue leyéndose como
+               estado "sin elegir". Solo se veía en móvil: el desktop usa otro
+               control. -->
+          <span :class="{ 'text-gray-500 font-normal': !selectedLabel }">
                     {{ selectedLabel || placeholder }}
                 </span>
             </u-button>

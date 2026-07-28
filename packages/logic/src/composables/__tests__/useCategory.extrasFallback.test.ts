@@ -72,4 +72,39 @@ describe('useCategory extras fallback wiring (SCEN-008, SCEN-009)', () => {
       expect(block).toContain('numberDays.value')
     })
   })
+
+  // Monthly extras (SCEN-X1..X6) are priced from their own constants, wired the
+  // same way. The behaviour lives in useCategory.monthlyExtras.test.ts, which
+  // runs the computeds and asserts pesos; these are the wiring assertions that
+  // match this file's convention.
+  describe('SCEN-X5: monthly constants fall back to the monthly price', () => {
+    it('EXTRA_DRIVER_MONTH_PRICE uses ?? 100000 against extras?.extraDriverMonthPrice', () => {
+      const line = priceConstantLine('EXTRA_DRIVER_MONTH_PRICE')
+      expect(line).toMatch(/extras\?\.\s*extraDriverMonthPrice\s*\?\?\s*100000/)
+    })
+
+    it('BABY_SEAT_MONTH_PRICE uses ?? 100000 against extras?.babySeatMonthPrice', () => {
+      const line = priceConstantLine('BABY_SEAT_MONTH_PRICE')
+      expect(line).toMatch(/extras\?\.\s*babySeatMonthPrice\s*\?\?\s*100000/)
+    })
+
+    it('uses ?? so a configured 0 stays a free extra', () => {
+      expect(priceConstantLine('EXTRA_DRIVER_MONTH_PRICE')).not.toMatch(/\|\|/)
+      expect(priceConstantLine('BABY_SEAT_MONTH_PRICE')).not.toMatch(/\|\|/)
+    })
+  })
+
+  describe('SCEN-X1/X2: the monthly branch never multiplies by a day count', () => {
+    it('getExtraDriverPrice returns EXTRA_DRIVER_MONTH_PRICE bare when monthly', () => {
+      const block = priceComputed('getExtraDriverPrice')
+      expect(block).toContain('EXTRA_DRIVER_MONTH_PRICE')
+      expect(block).not.toMatch(/30\s*\*/)
+    })
+
+    it('getBabySeatPrice returns BABY_SEAT_MONTH_PRICE bare when monthly', () => {
+      const block = priceComputed('getBabySeatPrice')
+      expect(block).toContain('BABY_SEAT_MONTH_PRICE')
+      expect(block).not.toMatch(/30\s*\*/)
+    })
+  })
 })

@@ -193,7 +193,7 @@
 
       <!-- Footer -->
       <footer class="mt-16 pt-8 border-t border-gray-200">
-        <NuxtLink to="/" class="text-brand-600 hover:text-brand-700 font-medium">← Volver al inicio</NuxtLink>
+        <NuxtLink to="/" class="text-brand-800 hover:text-brand-800 font-medium">← Volver al inicio</NuxtLink>
       </footer>
     </article>
   </main>

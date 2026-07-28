@@ -105,9 +105,12 @@ export interface WizardAdvanceState {
  * ¿Puede avanzar el paso dado con el estado actual?
  *   - busqueda: requiere que la búsqueda se haya ejecutado.
  *   - vehiculo: requiere una gama seleccionada.
- *   - seguro: siempre (Básico preseleccionado).
- *   - adicionales: siempre (paso opcional).
- *   - datos: requiere formulario válido.
+ *   - seguro / adicionales: no imponen requisitos PROPIOS (Básico preseleccionado,
+ *     adicionales opcionales), pero ninguno avanza con la gama anulada — esa es una
+ *     precondición del flujo entero, no un requisito del paso. Sin ella, anular la
+ *     cotización bajo los pies del usuario (issue #401) dejaba llegar a un «Confirmar
+ *     reserva» que valibot rechaza en silencio (SCEN-W-07 enmendado).
+ *   - datos: requiere formulario válido Y gama viva (misma razón).
  */
 export function canAdvance(step: WizardStep, state: WizardAdvanceState): boolean {
   switch (step) {
@@ -116,12 +119,95 @@ export function canAdvance(step: WizardStep, state: WizardAdvanceState): boolean
     case 'vehiculo':
       return Boolean(state.hasSelectedCategory)
     case 'seguro':
-      return true
     case 'adicionales':
-      return true
+      return Boolean(state.hasSelectedCategory)
     case 'datos':
-      return Boolean(state.formValid)
+      return Boolean(state.formValid && state.hasSelectedCategory)
   }
+}
+
+// ── Invalidación de cotización por deriva del tramo (issue #401) ───────────────
+
+/** Estado + evento que la máquina de invalidación consume en cada disparo. */
+export interface StaleTransitionInput {
+  /** `pending` actual (arg nuevo del watcher). */
+  isPending: boolean
+  /** `pending` anterior (arg viejo del watcher). */
+  wasPending: boolean
+  /** Firma del tramo VIVO en este instante (los seis campos de búsqueda). */
+  liveSignature: string
+  /** Firma del tramo con el que se pidió la disponibilidad en pantalla, o null. */
+  quotedSignature: string | null
+  /** Pestillo actual: la disponibilidad ya no corresponde al tramo vivo. */
+  stale: boolean
+}
+
+/** Acciones a aplicar tras un disparo de la máquina de invalidación. */
+export interface StaleTransitionResult {
+  /** Nuevo valor de `quotedSearchSignature`. */
+  quotedSignature: string | null
+  /** Nuevo valor del pestillo `searchStale`. */
+  stale: boolean
+  /** Anular `selectedCategory` + `vehiculo` como CONSECUENCIA (no condición). */
+  clearSelection: boolean
+}
+
+/**
+ * Núcleo puro de la invalidación de #401. Decide, a partir del flanco de `pending`
+ * y de la firma del tramo, si la cotización en pantalla quedó rancia. Se extrae del
+ * watcher para poder aseverar los seis guards en aislamiento (SCEN-401-11/-13/-08b);
+ * el watcher solo cablea refs y `flush: 'sync'` alrededor de esta función.
+ *
+ * El pestillo es asimétrico: lo baja una BÚSQUEDA (su arranque en guard 1 o su
+ * resolución en guard 2), nunca una edición. Deshacer una edición NO lo baja: la
+ * disponibilidad ya se tiró y no hay nada que recuperar sin volver a buscar
+ * (SCEN-401-11).
+ *
+ * El flanco de `pending` NO es un discriminador perfecto de "búsqueda nueva": dos
+ * search() con la primera en vuelo escriben `true` sobre `true` (sin flanco), vía
+ * back/forward del navegador (useSearchByQueryParams) o un montaje de
+ * useSearchByRouteParams a mitad de vuelo. Por eso guard 6 exige `!isPending`: con
+ * una búsqueda en vuelo NO se latchea (sus resultados vienen en camino), y guard 2
+ * los adopta al resolver. Sin esto, una reescritura de refs en vuelo latcheaba el
+ * pestillo sobre resultados frescos y correctos, o anulaba la gama del usuario en
+ * silencio (hallazgo del gate de edge-cases). El único residuo restante —editar el
+ * tramo DESPUÉS de que doSearch leyó los refs pero ANTES de que resuelva— es el
+ * best-effort que guard 2 asume, mucho más raro que la ventana que cierra.
+ */
+export function computeStaleTransition(input: StaleTransitionInput): StaleTransitionResult {
+  const { isPending, wasPending, liveSignature, quotedSignature, stale } = input
+
+  // 1. Búsqueda ARRANCA (pending false→true): captura el tramo consultado, baja el
+  //    pestillo y descarta la gama vieja (su precio está congelado al tramo anterior).
+  if (isPending && !wasPending) {
+    return { quotedSignature: liveSignature, stale: false, clearSelection: true }
+  }
+  // 2. Búsqueda RESUELVE (pending true→false): los resultados en pantalla son del
+  //    tramo que doSearch consultó ≈ el tramo vivo → adóptalo como cotizado y baja el
+  //    pestillo. Cubre el montaje sin captura previa (quoted===null, SCEN-401-13) y la
+  //    resolución de una segunda búsqueda arrancada sin flanco (true sobre true), que
+  //    de otro modo dejaría el pestillo pegado sobre resultados frescos.
+  if (!isPending && wasPending) {
+    return { quotedSignature: liveSignature, stale: false, clearSelection: false }
+  }
+  // Guards 3-5: "sin cambios, pasa el estado actual". Se conservan como tres guards
+  // separados porque cada uno documenta un invariante distinto y su precedencia.
+  const noChange: StaleTransitionResult = { quotedSignature, stale, clearSelection: false }
+  // 3. Nada consultado aún (quoted===null) sin flanco de búsqueda → nada rancio.
+  if (quotedSignature === null) return noChange
+  // 4. Ya latcheado: la anulación es idempotente, no se repite.
+  if (stale) return noChange
+  // 5. El tramo vivo sigue siendo el consultado.
+  if (liveSignature === quotedSignature) return noChange
+  // 6. Rancio: el tramo derivó y NO hay búsqueda en vuelo (una en vuelo trae
+  //    resultados nuevos que guard 2 adoptará al resolver; latchear sobre ellos los
+  //    ocultaría). `!isPending` ⇒ clamp de horario o edición del usuario.
+  if (!isPending) {
+    return { quotedSignature, stale: true, clearSelection: true }
+  }
+  // Reescritura de refs con una búsqueda en vuelo (true sobre true): no latchees; la
+  // resolución (guard 2) adoptará el tramo consultado.
+  return noChange
 }
 
 export interface WizardMachine {

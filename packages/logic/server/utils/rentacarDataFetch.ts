@@ -3,6 +3,62 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 const DEFAULT_TIMEOUT_MS = 8000
 
 /**
+ * The accessory `price_anchors` read gets its own, much shorter deadline —
+ * mirrors PRICE_ANCHOR_FETCH_TIMEOUT_MS in the dashboard (lib/api/price-anchor).
+ *
+ * It cannot share the 8s catalog deadline: a merely SLOW anchors query would
+ * abort the six core queries that already had their answer and turn the whole
+ * catalog into a 504, which is exactly what the accessory table is never
+ * allowed to do (R-WEB-M H-W1). Keep it well under the catalog deadline so this
+ * one always fires first and the fallback is what the tuple carries.
+ */
+export const MONTHLY_ANCHORS_TIMEOUT_MS = 2000
+
+/** What the 7th slot carries when there is no anchors answer to carry. */
+const MONTHLY_ANCHORS_STUB = { data: null, error: null }
+
+/**
+ * Reads the monthly anchors under their own deadline, degrading to the stub on
+ * timeout, abort or transport failure. Never rejects: the catalog's Promise.all
+ * must not be able to fail because of this table.
+ *
+ * Its AbortController is its own (so the 2s deadline actually cancels the query
+ * and frees the pooled connection) but is also chained to the catalog signal,
+ * so an outer abort still tears this one down instead of leaking it.
+ */
+async function fetchMonthlyAnchors(
+  supabase: SupabaseClient,
+  franchiseCode: string,
+  outerSignal: AbortSignal,
+) {
+  const controller = new AbortController()
+  const abort = () => controller.abort()
+  outerSignal.addEventListener('abort', abort)
+  const timer = setTimeout(abort, MONTHLY_ANCHORS_TIMEOUT_MS)
+
+  try {
+    return await supabase
+      .from('price_anchors')
+      .select('category_code, anchor_day_price_gross, computed_at')
+      .eq('franchise', franchiseCode)
+      .abortSignal(controller.signal)
+  } catch {
+    // Reached by the anchors budget, an outer abort or a transport failure —
+    // the message names none of them because it cannot tell them apart here.
+    // Worth logging at all because degrading in silence would let a chronically
+    // slow anchors table make the pilot measure as if it were switched off. The
+    // catalog is fine either way; this line is for us, not for the customer.
+    console.warn(
+      '[rentacar-data] monthly price anchors did not answer in time; serving catalog without the monthly cap',
+    )
+    return MONTHLY_ANCHORS_STUB
+  } finally {
+    clearTimeout(timer)
+    outerSignal.removeEventListener('abort', abort)
+  }
+}
+
+/**
  * Thrown when the parallel Supabase fetch does not complete within the
  * deadline. The handler maps this to a 504 instead of letting the request
  * hang until Nitro's default timeout (relevant on cold cache revalidation
@@ -16,7 +72,7 @@ export class RentacarDataTimeoutError extends Error {
 }
 
 /**
- * Runs the 6 rentacar-data Supabase queries in parallel with a hard deadline.
+ * Runs the rentacar-data Supabase queries in parallel with a hard deadline.
  * A shared AbortController cancels the underlying fetches on timeout so they
  * stop consuming the connection pool — Promise.race alone would leave them
  * running. Returns the raw PostgREST results in fixed order; per-result
@@ -26,11 +82,20 @@ export class RentacarDataTimeoutError extends Error {
  * the franchises query is scoped to it — shipping all 3 brands' testimonials
  * on every page was pure cross-brand payload bloat. Omitted/empty = no filter
  * (standalone logic-layer runs without brand runtimeConfig).
+ *
+ * `includeMonthlyAnchors`: the monthly struck-price pilot. The 7th slot always
+ * exists so the tuple shape never depends on a flag, but it costs a round trip
+ * only when the pilot is on AND the deploy knows its brand — anchors are stored
+ * per franchise, and an unscoped read would mix another brand's market into
+ * this one's prices. That slot runs on its OWN short deadline and can only ever
+ * resolve, so neither an error nor a stall in the accessory table can take the
+ * catalog down — see fetchMonthlyAnchors.
  */
 export async function fetchRentacarData(
   supabase: SupabaseClient,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
   franchiseCode?: string,
+  includeMonthlyAnchors: boolean = false,
 ) {
   const controller = new AbortController()
   const signal = controller.signal
@@ -54,7 +119,7 @@ export async function fetchRentacarData(
 
       supabase
         .from('rental_companies')
-        .select('extra_driver_day_price, baby_seat_day_price, wash_price, wash_onsite_price, wash_deep_price, wash_deep_upholstery_price')
+        .select('extra_driver_day_price, baby_seat_day_price, extra_driver_month_price, baby_seat_month_price, wash_price, wash_onsite_price, wash_deep_price, wash_deep_upholstery_price')
         .eq('code', 'localiza')
         .abortSignal(signal)
         .single(),
@@ -81,6 +146,10 @@ export async function fetchRentacarData(
         .eq('status', 'active')
         .order('display_order')
         .abortSignal(signal),
+
+      includeMonthlyAnchors && franchiseCode
+        ? fetchMonthlyAnchors(supabase, franchiseCode, signal)
+        : Promise.resolve(MONTHLY_ANCHORS_STUB),
     ])
 
     if (signal.aborted) throw new RentacarDataTimeoutError(timeoutMs)
