@@ -15,9 +15,7 @@
         </p>
         <p class="text-sm font-semibold text-gray-900 mt-3 mb-1">Requisitos para alquilar:</p>
         <ul class="space-y-1 text-sm">
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con una tarjeta de crédito</span></li>
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Ser mayor de edad con cédula o pasaporte</span></li>
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con licencia de conducción vigente.</span></li>
+          <li v-for="requisito in RESERVATION_REQUIREMENTS" :key="requisito" class="flex items-start gap-2"><span class="shrink-0">✅</span><span>{{ requisito }}</span></li>
         </ul>
       </div>
 
@@ -130,6 +128,7 @@
 import {
   ReservationFormValidationSchema,
 } from '@rentacar-main/logic/utils';
+import { RESERVATION_REQUIREMENTS } from '~/config/reservationRequirements';
 
 // Lazy load vue-tel-input (solo se carga cuando se renderiza el formulario)
 const VueTelInput = defineAsyncComponent(() =>

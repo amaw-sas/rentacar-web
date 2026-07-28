@@ -26,6 +26,12 @@ export type { ChatActions } from './extractChatActions';
 export { buildChatPayloadMessages, CHAT_PAYLOAD_TAIL } from './buildChatPayloadMessages';
 export type { ChatPayloadMessage } from './buildChatPayloadMessages';
 export { normalizeReservationCode } from './reservationCode';
+export {
+  buildReservationSummary,
+  type ReservationSummary,
+  type ReservationSummaryFields,
+  type ReservationSummaryCategory,
+} from './helpers/buildReservationSummary';
 
 // ============================================================================
 // Pricing
