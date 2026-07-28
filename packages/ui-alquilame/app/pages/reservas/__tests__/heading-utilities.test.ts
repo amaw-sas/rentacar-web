@@ -19,12 +19,15 @@ describe('reservas flow — token-free hero typography', () => {
     expect(results).not.toMatch(/<h1[^>]*\bheading-hero\b/)
   })
 
-  it('keeps the reservation code at text-4xl with the hero weight and tracking', () => {
+  it('keeps the reservation code on the hero weight and tracking, token-free', () => {
+    // Rediseño tiquete 2026-07-28: el código dejó de ser <h2> (no es un
+    // encabezado de sección) y ganó rampa responsive, pero el invariante
+    // protegido es el mismo: utilidades explícitas, nunca el token heading-*.
     expect(confirmation).toMatch(
-      /<h2 class="font-heading font-extrabold tracking-tight text-4xl mb-2">\{\{ reserveCode \}\}<\/h2>/,
+      /<p class="font-heading font-extrabold tracking-tight text-3xl sm:text-4xl text-gray-900">\{\{ reserveCode \}\}<\/p>/,
     )
     expect(confirmation).not.toMatch(
-      /<h2[^>]*\bheading-hero\b[^>]*>\{\{ reserveCode \}\}<\/h2>/,
+      /<[^>]*\bheading-hero\b[^>]*>\{\{ reserveCode \}\}/,
     )
   })
 })

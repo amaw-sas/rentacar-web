@@ -10,26 +10,28 @@
     Only the alt text varies per page — the home says "en Colombia", a city
     landing names the city — so that is the single prop.
 
-    Autoplay policy, unchanged from the home:
+    Autoplay policy:
       - default paint is the POSTER only, so reduced-motion and data-saver users
         never trigger a 4MB download;
-      - the muted preview starts only once the block is on screen AND the
-        browser is idle;
-      - the audio track is a separate <video preload="none"> that downloads only
+      - the muted preview starts automatically once the block is on screen and
+        the browser is idle;
+      - the audio track is a separate video with preload="none" that downloads only
         when the user clicks "Activar sonido" — autoplay WITH audio is blocked by
         browsers anyway, so the click is what unlocks it.
   -->
   <div ref="visualBox" class="relative flex items-center justify-center min-h-[16rem]">
     <!-- Main visual: car cutout (webp, alpha). width/height reserve space → no CLS. -->
-    <img
+    <NuxtImg
       src="/images/carro_hero.webp"
       :alt="carAlt"
       width="1199"
       height="678"
+      sizes="sm:100vw lg:50vw xl:576px"
+      densities="x1"
       class="w-full max-w-xl drop-shadow-2xl"
       loading="eager"
       fetchpriority="high"
-    >
+    />
 
     <!-- Small corner video over the car: muted preview loops, click plays with
          audio. Desktop bottom-right; mobile right + vertically centered. -->
@@ -47,9 +49,9 @@
         loading="eager"
         class="absolute inset-0 w-full h-full object-cover"
       />
-      <!-- Muted preview loop (no audio track). Activated post-idle when visible. -->
+      <!-- Muted preview loop. Created after visibility + idle. -->
       <video
-        v-show="videoActive && !audioActive"
+        v-if="videoActive && !audioActive"
         ref="previewVideo"
         class="absolute inset-0 w-full h-full object-cover"
         poster="/videos/hero-poster.jpg"
@@ -64,7 +66,7 @@
       </video>
       <!-- Full video WITH audio: preload="none" → downloads only on click. -->
       <video
-        v-show="audioActive"
+        v-if="audioActive"
         ref="audioVideo"
         class="absolute inset-0 w-full h-full object-cover bg-black"
         poster="/videos/hero-poster.jpg"
@@ -97,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 
 withDefaults(
   defineProps<{
@@ -114,15 +116,41 @@ const videoActive = ref(false)
 const audioActive = ref(false)
 let idleId: number | undefined
 let io: IntersectionObserver | undefined
+let heroVisible = false
+let previewScheduled = false
+
+function schedulePreview() {
+  if (!heroVisible || previewScheduled || audioActive.value) return
+  previewScheduled = true
+
+  const activate = () => {
+    previewScheduled = false
+    if (!heroVisible || audioActive.value) return
+    videoActive.value = true
+    io?.disconnect()
+  }
+
+  const ric = (window as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+  }).requestIdleCallback
+  if (ric) {
+    idleId = ric(activate, { timeout: 2500 })
+  } else {
+    idleId = window.setTimeout(activate, 1200) as unknown as number
+  }
+}
 
 /**
  * User clicked the sound affordance. This gesture is what lets the browser play
  * media WITH audio (autoplay-with-audio is blocked). Swap the muted preview for
  * the full audio video (preload="none" → it downloads only now), from the start.
  */
-function enableSound() {
+async function enableSound() {
   audioActive.value = true
   previewVideo.value?.pause()
+  // The audio element is conditionally rendered so neither it nor its source
+  // can be requested on initial paint. Wait for Vue to insert it before play().
+  await nextTick()
   const v = audioVideo.value
   if (!v) return
   try {
@@ -148,22 +176,11 @@ onMounted(() => {
   const el = visualBox.value
   if (!el) return
 
-  const activate = () => {
-    videoActive.value = true
-  }
-
   io = new IntersectionObserver(
     (entries) => {
-      if (!entries.some((e) => e.isIntersecting)) return
-      io?.disconnect()
-      const ric = (window as Window & {
-        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
-      }).requestIdleCallback
-      if (ric) {
-        idleId = ric(activate, { timeout: 2500 })
-      } else {
-        idleId = window.setTimeout(activate, 1200) as unknown as number
-      }
+      const entry = entries.find((candidate) => candidate.target === el) ?? entries[0]
+      heroVisible = Boolean(entry?.isIntersecting)
+      schedulePreview()
     },
     { rootMargin: '80px' },
   )

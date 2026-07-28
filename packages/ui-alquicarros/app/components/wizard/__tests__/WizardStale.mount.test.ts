@@ -277,6 +277,12 @@ describe('StepVehicle rancio (#401) — el aviso gana a "Sin vehículos" y al er
     vi.stubGlobal('useState', (_key: string, init?: () => unknown) =>
       ref(init ? init() : null),
     )
+    // Issue #366 D5: StepVehicle deriva el contacto del fallo de disponibilidad desde
+    // franchise (app.config), no de un literal. Sin este stub, montar el paso lanza
+    // `ReferenceError: useAppConfig is not defined` (este arnés #401 no lo proveía).
+    vi.stubGlobal('useAppConfig', () => ({
+      franchise: { phone: '+57 318 770 3670', whatsapp: 'https://wa.me/573187703670' },
+    }))
   }
 
   it('SCEN-401-03: con el tramo cambiado sin buscar muestra el aviso, no "Sin vehículos"', () => {

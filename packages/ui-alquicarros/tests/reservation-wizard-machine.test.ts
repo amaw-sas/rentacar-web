@@ -195,11 +195,19 @@ describe('canAdvance — per-step gating', () => {
     expect(canAdvance('adicionales', { hasSelectedCategory: true })).toBe(true)
   })
 
-  it('datos is gated by form validity AND a live gama (SCEN-W-07)', () => {
+  // Reconciliación #366 × #401: `datos` NO gatea por consentimiento (el único campo que
+  // #366 quitó, porque valibot ya bloquea el submit sin él — no emite @submit → cero POST,
+  // y gatearlo además producía un botón mudo), pero SÍ exige gama viva (#401: la deriva del
+  // tramo anula la gama, y sin ella «Confirmar reserva» quedaba mudo — SCEN-W-07 enmendado).
+  // En el Paso 5 real hasSelectedCategory siempre es true (se eligió en el Paso 2), así que
+  // el CTA es pulsable salvo que la cotización se haya invalidado bajo los pies del usuario.
+  it('datos no gatea por consentimiento (#366) pero exige gama viva (#401)', () => {
+    // #366: el consentimiento ya no lo apaga. `formValid` salió del interface; un extra
+    // desconocido no debe reintroducir el gate por la puerta de atrás.
+    expect(canAdvance('datos', { hasSelectedCategory: true })).toBe(true)
+    // #401: sin gama viva (deriva del tramo → gama anulada) no avanza.
     expect(canAdvance('datos', {})).toBe(false)
-    expect(canAdvance('datos', { formValid: true })).toBe(false)
-    expect(canAdvance('datos', { hasSelectedCategory: true })).toBe(false)
-    expect(canAdvance('datos', { formValid: true, hasSelectedCategory: true })).toBe(true)
+    expect(canAdvance('datos', { hasSelectedCategory: false })).toBe(false)
   })
 })
 

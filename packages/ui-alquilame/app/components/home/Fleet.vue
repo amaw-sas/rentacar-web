@@ -49,7 +49,7 @@
           <button
             type="button"
             data-testid="fleet-tab-daily-test"
-            class="px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200"
+            class="fleet-tab-daily-stable px-6 py-2.5 rounded-full text-sm font-semibold transition-colors duration-200"
             :class="plan === 'daily' ? 'bg-gray-700 text-white' : 'text-gray-600 hover:text-gray-900'"
             :aria-pressed="plan === 'daily'"
             @click="plan = 'daily'"
@@ -59,7 +59,7 @@
           <button
             type="button"
             data-testid="fleet-tab-monthly-test"
-            class="px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200"
+            class="fleet-tab-monthly-stable px-6 py-2.5 rounded-full text-sm font-semibold transition-colors duration-200"
             :class="plan === 'monthly' ? 'bg-gray-700 text-white' : 'text-gray-600 hover:text-gray-900'"
             :aria-pressed="plan === 'monthly'"
             @click="plan = 'monthly'"
@@ -74,7 +74,7 @@
         <div
           v-for="card in cards"
           :key="card.code"
-          class="bg-surface-softest rounded-[22px] overflow-hidden border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(17,17,34,0.09)] transition-all duration-200 group flex flex-col"
+          class="bg-surface-softest rounded-[22px] overflow-hidden border-[7px] border-white shadow-[0_8px_22px_rgba(17,17,34,0.055)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(17,17,34,0.09)] transition-[translate,box-shadow] duration-200 group flex flex-col"
         >
           <!-- Vehicle image via @nuxt/image (issue 322 SCEN-322-P02 — no raw JPEG). -->
           <div class="aspect-[16/10] bg-linear-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden">
@@ -85,6 +85,7 @@
               height="400"
               format="webp"
               sizes="sm:100vw md:50vw lg:33vw"
+              densities="x1"
               loading="lazy"
               decoding="async"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -102,7 +103,7 @@
                             else). No extrabold, no semibold.
                  · colors → gray-900 (title) / gray-600 (ALL support copy —
                             gray-500 is gone) / brand-600 (price) /
-                            emerald-600 (the single accent, "IVA incluido").
+                            tax-note (the single green accent, "IVA incluido").
           -->
           <div class="p-6 flex flex-col flex-1">
             <!-- Category + transmission -->
@@ -120,7 +121,7 @@
                 <p class="text-sm text-gray-600">Precio x día en alquiler de 30 días</p>
                 <p class="flex items-baseline gap-2 flex-wrap">
                   <span class="text-2xl font-bold font-heading text-brand-600">${{ moneyFormat(card.dailyPrice) }}</span>
-                  <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
+                  <span class="text-xs font-medium text-tax-note">IVA incluido</span>
                 </p>
                 <p class="text-sm font-medium text-gray-600">Temporada Baja</p>
               </div>
@@ -130,7 +131,7 @@
               >
                 <span class="text-sm text-gray-600">Desde</span>
                 <span class="text-2xl font-bold font-heading text-brand-600">${{ moneyFormat(card.monthlyPrice) }}/mes</span>
-                <span class="text-xs font-medium text-emerald-600">IVA incluido</span>
+                <span class="text-xs font-medium text-tax-note">IVA incluido</span>
               </p>
             </div>
 
@@ -156,7 +157,7 @@
                  con precio por día distinto → la nota (solo en Diario) lo aclara
                  y el CTA invita a cotizar cualquier duración. -->
             <div class="mt-auto">
-              <p v-if="plan === 'daily'" class="text-xs text-gray-600 mb-3 leading-snug">
+              <p v-if="plan === 'daily'" class="text-xs text-gray-600 mb-3 leading-snug xl:whitespace-nowrap">
                 ¿Menos días? El precio por día cambia — cotiza tus fechas.
               </p>
               <UButton

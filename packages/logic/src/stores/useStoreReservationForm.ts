@@ -5,12 +5,20 @@ import type { FormSubmitEvent } from '@nuxt/ui';
 
 // Internal dependencies - stores
 import useStoreAdminData from './useStoreAdminData';
+// Imported statically but CALLED lazily inside submitForm (never at store setup):
+// useStoreSearchData calls useStoreReservationForm() at its own setup, so an eager
+// call here would form an ES-module init cycle. (issue #368 hallazgo 1)
+import useStoreSearchData from './useStoreSearchData';
 
 // Internal dependencies - composables
 import useRecordReservationForm from '../composables/useRecordReservationForm';
 import useMessages from '../composables/useMessages';
 import { routeForReservationStatus } from '../utils/reservationStatusRoute';
 import { isBusinessUnavailabilityRecordError } from '../utils/helpers/isBusinessUnavailabilityRecordError';
+import {
+  buildReservationSummary,
+  type ReservationSummary,
+} from '../utils/helpers/buildReservationSummary';
 
 // Internal dependencies - utils
 import {
@@ -138,11 +146,20 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   // Issue 322 SCEN-322-E03: respuesta 200 con status desconocido — la reserva
   // pudo crearse; bloquear reenvío para no duplicar.
   const formSubmitLocked = ref<boolean>(false);
+  // Issue #366 D4: el código que el servidor devolvió con ese status desconocido.
+  // Vive exactamente lo que vive el lock (useStoreSearchData lo limpia junto a él):
+  // es el único identificador con el que el usuario puede reclamar una reserva que
+  // quizá se creó, y el toast que lo llevaba muere a los 25 s.
+  const unknownStatusReserveCode = ref<string | null>(null);
   // Tras enviar, el código del vehículo cuya entrada `/categoria/X` puede quedar
   // en el historial (el slideover empuja entradas; ver CategorySelectionSection).
   // El watcher de auto-apertura lo consulta para NO reabrir el slideover si el
   // usuario retrocede hasta esa entrada después de enviar. One-shot por código.
   const lastSubmittedCode = ref<string | null>(null);
+  // Issue #368 hallazgo 1: snapshot inmutable de lo reservado, congelado en el
+  // submit exitoso a /reservado. La confirmación lo lee (gateado por código);
+  // nada más lo escribe. El refresh lo borra (Pinia) → la confirmación degrada.
+  const lastReservationSummary = ref<ReservationSummary | null>(null);
   const haveTotalInsurance = ref<boolean>(false);
   const haveMonthlyReservation = ref<boolean>(false);
   // haveFlight / aerolinea / numeroVueloIda removed (issue #322 SCEN-322-X07):
@@ -332,6 +349,29 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
               { brand: analyticsBrand(), ...outcomeValue },
               dataRecord.value.reserveCode,
             );
+            // Congela el recap ANTES de navegar — único punto donde el código
+            // del backend y la instancia viva de useCategory coexisten sin
+            // driftar. useStoreSearchData() lazy aquí, nunca en setup (ciclo de
+            // módulos). Nombre y total se leen SIN `.value` (deep ref ya
+            // desenvuelto); los computeds del form store, con `.value`.
+            lastReservationSummary.value = buildReservationSummary(
+              dataRecord.value.reserveCode,
+              useStoreSearchData().selectedCategory,
+              {
+                pickupDate: humanFormattedPickupDate.value ?? null,
+                pickupTime: humanFormattedPickupHour.value ?? null,
+                returnDate: humanFormattedReturnDate.value ?? null,
+                returnTime: humanFormattedReturnHour.value ?? null,
+                pickupBranch: selectedPickupLocation.value?.name ?? null,
+                pickupCity: selectedPickupLocation.value?.city ?? null,
+                returnBranch: selectedReturnLocation.value?.name ?? null,
+                returnCity: selectedReturnLocation.value?.city ?? null,
+                days: selectedDays.value ?? null,
+                haveTotalInsurance: haveTotalInsurance.value,
+                haveMonthlyReservation: haveMonthlyReservation.value,
+                monthlyMileage: selectedMonthlyMileage.value,
+              },
+            );
           } else if (route === '/pendiente') {
             trackReservationOutcome('reservation_pending', {
               brand: analyticsBrand(),
@@ -353,6 +393,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
         // SCEN-322-E03: status desconocido — no navegar; toast + lock reenvío.
         // Clear loading spinner (releaseSubmit) but formSubmitLocked blocks retry.
         formSubmitLocked.value = true;
+        // Issue #366 D4: el `?? null` no es cosmético — el tipo lo declara `string`
+        // pero la respuesta real no siempre lo trae, y el bloque persistente hace
+        // v-if sobre este ref.
+        unknownStatusReserveCode.value = dataRecord.value.reserveCode ?? null;
         trackAnalyticsEvent('reservation_error', {
           brand: analyticsBrand(),
           reason: 'unknown_status',
@@ -403,6 +447,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     email,
     vehiculo,
     lastSubmittedCode,
+    lastReservationSummary,
     lugarRecogida,
     fechaRecogida,
     horaRecogida,
@@ -419,6 +464,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     selectedMonthlyMileage,
     isSubmittingForm,
     formSubmitLocked,
+    unknownStatusReserveCode,
     haveTotalInsurance,
     haveMonthlyReservation,
     // functions

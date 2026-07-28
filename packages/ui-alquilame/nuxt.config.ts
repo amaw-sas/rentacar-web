@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
+import { DEFERRED_GTAG_BOOTSTRAP } from './utils/deferred-gtag';
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -32,9 +33,107 @@ export default defineNuxtConfig({
         {
           key: 'critical-cls',
           innerHTML: `@layer theme, base, components, utilities;
+            /*
+              @nuxt/fonts adds these metric-compatible fallback faces to the
+              deferred entry stylesheet. They must also exist in the critical
+              stylesheet: otherwise the first paint uses raw system metrics and
+              the DM Sans swap moves <main>. Keep these values aligned with the
+              generated @nuxt/fonts 0.12.1/fontaine output.
+
+              @font-face stays outside the cascade layers because it does not
+              participate in selector precedence. The selectors that consume
+              the faces remain in their proper Tailwind layers below.
+            */
+            @font-face {
+              font-family: 'DM Sans Fallback: BlinkMacSystemFont';
+              src: local('BlinkMacSystemFont');
+              size-adjust: 111.8837%;
+              ascent-override: 88.6635%;
+              descent-override: 27.7073%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'DM Sans Fallback: Segoe UI';
+              src: local('Segoe UI');
+              size-adjust: 105.1066%;
+              ascent-override: 94.3804%;
+              descent-override: 29.4939%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'DM Sans Fallback: Helvetica Neue';
+              src: local('Helvetica Neue');
+              size-adjust: 103.5556%;
+              ascent-override: 95.794%;
+              descent-override: 29.9356%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'DM Sans Fallback: Arial';
+              src: local('Arial');
+              size-adjust: 104.531%;
+              ascent-override: 94.9001%;
+              descent-override: 29.6563%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'DM Sans Fallback: Noto Sans';
+              src: local('Noto Sans');
+              size-adjust: 98.3122%;
+              ascent-override: 100.903%;
+              descent-override: 31.5322%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: BlinkMacSystemFont';
+              src: local('BlinkMacSystemFont');
+              size-adjust: 112.3639%;
+              ascent-override: 92.3784%;
+              descent-override: 19.7572%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: Segoe UI';
+              src: local('Segoe UI');
+              size-adjust: 105.5577%;
+              ascent-override: 98.3348%;
+              descent-override: 21.0311%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: Helvetica Neue';
+              src: local('Helvetica Neue');
+              size-adjust: 104%;
+              ascent-override: 99.8077%;
+              descent-override: 21.3462%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: Arial';
+              src: local('Arial');
+              size-adjust: 104.9796%;
+              ascent-override: 98.8763%;
+              descent-override: 21.147%;
+              line-gap-override: 0%;
+            }
+            @font-face {
+              font-family: 'Plus Jakarta Sans Fallback: Noto Sans';
+              src: local('Noto Sans');
+              size-adjust: 98.7342%;
+              ascent-override: 105.1308%;
+              descent-override: 22.4846%;
+              line-gap-override: 0%;
+            }
             @layer base {
-            *, *::before, *::after { box-sizing: border-box; }
-            body { margin: 0; font-family: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif; }
+            *, *::before, *::after {
+              box-sizing: border-box;
+              border-style: solid;
+              border-width: 0;
+            }
+            body {
+              margin: 0;
+              font-family: 'DM Sans', 'DM Sans Fallback: BlinkMacSystemFont', 'DM Sans Fallback: Segoe UI', 'DM Sans Fallback: Helvetica Neue', 'DM Sans Fallback: Arial', 'DM Sans Fallback: Noto Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+            }
             /* Preflight block-margin reset — sin esto, al primer paint (solo crítico)
                el <h1> del hero carga su margen UA (0.67em ≈ 24px) y el <p> 1em (16px);
                al aterrizar el CSS inyectado (trae Preflight → margin:0) colapsan y la
@@ -46,7 +145,15 @@ export default defineNuxtConfig({
             svg { max-width: 100%; height: auto; }
             header svg { max-height: 3.5rem !important; max-width: 10rem !important; }
             }
+            @layer components {
+            .heading-hero, .heading-page, .heading-section, .heading-card, .heading-sub, .heading-label {
+              font-family: 'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback: BlinkMacSystemFont', 'Plus Jakarta Sans Fallback: Segoe UI', 'Plus Jakarta Sans Fallback: Helvetica Neue', 'Plus Jakarta Sans Fallback: Arial', 'Plus Jakarta Sans Fallback: Noto Sans', ui-sans-serif, system-ui, sans-serif;
+            }
+            }
             @layer utilities {
+            .font-heading {
+              font-family: 'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback: BlinkMacSystemFont', 'Plus Jakarta Sans Fallback: Segoe UI', 'Plus Jakarta Sans Fallback: Helvetica Neue', 'Plus Jakarta Sans Fallback: Arial', 'Plus Jakarta Sans Fallback: Noto Sans', ui-sans-serif, system-ui, sans-serif;
+            }
             .w-2\\.5 { width: 0.625rem; } .h-2\\.5 { height: 0.625rem; }
             .w-4 { width: 1rem; } .h-4 { height: 1rem; }
             .w-5 { width: 1.25rem; } .h-5 { height: 1.25rem; }
@@ -90,8 +197,17 @@ export default defineNuxtConfig({
             .w-32 { width: 8rem; }
             .h-32 { height: 8rem; }
             .h-6 { height: 1.5rem; }
+            .h-7 { height: 1.75rem; }
             .h-8 { height: 2rem; }
             .h-10 { height: 2.5rem; }
+            .h-14 { height: 3.5rem; }
+            .h-1 { height: 0.25rem; }
+            .h-full { height: 100%; }
+            @media (min-width: 506px) { .min-\\[506px\\]\\:h-9 { height: 2.25rem; } }
+            @media (max-width: 359px) {
+              .max-\\[359px\\]\\:h-auto { height: auto; }
+              .max-\\[359px\\]\\:py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+            }
             .w-auto { width: auto; }
             /*
               Tailwind v4 translate: usar la PROPIEDAD CSS translate (no
@@ -116,6 +232,11 @@ export default defineNuxtConfig({
             .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
             .py-24 { padding-top: 6rem; padding-bottom: 6rem; }
             .px-4 { padding-left: 1rem; padding-right: 1rem; }
+            .px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }
+            .p-1 { padding: 0.25rem; }
+            .py-2\\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+            .py-3\\.5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
+            .font-medium { font-weight: 500; }
             /*
               Reskin hero (F1/F2/F3, #112) above-the-fold utilities — keep in
               sync with components/{home,city}/Hero.vue. Omitted here they ship
@@ -126,6 +247,7 @@ export default defineNuxtConfig({
               city CLS after the card fix. These reserve the above-the-fold hero
               geometry from the first paint.
             */
+            .py-5 { padding-top: 1.25rem; padding-bottom: 1.25rem; }
             .py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
             @media (min-width: 768px) { .md\\:py-12 { padding-top: 3rem; padding-bottom: 3rem; } }
             .gap-10 { gap: 2.5rem; }
@@ -134,6 +256,8 @@ export default defineNuxtConfig({
             .gap-y-2 { row-gap: 0.5rem; }
             .aspect-\\[16\\/10\\] { aspect-ratio: 16 / 10; }
             .aspect-\\[16\\/9\\] { aspect-ratio: 16 / 9; }
+            .min-h-\\[16rem\\] { min-height: 16rem; }
+            .max-w-xl { max-width: 36rem; }
             .leading-\\[1\\.1\\] { line-height: 1.1; }
             /* SEO Dashboard Critical CSS */
             .bg-gray-900 { background-color: #111827; }
@@ -163,7 +287,9 @@ export default defineNuxtConfig({
             .gap-16 { gap: 4rem; }
             /* Nuxt UI PageHero slot margins - CRÍTICO para CLS */
             .mt-10 { margin-top: 2.5rem; }
+            .mt-3 { margin-top: 0.75rem; }
             .mb-4 { margin-bottom: 1rem; }
+            .mb-12 { margin-bottom: 3rem; }
             /* Nuxt UI PageHero typography - CRÍTICO para CLS */
             .text-5xl { font-size: 3rem; line-height: 1; }
             .tracking-tight { letter-spacing: -0.025em; }
@@ -202,6 +328,7 @@ export default defineNuxtConfig({
               /* UPageHero padding */
               .sm\\:py-32 { padding-top: 8rem; padding-bottom: 8rem; }
               .sm\\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+              .sm\\:px-7 { padding-left: 1.75rem; padding-right: 1.75rem; }
               .sm\\:gap-y-16 { row-gap: 4rem; }
               .sm\\:gap-y-24 { row-gap: 6rem; }
               .sm\\:gap-16 { gap: 4rem; }
@@ -211,6 +338,8 @@ export default defineNuxtConfig({
               /* CityPage Searcher visibility - CRÍTICO para CLS */
               .lg\\:hidden { display: none; }
               .lg\\:flex { display: flex; }
+              .lg\\:h-9 { height: 2.25rem; }
+              .lg\\:h-20 { height: 5rem; }
               .lg\\:flex-col { flex-direction: column; }
               .lg\\:flex-row { flex-direction: row; }
               .lg\\:items-center { align-items: center; }
@@ -434,6 +563,7 @@ export default defineNuxtConfig({
             .w-24 { width: 6rem; }
             .max-w-md { max-width: 28rem; }
             .max-w-xs { max-width: 20rem; }
+            .max-w-2xl { max-width: 42rem; }
             .rounded { border-radius: 0.25rem; }
             .rounded-t { border-top-left-radius: 0.25rem; border-top-right-radius: 0.25rem; }
             .font-normal { font-weight: 400; }
@@ -458,6 +588,129 @@ export default defineNuxtConfig({
             .heading-hero { font-size: 2.25rem; line-height: 1.25; font-weight: 800; letter-spacing: -0.025em; }
             @media (min-width: 768px) { .heading-hero { font-size: 3rem; } }
             @media (min-width: 1024px) { .heading-hero { font-size: 4.5rem; } }
+
+            /*
+              Home first-paint geometry. The entry stylesheet is intentionally
+              deferred, so these element contracts must be complete here rather
+              than arriving with the same request that starts the web fonts.
+            */
+            .home-hero-title {
+              font-size: 1.875rem;
+              line-height: 1.1;
+            }
+            .hero-review-row { height: 19.984375px; }
+            .hero-review-label {
+              display: block;
+              width: 122.765625px;
+              overflow: visible;
+              white-space: nowrap;
+            }
+            .hero-contact-label {
+              display: block;
+              width: 81.6875px;
+              overflow: visible;
+              white-space: nowrap;
+            }
+            .fleet-tab-daily-stable { width: 142.609375px; height: 2.5rem; }
+            .fleet-tab-monthly-stable { width: 134.15625px; height: 2.5rem; }
+            .contact-fab-layer {
+              position: fixed;
+              inset: 0;
+              pointer-events: none;
+              z-index: 60;
+            }
+            .contact-fab-stack {
+              position: absolute;
+              right: 1.5rem;
+              bottom: 1.5rem;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 1rem;
+              pointer-events: none;
+            }
+            .contact-fab-stack > ul {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 0.75rem;
+              pointer-events: auto;
+            }
+            .contact-fab-stack > ul > li { display: flex; }
+
+            @media (min-width: 640px) {
+              .home-hero-title { font-size: 2.25rem; }
+            }
+
+            @media (min-width: 768px) {
+              .md\\:py-20 { padding-top: 5rem; padding-bottom: 5rem; }
+              .md\\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+              .md\\:text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+            }
+
+            @media (min-width: 1024px) {
+              .home-hero-grid { gap: 2.5rem; }
+              .home-hero-copy { text-align: left; }
+              .home-hero-review-row,
+              .home-hero-cta-row {
+                justify-content: flex-start;
+              }
+              .home-hero-title { font-size: 3rem; }
+              header [data-slot="container"] {
+                display: flex;
+                height: 100%;
+                align-items: center;
+                justify-content: space-between;
+              }
+              header [data-slot="left"],
+              header [data-slot="right"] {
+                flex: 1 1 0%;
+              }
+              header [data-slot="right"] {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+              }
+              header [data-slot="right"] > div:first-child {
+                display: flex !important;
+              }
+              header [data-slot="right"] > button {
+                display: none !important;
+              }
+              .font-stable-nav [data-slot="list"] {
+                width: 407.328125px;
+                flex: none;
+              }
+              .font-stable-nav [data-slot="link"] {
+                display: flex;
+                width: 100%;
+                align-items: center;
+                padding: 0.375rem 0.625rem;
+                font-size: 0.875rem;
+                line-height: 1.25rem;
+                font-weight: 500;
+              }
+              .font-stable-nav [data-slot="linkLabel"] {
+                display: block;
+                overflow: visible;
+                text-overflow: clip;
+              }
+              .font-stable-nav [data-slot="item"]:nth-child(1) [data-slot="linkLabel"] { width: 35.234375px; }
+              .font-stable-nav [data-slot="item"]:nth-child(2) [data-slot="linkLabel"] { width: 32.46875px; }
+              .font-stable-nav [data-slot="item"]:nth-child(3) [data-slot="linkLabel"] { width: 62.71875px; }
+              .font-stable-nav [data-slot="item"]:nth-child(4) [data-slot="linkLabel"] { width: 68.46875px; }
+              .font-stable-nav [data-slot="item"]:nth-child(5) [data-slot="linkLabel"] { width: 26.375px; }
+              .font-stable-nav [data-slot="item"]:nth-child(6) [data-slot="linkLabel"] { width: 62.0625px; }
+              .header-reservation-cta {
+                width: 136.8125px;
+                height: 35.984375px;
+              }
+            }
+
+            @media (min-width: 1280px) {
+              .home-hero-title { font-size: 3.75rem; }
+              .xl\\:whitespace-nowrap { white-space: nowrap; }
+            }
             }
           `,
         },
@@ -468,15 +721,11 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       ],
       script: [
-        // Google Analytics 4 — manual sanitized SPA page views are emitted by
-        // the shared tracker, so config must not auto-send an initial view.
+        // Define gtag during HTML parsing so page views and contact events queue
+        // immediately, but keep the 148 KiB vendor script off the critical path.
+        // The bootstrap loads it on first interaction or 4s after window.load.
         {
-          src: 'https://www.googletagmanager.com/gtag/js?id=G-ZPZC1TP9T0',
-          async: true,
-        },
-        {
-          innerHTML:
-            "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-ZPZC1TP9T0',{send_page_view:false});",
+          innerHTML: DEFERRED_GTAG_BOOTSTRAP,
         },
       ],
     },
@@ -531,9 +780,10 @@ export default defineNuxtConfig({
 
   // Optimización Core Web Vitals
   vitalizer: {
-    // Diferir stylesheets para eliminar render-blocking CSS
-    // Requiere CSS crítico inline suficiente para evitar FOUC
-    disableStylesheets: 'entry',
+    // Keep stylesheet mutation in the route-aware Nitro renderer: home defers
+    // entry CSS, while every other route preserves Vitalizer's previous entry
+    // CSS removal without a global build-manifest transformation.
+    disableStylesheets: false,
     // Remueve prefetch links para mejorar FCP
     disablePrefetchLinks: true,
   },

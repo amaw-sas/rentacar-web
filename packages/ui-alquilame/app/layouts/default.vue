@@ -44,7 +44,7 @@
       <!-- Nav desktop: links oscuros con hover rojo -->
       <UNavigationMenu
         :items="items"
-        class="hidden lg:flex"
+        class="font-stable-nav hidden lg:flex"
         :ui="{ link: 'text-sm font-medium' }"
       />
       <template #right>
@@ -52,7 +52,7 @@
           <!-- CTA principal de reserva -->
           <NuxtLink
             to="/reservas"
-            class="inline-flex items-center justify-center font-semibold rounded-full transition-all duration-200 bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-lg shadow-brand-600/25 hover:shadow-xl hover:shadow-brand-600/30 px-5 py-2 text-sm"
+            class="header-reservation-cta inline-flex items-center justify-center font-semibold rounded-full transition-[background-color,box-shadow] duration-200 bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-lg shadow-brand-600/25 hover:shadow-xl hover:shadow-brand-600/30 px-5 py-2 text-sm"
           >
             Reserva Ahora
           </NuxtLink>
@@ -255,11 +255,11 @@
             </li>
           </ul>
           <!-- Créditos -->
-          <div class="text-center md:text-right">
+          <div class="text-center text-footer-credit md:text-right">
             <p class="text-gray-400 text-sm">
               © 2026 {{ franchise.name }}. Todos los derechos reservados.
             </p>
-            <p class="text-gray-500 text-sm mt-1">
+            <p class="text-sm mt-1">
               Elaborado por
                 <a
                   href="https://www.estrategias.us/"

@@ -97,8 +97,6 @@ export interface WizardAdvanceState {
   searchExecuted?: boolean
   /** Hay una gama/vehículo seleccionado. */
   hasSelectedCategory?: boolean
-  /** El formulario de datos es válido. */
-  formValid?: boolean
 }
 
 /**
@@ -110,7 +108,16 @@ export interface WizardAdvanceState {
  *     precondición del flujo entero, no un requisito del paso. Sin ella, anular la
  *     cotización bajo los pies del usuario (issue #401) dejaba llegar a un «Confirmar
  *     reserva» que valibot rechaza en silencio (SCEN-W-07 enmendado).
- *   - datos: requiere formulario válido Y gama viva (misma razón).
+ *   - datos: NO gatea por consentimiento (issue #366 — ver abajo), pero sí exige gama
+ *     viva, por la misma razón de #401.
+ *
+ * Issue #366: `datos` gateaba además por `formValid`, que era SOLO la casilla de
+ * consentimiento. El resto del schema (nombres, correo, teléfono…) nunca apagó el CTA: se
+ * pulsa, valibot marca los campos y no emite @submit, así que no sale ningún POST. Gatear
+ * el consentimiento aparte no añadía protección —valibot también lo valida— y sí producía
+ * un botón mudo al final de un formulario largo. Removido `formValid`, la validez del
+ * formulario tiene una sola fuente de verdad: el schema. Queda la precondición de #401
+ * (gama viva), que en el camino normal siempre se cumple al llegar al Paso 5.
  */
 export function canAdvance(step: WizardStep, state: WizardAdvanceState): boolean {
   switch (step) {
@@ -122,7 +129,10 @@ export function canAdvance(step: WizardStep, state: WizardAdvanceState): boolean
     case 'adicionales':
       return Boolean(state.hasSelectedCategory)
     case 'datos':
-      return Boolean(state.formValid && state.hasSelectedCategory)
+      // #366 quitó el gate de consentimiento (formValid, ya fuera del interface); #401
+      // mantiene la precondición de gama viva. En el Paso 5 hasSelectedCategory es true
+      // salvo que la deriva del tramo (#401) haya anulado la gama.
+      return Boolean(state.hasSelectedCategory)
   }
 }
 

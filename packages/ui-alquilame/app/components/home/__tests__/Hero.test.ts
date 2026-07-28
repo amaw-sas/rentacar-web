@@ -21,6 +21,11 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import {
+  effectiveNuxtImgQuality,
+  findNuxtImgTag,
+  parseImageQualityConfig,
+} from '../../../../tests/nuxt-image-quality'
 
 const ROOT = join(__dirname, '..', '..', '..', '..') // → packages/ui-alquilame
 
@@ -38,6 +43,7 @@ describe('Home hero — golden parity', () => {
   // city hero renders the identical visual. The assertions below still hold —
   // they just live where the markup now is.
   const visual = read('app/components/home/HeroVisual.vue')
+  const { defaultQuality, allowedQualities } = parseImageQualityConfig(read('nuxt.config.ts'))
 
   it('renders the brand red gradient via the v4 bg-linear-to-* utility, not the broken v3 alias', () => {
     expect(hero).toMatch(/bg-linear-to-[a-z]/)
@@ -100,7 +106,13 @@ describe('Home hero — golden parity', () => {
   // box in the SSR HTML → no CLS from a late-loading image.
   it('renders the car cutout with intrinsic dimensions (CLS)', () => {
     expect(visual).toMatch(/carro_hero\.webp/)
-    expect(visual).toMatch(/<img[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
+    expect(visual).toMatch(/<NuxtImg[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
+    expect(visual).toMatch(/sizes="sm:100vw lg:50vw xl:576px"/)
+    const carImage = findNuxtImgTag(visual, '/images/carro_hero.webp')
+    expect(carImage).toMatch(/\bdensities="x1"/)
+    expect(carImage).not.toMatch(/\bformat\s*=/)
+    expect(carImage).not.toMatch(/\b:?quality\s*=/)
+    expect(allowedQualities).toContain(effectiveNuxtImgQuality(carImage, defaultQuality))
   })
 
   it('defaults to poster image; defers video (mp4) off the critical path (issue 322 P01)', () => {
@@ -108,7 +120,7 @@ describe('Home hero — golden parity', () => {
     expect(visual).toMatch(/NuxtImg/)
     expect(visual).toMatch(/hero-poster\.jpg/)
     expect(visual).toMatch(/v-if="!videoActive && !audioActive"/)
-    // Deferred muted-preview branch (activated after idle/visible).
+    // Deferred muted-preview branch (activated after visibility/idle).
     expect(visual).toMatch(/<video\b/)
     expect(visual).toMatch(/autoplay/)
     expect(visual).toMatch(/\bmuted\b/)
@@ -177,5 +189,12 @@ describe('index.vue mounts the restyled hero', () => {
 
   it('introduces no broken v3 gradient alias on the page', () => {
     expect(index).not.toMatch(BROKEN_V3_GRADIENT)
+  })
+
+  it('preloads the CSS hero background at high priority in the SSR head', () => {
+    expect(index).toMatch(/rel:\s*["']preload["']/)
+    expect(index).toMatch(/as:\s*["']image["']/)
+    expect(index).toMatch(/href:\s*["']\/images\/fondo-banner\.webp["']/)
+    expect(index).toMatch(/fetchpriority:\s*["']high["']/)
   })
 })

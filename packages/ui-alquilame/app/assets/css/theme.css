@@ -38,6 +38,10 @@
   --color-surface-softer:  #f4f5f9;
   --color-surface-softest: #f8f9fc;
 
+  /* Accessible subtle text on the fleet and black footer surfaces. */
+  --color-tax-note:      #047857;
+  --color-footer-credit: #9ca3af;
+
   /* WhatsApp institutional green (issue #284). Pair ALWAYS with text-black on
      labeled CTAs — white on #25D366 fails WCAG AA (~2:1); black is ~10.6:1. */
   --color-whatsapp: #25D366;

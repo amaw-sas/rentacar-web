@@ -17,7 +17,7 @@
          root (#__nuxt) — that lets the whole page behind the backdrop be marked
          inert while the panel is open without inerting the chat itself. -->
     <Teleport to="body">
-    <div class="fixed inset-0 pointer-events-none z-[60]">
+    <div class="contact-fab-layer fixed inset-0 pointer-events-none z-[60]">
       <!-- Región aria-live persistente (siempre en el DOM, nunca v-if): anuncia
            un mensaje nuevo cuando llega con el chat cerrado. -->
       <span class="sr-only" role="status" aria-live="polite">{{ chatEnabled ? announce : '' }}</span>

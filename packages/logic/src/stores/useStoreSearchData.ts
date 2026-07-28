@@ -85,6 +85,9 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     categoriesAvailabilityData.value = null;
     // Nueva búsqueda = nueva reserva potencial: desbloquear submit consumido (E03).
     storeForm.formSubmitLocked = false;
+    // Issue #366 D4/D7: el código va con el lock, no un tick después. Si sobrevive,
+    // el próximo estado desconocido muestra el identificador de la reserva ANTERIOR.
+    storeForm.unknownStatusReserveCode = null;
     // Reset alongside the other per-search state: only the LLNRAG009 and
     // empty-result paths re-assign this, so without resetting here a stale
     // `true` from a prior LLNRAG009 search leaks into a later search that

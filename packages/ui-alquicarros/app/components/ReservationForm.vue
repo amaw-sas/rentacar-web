@@ -4,6 +4,7 @@
     :state="formState"
     :schema="validationSchema"
     @submit="onSubmit"
+    @error="onValidationError"
     class="light"
   >
       <!-- Requisitos para reservar: texto plano, sin recuadro ni modal anidado
@@ -14,9 +15,7 @@
         </p>
         <p class="text-sm font-semibold text-gray-900 mt-3 mb-1">Requisitos para alquilar:</p>
         <ul class="space-y-1 text-sm">
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con una tarjeta de crédito</span></li>
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Ser mayor de edad con cédula o pasaporte</span></li>
-          <li class="flex items-start gap-2"><span class="shrink-0">✅</span><span>Contar con licencia de conducción vigente.</span></li>
+          <li v-for="requisito in RESERVATION_REQUIREMENTS" :key="requisito" class="flex items-start gap-2"><span class="shrink-0">✅</span><span>{{ requisito }}</span></li>
         </ul>
       </div>
 
@@ -129,6 +128,7 @@
 import {
   ReservationFormValidationSchema,
 } from '@rentacar-main/logic/utils';
+import { RESERVATION_REQUIREMENTS } from '~/config/reservationRequirements';
 
 // Lazy load vue-tel-input (solo se carga cuando se renderiza el formulario)
 const VueTelInput = defineAsyncComponent(() =>
@@ -212,6 +212,48 @@ defineExpose({submit});
 /** functions */
 const onSubmit = (event) => {
   emit('submit', event.data)
+}
+
+/**
+ * Issue #366 (D6) — lleva el primer campo inválido a la pantalla y le da el foco.
+ *
+ * @nuxt/ui captura la FormValidationException y solo emite `error`: no hace scroll ni
+ * mueve el foco. Desde que el CTA del wizard dejó de nacer deshabilitado, un submit
+ * inválido no tenía ninguna consecuencia visible — el consentimiento es el último campo
+ * del formulario y el CTA vive en un aside sticky (desktop) o en una barra fija abajo
+ * (móvil), así que el error nacía fuera de pantalla.
+ *
+ * Se enfoca el primero en ORDEN DE DOM, no el primero de la lista de errores. Medido:
+ * valibot devuelve los issues en orden de declaración del schema, y ese orden no coincide
+ * con el del formulario en dos puntos. `vehiculo` encabeza la lista y no tiene ningún
+ * campo aquí (la gama se elige en el Paso 2), así que tomar el primero de la lista
+ * resolvería a null y el click volvería a no hacer nada; y email/telefono están cruzados
+ * entre ambos órdenes.
+ *
+ * Handler nombrado a propósito: una arrow inline dentro del tag de <u-form> rompe el
+ * regex de ReservationForm.test.ts, que captura el tag de apertura hasta el primer `>`.
+ */
+const onValidationError = (event) => {
+  if (typeof document === 'undefined') return;
+
+  // La resolución del primer campo inválido EN ORDEN DE DOM (con el caso especial de
+  // `telefono`) vive en un util puro para poder testearla sin montar el formulario ni
+  // depender del e2e gateado por Supabase — ver firstInvalidFieldEl y su test.
+  const first = firstInvalidFieldEl(event?.errors, document);
+  if (!first) return;
+
+  // Se espera al siguiente frame a propósito, y no es cosmético. Mientras UForm valida
+  // mantiene `loading` en true (`loadingAuto` viene activado por defecto) y ese estado se
+  // inyecta como `disabled` a TODOS los campos. El evento `error` se emite dentro de esa
+  // ventana —el `finally` que apaga `loading` corre después—, así que enfocar en ese
+  // instante cae sobre un <button disabled> y el navegador lo ignora sin avisar. Medido:
+  // en el tick del evento el campo sigue deshabilitado (nextTick tampoco basta); en el
+  // frame siguiente ya está habilitado y el foco prende. El nodo no se reemplaza, así que
+  // la referencia sigue siendo válida.
+  requestAnimationFrame(() => {
+    first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    first.focus({ preventScroll: true });
+  });
 }
 
 </script>
