@@ -112,7 +112,9 @@ describe('ChatWidget — WhatsApp option is gated by the schedule (mounted DOM)'
       { brand: 'alquicarros', enabled: true, whatsappSchedule: STANDARD },
       TUE_10H,
     )
-    expect(menuLabels()).toEqual(['Chat 24 horas', 'WhatsApp'])
+    // 2026-07-27 owner decision: live brands keep the tel: 'Llámanos' entry;
+    // the schedule gate only governs WhatsApp.
+    expect(menuLabels()).toEqual(['Chat 24 horas', 'WhatsApp', 'Llámanos'])
   })
 
   it('removes the WhatsApp option outside the window, keeping Chat', async () => {
@@ -122,7 +124,7 @@ describe('ChatWidget — WhatsApp option is gated by the schedule (mounted DOM)'
     )
     const labels = menuLabels()
     expect(labels).not.toContain('WhatsApp')
-    expect(labels).toEqual(['Chat 24 horas'])
+    expect(labels).toEqual(['Chat 24 horas', 'Llámanos'])
     // The wa.me link itself is gone from the FAB, not merely hidden by CSS.
     expect(document.querySelectorAll(`${MENU} a[href*="wa.me"]`)).toHaveLength(0)
   })
@@ -186,6 +188,6 @@ describe('ChatWidget — the gate does not disturb the rest of the list', () => 
       { brand: 'alquicarros', enabled: false, whatsappSchedule: STANDARD },
       TUE_10H,
     )
-    expect(menuLabels()).toEqual(['WhatsApp'])
+    expect(menuLabels()).toEqual(['WhatsApp', 'Llámanos'])
   })
 })
