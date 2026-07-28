@@ -100,7 +100,9 @@ describe('Home hero — golden parity', () => {
   // box in the SSR HTML → no CLS from a late-loading image.
   it('renders the car cutout with intrinsic dimensions (CLS)', () => {
     expect(visual).toMatch(/carro_hero\.webp/)
-    expect(visual).toMatch(/<img[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
+    expect(visual).toMatch(/<NuxtImg[\s\S]*?\bwidth="1199"[\s\S]*?\bheight="678"/)
+    expect(visual).toMatch(/sizes="sm:100vw lg:50vw xl:576px"/)
+    expect(visual).toMatch(/quality="75"/)
   })
 
   it('defaults to poster image; defers video (mp4) off the critical path (issue 322 P01)', () => {
@@ -108,7 +110,7 @@ describe('Home hero — golden parity', () => {
     expect(visual).toMatch(/NuxtImg/)
     expect(visual).toMatch(/hero-poster\.jpg/)
     expect(visual).toMatch(/v-if="!videoActive && !audioActive"/)
-    // Deferred muted-preview branch (activated after idle/visible).
+    // Deferred muted-preview branch (activated after intent/visibility/idle).
     expect(visual).toMatch(/<video\b/)
     expect(visual).toMatch(/autoplay/)
     expect(visual).toMatch(/\bmuted\b/)
@@ -177,5 +179,12 @@ describe('index.vue mounts the restyled hero', () => {
 
   it('introduces no broken v3 gradient alias on the page', () => {
     expect(index).not.toMatch(BROKEN_V3_GRADIENT)
+  })
+
+  it('preloads the CSS hero background at high priority in the SSR head', () => {
+    expect(index).toMatch(/rel:\s*["']preload["']/)
+    expect(index).toMatch(/as:\s*["']image["']/)
+    expect(index).toMatch(/href:\s*["']\/images\/fondo-banner\.webp["']/)
+    expect(index).toMatch(/fetchpriority:\s*["']high["']/)
   })
 })
