@@ -92,7 +92,13 @@ useSchemaOrg([
 useHead({
   link: [
     { rel: "canonical", href: franchise.website },
-    // Preloads de imagen hero movidos a nuxt.config.ts para estar en HTML inicial
+    {
+      key: "home-hero-background",
+      rel: "preload",
+      as: "image",
+      href: "/images/fondo-banner.webp",
+      fetchpriority: "high",
+    },
   ],
 });
 

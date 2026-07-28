@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 //
 // Issue #402 — SCEN-402-08: alquilame se comporta igual que alquicarros ante un
 // enlace /reservas sin sede de devolución, o con una que no resuelve. El archivo
