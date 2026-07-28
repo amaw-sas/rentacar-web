@@ -149,6 +149,11 @@ describe('useChatStatus — WhatsApp fails OPEN (F0 gate for live brands)', () =
     vi.stubGlobal('useRuntimeConfig', () => ({
       public: { rentacarPublicApiBase: 'https://dashboard.test' },
     }))
+    // The source arms the BARE global setInterval (not window.setInterval);
+    // stubbing only the window copy left this guard vacuous — a mutation that
+    // polled the network every tick stayed green (F0 re-review proof).
+    vi.stubGlobal('setInterval', ((cb: () => void) => { tick = cb; return 1 }) as never)
+    vi.stubGlobal('clearInterval', (() => undefined) as never)
     vi.stubGlobal('window', {
       addEventListener: () => undefined,
       removeEventListener: () => undefined,
@@ -157,6 +162,7 @@ describe('useChatStatus — WhatsApp fails OPEN (F0 gate for live brands)', () =
     })
     useChatStatus('alquilame')
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(tick, 'the interval callback was never captured — vacuous guard').toBeTruthy()
 
     tick?.()
     tick?.()

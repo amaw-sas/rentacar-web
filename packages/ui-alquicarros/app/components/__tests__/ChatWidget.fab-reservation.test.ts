@@ -90,7 +90,7 @@ describe('FAB de contacto móvil durante la solicitud', () => {
       )
 
       const turnsOn = sources.filter(({ source }) =>
-        /reservationOverlayOpen\.value = (true|open)\b/.test(source),
+        /reservationOverlayOpen\.value = (true|open|!isWideViewport\.value)\b/.test(source),
       )
       expect(
         turnsOn.map(({ file }) => file),
