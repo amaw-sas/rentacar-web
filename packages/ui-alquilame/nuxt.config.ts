@@ -484,6 +484,13 @@ export default defineNuxtConfig({
 
   modules: ['@nuxtjs/seo', '@nuxt/ui', '@nuxt/image', '@pinia/nuxt', 'nuxt-llms', 'nuxt-vitalizer', '@nuxtjs/mdc'],
 
+  // Blog prose: headings keep their `id` (the TOC still deep-links) but are no
+  // longer wrapped in a self-referencing <a> — the wrapper also painted them
+  // with the primary link color, making titles compete with real body links.
+  mdc: {
+    headings: { anchorLinks: false },
+  },
+
   // Fuentes de marca self-hosted (@nuxt/fonts, bundled con @nuxt/ui).
   // configKey top-level `fonts` — NO se añade a `modules[]`.
   // Self-hosted: @nuxt/fonts descarga y sirve local (sin <link> a Google).
