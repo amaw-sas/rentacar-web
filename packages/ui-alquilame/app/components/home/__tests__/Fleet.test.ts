@@ -161,7 +161,7 @@ describe('Fleet — F0 styling lessons', () => {
  *   weights → bold (title, price, CTA) / medium (labels) / normal (rest).
  *             No extrabold, no semibold.
  *   colors  → gray-900 (title) / gray-600 (ALL support copy) /
- *             brand-600 (price) / emerald-600 (single accent, "IVA incluido").
+ *             brand-600 (price) / tax-note (single green accent, "IVA incluido").
  * Scoped to the card body only: the section heading and the Diario/Mensualidad
  * toggle are section chrome and keep their own (heavier) scale on purpose.
  */
@@ -241,8 +241,9 @@ describe('Fleet — card typography system', () => {
   })
 
   it('keeps "IVA incluido" as the only non-brand accent color', () => {
-    expect(CARD).toMatch(/text-xs\s+font-medium\s+text-emerald-600">IVA incluido/)
+    expect(CARD).toMatch(/text-xs\s+font-medium\s+text-tax-note">IVA incluido/)
+    expect(CARD.match(/\btext-tax-note\b/g)).toHaveLength(2)
     const colors = CARD.match(/\btext-(emerald|green|blue|amber|yellow|purple|pink)-\d{3}\b/g) ?? []
-    expect([...new Set(colors)]).toEqual(['text-emerald-600'])
+    expect([...new Set(colors)]).toEqual([])
   })
 })
