@@ -222,6 +222,7 @@
 <script setup lang="ts">
 // External
 import { computed, onBeforeUnmount, ref, watchEffect } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 
 // config

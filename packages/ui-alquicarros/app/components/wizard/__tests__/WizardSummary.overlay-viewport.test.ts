@@ -17,6 +17,11 @@ const src = readFileSync(
  */
 describe('WizardSummary — the overlay flag follows the mobile bar viewport', () => {
   it('gates the write on the same 1024px breakpoint as the lg:hidden bar', () => {
+    // alquicarros has NO auto-import for @vueuse/core (verified against the
+    // generated .nuxt/imports.d.ts): without the explicit import the wizard
+    // throws ReferenceError on mount. Source-text tests cannot see unresolved
+    // identifiers, so the import line itself is pinned here.
+    expect(src).toContain("import { useMediaQuery } from '@vueuse/core'")
     expect(src).toContain("useMediaQuery('(min-width: 1024px)')")
     expect(src).toMatch(/reservationOverlayOpen\.value = !isWideViewport\.value/)
   })
