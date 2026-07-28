@@ -21,6 +21,12 @@
 | P5 | Search Console recibe el sitemap sin errores |
 | P6 | Rollback documentado y ensayado mentalmente: re-adjuntar el dominio al proyecto legacy (<10 min) |
 
+## Registro de ejecución
+
+- **F1 ✅** (2026-07-27): redirecciones 301 de URLs legacy implementadas con tests y verificadas en vivo; robots/sitemap OK en modo producción.
+- **F0 ✅** (2026-07-28): 4 rondas de revisión adversarial. Hallazgos corregidos: WhatsApp fallar-abierto (antes: el botón de las marcas vivas dependía de un fetch al dashboard), botón "Llámanos" restaurado en las marcas vivas (decisión del dueño: solo alquilame lo elimina; guards codifican la regla y atrapan deriva — probado con mutación), flag del wizard de alquicarros condicionado al viewport de la barra móvil (antes escondía TODO el contacto en desktop), import de useMediaQuery que faltaba (verificado montando el wizard en runtime), `.mission/` fuera del repo público, guard vacuo del timer arreglado y probado con mutación. Trabajo concurrente de la otra sesión (integración de main + extras mensuales) unido sin pérdidas. Suites finales: logic 1255/1255, alquilatucarro 301/301, alquicarros 683/683, alquilame solo los 7 rojos preexistentes. **Veredicto: APTO PARA MERGE A MAIN** (e23c654).
+- Seguimientos no bloqueantes ticketeados: los mount-tests con jsdom no corren en local (`ERR_REQUIRE_ESM` de html-encoding-sniffer — confirmar en CI del PR); `shiftLeft` es código muerto en el ChatWidget.
+
 ## Fases
 
 ### F0 — Revisión del paquete compartido (bloquea todo)
