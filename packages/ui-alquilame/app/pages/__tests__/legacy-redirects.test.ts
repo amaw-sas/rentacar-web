@@ -21,6 +21,9 @@ describe('legacy URL redirects (publication F1)', () => {
     ['/registratuflota', '/aliados'],
     ['/aviso-proteccion-de-datos', '/politica-privacidad'],
     ['/terminos-condiciones.html', '/terminos-condiciones'],
+    // Variantes vistas con impresiones reales en GSC tras el lanzamiento:
+    ['/aviso-proteccion-de-datos.html', '/politica-privacidad'],
+    ['/AVISO-DE-PROTECCIÓN-DE-DATOS-ALQUILAME.CO.pdf', '/politica-privacidad'],
   ])('301 rule exists: %s -> %s', (from, to) => {
     const rule = new RegExp(
       `'${from.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}':\\s*\\{\\s*redirect:\\s*\\{\\s*to:\\s*'${to}',\\s*statusCode:\\s*301`,
