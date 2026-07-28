@@ -299,3 +299,151 @@ describe('the discount pill is measured against the SAME base the card strikes',
     expect(cat.hasDiscountToShow.value).toBe(false)
   })
 })
+
+/**
+ * Una SUBIDA de precio jamás se pinta como descuento (defecto GY, QA en vivo).
+ *
+ * GY tiene el one_day_price POR DEBAJO de su propia mensualidad: 550.000 contra
+ * 562.133/día en el tier de 1k. El tachado ya desaparecía —hasStruckBasePrice
+ * compara las dos cifras y ve que la base es la MENOR—, pero getDiscount metía
+ * ese −2,2% en un Math.abs y devolvía "2", así que la píldora se quedaba sola
+ * anunciando "Hoy con 2% Dto." sobre una tarifa 2% MÁS cara. Con los precios de
+ * hoy, con el flag apagado, en la gama más cara del catálogo, y en las dos
+ * superficies (tarjeta y resumen comparten el par de computeds).
+ */
+describe('una subida de precio nunca se anuncia como descuento', () => {
+  beforeEach(() => {
+    h.store!.haveMonthlyReservation.value = true
+    h.store!.fechaRecogida.value = '2026-08-01'
+  })
+
+  /** GY real de category_pricing: ODP 550.000, mes 16.864.000 → 562.133/día. */
+  function gyCategoryData(): CategoryAvailabilityData {
+    const data = monthlyCategoryData(null)
+    data.categoryMonthPrices = [{
+      '1k_kms': 16_864_000,
+      '2k_kms': 18_351_000,
+      '3k_kms': 19_000_000,
+      init_date: '2026-07-01',
+      end_date: '2026-12-31',
+      total_insurance_price: 400_000,
+      one_day_price: 550_000,
+      status: 'active',
+    }]
+    return data
+  }
+
+  it('GY: base 550.000 bajo el real 562.133 → sin píldora, sin tachado, solo el precio', () => {
+    const cat = useCategory(gyCategoryData())
+    cat.withTotalCoverage.value = false
+    cat.withMileage.value = '1k_kms'
+
+    expect(cat.getDailyBasePrice.value).toBe(550_000)
+    expect(Math.round(cat.getDailyPrice.value)).toBe(562_133)
+    expect(cat.hasStruckBasePrice.value).toBe(false)
+    expect(cat.getDiscount.value).toBe('0')
+    expect(cat.hasDiscountToShow.value).toBe(false)
+  })
+
+  it('GY: el tier de 2k sube todavía más (611.700) y tampoco inventa un 11%', () => {
+    const cat = useCategory(gyCategoryData())
+    cat.withTotalCoverage.value = false
+    cat.withMileage.value = '2k_kms'
+
+    expect(cat.getDailyPrice.value).toBeGreaterThan(cat.getDailyBasePrice.value)
+    expect(cat.getDiscount.value).toBe('0')
+    expect(cat.hasDiscountToShow.value).toBe(false)
+  })
+
+  it('propiedad: con base <= real, el descuento es "0" para cualquier par', () => {
+    for (const monthTotal of [16_500_001, 16_864_000, 18_000_000, 30_000_000]) {
+      const data = gyCategoryData()
+      data.categoryMonthPrices = [{ ...data.categoryMonthPrices![0]!, '1k_kms': monthTotal }]
+      const cat = useCategory(data)
+      cat.withTotalCoverage.value = false
+      cat.withMileage.value = '1k_kms'
+
+      expect(cat.getDailyPrice.value).toBeGreaterThanOrEqual(cat.getDailyBasePrice.value)
+      expect(cat.getDiscount.value, `mes ${monthTotal}`).toBe('0')
+      expect(cat.hasDiscountToShow.value, `mes ${monthTotal}`).toBe(false)
+    }
+  })
+
+  it('píldora y tachado nunca divergen, tampoco con Seguro Total marcado', () => {
+    // Con la cobertura marcada getDailyPrice suma total_insurance_price, así que
+    // una copia de monthPrice[tier]/30 habría medido contra otra cifra.
+    for (const withCoverage of [false, true]) {
+      for (const tier of ['1k_kms', '2k_kms', '3k_kms'] as const) {
+        for (const data of [gyCategoryData(), monthlyCategoryData(null)]) {
+          const cat = useCategory(data)
+          cat.withTotalCoverage.value = withCoverage
+          cat.withMileage.value = tier
+
+          const label = `cobertura=${withCoverage} tier=${tier}`
+          expect(cat.hasDiscountToShow.value, label).toBe(
+            cat.hasStruckBasePrice.value && cat.getDiscount.value !== '0',
+          )
+          // Lo prohibido: píldora sin tachado.
+          if (cat.hasDiscountToShow.value) {
+            expect(cat.hasStruckBasePrice.value, `pildora sin tachado — ${label}`).toBe(true)
+          }
+        }
+      }
+    }
+  })
+
+  it('el caso sano sigue exacto: base 120.000 / real 100.000 → "17"', () => {
+    const cat = monthly(null)
+    expect(cat.getDailyBasePrice.value).toBe(120_000)
+    expect(cat.getDailyPrice.value).toBe(100_000)
+    expect(cat.getDiscount.value).toBe('17')
+    expect(cat.hasDiscountToShow.value).toBe(true)
+    expect(cat.hasStruckBasePrice.value).toBe(true)
+  })
+})
+
+/**
+ * El camino DIARIO no se movió. La QA en vivo lo certificó sano (29 dias, siete
+ * tarjetas, todas con tachado > real) y el cambio de getDiscount es sólo la rama
+ * mensual más el formateo. Aquí `initial` se construye desde
+ * vehicleDayCharge + discountAmount, así que nunca cae por debajo de `final` y
+ * el Math.abs que se quitó no mordía. Se fija con las cifras reales de G4 de esa
+ * corrida para que un refactor del formateo no las mueva en silencio.
+ */
+describe('camino diario intacto', () => {
+  beforeEach(() => {
+    h.store!.haveMonthlyReservation.value = false
+    h.store!.fechaRecogida.value = '2026-08-01'
+  })
+
+  /** G4 diario de la QA: base 288.857, real 236.604 → 18%. */
+  function dailyCategoryData(vehicleDay: number, discount: number, coverage: number): CategoryAvailabilityData {
+    const data = monthlyCategoryData(null)
+    data.vehicleDayCharge = vehicleDay
+    data.discountAmount = discount
+    data.coverageUnitCharge = coverage
+    data.numberDays = 29
+    return data
+  }
+
+  it('G4: 288.857 tachado contra 236.604 real → "18", igual que en pantalla', () => {
+    const cat = useCategory(dailyCategoryData(236_604, 52_253, 0))
+    cat.withTotalCoverage.value = false
+
+    expect(cat.getDailyBasePrice.value).toBe(288_857)
+    expect(cat.getDailyPrice.value).toBe(236_604)
+    expect(cat.hasStruckBasePrice.value).toBe(true)
+    expect(cat.getDiscount.value).toBe('18')
+    expect(cat.hasDiscountToShow.value).toBe(true)
+  })
+
+  it('diario sin descuento: base y real coinciden → sin píldora y sin tachado', () => {
+    const cat = useCategory(dailyCategoryData(236_604, 0, 0))
+    cat.withTotalCoverage.value = false
+
+    expect(cat.getDailyBasePrice.value).toBe(cat.getDailyPrice.value)
+    expect(cat.hasStruckBasePrice.value).toBe(false)
+    expect(cat.getDiscount.value).toBe('0')
+    expect(cat.hasDiscountToShow.value).toBe(false)
+  })
+})

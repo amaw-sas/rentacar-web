@@ -411,19 +411,14 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
 
       // Mensual: la base diaria llega en 0 (el precio vive en month_prices), así
       // que el ahorro se mide entre el precio de un día suelto y el día que sale
-      // de la mensualidad elegida — que es justo el par que la card muestra
-      // tachado y en limpio. Antes la guarda de abajo lo daba por inexistente y
-      // el tachado aparecía sin explicación.
+      // de la mensualidad elegida. Se leen los DOS computeds que la tarjeta
+      // imprime, no una copia de su aritmética: así la píldora y el tachado no
+      // pueden medir con varas distintas por construcción, ni siquiera con el
+      // Seguro Total marcado (ahí getDailyPrice suma la cobertura y una copia
+      // de `monthPrice[tier]/30` se habría quedado corta).
       if(haveMonthlyReservation.value && withMileage.value){
-         const monthPrice = getCategoryMonthPrice();
-         if(monthPrice){
-            // MISMA base que getDailyBasePrice, cap incluido. Sin el cap la
-            // píldora anunciaría un ahorro medido contra one_day_price mientras
-            // la cifra tachada al lado ya es la recortada: dos porcentajes para
-            // las mismas dos cifras impresas.
-            initial = applyMonthlyAnchorCap(monthPrice["one_day_price"] ?? 0, monthAnchorGross.value);
-            final = (monthPrice[withMileage.value] ?? 0) / 30;
-         }
+         initial = getDailyBasePrice.value;
+         final = getDailyPrice.value;
       }
       else {
          initial = ((hasDiscount()) ? vehicleDayCharge.value + (discountAmount.value ?? 0) : vehicleDayCharge.value) + coverageUnitCharge.value;
@@ -435,12 +430,19 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       // 100 * (0 / |0|) = NaN.
       if (initial <= 0) return "0";
 
+      // Una SUBIDA de precio no es un descuento. GY vende su mes a 562.133/día
+      // con un one_day_price de 550.000: el viejo Math.abs volteaba ese +2,2% a
+      // "2" y la tarjeta anunciaba "Hoy con 2% Dto." cobrando 2% MÁS, sin cifra
+      // tachada al lado porque hasStruckBasePrice sí lo veía. Con precios de hoy
+      // y el flag apagado, en los tres tiers de kilometraje de GY.
+      if (final >= initial) return "0";
+
       const formatter = new Intl.NumberFormat("es-CO", {
          style: "decimal",
       });
-      
+
       return formatter.format(
-         Math.round(Math.abs(100 * ((final - initial) / Math.abs(initial))))
+         Math.round(100 * ((initial - final) / initial))
       )
    });
    
@@ -450,7 +452,11 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
     * el precio tachado y se comía la píldora que lo explica.
     *
     * Gobierna la PÍLDORA de descuento, no el tachado: ese lo gobierna
-    * hasStruckBasePrice, que compara las dos cifras impresas.
+    * hasStruckBasePrice. Ya no pueden divergir: getDiscount mide sobre
+    * getDailyBasePrice/getDailyPrice —el mismo par que compara
+    * hasStruckBasePrice— y devuelve "0" cuando no hay ahorro real, así que la
+    * píldora no puede aparecer sin su tachado. Lo contrario sí es posible y es
+    * honesto: un ahorro que redondea a 0% deja el tachado sin píldora.
     */
    const hasDiscountToShow = computed<boolean>(() => getDiscount.value !== "0");
 
