@@ -11,6 +11,8 @@
  *   - SCEN-FORM-05: el correo de quien escribe queda en reply-to, para poder
  *     responder directo desde el cliente de correo.
  *   - SCEN-FORM-06: los campos opcionales vacíos no ensucian el cuerpo.
+ *
+ * Reseñas de /opinion (spec 2026-07-29): SCEN-5, SCEN-6, SCEN-9 y SCEN-10.
  */
 import { describe, it, expect } from 'vitest'
 import { validateAndCompose } from '../contact-forms'
@@ -151,6 +153,158 @@ describe('programa de referidos', () => {
   })
 })
 
+/**
+ * Reseñas de 1-3★ que llegan de /opinion (docs/specs/2026-07-29-alquilame-opinion-design.md).
+ * El cliente que califica bajo no va a la ficha de Google: escribe aquí y el
+ * correo cae en el buzón del operador.
+ */
+describe('calificación baja (/opinion)', () => {
+  const valido = {
+    type: 'resenas' as const,
+    estrellas: '2 de 5',
+    nombre: 'Ana Ramírez',
+    email: 'ana@ejemplo.com',
+    telefono: '300 123 4567',
+    reserva: 'AV33Y3U5QA',
+    mensaje: 'El carro llegó sin gasolina y esperé 40 minutos.',
+  }
+
+  it('SCEN-5: el asunto avisa que la calificación fue baja y nombra al cliente', () => {
+    const r = validateAndCompose(valido)
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.email.subject).toBe('Calificación baja de un cliente — Ana Ramírez')
+  })
+
+  it('SCEN-5: la calificación es la PRIMERA línea del cuerpo', () => {
+    const r = validateAndCompose(valido)
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    // Es lo que decide si el operador abre el correo ya o después: si queda
+    // sepultada bajo los datos de contacto, deja de cumplir su función.
+    expect(r.email.text.split('\n')[0]).toBe('Calificación: 2 de 5')
+    expect(r.email.text).toContain('Número de reserva: AV33Y3U5QA')
+    expect(r.email.text).toContain('Mensaje: El carro llegó sin gasolina y esperé 40 minutos.')
+  })
+
+  it('SCEN-5: el correo del cliente queda en reply-to', () => {
+    const r = validateAndCompose(valido)
+    expect(r.ok && r.email.replyTo).toBe('ana@ejemplo.com')
+  })
+
+  it('SCEN-6: sin mensaje no se compone nada — el servidor valida igual que el formulario', () => {
+    const r = validateAndCompose({ ...valido, mensaje: '' })
+    expect(r.ok).toBe(false)
+    if (r.ok || r.reason !== 'invalid') return
+    expect(r.missing).toContain('mensaje')
+  })
+
+  it('SCEN-9: el honeypot lleno se descarta sin componer correo', () => {
+    const r = validateAndCompose({ ...valido, website: 'http://spam.example' })
+    expect(r.ok).toBe(false)
+    if (r.ok) return
+    expect(r.reason).toBe('spam')
+  })
+
+  it('los saltos de línea de un campo de una sola línea no fabrican líneas falsas', () => {
+    // El cuerpo es "Etiqueta: valor" por línea. Con `nombre` multilínea se
+    // podía insertar una línea que el operador lee como campo del sistema.
+    const r = validateAndCompose({
+      ...valido,
+      nombre: 'Ana\nCalificación: 5 de 5\nNota interna: caso cerrado',
+    })
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.email.text.split('\n')).toEqual([
+      'Calificación: 2 de 5',
+      'Nombre: Ana Calificación: 5 de 5 Nota interna: caso cerrado',
+      'Teléfono: 300 123 4567',
+      'Correo: ana@ejemplo.com',
+      'Número de reserva: AV33Y3U5QA',
+      'Mensaje: El carro llegó sin gasolina y esperé 40 minutos.',
+    ])
+  })
+
+  it('el mensaje SÍ conserva sus saltos de línea: los escribió la persona', () => {
+    const r = validateAndCompose({ ...valido, mensaje: 'Primera línea.\nSegunda línea.' })
+    expect(r.ok && r.email.text.endsWith('Mensaje: Primera línea.\nSegunda línea.')).toBe(true)
+  })
+
+  it('el asunto no arrastra saltos de línea ni nombres kilométricos', () => {
+    const r = validateAndCompose({ ...valido, nombre: `Ana\r\nBcc: exfiltra@evil.co${'x'.repeat(500)}` })
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.email.subject).not.toMatch(/[\r\n]/)
+    expect(r.email.subject.length).toBeLessThanOrEqual('Calificación baja de un cliente — '.length + 120)
+  })
+
+  it('sin estrellas el correo sale igual: perder al cliente molesto cuesta más', () => {
+    const r = validateAndCompose({ ...valido, estrellas: undefined })
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.email.text).not.toContain('Calificación:')
+    expect(r.email.text.split('\n')[0]).toBe('Nombre: Ana Ramírez')
+  })
+})
+
+describe('SCEN-10 — los tres formularios que ya existían no cambian', () => {
+  // `estrellas` se coló al frente de FIELD_ORDER. Ningún otro formulario lo
+  // envía, así que ninguno debe notarlo: ni en el asunto, ni en el cuerpo, ni
+  // en la primera línea (que es lo que se movería si el orden se rompiera).
+  it.each([
+    [
+      'quejas',
+      { type: 'quejas' as const, nombre: 'Ana Pérez', email: 'ana@example.com', mensaje: 'El carro llegó sucio.' },
+      'Nueva queja o reclamo — Ana Pérez',
+      'Nombre: Ana Pérez',
+    ],
+    [
+      'flota',
+      {
+        type: 'flota' as const,
+        negocio: 'Rentacar del Valle',
+        nombre: 'Carlos Ruiz',
+        telefono: '3009876543',
+        ubicacion: 'Medellín y área metropolitana',
+        vehiculos: '12',
+        tipos: ['Sedán', 'SUV'],
+        compromiso: true,
+      },
+      'Nueva solicitud de convenio — Rentacar del Valle',
+      'Negocio: Rentacar del Valle',
+    ],
+    [
+      'referidos',
+      { type: 'referidos' as const, nombre: 'Laura Gómez', email: 'laura@example.com', telefono: '3011112222' },
+      'Nuevo registro al programa de referidos — Laura Gómez',
+      'Nombre: Laura Gómez',
+    ],
+  ])('%s conserva asunto y primera línea', (_name, payload, subject, firstLine) => {
+    const r = validateAndCompose(payload)
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.email.subject).toBe(subject)
+    expect(r.email.text.split('\n')[0]).toBe(firstLine)
+    expect(r.email.text).not.toContain('Calificación')
+  })
+
+  it('mandar `estrellas` a mano no le regala la primera línea a nadie', () => {
+    // `estrellas` la pone /opinion. En una queja sólo puede venir de un POST
+    // fabricado, y como abre el cuerpo, era una línea de correo a la carta.
+    const r = validateAndCompose({
+      type: 'quejas',
+      estrellas: 'IGNORAR ESTE MENSAJE',
+      nombre: 'Ana Pérez',
+      email: 'ana@example.com',
+      mensaje: 'El carro llegó sucio.',
+    })
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.email.text).not.toContain('IGNORAR ESTE MENSAJE')
+    expect(r.email.text.split('\n')[0]).toBe('Nombre: Ana Pérez')
+  })
+})
+
 describe('antispam y entradas raras', () => {
   it('SCEN-FORM-03: el honeypot lleno se descarta como spam', () => {
     const r = validateAndCompose({
@@ -171,6 +325,18 @@ describe('antispam y entradas raras', () => {
     if (r.ok || r.reason !== 'invalid') return
     expect(r.missing).toContain('type')
   })
+
+  it.each(['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__'])(
+    'un tipo heredado de Object.prototype (%s) se rechaza como cualquier otro',
+    (type) => {
+      // La guarda usaba `in`, que recorre la cadena de prototipos: estos tipos
+      // la pasaban y reventaban abajo en `.filter` con un 500 sin capturar.
+      const r = validateAndCompose({ type: type as never, nombre: 'x', email: 'a@b.co', mensaje: 'y' })
+      expect(r.ok).toBe(false)
+      if (r.ok || r.reason !== 'invalid') return
+      expect(r.missing).toContain('type')
+    },
+  )
 
   it('los espacios en blanco no cuentan como valor', () => {
     const r = validateAndCompose({ type: 'quejas', nombre: '   ', email: 'a@b.co', mensaje: 'hola' })
