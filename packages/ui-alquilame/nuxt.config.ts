@@ -2,6 +2,15 @@
 import tailwindcss from "@tailwindcss/vite";
 import { DEFERRED_GTAG_BOOTSTRAP } from './utils/deferred-gtag';
 
+// Páginas de diseño desechables (`lab-*`). En julio cinco de ellas llegaron a
+// producción Y al sitemap; esta guarda sobrevive a la lab de turno.
+//
+// Tiene que ser RegExp, no un glob: `sitemap.exclude` resuelve las cadenas con
+// radix3 (dist/runtime/utils-pure.js → createFilter), donde `*` y `**` solo
+// valen como SEGMENTO completo. Por eso `/reservado/**` funciona y `/lab-*` no
+// filtra nada — el comodín iría dentro del segmento.
+const LAB_ROUTES = /^\/lab-/;
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
@@ -954,6 +963,11 @@ export default defineNuxtConfig({
       '/reservado/**': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/reservas/lugar-recogida/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } },
       '/reservas/referido/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } },
+      // Sin reglas `lab-*` aquí a propósito: los routeRules de Nitro resuelven
+      // con radix3, donde `**` solo vale como SEGMENTO completo, así que un
+      // `/lab-**` quedaría muerto sin avisar (comprobado con un header sonda).
+      // Cada lab futura añade su ruta exacta; la guarda que sí es permanente
+      // vive en `sitemap.exclude` (LAB_ROUTES).
       // Independencia de enrutamiento (directiva): `/{city}/buscar-vehiculos/...` es
       // EXCLUSIVA de alquilatucarro. En alquilame la superficie de reserva es
       // `/reservas` (PATH). El 301 lo emite server/middleware/redirect-buscar-vehiculos.ts
@@ -1041,7 +1055,7 @@ export default defineNuxtConfig({
       { loc: '/gana/politicas-privacidad', changefreq: 'yearly', priority: 0.3 },
     ],
     sources: ['/api/__sitemap__/blog'],
-    exclude: ['/chat', '/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**'],
+    exclude: ['/chat', '/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**', LAB_ROUTES],
   },
 
   robots: {
