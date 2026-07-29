@@ -7,7 +7,7 @@
   >
     <div class="absolute inset-0 bg-black/10" aria-hidden="true" />
 
-    <div class="relative max-w-2xl mx-auto px-4 py-12 sm:py-16" role="status">
+    <div class="relative max-w-2xl mx-auto px-4 py-12 sm:py-16">
       <div class="shadow-2xl">
         <!-- Bloque superior del tiquete -->
         <div class="bg-white rounded-t-3xl px-6 pt-10 pb-8 text-center">
@@ -94,9 +94,10 @@
  *     proveedor. El estimado fijo que había aquí se rompía solo fuera de
  *     horario y generaba el reclamo por WhatsApp.
  *
- * Estas notas viven en el script y no en el template: Vue renderiza los
- * comentarios del template al HTML, así que ahí viajarían al cliente en cada
- * carga y quedarían a la vista en el código fuente público.
+ * Estas notas viven en el script y no en el template: Vue emite los comentarios
+ * del template al HTML en desarrollo y preview (en producción el compilador los
+ * descarta), y el script se minifica siempre. Es el lado seguro para el contexto
+ * de negocio.
  */
 const { franchise } = useAppConfig()
 
@@ -122,8 +123,6 @@ useSeoMeta({
 </script>
 
 <style scoped>
-@reference "~/assets/css/main.css";
-
 /* Muescas del tiquete — mismo bloque que reservado/[reserveCode]/index.vue. */
 .ticket-divider {
   height: 32px;

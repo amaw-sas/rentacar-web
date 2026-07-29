@@ -123,12 +123,24 @@ describe('SCEN-AL-05 — buscar-vehiculos eliminado + sin targets vivos', () => 
   it('SelectBranch.vue eliminado (dead-code)', () => {
     expect(exists('app/components/SelectBranch.vue')).toBe(false)
   })
-  it('sindisponibilidad reapunta a un PATH /reservas (no reconstruye la URL buscar-vehiculos)', () => {
+  it('sindisponibilidad reapunta a /reservas (no reconstruye la URL buscar-vehiculos)', () => {
     const src = tryRead('app/pages/sindisponibilidad.vue')
-    // La URL VIVA buscar-vehiculos siempre continuaba con `/lugar-recogida/`; el
-    // comentario nuevo solo menciona la palabra suelta. Distinguimos por el sufijo.
+    // La URL VIVA buscar-vehiculos siempre continuaba con `/lugar-recogida/`; un
+    // comentario puede mencionar la palabra suelta. Distinguimos por el sufijo.
     expect(src).not.toMatch(/buscar-vehiculos\/lugar-recogida/)
-    expect(src).toMatch(/\/reservas\/lugar-recogida/)
+
+    // ENMIENDA (rediseño de estados de reserva): la aserción original exigía
+    // `/reservas/lugar-recogida`, es decir el deep link COMPLETO reconstruido a
+    // mano. Eso fijaba el "cómo", no el invariante de este escenario, que es
+    // "la salida apunta a la superficie /reservas y no a buscar-vehiculos".
+    //
+    // El deep link se retiró porque rearmaba la búsqueda que acababa de fallar.
+    // Ahora la salida es un ancla a `/reservas` a secas: la recarga de documento
+    // limpia la parrilla agotada y libera `isSubmittingForm`, que la navegación
+    // de cliente arrastraba (ver la nota del <script setup> de esa página).
+    //
+    // El invariante se conserva y se sigue verificando aquí.
+    expect(src).toMatch(/href="\/reservas"/)
   })
 })
 

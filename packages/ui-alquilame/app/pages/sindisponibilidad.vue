@@ -7,7 +7,7 @@
   >
     <div class="absolute inset-0 bg-black/10" aria-hidden="true" />
 
-    <div class="relative max-w-2xl mx-auto px-4 py-12 sm:py-16" role="status">
+    <div class="relative max-w-2xl mx-auto px-4 py-12 sm:py-16">
       <div class="shadow-2xl">
         <!-- Bloque superior del tiquete -->
         <div class="bg-white rounded-t-3xl px-6 pt-10 pb-8 text-center">
@@ -43,13 +43,13 @@
               Cambia las fechas. Un día de diferencia suele ser suficiente.
               También puedes probar otra ciudad o categoría.
             </p>
-            <button
-              type="button"
+            <!-- Ancla HTML, no NuxtLink: ver la nota del <script setup>. -->
+            <a
+              href="/reservas"
               class="inline-flex items-center justify-center font-semibold rounded-full bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 px-6 py-3 text-base shadow-lg shadow-brand-600/25 transition-colors"
-              @click="buscarConOtrasFechas"
             >
               Buscar con otras fechas
-            </button>
+            </a>
           </div>
 
           <div class="border border-gray-200 rounded-2xl p-5">
@@ -74,8 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import { createCurrentDateObject } from '@rentacar-main/logic/utils'
-
 /**
  * Desenlace "no hay stock". Comparte el tratamiento de tiquete con /reservado
  * (foto full-bleed + tarjeta blanca troquelada) para que las tres pantallas
@@ -93,31 +91,35 @@ import { createCurrentDateObject } from '@rentacar-main/logic/utils'
  * en rutas no-home la hoja de estilos llega tarde, así que una utility de
  * Tailwind retrasaría su descubrimiento.
  *
- * Estas notas viven en el script y no en el template: Vue renderiza los
- * comentarios del template al HTML, así que ahí viajarían al cliente en cada
- * carga y quedarían a la vista en el código fuente público.
+ * Estas notas viven en el script y no en el template: Vue emite los comentarios
+ * del template al HTML en desarrollo y preview (en producción el compilador los
+ * descarta), y el script se minifica siempre. Es el lado seguro para el contexto
+ * de negocio.
+ *
+ * La salida hacia el buscador es un ANCLA HTML (`<a href="/reservas">`), no un
+ * `NuxtLink` ni un `navigateTo`. La recarga de documento es justamente el punto:
+ * reinicia Pinia y con ello dos estados sucios que la navegación de cliente
+ * arrastra hasta el final de la sesión.
+ *
+ *   1. `categoriesAvailabilityData` conserva la parrilla agotada. Solo se limpia
+ *      dentro de `search()` (useStoreSearchData.ts:85), y `/reservas` sin query
+ *      corta antes de buscar (useSearchByQueryParams.ts:66-72). El cliente vería
+ *      los mismos carros y precios de la búsqueda que acaba de fallar.
+ *   2. `isSubmittingForm` se queda en `true`. La rama sin-stock pone
+ *      `releaseSubmit = false` y el `finally` solo libera el flag dentro de
+ *      `if (releaseSubmit)` (useStoreReservationForm.ts:435). El CTA de reserva
+ *      se deshabilita con ese flag (CategorySelectionSection.vue:200), así que
+ *      quedaba muerto con el spinner girando hasta una recarga manual.
+ *
+ * Ambos se verificaron leyendo esas rutas de código. La alternativa era escribir
+ * en el store desde esta página o tocar `packages/logic`, que afecta a las tres
+ * marcas; el ancla resuelve los dos sin ese radio de impacto.
+ *
+ * Queda pendiente el bucle en sí: quien busque con las fechas por defecto y le
+ * salga agotado, volverá al buscador con esas mismas fechas. Eso se ataca aparte,
+ * con el dashboard levantado para poder probar el recorrido completo.
  */
 const { franchise } = useAppConfig()
-const store = useStoreReservationForm()
-
-/**
- * Rompe el bucle de fechas.
- *
- * El `Searcher` está atado en dos direcciones al store (Searcher.vue:570-590),
- * así que volver a /reservas sin tocar nada prefila LAS MISMAS fechas que
- * acaban de fallar: el cliente busca, ve el vehículo disponible otra vez, lo
- * pide y aterriza de nuevo en esta página. La versión anterior era peor todavía
- * — reconstruía el deep link completo con esas fechas.
- *
- * Se limpian solo las fechas, a los mismos valores con los que arranca el store
- * (mañana / +8 días, useStoreReservationForm.ts:59-63). La sede se conserva:
- * el cliente sigue queriendo esa ciudad, lo que no puede repetir son las fechas.
- */
-function buscarConOtrasFechas() {
-  store.fechaRecogida = createCurrentDateObject().add({ days: 1 }).toString()
-  store.fechaDevolucion = createCurrentDateObject().add({ days: 8 }).toString()
-  navigateTo('/reservas')
-}
 
 useHead({
   title: 'Sin disponibilidad',
@@ -141,8 +143,6 @@ useSeoMeta({
 </script>
 
 <style scoped>
-@reference "~/assets/css/main.css";
-
 /* Muescas del tiquete: el mask recorta dos semicírculos transparentes en los
    bordes del divisor, dejando ver la foto de fondo — el troquel clásico.
    Mismo bloque que reservado/[reserveCode]/index.vue. */

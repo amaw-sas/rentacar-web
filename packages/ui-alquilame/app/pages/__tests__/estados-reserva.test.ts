@@ -54,30 +54,74 @@ describe('SCEN-E1 — el vinotinto del layout ya no asoma', () => {
   })
 })
 
-describe('SCEN-E2 — /sindisponibilidad rompe el bucle de fechas', () => {
+describe('SCEN-E2 — la salida de /sindisponibilidad devuelve al buscador en limpio', () => {
   const source = read(SIN)
+  const block = markup(source)
 
-  it('ya no reconstruye el deep link con las fechas que acaban de fallar', () => {
-    // El `searchUrl` viejo rearmaba /reservas/lugar-recogida/…/fecha-recogida/…
-    // con los mismos valores del store, así que el cliente repetía la búsqueda
-    // agotada y volvía a caer aquí.
+  /*
+   * Historia de este escenario, porque el "cómo" ya cambió dos veces:
+   *
+   * 1. Original: el CTA reconstruía el deep link `/reservas/lugar-recogida/…`
+   *    con las fechas que acababan de fallar. El cliente repetía la búsqueda
+   *    agotada y volvía aquí.
+   * 2. Intento intermedio: `navigateTo('/reservas')` tras reescribir las fechas
+   *    del store. Se descartó — introducía dos regresiones verificadas:
+   *      · `useSearchByQueryParams.ts:66-72` corta sin query, así que la
+   *        búsqueda no se re-dispara y `categoriesAvailabilityData` conserva la
+   *        parrilla agotada (solo se limpia dentro de `search()`,
+   *        useStoreSearchData.ts:85).
+   *      · `isSubmittingForm` nunca se libera en la rama sin-stock
+   *        (useStoreReservationForm.ts:435, dentro de `if (releaseSubmit)`), y
+   *        el CTA de reserva se deshabilita con ese flag
+   *        (CategorySelectionSection.vue:200) → botón muerto el resto de la
+   *        sesión SPA.
+   * 3. Actual: un ancla HTML normal a `/reservas`. La navegación de documento
+   *    reinicia Pinia, así que ambos estados sucios desaparecen sin tocar
+   *    `packages/logic` ni el store desde una página.
+   *
+   * Lo observable —y lo único que este bloque fija— es que el cliente sale
+   * hacia el buscador sin arrastrar la búsqueda que acaba de fallar.
+   */
+
+  it('no reconstruye el deep link con las fechas que acaban de fallar', () => {
     expect(source).not.toContain('fecha-recogida/')
-    expect(source).not.toContain('lugar-recogida/')
+    expect(source).not.toContain('/reservas/lugar-recogida')
   })
 
-  it('limpia ambas fechas del store antes de navegar', () => {
-    // El Searcher está atado en dos direcciones al store (Searcher.vue:570-590):
-    // volver a /reservas sin limpiar las fechas las vuelve a prefijar.
-    expect(source).toMatch(/store\.fechaRecogida\s*=/)
-    expect(source).toMatch(/store\.fechaDevolucion\s*=/)
+  it('la salida es un ancla a /reservas, no una navegación de router', () => {
+    // `href` y no `NuxtLink`/`navigateTo` A PROPÓSITO: la recarga es la que
+    // limpia el estado. Si esto vuelve a ser navegación de cliente, regresan
+    // la parrilla obsoleta y el botón de reserva atascado.
+    expect(block).toMatch(/<a[^>]*href="\/reservas"/)
+    expect(block).toContain('Buscar con otras fechas')
+    expect(source).not.toMatch(/navigateTo\(/)
+    expect(source).not.toMatch(/<NuxtLink[^>]*to="\/reservas"/)
   })
 
-  it('conserva la sede elegida — el cliente sigue queriendo esa ciudad', () => {
-    expect(source).not.toMatch(/store\.lugarRecogida\s*=\s*null/)
+  it('la página no escribe en el store — no hay estado que sincronizar', () => {
+    // El intento 2 escribía fechas aquí. Sin escrituras no hay carrera con los
+    // watchers bidireccionales del Searcher ni defaults duplicados entre
+    // paquetes.
+    // Sobre la LLAMADA, no sobre la mención: el comentario del <script setup>
+    // cita `useStoreReservationForm.ts:435` para explicar por qué el ancla es
+    // ancla. Prohibir la palabra prohibiría documentar el motivo.
+    expect(source).not.toMatch(/useStoreReservationForm\(/)
+    expect(source).not.toMatch(/store\.\w+\s*=[^=]/)
   })
+})
 
-  it('manda a la página de búsqueda', () => {
-    expect(source).toMatch(/navigateTo\(\s*['"]\/reservas['"]\s*\)/)
+describe('SCEN-E7 — el contenido no va dentro de una live region', () => {
+  it.each([
+    ['sindisponibilidad', SIN],
+    ['pendiente', PEN],
+  ])('%s no envuelve la tarjeta en role="status"', (_name, file) => {
+    // `role="status"` es una live region: solo anuncia cambios POSTERIORES a
+    // que exista en el DOM, y aquí el contenido llega ya pintado por SSR — no
+    // aporta nada al cargar. A cambio mete un h1, dos h2, un enlace externo y
+    // el CTA dentro de una región con aria-atomic implícito, que es
+    // antipatrón ARIA: un parche de Vue durante la hidratación puede hacer que
+    // el lector relea el bloque entero. El <h1> ya comunica el desenlace.
+    expect(markup(read(file))).not.toContain('role="status"')
   })
 })
 
