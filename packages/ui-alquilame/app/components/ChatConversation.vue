@@ -437,6 +437,12 @@ button { -webkit-tap-highlight-color: transparent; }
   min-height: 0;
   background: #fff;
   overflow: hidden;
+  /* Sólo la mitad de las páginas declara colorMode:'light', y /chat no es una
+     de ellas: en las demás el .dark de Nuxt UI deja el body en color-scheme
+     dark y el auto-dark de Chrome Android repinta la conversación entera.
+     `color-scheme` se hereda, así que redeclararlo aquí saca de ahí a las dos
+     superficies —la página y el panel teleportado— sin depender del body. */
+  color-scheme: light;
 }
 
 /* --- Header (banda de marca: la firma visual del chat de alquilame) --- */

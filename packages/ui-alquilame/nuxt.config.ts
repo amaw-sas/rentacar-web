@@ -618,6 +618,7 @@ export default defineNuxtConfig({
               inset: 0;
               pointer-events: none;
               z-index: 60;
+              color-scheme: light;
             }
             .contact-fab-stack {
               position: absolute;
