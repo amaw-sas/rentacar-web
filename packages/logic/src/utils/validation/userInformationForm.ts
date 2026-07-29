@@ -11,6 +11,12 @@ v.setGlobalConfig({ lang: "es" });
 const CC_FORMAT = /^\d{7,12}$/;
 const PP_FORMAT = /^[A-Za-z0-9]{6,15}$/;
 
+// The extra driver has no document-type selector — one field takes both a cédula
+// and a passport, so the format is the permissive union of the two. Kept separate
+// from PP_FORMAT on purpose: the passport rule may tighten without dragging the
+// extra driver's field along.
+const EXTRA_DRIVER_DOCUMENT_FORMAT = /^[A-Za-z0-9]{6,15}$/;
+
 // Trivial sentinels that hijack customer records on CC collision (issue #44).
 // Rejected for every document type.
 const SENTINEL_BLOCKLIST = new Set([
@@ -43,6 +49,24 @@ export function identificationError(
   }
   // Unknown/unselected type: blocklist already applied, no format enforced.
   return null;
+}
+
+/**
+ * Pure rule for the extra driver's ID document (issue #396). Returns a Spanish
+ * error message, or `null` when the value is acceptable.
+ * Empty input returns `null` — presence is enforced by the cross-field check,
+ * which only fires when the add-on is contracted.
+ * Surrounding whitespace is tolerated (trimmed before checks).
+ */
+export function extraDriverDocumentError(documento: unknown): string | null {
+  const id = String(documento ?? "").trim();
+  if (id === "") return null;
+  if (SENTINEL_BLOCKLIST.has(id)) {
+    return "Escribe la identificación real del conductor adicional, no un valor de prueba";
+  }
+  return EXTRA_DRIVER_DOCUMENT_FORMAT.test(id)
+    ? null
+    : "El documento debe tener entre 6 y 15 caracteres (letras y números)";
 }
 
 // Shared field entries. Exported so composed schemas spread them WITHOUT the
