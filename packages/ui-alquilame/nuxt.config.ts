@@ -957,6 +957,9 @@ export default defineNuxtConfig({
       },
       // Keep HTTP crawl directives aligned with these pages' HTML robots meta.
       '/chat': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      // /opinion se envía por WhatsApp o correo después del alquiler; no es
+      // tráfico orgánico y filtra por calificación, así que no debe indexarse.
+      '/opinion': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/pendiente': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/sindisponibilidad': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/reservado/**': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
@@ -1054,7 +1057,7 @@ export default defineNuxtConfig({
       { loc: '/gana/politicas-privacidad', changefreq: 'yearly', priority: 0.3 },
     ],
     sources: ['/api/__sitemap__/blog'],
-    exclude: ['/chat', '/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**', LAB_ROUTES],
+    exclude: ['/chat', '/opinion', '/pendiente', '/sindisponibilidad', '/reservado/**', '/reservas/lugar-recogida/**', '/reservas/referido/**', '/seo/**', LAB_ROUTES],
   },
 
   robots: {

@@ -1,20 +1,30 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { validateAndCompose, type ContactFormPayload } from '../utils/contact-forms'
+import { logger } from '../utils/logger'
 
 /**
- * Recepción de los formularios públicos (quejas y reclamos, registro de flota)
- * y envío por correo al buzón del operador.
+ * Recepción de los formularios públicos (quejas y reclamos, registro de flota,
+ * referidos y las calificaciones bajas de /opinion) y envío por correo al buzón
+ * del operador.
  *
  * Se usa la API REST de Resend con `fetch` en vez del SDK: es una sola llamada
  * HTTP y así no se suma una dependencia al bundle del servidor.
  *
- * Fail-loud a propósito: si falta RESEND_API_KEY el endpoint devuelve 500 con un
- * mensaje explícito. Un formulario que "parece" enviar pero se traga los mensajes
- * es peor que uno que falla visiblemente — el operador perdería clientes sin
- * enterarse.
+ * Fail-loud hacia LOS LOGS, no hacia el visitante: si falta RESEND_API_KEY el
+ * endpoint devuelve 500 y deja el detalle en el log del servidor. Un formulario
+ * que "parece" enviar pero se traga los mensajes es peor que uno que falla
+ * visiblemente — el operador perdería clientes sin enterarse.
  */
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 const SEND_TIMEOUT_MS = 10_000
+
+/**
+ * Lo que ve el visitante cuando el fallo es nuestro. Los nombres de las
+ * variables de entorno se quedan en el log: el formulario los pintaba tal cual
+ * en pantalla, y el precedente de /reservado (503 en producción por un env var
+ * ausente) dice que ese día llega.
+ */
+const GENERIC_FAILURE = 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -38,11 +48,14 @@ export default defineEventHandler(async (event) => {
   }
 
   if (!apiKey || !to || !from) {
-    throw createError({
-      statusCode: 500,
-      statusMessage:
+    logger.error(
+      'contact-config',
+      new Error(
         'Falta configuración de correo (NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO / NUXT_CONTACT_EMAIL_FROM)',
-    })
+      ),
+      { hasApiKey: Boolean(apiKey), hasTo: Boolean(to), hasFrom: Boolean(from) },
+    )
+    throw createError({ statusCode: 500, statusMessage: GENERIC_FAILURE })
   }
 
   try {
@@ -61,13 +74,11 @@ export default defineEventHandler(async (event) => {
         ...(result.email.replyTo ? { reply_to: result.email.replyTo } : {}),
       },
     })
-  } catch {
-    // No se filtra el detalle del proveedor al cliente; en el servidor sí queda
-    // el stack por el error-handler del proyecto.
-    throw createError({
-      statusCode: 502,
-      statusMessage: 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.',
-    })
+  } catch (error) {
+    // Sin este log la queja se pierde SIN RASTRO: el cliente ve un mensaje
+    // genérico y en el servidor no queda nada que explique por qué falló.
+    logger.error('contact-send', error, { type: (body as ContactFormPayload)?.type })
+    throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
   }
 
   return { ok: true }

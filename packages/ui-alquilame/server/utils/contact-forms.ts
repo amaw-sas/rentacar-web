@@ -10,7 +10,7 @@
  * bot señal de que fue detectado.
  */
 
-export type ContactFormType = 'quejas' | 'flota' | 'referidos'
+export type ContactFormType = 'quejas' | 'flota' | 'referidos' | 'resenas'
 
 export interface ContactFormPayload {
   type: ContactFormType
@@ -22,8 +22,14 @@ export interface ContactFormPayload {
   ciudad?: string
   /** Sólo convenios: ciudad o zona donde opera el negocio. */
   ubicacion?: string
-  /** Sólo quejas: número de reserva, opcional. */
+  /** Sólo quejas y reseñas: número de reserva, opcional. */
   reserva?: string
+  /**
+   * Sólo reseñas: la calificación que dio el cliente, ya formateada ("2 de 5").
+   * La pone la página, no un campo del formulario. Llega del cliente y es
+   * falsificable; da igual, es una notificación interna, no una métrica.
+   */
+  estrellas?: string
   /** Cuántos vehículos tiene la flota. */
   vehiculos?: string
   /** Sólo convenios: tipos de vehículo (selección múltiple). */
@@ -47,6 +53,7 @@ export type ValidationResult =
   | { ok: false; reason: 'invalid'; missing: string[] }
 
 const LABELS: Record<string, string> = {
+  estrellas: 'Calificación',
   negocio: 'Negocio',
   nombre: 'Nombre',
   email: 'Correo',
@@ -70,16 +77,25 @@ const REQUIRED: Record<ContactFormType, string[]> = {
   // Referidos: hace falta correo Y teléfono porque hay que entregarle su enlace
   // único y poder ubicarlo para pagarle la comisión.
   referidos: ['nombre', 'email', 'telefono'],
+  // Reseñas de 1-3★ que llegan de /opinion. Mismos mínimos que una queja: hay
+  // que saber quién es y poder responderle. `estrellas` NO se exige — la pone
+  // la página, y si algún día llegara sin ella el correo debe salir igual: un
+  // cliente molesto perdido pesa más que un asunto incompleto.
+  resenas: ['nombre', 'email', 'mensaje'],
 }
 
 const SUBJECT: Record<ContactFormType, string> = {
   quejas: 'Nueva queja o reclamo',
   flota: 'Nueva solicitud de convenio',
   referidos: 'Nuevo registro al programa de referidos',
+  resenas: 'Calificación baja de un cliente',
 }
 
 /** Orden de presentación en el correo; omite lo que no aplique al formulario. */
 const FIELD_ORDER = [
+  // La calificación va primero porque es lo que decide si el operador abre el
+  // correo ya o después.
+  'estrellas',
   'negocio',
   'nombre',
   'telefono',
@@ -95,6 +111,23 @@ const FIELD_ORDER = [
 
 const clean = (v: unknown): string => (typeof v === 'string' ? v.trim() : '')
 
+/**
+ * El cuerpo del correo es una línea "Etiqueta: valor" por campo. Un salto de
+ * línea dentro de un campo de una sola línea fabrica una línea etiquetada
+ * falsa ("Ana\nMensaje: todo perfecto"), así que se aplana todo menos los
+ * campos que de verdad son multilínea.
+ */
+const oneLine = (v: unknown): string => clean(v).replace(/[\r\n\u2028\u2029]+/g, ' ')
+
+/** Único campo donde los saltos de línea son del usuario y hay que respetarlos. */
+const MULTILINE = new Set(['mensaje'])
+
+/**
+ * El asunto lo compone un dato que escribe quien envía el formulario. Sin tope,
+ * un nombre de kilobytes viaja entero a la cabecera Subject.
+ */
+const SUBJECT_NAME_MAX = 120
+
 const isEmail = (v: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
 /** Un campo "tiene valor" según su forma: texto, lista o casilla marcada. */
@@ -107,9 +140,17 @@ function hasValue(v: unknown): boolean {
 /** Renderiza un campo para el cuerpo del correo, o '' si no aplica. */
 function render(field: string, v: unknown): string {
   if (!hasValue(v)) return ''
-  if (Array.isArray(v)) return `${LABELS[field]}: ${v.filter((x) => clean(x)).join(', ')}`
+  if (Array.isArray(v)) return `${LABELS[field]}: ${v.filter((x) => clean(x)).map(oneLine).join(', ')}`
   if (typeof v === 'boolean') return `${LABELS[field]}: sí`
-  return `${LABELS[field]}: ${clean(v)}`
+  return `${LABELS[field]}: ${MULTILINE.has(field) ? clean(v) : oneLine(v)}`
+}
+
+/** Campos que sólo tienen sentido en un formulario concreto. */
+const FIELD_OWNER: Record<string, ContactFormType> = {
+  // `estrellas` la pone /opinion. Si llega en una queja, un convenio o un
+  // referido es alguien posteando a mano, y como va PRIMERA en el cuerpo le
+  // regalaría la línea de apertura del correo a quien la mande.
+  estrellas: 'resenas',
 }
 
 export function validateAndCompose(raw: ContactFormPayload): ValidationResult {
@@ -117,7 +158,9 @@ export function validateAndCompose(raw: ContactFormPayload): ValidationResult {
   if (clean(raw.website)) return { ok: false, reason: 'spam' }
 
   const type = raw.type
-  if (!(type in REQUIRED)) {
+  // `in` recorre la cadena de prototipos: con `type: 'constructor'` la guarda
+  // pasaba y reventaba abajo en `.filter` con un 500 en vez de un 400.
+  if (!Object.hasOwn(REQUIRED, type as string)) {
     return { ok: false, reason: 'invalid', missing: ['type'] }
   }
 
@@ -131,13 +174,16 @@ export function validateAndCompose(raw: ContactFormPayload): ValidationResult {
 
   if (missing.length) return { ok: false, reason: 'invalid', missing }
 
-  const lines = FIELD_ORDER.map((f) =>
-    render(f, raw[f as keyof ContactFormPayload]),
-  ).filter(Boolean)
+  const lines = FIELD_ORDER.filter((f) => (FIELD_OWNER[f] ?? type) === type)
+    .map((f) => render(f, raw[f as keyof ContactFormPayload]))
+    .filter(Boolean)
 
   // En convenios el asunto identifica al NEGOCIO, que es lo que se va a evaluar;
   // en los demás, a la persona.
-  const quien = type === 'flota' ? clean(raw.negocio) : clean(raw.nombre)
+  const quien = (type === 'flota' ? oneLine(raw.negocio) : oneLine(raw.nombre)).slice(
+    0,
+    SUBJECT_NAME_MAX,
+  )
 
   return {
     ok: true,

@@ -14,7 +14,7 @@
     input real, que algunos navegadores omiten al enviar) y con tabindex -1 para
     que nadie llegue a él tabulando.
   -->
-  <form class="space-y-5" novalidate @submit.prevent="submit">
+  <form ref="formEl" class="space-y-5" novalidate @submit.prevent="submit" @input="onEdit" @change="onEdit">
     <div v-for="f in fields" :key="f.name">
       <!--
         Casilla única (p. ej. aceptar una condición). Va con su label AL LADO,
@@ -112,19 +112,36 @@
       <input id="f-website" v-model="values.website" type="text" tabindex="-1" autocomplete="off">
     </div>
 
+    <!--
+      Tras un envío correcto el botón queda bloqueado hasta que la persona
+      vuelva a escribir algo: pulsarlo dos veces borraba el acuse de recibo y
+      pintaba los campos —ya vaciados— en rojo, así que quien SÍ había enviado
+      su queja concluía que no se había enviado.
+    -->
     <button
       type="submit"
-      :disabled="sending"
+      :disabled="sending || sent"
       class="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-brand-600 text-white font-semibold shadow-lg shadow-black/15 transition-all duration-200 hover:bg-brand-700 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
     >
       {{ sending ? 'Enviando…' : submitLabel }}
     </button>
 
-    <!-- Resultado: anunciado a lectores de pantalla -->
-    <p v-if="sent" role="status" aria-live="polite" class="rounded-xl bg-green-50 border border-green-200 text-green-800 px-4 py-3">
-      {{ successMessage }}
+    <!--
+      Las dos regiones viven SIEMPRE en el DOM, vacías mientras no haya nada que
+      decir: un aria-live que aparece con el texto ya dentro no lo anuncian ni
+      NVDA ni VoiceOver, que es lo que dejaba mudo el resultado del envío.
+    -->
+    <p
+      role="status"
+      aria-live="polite"
+      :class="sent ? 'rounded-xl bg-green-50 border border-green-200 text-green-800 px-4 py-3' : 'sr-only'"
+    >
+      {{ sent ? successMessage : '' }}
     </p>
-    <p v-else-if="failed" role="alert" class="rounded-xl bg-brand-50 border border-brand-200 text-brand-800 px-4 py-3">
+    <p
+      role="alert"
+      :class="failed ? 'rounded-xl bg-brand-50 border border-brand-200 text-brand-800 px-4 py-3' : 'sr-only'"
+    >
       {{ failed }}
     </p>
   </form>
@@ -144,11 +161,21 @@ export interface PublicFormField {
 
 const props = withDefaults(
   defineProps<{
-    /** Discriminante que recibe el servidor. */
-    type: 'quejas' | 'flota'
+    /**
+     * Discriminante que recibe el servidor. La unión tiene que cubrir TODOS los
+     * formularios: declaraba sólo 'quejas' | 'flota' mientras /gana ya pasaba
+     * "referidos", así que el tipado no protegía nada.
+     */
+    type: 'quejas' | 'flota' | 'referidos' | 'resenas'
     fields: PublicFormField[]
     submitLabel?: string
     successMessage?: string
+    /**
+     * Datos que la página añade al POST sin que existan como campo visible
+     * (la calificación de /opinion). No se limpian al enviar: los pone la
+     * página, no la persona.
+     */
+    extraFields?: Record<string, string>
   }>(),
   {
     submitLabel: 'Enviar',
@@ -171,6 +198,32 @@ const errors = reactive<Record<string, string>>({})
 const sending = ref(false)
 const sent = ref(false)
 const failed = ref('')
+const formEl = ref<HTMLFormElement | null>(null)
+
+/**
+ * Escribir cualquier cosa cancela el acuse anterior y vuelve a habilitar el
+ * botón. Se ata a los eventos del DOM y no a un watcher sobre `values`: el
+ * vaciado que hace el propio componente tras enviar también los mutaría.
+ */
+function onEdit() {
+  if (sent.value) sent.value = false
+}
+
+/**
+ * Llevar el foco al primer campo con error. Sin esto la validación fallaba en
+ * silencio: los mensajes inline son párrafos estáticos, nadie los anuncia, y
+ * quien usa lector de pantalla sólo percibía que el botón no hacía nada.
+ */
+function focusFirstError() {
+  const first = props.fields.find((f) => errors[f.name])
+  if (!first) return
+  const root = formEl.value
+  const target =
+    root?.querySelector<HTMLElement>(`#f-${first.name}`)
+    // Los grupos de casillas no tienen un control con ese id: se enfoca la 1ª opción.
+    ?? root?.querySelector<HTMLElement>(`[id^="f-${first.name}-"]`)
+  target?.focus()
+}
 
 function validateLocally(): boolean {
   for (const key of Object.keys(errors)) delete errors[key]
@@ -192,13 +245,28 @@ function validateLocally(): boolean {
 }
 
 async function submit() {
-  sent.value = false
+  // El botón ya está deshabilitado en estos dos estados; la guarda cubre el
+  // envío por Enter y el doble toque que llega antes del re-render.
+  if (sending.value || sent.value) return
+
   failed.value = ''
-  if (!validateLocally()) return
+  if (!validateLocally()) {
+    failed.value = 'Revisa los campos marcados.'
+    focusFirstError()
+    return
+  }
 
   sending.value = true
   try {
-    await $fetch('/api/contact', { method: 'POST', body: { type: props.type, ...values, ...groups } })
+    // `extraFields` va al final: lo que pone la página gana sobre un campo
+    // homónimo del formulario.
+    await $fetch('/api/contact', {
+      method: 'POST',
+      // Sin tope, una conexión que se cuelga deja el botón en «Enviando…» para
+      // siempre: la promesa nunca se resuelve y `finally` nunca corre.
+      timeout: 20_000,
+      body: { type: props.type, ...values, ...groups, ...props.extraFields },
+    })
     sent.value = true
     // Limpiar para que no se reenvíe lo mismo por error.
     for (const f of props.fields) {
@@ -212,6 +280,7 @@ async function submit() {
     if (missing?.length) {
       for (const m of missing) errors[m] = 'Este campo es obligatorio.'
       failed.value = 'Revisa los campos marcados.'
+      focusFirstError()
     } else {
       failed.value =
         (e as { data?: { statusMessage?: string } })?.data?.statusMessage

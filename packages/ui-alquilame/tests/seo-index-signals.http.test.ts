@@ -46,6 +46,18 @@ describe.skipIf(!nitroAvailable)('alquilame Nitro reservation index signals', as
     expect(header).not.toContain('noindex')
   })
 
+  // SCEN-8 de la spec de /opinion dice "GET /opinion". Las pruebas de la página
+  // sólo leen nuxt.config.ts como texto, y este repo ya vio un patrón de ruta
+  // que no casaba con nada pasar desapercibido semanas (`/lab-**` con radix3).
+  // Aquí sí se hace la petición.
+  it('serves /opinion as noindex,nofollow over HTTP', async () => {
+    const response = await fetch('/opinion')
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('x-robots-tag')).toContain('noindex')
+    expect(await response.text()).toContain('noindex, nofollow')
+  })
+
   it('marks query-driven /reservas results noindex,follow over HTTP', async () => {
     const response = await fetch('/reservas?lugar_recogida=bogota-aeropuerto')
 
