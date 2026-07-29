@@ -16,13 +16,13 @@
   <section class="cc-root" :class="`cc-${variant}`">
     <header class="cc-header">
       <span class="cc-avatar">
-        <img class="cc-avatar-img" src="/images/asesora-avatar.webp" alt="Asesora" width="40" height="40" decoding="async" />
+        <img class="cc-avatar-img" src="/images/asesora-camila.webp" alt="Camila" width="40" height="40" decoding="async" />
         <span class="cc-avatar-dot" />
       </span>
 
       <div class="cc-titlewrap">
-        <p class="cc-title">¿En qué te ayudamos?</p>
-        <p class="cc-status">En línea · Disponible 24/7</p>
+        <p class="cc-title">Camila · alquilame</p>
+        <p class="cc-status">Responde al instante · 24/7</p>
       </div>
 
       <button type="button" class="cc-dismiss" aria-label="Cerrar chat" @click="emit('dismiss')">
@@ -200,10 +200,8 @@
         type="text"
         autocomplete="off"
         enterkeyhint="send"
-        placeholder="Escribe tu mensaje…"
+        placeholder="Escribe aquí tu pregunta…"
         aria-label="Escribe tu mensaje"
-        @focus="inputFocused = true"
-        @blur="inputFocused = false"
       >
       <!-- SCEN-322-X04: while a reply streams the send slot becomes a visible
            "detener" control that aborts the in-flight turn on demand (stop()
@@ -211,7 +209,7 @@
       <button
         v-if="isStreaming"
         type="button"
-        class="cc-send cc-send-active"
+        class="cc-send"
         aria-label="Detener respuesta"
         data-testid="chat-stop-test"
         @click="stop"
@@ -224,7 +222,6 @@
         v-else
         type="submit"
         class="cc-send"
-        :class="{ 'cc-send-active': inputFocused || input.trim() }"
         :disabled="!input.trim()"
         aria-label="Enviar mensaje"
       >
@@ -298,7 +295,6 @@ function isGroupStart(idx: number): boolean {
   return true
 }
 
-const inputFocused = ref(false)
 const inputEl = ref<HTMLInputElement | null>(null)
 // Boundary for the "Mensajes nuevos" separator, snapshotted on mount BEFORE
 // onSurfaceMounted() advances the read-marker (which would zero it out).
@@ -441,15 +437,21 @@ button { -webkit-tap-highlight-color: transparent; }
   min-height: 0;
   background: #fff;
   overflow: hidden;
+  /* Sólo la mitad de las páginas declara colorMode:'light', y /chat no es una
+     de ellas: en las demás el .dark de Nuxt UI deja el body en color-scheme
+     dark y el auto-dark de Chrome Android repinta la conversación entera.
+     `color-scheme` se hereda, así que redeclararlo aquí saca de ahí a las dos
+     superficies —la página y el panel teleportado— sin depender del body. */
+  color-scheme: light;
 }
 
-/* --- Header --- */
+/* --- Header (banda de marca: la firma visual del chat de alquilame) --- */
 .cc-header {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.5rem 0.875rem;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 0.75rem 0.875rem;
+  background: var(--ui-primary, #cc022b);
   flex-shrink: 0;
 }
 .cc-avatar {
@@ -461,8 +463,8 @@ button { -webkit-tap-highlight-color: transparent; }
   height: 2.5rem;
   flex-shrink: 0;
   border-radius: 9999px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
-  background: color-mix(in oklab, var(--ui-primary, #cc022b) 14%, white);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+  background: #fff;
   color: var(--ui-primary, #cc022b);
 }
 .cc-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 9999px; }
@@ -474,7 +476,7 @@ button { -webkit-tap-highlight-color: transparent; }
   height: 0.7rem;
   border-radius: 9999px;
   background: #22c55e;
-  border: 2px solid #fff;
+  border: 2px solid var(--ui-primary, #cc022b);
   animation: cc-chip-glow 1.6s ease-in-out infinite;
 }
 @keyframes cc-chip-glow {
@@ -486,13 +488,13 @@ button { -webkit-tap-highlight-color: transparent; }
   .cc-flash { animation: none; }
 }
 .cc-titlewrap { flex: 1; min-width: 0; }
-.cc-title { font-weight: 700; color: #111827; font-size: 0.95rem; line-height: 1.15; margin: 0; }
-.cc-status { font-size: 0.8rem; color: #6b7280; margin: 0.125rem 0 0; }
+.cc-title { font-weight: 700; color: #fff; font-size: 1rem; line-height: 1.15; margin: 0; }
+.cc-status { font-size: 0.8rem; color: rgba(255, 255, 255, 0.82); margin: 0.125rem 0 0; }
 .cc-dismiss {
   display: flex; align-items: center; justify-content: center;
-  width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 9999px; color: #6b7280;
+  width: 2rem; height: 2rem; flex-shrink: 0; border-radius: 9999px; color: rgba(255, 255, 255, 0.85);
 }
-.cc-dismiss:hover { background: #f3f4f6; color: #111827; }
+.cc-dismiss:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
 
 /* --- Mensajes (gris ~10%: separa los globos con un fondo muy suave;
    min-height:0 = fix iOS) --- */
@@ -505,57 +507,50 @@ button { -webkit-tap-highlight-color: transparent; }
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  background: #ece5dd;
+  background: #f7f8f9;
 }
-.cc-empty { color: #6b7280; font-size: 0.875rem; text-align: center; margin: auto 0; padding: 1rem; }
+/* El saludo de bienvenida se presenta como lo que es —el primer mensaje de
+   Camila— en vez de como un cartel centrado en el vacío. */
+.cc-empty {
+  align-self: flex-start;
+  max-width: 85%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: #111827;
+  background: #fff;
+  border-radius: 1rem;
+  border-bottom-left-radius: 0.25rem;
+  box-shadow: inset 0 0 0 1px #e6e8ec;
+}
 .cc-msg {
   position: relative;
   max-width: 85%;
   padding: 0.5rem 0.75rem;
-  border-radius: 7.5px;
+  border-radius: 1rem;
   font-size: 1rem;
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
-  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
 }
 .cc-msg.is-user {
   align-self: flex-end;
-  background: #d9fdd3;
-  color: #111b21;
+  background: #4b5563;
+  color: #fff;
+  border-bottom-right-radius: 0.25rem;
 }
 .cc-msg.is-assistant {
   align-self: flex-start;
   background: #fff;
   color: #111827;
+  border-bottom-left-radius: 0.25rem;
+  box-shadow: inset 0 0 0 1px #e6e8ec;
 }
-/* Piquito WhatsApp: solo en la primera burbuja de una racha del mismo
-   remitente; sobresale 8px dentro del padding de 1rem de .cc-messages,
-   así que no crea overflow-x. */
-.cc-msg.is-user.is-group-start { border-top-right-radius: 0; }
-.cc-msg.is-user.is-group-start::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: -8px;
-  width: 0;
-  height: 0;
-  border-top: 10px solid #d9fdd3;
-  border-right: 8px solid transparent;
-  filter: drop-shadow(0 1px 0.5px rgba(11, 20, 26, 0.13));
-}
-.cc-msg.is-assistant.is-group-start { border-top-left-radius: 0; }
-.cc-msg.is-assistant.is-group-start::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -8px;
-  width: 0;
-  height: 0;
-  border-top: 10px solid #fff;
-  border-left: 8px solid transparent;
-  filter: drop-shadow(0 1px 0.5px rgba(11, 20, 26, 0.13));
-}
+/* Sin piquito: la esquina viva de abajo ya señala al remitente. La primera
+   burbuja de cada racha se separa con aire, que es para lo que sigue
+   existiendo isGroupStart(). */
+.cc-msg.is-group-start { margin-top: 0.5rem; }
 .cc-text, .cc-actions { display: block; }
 /* Hora dentro de la burbuja, pegada a la esquina inferior derecha (WhatsApp):
    posición absoluta + espaciador ::after que reserva su ancho al final de la
@@ -570,6 +565,8 @@ button { -webkit-tap-highlight-color: transparent; }
   white-space: nowrap;
   pointer-events: none;
 }
+/* Sobre el grafito del cliente la hora necesita invertirse para seguir legible. */
+.cc-msg.is-user .cc-time { color: rgba(255, 255, 255, 0.7); }
 .cc-msg.is-user.has-time::after,
 .cc-msg.is-assistant.has-time .cc-text::after {
   content: '';
@@ -783,22 +780,22 @@ button { -webkit-tap-highlight-color: transparent; }
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-/* Tarjeta de respuesta sobre el input (composer), calcada de WhatsApp. */
+/* Tarjeta de respuesta sobre el input (composer). Comparte el blanco y el filo
+   del área de escritura: la cita se lee como parte del mismo bloque. */
 .cc-reply-bar {
-  padding: 0.5rem 0.75rem 0;
-  background: #ece5dd;
-  border-top: 1px solid #d8cfc4;
+  padding: 0.75rem 0.75rem 0;
+  background: #fff;
+  border-top: 1px solid #eceef1;
   flex-shrink: 0;
 }
 .cc-reply-card {
   display: flex;
   align-items: center;
   width: 100%;
-  background: #fff;
-  border-radius: 8px;
+  background: #f2f3f5;
+  border-radius: 0.75rem;
   overflow: hidden;
   border-left: 4px solid var(--ui-primary, #cc022b);
-  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
 }
 .cc-reply-card-body {
   flex: 1;
@@ -830,23 +827,28 @@ button { -webkit-tap-highlight-color: transparent; }
 .cc-reply-bar-x:hover { background: rgba(0, 0, 0, 0.06); color: #111827; }
 
 /* --- Input --- */
-.cc-input { display: flex; gap: 0.5rem; padding: 0.375rem 0.75rem 0.75rem; flex-shrink: 0; background: #ece5dd; }
+.cc-input { display: flex; gap: 0.5rem; padding: 0.75rem; flex-shrink: 0; background: #fff; border-top: 1px solid #eceef1; align-items: center; }
+/* Con una cita abierta el filo ya lo pone la barra de respuesta: dos líneas
+   juntas se leerían como un borde doble. */
+.cc-reply-bar + .cc-input { border-top: 0; }
 .cc-input input {
   flex: 1; min-width: 0;
   padding: 0.625rem 0.875rem;
-  border: 2px solid #cbd0d6; border-radius: 9999px;
-  font-size: 1rem; color: #111827; background: #fff; outline: none;
-  transition: border-color 0.15s ease;
+  border: 0; border-radius: 0.75rem;
+  font-size: 1rem; color: #111827; background: #f2f3f5; outline: none;
+  transition: box-shadow 0.15s ease;
 }
-.cc-input input:focus { border-color: var(--ui-primary, #cc022b); }
-/* Botón enviar: gris neutro en reposo; cambia al color de marca apenas el
-   usuario enfoca el campo de texto (o hay texto). */
+.cc-input input:focus { box-shadow: inset 0 0 0 2px var(--ui-primary, #cc022b); }
+/* Botón enviar: cuadrado redondeado y de marca desde el primer momento — el
+   gris de espera pertenecía al chat clonado. Deshabilitado se atenúa, no
+   cambia de color, para que el control siempre se lea igual. */
 .cc-send {
   display: flex; align-items: center; justify-content: center;
-  width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 9999px;
-  background: #9ca3af; color: #fff;
-  transition: background-color 0.18s ease, opacity 0.15s ease;
+  width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 0.75rem;
+  background: var(--ui-primary, #cc022b); color: #fff;
+  transition: opacity 0.15s ease, filter 0.18s ease;
 }
-.cc-send.cc-send-active { background: var(--ui-primary, #cc022b); }
-.cc-send:disabled { cursor: not-allowed; }
+/* Sin texto el envío está bloqueado, pero a 0.45 el rojo se lavaba a rosa y el
+   control parecía roto recién abierto el chat: 0.7 lo apaga sin descolorarlo. */
+.cc-send:disabled { cursor: not-allowed; opacity: 0.7; }
 </style>
