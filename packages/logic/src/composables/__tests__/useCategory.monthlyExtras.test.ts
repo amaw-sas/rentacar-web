@@ -9,15 +9,14 @@
  * useCategory.extrasFallback.test.ts —que afirma sobre el TEXTO del archivo—
  * este mide plata.
  *
- * `getExtraDriverPrice` y `getBabySeatPrice` NO están en el objeto que devuelve
- * useCategory: la superficie pública son `getAdditionalsTotal` (lo que se suma
- * al total mostrado) y las cadenas `currency*` (lo que el cliente lee). Se
- * afirma contra esas dos. Marcar un solo extra a la vez aísla cada precio.
- *
- * Alcance: el registro de la reserva NO lleva este número — los extras se
- * persisten como banderas 1|0 (useRecordReservationForm.ts:79-80) y
- * total_price_to_pay sale de getActualTotalPrice, sin los adicionales. La
- * pantalla es la superficie completa de este cambio.
+ * Este archivo afirma contra `getAdditionalsTotal` (lo que se suma al total
+ * mostrado) y las cadenas `currency*` (lo que el cliente lee), marcando un
+ * solo extra a la vez para aislar cada precio. Desde la misión
+ * extras-en-confirmación (28-jul), `getExtraDriverPrice`/`getBabySeatPrice`/
+ * `getWashPrice` también son públicos y el registro SÍ persiste el precio
+ * pactado (extra_driver_price/baby_seat_price/wash_price) — ese alambre lo
+ * cubre useRecordReservationForm.extrasPrices.test.ts; total_price_to_pay
+ * sigue saliendo de getActualTotalPrice, sin los adicionales.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { CategoryAvailabilityData, CategoryMonthPriceData } from '@rentacar-main/logic/utils'

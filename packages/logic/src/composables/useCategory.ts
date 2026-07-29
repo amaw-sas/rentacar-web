@@ -641,6 +641,9 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
       getTotalWithAdditionals,
       getTotalToPayWithAdditionals,
       getMileageUpgradePrice,
+      getExtraDriverPrice,
+      getBabySeatPrice,
+      getWashPrice,
 
       // currency formatted prices
       currencyTotalPrice,
