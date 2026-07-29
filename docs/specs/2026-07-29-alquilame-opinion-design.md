@@ -24,7 +24,7 @@ negative reviews, or selectively solicit positive reviews». No reabrir la discu
 | Ruta | `/opinion` (sin tilde: sobrevive al copiar/pegar entre WhatsApp y navegador) |
 | 1-3★ | Formulario **en la misma página**, sin navegar |
 | 4-5★ | Redirección automática a los 800 ms, como el original |
-| Destino Google | `https://g.page/r/Ce09QLF1RhqkEBM/review` |
+| Destino Google | `https://g.page/r/Ce09QLF1RhqkEBM/review` — sin parámetros: el diálogo de Google **descarta** cualquier texto que se le pase (`?text=`, `?review=`, `?comment=` probados en navegador). No se puede prerrellenar la reseña, y la política de Google prohíbe pedir que incluya contenido concreto |
 | Destino del correo | `NUXT_CONTACT_EMAIL_TO` vía Resend (tubería existente) |
 | Indexación | `noindex, nofollow` + fuera del sitemap |
 | Alcance | Solo alquilame. No replicar en las otras dos marcas |
@@ -136,12 +136,13 @@ FIELD_ORDER        → 'estrellas' primero
 - El 500 por configuración ausente ya no devuelve los nombres de las variables de
   entorno — el formulario los pintaba literales en pantalla. El detalle va al log.
 - El `catch` vacío registraba nada: una queja perdida no dejaba rastro.
-**Abierto — freno de envíos.** Se construyó un límite por IP (5 envíos / 10 min, en
+**Descartado — freno de envíos.** Se construyó un límite por IP (5 envíos / 10 min, en
 memoria) y se retiró antes del PR: nadie lo pidió, cambia el comportamiento de tres
 formularios que ya están vivos, y en Vercel el contador vive en cada instancia, así que
 apenas protege. El riesgo real pesaba más: los operadores móviles colombianos comparten
 IP de salida entre clientes (CGNAT), así que la queja de una persona podía rebotar con un
-429 por culpa de otra. Si se quiere, va como cambio propio y con almacén durable.
+429 por culpa de otra. **El dueño lo descartó explícitamente (2026-07-29): no lo ve
+necesario.** No volver a proponerlo sin que haya un abuso medido.
 
 Correo resultante:
 
