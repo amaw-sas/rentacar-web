@@ -111,13 +111,14 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
       '    <div class="contact-fab-layer fixed inset-0 pointer-events-none z-[60]">',
       '    <div class="fixed inset-0 pointer-events-none z-[60]">',
     ],
-    ['  left: 0;', '  right: 0;'],
+    // 2026-07-29, decisión del dueño: el chat de alquilame tiene identidad
+    // propia y su FAB va relleno de marca con el icono en blanco, no en blanco
+    // con el icono de marca. Pintado con el token, nunca con el hex quemado
+    // (P386 en ui-alquicarros).
     [
-      '  border-radius: 1rem 1rem 1rem 0.25rem; /* esquina hacia el FAB (abajo-izq) */',
-      '  border-radius: 1rem 1rem 0.25rem 1rem; /* esquina hacia el FAB */',
+      '.fab-chat { background: var(--ui-primary, #cc022b); color: #fff; }',
+      '.fab-chat { color: var(--ui-primary, #cc022b); }',
     ],
-    ['  transform-origin: bottom left;', '  transform-origin: bottom right;'],
-    ['  left: 1.5rem;', '  right: 1.5rem;'],
   ]
 
   it('SCEN-5 — alquicarros y alquilatucarro siguen byte-idénticos', () => {

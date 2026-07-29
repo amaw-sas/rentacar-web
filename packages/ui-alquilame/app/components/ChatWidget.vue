@@ -352,7 +352,7 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .fab-item:hover .fab-circle { transform: scale(1.08); }
 /* Icono coloreado por canal sobre círculo blanco. */
-.fab-chat { color: var(--ui-primary, #cc022b); }
+.fab-chat { background: var(--ui-primary, #cc022b); color: #fff; }
 .fab-whatsapp { color: var(--color-whatsapp, #25D366); }
 /* Chip de disponibilidad (solo el Chat: verde con brillo pulsante = 24/7). */
 .fab-chip {
@@ -410,7 +410,7 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .teaser-bubble {
   position: absolute;
-  left: 0;
+  right: 0;
   bottom: 0;
   width: 100%;
   max-width: 100%;
@@ -418,10 +418,10 @@ button { -webkit-tap-highlight-color: transparent; }
   backdrop-filter: blur(4px);
   color: #111827;
   padding: 0.75rem 2rem 0.75rem 0.9rem; /* margen derecho para la X */
-  border-radius: 1rem 1rem 1rem 0.25rem; /* esquina hacia el FAB (abajo-izq) */
+  border-radius: 1rem 1rem 0.25rem 1rem; /* esquina hacia el FAB */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transform-origin: bottom left;
+  transform-origin: bottom right;
   will-change: transform, opacity;
 }
 .teaser-bubble-entering { animation: teaser-pop 0.2s ease-out; }
@@ -469,7 +469,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .chat-panel {
   position: absolute;
   bottom: 9rem;
-  left: 1.5rem;
+  right: 1.5rem;
   width: 24rem;
   max-width: calc(100vw - 2rem);
   height: 32rem;
