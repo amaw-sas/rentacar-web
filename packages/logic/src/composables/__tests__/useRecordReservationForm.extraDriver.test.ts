@@ -130,6 +130,9 @@ describe('SCEN-396-07: without the add-on the payload is unchanged', () => {
     await useRecordReservationForm()
 
     // Frozen key set of the regular branch, captured before issue #396.
+    // extras-en-confirmación (28-jul) legitimately added the three *_price
+    // keys (always present, null when unselected) — this list guards against
+    // the #396 add-on leaking ITS keys, so it grows with unrelated features.
     const expectedKeys = [
       'fullname', 'identification_type', 'identification', 'phone', 'email',
       'category', 'pickup_location', 'pickup_date', 'pickup_hour',
@@ -138,7 +141,8 @@ describe('SCEN-396-07: without the add-on the payload is unchanged', () => {
       'total_insurance', 'reference_token', 'rate_qualifier', 'extra_driver',
       'baby_seat', 'wash', 'flight', 'attribution', 'extra_hours',
       'extra_hours_price', 'tax_fee', 'iva_fee', 'total_price',
-      'total_price_to_pay',
+      'total_price_to_pay', 'extra_driver_price', 'baby_seat_price',
+      'wash_price',
     ].sort()
 
     expect(Object.keys(lastBody()).sort()).toEqual(expectedKeys)

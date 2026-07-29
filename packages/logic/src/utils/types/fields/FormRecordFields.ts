@@ -38,6 +38,11 @@ export default interface FormFields {
   extra_driver_document?: string | undefined;
   baby_seat?: number | undefined;
   wash?: number | undefined;
+  // Agreed total per SELECTED extra (days × day price, or flat monthly).
+  // null = not selected — never 0, which downstream would read as "free".
+  extra_driver_price?: number | null;
+  baby_seat_price?: number | null;
+  wash_price?: number | null;
   // Always 0 — the flight branch was removed (issue #322 SCEN-322-X07); the
   // flag stays for wire compatibility with the dashboard record endpoint.
   flight?: number | undefined;

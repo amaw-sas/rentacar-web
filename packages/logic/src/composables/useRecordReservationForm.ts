@@ -20,6 +20,15 @@ import { RECORD_FETCH_TIMEOUT_MS } from '../utils/fetchTimeouts';
 // Types
 import type { FormRecordFields, RecordReservationApiData } from '@rentacar-main/logic/utils';
 
+// null = extra not selected (never 0 — downstream would read 0 as "free").
+function frozenExtraPrice(
+  selected: boolean | undefined,
+  price: number | undefined,
+): number | null {
+  if (!selected || price == null) return null;
+  return Math.round(price);
+}
+
 export default async function useRecordReservationForm() {
   const config = useRuntimeConfig();
   const endpoint = config.public.rentacarApiReservasFormRecordEndpoint;
@@ -81,6 +90,22 @@ export default async function useRecordReservationForm() {
     extra_driver: selectedCategory.value?.withExtraDriver ? 1 : 0,
     baby_seat: selectedCategory.value?.withBabySeat ? 1 : 0,
     wash: selectedCategory.value?.withWash ? 1 : 0,
+    // Freeze the agreed price of each selected extra so post-checkout surfaces
+    // (voucher, email) can show the same total the client accepted. The getters
+    // already resolve daily (days × day price) vs monthly (flat, mig 109).
+    // Rounded to whole pesos — COP has no subunit (same invariant as #376).
+    extra_driver_price: frozenExtraPrice(
+      selectedCategory.value?.withExtraDriver,
+      selectedCategory.value?.getExtraDriverPrice,
+    ),
+    baby_seat_price: frozenExtraPrice(
+      selectedCategory.value?.withBabySeat,
+      selectedCategory.value?.getBabySeatPrice,
+    ),
+    wash_price: frozenExtraPrice(
+      selectedCategory.value?.withWash,
+      selectedCategory.value?.getWashPrice,
+    ),
     // Flight branch removed (issue #322 SCEN-322-X07): no form ever collected
     // aerolinea/numeroVueloIda, so this was ALWAYS 0/null on the wire. Keep the
     // explicit "no flight" flag; aeroline/flight_number (always null) dropped.
