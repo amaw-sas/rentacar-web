@@ -520,8 +520,10 @@ button { -webkit-tap-highlight-color: transparent; }
 /* --- Panel inline (desktop) ---
    `--panel-lift` lo escribe el widget midiendo la lista de canales; el fallback
    de 9rem es la pila de dos filas (SSR y primer frame). El alto cede al espacio
-   disponible antes que desbordar por arriba: en un portátil de 768 px con tres
-   filas da 540 px en vez de 704. El ancho topa en 34rem porque la columna de
+   disponible antes que desbordar por arriba: el tope de 52rem solo llega a
+   aplicar con ventanas de 940 px o más, así que en portátiles de 13" y 14"
+   manda siempre el espacio libre y el alto no cambia. El ancho topa en 34rem
+   porque la columna de
    conversación se planta en 413 px (burbujas al 85%, ajustadas a su contenido):
    más ancho solo añade margen vacío. */
 .chat-panel {
@@ -529,7 +531,7 @@ button { -webkit-tap-highlight-color: transparent; }
   bottom: var(--panel-lift, 9rem);
   right: 1.5rem;
   width: min(34rem, calc(100vw - 2rem));
-  height: min(44rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));
+  height: min(52rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));
   border-radius: 1rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
   overflow: hidden;
