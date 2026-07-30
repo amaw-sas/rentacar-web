@@ -57,11 +57,9 @@
           <article ref="articleRef" class="lg:w-2/3 prose prose-lg prose-gray max-w-none">
             <MDCRenderer v-if="post.body" :body="post.body" :data="post" />
 
-            <!-- FAQ del post. Se renderiza SOLO si el post trae faq_items, y el
-                 schema FAQPage del script se construye desde este MISMO array:
-                 texto visible y datos estructurados no pueden divergir (regla
-                 anti-penalización). Texto plano en el DOM SSR a propósito — un
-                 acordeón dejaría las respuestas fuera del HTML servido. -->
+            <!-- FAQ visible del post. Se renderiza SOLO si el post trae faq_items.
+                 Texto plano en el DOM SSR a propósito: un acordeón dejaría las
+                 respuestas fuera del HTML servido. -->
             <section
               v-if="post.faqItems?.length"
               id="preguntas-frecuentes"
@@ -308,7 +306,6 @@
 <script setup lang="ts">
 import type { BlogPosting, BreadcrumbList } from 'schema-dts'
 import type { MDCRoot, Toc } from '@nuxtjs/mdc'
-import { defineQuestion } from '@unhead/schema-org'
 import type { BlogPost } from '@rentacar-main/logic/src'
 
 // The post-detail endpoint augments BlogPost with the parsed MDC `body`
@@ -484,23 +481,6 @@ if (post.value) {
     twitterDescription: post.value.description,
     twitterImage: post.value.image
   })
-
-  // FAQPage del post — construido desde el MISMO post.faqItems que renderiza
-  // la sección visible "Preguntas frecuentes" del template, con el mismo patrón
-  // defineQuestion de las FAQs de ciudad (inLanguage + @id por pregunta).
-  // Condicional: un post sin faq_items no emite ningún nodo FAQPage.
-  if (post.value.faqItems?.length) {
-    useSchemaOrg([
-      {
-        '@type': 'FAQPage',
-        mainEntity: post.value.faqItems.map((faq, index) => defineQuestion({
-          '@id': `${canonicalUrl.replace(/\/+$/, '')}#/schema/question/blog-faq-${index + 1}`,
-          name: faq.question,
-          acceptedAnswer: faq.answer,
-        })),
-      },
-    ])
-  }
 
   // BlogPosting schema
   useSchemaOrg([
