@@ -27,15 +27,19 @@
             {{ post.title }}
           </h1>
           <div class="flex flex-wrap items-center gap-4 text-sm text-gray-300">
-            <div class="flex items-center gap-2">
+            <NuxtLink
+              :to="blogAuthor.path"
+              class="flex items-center gap-2 hover:text-white transition-colors"
+            >
               <img
-                :src="post.author.avatar"
-                :alt="post.author.name"
+                v-if="blogAuthor.photo"
+                :src="blogAuthor.photo"
+                :alt="blogAuthor.name"
                 class="w-8 h-8 rounded-full"
                 loading="lazy"
               >
-              <span>{{ post.author.name }}</span>
-            </div>
+              <span>{{ blogAuthor.name }}</span>
+            </NuxtLink>
             <span class="inline-flex items-center gap-1.5">
               <UIcon name="i-lucide-calendar" class="size-4" />
               <time :datetime="post.date">{{ formatDate(post.date) }}</time>
@@ -175,18 +179,26 @@
         <div class="bg-surface-softer rounded-2xl p-6 md:p-8">
           <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <img
-              :src="post.author.avatar"
-              :alt="post.author.name"
+              v-if="blogAuthor.photo"
+              :src="blogAuthor.photo"
+              :alt="blogAuthor.name"
               class="w-20 h-20 rounded-full object-cover"
               loading="lazy"
             >
             <div class="text-center sm:text-left flex-1">
-              <h3 class="text-lg font-bold text-gray-900">{{ post.author.name }}</h3>
+              <h3 class="text-lg font-bold text-gray-900">
+                <NuxtLink :to="blogAuthor.path" class="hover:text-brand-700 transition-colors">
+                  {{ blogAuthor.name }}
+                </NuxtLink>
+              </h3>
+              <p class="text-sm font-medium text-brand-700 mt-1">{{ blogAuthor.jobTitle }} · Alquílame</p>
               <p class="text-gray-600 mt-2 text-sm">
-                Somos tu mejor opción para alquilar carros en Colombia. Con presencia en más de 27 ciudades,
-                ofrecemos el mejor servicio sin anticipos y sin complicaciones. Nuestro equipo te acompaña
-                en cada paso de tu viaje.
+                Lleva más de diez años alquilando carros en Colombia, con flota propia y convenios
+                empresariales. Dirige la operación de Alquílame, hoy en 19 ciudades y más de 30 sedes.
               </p>
+              <NuxtLink :to="blogAuthor.path" class="inline-flex mt-3 text-sm font-semibold text-brand-700 hover:text-brand-800">
+                Conoce a Diego Melo
+              </NuxtLink>
               <div class="mt-4 flex flex-col sm:flex-row items-center gap-3">
                 <NuxtLink
                   to="/reservas"
@@ -313,6 +325,21 @@ import type { BlogPost } from '@rentacar-main/logic/src'
 type BlogPostDetail = BlogPost & { body?: MDCRoot & { toc?: Toc } }
 
 const { franchise } = useAppConfig()
+const authorPhotoFiles = import.meta.glob(
+  './autores/images/diego-melo.{avif,webp,jpg,jpeg,png}',
+  { eager: true, query: '?url', import: 'default' },
+) as Record<string, string>
+const authorPhoto = Object.values(authorPhotoFiles)[0]
+const blogAuthor = {
+  name: 'Diego Melo',
+  jobTitle: 'Director General',
+  path: '/blog/autores/diego-melo',
+  photo: authorPhoto,
+}
+const authorUrl = `${franchise.website}${blogAuthor.path}`
+const authorImageUrl = blogAuthor.photo
+  ? new URL(blogAuthor.photo, franchise.website).toString()
+  : undefined
 const route = useRoute()
 
 // Get the slug from route params
@@ -473,7 +500,7 @@ if (post.value) {
     ogImageAlt: post.value.alt,
     articlePublishedTime: post.value.date,
     articleModifiedTime: post.value.updated || post.value.date,
-    articleAuthor: [post.value.author.name],
+    articleAuthor: [blogAuthor.name],
     articleSection: post.value.category,
     articleTag: post.value.tags,
     twitterCard: 'summary_large_image',
@@ -493,8 +520,10 @@ if (post.value) {
       dateModified: post.value.updated || post.value.date,
       author: {
         '@type': 'Person',
-        name: post.value.author.name,
-        image: `${franchise.website}${post.value.author.avatar}`
+        name: 'Diego Melo',
+        jobTitle: 'Director General',
+        url: authorUrl,
+        ...(authorImageUrl ? { image: authorImageUrl } : {})
       },
       publisher: {
         '@type': 'Organization',

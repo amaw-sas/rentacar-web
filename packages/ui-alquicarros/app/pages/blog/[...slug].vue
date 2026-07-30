@@ -475,9 +475,8 @@ if (post.value) {
       datePublished: post.value.date,
       dateModified: post.value.updated || post.value.date,
       author: {
-        '@type': 'Person',
-        name: post.value.author.name,
-        image: `${franchise.website}${post.value.author.avatar}`
+        '@type': 'Organization',
+        name: franchise.shortname
       },
       publisher: {
         '@type': 'Organization',

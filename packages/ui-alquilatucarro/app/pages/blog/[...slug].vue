@@ -561,9 +561,8 @@ if (post.value) {
       datePublished: post.value.date,
       dateModified: post.value.updated ?? post.value.date,
       author: {
-        '@type': 'Person',
-        name: post.value.author.name,
-        image: resolveImageUrl(post.value.author.avatar, franchise.website)
+        '@type': 'Organization',
+        name: franchise.shortname
       },
       publisher: {
         '@type': 'Organization',
