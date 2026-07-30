@@ -43,6 +43,7 @@
         aria-label="Chat de asistencia"
         tabindex="-1"
         class="chat-panel pointer-events-auto"
+        :style="panelLiftStyle"
       >
         <ChatConversation :active="panelOpen" variant="panel" @dismiss="panelOpen = false" />
       </div>
@@ -86,6 +87,7 @@
 
         <!-- Los dos canales son visibles y accionables sin abrir un menú. -->
         <ul
+          ref="channelsEl"
           aria-label="Canales de contacto"
           class="flex flex-col items-end gap-3 pointer-events-auto"
         >
@@ -154,6 +156,7 @@ import {
   TEASER_LINE_1,
   TEASER_LINE_2,
 } from '@rentacar-main/logic/composables/useContactTeaser'
+import { chatPanelLiftPx } from '@rentacar-main/logic/utils/chatPanelLift'
 
 // The conversation/SSE/markdown graph is interaction-only. Because the panel
 // is also guarded by v-if, this loader is not requested until desktop chat is
@@ -178,6 +181,34 @@ const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
+
+// El panel se ancla SOBRE los canales visibles, nunca sobre una constante: el
+// switch de WhatsApp del dashboard cambia la pila entre 2 y 3 filas en caliente,
+// y `bottom: 9rem` (la pila de 2) dejaba la tercera fila DENTRO del panel
+// tapando el 40% del campo de texto. Se mide el <ul> y no `.contact-fab-stack`
+// porque el stack incluye el teaser-sizer oculto y su hueco (122 px medidos).
+const channelsEl = ref<HTMLElement | null>(null)
+const channelsHeight = ref(0)
+let channelsObserver: ResizeObserver | null = null
+const panelLiftStyle = computed(() => {
+  const lift = chatPanelLiftPx(channelsHeight.value)
+  return lift === null ? undefined : `--panel-lift: ${lift}px`
+})
+function measureChannels() {
+  channelsHeight.value = channelsEl.value?.getBoundingClientRect().height ?? 0
+}
+// La lista vive detrás de un v-if (switches del dashboard, overlay de reserva),
+// así que el observer se re-engancha cuando el elemento aparece o desaparece.
+// En servidor el ref es null y ResizeObserver nunca se toca.
+watch(channelsEl, (el) => {
+  channelsObserver?.disconnect()
+  channelsObserver = null
+  if (!el) return
+  measureChannels()
+  channelsObserver = new ResizeObserver(measureChannels)
+  channelsObserver.observe(el)
+}, { immediate: true })
+onBeforeUnmount(() => channelsObserver?.disconnect())
 
 // Desplazamiento a la izquierda de main (>=1024px), conservado tal cual.
 // OJO: hoy es INALCANZABLE — `hideContactButtons` de abajo desmonta el stack en
@@ -319,6 +350,10 @@ function openChat() {
   if (unread.value > 0) emitReopenedFromBadge()
   // Desktop: panel inline sobre la página (no navega). Móvil: /chat full-screen.
   if (isDesktop.value) {
+    // Medida sincrónica antes de abrir: el <ul> ya está montado porque el
+    // visitante acaba de pulsar el FAB, así que el panel nace con el bottom
+    // correcto en vez de saltar un frame desde el fallback.
+    measureChannels()
     panelOpen.value = true
   }
   else navigateTo('/chat')
@@ -478,15 +513,17 @@ button { -webkit-tap-highlight-color: transparent; }
   border: 0;
 }
 
-/* --- Panel inline (desktop) --- */
+/* --- Panel inline (desktop) ---
+   `--panel-lift` lo escribe el widget midiendo la lista de canales; el fallback
+   de 9rem es la pila de dos filas (SSR y primer frame). El alto cede al espacio
+   disponible antes que desbordar por arriba: en un portátil de 768 px con tres
+   filas da 540 px en vez de 640. */
 .chat-panel {
   position: absolute;
-  bottom: 9rem;
+  bottom: var(--panel-lift, 9rem);
   right: 1.5rem;
-  width: 24rem;
-  max-width: calc(100vw - 2rem);
-  height: 32rem;
-  max-height: min(75dvh, 40rem);
+  width: min(28rem, calc(100vw - 2rem));
+  height: min(40rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));
   border-radius: 1rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
   overflow: hidden;
