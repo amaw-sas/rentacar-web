@@ -26,14 +26,19 @@ describe('brand index signals', () => {
     it(`${brand}: submits /gana and excludes noindex chat from its sitemap`, () => {
       const sitemap = sitemapConfig(readBrandFile(brand, 'nuxt.config.ts'))
 
-      expect(sitemap).toContain("{ loc: '/gana', changefreq: 'monthly', priority: 0.7 }")
-      expect(sitemap).toContain(
-        "{ loc: '/gana/terminos-condiciones', changefreq: 'yearly', priority: 0.3 }",
-      )
-      expect(sitemap).toContain(
-        "{ loc: '/gana/politicas-privacidad', changefreq: 'yearly', priority: 0.3 }",
-      )
+      expect(sitemap).toContain("{ loc: '/gana' }")
+      expect(sitemap).toContain("{ loc: '/gana/terminos-condiciones' }")
+      expect(sitemap).toContain("{ loc: '/gana/politicas-privacidad' }")
       expect(sitemap).toMatch(/exclude: \[[^\]]*'\/chat'/)
+    })
+
+    it(`${brand}: omits ignored and unverifiable sitemap metadata`, () => {
+      const sitemap = sitemapConfig(readBrandFile(brand, 'nuxt.config.ts'))
+      const blogSource = readBrandFile(brand, 'server/api/__sitemap__/blog.get.ts')
+
+      expect(sitemap).not.toMatch(/\b(?:changefreq|priority|lastmod)\s*:/)
+      expect(blogSource).not.toMatch(/\b(?:changefreq|priority|lastmod)\s*:/)
+      expect(blogSource).toContain(".select('slug')")
     })
 
     it(`${brand}: sends noindex headers on non-indexable public pages`, () => {
