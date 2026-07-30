@@ -35,10 +35,26 @@ porque `whatsappVisible` sigue el horario del dashboard.
 
 ## SCEN-004: el panel usa el área que el dueño aprobó
 
-**Given**: cualquiera de las marcas en escritorio con ventana de 889 px de alto
+Revisado el 2026-07-29 tras ver el panel con una cotización real: el dueño pidió
+más área. Medido, 448 px partía en dos líneas 3 de las 4 filas de precios. El
+tamaño sube a 544 × 704. Pasado 544 la columna de conversación se planta en
+413 px (las burbujas topan al 85% y se ajustan a su contenido), así que más
+ancho solo añade margen vacío — ese es el techo, no una preferencia.
+
+**Given**: cualquiera de las marcas en escritorio con ventana de 1067 px de alto
 **When**: el panel está abierto
-**Then**: mide 448 px de ancho y 640 px de alto, y su borde superior queda a más de 24 px del tope del viewport
-**Evidence**: `getBoundingClientRect` del panel: `width: 448`, `height: 640`, `top > 24`
+**Then**: mide 544 px de ancho y 704 px de alto, y su borde superior queda a más de 24 px del tope del viewport
+**Evidence**: `getBoundingClientRect` del panel: `width: 544`, `height: 704`, `top > 24`
+
+## SCEN-008: la tabla de precios no parte ninguna fila
+
+Es el observable que justifica el ancho. A 448 px se partían 3 de 4 filas y la
+tabla medía 295 px en vez de 234.
+
+**Given**: una cotización de 4 gamas, con la etiqueta más larga (`Camioneta Automática de Lujo (Gama LE)`) y su precio al lado
+**When**: se rinde dentro de una burbuja del panel en escritorio
+**Then**: las 4 filas ocupan una sola línea — todas la misma altura, ninguna por encima de 45 px
+**Evidence**: altura de cada `.cc-quote-row` con `getBoundingClientRect`; no se puede comprobar en jsdom (no hay motor de maquetación), se verifica en navegador
 
 ## SCEN-005: en pantalla corta el panel se encoge, no desborda
 

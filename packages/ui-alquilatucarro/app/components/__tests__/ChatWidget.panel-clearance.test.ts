@@ -90,17 +90,21 @@ describe('SCEN-001/002 — el panel se ancla sobre la pila medida, no sobre una 
 })
 
 describe('SCEN-004/005 — el panel usa el área aprobada y se encoge en pantalla corta', () => {
-  it('mide 28rem de ancho acotado al viewport', () => {
+  // SCEN-008: 34rem es el ancho donde la tabla de precios deja de partir filas.
+  // Medido en navegador: a 28rem se partían 3 de 4. No sube más porque la
+  // columna de conversación topa en 413 px (burbujas al 85%, ajustadas a su
+  // contenido) y todo lo que exceda es margen vacío.
+  it('mide 34rem de ancho acotado al viewport', () => {
     for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('width: min(28rem, calc(100vw - 2rem));')
+      expect(source, brand).toContain('width: min(34rem, calc(100vw - 2rem));')
       expect(source, brand).not.toMatch(/^\s*width: 24rem;$/m)
     }
   })
 
-  it('techo de 40rem que cede al alto disponible en vez de desbordar', () => {
+  it('techo de 44rem que cede al alto disponible en vez de desbordar', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain(
-        'height: min(40rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));',
+        'height: min(44rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));',
       )
       // El par height:32rem + max-height:min(75dvh,40rem) se contradecía: el
       // techo permitía 640px pero el alto fijo cortaba en 512.
