@@ -192,6 +192,10 @@ watch(channelsEl, (el) => {
   channelsObserver = null
   if (!el) return
   measureChannels()
+  // jsdom no implementa ResizeObserver. La medida sincrónica de `openChat`
+  // basta para colocar el panel; sin observador solo se pierde el reajuste
+  // posterior, que en un entorno sin layout no tiene nada que observar.
+  if (typeof ResizeObserver === 'undefined') return
   channelsObserver = new ResizeObserver(measureChannels)
   channelsObserver.observe(el)
 }, { immediate: true })

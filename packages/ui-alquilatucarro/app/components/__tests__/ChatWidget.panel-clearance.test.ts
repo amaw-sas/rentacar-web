@@ -62,6 +62,21 @@ describe('SCEN-001/002 — el panel se ancla sobre la pila medida, no sobre una 
     }
   })
 
+  // Regresión: la primera versión construía el ResizeObserver sin comprobar que
+  // existiera y reventaba en jsdom con `ReferenceError` en cuanto otra suite
+  // MONTABA el widget (ChatWidget.whatsappSchedule.test.ts en ui-alquicarros).
+  it('no construye el observador donde el entorno no lo tiene', () => {
+    for (const { brand, source } of brandWidgets) {
+      const guard = source.indexOf("if (typeof ResizeObserver === 'undefined') return")
+      const build = source.indexOf('new ResizeObserver(')
+      expect(guard, `${brand}: falta la guarda de ResizeObserver`).toBeGreaterThan(-1)
+      expect(
+        guard,
+        `${brand}: la guarda va DESPUÉS de construirlo`,
+      ).toBeLessThan(build)
+    }
+  })
+
   it('SCEN-006 — reobserva la pila para seguir el horario de WhatsApp', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain('ResizeObserver')
