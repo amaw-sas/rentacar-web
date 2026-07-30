@@ -101,10 +101,13 @@ describe('SCEN-004/005 — el panel usa el área aprobada y se encoge en pantall
     }
   })
 
-  it('techo de 44rem que cede al alto disponible en vez de desbordar', () => {
+  // El tope de 52rem solo llega a aplicar con ventanas de 940 px o más de alto
+  // (1 fila) o 1060 px (3 filas). Por debajo — cualquier portátil de 13" o 14" —
+  // manda el espacio disponible y el alto es el mismo que antes de subir el tope.
+  it('techo de 52rem que cede al alto disponible en vez de desbordar', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain(
-        'height: min(44rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));',
+        'height: min(52rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));',
       )
       // El par height:32rem + max-height:min(75dvh,40rem) se contradecía: el
       // techo permitía 640px pero el alto fijo cortaba en 512.
