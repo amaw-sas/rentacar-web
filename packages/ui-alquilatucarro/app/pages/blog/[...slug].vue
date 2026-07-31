@@ -383,7 +383,7 @@
 </template>
 
 <script setup lang="ts">
-import type { BlogPosting, BreadcrumbList, FAQPage } from 'schema-dts'
+import type { BlogPosting, BreadcrumbList } from 'schema-dts'
 import type { MDCRoot, Toc } from '@nuxtjs/mdc'
 import type { BlogPost } from '@rentacar-main/logic/src'
 
@@ -561,9 +561,8 @@ if (post.value) {
       datePublished: post.value.date,
       dateModified: post.value.updated ?? post.value.date,
       author: {
-        '@type': 'Person',
-        name: post.value.author.name,
-        image: resolveImageUrl(post.value.author.avatar, franchise.website)
+        '@type': 'Organization',
+        name: franchise.shortname
       },
       publisher: {
         '@type': 'Organization',
@@ -600,19 +599,7 @@ if (post.value) {
           name: post.value.title
         }
       ]
-    },
-    // FAQPage schema — only when post has faqItems from the pipeline
-    ...(post.value.faqItems?.length ? [<FAQPage>{
-      '@type': 'FAQPage',
-      mainEntity: post.value.faqItems.map((faq: { question: string; answer: string }) => ({
-        '@type': 'Question',
-        name: faq.question,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: faq.answer
-        }
-      }))
-    }] : [])
+    }
   ])
 }
 

@@ -129,26 +129,24 @@ describe('SCEN-F4-11 — SEO / schema preserved in <script setup>', () => {
   })
 })
 
-describe('SEO audit P0 — BlogPosting author is a Person, not an Organization', () => {
-  // The page renders a human author (avatar + name + bio), so the JSON-LD author
-  // must be a Person carrying that name and avatar — an Organization author on a
-  // by-lined post is a structured-data mismatch.
+describe('SEO audit P0 — BlogPosting author is the real human signer', () => {
   const authorStart = scriptBlock.indexOf('author: {')
-  // Slice only the author object (up to its closing brace) so the following
-  // publisher block — legitimately an Organization — never bleeds in.
-  // End at '},' (not '}') — the avatar template literal contains '}' chars.
   const authorBlock = scriptBlock.slice(
     authorStart,
-    scriptBlock.indexOf('},', authorStart),
+    scriptBlock.indexOf('publisher:', authorStart),
   )
 
-  it('the BlogPosting author uses @type Person with the post author name + image', () => {
+  it('uses Diego Melo as a Person with separate job title and profile URL', () => {
     expect(authorBlock).toMatch(/'@type':\s*'Person'/)
-    expect(authorBlock).toMatch(/name:\s*post\.value\.author\.name/)
-    // Avatar must be an absolute URL — schema.org consumers ignore relative paths.
-    expect(authorBlock).toMatch(
-      /image:\s*`\$\{franchise\.website\}\$\{post\.value\.author\.avatar\}`/,
-    )
+    expect(authorBlock).toMatch(/name:\s*'Diego Melo'/)
+    expect(authorBlock).toMatch(/jobTitle:\s*'Director General'/)
+    expect(authorBlock).toMatch(/url:\s*authorUrl/)
+    expect(authorBlock).not.toMatch(/post\.value\.author\.name/)
     expect(authorBlock).not.toMatch(/'@type':\s*'Organization'/)
+  })
+
+  it('does not publish a missing author image', () => {
+    expect(slug).toMatch(/v-if="blogAuthor\.photo"/)
+    expect(authorBlock).toMatch(/authorImageUrl\s*\?\s*\{ image: authorImageUrl \}/)
   })
 })
