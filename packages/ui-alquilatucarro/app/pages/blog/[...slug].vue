@@ -206,19 +206,26 @@
             </div>
             <div class="text-center sm:text-left flex-1">
               <div class="flex items-center justify-center sm:justify-start gap-2">
-                <h3 class="text-lg font-bold text-gray-900">{{ post.author.name }}</h3>
+                <h3 class="text-lg font-bold text-gray-900">
+                  <NuxtLink :to="blogAuthor.path" class="hover:text-blue-700 transition-colors">
+                    {{ blogAuthor.name }}
+                  </NuxtLink>
+                </h3>
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded-full">
                   <UIcon name="i-lucide-badge-check" class="size-3" />
                   Verificado
                 </span>
               </div>
-              <p class="text-sm text-gray-500 mt-0.5">Equipo Editorial · Guías de viaje en carro</p>
-              <p class="text-gray-600 mt-3 text-sm">
-                Creamos guías prácticas para viajeros en Colombia basadas en experiencia real.
-                Con más de 27 sedes en el país, nuestro equipo conoce las rutas, requisitos y
-                recomendaciones que necesitas para viajar tranquilo.
-              </p>
+              <p class="text-sm text-gray-500 mt-0.5">{{ blogAuthor.jobTitle }} · Alquila tu Carro</p>
+              <p class="text-gray-600 mt-3 text-sm">{{ blogAuthor.bio[0] }}</p>
               <div class="mt-4 flex flex-col sm:flex-row items-center gap-3">
+                <NuxtLink
+                  :to="blogAuthor.path"
+                  class="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                >
+                  Conoce a {{ blogAuthor.name }}
+                  <UIcon name="i-lucide-arrow-right" class="size-4" />
+                </NuxtLink>
                 <NuxtLink
                   to="/"
                   class="inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-5 py-2.5 rounded-lg font-medium transition-colors"
@@ -386,12 +393,27 @@
 import type { BlogPosting, BreadcrumbList } from 'schema-dts'
 import type { MDCRoot, Toc } from '@nuxtjs/mdc'
 import type { BlogPost } from '@rentacar-main/logic/src'
+import { AUTHOR } from './autores/elisa-arcos.author'
 
 // The post-detail endpoint augments BlogPost with the parsed MDC `body`
 // (toc merged in) — list endpoints return the bare BlogPost without it.
 type BlogPostDetail = BlogPost & { body?: MDCRoot & { toc?: Toc } }
 
 const { franchise } = useAppConfig()
+
+// The byline is a real person (issue #440). `blog_posts.author_name` still holds
+// the brand string, so it is deliberately NOT the source here: declaring a
+// franchise as a `Person` is the defect this replaced.
+const authorPhotoFiles = import.meta.glob(
+  './autores/images/elisa-arcos.{avif,webp,jpg,jpeg,png}',
+  { eager: true, query: '?url', import: 'default' },
+) as Record<string, string>
+const authorPhoto = Object.values(authorPhotoFiles)[0]
+const blogAuthor = { ...AUTHOR, photo: authorPhoto }
+const authorUrl = `${franchise.website}${blogAuthor.path}`
+const authorImageUrl = blogAuthor.photo
+  ? new URL(blogAuthor.photo, franchise.website).toString()
+  : undefined
 const route = useRoute()
 
 // Get the slug from route params
@@ -561,8 +583,11 @@ if (post.value) {
       datePublished: post.value.date,
       dateModified: post.value.updated ?? post.value.date,
       author: {
-        '@type': 'Organization',
-        name: franchise.shortname
+        '@type': 'Person',
+        name: 'Elisa Arcos',
+        jobTitle: blogAuthor.jobTitle,
+        url: authorUrl,
+        ...(authorImageUrl ? { image: authorImageUrl } : {})
       },
       publisher: {
         '@type': 'Organization',

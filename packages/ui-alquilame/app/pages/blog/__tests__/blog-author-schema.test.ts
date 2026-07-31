@@ -57,13 +57,33 @@ describe('BlogPosting author identity across brands', () => {
     expect(author).toMatch(/url:\s*authorUrl/)
   })
 
-  it.each(['alquilatucarro', 'alquicarros'] as const)(
-    'uses an honest Organization author for %s',
+  it('uses the owner-approved human author for alquilatucarro', () => {
+    const author = authorBlock(pages.alquilatucarro)
+    expect(author).toMatch(/'@type':\s*'Person'/)
+    expect(author).toMatch(/name:\s*'Elisa Arcos'/)
+    expect(author).toMatch(/jobTitle:/)
+    expect(author).toMatch(/url:\s*authorUrl/)
+  })
+
+  // alquicarros keeps the Organization byline: it is not an active franchise and
+  // has no signer. Organization is honest here — the defect this whole guard
+  // exists to prevent is the opposite one, a franchise declared as a `Person`.
+  it('uses an honest Organization author for alquicarros', () => {
+    const author = authorBlock(pages.alquicarros)
+    expect(author).toMatch(/'@type':\s*'Organization'/)
+    expect(author).toMatch(/name:\s*franchise\.shortname/)
+    expect(author).not.toMatch(/'@type':\s*'Person'/)
+  })
+
+  // The invariant that survives every byline decision: no brand name may ever be
+  // declared as a Person, whichever brands happen to have a human signer.
+  it.each(['alquilame', 'alquilatucarro', 'alquicarros'] as const)(
+    'never declares a franchise name as a Person in %s',
     (brand) => {
       const author = authorBlock(pages[brand])
-      expect(author).toMatch(/'@type':\s*'Organization'/)
-      expect(author).toMatch(/name:\s*franchise\.shortname/)
-      expect(author).not.toMatch(/'@type':\s*'Person'/)
+      if (!/'@type':\s*'Person'/.test(author)) return
+      expect(author).not.toMatch(/name:\s*franchise\.shortname/)
+      expect(author).not.toMatch(/name:\s*'(Alquilame|Alquila tu Carro|Alquicarros)'/)
     },
   )
 })

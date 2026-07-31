@@ -597,6 +597,9 @@ export default defineNuxtConfig({
       { loc: '/soledad' },
       // Blog index — individual /blog/* posts come from sitemap.sources (dynamic, Supabase)
       { loc: '/blog' },
+      // Author page — `author.url` in every post's BlogPosting points here, and Google's
+      // helpful-content guidance expects the byline to lead somewhere. Static: one author.
+      { loc: '/blog/autores/elisa-arcos' },
       // Indexable referral acquisition landing
       { loc: '/gana' },
       // Indexable referral-program legal pages
