@@ -243,7 +243,7 @@ Desktop mantiene excelente rendimiento - sin cambios significativos.
 - 🎯 19 ciudades = 19 oportunidades de posicionamiento
 - 🎯 **Ibagué casi en Top 10** (posición 9.5) - optimizar para entrar
 - 🎯 **Manizales progresando** (posición 11.2, 109 impresiones)
-- 🎯 **Keywords "sin tarjeta de crédito"** ya posicionadas - expandir contenido
+- ~~🎯 **Keywords "sin tarjeta de crédito"** ya posicionadas - expandir contenido~~ → **ANULADO 2026-07-29 por el dueño.** No expandir: la tarjeta de crédito es obligatoria, así que atraer más de esa búsqueda trae gente que no puede alquilar. La FAQ del home que ya rankea SE QUEDA (responde "no" honestamente y ahorra la llamada), pero no se escribe contenido nuevo para el tema. Ver `docs/specs/2026-07-29-parrilla-blog-design.md`.
 - 🎯 Long-tail keywords con poca competencia
 - 🎯 FAQs estructuradas para featured snippets
 - 🎯 Contenido local diferenciado por ciudad
@@ -265,7 +265,7 @@ Desktop mantiene excelente rendimiento - sin cambios significativos.
 ### 🟡 Alta Prioridad (Este mes)
 4. **Obtener métricas DA/PA** - Con MOZ/SEMRush
 5. **Optimizar página Ibagué** - Ya en posición 9.5, push para Top 10
-6. **Expandir contenido "sin tarjeta de crédito"** - Keywords ya posicionadas
+6. ~~**Expandir contenido "sin tarjeta de crédito"**~~ - **ANULADO 2026-07-29:** tema vetado, no expandir (ver Oportunidades arriba)
 
 ### 🟢 Media Prioridad (Próximo mes)
 7. **Análisis de competidores** - Top 3 por ciudad

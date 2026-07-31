@@ -1,0 +1,748 @@
+<title>Silos y enlaces del blog — alquilame y alquilatucarro</title>
+
+<style>
+  :root {
+    --bg: #F4F6F9;
+    --surface: #FFFFFF;
+    --surface-2: #EDF1F6;
+    --ink: #111720;
+    --muted: #59657A;
+    --line: #DBE2EC;
+    --line-strong: #B9C5D4;
+    --alq: #B5342A;
+    --alq-soft: #FBEEEC;
+    --atc: #1B5C9E;
+    --atc-soft: #EAF1F9;
+    --city: #0E7C6B;
+    --city-soft: #E6F4F1;
+    --shadow: 0 1px 2px rgba(17,23,32,.05), 0 8px 24px -16px rgba(17,23,32,.25);
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D1117; --surface: #161C24; --surface-2: #1D242E;
+      --ink: #E6ECF4; --muted: #8E9AAB; --line: #28313D; --line-strong: #3B4756;
+      --alq: #E8756A; --alq-soft: #2A1917;
+      --atc: #6BA5E4; --atc-soft: #14202E;
+      --city: #3FBBA3; --city-soft: #10241F;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0D1117; --surface: #161C24; --surface-2: #1D242E;
+    --ink: #E6ECF4; --muted: #8E9AAB; --line: #28313D; --line-strong: #3B4756;
+    --alq: #E8756A; --alq-soft: #2A1917;
+    --atc: #6BA5E4; --atc-soft: #14202E;
+    --city: #3FBBA3; --city-soft: #10241F;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+  :root[data-theme="light"] {
+    --bg: #F4F6F9; --surface: #FFFFFF; --surface-2: #EDF1F6;
+    --ink: #111720; --muted: #59657A; --line: #DBE2EC; --line-strong: #B9C5D4;
+    --alq: #B5342A; --alq-soft: #FBEEEC;
+    --atc: #1B5C9E; --atc-soft: #EAF1F9;
+    --city: #0E7C6B; --city-soft: #E6F4F1;
+    --shadow: 0 1px 2px rgba(17,23,32,.05), 0 8px 24px -16px rgba(17,23,32,.25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 22px 90px; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(28px, 4.4vw, 44px); font-weight: 800; letter-spacing: -.032em;
+    line-height: 1.08; margin: 0 0 14px; text-wrap: balance; max-width: 20ch;
+  }
+  .lede { font-size: 17px; color: var(--muted); max-width: 62ch; margin: 0; }
+
+  h2 {
+    font-size: 22px; font-weight: 800; letter-spacing: -.02em;
+    margin: 0 0 6px; text-wrap: balance;
+  }
+  .sec { margin-top: 56px; }
+  .sec > p { color: var(--muted); max-width: 66ch; margin: 0 0 20px; }
+
+  hr.rule { border: 0; border-top: 1px solid var(--line); margin: 48px 0 0; }
+
+  /* ---------- explicador ---------- */
+  .explain {
+    display: grid; grid-template-columns: minmax(0,1fr) minmax(0,300px);
+    gap: 28px; align-items: start;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 24px; box-shadow: var(--shadow);
+  }
+  @media (max-width: 760px) { .explain { grid-template-columns: 1fr; } }
+  .explain ul { margin: 0; padding-left: 18px; color: var(--muted); }
+  .explain li { margin-bottom: 8px; }
+  .explain li b { color: var(--ink); }
+
+  .mini { display: grid; gap: 8px; justify-items: center; }
+  .mini-node {
+    width: 100%; text-align: center; padding: 9px 12px; border-radius: 9px;
+    font-size: 13px; font-weight: 600; border: 1px solid var(--line-strong);
+    background: var(--surface-2);
+  }
+  .mini-node.pil {
+    background: var(--alq-soft); border-color: var(--alq); color: var(--alq); font-weight: 800;
+  }
+  .mini-arrow {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+  .mini-sats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+
+  /* ---------- leyenda ---------- */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .07em;
+    text-transform: uppercase; padding: 5px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+  /* ---------- tablero ---------- */
+  .board { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 900px) { .board { grid-template-columns: 1fr; } }
+
+  .brand { display: grid; gap: 16px; }
+  .brand-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 12px; padding-bottom: 10px; border-bottom: 2px solid currentColor;
+  }
+  .brand-head .name { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+  .brand-head .meta {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .brand.alq { color: var(--alq); }
+  .brand.atc { color: var(--atc); }
+
+  .silo {
+    position: relative; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 16px 16px 14px; box-shadow: var(--shadow);
+    color: var(--ink);
+  }
+  .silo-title {
+    display: flex; align-items: center; gap: 9px; margin-bottom: 12px;
+  }
+  .silo-code {
+    font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    padding: 3px 7px; border-radius: 6px; color: #fff;
+  }
+  .alq .silo-code { background: var(--alq); }
+  .atc .silo-code { background: var(--atc); }
+  .silo-name { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+
+  .silo-body { position: relative; }
+  .conn { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+
+  .nodes { position: relative; display: grid; gap: 9px; }
+  .sats { display: grid; gap: 9px; margin-left: 26px; }
+
+  .node {
+    position: relative; text-align: left; width: 100%; display: block;
+    background: var(--surface-2); border: 1px solid var(--line-strong);
+    border-radius: 10px; padding: 10px 12px; cursor: pointer;
+    font-family: inherit; color: inherit; transition: border-color .13s, background .13s, transform .13s;
+  }
+  .node:hover { transform: translateY(-1px); }
+  .node:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .node .n-top {
+    display: flex; align-items: center; gap: 7px; margin-bottom: 3px; flex-wrap: wrap;
+  }
+  .node .n-title { font-size: 14px; font-weight: 650; letter-spacing: -.008em; line-height: 1.3; }
+  .node .n-kw {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    word-break: break-word; display: block; margin-top: 2px;
+  }
+  .badge {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; padding: 2px 6px; border-radius: 5px; flex: none;
+    border: 1px solid transparent;
+  }
+  .b-pil { color: #fff; }
+  .alq .b-pil { background: var(--alq); }
+  .atc .b-pil { background: var(--atc); }
+  .b-t1 { background: var(--city-soft); color: var(--city); border-color: var(--city); }
+  .b-t2, .b-t3 { background: transparent; color: var(--muted); border-color: var(--line-strong); }
+  .b-open { background: transparent; color: var(--muted); border-style: dashed; border-color: var(--line-strong); }
+
+  .node.pillar { background: var(--surface); border-width: 2px; }
+  .alq .node.pillar { border-color: var(--alq); }
+  .atc .node.pillar { border-color: var(--atc); }
+  .alq .node.pillar .n-title { color: var(--alq); font-weight: 800; }
+  .atc .node.pillar .n-title { color: var(--atc); font-weight: 800; }
+
+  .node.open { border-style: dashed; background: transparent; }
+  .node.open .n-title { color: var(--muted); font-weight: 500; }
+
+  .node.dim { opacity: .26; }
+  .node.sel { box-shadow: 0 0 0 3px var(--ink); }
+  .node.rel-in  { border-color: var(--city); }
+  .node.rel-out { border-color: var(--ink); }
+
+  .silo.dim { opacity: .42; }
+
+  /* ---------- panel ---------- */
+  .panel {
+    position: sticky; bottom: 16px; margin-top: 26px;
+    background: var(--surface); border: 1px solid var(--line-strong);
+    border-radius: 14px; padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .panel[hidden] { display: none; }
+  .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+  .panel h3 { margin: 0 0 4px; font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+  .panel .p-kw { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .panel-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px; margin-top: 16px;
+  }
+  .p-block h4 {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 5px; font-weight: 700;
+  }
+  .p-block p { margin: 0; font-size: 14px; line-height: 1.5; }
+  .p-block ul { margin: 0; padding-left: 16px; font-size: 14px; }
+  .p-block li { margin-bottom: 3px; }
+  .closebtn {
+    flex: none; border: 1px solid var(--line-strong); background: var(--surface-2);
+    color: var(--muted); border-radius: 8px; padding: 5px 10px; cursor: pointer;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  }
+  .closebtn:hover { color: var(--ink); }
+
+  .hint {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 16px;
+  }
+
+  /* ---------- ciudades ---------- */
+  .cities { display: flex; flex-wrap: wrap; gap: 7px; }
+  .city-pill {
+    font-family: var(--mono); font-size: 11.5px; padding: 5px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  }
+  .city-pill.hit {
+    border-color: var(--city); background: var(--city-soft); color: var(--city); font-weight: 700;
+  }
+  .city-pill.lit { box-shadow: 0 0 0 3px var(--ink); }
+
+  table.notes { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.notes td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.notes tr:last-child td { border-bottom: 0; }
+  table.notes td:first-child {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--muted); white-space: nowrap; width: 1%; padding-right: 20px; padding-top: 11px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Parrilla de contenido · 29 de julio de 2026</p>
+  <h1>Cómo se enlazan los artículos entre sí</h1>
+  <p class="lede">
+    Once silos, 31 espacios, 12 artículos comprometidos para la primera tanda.
+    Toca cualquier tarjeta para ver de dónde recibe enlaces y hacia dónde los manda.
+  </p>
+
+  <div class="sec">
+    <h2>Qué es un silo</h2>
+    <p>
+      Agrupar por tema, como los estantes de una biblioteca. Google entiende que sabes de Armenia
+      cuando ve un bloque de páginas conectadas hablando de Armenia. Si todo enlaza con todo,
+      no hay tema: hay ruido, y la autoridad se reparte en pedacitos inútiles.
+    </p>
+    <div class="explain">
+      <ul>
+        <li><b>El pilar</b> es el artículo grande del tema, el que quieres que rankee. Recibe enlaces de todos sus satélites.</li>
+        <li><b>Los satélites</b> profundizan un pedacito y apuntan hacia arriba, al pilar. Así le pasan autoridad.</li>
+        <li><b>El pilar devuelve</b> un enlace a cada satélite, para que Google los encuentre y entienda que son del mismo tema.</li>
+        <li><b>Entre silos distintos</b> van pocos puentes. Uno o dos, no todos con todos.</li>
+        <li><b>Todos</b> enlazan a la página de la ciudad que les corresponde. Ese es el destino que vende.</li>
+        <li><b>La regla que decide cada enlace:</b> ¿por qué un lector lo seguiría? Si la única razón es un dato interno del negocio, se borra.</li>
+      </ul>
+      <div class="mini" aria-hidden="true">
+        <div class="mini-node pil">PILAR</div>
+        <div class="mini-arrow">▲ reciben ↓ devuelve</div>
+        <div class="mini-sats">
+          <div class="mini-node">satélite</div>
+          <div class="mini-node">satélite</div>
+        </div>
+        <div class="mini-arrow">▼</div>
+        <div class="mini-node" style="background:var(--city-soft);border-color:var(--city);color:var(--city);font-weight:800">/ciudad</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="sec">
+    <h2>El tablero</h2>
+    <p>
+      Los pilares se escriben primero. Así cada satélite que se agregue después alimenta un pilar
+      que ya existe, y no hay que volver atrás a reescribir nada.
+    </p>
+
+    <div class="legend">
+      <span class="chip"><span class="dot" style="background:var(--alq)"></span>alquilame</span>
+      <span class="chip"><span class="dot" style="background:var(--atc)"></span>alquilatucarro</span>
+      <span class="chip"><span class="dot" style="background:var(--city)"></span>tanda 1 — keyword comprometida</span>
+      <span class="chip"><span class="dot" style="background:var(--line-strong)"></span>tanda 2 y 3 — tema fijo, keyword por elegir</span>
+      <span class="chip">borde grueso = pilar del silo</span>
+    </div>
+
+    <p class="hint">Toca una tarjeta para ver sus enlaces</p>
+
+    <div class="board" id="board"></div>
+
+    <div class="panel" id="panel" hidden>
+      <div class="panel-head">
+        <div>
+          <h3 id="p-title"></h3>
+          <div class="p-kw" id="p-kw"></div>
+        </div>
+        <button class="closebtn" id="p-close" type="button">cerrar</button>
+      </div>
+      <div class="panel-grid">
+        <div class="p-block">
+          <h4>Dato propio que lo sostiene</h4>
+          <p id="p-dato"></p>
+        </div>
+        <div class="p-block">
+          <h4>Recibe enlaces de</h4>
+          <ul id="p-in"></ul>
+        </div>
+        <div class="p-block">
+          <h4>Manda enlaces a</h4>
+          <ul id="p-out"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="sec">
+    <h2>Las 19 páginas de ciudad</h2>
+    <p>
+      Son el destino final: donde el lector reserva. Las resaltadas reciben al menos un enlace
+      de la parrilla; las apagadas todavía no aparecen en ningún artículo.
+    </p>
+    <div class="cities" id="cities"></div>
+  </div>
+
+  <hr class="rule">
+
+  <div class="sec">
+    <h2>Lo que hay que tener presente</h2>
+    <table class="notes">
+      <tr>
+        <td>Dos capas</td>
+        <td>La <b>estructura</b> de los 8 silos se fija hoy y no cambia: las 19 ciudades no se mueven.
+            Las <b>keywords</b> solo se comprometen para la tanda vigente, porque las que elegiríamos
+            hoy para el artículo 28 estarán mal cuando llegue el momento.</td>
+      </tr>
+      <tr>
+        <td>Pilares primero</td>
+        <td>Los 8 pilares abren cada silo. Un satélite escrito antes que su pilar queda huérfano
+            y obliga a volver atrás.</td>
+      </tr>
+      <tr>
+        <td>Re-enlace por tanda</td>
+        <td>Al publicar una tanda nueva, el chequeo automático lista qué artículos viejos deberían
+            enlazar hacia los nuevos. Es mecánico, no es criterio: el mapa ya declara el grafo.
+            Editar un artículo publicado son dos líneas en el repo y un redespliegue.</td>
+      </tr>
+      <tr>
+        <td>Texto del enlace</td>
+        <td>El H1 exacto en aproximadamente la mitad de los enlaces; variantes naturales en el resto.
+            Si siempre es el mismo texto, Google lo lee como manipulación.</td>
+      </tr>
+      <tr>
+        <td>Cifras por sede</td>
+        <td>Un porcentaje que depende de elegir sede solo se publica donde hay 2 o más sedes:
+            Bogotá, Medellín, Cali y Santa Marta. En Pereira, Armenia, Ibagué, Manizales y
+            Villavicencio hay una sola sede, así que el número no dice nada.</td>
+      </tr>
+      <tr>
+        <td>Por qué existe un enlace</td>
+        <td>Solo si un lector lo seguiría. El silo original agrupaba Barranquilla con Bogotá porque son
+            las dos ciudades donde alquilatucarro le gana a alquilame — contabilidad interna que el lector
+            nunca ve. Se disolvió: <b>Bogotá</b> quedó con silo propio y <b>Barranquilla</b> pasó a Costa.</td>
+      </tr>
+      <tr>
+        <td>Silos K y L</td>
+        <td>Contenido de calendario, con reglas distintas: vida útil de semanas, se publica
+            <b>6-8 semanas antes</b> del evento o no alcanza a rankear, y después se recicla al año
+            siguiente o se retira. Se alimentan de la alarma temprana: las búsquedas apuntan a fechas
+            futuras semanas antes de que exista una reserva.</td>
+      </tr>
+      <tr>
+        <td>Un artículo, un dominio</td>
+        <td>Ninguna ciudad ni tema se escribe en las dos marcas. Google agrupa los duplicados, elige
+            una URL y la otra desaparece — pagas dos veces y cobras una. Ya corrigió un conflicto propio:
+            <b>Bogotá</b> estaba en las dos y se quedó en alquilatucarro, que tiene 1.093 reservas contra 789.</td>
+      </tr>
+      <tr>
+        <td>La prueba del título</td>
+        <td>Google distingue contenido <i>commodity</i> de <i>non-commodity</i>. «10 consejos para alquilar
+            carro en Medellín» es lo primero. «El 42% recoge en el aeropuerto teniendo cinco sedes» es lo
+            segundo. Cada título de la parrilla tiene que pasar esa prueba, y el dato propio va en el
+            primer tercio del artículo, no escondido al final.</td>
+      </tr>
+      <tr>
+        <td>Riesgo mayor, sin auditar</td>
+        <td>Los <b>19 dominios satélite</b> que alimentan alquilame encajan en la definición de
+            <i>doorway</i> de Google mejor que las tres marcas principales. No se han revisado.
+            Eso pesa más que cualquier detalle del blog.</td>
+      </tr>
+      <tr>
+        <td>Lo urgente</td>
+        <td><code>search_logs</code> se purga a los 30 días, así que la alarma temprana solo alcanza
+            unas 6 semanas y hoy esa información <b>se está borrando sola</b>. Un respaldo mensual la
+            convierte en una serie histórica creciente. Es lo único de este plan que se pierde para
+            siempre si no se hace ya.</td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CITY_SLUGS = ["armenia","barranquilla","bogota","bucaramanga","cali","cartagena","cucuta",
+    "ibague","manizales","medellin","monteria","neiva","pereira","santa-marta","valledupar",
+    "villavicencio","floridablanca","palmira","soledad"];
+
+  // tanda: 1 = keyword comprometida, 2/3 = tema fijo, 0 = espacio libre
+  var DATA = [
+    { brand: "alq", label: "alquilame", meta: "14 espacios · 6 en tanda 1", silos: [
+      { code: "A", name: "Llegas en avión", nodes: [
+        { id:"A0", pillar:true, tanda:1, title:"Alquiler de carros en Medellín", kw:"alquiler de carros en medellin",
+          dato:"741 reservas. 42% recoge en el aeropuerto teniendo 5 sedes para escoger. 1.046 impresiones, posición 16,6.",
+          city:"medellin", out:["A1","A3"] },
+        { id:"A1", tanda:1, title:"Alquiler de carros en Santa Marta", kw:"alquiler de carros en santa marta",
+          dato:"707 reservas. 82% escoge el aeropuerto sobre la sede de El Prado. Solo 32% pide viernes o sábado: a la playa se va cualquier día.",
+          city:"santa-marta", out:["A0","A2","A3","C0"] },
+        { id:"A2", tanda:2, title:"Alquiler de carros en Cartagena", kw:"— se elige con datos frescos",
+          dato:"674 reservas. Cero búsquedas sin disponibilidad en 30 días.",
+          city:"cartagena", out:["A0","A1"] },
+        { id:"A3", tanda:2, title:"¿Recoger en el aeropuerto o en la ciudad?", kw:"— se elige con datos frescos",
+          dato:"Solo comparable donde hay más de una sede: Medellín 42%, Cali 52%, Santa Marta 82%. En las ciudades de una sola sede el número no dice nada. Bogotá NO entra aquí: es de alquilatucarro (silo H), un artículo por dominio.",
+          city:null, out:["A0","A1","B0"] }
+      ]},
+      { code: "B", name: "Cali y el Valle", nodes: [
+        { id:"B0", pillar:true, tanda:1, title:"Alquiler de carros en Cali", kw:"alquiler de carros en cali",
+          dato:"679 reservas con Google Ads apagado. 8,9 gamas por búsqueda, segunda flota más surtida. 52% escoge el aeropuerto entre 3 sedes.",
+          city:"cali", out:["B1","B2","A3"] },
+        { id:"B1", tanda:1, title:"Buscan una semana, reservan tres días", kw:"cuantos dias alquilar un carro",
+          dato:"En Cali piden 6 días, en Pereira 7, en Armenia 6. La reserva que firman dura 3.",
+          city:null, out:["B0","D0"] },
+        { id:"B2", tanda:3, title:"Alquiler de carros en Palmira", kw:"— se elige con datos frescos",
+          dato:"140 reservas: pasa el piso de 100, pero justo. 8,8 gamas por búsqueda.",
+          city:"palmira", out:["B0"] }
+      ]},
+      { code: "C", name: "Viajas desde España", nodes: [
+        { id:"C0", pillar:true, tanda:1, title:"Alquiler de coches en Colombia", kw:"alquiler de coches en colombia",
+          dato:"España: 281 clics en posición 10,4 — mejor posición que Colombia (12,6). 759 consultas dicen «coche», no «carro». Ninguna página escrita para ellos.",
+          city:null, out:["C1","C2","A1"] },
+        { id:"C1", tanda:2, title:"Licencia de conducción extranjera en Colombia", kw:"— se elige con datos frescos",
+          dato:"Válida durante la permanencia autorizada, según el artículo 25 del código de tránsito. Ya está en la FAQ del home.",
+          city:null, out:["C0","C2"] },
+        { id:"C2", tanda:2, title:"Requisitos para alquilar siendo extranjero", kw:"— se elige con datos frescos",
+          dato:"Pasaporte, licencia vigente, tarjeta de crédito, 18 años. Cuidado: la base registra 0 pasaportes, el segmento es invisible en el sistema.",
+          city:null, out:["C0","C1"] }
+      ]},
+      { code: "D", name: "Eje Cafetero", nodes: [
+        { id:"D0", pillar:true, tanda:1, title:"Alquiler de carros en Pereira", kw:"alquiler de carros pereira",
+          dato:"308 reservas. Piden 7 días, la estadía más larga del país. Una sola sede, en el aeropuerto — el 100% no es un hallazgo, es el inventario.",
+          city:"pereira", out:["D1","B1"] },
+        { id:"D1", tanda:2, title:"Rutas del Eje Cafetero en carro", kw:"— se elige con datos frescos",
+          dato:"Apoya la estadía larga de Pereira: 7 días dan para recorrer, no para un fin de semana.",
+          city:"pereira", out:["D0"] }
+      ]},
+      { code: "K", name: "Calendario · se publica 6-8 semanas antes", nodes: [
+        { id:"K0", pillar:true, tanda:2, title:"Puentes y temporada alta", kw:"— se elige con datos frescos",
+          dato:"Recicla el post que ya está vivo: el viernes y sábado antes de cada festivo concentraron el 46% de las recogidas de junio.",
+          city:null, out:["K1","A0","B0"] },
+        { id:"K1", tanda:3, title:"Evento por definir", kw:"— sale del respaldo mensual",
+          dato:"Se elige con la alarma temprana: búsquedas para fechas futuras. Horizonte real de 6 semanas.",
+          city:null, out:["K0"] }
+      ]}
+    ]},
+    { brand: "atc", label: "alquilatucarro", meta: "17 espacios · 6 en tanda 1", silos: [
+      { code: "E", name: "Tolima y Llano", nodes: [
+        { id:"E0", pillar:true, tanda:1, title:"Alquiler de carros en Villavicencio", kw:"alquiler de carros villavicencio",
+          dato:"1.613 impresiones en posición 9,2. La ciudad que menos planea: 52% pide para hoy o mañana, solo 7% con más de un mes.",
+          city:"villavicencio", out:["E1","E2"] },
+        { id:"E1", tanda:1, title:"Alquiler de carros en Ibagué", kw:"alquiler de carros ibague",
+          dato:"1.516 impresiones en posición 9,5. La más de fin de semana: 51% pide viernes o sábado. Y la que menos improvisa, 37%.",
+          city:"ibague", out:["E0","E2"] },
+        { id:"E2", tanda:1, title:"Reservar hoy para hoy: qué queda y qué se acabó", kw:"alquilar carro el mismo dia",
+          dato:"52% de las búsquedas de Villavicencio y Cúcuta piden el carro para el día siguiente o antes.",
+          city:null, out:["E0","E1","E3","F2","G0"] },
+        { id:"E3", tanda:2, title:"Alquiler de carros en Neiva", kw:"— se elige con datos frescos",
+          dato:"813 impresiones en posición 10,8, con solo 2 clics. 5,6 gamas por búsqueda.",
+          city:"neiva", out:["E0","E2"] }
+      ]},
+      { code: "F", name: "Eje Cafetero", nodes: [
+        { id:"F0", pillar:true, tanda:1, title:"Alquiler de carros en Armenia", kw:"alquiler de carros en armenia",
+          dato:"1.073 impresiones en posición 7,9 — la mejor posición del conjunto. La ciudad más previsora: 21% busca con más de 30 días.",
+          city:"armenia", out:["F1","F2"] },
+        { id:"F1", tanda:1, title:"Alquiler de carros en Manizales", kw:"alquiler de carros manizales",
+          dato:"1.064 impresiones en posición 9,4. 5,6 gamas por búsqueda contra 9,2 en Bogotá: la flota más corta.",
+          city:"manizales", out:["F0","F2"] },
+        { id:"F2", tanda:1, title:"Con cuánta anticipación reservar, según la ciudad", kw:"con cuanta anticipacion reservar carro",
+          dato:"Armenia 21% con más de 30 días. Villavicencio 7%. Es la misma empresa y la diferencia es de tres veces.",
+          city:null, out:["F0","F1","E0","E2","L0"] }
+      ]},
+      { code: "G", name: "Nororiente", nodes: [
+        { id:"G0", pillar:true, tanda:2, title:"Alquiler de carros en Cúcuta", kw:"— se elige con datos frescos",
+          dato:"830 impresiones en posición 10,5. 52% pide para ya. Solo 4,9 gamas disponibles, el catálogo más corto.",
+          city:"cucuta", out:["G1","G2","E2"] },
+        { id:"G1", tanda:2, title:"Alquiler de carros en Bucaramanga", kw:"— se elige con datos frescos",
+          dato:"19% busca con más de 30 días, junto con Montería lo más previsor después de Armenia.",
+          city:"bucaramanga", out:["G0","G2","F2"] },
+        { id:"G2", tanda:2, title:"Alquiler de carros en Valledupar", kw:"— se elige con datos frescos",
+          dato:"834 impresiones en posición 11,4 con 2 clics. Cero búsquedas sin disponibilidad.",
+          city:"valledupar", out:["G0","J0"] }
+      ]},
+      { code: "H", name: "Bogotá", nodes: [
+        { id:"H0", pillar:true, tanda:3, title:"Alquiler de carros en Bogotá", kw:"— se elige con datos frescos",
+          dato:"1.093 reservas, la ciudad donde alquilatucarro manda. Posición media 26,8: hay todo por hacer.",
+          city:"bogota", out:["H1","H2"] },
+        { id:"H1", tanda:3, title:"Pico y placa en Bogotá", kw:"— se elige con datos frescos",
+          dato:"Enlaza a la Secretaría de Movilidad de Bogotá. La URL se verifica en vivo antes de publicar.",
+          city:"bogota", out:["H0","H2"] },
+        { id:"H2", tanda:3, title:"El Dorado y las cinco sedes de Bogotá", kw:"— se elige con datos frescos",
+          dato:"5 sedes, una en el aeropuerto: Bogotá sí admite el dato de elección de sede.",
+          city:"bogota", out:["H0","H1"] }
+      ]},
+      { code: "J", name: "Costa", nodes: [
+        { id:"J0", pillar:true, tanda:2, title:"Alquiler de carros en Barranquilla", kw:"— se elige con datos frescos",
+          dato:"475 reservas, la ciudad donde alquilatucarro le gana a alquilame. 1.805 impresiones en posición 12,2.",
+          city:"barranquilla", out:["J1","G2"] },
+        { id:"J1", tanda:3, title:"Alquiler de carros en Soledad", kw:"— se elige con datos frescos",
+          dato:"⚠ Solo 59 reservas: por debajo del piso de 100. Este artículo no puede citar cifras propias de la ciudad.",
+          city:"soledad", out:["J0"] }
+      ]},
+      { code: "L", name: "Calendario · se publica 6-8 semanas antes", nodes: [
+        { id:"L0", pillar:true, tanda:2, title:"Puentes ciudad por ciudad", kw:"— se elige con datos frescos",
+          dato:"El 11 de julio de 2026 hubo pico simultáneo en cinco ciudades: Barranquilla, Montería, Bucaramanga, Medellín y Bogotá.",
+          city:null, out:["L1","E0","F0"] },
+        { id:"L1", tanda:3, title:"Evento por definir", kw:"— sale del respaldo mensual",
+          dato:"Los picos históricos dan la fecha pero no el motivo. Hay que cruzarlos con un calendario verificado, no de memoria.",
+          city:null, out:["L0"] }
+      ]}
+    ]}
+  ];
+
+  // ---- indices
+  var NODES = {}, INBOUND = {};
+  DATA.forEach(function (b) {
+    b.silos.forEach(function (s) {
+      s.nodes.forEach(function (n) {
+        n.brand = b.brand; n.siloCode = s.code; n.siloName = s.name;
+        NODES[n.id] = n; INBOUND[n.id] = INBOUND[n.id] || [];
+      });
+    });
+  });
+  Object.keys(NODES).forEach(function (id) {
+    (NODES[id].out || []).forEach(function (t) {
+      if (INBOUND[t]) INBOUND[t].push(id);
+    });
+  });
+
+  function tandaBadge(n) {
+    if (n.pillar) return '<span class="badge b-pil">pilar</span>';
+    return "";
+  }
+  function tandaTag(n) {
+    if (n.tanda === 1) return '<span class="badge b-t1">tanda 1</span>';
+    if (n.tanda === 2) return '<span class="badge b-t2">tanda 2</span>';
+    if (n.tanda === 3) return '<span class="badge b-t3">tanda 3</span>';
+    return '<span class="badge b-open">libre</span>';
+  }
+
+  // ---- render tablero
+  var board = document.getElementById("board");
+  DATA.forEach(function (b) {
+    var col = document.createElement("div");
+    col.className = "brand " + b.brand;
+    var head = document.createElement("div");
+    head.className = "brand-head";
+    head.innerHTML = '<span class="name">' + b.label + '</span><span class="meta">' + b.meta + '</span>';
+    col.appendChild(head);
+
+    b.silos.forEach(function (s) {
+      var card = document.createElement("section");
+      card.className = "silo";
+      card.dataset.silo = s.code;
+
+      var t = document.createElement("div");
+      t.className = "silo-title";
+      t.innerHTML = '<span class="silo-code">' + s.code + '</span><span class="silo-name">' + s.name + '</span>';
+      card.appendChild(t);
+
+      var body = document.createElement("div");
+      body.className = "silo-body";
+      var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "conn");
+      svg.dataset.for = s.code;
+      body.appendChild(svg);
+
+      var wrapN = document.createElement("div");
+      wrapN.className = "nodes";
+      var sats = document.createElement("div");
+      sats.className = "sats";
+
+      s.nodes.forEach(function (n) {
+        var el = document.createElement("button");
+        el.type = "button";
+        el.className = "node" + (n.pillar ? " pillar" : "") + (n.tanda === 0 ? " open" : "");
+        el.dataset.id = n.id;
+        el.innerHTML =
+          '<span class="n-top">' + tandaBadge(n) + tandaTag(n) + '</span>' +
+          '<span class="n-title">' + n.title + '</span>' +
+          '<span class="n-kw">' + n.kw + '</span>';
+        if (n.pillar) wrapN.appendChild(el); else sats.appendChild(el);
+      });
+
+      wrapN.appendChild(sats);
+      body.appendChild(wrapN);
+      card.appendChild(body);
+      col.appendChild(card);
+    });
+    board.appendChild(col);
+  });
+
+  // ---- conectores dentro de cada silo (satelite -> pilar)
+  function drawConnectors() {
+    document.querySelectorAll(".silo").forEach(function (card) {
+      var svg = card.querySelector(".conn");
+      var body = card.querySelector(".silo-body");
+      var pil = card.querySelector(".node.pillar");
+      if (!svg || !body || !pil) return;
+      var bb = body.getBoundingClientRect();
+      svg.setAttribute("viewBox", "0 0 " + bb.width + " " + bb.height);
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      var pb = pil.getBoundingClientRect();
+      var px = pb.left - bb.left + 13;
+      var py = pb.bottom - bb.top;
+
+      card.querySelectorAll(".sats .node").forEach(function (sat) {
+        var sb = sat.getBoundingClientRect();
+        var sy = sb.top - bb.top + sb.height / 2;
+        var sx = sb.left - bb.left;
+        var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", "M " + px + " " + py + " V " + (sy - 9) +
+                            " q 0 9 9 9 H " + sx);
+        p.setAttribute("fill", "none");
+        p.setAttribute("stroke", "currentColor");
+        p.setAttribute("stroke-width", "1.5");
+        p.setAttribute("stroke-opacity", ".38");
+        svg.appendChild(p);
+      });
+    });
+  }
+
+  // ---- ciudades
+  var citiesEl = document.getElementById("cities");
+  var cityHits = {};
+  Object.keys(NODES).forEach(function (id) { if (NODES[id].city) cityHits[NODES[id].city] = true; });
+  CITY_SLUGS.forEach(function (c) {
+    var el = document.createElement("span");
+    el.className = "city-pill" + (cityHits[c] ? " hit" : "");
+    el.dataset.city = c;
+    el.textContent = "/" + c;
+    citiesEl.appendChild(el);
+  });
+
+  // ---- seleccion
+  var panel = document.getElementById("panel");
+  var selected = null;
+
+  function clearState() {
+    document.querySelectorAll(".node").forEach(function (n) {
+      n.classList.remove("dim", "sel", "rel-in", "rel-out");
+    });
+    document.querySelectorAll(".silo").forEach(function (s) { s.classList.remove("dim"); });
+    document.querySelectorAll(".city-pill").forEach(function (p) { p.classList.remove("lit"); });
+  }
+
+  function li(ids) {
+    if (!ids.length) return "<li>ninguno todavía</li>";
+    return ids.map(function (i) {
+      var n = NODES[i];
+      return "<li>" + n.title + " <span style='color:var(--muted)'>(" + n.siloCode + ")</span></li>";
+    }).join("");
+  }
+
+  function select(id) {
+    clearState();
+    selected = id;
+    var n = NODES[id];
+    var outs = n.out || [];
+    var ins = INBOUND[id] || [];
+    var keep = {};
+    keep[id] = true;
+    outs.concat(ins).forEach(function (k) { keep[k] = true; });
+
+    document.querySelectorAll(".node").forEach(function (el) {
+      var eid = el.dataset.id;
+      if (eid === id) { el.classList.add("sel"); return; }
+      if (outs.indexOf(eid) > -1) { el.classList.add("rel-out"); return; }
+      if (ins.indexOf(eid) > -1) { el.classList.add("rel-in"); return; }
+      el.classList.add("dim");
+    });
+
+    if (n.city) {
+      var pill = document.querySelector('.city-pill[data-city="' + n.city + '"]');
+      if (pill) pill.classList.add("lit");
+    }
+
+    document.getElementById("p-title").textContent = n.title;
+    document.getElementById("p-kw").textContent =
+      "silo " + n.siloCode + " · " + n.siloName + " · " + n.kw + (n.city ? "  →  /" + n.city : "");
+    document.getElementById("p-dato").textContent = n.dato;
+    document.getElementById("p-in").innerHTML = li(ins);
+    document.getElementById("p-out").innerHTML = li(outs);
+    panel.hidden = false;
+  }
+
+  function deselect() { clearState(); selected = null; panel.hidden = true; }
+
+  board.addEventListener("click", function (e) {
+    var el = e.target.closest(".node");
+    if (!el) return;
+    if (selected === el.dataset.id) deselect(); else select(el.dataset.id);
+  });
+  document.getElementById("p-close").addEventListener("click", deselect);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") deselect(); });
+
+  drawConnectors();
+  window.addEventListener("resize", drawConnectors);
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(drawConnectors);
+    ro.observe(board);
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawConnectors);
+})();
+</script>

@@ -50,7 +50,6 @@
 
 | Keyword Long-tail | Vol. Est. |
 |-------------------|-----------|
-| alquiler de carros en bogota sin tarjeta de credito | Por medir |
 | alquiler de carros baratos en medellin | Por medir |
 | rent a car aeropuerto el dorado | Por medir |
 | requisitos para alquilar un carro en colombia | Por medir |
@@ -61,4 +60,6 @@
 
 Actualizar con `/seo-keywords` o manualmente después de investigación con SEMRush.
 
-**Última actualización:** 2025-01-11 (19 ciudades confirmadas)
+**La lista negra manda sobre este archivo.** Antes de perseguir cualquier keyword de aquí, verificar que no esté vetada — hay búsquedas con volumen que traen contactos que el negocio no puede atender. Reglas y motivos en `docs/specs/2026-07-29-parrilla-blog-design.md`.
+
+**Última actualización:** 2026-07-29 (eliminada "alquiler de carros en bogota sin tarjeta de credito": la tarjeta de crédito es obligatoria, esa búsqueda trae gente que no puede alquilar)
