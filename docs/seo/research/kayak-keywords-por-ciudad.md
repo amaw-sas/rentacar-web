@@ -65,7 +65,7 @@
 |---------|-----|---------|---------|-----|-------------|
 | alquiler de carros en bucaramanga | 3 | 95 | **1.9K** | 22 | ALTA - KD bajo, buena pos |
 | venta de carros en bucaramanga | 64 | 0 | 260 | 29 | BAJA - No es alquiler |
-| alquiler sin tarjeta de credito | 9 | 0 | 30 | 26 | NICHO interesante |
+| alquiler sin tarjeta de credito | 9 | 0 | 30 | 26 | ~~NICHO interesante~~ **VETADO 2026-07-29** — no perseguir |
 
 **Nota:** 9 keywords en total
 
@@ -190,7 +190,7 @@
 - "alquiler de carros [ciudad] baratos"
 - "alquiler de carros [ciudad] por dias"
 - "alquiler de carros [ciudad] aeropuerto"
-- "alquiler de carros [ciudad] sin tarjeta de credito"
+- ~~"alquiler de carros [ciudad] sin tarjeta de credito"~~ — **VETADO 2026-07-29 por el dueño:** la tarjeta de crédito es obligatoria, esa búsqueda trae gente que no puede alquilar. La FAQ del home que ya rankea se queda; no se escribe contenido nuevo. Ver `docs/specs/2026-07-29-parrilla-blog-design.md`.
 
 ---
 
