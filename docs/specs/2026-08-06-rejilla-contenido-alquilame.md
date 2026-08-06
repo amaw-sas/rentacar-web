@@ -1,4 +1,4 @@
-# Rejilla de contenido de alquilame — 48 silos, 222 artículos
+# Rejilla de contenido de alquilame — 48 silos, 220 artículos
 
 **Fecha:** 2026-08-06
 **Marca:** solo alquilame. Alquilatucarro queda congelado con sus 16 artículos vivos.
@@ -20,7 +20,7 @@ Un **clúster** es un pilar con sus satélites: la unidad que se publica junta. 
 
 **Cuatro artículos al mes.** De esos, uno o uno y medio son de calendario (fecha de publicación fija, evento menos 6-8 semanas) y el resto son de clúster.
 
-222 artículos a ese ritmo son unos **55 meses**. La rejilla no es un compromiso de escribirlos todos: es el inventario de lo que hay, para poder podar con criterio.
+220 artículos a ese ritmo son unos **55 meses**. El desglose exacto es 48 silos, 50 clústeres, 50 pilares y 170 satélites. La rejilla no es un compromiso de escribirlos todos: es el inventario de lo que hay, para poder podar con criterio.
 
 **El descuento que hace viable el número:** la capa de calendario del primer año ya está escrita en los 53 artículos de `alquilerdecarrosenbogota.com`. Hay que migrarlos y actualizarles los datos, no redactarlos.
 
