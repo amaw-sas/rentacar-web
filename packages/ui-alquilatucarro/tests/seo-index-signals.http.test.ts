@@ -79,6 +79,7 @@ describe.skipIf(!nitroAvailable)('alquilatucarro Nitro index signals', async () 
     expect(link).toMatch(/rel=["']?sitemap["']?/i)
     expect(link).toMatch(/<\/robots\.txt>/i)
     expect(link).toMatch(/rel=["']?robots["']?/i)
+    expect(link).toMatch(/api-catalog/i)
   })
 
   it('resolves agent discovery Link targets with GET and HEAD (200)', async () => {
@@ -117,4 +118,61 @@ describe.skipIf(!nitroAvailable)('alquilatucarro Nitro index signals', async () 
       expect(link, path).toMatch(/<\/robots\.txt>/i)
     }
   })
+
+  it('negotiates markdown for agents on the homepage (Accept: text/markdown)', async () => {
+    const response = await fetch('/', {
+      headers: { Accept: 'text/markdown' },
+    })
+    const body = await response.text()
+    const type = response.headers.get('content-type') ?? ''
+
+    expect(response.status).toBe(200)
+    expect(type).toMatch(/text\/markdown/i)
+    expect(body).toMatch(/^#\s+/m)
+    expect(response.headers.get('x-markdown-tokens')).toMatch(/^\d+$/)
+    // Default HTML still available without Accept override
+    const html = await fetch('/')
+    expect(html.headers.get('content-type') ?? '').toMatch(/text\/html/i)
+  })
+
+  it('serves RFC 9727 api-catalog and OpenAPI for public read APIs', async () => {
+    const catalog = await fetch('/.well-known/api-catalog', {
+      headers: { Accept: 'application/linkset+json, application/json' },
+    })
+    const catalogBody = await catalog.json()
+    const catalogType = catalog.headers.get('content-type') ?? ''
+
+    expect(catalog.status).toBe(200)
+    expect(catalogType).toMatch(/linkset\+json|application\/json/i)
+    expect(Array.isArray(catalogBody.linkset)).toBe(true)
+    expect(catalogBody.linkset.length).toBeGreaterThan(0)
+    expect(JSON.stringify(catalogBody)).toMatch(/rentacar-data|openapi/i)
+
+    const openapi = await fetch('/openapi.json')
+    const spec = await openapi.json()
+    expect(openapi.status).toBe(200)
+    expect(spec.openapi).toMatch(/^3\./)
+    expect(spec.paths['/api/rentacar-data']).toBeTruthy()
+  })
+
+  it('publishes agent skills discovery index with digests', async () => {
+    const index = await fetch('/.well-known/agent-skills/index.json')
+    const body = await index.json()
+
+    expect(index.status).toBe(200)
+    expect(body.$schema).toContain('agentskills.io/discovery')
+    expect(Array.isArray(body.skills)).toBe(true)
+    expect(body.skills.length).toBeGreaterThanOrEqual(1)
+
+    for (const skill of body.skills) {
+      expect(skill.name).toBeTruthy()
+      expect(skill.type).toBe('skill-md')
+      expect(skill.digest).toMatch(/^sha256:[a-f0-9]{64}$/)
+      const skillRes = await fetch(skill.url)
+      expect(skillRes.status, skill.url).toBe(200)
+      const text = await skillRes.text()
+      expect(text.length).toBeGreaterThan(50)
+    }
+  })
 })
+

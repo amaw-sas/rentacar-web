@@ -498,10 +498,9 @@ export default defineNuxtConfig({
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           'Content-Security-Policy': "frame-ancestors 'self'",
           'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-          // Agent discovery (isitagentready Link headers / RFC 8288).
-          // Points crawlers/agents at existing machine-readable surfaces.
+          // Agent discovery (isitagentready Link headers / RFC 8288 + RFC 9727).
           // Relative targets so preview deploys stay correct.
-          Link: '</llms.txt>; rel="describedby"; type="text/plain", </sitemap.xml>; rel="sitemap", </robots.txt>; rel="robots"',
+          Link: '</llms.txt>; rel="describedby"; type="text/plain", </sitemap.xml>; rel="sitemap", </robots.txt>; rel="robots", </.well-known/api-catalog>; rel="api-catalog"',
         },
       },
       '/_nuxt/**': {
