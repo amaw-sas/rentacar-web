@@ -57,4 +57,24 @@ describe.skipIf(!nitroAvailable)('alquilatucarro Nitro index signals', async () 
       locations.some((location) => /^\/(?:chat|tiktok)(?:\/|$)/.test(new URL(location).pathname)),
     ).toBe(false)
   })
+
+  it('emits Content-Signal preferences in robots.txt (isitagentready bot-aware)', async () => {
+    const response = await fetch('/robots.txt')
+    const body = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(body).toMatch(/Content-Signal:\s*.*search=yes/i)
+    expect(body).toMatch(/Content-Signal:\s*.*ai-input=yes/i)
+    expect(body).toMatch(/Content-Signal:\s*.*ai-train=yes/i)
+  })
+
+  it('emits agent discovery Link headers on the homepage', async () => {
+    const response = await fetch('/')
+    const link = response.headers.get('link') ?? ''
+
+    expect(response.status).toBe(200)
+    expect(link).toMatch(/<\/llms\.txt>/i)
+    expect(link).toMatch(/rel=["']?describedby["']?/i)
+    expect(link).toMatch(/<\/sitemap\.xml>/i)
+  })
 })
