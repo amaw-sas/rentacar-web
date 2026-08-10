@@ -127,6 +127,7 @@ describe('brand index signals', () => {
     expect(config).toContain("Link: '</llms.txt>; rel=\"describedby\"; type=\"text/plain\"")
     expect(config).toContain('</sitemap.xml>; rel="sitemap"')
     expect(config).toContain('</robots.txt>; rel="robots"')
+    expect(config).toContain('</.well-known/api-catalog>; rel="api-catalog"')
   })
 
   it('alquilatucarro ships a HEAD handler for /llms.txt (nuxt-llms GET-only gap)', () => {
@@ -136,6 +137,23 @@ describe('brand index signals', () => {
     expect(headRoute).toMatch(/Content-Type/i)
     expect(headRoute).toMatch(/text\/plain/)
   })
+
+  it('alquilatucarro ships agent-readable discovery surfaces (level 3–4 path)', () => {
+    const brand = 'alquilatucarro'
+    expect(readBrandFile(brand, 'server/middleware/markdown-negotiation.ts')).toMatch(
+      /text\/markdown/,
+    )
+    expect(readBrandFile(brand, 'server/routes/.well-known/api-catalog.get.ts')).toMatch(
+      /linkset/,
+    )
+    expect(readBrandFile(brand, 'server/routes/openapi.json.get.ts')).toMatch(/openapi/)
+    const skillsIndex = readBrandFile(brand, 'public/.well-known/agent-skills/index.json')
+    expect(skillsIndex).toContain('schemas.agentskills.io/discovery/0.2.0')
+    expect(skillsIndex).toContain('search-car-rental')
+    expect(skillsIndex).toContain('city-rental-info')
+    expect(skillsIndex).toMatch(/sha256:[a-f0-9]{64}/)
+  })
+
 
 
   for (const brand of ['alquilame', 'alquicarros']) {

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "search-car-rental",
+      "type": "skill-md",
+      "description": "Search and compare car rental options in Colombia via Alquilatucarro (cities, dates, categories). Use when a user wants to rent a car in Colombia or check availability/prices.",
+      "url": "/.well-known/agent-skills/search-car-rental/SKILL.md",
+      "digest": "sha256:94badfcd414f5bbc66b18c777cc34c15c0a289ca2a84ee05000b4c4faa7f934c"
+    },
+    {
+      "name": "city-rental-info",
+      "type": "skill-md",
+      "description": "Explain car rental context for a Colombian city served by Alquilatucarro (airport pickup, local tips, landing page). Use when the user names a city or airport in Colombia.",
+      "url": "/.well-known/agent-skills/city-rental-info/SKILL.md",
+      "digest": "sha256:7b87fc2fb7b920c3aebb3f53aab1bc0abb8e51b8d315451d0cd3895db86f582a"
+    }
+  ]
+}

@@ -9,5 +9,6 @@
 export default defineEventHandler((event) => {
   setHeader(event, 'Content-Type', 'text/plain; charset=utf-8')
   setResponseStatus(event, 200)
-  return null
+  // Empty string → 200 (null can surface as 204 on some Nitro/h3 paths).
+  return ''
 })
