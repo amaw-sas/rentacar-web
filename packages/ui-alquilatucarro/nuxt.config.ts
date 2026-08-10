@@ -498,6 +498,10 @@ export default defineNuxtConfig({
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           'Content-Security-Policy': "frame-ancestors 'self'",
           'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+          // Agent discovery (isitagentready Link headers / RFC 8288).
+          // Points crawlers/agents at existing machine-readable surfaces.
+          // Relative targets so preview deploys stay correct.
+          Link: '</llms.txt>; rel="describedby"; type="text/plain", </sitemap.xml>; rel="sitemap", </robots.txt>; rel="robots"',
         },
       },
       '/_nuxt/**': {
@@ -617,6 +621,14 @@ export default defineNuxtConfig({
         userAgent: ['*'],
         allow: ['/'],
         disallow: ['/seo', '/seo/*'],
+        // isitagentready Content Signals (IETF aipref-contentsignals).
+        // Decisión #71: priorizar mindshare en respuestas de IA — allow search,
+        // RAG/ai-input y training (misma postura que los bot rules de abajo).
+        contentSignal: {
+          search: 'yes',
+          'ai-input': 'yes',
+          'ai-train': 'yes',
+        },
       },
       // Bots de búsqueda IA — permitidos (generan tráfico referido)
       {

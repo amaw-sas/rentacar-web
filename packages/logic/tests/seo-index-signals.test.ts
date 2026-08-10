@@ -114,6 +114,30 @@ describe('brand index signals', () => {
     expect(edgeConfig.routes[0].src).toContain('tiktok')
   })
 
+  it('alquilatucarro declares permissive Content Signals (decisión #71 / isitagentready)', () => {
+    const config = readBrandFile('alquilatucarro', 'nuxt.config.ts')
+    // contentSignal lives on the '*' group so robots.txt emits Content-Signal: …
+    expect(config).toMatch(/contentSignal:\s*\{[\s\S]*?search:\s*'yes'/)
+    expect(config).toMatch(/'ai-input':\s*'yes'/)
+    expect(config).toMatch(/'ai-train':\s*'yes'/)
+  })
+
+  it('alquilatucarro publishes agent discovery Link headers on all responses', () => {
+    const config = readBrandFile('alquilatucarro', 'nuxt.config.ts')
+    expect(config).toContain("Link: '</llms.txt>; rel=\"describedby\"; type=\"text/plain\"")
+    expect(config).toContain('</sitemap.xml>; rel="sitemap"')
+    expect(config).toContain('</robots.txt>; rel="robots"')
+  })
+
+  it('alquilatucarro ships a HEAD handler for /llms.txt (nuxt-llms GET-only gap)', () => {
+    // nuxt-llms@0.1.3 registers only GET; without this file HEAD returns 404.
+    const headRoute = readBrandFile('alquilatucarro', 'server/routes/llms.txt.head.ts')
+    expect(headRoute).toMatch(/defineEventHandler/)
+    expect(headRoute).toMatch(/Content-Type/i)
+    expect(headRoute).toMatch(/text\/plain/)
+  })
+
+
   for (const brand of ['alquilame', 'alquicarros']) {
     it(`${brand}: aligns noindex headers on reservation result paths`, () => {
       const config = readBrandFile(brand, 'nuxt.config.ts')
