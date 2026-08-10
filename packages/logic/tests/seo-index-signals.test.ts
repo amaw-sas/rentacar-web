@@ -129,6 +129,15 @@ describe('brand index signals', () => {
     expect(config).toContain('</robots.txt>; rel="robots"')
   })
 
+  it('alquilatucarro ships a HEAD handler for /llms.txt (nuxt-llms GET-only gap)', () => {
+    // nuxt-llms@0.1.3 registers only GET; without this file HEAD returns 404.
+    const headRoute = readBrandFile('alquilatucarro', 'server/routes/llms.txt.head.ts')
+    expect(headRoute).toMatch(/defineEventHandler/)
+    expect(headRoute).toMatch(/Content-Type/i)
+    expect(headRoute).toMatch(/text\/plain/)
+  })
+
+
   for (const brand of ['alquilame', 'alquicarros']) {
     it(`${brand}: aligns noindex headers on reservation result paths`, () => {
       const config = readBrandFile(brand, 'nuxt.config.ts')
