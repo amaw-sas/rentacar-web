@@ -1,52 +1,118 @@
 <template>
   <!--
-    Hero — golden parity (design #hero). Brand orange gradient bg via the v4
-    bg-linear-to-* utility (custom @theme tokens render background-image:none
-    with the v3 alias — F0 lesson). Headline left / visual card right.
+    Hero split — portado del satélite alquilercarrosmonteria.com (decisión del
+    dueño, 2026-08-11). Sustituye al hero de degradado naranja: foto a sangre +
+    overlay, tarjeta de precio flotante a la izquierda, copy a la derecha.
 
-    Contrast (issue #364, R1): the orange gradient carries DARK text. White was
-    2.20:1 on #ff9500 and the subheading 1.95:1. The section declares
-    .context-brand — not [--ctx-text-primary:#fff], which claimed this was a
-    dark surface and is where the white came from. Copy uses text-on-brand, the
-    utility Tailwind derives from --color-on-brand, so the token stays the only
-    source of truth. No alpha: gray-900/90 already fails at the dark end of the
-    brand ramp. Hierarchy comes from size and weight instead.
+    ESTÁTICO POR DECISIÓN. El hero no consulta Supabase: ni useCityCount() ni
+    useFetchRentacarData(). El precio y el número de ciudades son literales. La
+    contrapartida es que envejecen en silencio — de ahí la constante fechada de
+    abajo y su guarda en __tests__/hero.test.ts.
 
-    The "Ver Precios" pill sits on white, so it follows R2 (brand-800 = 5.56:1);
-    brand-700 only reaches 3.74:1, which is what the old theme.css caveat wrongly
-    recommended.
+    Contraste (issue #364 dejó la lección con el degradado naranja: el blanco
+    daba 2.20:1). Aquí el texto va sobre fotografía, que es peor caso: lo que
+    garantiza AA es el overlay opaco de la capa 2, no la foto. Medido sobre el
+    render, no estimado. Si alguien aclara el overlay, vuelve a medirlo.
 
-    The visual column is a static vehicle image inside a card (max-w-lg,
-    aspect-[16/9], rounded + shadow + ring). The aspect box reserves space so the
-    image never shifts layout (no CLS). Asset from public/images/vehicles/.
+    LCP: la foto de fondo es el elemento más grande, así que va con preload +
+    fetchpriority alto. La sección declara min-height antes de que la imagen
+    llegue, de modo que el contenido de abajo no salta (CLS).
 
-    CTAs: "Ver Precios" (#fleet) + WhatsApp. WhatsApp is a CONTACT CTA pointing
-    at franchise.whatsapp (already a full https://wa.me/... URL — never
-    re-wrapped).
+    "Km ilimitado" NO aparece aquí a propósito: el precio mostrado es el del plan
+    mensual, y ese plan trae 1.000 km/mes (ver FleetCard.vue). El satélite pone
+    ese chip junto al precio mensual y se contradice.
   -->
   <section
     id="hero"
-    class="context-brand relative flex items-center overflow-hidden bg-linear-to-br from-hero-from to-hero-to"
+    class="relative isolate flex items-center overflow-hidden min-h-[560px] lg:min-h-[600px]"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 w-full">
-      <div class="grid lg:grid-cols-2 gap-10 items-center">
-        <!-- Text + CTA column -->
+    <!-- Capa 1 — fotografía de fondo (elemento LCP).
+         NuxtImg y no un <img> a pelo: en esta app el cliente reescribe el src
+         relativo (espera `/&/images/...`) y un <img> crudo rompe la hidratación.
+         El srcset "1w, 2w" que se ve en local es artefacto del proveedor vercel,
+         que no existe fuera de Vercel; en producción genera los anchos de
+         `image.screens`. `preload` emite el <link rel=preload>. -->
+    <NuxtImg
+      src="/images/hero/carretera.webp"
+      alt=""
+      aria-hidden="true"
+      class="absolute inset-0 -z-20 h-full w-full object-cover"
+      width="1306"
+      height="816"
+      sizes="100vw"
+      preload
+      loading="eager"
+      fetchpriority="high"
+    />
+
+    <!-- Capa 2 — overlay. Es lo que sostiene el contraste AA del texto.
+         El gradiente va CLARO→OSCURO de izquierda a derecha, no al revés: la
+         mitad izquierda la ocupa una tarjeta blanca que contrasta contra
+         cualquier cosa, así que ahí conviene dejar ver la foto; la derecha lleva
+         el texto blanco y necesita el negro. Con el gradiente invertido el
+         subtítulo se quedaba en 3.07:1 porque el asfalto asomaba justo debajo. -->
+    <div
+      class="absolute inset-0 -z-10 bg-linear-to-r from-black/55 via-black/70 to-black/85"
+      aria-hidden="true"
+    />
+
+    <div class="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 md:py-16 lg:px-8">
+      <div class="grid items-center gap-10 lg:grid-cols-2">
+        <!-- Tarjeta de precio flotante -->
+        <div class="flex justify-center lg:justify-start">
+          <div class="w-full max-w-sm rounded-2xl bg-white p-4 shadow-2xl shadow-black/40">
+            <div class="aspect-4/3 overflow-hidden rounded-xl">
+              <!-- NuxtImg como en FleetCard: un <img> a pelo aquí rompía la
+                   hidratación (el cliente esperaba el src reescrito y el
+                   servidor mandaba el crudo). -->
+              <NuxtImg
+                src="/images/vehicles/economico.jpg"
+                :alt="`${CATEGORY_NAME} para alquilar en Colombia`"
+                class="h-full w-full object-cover"
+                width="400"
+                height="300"
+                sizes="100vw lg:400px"
+                loading="eager"
+                decoding="async"
+              />
+            </div>
+            <p
+              class="mt-4 font-heading text-xs font-semibold tracking-widest text-brand-800 uppercase"
+            >
+              {{ CATEGORY_BADGE }}
+            </p>
+            <p class="mt-1 font-heading text-lg font-bold text-gray-900">
+              {{ CATEGORY_NAME }}
+            </p>
+            <p class="mt-2 flex items-baseline gap-1.5">
+              <span class="text-xs font-medium tracking-wide text-gray-500 uppercase">desde</span>
+              <span class="font-heading text-3xl font-extrabold text-gray-900">
+                {{ dailyPriceLabel }}/día
+              </span>
+            </p>
+            <p class="mt-1 text-sm text-gray-500">tarifa diaria en plan de 30 días</p>
+          </div>
+        </div>
+
+        <!-- Copy + CTAs + chips -->
         <div class="text-center lg:text-left">
+          <p class="font-heading text-sm font-semibold tracking-widest text-brand-300 uppercase">
+            Alquiler de carros
+          </p>
           <h1
-            class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold font-heading text-on-brand leading-[1.1]"
+            class="mt-3 font-heading text-3xl leading-[1.1] font-extrabold text-white sm:text-4xl xl:text-5xl"
           >
             Alquiler de Carros en Colombia al Mejor Precio
           </h1>
-          <p class="mt-4 text-base md:text-lg text-on-brand max-w-2xl mx-auto lg:mx-0">
-            Sin anticipos, sin fila. Flota con menos de 2 años y mantenimiento incluido.
-            Reserva por WhatsApp en {{ cityCount }} ciudades.
+          <p class="mt-4 max-w-2xl text-base text-white/90 md:text-lg">
+            Sin anticipos, sin fila. Flota con menos de 2 años y mantenimiento incluido. Reserva
+            por WhatsApp en {{ CITY_COUNT }} ciudades.
           </p>
 
-          <!-- CTA row: "Ver Precios" (jumps to #fleet) + contact WhatsApp -->
-          <div class="mt-6 flex flex-row items-stretch gap-3 justify-center lg:justify-start">
+          <div class="mt-6 flex flex-row items-stretch justify-center gap-3 lg:justify-start">
             <a
               href="#fleet"
-              class="inline-flex items-center justify-center px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-white text-brand-800 hover:bg-gray-100 shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+              class="inline-flex items-center justify-center rounded-full bg-brand-600 px-6 py-3.5 text-base font-semibold text-on-brand shadow-lg shadow-black/25 transition-all duration-200 hover:bg-brand-500 hover:shadow-xl sm:px-7"
             >
               Ver Precios
             </a>
@@ -55,7 +121,7 @@
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Contáctanos por WhatsApp"
-              class="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 text-base font-semibold rounded-full bg-whatsapp text-black hover:bg-whatsapp-hover shadow-lg shadow-black/15 hover:shadow-xl transition-all duration-200"
+              class="inline-flex items-center justify-center gap-2 rounded-full bg-whatsapp px-6 py-3.5 text-base font-semibold text-black shadow-lg shadow-black/25 transition-all duration-200 hover:bg-whatsapp-hover hover:shadow-xl sm:px-7"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -70,27 +136,34 @@
               WhatsApp
             </a>
           </div>
-        </div>
 
-        <!-- Visual column (card, aspect-[16/9] reserves space → no CLS) -->
-        <div class="flex items-center justify-center">
-          <div
-            class="w-full max-w-lg aspect-[16/9] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 ring-1 ring-white/10"
+          <ul
+            class="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start"
+            aria-label="Condiciones de la reserva"
           >
-            <!-- Static hero image from the neutral vehicle set. Eager + high
-                 priority: this is the LCP element. -->
-            <NuxtImg
-              src="/images/vehicles/premium.jpg"
-              alt="Alquiler de carros en Colombia sin anticipos"
-              class="w-full h-full object-cover"
-              width="512"
-              height="288"
-              preload
-              loading="eager"
-              fetchpriority="high"
-              sizes="100vw lg:512px"
-            />
-          </div>
+            <li
+              v-for="chip in TRUST_CHIPS"
+              :key="chip"
+              class="inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-sm font-medium text-white ring-1 ring-white/25"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="text-brand-300"
+                aria-hidden="true"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              {{ chip }}
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -100,6 +173,48 @@
 <script setup lang="ts">
 const { franchise } = useAppConfig()
 
-// Live active-city count (Supabase) for the subheading — tracks the dashboard.
-const cityCount = useCityCount()
+// La foto de fondo es el LCP: se pide antes de que el parser llegue al <img>.
+useHead({
+  link: [{ rel: 'preload', as: 'image', href: '/images/hero/carretera.webp', fetchpriority: 'high' }],
+})
+
+/**
+ * Tarifa mensual (plan de 1.000 km) activa más barata de la Gama C, en COP.
+ *
+ * Fuente: `category_pricing`, leída el 2026-08-11 con la misma regla que aplica
+ * Fleet.vue en la pestaña "Mensualidad" (`pickRepresentativeMonthlyPrice`: la
+ * `1k_kms` activa positiva más barata). Se congela aquí porque el dueño quiso el
+ * hero sin consultas.
+ *
+ * Cuando cambien las tarifas este número miente. El despertador es
+ * `node scripts/check-hero-pricing.mjs`, que lo compara contra los datos reales.
+ */
+const MONTHLY_1K_KMS_COP = 3_806_000
+
+/** Días del plan mensual — el divisor que convierte la mensualidad en tarifa diaria. */
+const MONTHLY_PLAN_DAYS = 30
+
+const CATEGORY_BADGE = 'Económico'
+const CATEGORY_NAME = 'Gama C Compacto Mecánico'
+
+/** Ciudades activas al 2026-08-11. Literal: el hero no consulta el conteo en vivo. */
+const CITY_COUNT = 19
+
+const TRUST_CHIPS = [
+  'Paga al recoger',
+  'Sin pago anticipado',
+  'Cancelación gratis',
+  'Vehículos nuevos',
+] as const
+
+/**
+ * Miles con punto, al estilo colombiano, sin depender de Intl: SSR y cliente
+ * tienen que producir el mismo string o la hidratación se queja.
+ */
+function formatCop(value: number): string {
+  return `$${Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
+}
+
+// Se redondea al alza (126.866,67 -> 126.867) para no anunciar menos de lo que se cobra.
+const dailyPriceLabel = formatCop(Math.ceil(MONTHLY_1K_KMS_COP / MONTHLY_PLAN_DAYS))
 </script>
