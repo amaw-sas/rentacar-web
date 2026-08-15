@@ -152,7 +152,7 @@
           ¿Listo para tu próxima aventura?
         </h2>
         <p class="text-gray-300 mb-6">
-          Reserva tu carro sin anticipos en cualquiera de nuestras 27 sedes
+          Reserva tu carro sin anticipos en cualquiera de nuestras {{ branchCount }} sedes
         </p>
         <NuxtLink
           to="/reservas"
@@ -171,6 +171,9 @@ import type { BlogPost } from '@rentacar-main/logic/src'
 const { franchise } = useAppConfig()
 const route = useRoute()
 const router = useRouter()
+
+// El conteo de sedes sale de los datos, igual que en alquilame (SCEN-BLOG-01).
+const branchCount = useBranchCount()
 
 // Category filter options
 const categories = [

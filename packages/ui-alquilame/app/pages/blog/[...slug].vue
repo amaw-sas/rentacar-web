@@ -194,7 +194,8 @@
               <p class="text-sm font-medium text-brand-700 mt-1">{{ blogAuthor.jobTitle }} · Alquílame</p>
               <p class="text-gray-600 mt-2 text-sm">
                 Lleva más de diez años alquilando carros en Colombia, con flota propia y convenios
-                empresariales. Dirige la operación de Alquílame, hoy en 19 ciudades y más de 30 sedes.
+                empresariales. Dirige la operación de Alquílame, hoy en {{ cityCount }} ciudades y
+                {{ branchCount }} sedes.
               </p>
               <NuxtLink :to="blogAuthor.path" class="inline-flex mt-3 text-sm font-semibold text-brand-700 hover:text-brand-800">
                 Conoce a Diego Melo
@@ -341,6 +342,11 @@ const authorImageUrl = blogAuthor.photo
   ? new URL(blogAuthor.photo, franchise.website).toString()
   : undefined
 const route = useRoute()
+
+// La bio del autor llevaba las dos cifras escritas ("19 ciudades y más de 30
+// sedes"). Cada una sale ahora de su propia fuente y se corrige sola.
+const cityCount = useCityCount()
+const branchCount = useBranchCount()
 
 // Get the slug from route params
 const slug = computed(() => {

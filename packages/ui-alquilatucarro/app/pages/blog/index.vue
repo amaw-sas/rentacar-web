@@ -227,7 +227,7 @@
         <div class="flex-1 text-center md:text-left">
           <div class="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold text-red-300 bg-red-900/30 rounded-full mb-3">
             <UIcon name="i-lucide-car" class="size-3.5" />
-            Sin anticipos · 27 sedes en Colombia
+            Sin anticipos · {{ branchCount }} sedes en Colombia
           </div>
           <h2 class="text-xl md:text-2xl font-bold text-white mb-2">
             ¿Te ayudamos a planear tu viaje?
@@ -265,6 +265,9 @@ import type { BlogPost } from '@rentacar-main/logic/src'
 const { franchise } = useAppConfig()
 const route = useRoute()
 const router = useRouter()
+
+// El conteo de sedes sale de los datos, igual que en alquilame (SCEN-BLOG-01).
+const branchCount = useBranchCount()
 
 // Search query (local ref — no URL sync to avoid noise)
 const searchQuery = ref('')
