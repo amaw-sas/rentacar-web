@@ -26,7 +26,7 @@
           <p class="text-lg text-gray-600">
             Todavía no es una reserva confirmada. Estamos verificando la
             disponibilidad y te escribimos apenas tengamos respuesta.
-            No necesitas hacer nada más.
+            No necesitas hacer nada por ahora.
           </p>
         </div>
 
@@ -59,6 +59,12 @@
             <p class="text-gray-600">
               Depende de la temporada. A veces respondemos en un par de horas;
               en temporada alta puede tomarnos algunos días.
+            </p>
+            <!-- El botón de abajo ya estaba, pero nada lo señalaba como la
+                 salida. Sin esta frase el cliente que lleva dos días esperando
+                 no sabe que puede escribir (issue #460). -->
+            <p class="text-gray-600 mt-3">
+              Si mañana no has recibido nada, escríbenos y lo revisamos.
             </p>
           </div>
 
