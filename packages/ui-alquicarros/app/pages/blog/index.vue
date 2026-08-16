@@ -172,7 +172,7 @@ const { franchise } = useAppConfig()
 const route = useRoute()
 const router = useRouter()
 
-// El conteo de sedes sale de los datos, igual que en alquilame (SCEN-BLOG-01).
+// El conteo de sedes sale de los datos, no del markup (ver SCEN-BLOG-01).
 const branchCount = useBranchCount()
 
 // Category filter options
