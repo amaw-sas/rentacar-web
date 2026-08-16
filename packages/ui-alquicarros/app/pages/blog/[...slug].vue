@@ -166,7 +166,7 @@
             <div class="text-center sm:text-left flex-1">
               <h3 class="text-lg font-bold text-gray-900">{{ post.author.name }}</h3>
               <p class="text-gray-600 mt-2 text-sm">
-                Somos tu mejor opción para alquilar carros en Colombia. Con presencia en más de 27 ciudades,
+                Somos tu mejor opción para alquilar carros en Colombia. Con presencia en {{ cityCount }} ciudades,
                 ofrecemos el mejor servicio sin anticipos y sin complicaciones. Nuestro equipo te acompaña
                 en cada paso de tu viaje.
               </p>
@@ -297,6 +297,10 @@ type BlogPostDetail = BlogPost & { body?: MDCRoot & { toc?: Toc } }
 
 const { franchise } = useAppConfig()
 const route = useRoute()
+
+// La bio del autor decía "más de 27 ciudades": ni eran 27 ni eran ciudades — el
+// 27 venía del conteo de sedes. Ahora cada cifra sale de su propia fuente.
+const cityCount = useCityCount()
 
 // Get the slug from route params
 const slug = computed(() => {

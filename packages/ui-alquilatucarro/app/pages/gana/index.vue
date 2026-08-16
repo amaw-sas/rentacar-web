@@ -256,7 +256,11 @@ const beneficios = [
   }
 ]
 
-const preguntas = [
+// computed y no un array plano: la última respuesta interpola el conteo de
+// ciudades, que llega con los datos. Decía "más de 20 ciudades" cuando son 19.
+const cityCount = useCityCount()
+
+const preguntas = computed(() => [
   {
     label: '¿Quién puede participar en el programa de referidos?',
     content: 'Cualquier persona mayor de edad puede participar, excepto empleados de AMAW S.A.S., socios y rentadoras locales.'
@@ -295,9 +299,9 @@ const preguntas = [
   },
   {
     label: '¿Por qué confiar en AlquilaTuCarro.com?',
-    content: 'Somos una plataforma confiable y líder en la renta de autos en Colombia, con una amplia red de socios y rentadoras locales en más de 20 ciudades del país.'
+    content: `Somos una plataforma confiable y líder en la renta de autos en Colombia, con una amplia red de socios y rentadoras locales en ${cityCount.value} ciudades del país.`
   }
-]
+])
 
 const testimonios = [
   {

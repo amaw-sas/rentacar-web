@@ -327,7 +327,7 @@
       <div class="max-w-4xl mx-auto text-center">
         <div class="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold text-red-300 bg-red-900/30 rounded-full mb-3">
           <UIcon name="i-lucide-car" class="size-3.5" />
-          Sin anticipos · 27 sedes en Colombia
+          Sin anticipos · {{ branchCount }} sedes en Colombia
         </div>
         <h2 class="text-xl md:text-2xl font-bold text-white mb-2">
           ¿Te ayudamos a planear tu viaje?
@@ -415,6 +415,10 @@ const authorImageUrl = blogAuthor.photo
   ? new URL(blogAuthor.photo, franchise.website).toString()
   : undefined
 const route = useRoute()
+
+// El conteo de sedes sale de los datos. Estaba escrito a mano y la auditoría del
+// 2026-08-14 lo encontró desfasado ("27 sedes" cuando eran 31).
+const branchCount = useBranchCount()
 
 // Get the slug from route params
 const slug = computed(() => {
