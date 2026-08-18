@@ -6,6 +6,101 @@
 
 ---
 
+## 0. CORRECCIONES DEL 2026-08-18 — leer antes que nada
+
+Las tres las hizo el dueño revisando el informe, y las tres son válidas. **No leas los veredictos de abajo sin pasar por aquí**, porque tres bloques de rechazos cambian de sentido.
+
+### Corrección 1 — El calendario se midió fuera de temporada
+
+**Este es el error grave del informe.** La ventana de Search Console fue del 9 de mayo al 7 de agosto. Pero Feria de Cali es en diciembre, Manizales en enero, Alumbrados en diciembre, Velitas el 7 de diciembre, Vallenato en abril e Independencia de Cartagena en noviembre.
+
+**Se midieron artículos de evento justo fuera de su temporada, y se declararon fracasados por eso.** Es como medir la venta de sombrillas en invierno.
+
+Con 12 meses (2025-08-08 → 2026-08-07) el dominio pasa de 16 clics a **124**, y de 1.968 impresiones a **9.150**:
+
+| Artículo | 90 días | 12 meses |
+|---|---|---|
+| Camioneta 7 puestos para el FILBO | 1 clic / 12 impr | **7 clics / 213 impr** |
+| Día de Velitas | 0 / 6 | **3 clics / 148 impr** |
+| Feria de Manizales | 0 / 14 | **1 clic / 113 impr** |
+| Andina Pack | 0 / 13 | **1 clic / 108 impr** |
+| Festival Vallenato | 0 / 4 | **5 clics / 87 impr** |
+| Feria de Cali | 0 / 10 | **8 clics / 80 impr** |
+| Alumbrados de Medellín | 0 / 3 | 0 / **52 impr** |
+
+**El veredicto correcto no es «ya se publicó y fracasó». Es «demanda modesta con títulos malos».** Alumbrados apareció 52 veces y no entró nadie: eso es un titular que no invita, no ausencia de demanda. Compáralo con el mejor del bloque, el del FILBO, que sí dice algo concreto: *«Alquiler camioneta 7 puestos Bogotá: guía para ir al FILBO»*.
+
+Los ~14 artículos de calendario **se rescatan, pero todos necesitan título nuevo y hay que revisarlos uno por uno** con datos de 12 meses antes de confirmarlos.
+
+### Corrección 2 — «Trampa de volumen» clasificó por la intención mayoritaria
+
+El informe descartó seis artículos porque la mayoría de quienes hacen esa búsqueda no van a alquilar. Es cierto y es insuficiente: **que 9 de cada 10 no alquilen no importa si el décimo tiene una cita médica y no puede esperar.**
+
+Cuatro vuelven, pero **con otro título**, apuntando al lector rentable y no a la masa:
+
+| Vuelve como | Sale de |
+|---|---|
+| Tengo pico y placa hoy y necesito moverme | Pico y placa en Bogotá |
+| ¿Me cobija el pico y placa si voy de otra ciudad en carro alquilado? | *(nuevo — no estaba en la rejilla)* |
+| Me pusieron una multa con un carro alquilado: qué pasa y cuánto cuesta | Multas y comparendos |
+| Alquilar un mes antes de comprar: probar el carro sin deuda | Alquiler mensual contra comprar |
+
+El de multas **cambia de categoría**: deja de ser trampa de volumen y pasa a dato propio, porque el negocio sabe qué pasa y cuánto cuesta cuando a un carro alquilado le ponen un comparendo.
+
+Se quedan fuera Medellín, Cali y Bucaramanga como artículos de pico y placa: esa búsqueda pide **una tabla que se actualiza sola**, no un texto.
+
+### Corrección 3 — «Genérico» usó la vara equivocada
+
+El informe preguntó *«¿esto lo puede escribir otro?»*. Casi todo lo puede escribir otro. **La pregunta correcta es: ¿este tema toca un cobro, una póliza o un riesgo que solo nosotros podemos poner en pesos?**
+
+Dos casos reales del dueño lo demuestran:
+
+**Llanta pinchada.** A un cliente se le pinchó, siguió andando hasta una vulcanizadora y dañó llanta y rin. Creyó que el todo riesgo lo cubría y no fue así, porque es negligencia y no accidente. El artículo genérico dice «cambie la llanta»; el suyo dice «pare aunque le quede lejos, porque lo que se ahorra en grúa lo paga en el rin, y esa parte no está cubierta».
+
+**Mareo en carretera.** No es «cómo evitar el mareo»: es que si un acompañante vomita, el cliente pasa de lavada básica a lavada completa. Advertencia con precio.
+
+El informe **ya había aceptado esta lógica** en el artículo de mascotas, precisamente porque tenía los $150.000–$225.000 al lado. Aplicarla allí y no aquí fue una inconsistencia.
+
+De los 14 genéricos: **6 se rescatan** (llanta pinchada, accidente en carretera, frenos en bajadas largas, mareo, transportar la mascota, retenes), **3 cambian de trabajo** (SIM prepago, roaming y mapas sin datos: están para vender la eSIM por afiliación, se miden por conversión y no por clics) y **4 siguen flojos** (cada cuánto parar, qué llevar en viajes de +8 h, cargadores, primer viaje largo).
+
+### Dos preguntas abiertas que quedaron resueltas
+
+**Mascotas: SÍ se aceptan**, con lavada obligatoria de **$150.000 a $225.000**. Desbloquea el silo y le da su ángulo.
+**Híbridos: NO son enchufables.** La LU es Mhev y la GY es e-POWER. Mata el artículo de dónde cargarlos y abre «cómo manejar un híbrido por primera vez».
+
+**Sigue abierta la contradicción del pico y placa**: la base de datos marca 5 gamas exentas (solo en Bogotá; fuera de Bogotá únicamente la GY, en 6 ciudades), pero la base de conocimiento del chatbot dice que los vehículos *«se entregan sin pico y placa, pero no están exentos»*. El silo 38 depende de cuál es verdad.
+
+### Una fuente que no existe
+
+El informe no pudo alimentar la categoría «experiencia operativa» porque **ninguna de las cinco fuentes contiene incidentes**. Se verificó el esquema completo: no hay tablas ni columnas de daños, lavadas, multas ni penalizaciones. Lo que existe son cobros cotizados al reservar:
+
+| Cobro | Veces | % de reservas | Valor promedio |
+|---|---|---|---|
+| Devolución en otra sede | 923 | 6,0% | **$153.095** |
+| Horas extra | 771 | 5,0% | **$97.420** |
+| Conductor adicional | 12 | 0,1% | $24.000 |
+
+Los dos primeros sostienen artículo con cifra propia. El tercero se cae solo: 12 casos en 15.091 reservas.
+
+**La lista de incidentes hay que construirla preguntándole a quien entrega los carros.** Es lo único de todo el trabajo que ni la competencia ni una IA pueden reproducir.
+
+### El conteo, después de las tres correcciones
+
+```
+211 auditados
+├── 120 rojos ──┬── ~26 se rescatan (14 calendario · 3 trampa · 6 genéricos · 3 eSIM)
+│               └── ~94 siguen cayendo
+├──  68 amarillos ── 25 solos + 43 absorbidos
+└──  21 verdes
++     6 nuevos que no estaban en la rejilla
+─────────────────────────────────────────
+    SE ESCRIBEN ≈ 78  (antes 46)
+```
+
+A cuatro artículos al mes, de once meses y medio pasa a poco más de año y medio.
+
+---
+
 ## 1. El resumen
 
 De los 211 artículos que propone la rejilla quedan **46 piezas publicables**. Se caen 120 en seco y otros 43 desaparecen porque se funden dentro de los que quedan.
