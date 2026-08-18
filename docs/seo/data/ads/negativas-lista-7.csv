@@ -1,0 +1,17 @@
+Informe detallado de palabras clave negativas
+Desde siempre
+keyword_text,match_type
+party bus,PHRASE
+limusina,BROAD
+limosina,BROAD
+indrive,BROAD
+chiva rumbera,PHRASE
+taxi,BROAD
+ambulancia,BROAD
+con chofer,PHRASE
+indriver,BROAD
+transporte escolar,PHRASE
+didi,BROAD
+uber,BROAD
+funeraria,BROAD
+con conductor,PHRASE

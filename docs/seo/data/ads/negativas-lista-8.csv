@@ -1,0 +1,24 @@
+Informe detallado de palabras clave negativas
+Desde siempre
+keyword_text,match_type
+carros colombia,EXACT
+venta,BROAD
+concesionarios bogota,EXACT
+compra,BROAD
+vender,BROAD
+usado,BROAD
+renting,BROAD
+usados,BROAD
+en venta,PHRASE
+millones,BROAD
+plataformas,BROAD
+segunda,BROAD
+concesionario,BROAD
+financiar,BROAD
+vendo,BROAD
+comprar,BROAD
+leasing,BROAD
+credito de vehiculo,PHRASE
+carros baratos en bogotá,EXACT
+financiacion,BROAD
+permuta,BROAD
