@@ -15,6 +15,12 @@
  *   pnpm blog:publish --check                       # validate every .md, write nothing
  *   pnpm blog:publish --slug=<slug> --dry-run       # diff against the live row
  *   pnpm blog:publish --slug=<slug>                 # publish (upsert)
+ *   pnpm blog:pull --slug=<slug> --brand=<brand>    # live row → markdown file
+ *
+ * `--pull` is the other direction, and it is why the repo can be trusted again:
+ * an article edited straight in the database, or published before this script
+ * existed, is recovered into `content/blog/` instead of being overwritten the
+ * next time someone publishes. It writes a file and touches nothing remote.
  *
  * Idempotent: upsert on the `blog_posts_brand_slug_key` unique index, the same
  * conflict target `server/api/blog/wordpress-sync.post.ts` uses.
@@ -25,7 +31,7 @@
  * --dry-run and read the diff.
  */
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml } from 'yaml'
@@ -227,6 +233,70 @@ function client(readOnly: boolean): SupabaseClient {
   })
 }
 
+/**
+ * Serializes a live row back into the `.md` shape, in the frontmatter key order
+ * the existing articles use so a pulled file reads like a hand-written one.
+ */
+function toMarkdown(row: Record<string, any>): string {
+  const quote = (v: string) => `"${String(v).replace(/"/g, '\\"')}"`
+  const lines = [
+    '---',
+    `brand: ${row.brand}`,
+    `slug: ${row.slug}`,
+    `title: ${quote(row.title)}`,
+  ]
+  if (row.meta_title !== null && row.meta_title !== undefined) lines.push(`meta_title: ${quote(row.meta_title)}`)
+  lines.push(`description: ${quote(row.description)}`)
+  lines.push(`image: ${row.image}`)
+  lines.push(`alt: ${quote(row.alt)}`)
+  lines.push(`author_name: ${row.author_name}`)
+  lines.push(`author_avatar: ${row.author_avatar}`)
+  lines.push(`date: ${toDateString(row.date)}`)
+  if (row.updated) lines.push(`updated: ${toDateString(row.updated)}`)
+  lines.push(`category: ${row.category}`)
+  lines.push('tags:')
+  for (const tag of row.tags ?? []) lines.push(`  - ${tag}`)
+  lines.push(`reading_time: ${row.reading_time}`)
+  lines.push(`featured: ${row.featured}`)
+  if (row.faq_items) lines.push(`faq_items: ${JSON.stringify(row.faq_items)}`)
+  lines.push('---', '', String(row.body).trim(), '')
+  return lines.join('\n')
+}
+
+async function pull(slug: string, brand: string | undefined) {
+  if (!brand) {
+    console.error('❌ --pull necesita --brand, porque el mismo slug puede existir en varias marcas')
+    process.exit(1)
+  }
+  const supabase = client(true)
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('brand', brand)
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (error) {
+    console.error(`❌ consulta fallida: ${error.message}`)
+    process.exit(1)
+  }
+  if (!data) {
+    console.error(`❌ no hay fila publicada para ${brand}/${slug}`)
+    process.exit(1)
+  }
+
+  const target = resolve(CONTENT_DIR, brand, `${slug}.md`)
+  if (existsSync(target)) {
+    console.error(
+      `❌ ${target} ya existe. --pull no sobrescribe: si quieres comparar, usa --slug=${slug} --dry-run.`,
+    )
+    process.exit(1)
+  }
+
+  writeFileSync(target, toMarkdown(data), 'utf-8')
+  console.log(`✅ content/blog/${brand}/${slug}.md · body ${md5(String(data.body).trim()).slice(0, 8)}`)
+}
+
 async function main() {
   const args = process.argv.slice(2)
   const flag = (name: string) => args.some((a) => a === `--${name}`)
@@ -234,9 +304,19 @@ async function main() {
 
   const checkOnly = flag('check')
   const dryRun = flag('dry-run')
+  const pullMode = flag('pull')
   const allowForwardLinks = flag('allow-forward-links')
   const slug = value('slug')
   const brand = value('brand')
+
+  if (pullMode) {
+    if (!slug) {
+      console.error('❌ --pull necesita --slug')
+      process.exit(1)
+    }
+    await pull(slug, brand)
+    return
+  }
 
   const articles = readArticles()
   if (!articles.length) {

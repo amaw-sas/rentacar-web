@@ -21,6 +21,7 @@
     "clean": "rm -rf .nuxt .output node_modules/.cache && echo cleaned",
     "blog:publish": "npx tsx --env-file=.env.local scripts/publish-blog-post.ts",
     "blog:check": "npx tsx --env-file=.env.local scripts/publish-blog-post.ts --check",
+    "blog:pull": "npx tsx --env-file=.env.local scripts/publish-blog-post.ts --pull",
     "perf:vehicle-results-cls": "node scripts/measure-vehicle-results-cls.mjs",
     "scrape:google-docs": "npx tsx scripts/docs-scraper/run.ts",
     "scrape:google-docs:resume": "npx tsx scripts/docs-scraper/run.ts --resume",
