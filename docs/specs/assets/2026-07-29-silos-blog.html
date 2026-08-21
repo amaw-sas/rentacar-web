@@ -255,7 +255,7 @@
   <p class="eyebrow">Parrilla de contenido · 29 de julio de 2026</p>
   <h1>Cómo se enlazan los artículos entre sí</h1>
   <p class="lede">
-    Once silos, 31 espacios, 12 artículos comprometidos para la primera tanda.
+    Doce silos, 37 espacios, 14 artículos comprometidos para la primera tanda.
     Toca cualquier tarjeta para ver de dónde recibe enlaces y hacia dónde los manda.
   </p>
 
@@ -432,7 +432,7 @@
 
   // tanda: 1 = keyword comprometida, 2/3 = tema fijo, 0 = espacio libre
   var DATA = [
-    { brand: "alq", label: "alquilame", meta: "14 espacios · 6 en tanda 1", silos: [
+    { brand: "alq", label: "alquilame", meta: "20 espacios · 8 en tanda 1", silos: [
       { code: "A", name: "Llegas en avión", nodes: [
         { id:"A0", pillar:true, tanda:1, title:"Alquiler de carros en Medellín", kw:"alquiler de carros en medellin",
           dato:"741 reservas. 42% recoge en el aeropuerto teniendo 5 sedes para escoger. 1.046 impresiones, posición 16,6.",
@@ -484,6 +484,32 @@
         { id:"K1", tanda:3, title:"Evento por definir", kw:"— sale del respaldo mensual",
           dato:"Se elige con la alarma temprana: búsquedas para fechas futuras. Horizonte real de 6 semanas.",
           city:null, out:["K0"] }
+      ]},
+      { code: "M", name: "Pico y placa", nodes: [
+        { id:"M0", pillar:true, tanda:1, title:"1.339 cámaras de fotodetección y un pico y placa escrito a mano",
+          kw:"pico y placa colombia",
+          dato:"Fuentes oficiales de 24 municipios revisadas una por una. 314 de las 1.339 cámaras del registro de la ANSV están habilitadas para el código C.14. PUBLICADO 19-08-2026.",
+          city:null, out:["M1","M2","M3","M4","M5"] },
+        { id:"M1", tanda:1, title:"La multa de pico y placa en 2026 no es la que te dice Google",
+          kw:"multa por pico y placa 2026 colombia",
+          dato:"$633.111 (52,28 UVB) contra los $875.452 que devuelve el buscador. Concepto MinTransporte 20261340213651. ESCRITO, falta portada.",
+          city:null, out:["M0"] },
+        { id:"M2", tanda:2, title:"Su carro puede estar exento y usted no lo sabe",
+          kw:"— se elige con datos frescos",
+          dato:"18 numerales de excepción en el art. 230 del Decreto 652 de 2025. La página oficial mejor posicionada dice que son tres.",
+          city:null, out:["M0","M3"] },
+        { id:"M3", tanda:2, title:"Los carros eléctricos y el híbrido suave",
+          kw:"— se elige con datos frescos",
+          dato:"Ley 1964 de 2019 art. 6: la exención del eléctrico es nacional, no municipal. El RUNT no tiene categoría de híbrido suave.",
+          city:null, out:["M0","M2"] },
+        { id:"M4", tanda:3, title:"Un viaje de Cali a Bogotá cruza el 78% de las cámaras del país",
+          kw:"— se elige con datos frescos",
+          dato:"245 de las 314 cámaras C.14 están en los municipios de esa ruta. Ninguna norma reconoce exenciones entre municipios.",
+          city:null, out:["M0","M5"] },
+        { id:"M5", tanda:3, title:"Pico y placa cuando alquilas un carro",
+          kw:"— se elige con datos frescos",
+          dato:"Quien alquila no eligió su placa. Competencia nula medida el 20-08-2026. Es el único del silo que va a las páginas de ciudad.",
+          city:null, out:["M0","M4"] }
       ]}
     ]},
     { brand: "atc", label: "alquilatucarro", meta: "17 espacios · 6 en tanda 1", silos: [
@@ -527,8 +553,8 @@
         { id:"H0", pillar:true, tanda:3, title:"Alquiler de carros en Bogotá", kw:"— se elige con datos frescos",
           dato:"1.093 reservas, la ciudad donde alquilatucarro manda. Posición media 26,8: hay todo por hacer.",
           city:"bogota", out:["H1","H2"] },
-        { id:"H1", tanda:3, title:"Pico y placa en Bogotá", kw:"— se elige con datos frescos",
-          dato:"Enlaza a la Secretaría de Movilidad de Bogotá. La URL se verifica en vivo antes de publicar.",
+        { id:"H1", tanda:3, title:"Tema de Bogotá por definir", kw:"— se elige con datos frescos",
+          dato:"Era «Pico y placa en Bogotá». Se liberó el 21-08-2026: pico y placa quedó como silo M de alquilame, y un artículo va en un solo dominio. El tema de reemplazo está sin elegir.",
           city:"bogota", out:["H0","H2"] },
         { id:"H2", tanda:3, title:"El Dorado y las cinco sedes de Bogotá", kw:"— se elige con datos frescos",
           dato:"5 sedes, una en el aeropuerto: Bogotá sí admite el dato de elección de sede.",
