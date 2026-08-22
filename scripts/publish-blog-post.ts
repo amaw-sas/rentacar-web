@@ -142,6 +142,17 @@ function validate(article: Article, known: Set<string>, allowForwardLinks: boole
     )
   }
 
+  // A draft's working notes live in HTML comments, invisible while writing and
+  // still invisible on the rendered page — but the body is stored verbatim and
+  // shipped to the browser, so "no verificado" and "NO inventar" travel with it.
+  // The Santa Marta article carried exactly this and only escaped because whoever
+  // published it stripped the block by hand.
+  const comment = body.match(/<!--[\s\S]*?-->/)
+  if (comment) {
+    const first = comment[0].replace(/\s+/g, ' ').slice(0, 70)
+    problems.push(`tiene un comentario HTML que viajaría al navegador dentro del cuerpo: «${first}…»`)
+  }
+
   // Internal links are the reason staggered publishing is risky: article 3 can
   // link to article 4 months before article 4 exists, and the reader gets a 404.
   for (const match of body.matchAll(/\]\(\/blog\/([a-z0-9-]+)\)/g)) {
