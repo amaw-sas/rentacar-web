@@ -1,5 +1,22 @@
 # Protocolo de Creación de Artículos del Blog
 
+> **OBSOLETO desde el 21 de agosto de 2026. No lo sigas.**
+>
+> Este documento es anterior a la migración del blog a Supabase (issue #52) y da instrucciones
+> que ya no aplican:
+>
+> - Manda escribir en `packages/ui-alquilatucarro/content/blog/`. Los artículos viven en
+>   `content/blog/<marca>/` en la raíz del repo.
+> - Manda editar `public/rss.xml`, `sitemap.urls` y `prerender.routes` a mano. El RSS y el
+>   sitemap se generan desde `blog_posts`; escribirlos a mano no hace nada.
+> - Da por sentado que mergear el `.md` publica el artículo. No lo hace: nada lee
+>   `content/blog/` en runtime. Publicar es `pnpm blog:publish --slug=<slug>`, que hace upsert
+>   en Supabase.
+>
+> Sigue sirviendo como referencia de la parte editorial: estructura, longitud, criterios de
+> imagen y el checklist de revisión. El grafo de enlaces vigente está en
+> `docs/specs/assets/2026-07-29-silos-blog.html`.
+
 > Documento que define el proceso estándar para crear artículos del blog de Alquilatucarro.
 > Fecha de creación: 2026-02-05
 

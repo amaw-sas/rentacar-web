@@ -9,6 +9,7 @@ alt: "Cámara de fotodetección montada en un poste sobre una avenida arbolada, 
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-19
+updated: 2026-08-20
 category: tips
 tags:
   - pico-y-placa
@@ -18,6 +19,10 @@ tags:
   - colombia
 reading_time: 12
 featured: true
+---
+
+**Nota sobre la vigencia.** Este artículo retrata el estado de las fuentes oficiales el 18 y 19 de agosto de 2026. Varias ciudades tenían entonces medidas extraordinarias de pico y placa por el sismo del 10 de agosto; son temporales y algunas ya volvieron a su rotación ordinaria.
+
 ---
 
 El país sabe dónde está cada una de sus 1.339 cámaras de fotodetección. Saber si hoy puedes sacar el carro es más difícil: el pico y placa cambia de ciudad en ciudad, y en varias toca revisar Facebook.

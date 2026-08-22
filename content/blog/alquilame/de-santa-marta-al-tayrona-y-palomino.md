@@ -11,10 +11,11 @@ author_avatar: /img/blog/author-avatar.png
 date: 2026-08-18
 category: destinos
 tags:
-  - santa marta
+  - santa-marta
   - tayrona
   - palomino
   - rutas
+  - costa-caribe
 reading_time: 7
 featured: true
 ---
@@ -157,18 +158,3 @@ El resto del año, la mayoría reserva tres días y termina corriendo.
 ---
 
 *Las tarifas y condiciones de ingreso son las publicadas por Parques Nacionales Naturales de Colombia. Los datos de alquiler salen de 1.075 reservas propias en Santa Marta. Verifica horarios y cierres del parque antes de viajar: cambian sin aviso.*
-
-<!--
-PENDIENTE ANTES DE PUBLICAR — no verificado en esta redacción:
-1. Distancias y tiempos Santa Marta → entrada El Zaino, y → Palomino.
-   NO inventar: medir con fuente o con el equipo de Santa Marta.
-2. Fechas de cierre anual del parque (cambian cada año). Confirmar con Parques
-   Nacionales antes de publicar; si el artículo sale sin eso, quitar cualquier
-   afirmación de que "siempre está abierto".
-3. Horarios de ingreso por sector (Zaino, Calabazo, Neguanje). La tabla oficial
-   no cargó en la extracción; cada punto tiene horario distinto.
-4. Confirmar que la foto de Diego Melo existe en /images/blog/autores/.
-FUENTE OFICIAL: parquesnacionales.gov.co, sección Valor de Ingreso.
-Página consultada el 2026-08-18, última actualización oficial 2026-06-19.
-DATOS PROPIOS: reservations + locations, city='santa-marta', 1.075 filas.
--->
