@@ -88,6 +88,8 @@ El C.14 es el de pico y placa. Artículo 131 de la Ley 769 de 2002, modificado p
 
 Cualquiera que use estas cifras debe desglosarlas por clase de vehículo y contrastarlas contra si el municipio tiene la medida. Nosotros lo hicimos y por eso lo advertimos.
 
+Y hay un detalle que vuelve más incómoda esa cuenta: **estar exento por ley no impide que la cámara emita el comparendo.** En Bogotá las excepciones son dieciocho, no las tres que anuncia la página oficial mejor posicionada, y varias solo funcionan si la placa quedó inscrita en un registro. Lo desarmamos en [las excepciones de pico y placa que casi nadie conoce](/blog/exenciones-pico-y-placa-bogota).
+
 ## Lo que el Estado hace mal
 
 Del otro lado está la norma. Esto es lo que encontramos en las veinticuatro fuentes oficiales:
