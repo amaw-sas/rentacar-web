@@ -9,7 +9,7 @@ alt: "Cámara de fotodetección montada en un poste sobre una avenida arbolada, 
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-19
-updated: 2026-08-20
+updated: 2026-08-24
 category: tips
 tags:
   - pico-y-placa
@@ -157,6 +157,8 @@ Hay incluso un caso borde que ocurre este mes: el 31 de agosto es impar y el 1 d
 ## Por qué esto le importa a alguien
 
 Una infracción de código C.14 cuesta hoy **$633.111**. Son 52,28 UVB, según la tabla de equivalencias que el Ministerio de Transporte publicó en concepto de su Oficina Asesora Jurídica con radicado 20261340213651 del 17 de febrero de 2026. Desde el 1° de enero de 2026 las multas ya no se calculan sobre el salario mínimo sino sobre la Unidad de Valor Básico creada por el artículo 313 de la Ley 2294 de 2023, fijada en $12.110 para este año.
+
+Esa cifra es además el error más repetido del tema: los buscadores todavía responden $875.452, calculado sobre una fórmula que dejó de existir. Lo desarmamos en [por qué la multa de pico y placa de 2026 no es la que te dice Google](/blog/multa-pico-y-placa-2026-colombia).
 
 Pero la multa no es lo peor. La norma dice, textual: «Además, el vehículo será inmovilizado.»
 
