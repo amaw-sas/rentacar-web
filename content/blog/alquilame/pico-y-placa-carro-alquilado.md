@@ -1,9 +1,9 @@
 ---
 brand: alquilame
 slug: pico-y-placa-carro-alquilado
-title: "Pico y placa en un carro alquilado: esa placa no la elegiste tú"
-meta_title: "Pico y placa en un carro alquilado en Colombia: qué preguntar en el mostrador | Alquílame"
-description: "La exención de pico y placa es del vehículo, no de quien lo conduce. Y varios registros de exentos no se pueden consultar desde afuera. Estas son las preguntas que hay que hacer antes de recibir las llaves."
+title: "En un carro alquilado, esa placa no la elegiste tú"
+meta_title: "Pico y placa en un carro alquilado | Alquílame"
+description: "La exención de pico y placa es del vehículo, no de quien lo conduce. Estas son las preguntas que hay que hacer antes de recibir las llaves."
 image: /img/blog/pico-y-placa-carro-alquilado.webp
 alt: "Unas llaves de carro sobre el mostrador de una oficina de alquiler, con un vehículo desenfocado al fondo, sin logos ni placas legibles"
 author_name: Diego Melo

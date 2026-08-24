@@ -214,10 +214,23 @@ function excerptAt(line: string, start: number, end: number): string {
  * pude» reports as both «no pude» and «pude», and the author fixes one finding
  * twice.
  */
+/**
+ * Quoted text is somebody else's words, so house-voice rules do not apply to it.
+ * A norm that says «no pude» is a citation, not a slip — and an article may quote
+ * the very phrasing it is arguing against. Masking keeps the offsets intact so the
+ * reported line and excerpt still line up with the real file.
+ */
+function maskQuotes(line: string): string {
+  return line
+    .replace(/«[^»]*»/g, (m) => ' '.repeat(m.length))
+    .replace(/"[^"]*"/g, (m) => ' '.repeat(m.length))
+}
+
 function scan(lines: string[], offset: number, terms: string[], caseSensitive = false): Hit[] {
   const hits: Hit[] = []
   const ordered = [...terms].sort((a, b) => b.length - a.length)
-  for (const [index, line] of lines.entries()) {
+  for (const [index, rawLine] of lines.entries()) {
+    const line = maskQuotes(rawLine)
     const claimed: Array<[number, number]> = []
     for (const term of ordered) {
       for (const match of line.matchAll(wordPattern(term, caseSensitive))) {
@@ -225,7 +238,7 @@ function scan(lines: string[], offset: number, terms: string[], caseSensitive = 
         const end = start + match[0].length
         if (claimed.some(([from, to]) => start < to && end > from)) continue
         claimed.push([start, end])
-        hits.push({ line: offset + index + 1, term: match[0], excerpt: excerptAt(line, start, end) })
+        hits.push({ line: offset + index + 1, term: match[0], excerpt: excerptAt(rawLine, start, end) })
       }
     }
   }
