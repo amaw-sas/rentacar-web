@@ -2,8 +2,8 @@
 brand: alquilame
 slug: pico-y-placa-colombia-camaras-fotodeteccion
 title: "1.339 cámaras de fotodetección y un pico y placa escrito a mano"
-meta_title: "Pico y placa en Colombia: 1.339 cámaras y normas que nadie puede leer | Alquílame"
-description: "El país publica dónde está cada una de sus 1.339 cámaras de fotodetección. Saber si hoy puedes sacar el carro es mucho más difícil. Revisamos las fuentes oficiales de 24 municipios."
+meta_title: "Pico y placa: 1.339 cámaras y normas ilegibles | Alquílame"
+description: "El país publica dónde está cada una de sus 1.339 cámaras de fotodetección. Saber si hoy puedes sacar el carro es más difícil: revisamos 24 municipios."
 image: /img/blog/pico-y-placa-fotodeteccion.webp
 alt: "Cámara de fotodetección montada en un poste sobre una avenida arbolada, con el tráfico desenfocado al fondo"
 author_name: Diego Melo

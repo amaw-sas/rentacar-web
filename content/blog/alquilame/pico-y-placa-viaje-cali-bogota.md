@@ -1,9 +1,9 @@
 ---
 brand: alquilame
 slug: pico-y-placa-viaje-cali-bogota
-title: "Un viaje de Cali a Bogotá cruza el 78% de las cámaras de pico y placa del país"
-meta_title: "Pico y placa de Cali a Bogotá: ocho municipios, ocho reglas | Alquílame"
-description: "245 de las 314 cámaras que sancionan pico y placa en Colombia están en los municipios de esa ruta. Cada uno tiene su horario, su rotación y su lista de excepciones. Y ninguno reconoce la del vecino."
+title: "Un viaje de Cali a Bogotá cruza el 78% de las cámaras"
+meta_title: "Pico y placa de Cali a Bogotá: ocho reglas | Alquílame"
+description: "245 de las 314 cámaras que sancionan pico y placa están en esa ruta. Cada municipio tiene su lista de excepciones y ninguno reconoce la del vecino."
 image: /img/blog/pico-y-placa-viaje-cali-bogota.webp
 alt: "Carretera de montaña en Colombia al amanecer, con neblina entre las laderas y un carro pequeño a lo lejos"
 author_name: Diego Melo
@@ -70,13 +70,13 @@ Manizales no tiene pico y placa permanente para carros particulares. Lo que tien
 
 Un domingo por la tarde, en una ciudad que normalmente no tiene pico y placa, con veintitrés cámaras encendidas. No hay forma de adivinarlo: hay que ir a mirarlo.
 
-**Los dígitos de hoy no los imprimo aquí, y es a propósito.** La rotación de Cali cambia cada semestre por decreto, la del Valle de Aburrá la acuerda un consejo metropolitano y la de Bogotá se publica en un PDF mensual. Un artículo con dígitos fijos queda desactualizado en semanas y sigue apareciendo en el buscador durante años. Lo que sí dura es saber a qué hora aplica, quién fija la regla y dónde publicarla.
+**Los dígitos de hoy no van en este artículo, y es a propósito.** La rotación de Cali cambia cada semestre por decreto, la del Valle de Aburrá la acuerda un consejo metropolitano y la de Bogotá se publica en un PDF mensual. Un artículo con dígitos fijos queda desactualizado en semanas y sigue apareciendo en el buscador durante años. Lo que sí dura es saber a qué hora aplica, quién fija la regla y dónde publicarla.
 
 ## Ninguna exención cruza la frontera del municipio
 
 Esta es la parte que sorprende a casi todo el mundo: **la exención que te dieron en una ciudad no vale en la siguiente.**
 
-No es que esté prohibido reconocerla. Es que nadie lo escribió. Busqué una norma de reconocimiento mutuo —nacional, departamental o metropolitana— en los decretos vigentes de Bogotá, Medellín, Envigado, Itagüí, Sabaneta y Bello, y no existe. Lo que existe es lo contrario: cada decreto se declara territorial y remite a su propia base de datos.
+No es que esté prohibido reconocerla. Es que nadie lo escribió. Buscamos una norma de reconocimiento mutuo —nacional, departamental o metropolitana— en los decretos vigentes de Bogotá, Medellín, Envigado, Itagüí, Sabaneta y Bello, y no existe. Lo que existe es lo contrario: cada decreto se declara territorial y remite a su propia base de datos.
 
 Bello lo dice con todas las letras:
 
@@ -88,7 +88,7 @@ Y el artículo 8 del mismo decreto, al describir qué produce una autorización 
 
 Envigado le habla directamente al conductor: recomienda «verificar la inscripción de la placa del vehículo» en su propio portal «antes de transitar en la jurisdicción del municipio de Envigado». Cada secretaría consulta su propia lista, y ninguna consulta la del vecino.
 
-Lo único que sí viaja por mandato legal es la exención de los carros eléctricos y de cero emisiones, que está en el artículo 6 de la Ley 1964 de 2019 y aplica en cualquier ciudad del país. Los híbridos quedan fuera de esa ley: su exención la decide cada alcaldía. Esa diferencia, con el detalle de qué dice tu tarjeta de propiedad, la desarmé en [el artículo sobre eléctricos e híbridos](/blog/carros-electricos-hibridos-pico-y-placa).
+Lo único que sí viaja por mandato legal es la exención de los carros eléctricos y de cero emisiones, que está en el artículo 6 de la Ley 1964 de 2019 y aplica en cualquier ciudad del país. Los híbridos quedan fuera de esa ley: su exención la decide cada alcaldía. Esa diferencia, con el detalle de qué dice tu tarjeta de propiedad, la desarmamos en [el artículo sobre eléctricos e híbridos](/blog/carros-electricos-hibridos-pico-y-placa).
 
 ## Tu híbrido está exento en Medellín al cruzar el letrero, y en Bogotá veinte días hábiles después
 
@@ -116,15 +116,15 @@ Tres municipios sí pensaron en el forastero. Envigado lo escribe así:
 
 Itagüí y Sabaneta tienen la misma cláusula, con la misma mecánica y el mismo límite de un día. Itagüí explica el porqué en sus considerandos: garantizar el derecho al turismo y el principio de proporcionalidad.
 
-No la encontré en el decreto de Medellín ni en el de Bello.
+No la encontramos en el decreto de Medellín ni en el de Bello.
 
 | Municipio | ¿Cláusula de turista? | Norma revisada |
 |---|---|---|
 | Envigado | Sí, primer día | Decreto 20260000804 del 24-07-2026, num. 4.21 |
 | Itagüí | Sí, primer día | Decreto 1011 de 2026 |
 | Sabaneta | Sí, primer día | Decreto 20260282, segundo semestre 2026 |
-| Medellín | No la encontré | Decreto 0102 de 2024 |
-| Bello | No la encontré | Decreto 202404000394 del 31-07-2024 |
+| Medellín | No la encontramos | Decreto 0102 de 2024 |
+| Bello | No la encontramos | Decreto 202404000394 del 31-07-2024 |
 
 Así que dentro del mismo valle, con la misma rotación de dígitos y sin un solo letrero que marque el cambio, el mismo carro de placa caleña está amparado en tres municipios y desamparado en dos.
 
@@ -138,7 +138,7 @@ Santa Marta parte el pico y placa según dónde esté registrado el vehículo. L
 
 Trece horas seguidas contra siete horas y media repartidas, el mismo día y el mismo dígito, según el origen de la placa.
 
-**Esto lo tomé de prensa que cita el Decreto 213 del 8 de mayo de 2026, no del decreto leído de primera mano.** El PDF oficial son doce páginas sin capa de texto accesible, y el buscador del portal de la Alcaldía devuelve, para «pico y placa», noticias de 2018 y 2020. Lo doy con esa salvedad.
+**Esto lo tomamos de prensa que cita el Decreto 213 del 8 de mayo de 2026, no del decreto leído de primera mano.** El PDF oficial son doce páginas sin capa de texto accesible, y el buscador del portal de la Alcaldía devuelve, para «pico y placa», noticias de 2018 y 2020. Va con esa salvedad.
 
 ## La última hora del viaje tiene su propia regla
 
@@ -166,7 +166,7 @@ El código C.14 no termina en la multa. El Código Nacional de Tránsito lo reda
 >
 > — Ley 769 de 2002, artículo 131, modificado por el artículo 21 de la Ley 1383 de 2010
 
-En tu ciudad, un mal día. En un viaje es otra cosa: el carro entra a patios de un municipio de paso, sale con grúa y parqueadero pagos, y el itinerario que ya compraste se cae. Cuánto cuesta la multa en 2026, y por qué la cifra que devuelve el buscador está inflada, lo revisé en [el artículo sobre la multa de pico y placa](/blog/multa-pico-y-placa-2026-colombia).
+En tu ciudad, un mal día. En un viaje es otra cosa: el carro entra a patios de un municipio de paso, sale con grúa y parqueadero pagos, y el itinerario que ya compraste se cae. Cuánto cuesta la multa en 2026, y por qué la cifra que devuelve el buscador está inflada, lo revisamos en [el artículo sobre la multa de pico y placa](/blog/multa-pico-y-placa-2026-colombia).
 
 Vale la pena tener presente el matiz procesal: en Bogotá la Alcaldía explica que la cámara captura la evidencia y un agente de tránsito valida los documentos antes de decidir si emite el comparendo. La cámara no inmoviliza. Quien inmoviliza es el agente que te para en la vía. Las dos cosas están en juego en un viaje.
 
@@ -180,19 +180,19 @@ Vale la pena tener presente el matiz procesal: en Bogotá la Alcaldía explica q
 - **Si el carro es alquilado, pregúntale a la rentadora si la placa está inscrita en algún registro de exentos.** Varias exenciones dependen de padrones municipales que no son públicos: tú no puedes consultarlos, y la exención es del vehículo, no de quien lo conduce.
 - **Si vuelves a Bogotá un domingo o un lunes de puente, revisa el pico y placa regional.** Funciona por paridad y solo en los corredores de entrada.
 
-## Cómo verifiqué esto y qué no pude cerrar
+## Cómo verificamos esto y qué no pudimos cerrar
 
-El conteo de cámaras es propio, hecho sobre el archivo público que la ANSV publica en `fotodeteccion.ansv.gov.co`, con corte del 18 de agosto de 2026. Los decretos municipales los leí en el articulado, no en resúmenes de prensa, salvo donde digo lo contrario. Fecha de verificación del bloque normativo: 20 de agosto de 2026.
+El conteo de cámaras es propio, hecho sobre el archivo público que la ANSV publica en `fotodeteccion.ansv.gov.co`, con corte del 18 de agosto de 2026. Los decretos municipales los leímos en el articulado, no en resúmenes de prensa, salvo donde se advierte lo contrario. Fecha de verificación del bloque normativo: 20 de agosto de 2026.
 
 Lo que queda abierto:
 
 - **El C.14 no es solo el pico y placa de los carros.** El código sanciona «transitar por sitios restringidos o en horas prohibidas», que cubre además restricciones a motos, a vehículos de carga y a zonas de circulación limitada. Que una cámara esté habilitada para C.14 no prueba que esté sancionando pico y placa de particulares en ese punto. En Bogotá y en Medellín las alcaldías sí lo confirman por escrito; en los demás municipios de la ruta el dato es la autorización, no la práctica.
-- **Autorizado no es lo mismo que sancionado.** El registro de la ANSV dice qué está habilitado cada punto, y su campo de estado va con rezago documentado en varias ciudades. Conté solo los puntos en estado «Operando», que es el criterio conservador.
-- **La ruta que produce el 78% es la que pasa por el Valle de Aburrá y el Eje Cafetero.** El trayecto directo por La Línea da 155 de 314, el 49%. Elegí la primera porque es la que hace un viaje de varios días con paradas, pero el número depende del itinerario y así hay que leerlo.
-- **No localicé el decreto de pico y placa de Medellín para el segundo semestre de 2026.** La ficha oficial del trámite de exenciones, consultada el 20 de agosto de 2026, sigue remitiendo al Decreto 0102 de 2024, y ese es el texto que cité.
-- **No pude citar el número del decreto de la medida temporal de Manizales.** El anuncio oficial confirma que existe, pero no lo enumera ni enlaza el PDF. El calendario día por día sí está publicado en texto en el portal de la Alcaldía.
-- **El horario de Santa Marta viene de prensa que cita el Decreto 213 del 8 de mayo de 2026,** no del decreto leído directamente. Marcado en su sección.
-- **No verifiqué el formulario de inscripción de exentos de Bogotá.** Exige crear usuario en SIMUR y no inicié sesión, así que no sé si el sistema pide organismo de tránsito. La norma no lo exige; que la norma calle no garantiza que el software calle.
+- **Autorizado no es lo mismo que sancionado.** El registro de la ANSV dice qué está habilitado cada punto, y su campo de estado va con rezago documentado en varias ciudades. Contamos solo los puntos en estado «Operando», que es el criterio conservador.
+- **La ruta que produce el 78% es la que pasa por el Valle de Aburrá y el Eje Cafetero.** El trayecto directo por La Línea da 155 de 314, el 49%. Elegimos la primera porque es la que hace un viaje de varios días con paradas, pero el número depende del itinerario y así hay que leerlo.
+- **No localizamos el decreto de pico y placa de Medellín para el segundo semestre de 2026.** La ficha oficial del trámite de exenciones, consultada el 20 de agosto de 2026, sigue remitiendo al Decreto 0102 de 2024, y ese es el texto que citamos.
+- **No pudimos citar el número del decreto de la medida temporal de Manizales.** El anuncio oficial confirma que existe, pero no lo enumera ni enlaza el PDF. El calendario día por día sí está publicado en texto en el portal de la Alcaldía.
+- **El horario de Santa Marta viene de prensa que cita el Decreto 213 del 8 de mayo de 2026,** no del decreto en su texto original. Marcado en su sección.
+- **No verificamos el formulario de inscripción de exentos de Bogotá.** Exige crear usuario en SIMUR y no iniciamos sesión, así que no sabemos si el sistema pide organismo de tránsito. La norma no lo exige; que la norma calle no garantiza que el software calle.
 - **En agosto de 2026 varias ciudades de la ruta tuvieron esquemas de emergencia** que rompen las suposiciones del régimen ordinario: cinco dígitos por día en lugar de dos, sábados incluidos, paridad en lugar de rotación. Son transitorios por su propio texto. Si viajas, esto es exactamente lo que hay que confirmar el día antes.
 
 ## Hasta cuándo vale esto

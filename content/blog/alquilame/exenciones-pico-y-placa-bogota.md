@@ -2,8 +2,8 @@
 brand: alquilame
 slug: exenciones-pico-y-placa-bogota
 title: "Tu carro puede estar exento de pico y placa y no saberlo"
-meta_title: "Excepciones de pico y placa en Bogotá: son 18, no 3 | Alquílame"
-description: "La página oficial mejor posicionada dice que en Bogotá hay tres excepciones de pico y placa. El decreto vigente tiene dieciocho. Y estar exento por ley no impide que la cámara te ponga el comparendo."
+meta_title: "Excepciones de pico y placa en Bogotá: 18, no 3 | Alquílame"
+description: "La página oficial mejor posicionada dice que en Bogotá hay tres excepciones de pico y placa. El decreto vigente tiene dieciocho."
 image: /img/blog/exenciones-pico-y-placa-bogota.webp
 alt: "Carro particular esperando en un semáforo de una avenida de Bogotá al final de la tarde, con edificios y cerros al fondo"
 author_name: Diego Melo
@@ -34,7 +34,7 @@ Las excepciones vigentes están en el **artículo 230 del Decreto Distrital 652 
 
 De esa lista de tres faltan, entre otras, las categorías más obvias: vehículos de emergencia, carros que transportan a personas con discapacidad, medios de comunicación, cuerpo diplomático, carrozas fúnebres, organismos de seguridad del Estado y motocicletas.
 
-Y sobra una. **El carro compartido no aparece en ninguno de los dieciocho numerales del artículo 230.** Revisé el articulado completo: no está. No rastreé en qué momento dejó de figurar ni bajo qué norma existió antes, así que no puedo decirte más que eso.
+Y sobra una. **El carro compartido no aparece en ninguno de los dieciocho numerales del artículo 230.** Revisamos el articulado completo: no está. No rastreamos en qué momento dejó de figurar ni bajo qué norma existió antes, así que no podemos decirte más que eso.
 
 Esta es la lista completa. La columna de la derecha es la que de verdad importa, y la explico en la sección siguiente.
 
@@ -85,7 +85,7 @@ Lo que cuesta equivocarse aquí son **$633.111** —el valor de una infracción 
 
 ## Cómo funciona el registro, y por qué se cae solo
 
-El registro lo reglamenta la **Resolución 118139 del 23 de noviembre de 2021** de la Secretaría Distrital de Movilidad. Sigue vigente: la propia plataforma de la Secretaría la cita en producción, y no encontré ninguna resolución posterior que la reemplace.
+El registro lo reglamenta la **Resolución 118139 del 23 de noviembre de 2021** de la Secretaría Distrital de Movilidad. Sigue vigente: la propia plataforma de la Secretaría la cita en producción, y no encontramos ninguna resolución posterior que la reemplace.
 
 Para eléctricos e híbridos el trámite es de los que la resolución llama automáticos, y su artículo 9 pide **un solo dato: la placa**. Después, dice el texto, «de manera automática el sistema cotejará en el RUNT el tipo de combustible». No hay formulario donde tú declares qué clase de carro tienes. Decide lo que quedó escrito en la matrícula.
 
@@ -123,17 +123,17 @@ El próximo Día sin carro cae el **jueves 4 de febrero de 2027**, salvo que la 
 
 Ese último punto es el que nos toca de cerca, y merece su propio texto: quien alquila un carro no eligió su placa ni sabe si está inscrita. Lo vamos a escribir aparte, con lo que sí podemos responder desde el mostrador.
 
-## Cómo verifiqué esto y qué no pude cerrar
+## Cómo verificamos esto y qué no pudimos cerrar
 
-Todo el articulado citado sale del HTML del Régimen Legal de Bogotá, el sistema oficial de normas del Distrito, consultado el **20 y 21 de agosto de 2026**. No usé agregadores, prensa ni memoria para completar listados. Donde la norma calla, aquí dice que calla.
+Todo el articulado citado sale del HTML del Régimen Legal de Bogotá, el sistema oficial de normas del Distrito, consultado el **20 y 21 de agosto de 2026**. No usamos agregadores, prensa ni memoria para completar listados. Donde la norma calla, aquí dice que calla.
 
 Lo que quedó abierto:
 
-- **De dónde salió el carro compartido.** Confirmé que no está en el artículo 230 vigente. No rastreé si estuvo antes, en qué norma, ni cuándo salió.
+- **De dónde salió el carro compartido.** Confirmamos que no está en el artículo 230 vigente. No rastreamos si estuvo antes, en qué norma, ni cuándo salió.
 - **La medición del buscador es de un solo navegador y una sola ubicación**, el 20 de agosto de 2026. Google personaliza resultados y las páginas oficiales se actualizan. Tu pantalla puede mostrar otra cosa, y ojalá muestre otra cosa.
-- **El formulario de inscripción está detrás de un login.** No creé una cuenta en la plataforma de la Secretaría, así que describí el trámite por lo que ordena la resolución, no por lo que se ve en pantalla al llenarlo.
+- **El formulario de inscripción está detrás de un login.** No creamos una cuenta en la plataforma de la Secretaría, así que el trámite queda descrito por lo que ordena la resolución, no por lo que se ve en pantalla al llenarlo.
 - **No hay pronunciamiento oficial sobre los híbridos suaves** —los de sistema eléctrico de 48 voltios que no mueven el carro por sí solos—. Ni la Secretaría ni el Ministerio los mencionan en ningún documento. En la práctica el asunto lo decide el RUNT, que no tiene esa categoría: o quedaste como `GASO ELEC` o quedaste como `GASOLINA`.
-- **No verifiqué el catálogo normativo de tipologías de combustible del RUNT.** Las etiquetas están probadas contra los datos abiertos del propio RUNT, pero no encontré el acto administrativo que las fija.
+- **No verificamos el catálogo normativo de tipologías de combustible del RUNT.** Las etiquetas están probadas contra los datos abiertos del propio RUNT, pero no encontramos el acto administrativo que las fija.
 
 **Hasta cuándo vale esto:** hasta que la Secretaría Distrital de Movilidad modifique el artículo 230 o expida una resolución nueva de registro. A la fecha de esta consulta no había ninguna en trámite visible, y el artículo 230 no tenía notas de modificación. Las cifras de multa corresponden a 2026 y se mueven el 1.º de enero de 2027, cuando el Ministerio de Hacienda fije la unidad con que se calculan.
 

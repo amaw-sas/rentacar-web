@@ -2,8 +2,8 @@
 brand: alquilame
 slug: multa-pico-y-placa-2026-colombia
 title: "La multa de pico y placa en 2026 no es la que te dice Google"
-meta_title: "Multa de pico y placa 2026 en Colombia: $633.111, no $875.452 | Alquílame"
-description: "El buscador responde $875.452. La cifra que rige es $633.111. La diferencia tiene explicación: una fórmula que dejó de existir el 31 de diciembre de 2025 y que casi todo el mundo sigue usando."
+meta_title: "Multa pico y placa 2026: $633.111, no $875.452 | Alquílame"
+description: "El buscador responde $875.452. La cifra que rige es $633.111. La diferencia: una fórmula que dejó de existir el 31 de diciembre de 2025."
 image: /img/blog/multa-pico-y-placa-2026.webp
 alt: "Comparendo de tránsito impreso sobre el timón de un carro, con un semáforo desenfocado al fondo"
 author_name: Diego Melo
@@ -54,7 +54,7 @@ Cuando el Ministerio tiene que *instar* a las secretarías de tránsito a actual
 
 ## De dónde sale el $875.452
 
-Este es el paso que casi nunca se hace, y sin él el artículo no sirve: si llegaste aquí habiendo visto $875.452, tienes todo el derecho a pensar que el equivocado soy yo.
+Este es el paso que casi nunca se hace, y sin él el artículo no sirve: si llegaste aquí habiendo visto $875.452, tienes todo el derecho a pensar que los equivocados somos nosotros.
 
 Así que hagamos la cuenta al revés.
 
@@ -96,7 +96,7 @@ Así que la brecha entre $875.452 y $633.111 no es un error de cuentas de nadie.
 
 ## El 15 que se quedó pegado
 
-Este es el detalle que más me llama la atención.
+Este es el detalle que más llama la atención.
 
 Si haces la consulta en el lenguaje de la norma, «valor comparendo pico y placa 2026 UVB C14», el buscador sí devuelve la cifra correcta. Pero la unidad se le enreda.
 
@@ -116,7 +116,7 @@ Dos diferencias con la tabla del Ministerio. La equivalencia oficial es 52,28, n
 
 El artículo 313 respalda a la tabla en las dos cosas. Su parágrafo 1 ordena aproximar «a la cifra con dos (2) decimales más cercana», y esa cifra de dos decimales es la de UVB: 52,28. De redondear el resultado en pesos no dice nada.
 
-Son $89 de diferencia. Ridículo, si no fuera porque el argumento entero de este texto es «yo verifiqué esto». Publicar la cifra que circula en vez de la que está en la tabla oficial sería justo el error que prometo no cometer.
+Son $89 de diferencia. Ridículo, si no fuera porque el argumento entero de este texto es «yo verifiqué esto». Publicar la cifra que circula en vez de la que está en la tabla oficial sería justo el error que prometemos no cometer.
 
 ## La multa no es lo peor
 
@@ -132,7 +132,7 @@ No es una hipótesis remota. Según el registro público de la Agencia Nacional 
 
 ## Cómo comprobarlo tú mismo
 
-Son tres pasos y no necesitas creerme nada:
+Son tres pasos y no necesitas creernos nada:
 
 1. **Busca el valor de la UVB del año.** Lo fija el Ministerio de Hacienda por resolución, antes del 1° de enero. Para 2026 es la Resolución 3488 del 31 de diciembre de 2025: **$12.110**.
 2. **Busca la equivalencia de tu categoría.** Pico y placa es C.14, categoría C, **52,28 UVB**, según la tabla del concepto MT 20261340213651.
@@ -142,13 +142,13 @@ Si el número que te dan no sale de esa multiplicación, está calculado sobre o
 
 Y si lo que tienes es un comparendo real y no una duda general, el valor que manda es el del comparendo: consúltalo en el SIMIT con la placa o la cédula. Ahí también ves si aplica descuento por pronto pago y hasta qué fecha.
 
-## Lo que no pude cerrar
+## Lo que no pudimos cerrar
 
-Sería incoherente publicar un texto sobre verificar cifras sin decir dónde se quedó corta la mía:
+Sería incoherente publicar un texto sobre verificar cifras sin decir dónde se quedó corta la nuestra:
 
-- **No pude abrir la Resolución 3488 de 2025 del Ministerio de Hacienda.** El sitio bloquea el acceso automatizado. El valor de $12.110 está confirmado por la tabla del Ministerio de Transporte, por al menos una secretaría de tránsito municipal, y cuadra aritméticamente en las catorce categorías de la tabla. Pero no leí el documento original.
-- **No logré reconstruir de dónde sale el 52,28.** El artículo 313 ordena convertir a UVB, y el resultado tiene la forma que la norma exige —dos decimales—, pero no conseguí reproducir la operación exacta que produce ese número a partir del texto de la ley. Lo que rige es la tabla del Ministerio, y la tabla dice 52,28.
-- **Hay dos años sin explicar.** El artículo 313 empezó a regir el 1° de enero de 2024, pero la conversión de las multas de tránsito se ordenó desde el 1° de enero de 2026. No verifiqué qué explica ese intervalo.
+- **La Resolución 3488 de 2025 del Ministerio de Hacienda no se pudo abrir.** El sitio bloquea el acceso automatizado. El valor de $12.110 está confirmado por la tabla del Ministerio de Transporte, por al menos una secretaría de tránsito municipal, y cuadra aritméticamente en las catorce categorías de la tabla. Pero no leímos el documento original.
+- **No logramos reconstruir de dónde sale el 52,28.** El artículo 313 ordena convertir a UVB, y el resultado tiene la forma que la norma exige —dos decimales—, pero no conseguimos reproducir la operación exacta que produce ese número a partir del texto de la ley. Lo que rige es la tabla del Ministerio, y la tabla dice 52,28.
+- **Hay dos años sin explicar.** El artículo 313 empezó a regir el 1° de enero de 2024, pero la conversión de las multas de tránsito se ordenó desde el 1° de enero de 2026. No verificamos qué explica ese intervalo.
 - **La medición del buscador es de un solo navegador y una sola ubicación** (Valle del Cauca), y Google personaliza resultados. Tu pantalla puede mostrar otra cosa. Las citas están fechadas el 20 y el 21 de agosto de 2026.
 
 **Hasta cuándo vale esto:** hasta el 31 de diciembre de 2026. En diciembre el Ministerio de Hacienda expide la resolución con la UVB de 2027 y toda la tabla se mueve. La equivalencia en UVB, 52,28 para categoría C, no cambia con el año. Lo que cambia es el peso.

@@ -1,7 +1,7 @@
 ---
 brand: alquilame
 slug: de-santa-marta-al-tayrona-y-palomino
-title: "De Santa Marta al Tayrona y a Palomino en carro: lo que nadie te dice antes de salir"
+title: "De Santa Marta al Tayrona y Palomino: lo que nadie te dice"
 meta_title: "De Santa Marta al Tayrona y Palomino en carro | Alquílame"
 description: "Cuánto cuesta entrar al Tayrona con carro, por qué el parqueadero se llena, y cuántos días necesitas de verdad. Con datos de 1.075 alquileres en Santa Marta."
 image: /img/blog/santa-marta-tayrona-palomino.webp

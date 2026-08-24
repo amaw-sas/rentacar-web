@@ -1,9 +1,9 @@
 ---
 brand: alquilame
 slug: carros-electricos-hibridos-pico-y-placa
-title: "Eléctricos e híbridos y el pico y placa: la ley solo protege a uno de los dos"
-meta_title: "Carros eléctricos e híbridos y el pico y placa en Colombia | Alquílame"
-description: "El eléctrico está exento en todo el país por la Ley 1964 de 2019. El híbrido no: su exención la decide cada alcaldía y hay días del año en que se cae. Y el híbrido suave depende de una etiqueta del RUNT que casi nadie ha mirado."
+title: "Eléctricos e híbridos: la ley solo protege a uno de los dos"
+meta_title: "Eléctricos e híbridos y el pico y placa | Alquílame"
+description: "El eléctrico está exento en todo el país por la Ley 1964 de 2019. El híbrido no: su exención la decide cada alcaldía y hay días en que se cae."
 image: /img/blog/carros-electricos-hibridos-pico-y-placa.webp
 alt: "Carro compacto conectado a un cargador eléctrico en el parqueadero cubierto de un edificio, sin logos ni marcas visibles"
 author_name: Diego Melo
@@ -48,7 +48,7 @@ Lee la frase con calma, porque cada pedazo hace un trabajo.
 
 ## Y la misma ley deja a los híbridos por fuera
 
-Aquí está el punto que no encontré escrito en ningún lado.
+Aquí está el punto que no encontramos escrito en ningún lado.
 
 El artículo 2 de esa misma ley define los términos que usa el artículo 6. Y define «vehículo eléctrico» como aquel que **no cuenta con motores de combustión interna**. «Cero emisiones», como el que no emite contaminantes por el escape.
 
@@ -76,7 +76,7 @@ El numeral 17 es el de los híbridos, y es más específico:
 
 El numeral 1 es Bogotá cumpliendo una ley nacional. El numeral 17 es Bogotá regalando algo que la ley no la obligaba a dar. Si mañana un decreto distrital borra el numeral 17, los híbridos quedan restringidos y no hay ley nacional que los ampare. Si borra el numeral 1, ese decreto se cae en el primer juzgado.
 
-Los otros dieciséis numerales —ambulancias, prensa, discapacidad, diplomáticos, carrozas fúnebres y demás— los repasé uno por uno en [el artículo sobre las excepciones del pico y placa en Bogotá](/blog/exenciones-pico-y-placa-bogota).
+Los otros dieciséis numerales —ambulancias, prensa, discapacidad, diplomáticos, carrozas fúnebres y demás— los repasamos uno por uno en [el artículo sobre las excepciones del pico y placa en Bogotá](/blog/exenciones-pico-y-placa-bogota).
 
 Y no es solo Bogotá. Medellín, Bello y Sabaneta eximen híbridos en sus decretos de 2026. Envigado e Itagüí también, y con menos trámite todavía. Cali los exime en su decreto ordinario del segundo semestre. Que cinco alcaldías distintas lleguen al mismo resultado por caminos separados parece una regla nacional, y no lo es. Es una coincidencia de decisiones. Y lo que se decide, se puede deshacer.
 
@@ -106,15 +106,15 @@ En agosto la ciudad expidió una medida transitoria, el Decreto 4112.010.20.0968
 
 Para los híbridos, la lectura es limpia: lo que Cali dio, Cali lo quitó. Estaba en su mano.
 
-Para los eléctricos puros, no. La Ley 1964 dice «en cualquiera de sus modalidades», y un decreto municipal no puede recortar una exención de fuente legal nacional. La excepción sería el «por razones de seguridad» del final del artículo 6, y ahí es donde se abre la discusión: **no verifiqué la motivación que invoca ese decreto**, así que no puedo decirte de qué lado cae. Lo que sí puedo decirte es que nadie lo ha resuelto por escrito, y que el propio decreto ordinario de Cali cita la Ley 1964 en sus considerandos.
+Para los eléctricos puros, no. La Ley 1964 dice «en cualquiera de sus modalidades», y un decreto municipal no puede recortar una exención de fuente legal nacional. La excepción sería el «por razones de seguridad» del final del artículo 6, y ahí es donde se abre la discusión: **no verificamos la motivación que invoca ese decreto**, así que no podemos decirte de qué lado cae. Lo que sí podemos decirte es que nadie lo ha resuelto por escrito, y que el propio decreto ordinario de Cali cita la Ley 1964 en sus considerandos.
 
 No es una anécdota lejana. Es el aviso de que la exención de tu híbrido depende de un decreto que se reescribe cada semestre, y a veces cada semana.
 
 ## El gas nunca entró en Bogotá. En Medellín sí
 
-Este es el error que más veces vi repetido, y tiene la misma raíz: dar por nacional lo que es municipal.
+Este es el error que más veces vimos repetido, y tiene la misma raíz: dar por nacional lo que es municipal.
 
-En Bogotá, un carro a gas **no está exento del pico y placa**. Revisé los dieciocho numerales del artículo 230 y los dieciocho del artículo 238: el gas no aparece en ninguno. Nunca estuvo. No es que lo hayan quitado.
+En Bogotá, un carro a gas **no está exento del pico y placa**. Revisamos los dieciocho numerales del artículo 230 y los dieciocho del artículo 238: el gas no aparece en ninguno. Nunca estuvo. No es que lo hayan quitado.
 
 En Medellín, Bello y Sabaneta sí está exento, y la norma es explícita. El numeral 4.3 del decreto de Medellín —y su equivalente en los otros dos— exime a los vehículos a gas junto con eléctricos e híbridos, y enumera los siete valores del campo de combustible del RUNT que dan derecho a la exención: `GNV`, `Gas-gasol`, `Eléctrico`, `Hidrógeno`, `Etanol`, `Gaso Elec` y `Dies Elec`.
 
@@ -155,11 +155,11 @@ La consecuencia es incómoda de escribir y hay que escribirla.
 
 Por eso hay dueños de híbridos suaves que lograron inscribirse sin pelear nada: su placa dice `GASO ELEC` y el cotejo automático pasó. Y por eso hay otros a quienes el sistema los rechaza sin explicación: su placa dice `GASOLINA`.
 
-Busqué «híbrido suave», «hibridación ligera», «semihíbrido», «MHEV» y «48 voltios» en el sitio completo de la Secretaría Distrital de Movilidad, incluidos sus conceptos jurídicos. Cero resultados. **No hay un solo pronunciamiento oficial en Colombia sobre si un MHEV cumple el numeral 17.** El borde está en su propia redacción: el numeral pide que el carro funcione «alternada o simultáneamente» con motor eléctrico. Un híbrido suave funciona simultáneamente, sí. Alternadamente, nunca. Media frase se cumple y media no, y nadie ha decidido si eso alcanza.
+Buscamos «híbrido suave», «hibridación ligera», «semihíbrido», «MHEV» y «48 voltios» en el sitio completo de la Secretaría Distrital de Movilidad, incluidos sus conceptos jurídicos. Cero resultados. **No hay un solo pronunciamiento oficial en Colombia sobre si un MHEV cumple el numeral 17.** El borde está en su propia redacción: el numeral pide que el carro funcione «alternada o simultáneamente» con motor eléctrico. Un híbrido suave sí funciona a la vez que el motor de gasolina. Por turnos, nunca: no hay modo eléctrico. Media frase se cumple y media no, y nadie ha decidido si eso alcanza.
 
 ## Mira el campo combustible de tu tarjeta de propiedad
 
-Todo lo anterior se reduce a un consejo, y es el que quiero que te lleves.
+Todo lo anterior se reduce a un consejo, y es el que queremos que te lleves.
 
 **No te preguntes qué tipo de carro tienes. Mira qué dice tu tarjeta de propiedad.**
 
@@ -186,7 +186,7 @@ El parágrafo 2 del artículo 230 dice que los vehículos exceptuados circulan �
 
 Traducido: frente a un agente en la vía, muestras la tarjeta y listo. **Frente a una cámara, no hay nada que mostrar.** La cámara lee la placa y consulta el registro de exceptuados. Si no estás inscrito, el comparendo sale, aunque jurídicamente estés exento desde el primer día.
 
-Y hay 88 cámaras habilitadas para el código C.14 en Bogotá, de las 314 que operan en el país. Las conté una por una en [el artículo sobre las 1.339 cámaras de fotodetección](/blog/pico-y-placa-colombia-camaras-fotodeteccion).
+Y hay 88 cámaras habilitadas para el código C.14 en Bogotá, de las 314 que operan en el país. Las contamos una por una en [el artículo sobre las 1.339 cámaras de fotodetección](/blog/pico-y-placa-colombia-camaras-fotodeteccion).
 
 Lo que cuesta el descuido: [$633.111 y el carro inmovilizado](/blog/multa-pico-y-placa-2026-colombia). La inmovilización no es opcional; está en el texto del artículo 131 del Código Nacional de Tránsito.
 
@@ -204,16 +204,16 @@ La consulta por placa de la Secretaría es pública y gratuita, y es la única f
 3. **Verifica que la inscripción quedó vigente**, con la consulta pública por placa. No des por hecho que sigue activa.
 4. **Si viajas a otra ciudad, revisa el decreto de esa ciudad.** Si eres eléctrico, la ley nacional te cubre. Si eres híbrido, dependes de lo que haya decidido esa alcaldía este semestre.
 
-## Lo que no pude cerrar
+## Lo que no pudimos cerrar
 
 Sería incoherente publicar un texto sobre verificar normas sin decir dónde se quedó corta la verificación:
 
-- **No pude ver el formulario de inscripción de Bogotá por dentro.** Está detrás del login de SIMUR y habría implicado registrar la identidad de una persona real ante una entidad pública. Lo que afirmo sobre qué pide el trámite sale del artículo 9 de la resolución, no de la pantalla.
-- **No encontré la norma que fija el catálogo de tipologías de combustible del RUNT.** Las cuatro etiquetas son observables en los datos abiertos del propio RUNT, y por ahí quedan probadas, pero no localicé el acto del Ministerio de Transporte que las establezca como tabla paramétrica.
-- **No verifiqué la motivación del decreto de emergencia de Cali de agosto de 2026**, que es lo que decidiría si cae o no dentro del «por razones de seguridad» del artículo 6 de la Ley 1964.
+- **No pudimos ver el formulario de inscripción de Bogotá por dentro.** Está detrás del login de SIMUR y habría implicado registrar la identidad de una persona real ante una entidad pública. Lo que este artículo afirma sobre qué pide el trámite sale del artículo 9 de la resolución, no de la pantalla.
+- **No encontramos la norma que fija el catálogo de tipologías de combustible del RUNT.** Las cuatro etiquetas son observables en los datos abiertos del propio RUNT, y por ahí quedan probadas, pero no localizamos el acto del Ministerio de Transporte que las establezca como tabla paramétrica.
+- **No verificamos la motivación del decreto de emergencia de Cali de agosto de 2026**, que es lo que decidiría si cae o no dentro del «por razones de seguridad» del artículo 6 de la Ley 1964.
 - **No hay un pronunciamiento oficial sobre el híbrido suave.** Lo que este artículo describe es cómo funciona el mecanismo, no cómo lo resolvió alguna autoridad. Nadie lo ha resuelto.
 - **La Resolución 118139 remite a decretos derogados.** Se expidió contra los decretos 575 de 2013, 846 de 2019 y 073 de 2021, que ya fueron compilados en el 652 de 2025. Sigue vigente y sigue siendo la que rige el trámite, pero nadie ha corregido la remisión.
-- **Las cifras de matriculados son de los datos abiertos del RUNT**, no de una certificación. Son las mismas que publica la entidad, agrupadas por mí.
+- **Las cifras de matriculados son de los datos abiertos del RUNT**, no de una certificación. Son las mismas que publica la entidad, agrupadas por nosotros.
 
 **Hasta cuándo vale esto:** el artículo 6 de la Ley 1964 de 2019 no tiene fecha de vencimiento y es lo más estable de todo el texto. Lo que se mueve es la capa municipal. Los decretos de pico y placa de Cali y del Valle de Aburrá se expiden por semestre, así que revisa el vigente a partir del 1.º de enero de 2027. El artículo 230 del Decreto 652 de 2025 de Bogotá no tiene fecha de expiración, pero un decreto distrital lo puede modificar cualquier martes. Verificado el 20 y el 21 de agosto de 2026.
 
