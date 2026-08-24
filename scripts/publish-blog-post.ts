@@ -13,9 +13,14 @@
  *
  * Run from the repo root:
  *   pnpm blog:publish --check                       # validate every .md, write nothing
+ *   pnpm blog:publish --solo-seo                    # only the SEO/voice review, no database
  *   pnpm blog:publish --slug=<slug> --dry-run       # diff against the live row
  *   pnpm blog:publish --slug=<slug>                 # publish (upsert)
  *   pnpm blog:pull --slug=<slug> --brand=<brand>    # live row → markdown file
+ *
+ * `--solo-seo` is the draft reader: it needs no credentials because it never
+ * opens a connection, so an article can be reviewed before its images exist or
+ * before anyone has the service-role key in scope.
  *
  * `--pull` is the other direction, and it is why the repo can be trusted again:
  * an article edited straight in the database, or published before this script
@@ -64,10 +69,17 @@ type Article = {
   file: string
   fm: Record<string, any>
   body: string
+  /** Lines consumed by the frontmatter, so a finding in the body can be
+   *  reported at the line number the author sees in their editor. */
+  bodyOffset: number
 }
 
 function md5(value: string): string {
   return createHash('md5').update(value, 'utf8').digest('hex')
+}
+
+function countLines(text: string): number {
+  return text.split('\n').length - 1
 }
 
 function toDateString(value: unknown): string {
@@ -87,6 +99,9 @@ function readArticles(): Article[] {
       if (!match) {
         throw new Error(`${brand.name}/${file}: no frontmatter block found`)
       }
+      const rawBody = match[2]
+      const beforeBody = raw.slice(0, raw.length - rawBody.length)
+      const blankLead = rawBody.slice(0, rawBody.length - rawBody.trimStart().length)
       articles.push({
         brand: brand.name,
         slug: file.replace(/\.md$/, ''),
@@ -94,11 +109,356 @@ function readArticles(): Article[] {
         fm: parseYaml(match[1]) ?? {},
         // Trailing newlines would flip the md5 on every round-trip and make the
         // dry-run diff lie about a no-op edit.
-        body: match[2].trim(),
+        body: rawBody.trim(),
+        bodyOffset: countLines(beforeBody) + countLines(blankLead),
       })
     }
   }
   return articles
+}
+
+/* ── SEO and voice ────────────────────────────────────────────────────────
+ *
+ * Two families of defect that the structural checks above cannot see: a post
+ * that is well-formed but gets truncated in the results page, and a post that
+ * reads like it was written by a machine. Both are cheap to fix before
+ * publishing and expensive after, because the row is what Google crawls.
+ */
+
+/** Where the results page cuts, in characters. */
+const TITLE_IDEAL = 60
+const TITLE_HARD = 70
+const DESC_IDEAL_MIN = 120
+const DESC_IDEAL_MAX = 158
+const DESC_HARD_MIN = 100
+const DESC_HARD_MAX = 165
+const SLUG_MAX = 60
+const ALT_MIN = 40
+const WORDS_PER_MINUTE = 200
+/** How far `reading_time` may drift from the estimate before it is worth saying. */
+const READING_TIME_TOLERANCE = 0.4
+
+/**
+ * `\b` is ASCII-only: it treats `é` as a separator, so `\bverifiqué\b` never
+ * matches, and it fires `\bavis\b` inside «aviso». Both bugs bite this corpus —
+ * every first-person verb here is accented and «aviso» is a common word. These
+ * lookarounds ask for a letter or digit in any script instead.
+ */
+function wordPattern(term: string, caseSensitive = false): RegExp {
+  return new RegExp(`(?<![\\p{L}\\p{N}])${term}(?![\\p{L}\\p{N}])`, caseSensitive ? 'gu' : 'giu')
+}
+
+/**
+ * First person singular narrating the research. The most telling AI marker in
+ * this blog, and the one with a clean fix: the impersonal says the same thing.
+ * The company «nosotros» is deliberately absent from this list — «lo escribimos
+ * nosotros, que alquilamos carros» is the house voice, not a defect.
+ */
+const FIRST_PERSON: Record<string, string> = {
+  'no pude': 'no se pudo',
+  pude: 'se pudo',
+  verifiqué: 'se verificó',
+  revisé: 'se revisó',
+  conté: 'se contaron',
+  encontré: 'se encontró',
+  busqué: 'se buscó',
+  medí: 'se midió',
+  comprobé: 'se comprobó',
+  intenté: 'se intentó',
+  leí: 'se leyó',
+  miré: 'se miró',
+  hice: 'se hizo',
+  logré: 'se logró',
+  quise: 'se quiso',
+}
+
+const FILLERS = [
+  'cabe destacar', 'en este sentido', 'es importante señalar', 'es importante mencionar',
+  'juega un papel', 'sin duda alguna', 'en el mundo actual', 'en la era de',
+  'en resumen', 'en conclusión',
+]
+
+/** Gerund of posteriority: the action did not happen *while*, it happened after. */
+const GERUNDS = [
+  'logrando así', 'posicionándose como', 'convirtiéndose en',
+  'generando un impacto', 'permitiendo así',
+]
+
+const EMPTY_CLOSERS = [
+  'el futuro es prometedor', 'solo el tiempo dirá', 'queda claro que', 'en definitiva',
+]
+
+/** Rental brands and pico y placa aggregators. Naming them sends the reader away. */
+const COMPETITORS = [
+  'pyphoy', 'picoyplacahoy', 'hertz', 'avis', 'sixt', 'rentcars', 'kayak',
+]
+
+/**
+ * Brands that are also ordinary words: «el sistema localiza la placa» is the
+ * verb, not the rental company. Matched only capitalized, which in Spanish
+ * mid-sentence means a proper noun.
+ */
+const COMPETITORS_AMBIGUOUS = ['Localiza', 'Budget', 'Alamo']
+
+type Hit = { line: number; term: string; excerpt: string }
+
+/** A window around the match, so the author can find it without opening a diff. */
+function excerptAt(line: string, start: number, end: number): string {
+  const from = Math.max(0, start - 26)
+  const to = Math.min(line.length, end + 26)
+  return `${from > 0 ? '…' : ''}${line.slice(from, to).trim()}${to < line.length ? '…' : ''}`
+}
+
+/**
+ * Longest term first, and claimed ranges are not offered twice: otherwise «no
+ * pude» reports as both «no pude» and «pude», and the author fixes one finding
+ * twice.
+ */
+/**
+ * Quoted text is somebody else's words, so house-voice rules do not apply to it.
+ * A norm that says «no pude» is a citation, not a slip — and an article may quote
+ * the very phrasing it is arguing against. Masking keeps the offsets intact so the
+ * reported line and excerpt still line up with the real file.
+ */
+function maskQuotes(line: string): string {
+  return line
+    .replace(/«[^»]*»/g, (m) => ' '.repeat(m.length))
+    .replace(/"[^"]*"/g, (m) => ' '.repeat(m.length))
+}
+
+function scan(lines: string[], offset: number, terms: string[], caseSensitive = false): Hit[] {
+  const hits: Hit[] = []
+  const ordered = [...terms].sort((a, b) => b.length - a.length)
+  for (const [index, rawLine] of lines.entries()) {
+    const line = maskQuotes(rawLine)
+    const claimed: Array<[number, number]> = []
+    for (const term of ordered) {
+      for (const match of line.matchAll(wordPattern(term, caseSensitive))) {
+        const start = match.index ?? 0
+        const end = start + match[0].length
+        if (claimed.some(([from, to]) => start < to && end > from)) continue
+        claimed.push([start, end])
+        hits.push({ line: offset + index + 1, term: match[0], excerpt: excerptAt(rawLine, start, end) })
+      }
+    }
+  }
+  return hits.sort((a, b) => a.line - b.line)
+}
+
+/** Blocks separated by a blank line, each keeping the line it starts on. */
+function paragraphs(body: string, offset: number): Array<{ line: number; text: string }> {
+  const blocks: Array<{ line: number; text: string }> = []
+  let current: string[] = []
+  let start = 0
+  const flush = () => {
+    if (current.length) blocks.push({ line: offset + start + 1, text: current.join(' ') })
+    current = []
+  }
+  for (const [index, line] of body.split('\n').entries()) {
+    if (line.trim() === '') {
+      flush()
+      continue
+    }
+    if (!current.length) start = index
+    current.push(line.trim())
+  }
+  flush()
+  return blocks
+}
+
+function countWords(body: string): number {
+  return body
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/[#*_>|`-]+/g, ' ')
+    .split(/\s+/)
+    .filter((token) => /[\p{L}\p{N}]/u.test(token)).length
+}
+
+/**
+ * SEO and voice review. Same contract as `validate`: a flat list of Spanish
+ * strings, `AVISO:` prefixed when the finding should not block publishing.
+ * Runs without a database connection, which is what lets `--solo-seo` review a
+ * draft with no credentials in scope.
+ */
+function reviewSeoAndVoice(article: Article): string[] {
+  const { fm, body, bodyOffset } = article
+  const problems: string[] = []
+  const bodyLines = body.split('\n')
+
+  // ── SEO
+  for (const field of ['title', 'meta_title'] as const) {
+    const value = fm[field]
+    if (typeof value !== 'string' || !value) continue
+    if (value.length > TITLE_HARD) {
+      problems.push(
+        `${field}: ${value.length} caracteres. Google corta cerca de ${TITLE_IDEAL}; ` +
+          `recorta ${value.length - TITLE_IDEAL}.`,
+      )
+    } else if (value.length > TITLE_IDEAL) {
+      problems.push(
+        `AVISO: ${field}: ${value.length} caracteres. Se va a ver cortado en los resultados ` +
+          `(el límite cómodo es ${TITLE_IDEAL}).`,
+      )
+    }
+  }
+
+  const description = typeof fm.description === 'string' ? fm.description : ''
+  if (description) {
+    if (description.length > DESC_HARD_MAX) {
+      problems.push(
+        `description: ${description.length} caracteres. Google corta cerca de ${DESC_IDEAL_MAX}; ` +
+          `recorta ${description.length - DESC_IDEAL_MAX}.`,
+      )
+    } else if (description.length < DESC_HARD_MIN) {
+      problems.push(
+        `description: ${description.length} caracteres. Es muy corta para ocupar el espacio ` +
+          `que da el resultado; súbela a ${DESC_IDEAL_MIN}-${DESC_IDEAL_MAX}.`,
+      )
+    } else if (description.length > DESC_IDEAL_MAX || description.length < DESC_IDEAL_MIN) {
+      problems.push(
+        `AVISO: description: ${description.length} caracteres. La franja que se ve entera es ` +
+          `${DESC_IDEAL_MIN}-${DESC_IDEAL_MAX}.`,
+      )
+    }
+  }
+
+  const slug = typeof fm.slug === 'string' ? fm.slug : article.slug
+  if (slug.length > SLUG_MAX) {
+    problems.push(`slug: ${slug.length} caracteres. Máximo ${SLUG_MAX}: acórtalo y renombra el archivo.`)
+  }
+  if (!/^[a-z0-9-]+$/.test(slug)) {
+    problems.push(
+      `slug "${slug}": solo minúsculas, números y guiones. Quita tildes, mayúsculas, ` +
+        'espacios y guiones bajos, y renombra el archivo igual.',
+    )
+  }
+
+  const alt = typeof fm.alt === 'string' ? fm.alt : ''
+  const title = typeof fm.title === 'string' ? fm.title : ''
+  if (alt && alt.length < ALT_MIN) {
+    problems.push(
+      `AVISO: alt: ${alt.length} caracteres. Describe la foto para quien no la ve; ` +
+        `con menos de ${ALT_MIN} no alcanza a decir qué se ve.`,
+    )
+  }
+  const normalize = (v: string) => v.toLowerCase().replace(/\s+/g, ' ').trim()
+  if (alt && title && normalize(alt).includes(normalize(title))) {
+    problems.push(
+      'AVISO: alt: repite el título tal cual. El alt describe la imagen, no el artículo — ' +
+        'di qué se ve en la foto.',
+    )
+  }
+
+  // The template prints the H1 from `title`. A `# ` in the body ships a second
+  // one, and the two compete for the same query.
+  for (const [index, line] of bodyLines.entries()) {
+    if (/^#\s/.test(line)) {
+      problems.push(
+        `línea ${bodyOffset + index + 1}: «${line.trim().slice(0, 60)}» — el cuerpo no lleva H1, ` +
+          'la plantilla ya lo pone desde `title`. Bájalo a `##`.',
+      )
+    }
+  }
+
+  // Starts at 1 because the page always has the template's H1 above the body:
+  // a body that opens on `###` is already a skipped level, not a fresh start.
+  let previousLevel = 1
+  for (const [index, line] of bodyLines.entries()) {
+    const heading = line.match(/^(#{1,6})\s/)
+    if (!heading) continue
+    const level = heading[1].length
+    if (level > previousLevel + 1) {
+      problems.push(
+        `AVISO: línea ${bodyOffset + index + 1}: salta de ${'#'.repeat(previousLevel)} a ` +
+          `${'#'.repeat(level)} sin pasar por ${'#'.repeat(previousLevel + 1)}. ` +
+          'Los lectores de pantalla y el índice leen ese salto como un hueco.',
+      )
+    }
+    previousLevel = level
+  }
+
+  const internalLinks = [...body.matchAll(/\]\(\/blog\/([a-z0-9-]+)\)/g)]
+  if (!internalLinks.length) {
+    problems.push(
+      'AVISO: no enlaza a ningún otro artículo del blog. Un enlace interno contextual reparte ' +
+        'autoridad y mantiene al lector adentro.',
+    )
+  }
+
+  const declared = Number(fm.reading_time ?? 0)
+  const words = countWords(body)
+  const estimated = Math.max(1, Math.round(words / WORDS_PER_MINUTE))
+  if (declared > 0 && Math.abs(declared - estimated) / estimated > READING_TIME_TOLERANCE) {
+    problems.push(
+      `AVISO: reading_time: dice ${declared} min y el cuerpo tiene ${words} palabras, ` +
+        `que a ${WORDS_PER_MINUTE} por minuto son ~${estimated} min. Ajusta el número.`,
+    )
+  }
+
+  const images = [...body.matchAll(/!\[[^\]]*\]\([^)]+\)/g)].length
+  problems.push(
+    `AVISO: imágenes internas: ${images}. No son obligatorias — una imagen interna vale cuando ` +
+      'es evidencia o un mapa, no cuando decora.',
+  )
+
+  // ── Voz
+  for (const hit of scan(bodyLines, bodyOffset, Object.keys(FIRST_PERSON))) {
+    const fix = FIRST_PERSON[hit.term.toLowerCase()]
+    problems.push(
+      `línea ${hit.line}: «${hit.excerpt}» — primera persona del singular.\n` +
+        `     Cambia a impersonal: «${fix}». El «nosotros» de la empresa sí vale; el «yo» no.`,
+    )
+  }
+
+  for (const hit of scan(bodyLines, bodyOffset, FILLERS)) {
+    problems.push(
+      `línea ${hit.line}: «${hit.excerpt}» — frase muleta.\n` +
+        `     Bórrala: «${hit.term}» no añade información, y la frase se sostiene sin ella.`,
+    )
+  }
+
+  for (const hit of scan(bodyLines, bodyOffset, GERUNDS)) {
+    problems.push(
+      `línea ${hit.line}: «${hit.excerpt}» — gerundio de posterioridad.\n` +
+        '     Parte la frase en dos, o usa un verbo conjugado: «y así logró», «se convirtió en».',
+    )
+  }
+
+  const competitorHits = [
+    ...scan(bodyLines, bodyOffset, COMPETITORS),
+    ...scan(bodyLines, bodyOffset, COMPETITORS_AMBIGUOUS, true),
+  ].sort((a, b) => a.line - b.line)
+  for (const hit of competitorHits) {
+    problems.push(
+      `línea ${hit.line}: «${hit.excerpt}» — nombra a «${hit.term}», que es competencia.\n` +
+        '     Dilo genérico: «otra rentadora», «los agregadores de pico y placa».',
+    )
+  }
+
+  const blocks = paragraphs(body, bodyOffset)
+  const lastBlock = blocks[blocks.length - 1]
+  if (lastBlock) {
+    for (const closer of EMPTY_CLOSERS) {
+      if (wordPattern(closer).test(lastBlock.text)) {
+        problems.push(
+          `línea ${lastBlock.line}: el último párrafo cierra con «${closer}» — cierre vacío.\n` +
+            '     Termina con el dato o con lo que el lector tiene que hacer, no con una frase de relleno.',
+        )
+      }
+    }
+  }
+
+  for (const block of blocks) {
+    const adverbs = [...block.text.matchAll(/(?<![\p{L}])[\p{L}]{3,}mente(?![\p{L}])/giu)].map((m) => m[0])
+    if (adverbs.length > 1) {
+      problems.push(
+        `AVISO: línea ${block.line}: ${adverbs.length} adverbios en -mente en el mismo párrafo ` +
+          `(${adverbs.join(', ')}). Deja uno y reescribe los otros.`,
+      )
+    }
+  }
+
+  return problems
 }
 
 /**
@@ -162,6 +522,8 @@ function validate(article: Article, known: Set<string>, allowForwardLinks: boole
       problems.push(allowForwardLinks ? `AVISO: ${message}` : message)
     }
   }
+
+  problems.push(...reviewSeoAndVoice(article))
 
   return problems
 }
@@ -308,12 +670,44 @@ async function pull(slug: string, brand: string | undefined) {
   console.log(`✅ content/blog/${brand}/${slug}.md · body ${md5(String(data.body).trim()).slice(0, 8)}`)
 }
 
+/**
+ * `--solo-seo`: the SEO and voice review on its own. No client, no keys, no
+ * network — a draft can be read before its hero image exists or before anyone
+ * has the service-role key. Returns the count of articles with blocking
+ * findings, so the caller can gate a branch the way `--check` does.
+ */
+function reviewOnly(articles: Article[]): number {
+  let failed = 0
+  for (const article of articles) {
+    const problems = reviewSeoAndVoice(article)
+    const blocking = problems.filter((p) => !p.startsWith('AVISO:'))
+    const warnings = problems.filter((p) => p.startsWith('AVISO:'))
+
+    console.log(`\n${article.file}`)
+    for (const p of blocking) console.log(`  ✗ ${p}`)
+    for (const w of warnings) console.log(`  ⚠ ${w.replace('AVISO: ', '')}`)
+    if (blocking.length) {
+      failed++
+    } else {
+      console.log('  ✓ sin problemas que bloqueen la publicación')
+    }
+  }
+
+  if (failed) {
+    console.error(`\n❌ ${failed} de ${articles.length} artículo(s) con problemas de SEO o de voz.`)
+  } else {
+    console.log(`\n✅ ${articles.length} artículo(s) revisados, ninguno bloquea`)
+  }
+  return failed
+}
+
 async function main() {
   const args = process.argv.slice(2)
   const flag = (name: string) => args.some((a) => a === `--${name}`)
   const value = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
 
   const checkOnly = flag('check')
+  const soloSeo = flag('solo-seo')
   const dryRun = flag('dry-run')
   const pullMode = flag('pull')
   const allowForwardLinks = flag('allow-forward-links')
@@ -333,6 +727,15 @@ async function main() {
   if (!articles.length) {
     console.error(`❌ no hay artículos en ${CONTENT_DIR}`)
     process.exit(1)
+  }
+
+  if (soloSeo) {
+    const scoped = articles.filter((a) => (!slug || a.slug === slug) && (!brand || a.brand === brand))
+    if (!scoped.length) {
+      console.error(`❌ no encontré ${slug ?? 'artículos'}${brand ? ` en la marca ${brand}` : ''} bajo content/blog/`)
+      process.exit(1)
+    }
+    process.exit(reviewOnly(scoped) ? 1 : 0)
   }
 
   if (!checkOnly && !slug) {
