@@ -658,6 +658,13 @@ definePageMeta({
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
+  /* Una URL sin espacios es un solo token. Sin esto el navegador ensancha el
+     documento entero hasta que quepa —570px en un viewport de 412 en el
+     artículo de exenciones— y el lector arrastra la página de lado con el
+     encabezado recortado. `anywhere` parte sólo cuando no cabe, así que las
+     palabras que sí caben siguen enteras. Ver docs/specs/blog-code-overflow. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .prose pre {
@@ -674,6 +681,10 @@ definePageMeta({
   background-color: transparent;
   color: inherit;
   padding: 0;
+  /* El bloque ya trae su propio overflow-x en `pre`: aquí el partido del chip
+     en línea estorbaría la lectura del código. */
+  overflow-wrap: normal;
+  max-width: none;
 }
 
 .prose img {
