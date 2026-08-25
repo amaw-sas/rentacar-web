@@ -64,12 +64,27 @@ describe('SCEN-F4-08 — share platform colors preserved, copy debranded', () =>
 
   it('copy-link button debrands to a brand token, never bg-gray-600', () => {
     expect(slug).not.toMatch(/bg-gray-600/)
-    // Both copy buttons (desktop sidebar + mobile bar) carry the brand fill.
-    const copyButtons = (slug.match(/@click="copyLink"[\s\S]*?aria-label="Copiar enlace"/g) ?? [])
-    expect(copyButtons.length).toBe(2)
-    for (const btn of copyButtons) {
-      expect(btn).toMatch(/bg-brand-600 hover:bg-brand-700/)
-    }
+
+    // El copiar del sidebar sigue siendo el círculo relleno de marca.
+    const desktopShare = slug.slice(
+      slug.indexOf('<!-- Share Buttons (Desktop) -->'),
+      slug.indexOf('<!-- CTA -->'),
+    )
+    const desktopCopy = desktopShare.match(/@click="copyLink"[\s\S]*?aria-label="Copiar enlace"/g) ?? []
+    expect(desktopCopy.length).toBe(1)
+    expect(desktopCopy[0]).toMatch(/bg-brand-600 hover:bg-brand-700/)
+
+    // El de móvil ya no es un círculo dentro de la píldora flotante: esa píldora
+    // quedaba debajo del stack de contacto y no se podía tocar. Ahora es un
+    // botón de texto al final del artículo, con el mismo acento de marca.
+    // Ver docs/specs/blog-share-mobile — supersede la "barra share móvil" de
+    // SCEN-F4-08.
+    const mobileShare = slug.slice(
+      slug.indexOf('¿Te sirvió? Compártelo'),
+      slug.indexOf('<!-- Sidebar -->'),
+    )
+    expect(mobileShare).toMatch(/@click="copyLink"[\s\S]*?hover:text-brand-700/)
+    expect(mobileShare).not.toMatch(/bg-gray-[567]00/)
   })
 })
 
@@ -125,7 +140,10 @@ describe('SCEN-F4-11 — SEO / schema preserved in <script setup>', () => {
   })
 
   it('keeps the copyLink + share behavior', () => {
-    expect(scriptBlock).toMatch(/function copyLink/)
+    // Las cuatro funciones se fueron al layer (useArticleShare, probado en
+    // packages/logic); la página sigue cableando copiar y compartir.
+    expect(scriptBlock).toMatch(/useArticleShare\(\(\) => \(\{/)
+    expect(scriptBlock).toMatch(/\bcopyLink,/)
   })
 })
 

@@ -56,6 +56,59 @@
           <!-- Main Content -->
           <article ref="articleRef" class="lg:w-2/3 prose prose-lg prose-gray max-w-none">
             <MDCRenderer v-if="post.body" :body="post.body" :data="post" />
+
+            <!-- Compartir (móvil). Esto vivía en una píldora `fixed bottom-4`
+                 que el stack de contacto tapaba: z-60 contra z-40, y una o dos
+                 filas según el horario de WhatsApp, así que sus dos últimos
+                 botones no se podían tocar. En el flujo del artículo no hay
+                 nada que se le monte encima. Escritorio sigue con el bloque del
+                 sidebar; de ahí el lg:hidden. -->
+            <section class="not-prose lg:hidden mt-12 border-t border-gray-200 pt-8">
+              <h2 class="text-lg font-bold text-gray-900 mb-4">¿Te sirvió? Compártelo</h2>
+              <button
+                v-if="canNativeShare"
+                @click="shareNative"
+                type="button"
+                class="w-full inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-gray-900 px-5 py-3 rounded-lg font-medium transition-colors"
+              >
+                <UIcon name="i-lucide-share-2" class="size-5" />
+                Compartir
+              </button>
+              <div v-else class="flex gap-3">
+                <button
+                  @click="shareWhatsApp"
+                  type="button"
+                  class="flex items-center justify-center w-11 h-11 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors"
+                  aria-label="Compartir en WhatsApp"
+                >
+                  <UIcon name="i-lucide-message-circle" class="size-5" />
+                </button>
+                <button
+                  @click="shareFacebook"
+                  type="button"
+                  class="flex items-center justify-center w-11 h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
+                  aria-label="Compartir en Facebook"
+                >
+                  <UIcon name="i-lucide-facebook" class="size-5" />
+                </button>
+                <button
+                  @click="shareTwitter"
+                  type="button"
+                  class="flex items-center justify-center w-11 h-11 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
+                  aria-label="Compartir en X"
+                >
+                  <UIcon name="i-lucide-twitter" class="size-5" />
+                </button>
+              </div>
+              <button
+                @click="copyLink"
+                type="button"
+                class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-brand-800 transition-colors"
+              >
+                <UIcon :name="linkCopied ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
+                {{ linkCopied ? 'Enlace copiado' : 'Copiar enlace' }}
+              </button>
+            </section>
           </article>
 
           <!-- Sidebar -->
@@ -234,41 +287,6 @@
         </NuxtLink>
       </div>
     </section>
-
-    <!-- Mobile Share Buttons (Floating) -->
-    <div class="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
-      <div class="flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2 border border-gray-200">
-        <span class="text-xs text-gray-500 font-medium mr-1">Compartir</span>
-        <button
-          @click="shareWhatsApp"
-          class="flex items-center justify-center w-9 h-9 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors"
-          aria-label="Compartir en WhatsApp"
-        >
-          <UIcon name="i-lucide-message-circle" class="size-4" />
-        </button>
-        <button
-          @click="shareFacebook"
-          class="flex items-center justify-center w-9 h-9 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
-          aria-label="Compartir en Facebook"
-        >
-          <UIcon name="i-lucide-facebook" class="size-4" />
-        </button>
-        <button
-          @click="shareTwitter"
-          class="flex items-center justify-center w-9 h-9 bg-black hover:bg-gray-800 text-white rounded-full transition-colors"
-          aria-label="Compartir en X"
-        >
-          <UIcon name="i-lucide-twitter" class="size-4" />
-        </button>
-        <button
-          @click="copyLink"
-          class="flex items-center justify-center w-9 h-9 bg-brand-600 hover:bg-brand-700 text-gray-900 rounded-full transition-colors"
-          aria-label="Copiar enlace"
-        >
-          <UIcon :name="linkCopied ? 'i-lucide-check' : 'i-lucide-link'" class="size-4" />
-        </button>
-      </div>
-    </div>
   </UPage>
 
   <!-- 404 -->
@@ -399,44 +417,22 @@ function getCategoryIcon(category: string): string {
   return icons[category] || 'i-lucide-file-text'
 }
 
-// Share functions
-const linkCopied = ref(false)
-
-function getShareUrl(): string {
-  if (import.meta.client) {
-    return window.location.href
-  }
-  return `${franchise.website}/blog/${slug.value}`
-}
-
-function shareWhatsApp() {
-  const url = getShareUrl()
-  const text = encodeURIComponent(`${post.value?.title} - ${url}`)
-  window.open(`https://wa.me/?text=${text}`, '_blank')
-}
-
-function shareFacebook() {
-  const url = encodeURIComponent(getShareUrl())
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400')
-}
-
-function shareTwitter() {
-  const url = encodeURIComponent(getShareUrl())
-  const text = encodeURIComponent(post.value?.title || '')
-  window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'width=600,height=400')
-}
-
-async function copyLink() {
-  try {
-    await navigator.clipboard.writeText(getShareUrl())
-    linkCopied.value = true
-    setTimeout(() => {
-      linkCopied.value = false
-    }, 2000)
-  } catch (err) {
-    console.error('Failed to copy link:', err)
-  }
-}
+// Compartir — la lógica vive en el layer y la comparten las tres marcas.
+// El enlace es siempre el canónico, no `window.location.href`: el lector que
+// llega desde un anuncio lo trae con `utm_*` y `gclid` colgando y eso acababa
+// dentro de cada enlace compartido.
+const {
+  canNativeShare,
+  linkCopied,
+  shareNative,
+  shareWhatsApp,
+  shareFacebook,
+  shareTwitter,
+  copyLink,
+} = useArticleShare(() => ({
+  title: post.value?.title ?? '',
+  url: `${franchise.website}/blog/${slug.value}`,
+}))
 
 // SEO - only if post exists
 if (post.value) {
