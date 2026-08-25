@@ -64,3 +64,72 @@ describe.each(brands)('$name reservation confirmation page', ({ name, markupIn }
     expect(pageSource).toContain("content: 'noindex, nofollow'")
   })
 })
+
+// Issue #472 — el Atrás desde la página de gracias dejaba el formulario con los
+// datos del cliente anterior y el CTA girando en "Confirmando…".
+// Holdout: docs/specs/reset-post-reserva/scenarios/reset-post-reserva.scenarios.md
+//
+// El arreglo vive en el store compartido, pero solo sirve si CADA página terminal
+// lo llama. Este contrato de fuente es el guard contra que una marca nueva —o una
+// reescritura de estas páginas— se lo deje. La conducta la cubren los tests de
+// `useStoreReservationForm.resetAfterReservation.test.ts`; aquí solo se comprueba
+// el cableado, que es lo que se olvida.
+const reserveDestination = {
+  // alquilatucarro no tiene /reservas: su buscador vive en la home.
+  'ui-alquilatucarro': '/',
+  'ui-alquilame': '/reservas',
+  'ui-alquicarros': '/reservas',
+} as const
+
+describe.each(brands)('$name — el siguiente cliente empieza limpio (issue #472)', ({ name, markupIn }) => {
+  const read = (p: string) => readFileSync(`${repoRoot}/packages/${name}/${p}`, 'utf8')
+  const confirmationPage = read('app/pages/reservado/[reserveCode]/index.vue')
+  const pendientePage = read('app/pages/pendiente.vue')
+  const sinDisponibilidadPage = read('app/pages/sindisponibilidad.vue')
+
+  it.each([
+    ['confirmación', confirmationPage],
+    ['pendiente', pendientePage],
+  ])('la página de %s borra al cliente anterior al montar', (_label, source) => {
+    expect(source).toContain('useStoreReservationForm().resetAfterReservation()')
+    // En onMounted, no en el submit: ahí el formulario ya está desmontado y no se
+    // reabre la ventana de doble-POST que `releaseSubmit = false` cierra.
+    const call = source.indexOf('resetAfterReservation()')
+    const mounted = source.lastIndexOf('onMounted', call)
+    expect(mounted).toBeGreaterThan(-1)
+  })
+
+  it('sin disponibilidad libera el botón pero NO borra los datos del cliente', () => {
+    // Sigue el mismo cliente reintentando otras fechas: borrarle la identidad
+    // sería hostil. Solo se sueltan las banderas del envío.
+    //
+    // alquilame queda fuera A PROPÓSITO: su salida es un ancla HTML, no un
+    // NuxtLink, y la recarga de documento ya reinicia Pinia entera. Su suite fija
+    // ese diseño con un contrato propio que prohíbe escribir en el store desde esa
+    // página (app/pages/__tests__/estados-reserva.test.ts, SCEN-E2), para que no
+    // vuelva el intento que metía fechas ahí y competía con los watchers del
+    // Searcher. Las otras dos marcas salen con NuxtLink y sí necesitan la llamada.
+    if (name === 'ui-alquilame') {
+      expect(sinDisponibilidadPage).toMatch(/<a[^>]*href="\/reservas"/)
+      return
+    }
+    expect(sinDisponibilidadPage).toContain('useStoreReservationForm().releaseSubmitFlags()')
+    expect(sinDisponibilidadPage).not.toContain('resetAfterReservation')
+  })
+
+  it.each([
+    ['confirmación', markupIn === 'component' ? 'component' : 'page'],
+    ['pendiente', 'pendiente'],
+  ])('la página de %s ofrece una salida hacia una reserva nueva', (_label, where) => {
+    const source =
+      where === 'component'
+        ? read('app/components/ReservationConfirmation.vue')
+        : where === 'pendiente'
+          ? pendientePage
+          : confirmationPage
+    expect(source).toContain('data-testid="nueva-reserva-link"')
+    expect(source).toContain('Hacer otra reserva')
+    // El destino no es el mismo en las tres marcas.
+    expect(source).toContain(`to="${reserveDestination[name]}"`)
+  })
+})

@@ -56,6 +56,17 @@
       Escribir por WhatsApp
     </a>
 
+    <!-- Va a la home: el buscador de esta marca vive ahí, no en /reservas. -->
+    <div class="mt-6">
+      <NuxtLink
+        data-testid="nueva-reserva-link"
+        to="/"
+        class="inline-flex items-center gap-2 rounded-full bg-white/15 px-6 py-2.5 font-semibold text-white hover:bg-white/25"
+      >
+        Hacer otra reserva
+      </NuxtLink>
+    </div>
+
     <p class="text-sm text-gray-400 mt-6">
       Revisa tu bandeja de entrada y carpeta de spam
     </p>
@@ -90,5 +101,14 @@ useHead({
 
 useSeoMeta({
   description: 'Tu reserva de alquiler de carro está siendo procesada. Recibirás confirmación por correo.',
+})
+
+// Issue #472 — la solicitud ya salió: el formulario queda listo para el siguiente
+// cliente. Sin esto, retroceder desde aquí devuelve al operador un formulario con
+// los datos del cliente anterior y el CTA de envío girando para siempre.
+// En `onMounted` y no en el submit: aquí el formulario ya está desmontado, así que
+// no reabre la ventana de doble-POST.
+onMounted(() => {
+  useStoreReservationForm().resetAfterReservation()
 })
 </script>

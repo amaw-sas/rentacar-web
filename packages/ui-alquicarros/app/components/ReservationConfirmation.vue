@@ -141,6 +141,19 @@
       </div>
     </div>
 
+    <!-- Salida hacia una reserva nueva. El operador que atiende una fila venía
+         usando el Atrás del navegador; esto le da un camino explícito y deja la
+         búsqueda anterior puesta (sedes, fechas y horas) para no re-teclearla. -->
+    <div class="mb-6">
+      <NuxtLink
+        data-testid="nueva-reserva-link"
+        to="/reservas"
+        class="inline-flex items-center gap-2 rounded-full bg-white/15 px-6 py-2.5 font-semibold text-white hover:bg-white/25"
+      >
+        Hacer otra reserva
+      </NuxtLink>
+    </div>
+
     <p class="text-lg mt-4">¡Buen viaje! 🚗</p>
   </div>
 </template>

@@ -323,6 +323,58 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     window.history.replaceState(window.history.state, '', cleanPath);
   };
 
+  // Issue #472. El submit deja `isSubmittingForm` en true a propósito
+  // (`releaseSubmit = false`) para que un segundo clic no dispare otro POST
+  // mientras navega, y el `finally` solo la libera dentro de `if (releaseSubmit)`.
+  // Nadie la vuelve a bajar. Retroceder es navegación de cliente: Pinia no se
+  // reconstruye, así que el CTA se queda con el spinner hasta una recarga manual.
+  //
+  // Lo llama `/sindisponibilidad`, donde sigue el MISMO cliente: se le devuelve el
+  // botón, pero sus datos se quedan puestos para que reintente con otras fechas.
+  const releaseSubmitFlags = () => {
+    isSubmittingForm.value = false;
+    formSubmitLocked.value = false;
+    unknownStatusReserveCode.value = null;
+  };
+
+  // Cierra la reserva: además de devolver el botón, borra al cliente que acaba de
+  // reservar. Lo llaman las páginas terminales (/reservado, /pendiente) al montar —
+  // ahí el formulario ya está desmontado, así que no reabre la ventana de
+  // doble-POST que `releaseSubmit = false` cierra.
+  //
+  // Se va la identidad y lo que se eligió para ESTA reserva; se queda la búsqueda
+  // (sedes, fechas, horas). Un operador que atiende una fila re-teclea al cliente,
+  // no la búsqueda entera.
+  //
+  // El consentimiento vuelve a false por la misma razón que no puede venir
+  // pre-marcado (issue #311, Ley 1581/2012): el de un cliente no autoriza al
+  // siguiente. Y `haveTotalInsurance` se va porque arrastrarlo le cobraría al
+  // siguiente una cobertura que no pidió.
+  //
+  // `lastReservationSummary` y `lastSubmittedCode` NO se tocan: el primero es lo
+  // único con lo que la confirmación puede pintar el recap (el endpoint solo
+  // devuelve `{ exists }`), y el segundo es el one-shot que impide reabrir el
+  // resumen al retroceder.
+  const resetAfterReservation = () => {
+    releaseSubmitFlags();
+
+    nombreCompleto.value = null;
+    apellidos.value = null;
+    tipoIdentificacion.value = null;
+    identificacion.value = null;
+    telefono.value = null;
+    email.value = null;
+    referido.value = null;
+    conductorAdicionalNombre.value = null;
+    conductorAdicionalIdentificacion.value = null;
+    politicaPrivacidad.value = false;
+
+    vehiculo.value = null;
+    haveTotalInsurance.value = false;
+    haveMonthlyReservation.value = false;
+    selectedMonthlyMileage.value = null;
+  };
+
   const submitForm = async (_event: FormSubmitEvent<ReservationFormValidationSchemaType>) => {
     // Anti double-submit: in-flight or consumido tras status desconocido.
     if (isSubmittingForm.value || formSubmitLocked.value) return;
@@ -481,6 +533,8 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     registerConvertion,
     serverFailed,
     submitForm,
+    releaseSubmitFlags,
+    resetAfterReservation,
     // computed functions
     selectedPickupLocation,
     selectedReturnLocation,

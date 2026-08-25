@@ -144,6 +144,23 @@ const LEGACY_CITY_SEARCH =
   '/fecha-recogida/2026-10-04/fecha-devolucion/2026-10-11' +
   '/hora-recogida/12:00pm/hora-devolucion/12:00pm';
 
+/**
+ * La confirmación consulta `/api/reservations/<code>/exists` antes de pintar. Sin
+ * stub, ese lookup falla, `useReservationConfirmation` lanza un `createError` 404
+ * fatal y el navegador pide el documento entero — con eso Pinia se reinicia solo y
+ * cualquier aserción sobre el estado que sobrevive al Atrás sale verde por el
+ * motivo equivocado. Con backend real la reserva existe; el stub reproduce eso.
+ */
+function stubReservationExists(page: Page) {
+  return page.route('**/api/reservations/*/exists', (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ exists: true }),
+    }),
+  );
+}
+
 /** Espera a que aparezca un selector; true si apareció dentro del timeout. */
 async function appears(page: Page, selector: string, timeout = 12_000): Promise<boolean> {
   return page
@@ -315,6 +332,53 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     await confirmCta.click();
     await page.waitForURL(/\/reservado\/E2ECODE|\/pendiente|\/sindisponibilidad/, { timeout: 15_000 });
     expect(page.url()).toContain('/reservado/E2ECODE');
+  });
+
+  // Issue #472 — el operador reserva, cae en la página de gracias y pulsa Atrás para
+  // atender al siguiente cliente. Se encontraba los datos del anterior y el CTA
+  // girando en "Confirmando…" para siempre; la única salida era recargar a mano.
+  // Holdout: docs/specs/reset-post-reserva/scenarios/reset-post-reserva.scenarios.md
+  test('SCEN-472-01/02/03: tras reservar, el Atrás deja el formulario listo para el siguiente cliente', async ({ page }) => {
+    await stubAvailability(page, AVAILABILITY_STUB);
+    await stubRecord(page);
+    await stubReservationExists(page);
+
+    const rendered = await gotoCoverageWithGamaC(page);
+    test.skip(!rendered, 'vehicleCategories (Supabase) no disponible en el entorno');
+
+    const cta = page.locator('[data-testid="wizard-continue-desktop-test"]');
+    await cta.click(); // Seguro → Adicionales
+    await cta.click(); // Adicionales → Datos
+    await expect(page.locator('input#telefono')).toBeVisible({ timeout: 10_000 });
+
+    await fillReservationForm(page);
+    await page.locator('[data-testid="privacy-consent-checkbox-test"]').check();
+    await cta.click();
+    await page.waitForURL(/\/reservado\/E2ECODE/, { timeout: 15_000 });
+
+    // SCEN-005: el recap de la reserva sigue en pantalla — el reset no toca el
+    // snapshot congelado, que es lo único con lo que la confirmación puede pintarlo.
+    await expect(page.getByText('E2ECODE').first()).toBeVisible();
+
+    await page.goBack();
+    await page.waitForURL(/\/reservas/, { timeout: 15_000 });
+
+    // SCEN-003: el CTA responde. Antes decía "Confirmando…", deshabilitado y con
+    // spinner, ya desde el Paso 2 — y volver a elegir vehículo no lo revivía.
+    await expect(cta).not.toHaveText(/Confirmando/, { timeout: 10_000 });
+    await page.locator('[data-testid="wizard-select-C-test"]').click();
+    await expect(cta).toBeEnabled();
+
+    // SCEN-001 y SCEN-002: el formulario del siguiente cliente nace vacío.
+    await cta.click(); // Vehículo → Seguro
+    await cta.click(); // Seguro → Adicionales
+    await cta.click(); // Adicionales → Datos
+    await expect(page.locator('input#telefono')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByPlaceholder('Nombres*')).toHaveValue('');
+    await expect(page.getByPlaceholder('Apellidos*')).toHaveValue('');
+    await expect(page.getByPlaceholder('ID Número*')).toHaveValue('');
+    await expect(page.getByPlaceholder('Email*')).toHaveValue('');
+    await expect(page.locator('[data-testid="privacy-consent-checkbox-test"]')).not.toBeChecked();
   });
 
   test('SCEN-366-04: el envío en vuelo se anuncia y no se duplica', async ({ page }) => {
