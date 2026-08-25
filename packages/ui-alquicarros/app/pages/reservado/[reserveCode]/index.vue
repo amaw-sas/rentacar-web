@@ -39,6 +39,16 @@ useSeoMeta({
     : 'Estamos verificando tu reserva. Intenta en unos minutos.',
 })
 
+// Issue #472 — la reserva se cerró: el formulario queda listo para el siguiente
+// cliente. Sin esto, retroceder desde aquí devuelve al operador un formulario con
+// los datos del cliente anterior y el CTA girando en "Confirmando…" para siempre.
+// En `onMounted` y no en el submit: aquí el formulario ya está desmontado, así que
+// no reabre la ventana de doble-POST. El recap de arriba lee `lastReservationSummary`,
+// que el reset no toca.
+onMounted(() => {
+  useStoreReservationForm().resetAfterReservation()
+})
+
 // Lazy load js-confetti (solo se carga en esta página de confirmación)
 onMounted(async () => {
   if (validation.status !== 'found') return

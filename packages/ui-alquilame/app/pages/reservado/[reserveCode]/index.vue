@@ -118,6 +118,19 @@
             </a>
           </div>
 
+          <!-- Salida hacia una reserva nueva. El operador que atiende una fila
+               venía usando el Atrás del navegador; esto le da un camino explícito
+               y deja la búsqueda anterior puesta para no re-teclearla. -->
+          <div class="mb-6">
+            <NuxtLink
+              data-testid="nueva-reserva-link"
+              to="/reservas"
+              class="inline-flex items-center justify-center gap-2 font-semibold rounded-full border border-gray-300 text-gray-900 hover:bg-gray-50 px-6 py-2.5 text-base transition-all duration-200"
+            >
+              Hacer otra reserva
+            </NuxtLink>
+          </div>
+
           <p class="font-heading italic font-bold text-2xl text-red-600">¡Buen viaje!</p>
         </div>
       </div>
@@ -159,6 +172,15 @@ async function copyCode() {
 
 onBeforeUnmount(() => {
   if (copiedTimer) clearTimeout(copiedTimer)
+})
+
+// Issue #472 — la reserva se cerró: el formulario queda listo para el siguiente
+// cliente. Sin esto, retroceder desde aquí devuelve al operador un formulario con
+// los datos del cliente anterior y el CTA de envío girando para siempre.
+// En `onMounted` y no en el submit: aquí el formulario ya está desmontado, así que
+// no reabre la ventana de doble-POST.
+onMounted(() => {
+  useStoreReservationForm().resetAfterReservation()
 })
 
 useHead({

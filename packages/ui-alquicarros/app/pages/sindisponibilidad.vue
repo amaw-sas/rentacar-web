@@ -80,4 +80,12 @@ useHead({
 useSeoMeta({
   description: 'El vehículo solicitado no está disponible para esta fecha. Intenta con otras fechas.',
 })
+
+// Issue #472 — aquí sigue el MISMO cliente: se le devuelve el botón de reserva,
+// pero sus datos se quedan puestos para que reintente con otras fechas. La rama
+// sin-stock del submit también deja `isSubmittingForm` en true, y sin esto el CTA
+// del buscador quedaba muerto con el spinner hasta una recarga manual.
+onMounted(() => {
+  useStoreReservationForm().releaseSubmitFlags()
+})
 </script>

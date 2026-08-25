@@ -55,6 +55,19 @@
       </p>
     </div>
 
+    <!-- Salida hacia una reserva nueva. El operador que atiende una fila venía
+         usando el Atrás del navegador; esto le da un camino explícito. Va a la
+         home porque el buscador de esta marca vive ahí, no en /reservas. -->
+    <div class="mb-6">
+      <NuxtLink
+        data-testid="nueva-reserva-link"
+        to="/"
+        class="inline-flex items-center gap-2 rounded-full bg-white/15 px-6 py-2.5 font-semibold text-white hover:bg-white/25"
+      >
+        Hacer otra reserva
+      </NuxtLink>
+    </div>
+
     <!-- Despedida -->
     <p class="text-lg mt-4">¡Buen viaje! 🚗</p>
   </div>
@@ -79,6 +92,15 @@ useSeoMeta({
   description: validation.status === 'found'
     ? 'Tu reserva de alquiler de carro ha sido confirmada. Revisa tu correo para los detalles.'
     : 'Estamos verificando tu reserva. Intenta en unos minutos.',
+})
+
+// Issue #472 — la reserva se cerró: el formulario queda listo para el siguiente
+// cliente. Sin esto, retroceder desde aquí devuelve al operador un formulario con
+// los datos del cliente anterior y el CTA de envío girando para siempre.
+// En `onMounted` y no en el submit: aquí el formulario ya está desmontado, así que
+// no reabre la ventana de doble-POST.
+onMounted(() => {
+  useStoreReservationForm().resetAfterReservation()
 })
 
 // Lazy load js-confetti (solo se carga en esta página de confirmación)
