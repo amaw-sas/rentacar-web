@@ -67,7 +67,7 @@ Reskin de marca alquilame (rojo #CC022B, Plus Jakarta Sans headings + DM Sans bo
 - **SCEN-F4-05** — Detalle hero: imagen + overlay `bg-linear-to-t` renderiza; título `.heading-*` blanco sobre imagen; fila de meta (autor/fecha/tiempo) intacta.
 - **SCEN-F4-06** — Cuerpo MDC: prose estilado a marca (blog.css), callouts legibles (contraste correcto).
 - **SCEN-F4-07** — Sidebar: TOC + tags brand; caja CTA del sidebar Y CTA de bio del autor → `/reservas`; ningún CTA de reserva del detalle sigue en `to="/"`.
-- **SCEN-F4-08** — Share buttons: WhatsApp verde / FB azul / X negro preservados (plataforma); botón copiar gris → token de marca; barra share móvil presente.
+- **SCEN-F4-08** — Share buttons: WhatsApp verde / FB azul / X negro preservados (plataforma); botón copiar gris → token de marca; barra share móvil presente. **Superado en parte el 2026-08-24** (`docs/specs/blog-share-mobile`): la "barra share móvil" flotante quedaba debajo del stack de contacto y no se podía tocar; el compartir de móvil vive ahora al final del artículo. Los colores de plataforma y el copiar debrandado siguen vigentes.
 - **SCEN-F4-09** — Sección bio del autor: estilada a marca (token surface, no `gray-50` crudo).
 - **SCEN-F4-10** — Relacionados: cards brand, enlazan a `/blog/[slug]`.
 - **SCEN-F4-11** — SEO preservado: `BlogPosting` + `BreadcrumbList` JSON-LD intactos en el HTML; article meta (published/modified/author/section/tags) presentes.
