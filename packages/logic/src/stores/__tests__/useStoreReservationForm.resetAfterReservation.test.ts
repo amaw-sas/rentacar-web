@@ -204,4 +204,70 @@ describe('useStoreReservationForm — el siguiente cliente empieza limpio (issue
     // El one-shot que impide reabrir el resumen al retroceder sigue puesto.
     expect(store.lastSubmittedCode).toBe('C')
   })
+
+  // Hallazgo de revisión sobre este mismo issue. Anular solo `vehiculo` no basta:
+  // `selectedCategory` (useStoreSearchData) es un ref independiente, no derivado.
+  // Si sobrevive, al volver a la superficie query `canReuseExistingSearch` da true
+  // —la firma coincide justo porque SCEN-004 conserva sedes, fechas y horas—, no se
+  // re-busca, la máquina de invalidación del wizard no descarta la gama, y su
+  // watcher espejo (`immediate: true`) reescribe `haveTotalInsurance` desde
+  // `selectedCategory.withTotalCoverage`. SCEN-006 se rompe por la puerta de atrás.
+  it('resetAfterReservation anula tambien la gama elegida en useStoreSearchData', async () => {
+    const store = await bootStore()
+    const { default: useStoreSearchData } = await import('../useStoreSearchData')
+    const search = useStoreSearchData()
+    fillClientA(store as unknown as Record<string, unknown>)
+    search.selectedCategory = { withTotalCoverage: true } as never
+
+    store.resetAfterReservation()
+
+    expect(search.selectedCategory).toBeNull()
+  })
+
+  // Guard de clasificación. El reset decide campo por campo, y un campo nuevo que
+  // nadie clasifique se cuela por la rama "se conserva" en silencio: si guarda algo
+  // del cliente, viaja al siguiente. Esta lista obliga a decidir al añadirlo.
+  it('cada campo del store esta clasificado como borrable o conservable', async () => {
+    const store = await bootStore()
+
+    const BORRADOS = [
+      'nombreCompleto', 'apellidos', 'tipoIdentificacion', 'identificacion',
+      'telefono', 'email', 'referido', 'conductorAdicionalNombre',
+      'conductorAdicionalIdentificacion', 'politicaPrivacidad',
+      'vehiculo', 'haveTotalInsurance', 'haveMonthlyReservation',
+      'selectedMonthlyMileage',
+      'isSubmittingForm', 'formSubmitLocked', 'unknownStatusReserveCode',
+    ]
+    const CONSERVADOS = [
+      'lugarRecogida', 'lugarDevolucion', 'fechaRecogida', 'fechaDevolucion',
+      'horaRecogida', 'horaDevolucion',
+      'lastReservationSummary', 'lastSubmittedCode', 'attribution',
+    ]
+
+    const clasificados = new Set([...BORRADOS, ...CONSERVADOS])
+    const sinClasificar = Object.keys(store.$state).filter((k) => !clasificados.has(k))
+
+    expect(sinClasificar).toEqual([])
+  })
+
+  // Y que la clasificación no sea decorativa: lo listado como borrable se borra.
+  it('todo lo clasificado como borrable queda en su valor vacio', async () => {
+    const store = await bootStore()
+    fillClientA(store as unknown as Record<string, unknown>)
+    store.isSubmittingForm = true
+    store.formSubmitLocked = true
+    store.unknownStatusReserveCode = 'QA-472'
+
+    store.resetAfterReservation()
+
+    const vivos = Object.entries(store.$state).filter(
+      ([k, v]) =>
+        !['lugarRecogida', 'lugarDevolucion', 'fechaRecogida', 'fechaDevolucion',
+          'horaRecogida', 'horaDevolucion', 'lastReservationSummary',
+          'lastSubmittedCode', 'attribution'].includes(k) &&
+        v !== null && v !== false && v !== '',
+    )
+
+    expect(vivos).toEqual([])
+  })
 })

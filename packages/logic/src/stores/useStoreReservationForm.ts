@@ -369,6 +369,20 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     conductorAdicionalIdentificacion.value = null;
     politicaPrivacidad.value = false;
 
+    // `vehiculo` y `selectedCategory` se anulan JUNTOS. Anular solo `vehiculo`
+    // deja el seguro puesto por la puerta de atrás: al volver a `/reservas?...`,
+    // `canReuseExistingSearch` (useSearchByQueryParams) da true —la firma de seis
+    // campos coincide precisamente porque este reset conserva sedes, fechas y
+    // horas, y ni la gama ni la disponibilidad se limpiaron—, así que `doSearch()`
+    // no corre, `pending` no bascula y la máquina de invalidación del wizard nunca
+    // descarta la gama. Su watcher espejo (`immediate: true`) entonces reescribe
+    // `haveTotalInsurance = !!selectedCategory.withTotalCoverage` y el siguiente
+    // cliente arranca con la cobertura del anterior. Con la gama en null la
+    // reutilización se cae y la búsqueda se rehace, que es lo que toca.
+    //
+    // useStoreSearchData() lazy aquí, nunca en el setup: llamarlo arriba forma un
+    // ciclo de inicialización de módulos (ver el import).
+    useStoreSearchData().selectedCategory = null;
     vehiculo.value = null;
     haveTotalInsurance.value = false;
     haveMonthlyReservation.value = false;

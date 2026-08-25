@@ -91,12 +91,14 @@ describe.each(brands)('$name — el siguiente cliente empieza limpio (issue #472
     ['confirmación', confirmationPage],
     ['pendiente', pendientePage],
   ])('la página de %s borra al cliente anterior al montar', (_label, source) => {
-    expect(source).toContain('useStoreReservationForm().resetAfterReservation()')
-    // En onMounted, no en el submit: ahí el formulario ya está desmontado y no se
-    // reabre la ventana de doble-POST que `releaseSubmit = false` cierra.
-    const call = source.indexOf('resetAfterReservation()')
-    const mounted = source.lastIndexOf('onMounted', call)
-    expect(mounted).toBeGreaterThan(-1)
+    // En onMounted, no en el nivel superior del setup: ahí el formulario ya está
+    // desmontado y no se reabre la ventana de doble-POST que `releaseSubmit = false`
+    // cierra. La llamada tiene que estar DENTRO del callback — buscar un `onMounted`
+    // cualquiera antes en el fichero pasa aunque sea el del confetti y la llamada
+    // cuelgue suelta del setup.
+    expect(source).toMatch(
+      /onMounted\(\s*(?:async\s*)?\(\s*\)\s*=>\s*\{[^}]*useStoreReservationForm\(\)\.resetAfterReservation\(\)/,
+    )
   })
 
   it('sin disponibilidad libera el botón pero NO borra los datos del cliente', () => {
@@ -114,7 +116,9 @@ describe.each(brands)('$name — el siguiente cliente empieza limpio (issue #472
       return
     }
     expect(sinDisponibilidadPage).toContain('useStoreReservationForm().releaseSubmitFlags()')
-    expect(sinDisponibilidadPage).not.toContain('resetAfterReservation')
+    // La LLAMADA, no la palabra: el comentario de al lado explica por qué esta
+    // página no borra al cliente, y nombrar la función ahí no puede romper el test.
+    expect(sinDisponibilidadPage).not.toContain('resetAfterReservation(')
   })
 
   it.each([
