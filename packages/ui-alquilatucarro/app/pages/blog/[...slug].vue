@@ -81,9 +81,14 @@
           <UIcon name="i-lucide-chevron-right" class="size-3.5" />
           <NuxtLink to="/blog" class="hover:text-red-700 transition-colors">Blog</NuxtLink>
         </li>
-        <li class="flex items-center gap-2">
-          <UIcon name="i-lucide-chevron-right" class="size-3.5" />
-          <span class="text-gray-900 font-medium truncate max-w-xs">{{ post.title }}</span>
+        <!-- El recorte del título es «lo que sobre», no 320px fijos: con
+             `max-w-xs` la fila pedía 459px en un viewport de 412 y la página se
+             arrastraba de lado. `min-w-0` es lo que deja encoger el tramo — un
+             elemento flex nace con `min-width: auto` y se niega a bajar de su
+             contenido. Ver docs/specs/blog-breadcrumb-overflow. -->
+        <li class="flex items-center gap-2 min-w-0">
+          <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0" />
+          <span class="text-gray-900 font-medium truncate">{{ post.title }}</span>
         </li>
       </ol>
     </nav>
