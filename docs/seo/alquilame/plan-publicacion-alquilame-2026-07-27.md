@@ -36,7 +36,6 @@
 - **F4 ✅** (2026-07-28 ~01:40): dominio movido en Vercel por el dueño (alquilame.co + www → rentacar-web-alquilame). Verificación completa en el dominio vivo: home/19 ciudades/blog/aliados 200, las 3 redirecciones legacy 301 correctas, robots INDEXABLE, sitemap 200, www 307→apex, contenido nuevo servido, consola limpia. Rollback disponible: re-adjuntar dominios al proyecto "alquilame.co" legacy.
 - **F5 ✅ (sitemap)** (2026-07-28): enviado por UI de GSC; Google lo leyó de inmediato — Estado Correcto, 35 páginas descubiertas. Vigilancia 48h en curso.
 - **Limpieza pendiente (con luz del día)**: borrar key Resend vieja (Resend + proyecto legacy), var NUXT_RESEND_API_KEY del proyecto legacy, pausar/retirar plantilla WATI del flujo GHL roto, construir /califica en casa (diseño ya aprobado), primer artículo mensual del blog.
-- **Pendiente-viejo: F4** (cutover del dominio alquilame.co, con el dueño, en ventana tranquila) y F5.
 
 ## Fases
 
