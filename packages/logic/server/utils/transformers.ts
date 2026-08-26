@@ -7,6 +7,7 @@ import type LocationSchedule from '../../src/utils/types/data/LocationSchedule'
 import type VehicleCategoryData from '../../src/utils/types/data/VehicleCategoryData'
 import type ExtrasData from '../../src/utils/types/data/ExtrasData'
 import type City from '../../src/utils/types/type/City'
+import { isBookable } from '../../src/utils/isBookable'
 import type FAQ from '../../src/utils/types/type/FAQ'
 import type Testimonial from '../../src/utils/types/type/Testimonial'
 
@@ -65,7 +66,7 @@ interface SupabaseLocation {
   // `display`. `{}` = unconfigured (permissive), null/absent = no schedule.
   schedule: LocationSchedule | null
   status: string
-  cities: { slug: string } | null
+  cities: { slug: string; bookable?: boolean } | null
 }
 
 const dayMs = 24 * 60 * 60 * 1000
@@ -282,6 +283,10 @@ export function transformBranches(rows: SupabaseLocation[]): BranchData[] {
     // per-day ranges directly. null → undefined (permissive; the city-page chip
     // hides on a missing `display`).
     schedule: row.schedule ?? undefined,
+    // Inherited from the city, because that is the level operations switches. Normalised here so
+    // the browser never has to reason about a missing column; consumers still read it through
+    // `isBookable()`, since a payload cached before the deploy carries no field at all.
+    bookable: isBookable(row.cities),
   }))
 }
 
@@ -313,6 +318,7 @@ interface SupabaseCity {
   name: string
   description: string | null
   testimonials: unknown
+  bookable?: boolean
 }
 
 // The Supabase descriptions predate the active-branch inventory and four of
@@ -369,6 +375,10 @@ export function transformCities(rows: SupabaseCity[], locations: SupabaseLocatio
       ) && cityDescriptionsWithoutUnsupportedAirportPickup[row.slug]
         ? cityDescriptionsWithoutUnsupportedAirportPickup[row.slug]
         : row.description ?? '',
+    // The city stays in the payload when it is switched off — that is the entire point. Its page
+    // must keep answering 200; what disappears is the OFFER, and each consumer decides what that
+    // means for it (a selector hides it, the city page swaps the searcher for a notice).
+    bookable: isBookable(row),
   }))
 }
 

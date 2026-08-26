@@ -229,6 +229,9 @@ describe('transformBranches', () => {
       city: 'bogota',
       slug: 'bogota-aeropuerto',
       schedule: aabotSchedule,
+      // These fixtures predate `cities.bookable`, so the flag is absent and reads as on sale —
+      // the same thing a payload cached before the deploy does.
+      bookable: true,
     })
     expect(result[1].city).toBe('medellin')
   })
