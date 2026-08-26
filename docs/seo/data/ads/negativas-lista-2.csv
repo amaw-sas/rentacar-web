@@ -1,0 +1,12 @@
+Informe detallado de palabras clave negativas
+Desde siempre
+keyword_text,match_type
+sueldo,BROAD
+se busca,PHRASE
+se solicita,PHRASE
+vacante,BROAD
+curriculum,BROAD
+salario,BROAD
+hoja de vida,PHRASE
+trabajo,BROAD
+empleo,BROAD
