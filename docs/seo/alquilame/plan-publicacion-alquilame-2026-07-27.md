@@ -1,6 +1,6 @@
 # Plan de publicación de alquilame.co
 
-**Fecha:** 2026-07-27 · **Estado:** propuesto, pendiente de aprobación del dueño
+**Fecha:** 2026-07-27 · **Estado:** ✅ **LANZADO** — alquilame.co sirve el sitio nuevo desde 2026-07-28 ~01:40 (hora CO)
 **Contexto:** el contenido propio está terminado y verificado (ver `mision-contenido-propio-2026-07-27.md`); el blog tiene su primer artículo. Falta el único paso que toca producción: publicar el sitio en el dominio real.
 
 ## Hechos verificados (no supuestos)
@@ -30,6 +30,12 @@
 - **F2 🔄** (2026-07-28): dueño verificó en Vercel — proyecto legacy identificado: **"alquilame.co"** (tiene alquilame.co Production + www con 308 + alquilameco.vercel.app; Cloudflare proxy delante). Variables de `rentacar-web-alquilame`: Supabase, admin URL/key, image domains, blog key — todas Production ✓. **Falta 1**: `NUXT_RESEND_API_KEY` quedó solo en el proyecto legacy (añadida allí el 23-jul por error); el dueño debe crear key NUEVA en Resend (rotación pendiente) y añadirla al proyecto nuevo (Production+Preview, Sensitive).
 - **F2 ✅** (2026-07-28): cerrada con evidencia E2E. Las 3 variables de correo en `rentacar-web-alquilame` (Production+Preview): key NUEVA de Resend (rotación hecha), TO/FROM. Prueba real: POST /api/contact → {"ok":true} 200 en el deployment fresco (verificado con build marker). Nota: la key vieja quedó en el proyecto legacy — borrarla en Resend y en Vercel post-lanzamiento.
 - **F3-checks ✅** (2026-07-28): PR #419 con TODO el tablero en verde (Quality Checks + E2E + 3 builds Vercel). Para llegar: los 7 tests que fijaban el diseño viejo de alquilame se alinearon al rediseño aprobado (939/939, primera corrida totalmente verde de la rama), y la suite jsdom que solo corre en CI (whatsappSchedule montado) se adaptó a la decisión del teléfono. El lint de CI es continue-on-error (ruido histórico: eslint no es dep de los paquetes de marca) — seguimiento, no bloqueo.
+
+- **F3 ✅** (2026-07-28 ~01:20): PR #419 MERGEADO a main (943d281) con tablero verde. Los 3 deploys de producción success. **Smoke P1 aprobado**: alquilatucarro.com (dominio real) home/bogotá/tarifas 200, widget con Chat+Llámanos visibles y WhatsApp oculto por horario nocturno (feature correcta), consola limpia, precios de tarifas sanos (sin tachados absurdos — el tope mensual operando); alquicarros (producción del proyecto) wizard monta, FAB visible en desktop 1487px (el fix F0 vivo), Llámanos presente, consola limpia. Notas: ATC /reservas 404 es correcto (esa ruta nunca existió ahí); tel: con espacios en ATC es preexistente (mejora menor futura).
+- **DESCUBRIMIENTO** (2026-07-28): `alquicarros.com` (www) sirve un sitio LEGACY ajeno al monorepo — su dominio real nunca apuntó al proyecto `rentacar-web-alquicarros`. Misma situación que alquilame: cutover de dominio propio pendiente, fuera del alcance de este plan. El único dominio real en la plataforma nueva es alquilatucarro.com.
+- **F4 ✅** (2026-07-28 ~01:40): dominio movido en Vercel por el dueño (alquilame.co + www → rentacar-web-alquilame). Verificación completa en el dominio vivo: home/19 ciudades/blog/aliados 200, las 3 redirecciones legacy 301 correctas, robots INDEXABLE, sitemap 200, www 307→apex, contenido nuevo servido, consola limpia. Rollback disponible: re-adjuntar dominios al proyecto "alquilame.co" legacy.
+- **F5 ✅ (sitemap)** (2026-07-28): enviado por UI de GSC; Google lo leyó de inmediato — Estado Correcto, 35 páginas descubiertas. Vigilancia 48h en curso.
+- **Limpieza pendiente (con luz del día)**: borrar key Resend vieja (Resend + proyecto legacy), var NUXT_RESEND_API_KEY del proyecto legacy, pausar/retirar plantilla WATI del flujo GHL roto, construir /califica en casa (diseño ya aprobado), primer artículo mensual del blog.
 
 ## Fases
 
