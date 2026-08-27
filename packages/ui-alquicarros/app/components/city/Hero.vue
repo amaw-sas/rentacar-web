@@ -67,7 +67,12 @@
             </span>
           </h1>
 
-          <p class="mt-4 text-base md:text-lg text-on-brand max-w-2xl mx-auto lg:mx-0">
+          <!-- El subtitulo invita a consultar disponibilidad; junto a "no estamos alquilando en
+               esta ciudad" se contradice. Se va con el motor. Lo vio la revision en navegador. -->
+          <p
+            v-if="cityIsBookable"
+            class="mt-4 text-base md:text-lg text-on-brand max-w-2xl mx-auto lg:mx-0"
+          >
             Consulta disponibilidad y precios. Elige ciudad, fechas y horarios y
             renta un vehículo por días, semanas o el tiempo que necesites.
           </p>
@@ -144,6 +149,11 @@
 </template>
 
 <script setup lang="ts">
+// Import explicito: el auto-import de Nuxt cubre los composables `use*` de la capa (por eso
+// `useBookableRelatedCities` y `useRelatedCities` no se importan), pero NO una funcion suelta de
+// `utils`. Sin esta linea la pagina revienta con un 500 en SSR — justo la pagina que esta feature
+// existe para mantener viva. Ningun test lo veia porque ninguno ejecuta este script.
+import { isBookable } from '@rentacar-main/logic/utils'
 /** types */
 import type { City } from '@rentacar-main/logic/utils'
 

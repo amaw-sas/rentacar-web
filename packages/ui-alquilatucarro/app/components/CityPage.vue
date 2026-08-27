@@ -32,8 +32,11 @@
         </span>
       </template>
       <template #body>
+        <!-- El encabezado del buscador se va con el buscador: "Consulta disponibilidad y
+             precios / Elige ciudades y fechas" justo encima de "no estamos alquilando aqui"
+             se contradice solo. Lo vio la revision en navegador, no los tests. -->
         <!-- Solo visible en mobile -->
-        <div class="text-center justify-items-center -mt-4 -mb-4 lg:hidden">
+        <div v-if="cityIsBookable" class="text-center justify-items-center -mt-4 -mb-4 lg:hidden">
           <div class="mb-1 text-white text-xl">
             Consulta disponibilidad y precios
           </div>
@@ -48,7 +51,7 @@
       <template #default>
         <!-- Contenedor para texto + formulario alineados - solo desktop -->
         <div class="hidden lg:flex lg:flex-col lg:items-center w-full">
-          <div class="w-4/6 text-center mb-2">
+          <div v-if="cityIsBookable" class="w-4/6 text-center mb-2">
             <div class="mb-1 text-white text-xl">
               Consulta disponibilidad y precios
             </div>
@@ -385,6 +388,11 @@
 </template>
 
 <script setup lang="ts">
+// Import explicito: el auto-import de Nuxt cubre los composables `use*` de la capa (por eso
+// `useBookableRelatedCities` y `useRelatedCities` no se importan), pero NO una funcion suelta de
+// `utils`. Sin esta linea la pagina revienta con un 500 en SSR — justo la pagina que esta feature
+// existe para mantener viva. Ningun test lo veia porque ninguno ejecuta este script.
+import { isBookable } from '@rentacar-main/logic/utils'
 /** types */
 import type { CategoryData, City } from '@rentacar-main/logic/utils';
 import { isCategoryVisibleInCity } from '@rentacar-main/logic/utils';
