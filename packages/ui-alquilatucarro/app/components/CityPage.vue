@@ -57,7 +57,10 @@
             </p>
           </div>
           <!-- Wrapper con altura fija para prevenir layout shift durante hidratación -->
-          <div class="h-[410px] w-full">
+          <!-- SCEN-008: donde iba el buscador va el aviso. El aviso NO va dentro de ClientOnly
+               -es estatico y no necesita hidratacion-, asi se pinta en SSR y una arana lo lee. -->
+          <CityNoService v-if="!cityIsBookable" :city-name="city?.name ?? ''" :nearby="nearbyBookable" />
+          <div v-else class="h-[410px] w-full">
             <ClientOnly>
               <Searcher />
               <template #fallback>
@@ -69,7 +72,8 @@
         <!-- Buscador solo en mobile/tablet -->
         <div class="lg:hidden">
           <!-- Wrapper con min-height ajustado al form compacto (~248px natural) -->
-          <div class="min-h-[250px]">
+          <CityNoService v-if="!cityIsBookable" :city-name="city?.name ?? ''" :nearby="nearbyBookable" />
+          <div v-else class="min-h-[250px]">
             <ClientOnly>
               <Searcher />
               <template #fallback>
@@ -455,6 +459,15 @@ const hasExpandedContent = props.city?.name ? hasCityExpandedContent(props.city.
 
 // Get related cities for internal linking
 const relatedCities = props.city?.id ? useRelatedCities(props.city.id) : [];
+
+// SCEN-008. `isBookable` y no `city.bookable`: el payload se cachea una hora, asi que justo tras
+// el deploy el campo no viene y ausente significa que si se alquila — leerlo directo pondria el
+// aviso en las 19 ciudades durante esa hora.
+const cityIsBookable = computed(() => isBookable(props.city));
+// Las cercanas del aviso SI se filtran: son una invitacion a buscar, y mandar a alguien a otra
+// ciudad apagada repetiria el callejon sin salida. La seccion "ciudades cercanas" de mas abajo NO
+// se filtra a proposito: es enlazado interno para SEO y la pagina de destino se explica sola.
+const nearbyBookable = useBookableRelatedCities(props.city?.id ?? '');
 
 // Add Product Schema for SEO (shows vehicle offers in Google SERPs)
 if (props.city?.name && props.city?.id) {

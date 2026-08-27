@@ -118,6 +118,18 @@
         -->
         <div v-if="mode === 'results'" class="flex items-center justify-center">
           <!--
+            SCEN-008: la ciudad esta publicada pero no se alquila, asi que el aviso ocupa el sitio
+            del motor. Anidado DENTRO de la rama de modo a proposito: el contrato
+            `v-if="mode === 'results'" / v-else` que fija Hero.test.ts sigue intacto.
+            Fuera de ClientOnly: es estatico, no necesita hidratacion, y asi lo lee una arana en
+            el HTML servido (SCEN-001).
+          -->
+          <CityNoService
+            v-if="!cityIsBookable"
+            :city-name="city?.name ?? ''"
+            :nearby="nearbyBookable"
+          />
+          <!--
             CLS guard (issue #109): reserve the Searcher footprint with a fixed
             height so the ClientOnly fallback and the hydrated form occupy the
             same box — no shift, and no current-date call in the SSR/ISR markup.
@@ -151,6 +163,14 @@
              video), via the shared component. Replaces the lone vehicle photo
              card and its navigation CTA: WhatsApp now lives in the text
              column, matching the home. -->
+        <!-- En landing el aviso reemplaza la imagen decorativa: una foto de carro junto a "no
+             alquilamos aqui" es peor que el aviso. El CTA de WhatsApp de la columna de texto se
+             queda: hablar con alguien sigue siendo una salida valida. -->
+        <CityNoService
+          v-else-if="!cityIsBookable"
+          :city-name="city?.name ?? ''"
+          :nearby="nearbyBookable"
+        />
         <HomeHeroVisual
           v-else
           :car-alt="`Carro disponible para alquilar en ${city?.name}`"
@@ -169,7 +189,7 @@ import { defineAsyncComponent } from 'vue'
 import { IconsStarIcon as StarIcon } from '#components'
 
 /** props */
-withDefaults(
+const props = withDefaults(
   defineProps<{
     city: City
     /**
@@ -199,4 +219,12 @@ const Searcher = defineAsyncComponent(() => import('../Searcher.vue'))
 const PlaceholdersSearcher = defineAsyncComponent(
   () => import('../Placeholders/Searcher.vue'),
 )
+
+// SCEN-008. `isBookable` y no `city.bookable`: el payload se cachea una hora, asi que justo tras
+// el deploy el campo no viene y ausente significa que si se alquila — leerlo directo pondria el
+// aviso en las 19 ciudades durante esa hora.
+const cityIsBookable = computed(() => isBookable(props.city))
+// Las cercanas del aviso se filtran: son una invitacion a buscar, y mandar a alguien a otra
+// ciudad apagada repetiria el callejon sin salida que el aviso viene a resolver.
+const nearbyBookable = useBookableRelatedCities(props.city?.id ?? '')
 </script>
