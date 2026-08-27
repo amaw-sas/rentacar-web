@@ -85,16 +85,27 @@ describe('SCEN-001 — >15 days of inactivity → fresh chat, keys cleared', () 
     expect(store.getItem(c.lastReadKey)).toBeNull();
   });
 
+  // El reloj se congela porque este test vive EXACTAMENTE sobre el borde. `turn` fija
+  // `createdAt = Date.now() - CHAT_TTL_MS` y el codigo bajo prueba vuelve a leer `Date.now()`
+  // despues; con la comparacion `>` estricta, UN SOLO milisegundo transcurrido entre ambas
+  // lecturas convierte "justo en el borde" en "pasado el borde" y el caso que debe conservarse
+  // se borra. En una maquina ociosa no pasa nunca; con las cuatro suites del monorepo
+  // encadenadas, si. Era un fallo intermitente real, reproducible al insertar 2 ms de espera.
   it('boundary: exactly at the TTL edge is NOT expired; just past it is', () => {
-    // At exactly CHAT_TTL_MS the strict > keeps the conversation (15 days is
-    // the allowance, not the cutoff-inclusive).
-    const cKeep = cfg();
-    seed(cKeep, [turn('a1', CHAT_TTL_MS)]);
-    expect(createChatConversation(cKeep).messages.value).toHaveLength(1);
+    vi.useFakeTimers();
+    try {
+      // At exactly CHAT_TTL_MS the strict > keeps the conversation (15 days is
+      // the allowance, not the cutoff-inclusive).
+      const cKeep = cfg();
+      seed(cKeep, [turn('a1', CHAT_TTL_MS)]);
+      expect(createChatConversation(cKeep).messages.value).toHaveLength(1);
 
-    const cWipe = cfg();
-    seed(cWipe, [turn('a1', CHAT_TTL_MS + 60_000)]);
-    expect(createChatConversation(cWipe).messages.value).toEqual([]);
+      const cWipe = cfg();
+      seed(cWipe, [turn('a1', CHAT_TTL_MS + 60_000)]);
+      expect(createChatConversation(cWipe).messages.value).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
