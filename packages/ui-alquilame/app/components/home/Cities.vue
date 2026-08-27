@@ -29,7 +29,7 @@
           Alquila tu carro en las principales ciudades de Colombia
         </h2>
         <p class="mt-4 body-lg">
-          Operamos en más de {{ cities.length }} ciudades de Colombia. Estas son las más solicitadas.
+          Operamos en más de {{ bookableCities.length }} ciudades de Colombia. Estas son las más solicitadas.
         </p>
       </div>
 
@@ -89,7 +89,7 @@
       <!-- All cities — pill / chip grid (every active city, internal link) -->
       <div class="flex flex-wrap justify-center gap-3">
         <NuxtLink
-          v-for="city in cities"
+          v-for="city in bookableCities"
           :key="city.id"
           :to="`/${city.id}`"
           :aria-label="`Alquiler de carros en ${city.name}`"
@@ -139,9 +139,19 @@
 <script setup lang="ts">
 // Types
 import type { City } from '@rentacar-main/logic/utils'
+import { isBookable } from '@rentacar-main/logic/utils'
 
 // useData is auto-imported from the logic layer; cities are Supabase-dynamic.
 const { cities } = useData()
+
+// SCEN-002 — una ciudad que dejamos de alquilar sale de la grilla, aunque su pagina siga viva.
+// Ese es el reparto: la pagina sobrevive (por eso `bookable` existe en vez de apagar `status`),
+// pero el home no puede seguir ofreciendola.
+//
+// `isBookable` en vez de leer el campo: el payload se cachea una hora, asi que justo tras el
+// deploy ninguna ciudad lo trae, y ausente significa que si se alquila. Leerlo directo vaciaria
+// la grilla entera durante esa hora.
+const bookableCities = computed(() => (unref(cities) ?? []).filter(isBookable))
 
 // Photos we actually ship, keyed by City.id (=== slug). A city only becomes a
 // featured photo card when both (a) it is an active city in the data source AND
@@ -175,7 +185,7 @@ function branchLabelFor(cityId: string): string | undefined {
 // cities. flatMap drops any photo whose city is not currently active.
 const featuredCities = computed<FeaturedCity[]>(() =>
   FEATURED.flatMap(({ id, image }) => {
-    const city = cities.value.find((c: City) => c.id === id)
+    const city = bookableCities.value.find((c: City) => c.id === id)
     return city ? [{ ...city, image, branchLabel: branchLabelFor(id) }] : []
   })
 )
