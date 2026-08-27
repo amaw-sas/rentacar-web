@@ -6,7 +6,7 @@
         <SearcherSelectDrawer
             v-model="lugarRecogida"
             class="col-span-2 sm:hidden"
-            :items="sortedBranches"
+            :items="bookableBranches"
             value-key="code"
             label-key="name"
             label="Lugar de recogida"
@@ -28,7 +28,7 @@
                     class="w-full"
                     variant="ghost"
                     data-testid="pickup-location-desktop-test"
-                    :items="sortedBranches"
+                    :items="bookableBranches"
                     :search-input="{
                         placeholder: 'Buscar sucursal',
                         autofocus: false,
@@ -47,7 +47,7 @@
         <SearcherSelectDrawer
             v-model="lugarDevolucion"
             class="col-span-2 sm:hidden"
-            :items="sortedBranches"
+            :items="bookableBranches"
             value-key="code"
             label-key="name"
             label="Lugar de devolución"
@@ -69,7 +69,7 @@
                     value-key="code"
                     variant="ghost"
                     class="w-full"
-                    :items="sortedBranches"
+                    :items="bookableBranches"
                     :search-input="{
                         placeholder: 'Buscar sucursal',
                         autofocus: false,
@@ -374,7 +374,7 @@
 
 <script setup lang="ts">
 // Note: stores and components are auto-imported by Nuxt; utils are not.
-import { formatHumanDate } from '@rentacar-main/logic/utils';
+import { formatHumanDate, isBookable } from '@rentacar-main/logic/utils';
 import type { DateObject } from '@rentacar-main/logic/utils';
 
 /** Local refs - initialized lazily to avoid SSR Pinia errors */
@@ -421,6 +421,18 @@ const onReturnDateSelect = (v: DateObject | null) => {
 };
 const pendingSearching = ref<boolean>(false);
 const sortedBranches = ref<any[]>([]);
+
+// SCEN-003 — what the selectors OFFER, which is not the same as what the catalog HOLDS.
+//
+// The local `sortedBranches` ref deliberately keeps the complete list. This component reads
+// `sortedBranches.length === 0` as "the branch data never loaded, tell them to reload", and
+// filtering the ref itself would fire that message the day the last city goes off sale — telling
+// a customer the site is broken when it is merely closed.
+//
+// `isBookable(b)` rather than `b.bookable`: the catalog payload is cached for an hour, so right
+// after the deploy the field is absent, and absent means on sale.
+const bookableBranches = computed(() => sortedBranches.value.filter(isBookable));
+
 const pickupHourOptions = ref<any[]>([]);
 const returnHourOptions = ref<any[]>([]);
 const searchLinkName = ref<string>('');

@@ -7,6 +7,7 @@ import useFetchRentacarData from '../composables/useFetchRentacarData';
 
 // Types
 import type { BranchData } from '@rentacar-main/logic/utils';
+import { isBookable } from '../utils/isBookable';
 
 const useStoreAdminData = defineStore("storeAdminData", () => {
   // Reactive reads via computed. Direct destructure was capturing whatever
@@ -23,6 +24,26 @@ const useStoreAdminData = defineStore("storeAdminData", () => {
             a.name.localeCompare(b.name)
           )
       : []
+  );
+
+  /**
+   * The branches a customer may actually be offered.
+   *
+   * Deliberately NOT the same list as `sortedBranches`, which stays complete. Three things break
+   * if the shared list is filtered instead:
+   *   · `CityPage.vue` paints the switched-off city's delivery points from it, and that page has
+   *     to keep working — keeping it alive is the entire point of `bookable`;
+   *   · `searchBranchByCode`/`BySlug` resolve a switched-off branch, so an existing deep link
+   *     still lands on something real instead of 404ing;
+   *   · `Searcher.vue` reads `sortedBranches.length === 0` as "the load failed, reload the page".
+   *     Filtering the shared list would fire that message the day the last city goes off sale,
+   *     telling a customer the site is broken when it is only closed.
+   *
+   * `isBookable` rather than `branch.bookable`: the catalog payload is cached for an hour, so
+   * right after the deploy the field is absent and absent means on sale.
+   */
+  const bookableBranches = computed<BranchData[]>(() =>
+    sortedBranches.value.filter(isBookable)
   );
 
   function searchBranchByCity(city: string | string[]): BranchData | undefined {
@@ -67,6 +88,7 @@ const useStoreAdminData = defineStore("storeAdminData", () => {
     categories,
     branches,
     sortedBranches,
+    bookableBranches,
     searchBranchByCity,
     searchBranchByCode,
     isBranchCode,

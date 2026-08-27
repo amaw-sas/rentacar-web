@@ -88,7 +88,7 @@
 </template>
 
 <script lang="ts" setup>
-import { buildCityReservationURL } from '@rentacar-main/logic/utils'
+import { buildCityReservationURL, isBookable } from '@rentacar-main/logic/utils'
 import type { City as CityData } from '@rentacar-main/logic/utils'
 import { today } from '@internationalized/date'
 import { storeToRefs } from 'pinia'
@@ -110,11 +110,20 @@ const { cities } = useData()
 const { franchise, defaultTimezone } = useAppConfig()
 const { sortedBranches: branches } = storeToRefs(useStoreAdminData())
 
-// Ciudades del linktree: todas menos las 3 excluidas, en orden alfabético (es).
+// Ciudades del linktree: todas menos las 3 excluidas y las que no se están alquilando,
+// en orden alfabético (es).
+//
+// SCEN-003: este linktree es un selector de ciudad como cualquier otro, así que una ciudad
+// apagada no puede aparecer — su enlace llevaría a un buscador que acaba en un 422. `branches`
+// se queda completo a propósito: `buildCityReservationURL` solo resuelve las ciudades que sí
+// listamos, y recortarlo no aportaría nada.
+//
+// `isBookable` en vez de `c.bookable`: el payload del catálogo se cachea una hora, así que justo
+// tras el deploy el campo no viene, y ausente significa que sí se alquila.
 const EXCLUDED = new Set(['palmira', 'soledad', 'floridablanca'])
 const tiktokCities = computed<CityData[]>(() =>
   (unref(cities) ?? [])
-    .filter((c: CityData) => !EXCLUDED.has(c.id))
+    .filter((c: CityData) => !EXCLUDED.has(c.id) && isBookable(c))
     .sort((a: CityData, b: CityData) => a.name.localeCompare(b.name, 'es')),
 )
 
