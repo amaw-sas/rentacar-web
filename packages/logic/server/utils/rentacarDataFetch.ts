@@ -112,7 +112,7 @@ export async function fetchRentacarData(
 
       supabase
         .from('locations')
-        .select('id, code, name, city, slug, schedule, status, cities(slug)')
+        .select('id, code, name, city, slug, schedule, status, cities(slug, bookable)')
         .eq('status', 'active')
         .order('name')
         .abortSignal(signal),
@@ -126,7 +126,7 @@ export async function fetchRentacarData(
 
       supabase
         .from('cities')
-        .select('slug, name, description, testimonials')
+        .select('slug, name, description, testimonials, bookable')
         .eq('status', 'active')
         .order('name')
         .abortSignal(signal),

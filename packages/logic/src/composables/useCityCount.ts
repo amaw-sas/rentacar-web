@@ -1,6 +1,9 @@
 // External
 import { computed, type ComputedRef } from 'vue'
 
+// Internal
+import { isBookable } from '../utils/isBookable'
+
 /**
  * Live count of active service cities, derived from the Supabase-backed
  * rentacar-data (`useFetchRentacarData().cities`, filtered to status=active
@@ -35,7 +38,16 @@ export const useCityCount = (): ComputedRef<number> =>
     const { cities } = useFetchRentacarData()
     // Explicit: fall back only when the list is genuinely unavailable, not by
     // coercing a real 0 — `|| FALLBACK` would conflate the two.
+    //
+    // The AVAILABILITY check reads the raw list; the FIGURE counts only the cities still on sale.
+    // Keeping those two apart matters: a city stays published so its page survives, and letting
+    // it keep inflating this number would have us claim we operate somewhere we refuse bookings.
+    // Filtering before the emptiness check instead would make "the catalog failed to load" and
+    // "every city is off" indistinguishable, and quietly show the fallback for the second one.
+    //
+    // `isBookable` rather than reading the field: the payload is cached for an hour, so right
+    // after the deploy no city carries it, and absent means on sale.
     return Array.isArray(cities) && cities.length > 0
-      ? cities.length
+      ? cities.filter(isBookable).length
       : FALLBACK_CITY_COUNT
   })

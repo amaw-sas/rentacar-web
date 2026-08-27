@@ -47,6 +47,7 @@ export { IVA_PERCENTAGE } from './ivaRate';
 export { pickTotalCoverageChargeForDate } from './pickTotalCoverageCharge';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
+export { isBookable } from './isBookable';
 export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';
 export { SEARCH_PARAM_NOTICE_KEY, SEARCH_PARAM_NOTICES, readNoticeCodes, withNoticeCode } from './searchParamNotices';
 export type { SearchParamNoticeCode } from './searchParamNotices';

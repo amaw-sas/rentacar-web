@@ -15,11 +15,15 @@ import { join } from 'node:path'
 const cities = readFileSync(join(__dirname, '..', 'Cities.vue'), 'utf-8')
 
 describe('Cities — SCEN-CITIES-01: todas las ciudades activas son alcanzables', () => {
-  it('el listado itera TODAS las ciudades de useData().cities (sin slice/hardcode)', () => {
+  it('el listado itera TODAS las ciudades que se alquilan (sin slice/hardcode)', () => {
     expect(cities).toMatch(/const\s*\{\s*cities\s*\}\s*=\s*useData\(\)/)
-    expect(cities).toMatch(/v-for="city in cities"/)
+    expect(cities).toMatch(/v-for="city in bookableCities"/)
     expect(cities).toMatch(/:to="`\/\$\{city\.id\}`"/)
     expect(cities).not.toMatch(/\.slice\(/)
+    // El unico recorte permitido sigue siendo por DATO, nunca por posicion ni por una lista
+    // escrita a mano: `bookableCities` se deriva de useData().cities con isBookable, y una ciudad
+    // apagada sale de la grilla aunque su pagina siga viva (SCEN-002).
+    expect(cities).toMatch(/const bookableCities = computed\(\(\) =>[\s\S]*?\.filter\(isBookable\)\)/)
   })
 })
 
@@ -67,9 +71,11 @@ describe('Cities — SCEN-CITIES-05: sin marquesina ni auto-scroll', () => {
 })
 
 describe('Cities — SCEN-CITIES-06: sin ciudades inventadas', () => {
-  it('featuredCities es la intersección de FEATURED con las ciudades activas', () => {
+  it('featuredCities es la intersección de FEATURED con las ciudades que se alquilan', () => {
     expect(cities).toMatch(/FEATURED\.flatMap/)
-    expect(cities).toMatch(/cities\.value\.find/)
+    // Una tarjeta destacada es una oferta, asi que se resuelve contra la lista filtrada: no
+    // tendria sentido invitar en portada a una ciudad donde no hay carros.
+    expect(cities).toMatch(/bookableCities\.value\.find/)
   })
 })
 

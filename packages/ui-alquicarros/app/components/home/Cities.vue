@@ -66,7 +66,7 @@
       </div>
 
       <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-3 max-w-4xl mx-auto">
-        <li v-for="city in cities" :key="city.id">
+        <li v-for="city in bookableCities" :key="city.id">
           <NuxtLink
             :to="`/${city.id}`"
             :aria-label="`Alquiler de carros en ${city.name}`"
@@ -84,9 +84,19 @@
 <script setup lang="ts">
 // Types
 import type { City } from '@rentacar-main/logic/utils'
+import { isBookable } from '@rentacar-main/logic/utils'
 
 // useData / useCityCount son auto-imported del logic layer; las ciudades son Supabase-dynamic.
 const { cities } = useData()
+
+// SCEN-002 — una ciudad que dejamos de alquilar sale de la grilla, aunque su pagina siga viva.
+// Ese es el reparto: la pagina sobrevive (por eso `bookable` existe en vez de apagar `status`),
+// pero el home no puede seguir ofreciendola.
+//
+// `isBookable` en vez de leer el campo: el payload se cachea una hora, asi que justo tras el
+// deploy ninguna ciudad lo trae, y ausente significa que si se alquila. Leerlo directo vaciaria
+// la grilla entera durante esa hora.
+const bookableCities = computed(() => (unref(cities) ?? []).filter(isBookable))
 
 // Count vivo (Supabase) para el heading. Guarda el camino degradado: cities.length renderiza 0
 // cuando el data source está vacío (mismo composable que Stats.vue / ValueProps.vue).
@@ -106,7 +116,7 @@ type FeaturedCity = { id: string; name: string; image: string }
 // cualquier foto cuya ciudad no esté activa — nunca se inventan ciudades.
 const featuredCities = computed<FeaturedCity[]>(() =>
   FEATURED.flatMap(({ id, image }) => {
-    const city = cities.value.find((c: City) => c.id === id)
+    const city = bookableCities.value.find((c: City) => c.id === id)
     return city ? [{ id: city.id, name: city.name, image }] : []
   }),
 )

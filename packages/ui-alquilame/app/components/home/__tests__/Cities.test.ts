@@ -36,10 +36,15 @@ describe('F1 step04 — Cities.vue', () => {
   })
 
   it('iterates the data source — no hardcoded city count or subset for the full grid', () => {
-    // The pill grid must v-for over the full `cities` collection, never a literal
-    // array of city names. The only allowed cap (featuredCities) is a presentation
-    // slice that does not hide any city from the grid.
-    expect(cities).toMatch(/v-for="city in cities"/)
+    // The pill grid must v-for over the whole derived collection, never a literal array of city
+    // names. The only allowed cap (featuredCities) is a presentation slice that does not hide any
+    // city from the grid.
+    //
+    // The source is now `bookableCities`, which is still DERIVED from useData().cities — the
+    // subset is decided by data (SCEN-002), not by position or by a hand-written list, which is
+    // what this test exists to forbid.
+    expect(cities).toMatch(/v-for="city in bookableCities"/)
+    expect(cities).toMatch(/const bookableCities = computed\(\(\) =>[\s\S]*?\.filter\(isBookable\)\)/)
   })
 
   it('links every city INTERNALLY to /{city.id} via NuxtLink :to', () => {
@@ -83,8 +88,8 @@ describe('F1 step04 — Cities.vue', () => {
   it('adopts the reference title and keeps the pill grid untouched', () => {
     expect(cities).toContain('Alquila tu carro en las principales ciudades de Colombia')
     expect(cities).not.toContain('Presentes en más de')
-    // Pill grid still iterates the full data-source order, unchanged.
-    expect(cities).toMatch(/v-for="city in cities"/)
+    // Pill grid still iterates the data-source order, unchanged.
+    expect(cities).toMatch(/v-for="city in bookableCities"/)
   })
 
   it('shows the featured cities as a STATIC grid, not a marquee', () => {

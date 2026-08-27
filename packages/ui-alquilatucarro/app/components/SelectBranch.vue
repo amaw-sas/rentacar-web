@@ -116,7 +116,9 @@ const props = withDefaults(defineProps<{
 
 /** consts */
 const { reservation, defaultTimezone } = useAppConfig();
-const { sortedBranches: branches } = storeToRefs(useStoreAdminData());
+// The selector offers only what is on sale; the full catalog stays available elsewhere for the
+// city page's delivery points and for resolving existing deep links (SCEN-003).
+const { bookableBranches: branches } = storeToRefs(useStoreAdminData());
 
 const reservationInitDay: string = today(defaultTimezone)
   .add({ days: 1 })

@@ -32,8 +32,11 @@
         </span>
       </template>
       <template #body>
+        <!-- El encabezado del buscador se va con el buscador: "Consulta disponibilidad y
+             precios / Elige ciudades y fechas" justo encima de "no estamos alquilando aqui"
+             se contradice solo. Lo vio la revision en navegador, no los tests. -->
         <!-- Solo visible en mobile -->
-        <div class="text-center justify-items-center -mt-4 -mb-4 lg:hidden">
+        <div v-if="cityIsBookable" class="text-center justify-items-center -mt-4 -mb-4 lg:hidden">
           <div class="mb-1 text-white text-xl">
             Consulta disponibilidad y precios
           </div>
@@ -48,7 +51,7 @@
       <template #default>
         <!-- Contenedor para texto + formulario alineados - solo desktop -->
         <div class="hidden lg:flex lg:flex-col lg:items-center w-full">
-          <div class="w-4/6 text-center mb-2">
+          <div v-if="cityIsBookable" class="w-4/6 text-center mb-2">
             <div class="mb-1 text-white text-xl">
               Consulta disponibilidad y precios
             </div>
@@ -57,7 +60,10 @@
             </p>
           </div>
           <!-- Wrapper con altura fija para prevenir layout shift durante hidratación -->
-          <div class="h-[410px] w-full">
+          <!-- SCEN-008: donde iba el buscador va el aviso. El aviso NO va dentro de ClientOnly
+               -es estatico y no necesita hidratacion-, asi se pinta en SSR y una arana lo lee. -->
+          <CityNoService v-if="!cityIsBookable" :city-name="city?.name ?? ''" :nearby="nearbyBookable" />
+          <div v-else class="h-[410px] w-full">
             <ClientOnly>
               <Searcher />
               <template #fallback>
@@ -69,7 +75,8 @@
         <!-- Buscador solo en mobile/tablet -->
         <div class="lg:hidden">
           <!-- Wrapper con min-height ajustado al form compacto (~248px natural) -->
-          <div class="min-h-[250px]">
+          <CityNoService v-if="!cityIsBookable" :city-name="city?.name ?? ''" :nearby="nearbyBookable" />
+          <div v-else class="min-h-[250px]">
             <ClientOnly>
               <Searcher />
               <template #fallback>
@@ -381,6 +388,11 @@
 </template>
 
 <script setup lang="ts">
+// Import explicito: el auto-import de Nuxt cubre los composables `use*` de la capa (por eso
+// `useBookableRelatedCities` y `useRelatedCities` no se importan), pero NO una funcion suelta de
+// `utils`. Sin esta linea la pagina revienta con un 500 en SSR — justo la pagina que esta feature
+// existe para mantener viva. Ningun test lo veia porque ninguno ejecuta este script.
+import { isBookable } from '@rentacar-main/logic/utils'
 /** types */
 import type { CategoryData, City } from '@rentacar-main/logic/utils';
 import { isCategoryVisibleInCity } from '@rentacar-main/logic/utils';
@@ -455,6 +467,15 @@ const hasExpandedContent = props.city?.name ? hasCityExpandedContent(props.city.
 
 // Get related cities for internal linking
 const relatedCities = props.city?.id ? useRelatedCities(props.city.id) : [];
+
+// SCEN-008. `isBookable` y no `city.bookable`: el payload se cachea una hora, asi que justo tras
+// el deploy el campo no viene y ausente significa que si se alquila — leerlo directo pondria el
+// aviso en las 19 ciudades durante esa hora.
+const cityIsBookable = computed(() => isBookable(props.city));
+// Las cercanas del aviso SI se filtran: son una invitacion a buscar, y mandar a alguien a otra
+// ciudad apagada repetiria el callejon sin salida. La seccion "ciudades cercanas" de mas abajo NO
+// se filtra a proposito: es enlazado interno para SEO y la pagina de destino se explica sola.
+const nearbyBookable = useBookableRelatedCities(props.city?.id ?? '');
 
 // Add Product Schema for SEO (shows vehicle offers in Google SERPs)
 if (props.city?.name && props.city?.id) {
