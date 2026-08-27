@@ -439,11 +439,14 @@ describe('WizardSummary — aparta el FAB de contacto de su CTA', () => {
     // La barra vive en el DOM renderizado y se esconde por CSS a partir de `lg`.
     expect(w.html()).toContain('lg:hidden fixed inset-x-0 bottom-0')
 
-    // Ruta desde el cwd del paquete: bajo jsdom `import.meta.url` no es file://.
-    const widget = readFileSync(
-      resolve(process.cwd(), 'app/components/ChatWidget.vue'),
-      'utf8',
-    )
+    // Bajo jsdom `import.meta.url` no es file://, así que la ruta se ancla al cwd. Pero el cwd
+    // depende de cómo se invoque vitest: por paquete es el del paquete, y desde la raíz — que es
+    // como corren los hooks de SDD, según dice el propio vitest.config.ts de la raíz — es el del
+    // repo. Anclarlo solo al primero dejaba este test en rojo permanente para el hook.
+    const pkgRoot = process.cwd().endsWith('ui-alquicarros')
+      ? process.cwd()
+      : resolve(process.cwd(), 'packages/ui-alquicarros')
+    const widget = readFileSync(resolve(pkgRoot, 'app/components/ChatWidget.vue'), 'utf8')
     expect(widget).toMatch(
       /const hideContactButtons = computed\(\(\) => reservationOverlayOpen\.value\)/,
     )
