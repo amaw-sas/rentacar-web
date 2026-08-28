@@ -20,51 +20,76 @@
     + the Diario/Mensualidad toggle + the grid. Card presentation (badge, title,
     price, spec chips, CTA -> modal -> SelectBranch flow) lives in HomeFleetCard.
   -->
-  <section id="fleet" class="bg-white text-black py-12 md:py-20 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
-      <!-- Heading -->
-      <div class="text-center mb-12">
-        <div class="h-1 w-10 rounded-full bg-brand-600 mb-4 mx-auto" />
-        <h2 class="text-3xl md:text-4xl font-extrabold font-heading text-gray-900">
-          Nuestra Flota
-        </h2>
-        <p class="mt-3 text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
-          Reserva con anticipación y obtén mejores precios — el precio final varía
-          según la temporada y los días de renta.
-        </p>
-
-        <!-- Toggle Diario / Mensualidad -->
-        <div class="mt-8 inline-flex bg-white rounded-full p-1 shadow-sm border border-gray-200">
-          <button
-            type="button"
-            data-testid="fleet-tab-daily-test"
-            class="px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200"
-            :class="plan === 'daily' ? 'bg-gray-700 text-white' : 'text-gray-600 hover:text-gray-900'"
-            :aria-pressed="plan === 'daily'"
-            @click="plan = 'daily'"
+  <section
+    id="fleet"
+    class="px-4 sm:px-6 lg:px-8"
+    :class="[
+      variante === 1 ? 'bg-[#111b22] py-12 text-white md:py-20' : '',
+      variante === 2 ? 'bg-gray-50 py-12 text-black md:py-20' : '',
+      variante === 3 ? 'bg-[#111b22] pt-0 pb-12 text-white md:pb-20' : '',
+      variante === 0 ? 'bg-white py-12 text-black md:py-20' : '',
+    ]"
+  >
+    <div class="mx-auto max-w-7xl">
+      <!-- 1 · fondo oscuro continuo: las tarjetas dejan de flotar sobre un hueco blanco -->
+      <!-- 2 · encabezado a la izquierda y selector a la derecha, en una fila -->
+      <!-- 3 · el selector monta sobre el borde del hero y cose las dos secciones -->
+      <div
+        :class="[
+          variante === 2 ? 'mb-10 flex flex-wrap items-end justify-between gap-4' : '',
+          variante === 3 ? 'relative z-10 -mt-[57px] mb-10 flex justify-center' : '',
+          variante === 1 || variante === 0 ? 'text-center mb-12' : '',
+        ]"
+      >
+        <div v-if="variante === 1 || variante === 2" :class="variante === 2 ? 'text-left' : ''">
+          <p
+            class="font-heading text-xs font-semibold tracking-widest uppercase"
+            :class="variante === 1 ? 'text-brand-300' : 'text-brand-800'"
           >
-            Alquiler Diario
-          </button>
+            Precios reales, fechas reales
+          </p>
+          <h2 class="mt-1 font-heading text-2xl font-extrabold md:text-3xl">
+            Elige cuántos días
+          </h2>
+        </div>
+        <!-- Selector de ventana · segmentado, con las fechas dentro del propio botón
+             para no gastar un renglón aparte debajo. -->
+        <div
+          class="inline-flex gap-0.5 rounded-2xl border p-1 shadow-sm"
+          :class="[
+            variante === 1 ? 'border-white/15 bg-white/10' : 'border-gray-200 bg-white',
+            variante === 2 ? 'mt-0' : 'mt-8',
+            variante === 3 ? 'shadow-2xl shadow-black/40 ring-1 ring-black/5' : '',
+          ]"
+        >
           <button
+            v-for="v in VENTANAS"
+            :key="v.k"
             type="button"
-            data-testid="fleet-tab-monthly-test"
-            class="px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-200"
-            :class="plan === 'monthly' ? 'bg-gray-700 text-white' : 'text-gray-600 hover:text-gray-900'"
-            :aria-pressed="plan === 'monthly'"
-            @click="plan = 'monthly'"
+            class="rounded-xl px-3.5 py-2.5 text-center whitespace-nowrap transition-colors sm:px-5 sm:text-left"
+            :class="[
+              plan === v.k
+                ? 'bg-whatsapp text-black shadow-sm'
+                : variante === 1
+                  ? 'text-white/80 hover:bg-white/10'
+                  : 'text-gray-900 hover:bg-gray-50',
+            ]"
+            :aria-pressed="plan === v.k"
+            @click="plan = v.k"
           >
-            Mensualidad
+            <span class="block font-heading text-sm font-bold">{{ v.label }}</span>
           </button>
         </div>
       </div>
 
       <!-- Grid: 6 golden cards with real prices; presentación en FleetCard -->
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid md:grid-cols-2 gap-6">
         <HomeFleetCard
           v-for="card in cards"
           :key="card.code"
           :card="card"
           :plan="plan"
+          :ventana="ventanaActiva"
         />
       </div>
     </div>
@@ -81,7 +106,70 @@ import type { CategoryMonthPriceData } from '@rentacar-main/logic/utils'
 
 type Plan = 'daily' | 'monthly'
 
-const plan = ref<Plan>('daily')
+// MAQUETA — «?d=2026-10-05» simula ese día para ver cómo se renombra la pestaña.
+/** 3 = el selector monta sobre el hero. La lab page usa 1 y 2 para comparar. */
+const props = withDefaults(defineProps<{ variante?: number }>(), { variante: 3 })
+const variante = computed(() => props.variante)
+
+const route = useRoute()
+const hoySimulado = computed(() => {
+  const q = String(route.query.d ?? '')
+  return /^\d{4}-\d{2}-\d{2}$/.test(q)
+    ? new Date(`${q}T00:00:00.000Z`)
+    : new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`)
+})
+
+/** «?h=17» simula esa hora de Bogotá para ver el corte por cierre de sedes. */
+const ahoraSimulado = computed(() => {
+  const h = Number(route.query.h)
+  // OJO: hoySimulado es medianoche UTC. Convertirlo a Bogotá devuelve el día
+  // ANTERIOR (00:00Z = 19:00 del día previo en UTC-5). Se toman las partes UTC.
+  const base = hoySimulado.value.toISOString().slice(0, 10)
+  const hora = Number.isFinite(h) && h >= 0 && h <= 23 ? h : new Date().getHours()
+  return new Date(`${base}T${String(hora).padStart(2, '0')}:00:00.000-05:00`)
+})
+const salida = computed(() => primeraRecogida(ahoraSimulado.value))
+
+/** La etiqueta del bloque NO está escrita: la decide el calendario. */
+const bloque = computed(() => bloqueDe(hoySimulado.value))
+
+const VENTANAS = computed(() => {
+  const hoy = hoySimulado.value
+  const b = bloque.value
+  const manana = new Date(hoy.getTime() + 86400000)
+  const semana = new Date(hoy.getTime() + 7 * 86400000)
+  return [
+    {
+      k: 'hoy',
+      label: 'Un día',
+      // La pestaña dice la duración; la tarjeta dice si esa salida es hoy o
+      // mañana, que depende de si las sedes ya cerraron.
+      etiqueta: salida.value.rodo ? 'Mañana' : 'Hoy',
+      when: `${fmtCorto(salida.value.fecha)} → ${fmtCorto(new Date(salida.value.fecha.getTime() + 86400000))}`,
+      dias: 1,
+    },
+    {
+      k: 'finde',
+      label: b ? b.etiqueta : 'Fin de semana',
+      etiqueta: b ? b.etiqueta : 'Fin de semana',
+      when: b ? `${fmtCorto(b.recogida)} → ${fmtCorto(b.devolucion)}` : '',
+      festivos: b?.festivos ?? [],
+      dias: b?.dias ?? 3,
+    },
+    {
+      k: 'semana',
+      label: 'Una semana',
+      etiqueta: 'Una semana',
+      when: `${fmtCorto(hoy)} → ${fmtCorto(semana)}`,
+      dias: 7,
+    },
+  ]
+})
+
+const plan = ref<string>('finde')
+const ventanaActiva = computed(
+  () => VENTANAS.value.find((v) => v.k === plan.value) ?? VENTANAS.value[1]!,
+)
 
 // The 6 golden cards, each mapped to a real category code. Copy (title /
 // transmission / example / description / passengers / luggage) mirrors the
