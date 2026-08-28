@@ -9,7 +9,7 @@ alt: "Cámara de fotodetección montada en un poste sobre una avenida arbolada, 
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-19
-updated: 2026-08-24
+updated: 2026-08-27
 category: tips
 tags:
   - pico-y-placa
@@ -89,6 +89,8 @@ El C.14 es el de pico y placa. Artículo 131 de la Ley 769 de 2002, modificado p
 Cualquiera que use estas cifras debe desglosarlas por clase de vehículo y contrastarlas contra si el municipio tiene la medida. Nosotros lo hicimos y por eso lo advertimos.
 
 Y hay un detalle que vuelve más incómoda esa cuenta: **estar exento por ley no impide que la cámara emita el comparendo.** En Bogotá las excepciones son dieciocho, no las tres que anuncia la página oficial mejor posicionada, y varias solo funcionan si la placa quedó inscrita en un registro. Lo desarmamos en [las excepciones de pico y placa que casi nadie conoce](/blog/exenciones-pico-y-placa-bogota).
+
+Ese registro manda incluso cuando la exención viene de una ley nacional: el carro eléctrico está exento en todo el país y la cámara lo sigue leyendo por la placa. Cómo funciona esa inscripción, y por qué el híbrido depende de una norma mucho más frágil, está en [eléctricos e híbridos: la ley solo protege a uno de los dos](/blog/carros-electricos-hibridos-pico-y-placa).
 
 ## Lo que el Estado hace mal
 

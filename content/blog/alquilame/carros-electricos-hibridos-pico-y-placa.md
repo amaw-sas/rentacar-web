@@ -8,7 +8,7 @@ image: /img/blog/carros-electricos-hibridos-pico-y-placa.webp
 alt: "Carro compacto conectado a un cargador eléctrico en el parqueadero cubierto de un edificio, sin logos ni marcas visibles"
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
-date: 2026-08-24
+date: 2026-08-27
 category: tips
 tags:
   - pico-y-placa
