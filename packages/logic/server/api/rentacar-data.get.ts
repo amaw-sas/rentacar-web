@@ -1,6 +1,7 @@
 import { useSupabaseClient } from '../utils/supabase'
 import { fetchRentacarData, RentacarDataTimeoutError } from '../utils/rentacarDataFetch'
 import { buildMonthlyAnchorMap } from '../utils/monthlyAnchors'
+import { buildPriceFloor } from '../utils/priceFloors'
 import { transformCategories, transformBranches, transformExtras, transformVehicleCategories, transformCities, transformFranchiseTestimonials, transformFAQs } from '../utils/transformers'
 
 // Catalog freshness has one cache clock: the one-hour ISR window declared by
@@ -21,8 +22,14 @@ export default defineEventHandler(async (event) => {
   // Vercel project without shipping a different bundle.
   const monthlyAnchorsEnabled = useRuntimeConfig(event).public?.priceAnchorMonthly === 'on'
 
-  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult, faqsResult, anchorsResult] =
-    await fetchRentacarData(supabase, undefined, franchiseCode, monthlyAnchorsEnabled).catch((err) => {
+  // Home "desde" claim (migration 142). Same read-once-on-the-server contract as
+  // the anchors flag above, and the reason it is a flag at all: the floor is
+  // computed for all three franchises, so which brand PUBLISHES it is a decision,
+  // not an accident of which rows happen to exist. Today only alquilame.
+  const priceFloorsEnabled = useRuntimeConfig(event).public?.priceFloorHomeSeo === 'on'
+
+  const [categoriesResult, locationsResult, companyResult, citiesResult, franchisesResult, faqsResult, anchorsResult, floorsResult] =
+    await fetchRentacarData(supabase, undefined, franchiseCode, monthlyAnchorsEnabled, priceFloorsEnabled).catch((err) => {
       if (err instanceof RentacarDataTimeoutError) {
         throw createError({ statusCode: 504, statusMessage: 'rentacar-data upstream timeout' })
       }
@@ -64,10 +71,33 @@ export default defineEventHandler(async (event) => {
     ? {}
     : buildMonthlyAnchorMap(anchorsResult?.data as Parameters<typeof buildMonthlyAnchorMap>[0])
 
+  // Same deliberate exception, and here the fail-open IS the feature: with no
+  // floor the home title publishes no number at all rather than falling back to
+  // the list price, which is the $220.000 defect this replaced.
+  if (floorsResult?.error) {
+    console.warn('[rentacar-data] price floors unavailable; serving catalog without the home price claim:', floorsResult.error)
+  }
+  const dayPriceFloorGross = floorsResult?.error
+    ? null
+    : buildPriceFloor(floorsResult?.data as Parameters<typeof buildPriceFloor>[0])
+
   return {
     // Coupled to the body (rather than client receipt time) so an ISR-restored
     // snapshot retains its real age throughout an open SPA session.
     catalogFetchedAt: Date.now(),
+    // Cheapest gama's real p05 day price, taxes in — the only figure honest
+    // enough to publish as "desde". Top-level and already reduced to one number
+    // because its single consumer (useHomeSEO) speaks for the whole catalog,
+    // not for a gama the visitor has not picked yet.
+    //
+    // Absent vs null is load-bearing and must not be "simplified" to always
+    // emitting the key. ABSENT = this brand never opted into the real floor, so
+    // useHomeSEO keeps the legacy list-rate claim. NULL = it DID opt in and
+    // there is nothing publishable today (stale, thin sample, table down), so
+    // the title must publish no number at all. Collapsing the two would make a
+    // stale pipeline silently reprint the $220.000 this replaced — the exact
+    // failure the floor exists to prevent.
+    ...(priceFloorsEnabled ? { dayPriceFloorGross } : {}),
     // `undefined` keeps transformCategories' own todayIsoUtc() default — the
     // handler has no business picking the pruning date.
     categories: transformCategories(categoriesResult.data, undefined, monthlyAnchors),

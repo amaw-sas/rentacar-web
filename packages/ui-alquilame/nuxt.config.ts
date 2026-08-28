@@ -855,6 +855,12 @@ export default defineNuxtConfig({
       // all three brands so the key exists to override (Nuxt ignores env vars
       // for keys absent from runtimeConfig).
       priceAnchorMonthly: '',
+      // Home "desde" claim from the real p05 (price_floors, migration 142).
+      // Read ONLY server-side, in /api/rentacar-data. ON for alquilame: the
+      // title used to publish $220.000, the list rate BEFORE the discount,
+      // which sat near the p90 of what customers actually pay. Declared empty
+      // in the other two brands, whose titles keep the old claim on purpose.
+      priceFloorHomeSeo: 'on',
     },
   },
 

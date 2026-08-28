@@ -75,7 +75,7 @@
 
 | Elemento | Estado | Implementación |
 |----------|--------|----------------|
-| Title SEO | ✅ 19/19 | `"Alquiler de Carros en [Ciudad]"` (el precio base verificado se publica como `$220.000 COP/día`) |
+| Title SEO | ✅ 19/19 | `"Alquiler de Carros en [Ciudad]"`. El home de **alquilame** publica `desde $158.000 COP/día`: el p05 real de `price_floors` (migración 142), redondeado al millar hacia arriba. Sustituyó al `$220.000`, que era la tarifa de lista **antes del descuento** y estaba en el percentil ~90 de lo que paga el cliente. alquilatucarro y alquicarros siguen con el `$220.000` — su bandera `priceFloorHomeSeo` está apagada. |
 | Meta Description | ✅ 19/19 | Única por ciudad, truncada a 155 chars |
 | H1 con keyword | ✅ 19/19 | `"ALQUILER DE CARROS EN [Ciudad] Colombia"` |
 | H2s con keyword | ✅ 8/8 | Todas incluyen variaciones de "alquiler de carros" |

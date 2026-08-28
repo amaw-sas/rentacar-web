@@ -18,6 +18,17 @@ export const MONTHLY_ANCHORS_TIMEOUT_MS = 2000
 const MONTHLY_ANCHORS_STUB = { data: null, error: null }
 
 /**
+ * Same reasoning as MONTHLY_ANCHORS_TIMEOUT_MS for the `price_floors` read
+ * (migration 142) that feeds the home "desde" claim. Same budget on purpose:
+ * both are single-digit-row reads on a primary key, and giving the floor a
+ * longer rope would only let it be the one accessory table that stalls a page.
+ */
+export const PRICE_FLOORS_TIMEOUT_MS = 2000
+
+/** What the 8th slot carries when there is no floors answer to carry. */
+const PRICE_FLOORS_STUB = { data: null, error: null }
+
+/**
  * Reads the monthly anchors under their own deadline, degrading to the stub on
  * timeout, abort or transport failure. Never rejects: the catalog's Promise.all
  * must not be able to fail because of this table.
@@ -59,6 +70,44 @@ async function fetchMonthlyAnchors(
 }
 
 /**
+ * Reads the publishable price floors under their own deadline. Identical
+ * degradation contract to fetchMonthlyAnchors — never rejects, own controller
+ * chained to the catalog signal — because the failure it guards against is the
+ * same one: an accessory table must never be able to 504 the booking flow.
+ *
+ * The stakes differ on the other side though. Losing the anchors drops a
+ * strike-through; losing the floors drops the numeric claim out of the home
+ * title entirely, which is the deliberate fail-closed behaviour — publishing a
+ * stale floor is the exact defect this pipeline exists to end.
+ */
+async function fetchPriceFloors(
+  supabase: SupabaseClient,
+  franchiseCode: string,
+  outerSignal: AbortSignal,
+) {
+  const controller = new AbortController()
+  const abort = () => controller.abort()
+  outerSignal.addEventListener('abort', abort)
+  const timer = setTimeout(abort, PRICE_FLOORS_TIMEOUT_MS)
+
+  try {
+    return await supabase
+      .from('price_floors')
+      .select('category_code, floor_day_price_gross, computed_at')
+      .eq('franchise', franchiseCode)
+      .abortSignal(controller.signal)
+  } catch {
+    console.warn(
+      '[rentacar-data] price floors did not answer in time; serving catalog without the home price claim',
+    )
+    return PRICE_FLOORS_STUB
+  } finally {
+    clearTimeout(timer)
+    outerSignal.removeEventListener('abort', abort)
+  }
+}
+
+/**
  * Thrown when the parallel Supabase fetch does not complete within the
  * deadline. The handler maps this to a 504 instead of letting the request
  * hang until Nitro's default timeout (relevant on cold cache revalidation
@@ -90,12 +139,19 @@ export class RentacarDataTimeoutError extends Error {
  * this one's prices. That slot runs on its OWN short deadline and can only ever
  * resolve, so neither an error nor a stall in the accessory table can take the
  * catalog down — see fetchMonthlyAnchors.
+ *
+ * `includePriceFloors`: the home "desde" claim (migration 142). Same contract,
+ * same reasons, 8th slot. Kept a separate flag rather than folded into the
+ * anchors one because the two answer different questions — a p95 ceiling for a
+ * strike-through and a p05 floor for a public claim — and a brand may well want
+ * one without the other.
  */
 export async function fetchRentacarData(
   supabase: SupabaseClient,
   timeoutMs: number = DEFAULT_TIMEOUT_MS,
   franchiseCode?: string,
   includeMonthlyAnchors: boolean = false,
+  includePriceFloors: boolean = false,
 ) {
   const controller = new AbortController()
   const signal = controller.signal
@@ -150,6 +206,10 @@ export async function fetchRentacarData(
       includeMonthlyAnchors && franchiseCode
         ? fetchMonthlyAnchors(supabase, franchiseCode, signal)
         : Promise.resolve(MONTHLY_ANCHORS_STUB),
+
+      includePriceFloors && franchiseCode
+        ? fetchPriceFloors(supabase, franchiseCode, signal)
+        : Promise.resolve(PRICE_FLOORS_STUB),
     ])
 
     if (signal.aborted) throw new RentacarDataTimeoutError(timeoutMs)
