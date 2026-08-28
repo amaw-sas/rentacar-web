@@ -9,7 +9,7 @@ alt: "Cámara de fotodetección montada en un poste sobre una avenida arbolada, 
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-19
-updated: 2026-08-27
+updated: 2026-08-28
 category: tips
 tags:
   - pico-y-placa
@@ -22,6 +22,8 @@ featured: true
 ---
 
 **Nota sobre la vigencia.** Este artículo retrata el estado de las fuentes oficiales el 18 y 19 de agosto de 2026. Varias ciudades tenían entonces medidas extraordinarias de pico y placa por el sismo del 10 de agosto; son temporales y algunas ya volvieron a su rotación ordinaria.
+
+**Actualizado el 28 de agosto.** El Gobierno Nacional anunció que revisará las cámaras de fotodetección y retirará las que no tengan sustento técnico. Lo que el registro público responde a ese anuncio está [al final de este artículo](#actualización-del-28-de-agosto-el-gobierno-anunció-que-va-a-retirar-cámaras).
 
 ---
 
@@ -200,6 +202,61 @@ Poco, y eso es lo frustrante. Tres cosas concretas, en orden de esfuerzo:
 
 Si suficientes personas lo hacen, el archivo aparece.
 
+## Actualización del 28 de agosto: el Gobierno anunció que va a retirar cámaras
+
+Seis días después de publicar este artículo, el tema se volvió noticia nacional. El 25 de agosto la ministra de Transporte, Elsa Noguera, dijo en entrevista con EL TIEMPO que las cámaras que no tengan sustento técnico se van a desmontar:
+
+**«Cuando la revisión demuestre que una cámara no tiene una justificación técnica de seguridad vial, será retirada»**, dijo. «No habrá un desmonte indiscriminado, pero tampoco mantendremos cámaras innecesarias solo porque ya fueron instaladas.»
+
+Y anunció con qué criterio se va a medir: «Revisaremos la distancia y la concentración de cámaras para que cada corredor tenga únicamente las que realmente se requieran». Su argumento son dos cifras: entre 2021 y 2025 las muertes en siniestros viales pasaron de 7.300 a 8.700, cerca de un 20% más, mientras se autorizaban 670 cámaras nuevas.
+
+El mismo día, en Bogotá, la instalación de cámaras nuevas abrió su propia discusión.
+
+Ese debate se puede alimentar con el archivo del que trata este artículo. Volvimos a descargarlo el 28 de agosto y esto es lo que responde.
+
+### La cifra de la ministra no se cae
+
+Las 670 cámaras autorizadas entre 2021 y 2025 son verificables, con una salvedad de método. El campo que registra la fecha de aprobación final solo lo traen 290 de las 1.342 ubicaciones, así que no sirve para contar. Usando la fecha de última actualización de cada solicitud, el registro tiene **681 ubicaciones movidas entre 2021 y 2025**. Es un dato aproximado y lo decimos así: no confirma el 670, pero tampoco lo contradice, que es lo relevante cuando la cifra viene de la propia cartera.
+
+### La pregunta que nadie ha hecho: cuántas están encendidas
+
+El registro nacional tiene hoy **1.342 ubicaciones aprobadas** — tres más que las 1.339 del 19 de agosto, porque el archivo se actualiza a diario. Ese es el número que circula. No es el número de cámaras funcionando:
+
+| Estado de operación | Ubicaciones |
+|---|---|
+| **Operando** | **360** |
+| Autorizada a instalar | 445 |
+| Renovada – Expirada | 292 |
+| Vencida | 162 |
+| Prorrogada – Vencida | 80 |
+| Autorizada – Desistida | 3 |
+
+Poco más de una de cada cuatro autorizaciones es una cámara encendida. Hay 534 con la autorización expirada o vencida y 445 aprobadas que todavía no se instalan. Cuando la discusión pública dice «hay 1.342 cámaras», está contando permisos, no equipos.
+
+### Y el registro cuenta dispositivos, no postes
+
+Aquí hay una trampa que conviene señalar antes de que alguien mida mal la concentración por corredor, que es justo el criterio anunciado.
+
+Las 360 cámaras operando están en **283 sitios físicos** si se agrupan los registros que caen a menos de cien metros unos de otros. En Bogotá la diferencia es mayor: **88 dispositivos en 57 sitios**.
+
+La razón está en las direcciones. En la Avenida Calle 80 con Carrera 114, sentido occidente–oriente, el registro trae dos entradas con la misma coordenada: el código `DEI33CAM01` termina en «C. LEN» y el `DEI33CAM03` en «C. RAP». Carril lento y carril rápido. Son dos aparatos en un punto, no dos puntos.
+
+Quien calcule distancias sobre las coordenadas crudas va a concluir que Bogotá tiene cámaras a cincuenta metros unas de otras. Lo que tiene son intersecciones instrumentadas por carril y por sentido.
+
+### De dónde sale la diferencia entre 88 y 129
+
+La Secretaría Distrital de Movilidad habla de 129 cámaras operativas en Bogotá. El registro nacional dice 88 operando. La brecha no es que alguien esté inflando el dato: en el registro nacional Bogotá tiene 260 ubicaciones aprobadas en total, y **88 operando más 43 autorizadas a instalar dan 131**.
+
+Los dos organismos usan la misma palabra para estados distintos. Es el mismo problema que este artículo describe en las normas de pico y placa, solo que ahora del lado que el Estado publica bien.
+
+### Ninguna cámara hace una sola cosa
+
+Queda un punto que complica el desmonte más de lo que suena. De las 360 que operan, 314 están habilitadas para el código C.14, que es el de pico y placa. Sería cómodo concluir que ese 87% del parque no sirve para salvar vidas y sobra.
+
+No se sostiene. **Ninguna de esas 314 detecta solamente C.14**: cada una está habilitada para 6,7 códigos en promedio, y **261 de las 314 también sancionan exceso de velocidad**. La secretaria de Movilidad de Bogotá lo describe igual cuando enumera qué vigilan sus cámaras: velocidad, SOAT, tecnicomecánica, pico y placa e invasión de pasos peatonales.
+
+Retirar una cámara «de pico y placa» significa retirar también un radar de velocidad en ese punto. La revisión que se anunció tendrá que decidir eso aparato por aparato, y el registro público —que trae la lista de códigos de cada ubicación— es donde está la información para hacerlo.
+
 ## Metodología y huecos declarados
 
 Sería incoherente publicar un texto sobre verificación sin declarar la propia. Esto es lo que no pudimos cerrar:
@@ -209,6 +266,8 @@ Sería incoherente publicar un texto sobre verificación sin declarar la propia.
 - **La Resolución 3488 de 2025 del Ministerio de Hacienda**, que fija la UVB en $12.110, no se pudo abrir: el sitio bloquea el acceso automatizado. El valor está confirmado por la tabla del Ministerio de Transporte y por al menos una secretaría de tránsito municipal, y cuadra aritméticamente en las catorce categorías.
 - **No hay balance nacional consolidado de víctimas del sismo** publicado que hayamos encontrado, por lo que este artículo no cita ninguna cifra de afectación.
 - **El estado de operación de algunas cámaras va con rezago** en el registro de la ANSV. Lo usamos como indicio, no como veredicto.
+- **Los sitios físicos son una estimación, no un dato del archivo.** El registro no dice qué entradas comparten poste. Agrupamos las que caen a menos de cien metros unas de otras; con un umbral distinto el número cambia. Los dispositivos —360— sí son un conteo directo.
+- **La fecha de autorización no se puede contar.** El campo de aprobación final solo lo traen 290 de las 1.342 ubicaciones. Para el tramo 2021-2025 usamos la fecha de última actualización de la solicitud, que es un sustituto imperfecto y por eso el 681 se presenta como aproximación.
 
 Las cifras de pico y placa citadas corresponden al 18 y 19 de agosto de 2026 y cambian sin previo aviso. Para decisiones reales, consulte siempre la fuente oficial de su municipio — que es, precisamente, el problema del que trata este artículo.
 
@@ -224,3 +283,5 @@ Las cifras de pico y placa citadas corresponden al 18 y 19 de agosto de 2026 y c
 - Decreto 4112.010.20.0814 de 2026 — Alcaldía de Santiago de Cali
 - Servicio Geológico Colombiano — parámetros del sismo del 10 de agosto de 2026
 - Portales oficiales de los veinticuatro municipios revisados
+- Entrevista a la ministra de Transporte, Elsa Noguera — EL TIEMPO, 25 de agosto de 2026
+- «¿En dónde quedan todas las cámaras de fotomultas en Bogotá?» — Semana, 25 de agosto de 2026
