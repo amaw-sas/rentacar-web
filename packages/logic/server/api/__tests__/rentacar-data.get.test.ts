@@ -377,6 +377,18 @@ describe('server/api/rentacar-data.get — monthly anchors', () => {
 
     expect('dayPriceFloorGross' in result).toBe(true)
     expect(result.dayPriceFloorGross).toBeNull()
+    // A silently numeric-less title must leave a trace; without this line it is
+    // indistinguishable from a healthy response that simply had no rows.
+    expect(warn).toHaveBeenCalled()
+  })
+
+  it('SCEN-F1: stays quiet when the claim is off — no warn for brands that never opted in', async () => {
+    publicConfig = { rentacarFranchise: 'alquilatucarro' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+
+    await handler()
+
+    expect(warn).not.toHaveBeenCalled()
   })
 
   it('SCEN-F5: a floors { error } warns, yields null, and still serves the catalog', async () => {

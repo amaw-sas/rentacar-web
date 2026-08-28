@@ -130,6 +130,89 @@ describe('useRentacarData', () => {
     expect(states.get('rentacar-data-loaded')?.value).toBe(true)
   })
 
+  /**
+   * The absent-vs-null invariant of `dayPriceFloorGross`, at the layer that
+   * actually broke it. `copyCatalog` is a hand-maintained allowlist and the
+   * field was not on it, so SSR published the real floor while every SPA
+   * navigation silently fell back to the $220.000 list rate. Stubbing
+   * `useState` cannot catch that — these drive the real client branch.
+   */
+  describe('dayPriceFloorGross survives the client copy', () => {
+    const acceptOnClient = async (payload: Record<string, unknown>) => {
+      vi.stubGlobal('useAsyncData', vi.fn(async () => ({ data: ref(payload), error: ref(null) })))
+      await useRentacarData()
+      return states.get('rentacar-data')?.value as Record<string, unknown>
+    }
+
+    it('carries a real floor through to the catalog state', async () => {
+      const state = await acceptOnClient({ ...catalogPayload, dayPriceFloorGross: 157_696.09 })
+
+      expect(state.dayPriceFloorGross).toBe(157_696.09)
+    })
+
+    it('carries an explicit null through — the key stays PRESENT', async () => {
+      // Present-and-null is what tells buildHomeSEO to publish no number.
+      // Losing the key would read as "brand never opted in" and reprint $220.000.
+      const state = await acceptOnClient({ ...catalogPayload, dayPriceFloorGross: null })
+
+      expect('dayPriceFloorGross' in state).toBe(true)
+      expect(state.dayPriceFloorGross).toBeNull()
+    })
+
+    it('leaves the key ABSENT for a brand that never opted in', async () => {
+      const state = await acceptOnClient({ ...catalogPayload })
+
+      expect('dayPriceFloorGross' in state).toBe(false)
+    })
+
+    it('preserves every key of a server response — the allowlist must not rot', async () => {
+      // Structural guard: the next field added to the payload fails here rather
+      // than silently vanishing on client navigation, which is how this one got
+      // through. Keyed off the response shape, not a hand-written list.
+      const serverResponse = {
+        ...catalogPayload,
+        catalogFetchedAt: Date.now(),
+        dayPriceFloorGross: 157_696.09,
+      }
+
+      const state = await acceptOnClient(serverResponse)
+
+      expect(Object.keys(state).sort()).toEqual(Object.keys(serverResponse).sort())
+    })
+  })
+
+  it('the hourly refresh drops a floor the server no longer publishes', async () => {
+    // clearCatalog + copyCatalog together. Without the clear, an open tab pinned
+    // its original number for the life of the tab and the 7-day staleness guard
+    // could never reach the title.
+    vi.useFakeTimers()
+    const now = new Date('2026-08-28T20:00:00Z')
+    vi.setSystemTime(now)
+
+    const nuxtApp = { isHydrating: false, hook: vi.fn() }
+    vi.stubGlobal('useNuxtApp', () => nuxtApp)
+    vi.stubGlobal('useRouter', () => ({ currentRoute: ref({ meta: { middleware: ['rentacar-data'] } }) }))
+    vi.stubGlobal('window', { addEventListener: vi.fn(), removeEventListener: vi.fn() })
+    vi.stubGlobal('document', { visibilityState: 'visible', addEventListener: vi.fn(), removeEventListener: vi.fn() })
+
+    const expired = ref({
+      ...catalogPayload,
+      catalogFetchedAt: now.getTime() - CATALOG_MAX_AGE_MS,
+      dayPriceFloorGross: 157_696.09,
+    })
+    vi.stubGlobal('$fetch', vi.fn(async () => ({
+      ...catalogPayload,
+      catalogFetchedAt: now.getTime(),
+      dayPriceFloorGross: null,
+    })))
+
+    const controller = installRouteCatalogFreshness(expired, ref(true))
+    await controller?.check()
+
+    expect('dayPriceFloorGross' in expired.value).toBe(true)
+    expect(expired.value.dayPriceFloorGross).toBeNull()
+  })
+
   it('does not schedule another request after the route catalog is loaded', async () => {
     states.set('rentacar-data-loaded', ref(true))
     const useAsyncData = vi.fn(async (_key, _handler, options) => ({

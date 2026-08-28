@@ -80,6 +80,13 @@ export default defineEventHandler(async (event) => {
   const dayPriceFloorGross = floorsResult?.error
     ? null
     : buildPriceFloor(floorsResult?.data as Parameters<typeof buildPriceFloor>[0])
+  // Losing the claim without an error is the quiet failure: rows that are all
+  // stale, all below the sample threshold, or all missing a fiscal factor read
+  // exactly like a healthy empty response. Say it once here so a title that has
+  // silently gone numeric-less is greppable instead of merely invisible.
+  if (priceFloorsEnabled && !floorsResult?.error && dayPriceFloorGross === null) {
+    console.warn('[rentacar-data] price floors carried nothing publishable; the home title will show no price')
+  }
 
   return {
     // Coupled to the body (rather than client receipt time) so an ISR-restored
