@@ -9,6 +9,7 @@ alt: "Carro particular esperando en un semáforo de una avenida de Bogotá al fi
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-24
+updated: 2026-08-27
 category: tips
 tags:
   - pico-y-placa
@@ -110,6 +111,8 @@ La Secretaría no publica el padrón completo de vehículos exceptuados, pero s�
 | Autoridades judiciales y enseñanza automovilística (numerales 14 y 16) | **No.** Tampoco figuran |
 
 Los eléctricos sí sobreviven, por el numeral 13 del artículo 238. Los carros a gas dedicado no están exentos en ninguno de los dos regímenes: no aparecen en ninguna de las dos listas de dieciocho.
+
+Que el eléctrico sobreviva y el híbrido no tampoco es un capricho de Bogotá. Al eléctrico lo exime una ley nacional, el artículo 6 de la Ley 1964 de 2019, que no menciona a los híbridos por ninguna parte; la exención del híbrido la concede cada alcaldía y por eso se puede caer. En Cali se cayó cuatro días de agosto de 2026. Lo contamos en [eléctricos e híbridos: la ley solo protege a uno de los dos](/blog/carros-electricos-hibridos-pico-y-placa).
 
 El próximo Día sin carro cae el **jueves 4 de febrero de 2027**, salvo que la Administración lo mueva.
 

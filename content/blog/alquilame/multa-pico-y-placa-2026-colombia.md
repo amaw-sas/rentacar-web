@@ -9,7 +9,7 @@ alt: "Comparendo de tránsito impreso sobre el timón de un carro, con un semáf
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-21
-updated: 2026-08-24
+updated: 2026-08-27
 category: tips
 tags:
   - pico-y-placa
@@ -130,6 +130,8 @@ La inmovilización no es opcional ni depende del ánimo del agente. Está en el 
 Si manejas dentro de tu ciudad, eso es un mal día. Si vas de viaje, o alquilaste un carro y tienes el itinerario comprado, es el viaje cancelado y el carro en una ciudad de paso.
 
 Antes de dar por hecho que te aplica, vale la pena revisar si tu carro entra en alguna excepción: en Bogotá son dieciocho y varias exigen una inscripción previa sin la cual la cámara sanciona igual. Están todas en [las excepciones de pico y placa que casi nadie conoce](/blog/exenciones-pico-y-placa-bogota).
+
+Y conviene saber de dónde viene la excepción que te cubre, porque no todas pesan igual: la del carro eléctrico la da una ley nacional y la del híbrido la da cada alcaldía, que puede quitarla en el decreto siguiente. La diferencia, con el texto de las dos normas al lado, está en [eléctricos e híbridos: la ley solo protege a uno de los dos](/blog/carros-electricos-hibridos-pico-y-placa).
 
 No es una hipótesis remota. Según el registro público de la Agencia Nacional de Seguridad Vial hay 314 cámaras operando en el país habilitadas para detectar el código C.14: 88 en Bogotá, 67 en Cali, 39 en Medellín, 29 en Barranquilla, 23 en Manizales. Revisamos ese registro y las fuentes oficiales de veinticuatro municipios en [el artículo sobre las 1.339 cámaras de fotodetección](/blog/pico-y-placa-colombia-camaras-fotodeteccion), que cuenta la otra mitad de esta historia: el país publica con precisión milimétrica dónde te sanciona, y publica muchísimo peor qué te prohíbe.
 
