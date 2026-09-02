@@ -567,6 +567,10 @@ export default defineNuxtConfig({
       // all three brands so the key exists to override (Nuxt ignores env vars
       // for keys absent from runtimeConfig).
       priceAnchorMonthly: '',
+      // Home "desde" claim from the real p05 (price_floors, migration 142).
+      // Declared so the key exists to override, but OFF for this brand: only
+      // alquilame publishes the derived floor today.
+      priceFloorHomeSeo: '',
     },
   },
 

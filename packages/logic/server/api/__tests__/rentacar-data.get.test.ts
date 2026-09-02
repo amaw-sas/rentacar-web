@@ -48,8 +48,8 @@ const errResult = (error: unknown): Result => ({ data: null, error })
 let publicConfig: Record<string, unknown> = {}
 
 // Tuple order matches fetchRentacarData / handler destructuring:
-// [categories, locations, company, cities, franchises, faqs, anchors]
-function tuple(over: Partial<Record<0 | 1 | 2 | 3 | 4 | 5 | 6, Result>> = {}): Result[] {
+// [categories, locations, company, cities, franchises, faqs, anchors, floors]
+function tuple(over: Partial<Record<0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, Result>> = {}): Result[] {
   const base: Result[] = [
     ok([{ id: 'B' }]),
     ok([{ code: 'BOG' }]),
@@ -58,6 +58,7 @@ function tuple(over: Partial<Record<0 | 1 | 2 | 3 | 4 | 5 | 6, Result>> = {}): R
     ok([{ code: 'localiza' }]),
     ok([{ label: 'q' }]),
     { data: null, error: null }, // anchors: the pilot-off stub
+    { data: null, error: null }, // floors: the claim-off stub
   ]
   for (const [i, v] of Object.entries(over)) base[Number(i)] = v as Result
   return base
@@ -223,10 +224,14 @@ describe('server/api/rentacar-data.get — monthly anchors', () => {
     expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[3]).toBe(false)
     expect(anchorsArg()).toEqual({})
     // Byte-identical to the pre-pilot response: same keys, same values, and no
-    // anchor key smuggled in at the top level.
+    // anchor key smuggled in at the top level. `dayPriceFloorGross` is ABSENT
+    // and not null with both claims off — absent means "this brand never opted
+    // into the real floor", which is what keeps the legacy claim alive for
+    // alquilatucarro and alquicarros. See SCEN-F3 below.
     expect(Object.keys(result).sort()).toEqual(
       ['branches', 'catalogFetchedAt', 'categories', 'cities', 'extras', 'faqs', 'franchiseTestimonials', 'vehicleCategories'],
     )
+    expect('dayPriceFloorGross' in result).toBe(false)
     expect(result.categories).toEqual(['CAT'])
   })
 
@@ -310,5 +315,102 @@ describe('server/api/rentacar-data.get — monthly anchors', () => {
     expect(anchorsArg()).toEqual({})
     expect(result.categories).toEqual(['CAT'])
     expect(warn).not.toHaveBeenCalled()
+  })
+
+  /**
+   * The home "desde" claim (price_floors, migration 142). The invariant these
+   * cases exist for: ABSENT and NULL must never collapse into each other.
+   * Absent keeps the legacy list-rate claim alive for the brands that never
+   * opted in; null makes the opted-in brand's title go quiet. If a refactor
+   * "simplifies" this to always emitting the key, a stale floor starts silently
+   * reprinting the $220.000 that migration 142 removed.
+   */
+  const floorRow = (code: string, gross: number | string) => ({
+    category_code: code,
+    floor_day_price_gross: gross,
+    computed_at: new Date().toISOString(),
+  })
+
+  it('SCEN-F1: claim off → fetch asked NOT to read floors, and the key is ABSENT', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+
+    const result = await handler()
+
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[4]).toBe(false)
+    expect('dayPriceFloorGross' in result).toBe(false)
+  })
+
+  it.each([
+    ['empty string', ''],
+    ['off', 'off'],
+    ['ON (wrong case)', 'ON'],
+    ['boolean true', true],
+  ] as const)('SCEN-F1: the floors flag only opens on the exact string "on" — %s keeps it closed', async (_label, value) => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceFloorHomeSeo: value }
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+
+    const result = await handler()
+
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[4]).toBe(false)
+    expect('dayPriceFloorGross' in result).toBe(false)
+  })
+
+  it('SCEN-F2: claim on → the cheapest gross floor reaches the payload', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceFloorHomeSeo: 'on' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(
+      tuple({ 7: ok([floorRow('CX', '174796.10'), floorRow('C', '157696.09')]) }) as never,
+    )
+
+    const result = await handler()
+
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[4]).toBe(true)
+    expect(result.dayPriceFloorGross).toBeCloseTo(157696.09)
+  })
+
+  it('SCEN-F2: claim on with nothing publishable → key PRESENT and null, never absent', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceFloorHomeSeo: 'on' }
+    const stale = { category_code: 'C', floor_day_price_gross: 157696, computed_at: '2020-01-01T00:00:00Z' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple({ 7: ok([stale]) }) as never)
+
+    const result = await handler()
+
+    expect('dayPriceFloorGross' in result).toBe(true)
+    expect(result.dayPriceFloorGross).toBeNull()
+    // A silently numeric-less title must leave a trace; without this line it is
+    // indistinguishable from a healthy response that simply had no rows.
+    expect(warn).toHaveBeenCalled()
+  })
+
+  it('SCEN-F1: stays quiet when the claim is off — no warn for brands that never opted in', async () => {
+    publicConfig = { rentacarFranchise: 'alquilatucarro' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+
+    await handler()
+
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  it('SCEN-F5: a floors { error } warns, yields null, and still serves the catalog', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceFloorHomeSeo: 'on' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(
+      tuple({ 7: errResult({ message: 'relation "price_floors" does not exist' }) }) as never,
+    )
+
+    const result = await handler()
+
+    expect(result.dayPriceFloorGross).toBeNull()
+    expect(result.categories).toEqual(['CAT'])
+    expect(warn).toHaveBeenCalled()
+  })
+
+  it('SCEN-F2: the two flags travel independently to the fetch', async () => {
+    publicConfig = { rentacarFranchise: 'alquilame', priceFloorHomeSeo: 'on' }
+    vi.mocked(fetchRentacarData).mockResolvedValue(tuple() as never)
+
+    await handler()
+
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[3]).toBe(false)
+    expect(vi.mocked(fetchRentacarData).mock.calls[0]?.[4]).toBe(true)
   })
 })

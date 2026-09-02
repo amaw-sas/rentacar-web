@@ -11,6 +11,12 @@ const TABLES = ['vehicle_categories', 'locations', 'rental_companies', 'cities',
  */
 const ANCHOR_TABLE = 'price_anchors' as const
 
+/**
+ * The 8th slot: the home "desde" claim (migration 142). Out of TABLES for the
+ * same reason as ANCHOR_TABLE — it is accessory, not always-on.
+ */
+const FLOOR_TABLE = 'price_floors' as const
+
 function abortError() {
   return Object.assign(new Error('The operation was aborted'), { name: 'AbortError' })
 }
@@ -46,11 +52,11 @@ function makeQuery(resolveWith?: { data: unknown; error: unknown }) {
   return q
 }
 
-type AnyTable = (typeof TABLES)[number] | typeof ANCHOR_TABLE
+type AnyTable = (typeof TABLES)[number] | typeof ANCHOR_TABLE | typeof FLOOR_TABLE
 
 function makeSupabase(perTable: Partial<Record<AnyTable, { data: unknown; error: unknown }>>) {
   const builders = Object.fromEntries(
-    [...TABLES, ANCHOR_TABLE].map((t) => [t, makeQuery(perTable[t] ?? (t in perTable ? perTable[t] : undefined))]),
+    [...TABLES, ANCHOR_TABLE, FLOOR_TABLE].map((t) => [t, makeQuery(perTable[t] ?? (t in perTable ? perTable[t] : undefined))]),
   ) as Record<AnyTable, ReturnType<typeof makeQuery>>
   return {
     supabase: { from: (table: string) => builders[table as AnyTable] } as never,
@@ -65,7 +71,7 @@ afterEach(() => {
 })
 
 describe('fetchRentacarData', () => {
-  it('SCEN-1: resolves the 7-result tuple and clears the timeout timer (happy path)', async () => {
+  it('SCEN-1: resolves the 8-result tuple and clears the timeout timer (happy path)', async () => {
     vi.useFakeTimers()
     const { supabase, builders } = makeSupabase({
       vehicle_categories: OK,
@@ -78,11 +84,13 @@ describe('fetchRentacarData', () => {
 
     const results = await fetchRentacarData(supabase, 8000)
 
-    // The 7th slot always exists so the tuple shape never depends on a flag;
-    // with the pilot off it is the stub, not a query (see the SCEN-M1 case).
-    expect(results).toHaveLength(7)
+    // The 7th and 8th slots always exist so the tuple shape never depends on a
+    // flag; with both pilots off they are stubs, not queries (SCEN-M1/SCEN-F1).
+    expect(results).toHaveLength(8)
     expect(results[6]).toEqual({ data: null, error: null })
+    expect(results[7]).toEqual({ data: null, error: null })
     expect(builders.price_anchors.__state.signal).toBeUndefined()
+    expect(builders.price_floors.__state.signal).toBeUndefined()
     expect(vi.getTimerCount()).toBe(0) // timer cleared, no dangling handle
   })
 
@@ -214,5 +222,84 @@ describe('fetchRentacarData', () => {
 
     expect(results[6]).toEqual(anchorsError)
     expect(results[0]).toEqual(OK)
+  })
+
+  // Home "desde" claim (price_floors, migration 142). Same contract as the
+  // anchors above; asserted separately because the two flags are independent —
+  // a brand may publish the floor without running the monthly strike pilot.
+  const FLOORS = {
+    data: [{ category_code: 'C', floor_day_price_gross: 157696, computed_at: '2026-08-28T04:28:59Z' }],
+    error: null,
+  }
+
+  it('SCEN-F2: reads price_floors scoped to the brand when the claim is on', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_floors: FLOORS })
+
+    const results = await fetchRentacarData(supabase, 8000, 'alquilame', false, true)
+
+    expect(results[7]).toEqual(FLOORS)
+    expect(builders.price_floors.__state.eqCalls).toEqual([['franchise', 'alquilame']])
+    // Its OWN controller, like the anchors': an accessory table must never be
+    // able to abort the answered core queries and 504 the catalog.
+    expect(builders.price_floors.__state.signal).not.toBe(builders.cities.__state.signal)
+  })
+
+  it('SCEN-F2: the two accessory flags are independent', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_anchors: OK, price_floors: FLOORS })
+
+    const results = await fetchRentacarData(supabase, 8000, 'alquilame', false, true)
+
+    expect(results[7]).toEqual(FLOORS)
+    // Floors on must not drag the anchors pilot on with it.
+    expect(results[6]).toEqual({ data: null, error: null })
+    expect(builders.price_anchors.__state.eqCalls).toEqual([])
+  })
+
+  it('SCEN-F1: makes no floors round trip when the claim is off (default)', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_floors: FLOORS })
+
+    const off = await fetchRentacarData(supabase, 8000, 'alquilame', false, false)
+    const omitted = await fetchRentacarData(supabase, 8000, 'alquilame')
+
+    expect(off[7]).toEqual({ data: null, error: null })
+    expect(omitted[7]).toEqual({ data: null, error: null })
+    expect(builders.price_floors.__state.eqCalls).toEqual([])
+    expect(builders.price_floors.__state.signal).toBeUndefined()
+  })
+
+  it('SCEN-F1: makes no floors round trip without a brand — floors are per franchise', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_floors: FLOORS })
+
+    const results = await fetchRentacarData(supabase, 8000, undefined, false, true)
+
+    expect(results[7]).toEqual({ data: null, error: null })
+    expect(builders.price_floors.__state.eqCalls).toEqual([])
+  })
+
+  it('SCEN-F5: passes a floors { error } through instead of throwing (the handler fails open)', async () => {
+    vi.useFakeTimers()
+    const floorsError = { data: null, error: { message: 'relation "price_floors" does not exist' } }
+    const { supabase } = makeSupabase({ ...SIX_OK, price_floors: floorsError })
+
+    const results = await fetchRentacarData(supabase, 8000, 'alquilame', false, true)
+
+    expect(results[7]).toEqual(floorsError)
+    expect(results[0]).toEqual(OK)
+  })
+
+  it('SCEN-F5: a catalog deadline SHORTER than the floors one still tears the floors query down', async () => {
+    vi.useFakeTimers()
+    const { supabase, builders } = makeSupabase({ ...SIX_OK, price_floors: undefined })
+
+    const promise = fetchRentacarData(supabase, 1000, 'alquilame', false, true)
+    const assertion = expect(promise).rejects.toBeInstanceOf(RentacarDataTimeoutError)
+    await vi.advanceTimersByTimeAsync(1000)
+    await assertion
+
+    expect(builders.price_floors.__state.signal!.aborted).toBe(true)
   })
 })

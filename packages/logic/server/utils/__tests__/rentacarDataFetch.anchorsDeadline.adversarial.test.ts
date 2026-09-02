@@ -46,11 +46,16 @@ function makeQuery(resolveWith?: { data: unknown; error: unknown }) {
 const OK = { data: [], error: null }
 const CORE = ['vehicle_categories', 'locations', 'rental_companies', 'cities', 'franchises', 'faqs'] as const
 
-/** Six healthy core queries; the anchors query stalls unless given an answer. */
-function makeSupabase(anchors?: { data: unknown; error: unknown }) {
+/**
+ * Six healthy core queries; the accessory queries stall unless given an answer.
+ * `price_floors` stalls by default too — it shares the anchors' contract, so
+ * these deadline cases must hold with both accessory slots hostile at once.
+ */
+function makeSupabase(anchors?: { data: unknown; error: unknown }, floors?: { data: unknown; error: unknown }) {
   const builders: Record<string, ReturnType<typeof makeQuery>> = {}
   for (const t of CORE) builders[t] = makeQuery(OK)
   builders.price_anchors = makeQuery(anchors)
+  builders.price_floors = makeQuery(floors)
   return { supabase: { from: (t: string) => builders[t] } as never, builders }
 }
 
@@ -74,7 +79,7 @@ describe('a SLOW price_anchors query must NOT take the catalog down (H-W1)', () 
     await vi.advanceTimersByTimeAsync(MONTHLY_ANCHORS_TIMEOUT_MS)
     const results = await promise
 
-    expect(results).toHaveLength(7)
+    expect(results).toHaveLength(8)
     expect(results[0]).toEqual(OK) // the catalog survived intact
     expect(results[5]).toEqual(OK)
     expect(results[6]).toEqual({ data: null, error: null })
@@ -151,7 +156,7 @@ describe('a SLOW price_anchors query must NOT take the catalog down (H-W1)', () 
 
     const results = await fetchRentacarData(supabase, 8000, 'alquilame', false)
 
-    expect(results).toHaveLength(7)
+    expect(results).toHaveLength(8)
     expect(results[6]).toEqual({ data: null, error: null })
   })
 

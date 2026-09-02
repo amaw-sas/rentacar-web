@@ -15,6 +15,15 @@ export function hasFreshCatalog(snapshot: ReservasApiData | null, now = Date.now
 function copyCatalog(target: ReservasApiData, source: ReservasApiData): void {
   if (source.catalogFetchedAt === undefined) delete target.catalogFetchedAt
   else target.catalogFetchedAt = source.catalogFetchedAt
+  // `in`, not `=== undefined`: absent and null mean different things for this
+  // field and BOTH have to survive the copy. Absent = the brand never opted
+  // into the real price floor, so the home title keeps its legacy claim. Null =
+  // it opted in and nothing is publishable, so the title must publish no number
+  // at all. Dropping the key turned every client-side navigation into the
+  // second case reading as the first — i.e. the $220.000 list rate coming back
+  // on SPA nav while SSR looked correct. See buildHomeSEO.
+  if (!('dayPriceFloorGross' in source)) delete target.dayPriceFloorGross
+  else target.dayPriceFloorGross = source.dayPriceFloorGross
   target.categories.splice(0, target.categories.length, ...source.categories)
   target.branches.splice(0, target.branches.length, ...source.branches)
   target.cities.splice(0, target.cities.length, ...source.cities)
@@ -31,6 +40,12 @@ function copyCatalog(target: ReservasApiData, source: ReservasApiData): void {
 
 function clearCatalog(target: ReservasApiData): void {
   delete target.catalogFetchedAt
+  // Without this an open tab pinned its original floor for the life of the tab:
+  // the hourly refresh clears and re-copies, so a server that has since started
+  // answering `null` (cron missed, table unreachable) never reached the title.
+  // The 7-day guard in priceFloors.ts is only worth having if its verdict can
+  // actually arrive.
+  delete target.dayPriceFloorGross
   target.categories.splice(0)
   target.branches.splice(0)
   target.cities.splice(0)
