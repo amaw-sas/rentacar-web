@@ -5,7 +5,7 @@ title: "Pico y placa: la página que consultas no lee decretos"
 meta_title: "Pico y placa por emergencia en Colombia | Alquílame"
 description: "Durante 13 días comparamos las dos páginas de pico y placa más consultadas de Colombia contra los decretos de Cali y Manizales. Fallaron 30 de 52 veces."
 image: /img/blog/pico-y-placa-emergencia-colombia.webp
-alt: "Rejilla de 52 cuadros: cuatro filas, una por página y ciudad, y trece columnas, una por día medido entre el 18 y el 31 de agosto de 2026. Treinta cuadros están marcados como dato equivocado"
+alt: "Calle urbana mojada al anochecer. A la derecha, un carro plateado detenido frente a una fila de conos naranjas y una barrera que cierra el carril; a la izquierda, asfalto vacío y un muro de concreto. Sin placas ni logos visibles"
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-09-01
@@ -53,7 +53,11 @@ Trece días con dato válido, dos ciudades, dos páginas. **52 comprobaciones.**
 | Manizales · página A | 7 | 6 |
 | Manizales · página B | **13 de 13** | 0 |
 
-El promedio no dice nada. Lo que importa es *cuáles* días fallaron.
+![Rejilla de 52 cuadros ordenados en cuatro filas y trece columnas. Cada fila es una página en una ciudad y cada columna un día entre el 18 y el 31 de agosto de 2026. Los cuadros naranjas marcan los días con el dato equivocado y los grises los días correctos](/img/blog/emergencia-medicion-rejilla.webp)
+
+*Las 52 comprobaciones, una por cuadro. En naranja, los días en que la página mostró algo distinto de lo que decía el decreto.*
+
+El promedio no dice nada. Lo que importa es *cuáles* días fallaron. Y en la rejilla se ven agrupados a la izquierda, que es donde estaban las medidas de emergencia.
 
 ## En Cali las dos páginas fallaron los cinco días raros
 
