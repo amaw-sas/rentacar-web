@@ -9,7 +9,7 @@ alt: "Cámara de fotodetección montada en un poste sobre una avenida arbolada, 
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-19
-updated: 2026-08-28
+updated: 2026-09-01
 category: tips
 tags:
   - pico-y-placa
@@ -134,6 +134,8 @@ Del otro lado está la norma. Esto es lo que encontramos en las veinticuatro fue
 **Y Pereira cambió el pico y placa el día del terremoto sin publicarlo.** El 10 de agosto de 2026, un sismo de magnitud 7,4 con epicentro en San José del Palmar, Chocó, a 103 kilómetros de profundidad, sacudió una franja de quince departamentos. Varias ciudades ajustaron su restricción vehicular por decreto de emergencia. La medida de Pereira rige desde el 18 de agosto y no aparece en el sitio de la Alcaldía ni en el de Movilidad; su página de pico y placa tiene última modificación de octubre de 2024. El buscador del portal, además, exige iniciar sesión.
 
 En cambio **Manizales lo hizo bien**: publicó el 13 de agosto una noticia con el calendario completo día por día, horarios y alcance, cinco días antes de que empezara a aplicar. Se puede leer, citar y automatizar. Es la prueba de que hacerlo bien no requiere presupuesto especial — requiere decidirlo.
+
+Publicar bien, sin embargo, no garantiza que el dato llegue. Medimos durante trece días las dos páginas que Google pone de primeras cuando alguien busca el pico y placa de una ciudad colombiana, y ninguna de las dos recogió el decreto de Manizales mientras estuvo vigente: una tardó dos semanas en leerlo y la otra sigue mostrando la regla anterior al sismo. Están las 52 comprobaciones, día por día, en [el artículo sobre el pico y placa por emergencia](/blog/pico-y-placa-emergencia-colombia).
 
 ## Bogotá: la regla que casi todo el mundo modela mal
 

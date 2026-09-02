@@ -9,7 +9,7 @@ alt: "Comparendo de tránsito impreso sobre el timón de un carro, con un semáf
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-21
-updated: 2026-08-27
+updated: 2026-09-01
 category: tips
 tags:
   - pico-y-placa
@@ -128,6 +128,8 @@ El artículo 131 del Código Nacional de Tránsito, modificado por el artículo 
 La inmovilización no es opcional ni depende del ánimo del agente. Está en el texto de la norma. Y el carro no se va solo a patios: se va con grúa, y sale pagando grúa y parqueadero.
 
 Si manejas dentro de tu ciudad, eso es un mal día. Si vas de viaje, o alquilaste un carro y tienes el itinerario comprado, es el viaje cancelado y el carro en una ciudad de paso.
+
+Y hay un escenario donde el riesgo se dispara: cuando la ciudad cambió su pico y placa por decreto de emergencia y la página donde lo consultas todavía muestra la regla anterior. Medimos ese desfase durante trece días en Cali y Manizales, con 52 comprobaciones contra el decreto vigente, en [el artículo sobre el pico y placa por emergencia](/blog/pico-y-placa-emergencia-colombia).
 
 Antes de dar por hecho que te aplica, vale la pena revisar si tu carro entra en alguna excepción: en Bogotá son dieciocho y varias exigen una inscripción previa sin la cual la cámara sanciona igual. Están todas en [las excepciones de pico y placa que casi nadie conoce](/blog/exenciones-pico-y-placa-bogota).
 
