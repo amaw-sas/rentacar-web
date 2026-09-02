@@ -127,7 +127,7 @@ El artículo 131 del Código Nacional de Tránsito, modificado por el artículo 
 
 La inmovilización no es opcional ni depende del ánimo del agente. Está en el texto de la norma. Y el carro no se va solo a patios: se va con grúa, y sale pagando grúa y parqueadero.
 
-Si manejas dentro de tu ciudad, eso es un mal día. Si vas de viaje, o alquilaste un carro y tienes el itinerario comprado, es el viaje cancelado y el carro en una ciudad de paso.
+Si manejas dentro de tu ciudad, eso es un mal día. Si vas de viaje, o alquilaste un carro y tienes el itinerario comprado, es el viaje cancelado y el carro en una ciudad de paso. Y con un carro alquilado el trámite de recuperación pasa además por la empresa: qué preguntar antes de recibir las llaves está en [el artículo sobre el pico y placa en un carro alquilado](/blog/pico-y-placa-carro-alquilado).
 
 Y hay un escenario donde el riesgo se dispara: cuando la ciudad cambió su pico y placa por decreto de emergencia y la página donde lo consultas todavía muestra la regla anterior. Medimos ese desfase durante trece días en Cali y Manizales, con 52 comprobaciones contra el decreto vigente, en [el artículo sobre el pico y placa por emergencia](/blog/pico-y-placa-emergencia-colombia).
 

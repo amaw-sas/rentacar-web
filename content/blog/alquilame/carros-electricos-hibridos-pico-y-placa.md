@@ -166,6 +166,10 @@ Todo lo anterior se reduce a un consejo, y es el que queremos que te lleves.
 
 La licencia de tránsito trae impreso el campo **COMBUSTIBLE**. Ese campo es el que se coteja. Ese campo es el que decide.
 
+Y no te desconcierte el nombre: la casilla se sigue llamando así aunque el carro no queme nada. En un eléctrico puro lo que aparece escrito ahí es `ELECTRICO`.
+
+Eso vale doble si el carro no es tuyo. La licencia viaja con el vehículo, así que en un alquiler puedes leerla en el mostrador en vez de creerle a nadie: es una de las cinco preguntas de [el artículo sobre el pico y placa en un carro alquilado](/blog/pico-y-placa-carro-alquilado).
+
 | Lo que dice tu tarjeta | Qué eres para la norma | Bogotá, pico y placa | Bogotá, día sin carro |
 |---|---|---|---|
 | `ELECTRICO` o `HIDROGENO` | Eléctrico o cero emisiones | Exento por ley nacional y por el numeral 1 | **Exento** (art. 238 num. 13) |

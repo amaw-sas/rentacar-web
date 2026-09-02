@@ -154,7 +154,7 @@ Si vas a manejar en una ciudad donde hubo un desastre reciente, esas páginas no
 
 **La franja horaria y los días.** Una medida de emergencia que va de cinco de la mañana a diez de la noche todos los días no se parece en nada a un pico y placa de horas pico entre semana. Si la página que consultas te muestra el horario de siempre, probablemente esté mostrando la regla de siempre.
 
-Y si el carro es alquilado, hay una cuarta: pregúntale a la rentadora. Varias excepciones dependen de registros que no son públicos, y quien alquila no tiene forma de saber si ese vehículo está inscrito. En Bogotá pasa lo mismo con las exenciones que sí existen por ley y aun así requieren inscripción previa, como explicamos en [el artículo sobre las excepciones](/blog/exenciones-pico-y-placa-bogota).
+Y si el carro es alquilado, hay una cuarta: pídele el dato a la rentadora. Varias excepciones dependen de registros que las ciudades no publican, así que mirar el carro no dice nada; el dato está en los papeles del propietario. En Bogotá pasa lo mismo con las exenciones que sí existen por ley y aun así requieren inscripción previa, como explicamos en [el artículo sobre las excepciones](/blog/exenciones-pico-y-placa-bogota). Las cinco preguntas que sí conviene hacer en el mostrador, y la razón de que la exención sea del carro y no de quien lo maneja, están en [el artículo sobre el pico y placa en un carro alquilado](/blog/pico-y-placa-carro-alquilado).
 
 ## Metodología y huecos declarados
 
