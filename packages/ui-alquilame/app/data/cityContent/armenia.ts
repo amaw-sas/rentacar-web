@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'Armenia restringe la circulación de lunes a viernes según el último dígito. El horario es de 7:30 a 8:30 AM y de 5:30 a 6:30 PM: una hora por cada franja.',
+    picoPlaca: 'Armenia restringe por el último dígito de la placa de lunes a viernes, y el horario es continuo: de 7:00 AM a 7:00 PM en todo el perímetro urbano, no solo en el centro. El fin de semana y los festivos no cuentan.',
     tolls: 'Dentro del Quindío puedes moverte sin peajes. Aparece uno de aproximadamente $8.700 COP al viajar hacia Pereira y otro cercano a $15.500 COP en dirección a Ibagué por la Línea.',
     parking: 'En el centro, una hora de parqueadero cuesta entre $2.000 y $4.000 COP. Los parques temáticos suelen incluir el cupo o cobrar de $5.000 a $10.000 COP por todo el día.',
   },

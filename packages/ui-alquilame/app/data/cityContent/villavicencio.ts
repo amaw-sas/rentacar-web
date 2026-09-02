@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'El pico y placa de Villavicencio rige de lunes a viernes dentro del casco urbano. Se asigna por el último dígito de la matrícula. Opera de 6:30 a 8:30 AM y vuelve de 5:30 a 7:30 PM.',
+    picoPlaca: 'Villavicencio restringe de lunes a viernes por el último dígito, de 6:30 a 9:30 AM y de 5:00 a 8:00 PM, dentro de un polígono del centro y los sectores de más congestión. No rige el fin de semana ni en festivos.',
     tolls: 'Entre Bogotá y Villavicencio se pagan dos peajes que suman aproximadamente $26.000 COP. La ruta es montañosa, con curvas y grandes vistas. En contraste, las carreteras hacia Acacías y Puerto López avanzan sobre terreno plano.',
     parking: 'En el centro y en los sectores comerciales, estacionar cuesta entre $2.000 y $4.000 COP por hora. Viva Villavicencio y Unicentro manejan tarifas relacionadas con el consumo.',
   },

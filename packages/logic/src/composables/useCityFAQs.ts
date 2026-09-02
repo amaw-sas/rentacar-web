@@ -132,6 +132,10 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
     ],
     'Cartagena': [
         {
+            label: '¿Aplica pico y placa en Cartagena?',
+            content: 'Sí, aunque medio internet siga diciendo que no. Rige de lunes a viernes según el último dígito de la placa, de 7:00 a 9:00 AM y de 6:00 a 8:00 PM. Te decimos cuál le toca a tu carro cuando lo recibas.'
+        },
+        {
             label: '¿Dónde puedo recoger mi carro en Cartagena?',
             content: getCityPickupAnswer('Cartagena')
         },
@@ -200,8 +204,8 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
             content: 'Puedes llegar en carro hasta el parqueadero de El Zaino (entrada principal) o Calabazo. Desde allí el acceso es a pie o en transporte interno del parque. El carro queda seguro en los parqueaderos.'
         },
         {
-            label: '¿Hay pico y placa en Santa Marta?',
-            content: 'Santa Marta no tiene restricción de pico y placa para vehículos particulares. Puedes circular libremente cualquier día de la semana por toda la ciudad.'
+            label: '¿Aplica pico y placa en Santa Marta?',
+            content: 'Sí, y depende de dónde esté matriculado el carro. Con placa de otra ciudad, el caso de casi todo carro alquilado, la restricción es continua de 7:00 AM a 8:00 PM de lunes a viernes. Con placa del distrito son tres franjas más cortas. Te confirmamos la de tu vehículo al entregarlo.'
         },
         {
             label: '¿Qué lugares puedo visitar con carro desde Santa Marta?',
@@ -223,7 +227,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Aplica pico y placa en Pereira?',
-            content: 'Sí, Pereira tiene pico y placa según el último dígito de la placa de lunes a viernes. Te informamos la restricción al entregar el vehículo. Los fines de semana y festivos no hay restricción.'
+            content: 'Sí, y ahora rige una medida temporal por emergencias viales: de lunes a sábado, de 8:00 AM a 6:00 PM, por par e impar. El sábado ya no está libre. Te informamos la restricción al entregar el vehículo.'
         },
         {
             label: '¿Puedo visitar Salento y el Valle del Cocora con el carro?',
@@ -249,7 +253,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Aplica pico y placa en Bucaramanga?',
-            content: 'Sí, Bucaramanga tiene pico y placa rotativo según el último dígito de la placa. Te informamos la restricción al entregar el vehículo. Los fines de semana puedes circular sin restricción.'
+            content: 'Sí, y el horario es continuo: de lunes a viernes de 6:00 AM a 8:00 PM, y los sábados de 9:00 AM a 1:00 PM. Solo domingos y festivos quedan libres. Te informamos la restricción al entregar el vehículo.'
         },
         {
             label: '¿Cómo llego al Cañón del Chicamocha en carro?',
@@ -274,8 +278,8 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
             content: getCityPriceAnswer('Armenia')
         },
         {
-            label: '¿Hay pico y placa en Armenia?',
-            content: 'Armenia tiene pico y placa rotativo pero con horarios limitados. Te informamos la restricción vigente al entregar el vehículo. La mayoría de destinos turísticos están fuera del área urbana.'
+            label: '¿Aplica pico y placa en Armenia?',
+            content: 'Sí, y el horario es continuo: de 7:00 AM a 7:00 PM de lunes a viernes, en todo el perímetro urbano. Te informamos la restricción vigente al entregar el vehículo.'
         },
         {
             label: '¿Puedo visitar el Parque del Café con el carro?',
@@ -301,7 +305,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Aplica pico y placa en Manizales?',
-            content: 'Sí, Manizales tiene pico y placa según el último dígito de la placa en días hábiles. Te informamos la restricción al entregar el vehículo. Fines de semana y festivos sin restricción.'
+            content: 'Sí, y en este momento rige una medida temporal por el sismo: de 5:00 AM a 10:00 PM todos los días, fines de semana y festivos incluidos. Confirma con nosotros antes de viajar, porque la fecha de vigencia cambia.'
         },
         {
             label: '¿Puedo subir al Nevado del Ruiz en carro?',
@@ -326,8 +330,8 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
             content: getCityPriceAnswer('Villavicencio')
         },
         {
-            label: '¿Hay pico y placa en Villavicencio?',
-            content: 'Villavicencio no tiene restricción de pico y placa para vehículos particulares. Puedes circular libremente cualquier día de la semana por toda la ciudad y el departamento.'
+            label: '¿Aplica pico y placa en Villavicencio?',
+            content: 'Sí. Villavicencio restringe de lunes a viernes según el último dígito de la placa, de 6:30 a 9:30 AM y de 5:00 a 8:00 PM, dentro de un polígono del centro. Te informamos la restricción al entregar el vehículo.'
         },
         {
             label: '¿Cómo es la vía Bogotá-Villavicencio?',
@@ -379,7 +383,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Aplica pico y placa en Ibagué?',
-            content: 'Sí, Ibagué tiene pico y placa según el último dígito de la placa en horarios pico. Te informamos la restricción al entregar el vehículo. Fines de semana y festivos sin restricción.'
+            content: 'Sí, de 6:00 AM a 9:00 PM de lunes a viernes. Los carros matriculados en Ibagué descansan en hora valle; una placa de otra ciudad no tiene esa pausa. Te informamos la restricción al entregar el vehículo.'
         },
         {
             label: '¿Cómo llego al Cañón del Combeima en carro?',
@@ -405,7 +409,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Hay pico y placa en Neiva?',
-            content: 'Neiva tiene pico y placa rotativo según el último dígito de la placa en días hábiles. Te informamos la restricción vigente al entregar el vehículo. Fines de semana sin restricción.'
+            content: 'Neiva no tiene pico y placa para vehículos particulares. Puedes circular cualquier día de la semana sin depender del último dígito de la placa.'
         },
         {
             label: '¿Cómo llego al Desierto de la Tatacoa en carro?',
@@ -431,7 +435,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Aplica pico y placa en Cúcuta?',
-            content: 'Cúcuta tiene pico y placa según el último dígito de la placa en horarios específicos. Te informamos la restricción al entregar el vehículo. Los fines de semana puedes circular libremente.'
+            content: 'Sí, en tres franjas de lunes a viernes: 7:00 a 8:30 AM, 11:30 AM a 2:30 PM y 5:30 a 7:30 PM. Con placa de otra ciudad, dentro de los anillos viales la restricción es continua de 7:00 AM a 8:00 PM.'
         },
         {
             label: '¿Puedo cruzar a Venezuela con el carro alquilado?',
@@ -457,7 +461,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Hay pico y placa en Montería?',
-            content: 'Montería no tiene restricción de pico y placa para vehículos particulares actualmente. Puedes circular libremente cualquier día de la semana por toda la ciudad y el departamento.'
+            content: 'Montería no tiene pico y placa para vehículos particulares. Puedes circular cualquier día de la semana por toda la ciudad y el departamento.'
         },
         {
             label: '¿Puedo viajar a las playas desde Montería?',
@@ -483,7 +487,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Aplica pico y placa en Floridablanca?',
-            content: 'Floridablanca comparte el pico y placa del área metropolitana de Bucaramanga. Te informamos la restricción al entregar el vehículo. Fines de semana y festivos sin restricción.'
+            content: 'Sí. Floridablanca comparte el esquema del área metropolitana de Bucaramanga: de lunes a viernes de 6:00 AM a 8:00 PM y los sábados de 9:00 AM a 1:00 PM. Te informamos la restricción al entregar el vehículo.'
         },
         {
             label: '¿Hay diferencia entre alquilar en Floridablanca o Bucaramanga?',
@@ -509,7 +513,7 @@ const citySpecificFAQs: Record<string, FAQ[]> = {
         },
         {
             label: '¿Hay pico y placa en Palmira?',
-            content: 'Palmira tiene pico y placa según el último dígito de la placa en días hábiles. Te informamos la restricción vigente al entregar el vehículo. Fines de semana sin restricción vehicular.'
+            content: 'Palmira no tiene pico y placa permanente para vehículos particulares. La medida que mucha gente recuerda es la de Cali, la ciudad vecina.'
         },
         {
             label: '¿Hay diferencia entre alquilar en Palmira o Cali?',

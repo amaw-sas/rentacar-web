@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Cuándo debo tener en cuenta el pico y placa de Pereira?',
-    content: 'La restricción aplica de lunes a viernes y rota según el último dígito de la placa. Al entregarte el carro te contamos cuál medida le corresponde. Sábados, domingos y festivos puedes circular sin esa limitación.',
+    content: 'Sí hay que tenerlo en cuenta, y ahora rige una medida temporal por emergencias viales: de lunes a sábado, de 8:00 AM a 6:00 PM, por par e impar. El sábado ya no está libre. Te contamos cuál te corresponde en la entrega.',
   },
   {
     label: '¿Cómo visito Salento y el Valle del Cocora desde Pereira?',

@@ -5,6 +5,10 @@ export const citySlug = "cartagena"
 
 export const faqs: FAQ[] = [
         {
+            label: '¿Aplica pico y placa en Cartagena?',
+            content: 'Sí. Mucha guía sigue diciendo que Cartagena no restringe, pero la medida está vigente de lunes a viernes según el último dígito de la placa, de 7:00 a 9:00 AM y de 6:00 a 8:00 PM. Te indicamos la restricción de tu vehículo al entregarlo.',
+        },
+        {
             label: '¿Dónde puedo recoger mi carro reservado en Cartagena?',
             content: getCityPickupAnswer('Cartagena')
         },

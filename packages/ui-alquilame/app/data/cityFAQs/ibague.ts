@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Debo revisar el pico y placa antes de conducir en Ibagué?',
-    content: 'Sí. La ciudad limita la circulación en las horas pico de los días hábiles según el último dígito de cada placa. Te explicamos la medida al entregarte el vehículo; fines de semana y festivos quedan libres.',
+    content: 'Sí, de 6:00 AM a 9:00 PM de lunes a viernes. Los carros matriculados en Ibagué descansan en hora valle; una placa de otra ciudad no tiene esa pausa. Te explicamos la medida al entregarte el vehículo.',
   },
   {
     label: '¿Qué condiciones tiene la vía al Cañón del Combeima?',

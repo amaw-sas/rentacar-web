@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'Floridablanca comparte el pico y placa de Bucaramanga. De lunes a viernes, el número final de la placa define la restricción. Rige de 6:00 a 8:00 AM y vuelve de 5:30 a 7:30 PM.',
+    picoPlaca: 'Floridablanca comparte esquema con Bucaramanga. De lunes a viernes la restricción es continua, de 6:00 AM a 8:00 PM, y los sábados va de 9:00 AM a 1:00 PM. Solo el domingo y los festivos quedan por fuera.',
     tolls: 'En el camino al Cañón del Chicamocha se paga un peaje cercano a $10.000 COP. Hacia San Gil hay dos, que suman alrededor de $18.000 COP. Son vías montañosas, pero están bien mantenidas.',
     parking: 'En Cañaveral y en otros sectores comerciales, una hora de parqueadero cuesta entre $2.500 y $5.000 COP. Centros comerciales como Cañaveral manejan tarifa vinculada al consumo.',
   },
