@@ -8,6 +8,7 @@ image: /img/blog/carros-electricos-hibridos-pico-y-placa.webp
 alt: "Carro compacto conectado a un cargador eléctrico en el parqueadero cubierto de un edificio, sin logos ni marcas visibles"
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
+updated: 2026-09-01
 date: 2026-08-27
 category: tips
 tags:
@@ -210,7 +211,7 @@ Sería incoherente publicar un texto sobre verificar normas sin decir dónde se 
 
 - **No pudimos ver el formulario de inscripción de Bogotá por dentro.** Está detrás del login de SIMUR y habría implicado registrar la identidad de una persona real ante una entidad pública. Lo que este artículo afirma sobre qué pide el trámite sale del artículo 9 de la resolución, no de la pantalla.
 - **No encontramos la norma que fija el catálogo de tipologías de combustible del RUNT.** Las cuatro etiquetas son observables en los datos abiertos del propio RUNT, y por ahí quedan probadas, pero no localizamos el acto del Ministerio de Transporte que las establezca como tabla paramétrica.
-- **No verificamos la motivación del decreto de emergencia de Cali de agosto de 2026**, que es lo que decidiría si cae o no dentro del «por razones de seguridad» del artículo 6 de la Ley 1964.
+- **No verificamos la motivación del decreto de emergencia de Cali de agosto de 2026**, que es lo que decidiría si cae o no dentro del «por razones de seguridad» del artículo 6 de la Ley 1964. *Actualización del 1 de septiembre:* el caso paralelo de Manizales sí quedó verificado, y ahí la alcaldía metió a los eléctricos y a los híbridos dentro de la restricción de emergencia sin excepción alguna. Lo contamos en [el artículo sobre el pico y placa por emergencia](/blog/pico-y-placa-emergencia-colombia).
 - **No hay un pronunciamiento oficial sobre el híbrido suave.** Lo que este artículo describe es cómo funciona el mecanismo, no cómo lo resolvió alguna autoridad. Nadie lo ha resuelto.
 - **La Resolución 118139 remite a decretos derogados.** Se expidió contra los decretos 575 de 2013, 846 de 2019 y 073 de 2021, que ya fueron compilados en el 652 de 2025. Sigue vigente y sigue siendo la que rige el trámite, pero nadie ha corregido la remisión.
 - **Las cifras de matriculados son de los datos abiertos del RUNT**, no de una certificación. Son las mismas que publica la entidad, agrupadas por nosotros.
