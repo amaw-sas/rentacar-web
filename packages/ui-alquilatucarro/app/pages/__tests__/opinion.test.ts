@@ -19,7 +19,7 @@
  * `PublicContactForm`/`StarRating` se registran REALES — SCEN-4 y SCEN-6 son
  * escenarios del formulario, así que stubearlo sería probar el stub.
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, computed, reactive, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { readFileSync } from 'node:fs'
@@ -80,11 +80,35 @@ const NuxtLink = {
   template: '<a :href="to"><slot /></a>',
 }
 
-const factory = () =>
-  mount(Opinion, {
+/**
+ * Todo lo montado se desmonta al terminar cada caso.
+ *
+ * Sin esto, un caso que califica con 4-5★ y NO usa temporizadores falsos deja
+ * vivo el `setTimeout` de la redirección. Cuando salta, ya corrió el
+ * `afterAll` que hace `unstubAllGlobals`, así que `navigateTo` ya no existe y
+ * vitest reporta un «Unhandled Error» — fuera de cualquier caso, con los 475
+ * en verde. Fue exactamente lo que rompió CI en el PR #485: bajar la espera de
+ * 800 ms a 300 movió la carrera y los temporizadores empezaron a saltar DENTRO
+ * de la corrida en vez de después de que el proceso terminara.
+ *
+ * Desmontar dispara el `onBeforeUnmount` de la página, que es quien limpia los
+ * dos temporizadores. O sea: esto no es solo higiene del test, ejercita el
+ * camino de limpieza real del componente.
+ */
+const mounted: { unmount: () => void }[] = []
+
+afterEach(() => {
+  while (mounted.length) mounted.pop()!.unmount()
+})
+
+const factory = () => {
+  const w = mount(Opinion, {
     attachTo: document.body,
     global: { components: { StarRating, PublicContactForm, NuxtLink } },
   })
+  mounted.push(w)
+  return w
+}
 
 type Wrapper = ReturnType<typeof factory>
 
@@ -135,25 +159,69 @@ describe('SCEN-1 — la página recién cargada no delata el filtro', () => {
   })
 })
 
-describe('SCEN-2 — 4★ va a la ficha de Google', () => {
-  it('agradece y redirige a los 800 ms', async () => {
+describe('SCEN-2 — 4★ va a la ficha de Google sin mover la pantalla', () => {
+  /**
+   * Medido en producción el 2026-09-04: al tocar la 4ª estrella la sección
+   * pasaba de 380 px a 541 px de alto. 161 px de salto por tres cosas que
+   * aparecían a la vez — «Calificaste con 4 de 5», el párrafo «¡Gracias por
+   * calificarnos! Redirigiendo…» y el enlace de salida.
+   *
+   * Y el texto mentía: «Gracias por calificarnos» le decía a la persona que
+   * había terminado cuando la reseña todavía no existía. Al saltar a Google
+   * después, el salto se leía como si el sitio hiciera algo por su cuenta.
+   *
+   * Ahora la única confirmación visible es la estrella pintándose.
+   */
+  /**
+   * Texto que una persona VE. `sr-only` esconde por CSS y no por `display:none`,
+   * así que su contenido sigue en el DOM (tiene que seguir, o el lector de
+   * pantalla no lo anuncia) y `wrapper.text()` lo devuelve. Afirmar sobre
+   * `text()` a secas mediría el DOM, no la pantalla.
+   */
+  function visible(w: ReturnType<typeof factory>): string {
+    const root = w.element.cloneNode(true) as HTMLElement
+    root.querySelectorAll('.sr-only').forEach((n) => n.remove())
+    return (root.textContent ?? '').replace(/\s+/g, ' ').trim()
+  }
+
+  it('no imprime NADA visible: la pantalla se queda quieta', async () => {
+    const w = factory()
+    const antes = visible(w)
+    await stars(w)[3]!.trigger('click')
+
+    expect(gold(w)).toBe(4)
+    expect(visible(w)).toBe(antes)
+    expect(form(w).exists()).toBe(false)
+  })
+
+  it('pero el lector de pantalla sí se entera, en una región invisible', async () => {
+    // Quien no ve la estrella pintarse necesita saber que va camino a Google:
+    // sin esto el cambio de página la deja sin explicación.
+    const w = factory()
+    await stars(w)[3]!.trigger('click')
+
+    const region = w.find('[role="status"]')
+    expect(region.text()).toMatch(/Google/i)
+    // Invisible para todos los demás: no ocupa espacio ni empuja nada.
+    expect(region.classes()).toContain('sr-only')
+    // Y no promete que ya terminó, porque no ha terminado.
+    expect(region.text()).not.toMatch(/gracias/i)
+  })
+
+  it('redirige a los 300 ms, no a los 800', async () => {
     vi.useFakeTimers()
     try {
       const w = factory()
       await stars(w)[3]!.trigger('click')
 
-      expect(gold(w)).toBe(4)
-      expect(w.find('[role="status"]').text()).toContain('Redirigiendo…')
-      expect(w.html()).toContain(GBP_URL)
-      expect(form(w).exists()).toBe(false)
-
-      // Ni un milisegundo antes: el agradecimiento tiene que alcanzar a leerse.
-      vi.advanceTimersByTime(799)
+      // Lo justo para ver la estrella pintarse. 800 ms era casi un segundo
+      // mirando una pantalla en la que no pasaba nada.
+      vi.advanceTimersByTime(299)
       expect(navigate).not.toHaveBeenCalled()
 
       vi.advanceTimersByTime(1)
       // `replace`: sin esto, volver con Atrás restaura /opinion desde bfcache
-      // congelada en «Redirigiendo…» y con las estrellas muertas.
+      // con el estado congelado y las estrellas muertas.
       expect(navigate).toHaveBeenCalledWith(GBP_URL, { external: true, replace: true })
     } finally {
       vi.useRealTimers()
@@ -165,23 +233,49 @@ describe('SCEN-2 — 4★ va a la ficha de Google', () => {
     try {
       const w = factory()
       await stars(w)[4]!.trigger('click')
-      vi.advanceTimersByTime(800)
+      vi.advanceTimersByTime(300)
       expect(navigate).toHaveBeenCalledWith(GBP_URL, { external: true, replace: true })
     } finally {
       vi.useRealTimers()
     }
   })
 
-  it('la salida manual dice a dónde lleva', async () => {
-    // "Si no pasa nada, entra aquí" no es un nombre accesible: en la lista de
-    // enlaces del lector de pantalla no se sabe que es la ficha de Google.
-    const w = factory()
-    await stars(w)[4]!.trigger('click')
-    const escape = w.findAll('a').find((a) => a.attributes('href') === GBP_URL)!
-    expect(escape.text()).toMatch(/Google/)
-    // `rel="noopener"` sin `target` no protege de nada y su `noreferrer` le
-    // quitaba a Google la atribución sólo por este camino.
-    expect(escape.attributes('rel')).toBeUndefined()
+  it('la ficha de Google NO está en el DOM mientras la redirección va bien', async () => {
+    // El enlace de salida era la tercera cosa que empujaba la página. En el
+    // camino normal nadie tiene que verlo: la redirección ya se lo lleva.
+    vi.useFakeTimers()
+    try {
+      const w = factory()
+      await stars(w)[4]!.trigger('click')
+      vi.advanceTimersByTime(300)
+      await nextTick()
+      expect(w.findAll('a').some((a) => a.attributes('href') === GBP_URL)).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('si a los 2 s seguimos aquí, la redirección falló y aparece la salida', async () => {
+    // Pestaña en segundo plano, un bloqueador: si el salto no ocurre, la persona
+    // se queda con las estrellas pintadas y sin ninguna forma de continuar.
+    vi.useFakeTimers()
+    try {
+      const w = factory()
+      await stars(w)[4]!.trigger('click')
+      vi.advanceTimersByTime(2000)
+      await nextTick()
+
+      const escape = w.findAll('a').find((a) => a.attributes('href') === GBP_URL)!
+      expect(escape).toBeDefined()
+      // "Si no pasa nada, entra aquí" no es un nombre accesible: en la lista de
+      // enlaces del lector de pantalla no se sabe que es la ficha de Google.
+      expect(escape.text()).toMatch(/Google/)
+      // `rel="noopener"` sin `target` no protege de nada y su `noreferrer` le
+      // quitaba a Google la atribución sólo por este camino.
+      expect(escape.attributes('rel')).toBeUndefined()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('salir de la página antes de tiempo cancela la redirección', async () => {
