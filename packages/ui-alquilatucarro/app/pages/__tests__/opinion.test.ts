@@ -53,8 +53,12 @@ beforeAll(() => {
   vi.stubGlobal('onBeforeUnmount', onBeforeUnmount)
   vi.stubGlobal('definePageMeta', () => {})
   vi.stubGlobal('useSeoMeta', () => {})
+  // La página NO llama a useAppConfig hoy, así que este stub no se ejerce. Se
+  // deja con la marca correcta a propósito: en cuanto alguien haga que la
+  // página lea la marca del appConfig, el stub dirá la verdad en vez de
+  // colar «Alquilame» dentro de la suite de alquilatucarro.
   vi.stubGlobal('useAppConfig', () => ({
-    organization: { brand: 'Alquilame', logo: '/images/brand/logo.svg' },
+    organization: { brand: 'Alquilatucarro', logo: '/images/brand/logo.svg' },
   }))
 })
 afterAll(() => vi.unstubAllGlobals())

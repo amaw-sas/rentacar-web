@@ -407,6 +407,8 @@ export default defineNuxtConfig({
     // Formularios públicos (hoy sólo las calificaciones bajas de /opinion) —
     // server-only. Override con NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO /
     // NUXT_CONTACT_EMAIL_FROM.
+    // `from` debe ser un dominio verificado en Resend; si no, el envío es
+    // rechazado.
     // El remitente es el sandbox de Resend (onboarding@resend.dev): NO requiere
     // dominio verificado, pero Resend sólo entrega al correo dueño de la cuenta.
     // Por eso el destino es info@artesyweb.com, igual que en alquilame. Si algún

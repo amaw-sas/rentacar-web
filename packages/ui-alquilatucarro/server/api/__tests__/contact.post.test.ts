@@ -5,20 +5,26 @@
  *     entorno en la pantalla de un cliente; el detalle va al log del servidor.
  *   - Un fallo del proveedor de correo tiene que dejar rastro: sin log, la
  *     queja se pierde sin que nadie sepa por qué.
- *   - El endpoint se frena por IP: el honeypot vive en el navegador y un bucle
- *     de curl ni lo ve.
+ *
+ * OJO — lo que este archivo NO cubre: el endpoint es público, sin autenticar y
+ * SIN NINGÚN FRENO POR IP. El honeypot vive en el navegador, así que un bucle
+ * de curl ni lo ve y puede disparar envíos de Resend sin tope. El docblock que
+ * venía de alquilame afirmaba lo contrario («el endpoint se frena por IP») y
+ * era falso en las dos marcas: `contact.post.ts` nunca llama a `getRequestIP`
+ * y aquí no hay ni una aserción de 429. El único rate limit del repo es
+ * `logic/server/utils/rate-limit.ts`, atado al RPC `check_blog_rate_limit` de
+ * Supabase y solo para las rutas de blog. Cerrar el hueco necesita su propia
+ * migración; hasta entonces, que se lea aquí en vez de creerse cubierto.
  *
  * h3 se sustituye entero: interesa la lógica del handler, no el ciclo HTTP.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 let body: Record<string, unknown>
-let ip: string
 
 vi.mock('h3', () => ({
   defineEventHandler: (fn: unknown) => fn,
   readBody: async () => body,
-  getRequestIP: () => ip,
   createError: (options: Record<string, unknown>) =>
     Object.assign(new Error(String(options.statusMessage)), options),
 }))
@@ -56,7 +62,6 @@ async function run(config: Record<string, unknown> = CONFIG) {
 
 beforeEach(() => {
   body = { ...VALID }
-  ip = '190.0.0.1'
   send = vi.fn(async () => ({ id: 'x' }))
   vi.stubGlobal('$fetch', send)
   errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})

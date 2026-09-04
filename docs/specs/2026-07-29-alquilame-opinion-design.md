@@ -50,7 +50,8 @@ negative reviews, or selectively solicit positive reviews». No reabrir la discu
 | Alcance | alquilame y alquilatucarro (ver «Réplica en alquilatucarro»). alquicarros NO |
 
 Fuera de alcance: envío del enlace al cliente (sale del dashboard), persistencia en base
-de datos, réplica cross-marca.
+de datos, y réplica en alquicarros. La réplica en alquilatucarro SÍ se hizo el 2026-09-03
+(ver el bloque de la cabecera); esta línea decía «réplica cross-marca» y quedó obsoleta.
 
 ## Arquitectura
 
