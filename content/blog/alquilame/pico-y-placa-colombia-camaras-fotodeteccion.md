@@ -9,7 +9,7 @@ alt: "Cámara de fotodetección montada en un poste sobre una avenida arbolada, 
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
 date: 2026-08-19
-updated: 2026-09-01
+updated: 2026-09-04
 category: tips
 tags:
   - pico-y-placa
@@ -17,7 +17,7 @@ tags:
   - movilidad
   - multas
   - colombia
-reading_time: 12
+reading_time: 23
 featured: true
 ---
 
@@ -259,23 +259,54 @@ No se sostiene. **Ninguna de esas 314 detecta solamente C.14**: cada una está h
 
 Retirar una cámara «de pico y placa» significa retirar también un radar de velocidad en ese punto. La revisión que se anunció tendrá que decidir eso aparato por aparato, y el registro público —que trae la lista de códigos de cada ubicación— es donde está la información para hacerlo.
 
+## Una cámara «móvil» no se para donde quiera
+
+El registro separa las instalaciones en dos clases y hasta ahora no habíamos usado ese campo: **fijas** y **móviles**.
+
+Al 3 de septiembre de 2026 el archivo trae 1.342 ubicaciones. Son tres más que las 1.339 del 18 de agosto que dan título a este artículo, y esa diferencia de dos semanas es justo lo que el archivo hace bien: se actualiza a diario y lo dice. Se reparten en 832 declaradas fijas, 116 declaradas móviles y 394 sin ese dato — todas estas últimas vencidas o expiradas, ninguna operando.
+
+«Móvil» suena a lo que uno se imagina: una camioneta que se estaciona en una recta y saca el equipo. El registro dice otra cosa. Las 116 traen **dirección exacta y coordenadas**, y cada una declara entre seis y ocho señales de aviso, cada señal con su propia coordenada, plantadas alrededor del punto.
+
+Lo móvil es el aparato. El permiso no se mueve.
+
+La ley empuja en la misma dirección:
+
+> «En las vías nacionales, departamentales y municipales, en donde funcionen sistemas automáticos, semiautomáticos y otros medios tecnológicos para la detección de infracciones, se deberá adicionar en la vía señales visibles que informen que es una zona vigilada por cámaras o radar, localizadas antes de iniciar estas zonas.»
+>
+> — Ley 1843 de 2017, artículo 10
+
+Ese deber no distingue entre fijas y móviles. Lo único reservado a las fijas es la anticipación de quinientos metros, y solo en vías nacionales y solo para detección de velocidad.
+
+Un matiz que hay que decir: en el archivo esas señales figuran con estado «Propuesta». Eso describe lo que se aprobó, no necesariamente lo que hay clavado en el andén.
+
+### Cuántas móviles sancionan pico y placa: cuatro
+
+De las 116 instalaciones móviles, 25 están autorizadas para el código C.14. De esas 25, **cuatro están operando**: tres en Bogotá —Avenida Boyacá con Transversal 3F en los dos sentidos, y Avenida Carrera 10 con Calle 18— y una en Medellín, en la Carrera 43A con Calle 9. Las cuatro son radar Doppler y las cuatro detectan también exceso de velocidad.
+
+Móviles encendidas para cualquier código hay catorce, repartidas en siete municipios: Los Patios, Bogotá, Agustín Codazzi, Zona Bananera, Dagua, Yotoco y Medellín.
+
+Conviene ser explícitos sobre qué significa esto para lo que este artículo ya contaba: **nada cambia**. Los conteos se hicieron sobre el estado de operación y los códigos de infracción, sin filtrar por tipo de instalación, así que las móviles siempre estuvieron adentro. Al 3 de septiembre son 316 dispositivos operando habilitados para C.14, de los cuales 312 son fijos y 4 son móviles.
+
 ## Metodología y huecos declarados
 
 Sería incoherente publicar un texto sobre verificación sin declarar la propia. Esto es lo que no pudimos cerrar:
 
 - **Veinticuatro municipios no son el país.** Los agregadores privados dicen cubrir entre 39 y 50, pero sus listas incluyen ciudades sin medida y omiten municipios que sí la tienen. Nuestra estimación es que entre 45 y 60 municipios tienen alguna forma de restricción por placa vigente. Es una estimación, no un dato.
 - **Los textos de varios decretos no se leyeron completos.** Donde el PDF no se dejó extraer, tomamos el contenido operativo de boletines oficiales de la misma entidad y lo decimos aquí.
-- **La Resolución 3488 de 2025 del Ministerio de Hacienda**, que fija la UVB en $12.110, no se pudo abrir: el sitio bloquea el acceso automatizado. El valor está confirmado por la tabla del Ministerio de Transporte y por al menos una secretaría de tránsito municipal, y cuadra aritméticamente en las catorce categorías.
+- **La Resolución 3488 de 2025 del Ministerio de Hacienda**, que fija la UVB en $12.110, no se pudo abrir: el sitio bloquea el acceso automatizado. El valor está confirmado por la tabla del Ministerio de Transporte y por al menos una secretaría de tránsito municipal, y la cuenta cierra en las catorce categorías.
 - **No hay balance nacional consolidado de víctimas del sismo** publicado que hayamos encontrado, por lo que este artículo no cita ninguna cifra de afectación.
 - **El estado de operación de algunas cámaras va con rezago** en el registro de la ANSV. Lo usamos como indicio, no como veredicto.
 - **Los sitios físicos son una estimación, no un dato del archivo.** El registro no dice qué entradas comparten poste. Agrupamos las que caen a menos de cien metros unas de otras; con un umbral distinto el número cambia. Los dispositivos —360— sí son un conteo directo.
 - **La fecha de autorización no se puede contar.** El campo de aprobación final solo lo traen 290 de las 1.342 ubicaciones. Para el tramo 2021-2025 usamos la fecha de última actualización de la solicitud, que es un sustituto imperfecto y por eso el 681 se presenta como aproximación.
+- **El registro público no es el universo completo de cámaras del país, y eso lo permite la ley.** El parágrafo 2 del artículo 2 de la Ley 1843, añadido por el artículo 181 de la Ley 2294 de 2023, deja a las autoridades de tránsito instalar sistemas fijos o móviles en la infraestructura del transporte público —en tramos de vía, en las estaciones o a bordo de los buses— «sin que se requiera autorización por parte del Gobierno Nacional». El texto dice que se orientarán «principalmente» a controlar la invasión de los carriles exclusivos, y esa palabra deja abierto qué más pueden sancionar. Esos equipos no están en el archivo de la ANSV y este artículo no los cuenta, porque no hay dónde contarlos.
 
 Las cifras de pico y placa citadas corresponden al 18 y 19 de agosto de 2026 y cambian sin previo aviso. Para decisiones reales, consulte siempre la fuente oficial de su municipio — que es, precisamente, el problema del que trata este artículo.
 
 ## Fuentes principales
 
 - Registro de fotodetección — Agencia Nacional de Seguridad Vial · `fotodeteccion.ansv.gov.co`
+- Ley 1843 de 2017, arts. 2 y 10 — autorización y señalización de los sistemas de detección
+- Ley 2294 de 2023, art. 181 — sistemas en la infraestructura del transporte público sin autorización nacional
 - Ley 769 de 2002, art. 131 · Ley 1383 de 2010, art. 21 — Código Nacional de Tránsito
 - Ley 1712 de 2014, arts. 3, 6, 11 y 21 — Transparencia y Acceso a la Información Pública
 - Ley 23 de 1982, art. 41 — Derecho de autor sobre textos oficiales
