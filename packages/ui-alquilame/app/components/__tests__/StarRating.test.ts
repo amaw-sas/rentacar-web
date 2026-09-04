@@ -134,11 +134,25 @@ describe('SCEN-3 — el clic confirma', () => {
     expect(filled(w)).toBe(2)
   })
 
-  it('la calificación confirmada también se dice en texto, no sólo en color', () => {
-    // El relleno es un <svg aria-hidden>: sin esto, "cuántas dejé" no existe
-    // para quien no distingue ámbar de gris ni para un lector de pantalla que
-    // ya no puede recorrer el widget.
-    expect(factory({ modelValue: 2 }).text()).toContain('2 de 5')
+  it('la calificación confirmada no imprime NADA de texto', () => {
+    // Antes se pintaba «Calificaste con N de 5» bajo las estrellas. Se quitó por
+    // dos razones observadas en producción: empujaba la página 161 px al tocar
+    // la estrella, y «Calificaste» le decía a la persona que ya había terminado
+    // cuando todavía le faltaba escribir la reseña en Google.
+    //
+    // Nada se pierde para quien no ve el ámbar: `aria-checked` es el estado que
+    // el lector de pantalla anuncia, y se afirma abajo. Es una afirmación MÁS
+    // fuerte que buscar una subcadena en el texto del componente.
+    const w = factory({ modelValue: 2 })
+    expect(w.text().trim()).toBe('')
+  })
+
+  it('el estado confirmado vive en aria-checked, no en el color', () => {
+    const w = factory({ modelValue: 2 })
+    expect(stars(w).map((s) => s.attributes('aria-checked')))
+      .toEqual(['false', 'true', 'false', 'false', 'false'])
+    // Y el nombre accesible de cada estrella sigue diciendo cuál es.
+    expect(stars(w)[1]!.attributes('aria-label')).toBe('2 estrellas')
   })
 })
 

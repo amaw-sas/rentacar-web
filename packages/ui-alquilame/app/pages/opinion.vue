@@ -25,11 +25,7 @@
         Sólo habla la rama de Google. La de 1-3★ no necesita anuncio porque el
         foco se mueve al formulario, y dos avisos a la vez se pisan.
       -->
-      <p
-        role="status"
-        aria-live="polite"
-        :class="announcement ? 'body-lg font-semibold text-gray-900 mt-8' : 'sr-only'"
-      >
+      <p role="status" aria-live="polite" class="sr-only">
         {{ announcement }}
       </p>
 
@@ -40,7 +36,7 @@
         atribución sólo de este enlace y no la del salto automático.
       -->
       <a
-        v-if="isHighRating"
+        v-if="redirectStalled"
         :href="GBP_URL"
         class="mt-3 inline-block text-brand-700 font-semibold hover:underline"
       >
@@ -126,16 +122,37 @@ import type { PublicFormField } from '~/components/PublicContactForm.vue'
 const GBP_URL = 'https://g.page/r/Ce09QLF1RhqkEBM/review'
 /** Desde cuántas estrellas se considera reseña pública. */
 const HIGH_RATING_MIN = 4
-/** Igual que el original: da tiempo a leer el agradecimiento antes de saltar. */
-const REDIRECT_MS = 800
+/**
+ * Lo justo para ver la estrella pintarse antes de salir. Eran 800 ms, heredados
+ * de la página de GoHighLevel, para «dar tiempo a leer el agradecimiento». Ese
+ * agradecimiento ya no existe (ver `announcement`), así que la espera solo era
+ * casi un segundo de pantalla quieta después de tocar.
+ */
+const REDIRECT_MS = 300
+/**
+ * Si a los 2 s seguimos montados, la redirección no ocurrió: pestaña en segundo
+ * plano con los timers estrangulados, o un bloqueador. Recién entonces aparece
+ * la salida manual. En el camino normal nadie llega a verla.
+ */
+const STALLED_MS = 2000
 
 const rating = ref<number | null>(null)
 const isHighRating = computed(() => rating.value !== null && rating.value >= HIGH_RATING_MIN)
 const isLowRating = computed(() => rating.value !== null && rating.value < HIGH_RATING_MIN)
 
+/**
+ * SOLO para lectores de pantalla: la región es `sr-only` siempre. Quien ve la
+ * estrella pintarse ya tiene su confirmación y no necesita un párrafo que le
+ * empuje la página.
+ *
+ * El texto anterior decía «¡Gracias por calificarnos!», y era falso: en ese
+ * momento no hay ninguna calificación: la reseña no existe hasta que la escriba
+ * en Google. Dar por terminado el trámite antes de tiempo hacía que el salto se
+ * leyera como si el sitio se hubiera ido por su cuenta.
+ */
 const announcement = computed(() =>
   isHighRating.value
-    ? '¡Gracias por calificarnos! Redirigiendo… te llevamos a Google para que dejes tu reseña.'
+    ? 'Te estamos llevando a Google para que escribas tu reseña.'
     : '',
 )
 
@@ -144,7 +161,11 @@ const extraFields = computed(() => ({ estrellas: `${rating.value} de 5` }))
 
 const complaintHeading = ref<HTMLElement | null>(null)
 
+/** La redirección debía haber ocurrido y seguimos aquí. */
+const redirectStalled = ref(false)
+
 let redirectTimer: ReturnType<typeof setTimeout> | null = null
+let stalledTimer: ReturnType<typeof setTimeout> | null = null
 
 function onRate(value: number) {
   // Segunda barrera además del `disabled` del widget: un segundo voto abriría
@@ -160,10 +181,16 @@ function onRate(value: number) {
     return
   }
 
+  // Red de seguridad: si el salto no se produce, la persona se queda con las
+  // estrellas pintadas y sin ninguna forma de continuar.
+  stalledTimer = setTimeout(() => {
+    redirectStalled.value = true
+  }, STALLED_MS)
+
   redirectTimer = setTimeout(() => {
     // `replace` en vez de push: sin esto el historial queda [.., /opinion,
     // g.page] y volver con Atrás restaura /opinion desde bfcache con el estado
-    // congelado en «Redirigiendo…» y las estrellas muertas.
+    // congelado y las estrellas muertas.
     navigateTo(GBP_URL, { external: true, replace: true })
   }, REDIRECT_MS)
 }
@@ -180,9 +207,11 @@ function onPageShow(event: PageTransitionEvent) {
 // así que `window` está disponible sin guarda.
 onMounted(() => window.addEventListener('pageshow', onPageShow))
 
-// Salir de la página antes de los 800 ms no debe arrastrar a Google después.
+// Salir de la página antes de tiempo no debe arrastrar a Google después, ni
+// dejar vivo el temporizador que pinta la salida manual.
 onBeforeUnmount(() => {
   if (redirectTimer) clearTimeout(redirectTimer)
+  if (stalledTimer) clearTimeout(stalledTimer)
   window.removeEventListener('pageshow', onPageShow)
 })
 

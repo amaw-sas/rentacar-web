@@ -17,7 +17,7 @@
     anunciar "3 estrellas, marcado" mientras la aplicación no ha registrado nada
     manda a la persona a cerrar la página creyendo que ya calificó.
   -->
-  <div class="flex flex-col items-center gap-2">
+  <div class="flex flex-col items-center">
     <div
       role="radiogroup"
       aria-label="Calificación de 1 a 5 estrellas"
@@ -49,7 +49,8 @@
 
           Relleno contra contorno separa los dos estados por FORMA, no sólo por
           color: en escala de grises o con daltonismo el ámbar y el gris tienen
-          luminancias casi iguales. El texto de abajo cierra el hueco.
+          luminancias casi iguales. `aria-checked` cierra el hueco para quien no
+          ve ninguna de las dos.
         -->
         <svg
           viewBox="0 0 24 24"
@@ -66,13 +67,15 @@
     </div>
 
     <!--
-      La calificación en texto: sin esto, el único rastro de "cuántas dejé" es
-      el color de un <svg aria-hidden>, y el widget se congela sin que nadie
-      pueda releerlo.
+      Aquí vivía «Calificaste con N de 5». Se quitó: empujaba la página 161 px
+      al tocar la estrella (medido en producción), y «Calificaste» daba por
+      terminado algo que no lo estaba — todavía falta escribir la reseña.
+
+      El rastro de "cuántas dejé" NO se pierde: lo lleva `aria-checked` en cada
+      <button role="radio">, que es lo que anuncia el lector de pantalla. El
+      <svg aria-hidden> nunca fue el único rastro; el pie de texto era redundante
+      con el estado ARIA y costaba un salto de maquetación.
     -->
-    <p v-if="selected !== null" class="text-sm font-semibold text-gray-700">
-      Calificaste con {{ selected }} de {{ MAX }}
-    </p>
   </div>
 </template>
 
