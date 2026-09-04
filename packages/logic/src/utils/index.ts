@@ -46,6 +46,14 @@ export { applyMonthlyAnchorCap } from './applyMonthlyAnchorCap';
 export { IVA_PERCENTAGE } from './ivaRate';
 export { pickTotalCoverageChargeForDate } from './pickTotalCoverageCharge';
 export { resolvePicoyPlacaExempt } from './isPicoyPlacaExempt';
+export {
+    picoPlacaFacts,
+    findPicoPlacaFact,
+    picoPlacaVerifiedLabel,
+    formatSpanishDate,
+    PICO_Y_PLACA_VERIFIED_AT,
+} from './picoPlacaFacts';
+export type { PicoPlacaFact } from './picoPlacaFacts';
 export { isCategoryVisibleInCity } from './isCategoryVisibleInCity';
 export { isBookable } from './isBookable';
 export { resolveCityBranchCorrection } from './resolveCityBranchCorrection';

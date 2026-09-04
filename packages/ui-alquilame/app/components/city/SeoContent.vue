@@ -164,6 +164,10 @@
             <div>
               <h3 class="font-heading text-xl font-bold text-gray-900 mb-1">{{ tip.title }}</h3>
               <p class="body-sm leading-relaxed">{{ tip.body }}</p>
+              <!-- Only pico y placa carries a date. Tolls and parking are ranges
+                   we quote as approximate; a restriction is a rule the city
+                   enforces, so the reader deserves to know how fresh it is. -->
+              <p v-if="tip.verifiedLabel" class="body-sm mt-2 text-gray-500 text-xs">{{ tip.verifiedLabel }}</p>
             </div>
           </div>
         </div>
@@ -272,7 +276,7 @@
 /** types */
 // City is imported from utils (explicit, per convention); CityExpandedContent
 // and RelatedCity are auto-imported layer types (Nuxt imports.dirs) → used bare.
-import type { City } from '@rentacar-main/logic/utils'
+import { picoPlacaVerifiedLabel, type City } from '@rentacar-main/logic/utils'
 
 /** imports */
 import { computed } from 'vue'
@@ -345,7 +349,12 @@ const benefits = computed(() => [
 const drivingTips = computed(() =>
   props.expandedContent
     ? [
-        { emoji: '🚗', title: 'Pico y Placa', body: props.expandedContent.drivingTips.picoPlaca },
+        {
+          emoji: '🚗',
+          title: 'Pico y Placa',
+          body: props.expandedContent.drivingTips.picoPlaca,
+          verifiedLabel: picoPlacaVerifiedLabel(props.city?.name ?? ''),
+        },
         { emoji: '💰', title: 'Peajes', body: props.expandedContent.drivingTips.tolls },
         { emoji: '🅿️', title: 'Parqueaderos', body: props.expandedContent.drivingTips.parking },
       ]

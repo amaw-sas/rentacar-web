@@ -22,7 +22,7 @@ export const faqs: FAQ[] = [
         },
         {
             label: '¿Los carros particulares tienen pico y placa en Barranquilla?',
-            content: 'En la actualidad no existe esa restricción para los vehículos particulares en Barranquilla. Puedes conducir cualquier día de la semana sin depender del número de la placa.'
+            content: 'Barranquilla no tiene pico y placa para carros particulares. Puedes conducir cualquier día de la semana sin depender del número de la placa.'
         },
         {
             label: '¿Qué destinos cercanos puedo recorrer desde Barranquilla?',

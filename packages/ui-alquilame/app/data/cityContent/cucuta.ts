@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'Cúcuta restringe la circulación de lunes a viernes de acuerdo con el último dígito. La medida opera de 6:30 a 8:30 AM y de 5:00 a 7:30 PM; cerca de la frontera debes prever congestión adicional.',
+    picoPlaca: 'Cúcuta reparte la restricción en tres franjas de lunes a viernes: 7:00 a 8:30 AM, 11:30 AM a 2:30 PM y 5:30 a 7:30 PM. Si la placa es de otra ciudad, dentro de los anillos viales la restricción es continua de 7:00 AM a 8:00 PM.',
     tolls: 'Al tomar la carretera de montaña hacia Pamplona pagas un peaje de unos $11.300 COP. Conduce con precaución por la cantidad de curvas. Dentro del Área Metropolitana no hay peajes.',
     parking: 'Ventura Plaza, Unicentro y los sectores comerciales ofrecen parqueaderos de $2.000 a $4.000 COP la hora. Junto a la frontera es más difícil encontrar cupo y no conviene dejar el vehículo en la calle.',
   },

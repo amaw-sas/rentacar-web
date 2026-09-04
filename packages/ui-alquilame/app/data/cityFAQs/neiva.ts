@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Qué debo saber del pico y placa antes de manejar en Neiva?',
-    content: 'La medida funciona en días hábiles y rota de acuerdo con el último dígito de la placa. Cuando recibas el carro te indicaremos la restricción vigente para que organices tus trayectos. Los fines de semana no hay restricción.',
+    content: 'Neiva no tiene pico y placa para carros particulares. Solo hay cierres puntuales en fechas de eventos, como el Día sin Carro, y te avisamos si tu reserva coincide con uno.',
   },
   {
     label: '¿Cuál es la ruta en carro desde Neiva hasta la Tatacoa?',

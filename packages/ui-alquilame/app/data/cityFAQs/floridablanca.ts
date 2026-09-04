@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿El pico y placa de Bucaramanga también rige en Floridablanca?',
-    content: 'Sí. Floridablanca aplica la misma restricción del área metropolitana de Bucaramanga. Cuando te entreguemos el vehículo te confirmaremos el turno que corresponde a su placa. No hay pico y placa los fines de semana ni los festivos.',
+    content: 'Sí. Floridablanca comparte el esquema del área metropolitana: de lunes a viernes de 6:00 AM a 8:00 PM y los sábados de 9:00 AM a 1:00 PM. Solo domingos y festivos quedan libres. Te confirmamos el turno de tu placa en la entrega.',
   },
   {
     label: '¿Cambian las condiciones si alquilo en Floridablanca y no en Bucaramanga?',

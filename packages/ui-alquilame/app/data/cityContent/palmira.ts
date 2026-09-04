@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'Palmira restringe la circulación de lunes a viernes con base en el último número de la placa. La medida funciona de 7:00 a 9:00 AM y de 5:00 a 7:00 PM. Los fines de semana quedan por fuera de la restricción.',
+    picoPlaca: 'Palmira no tiene pico y placa permanente para carros particulares. La medida que mucha gente recuerda es la de Cali, que es la ciudad vecina.',
     tolls: 'La carretera hacia Buga tiene un peaje cercano a $10.500 COP. Por la vía principal entre Palmira y Cali no se paga ninguno. En general, las rutas del Valle están en excelente estado, son planas y cuentan con buena señalización, condiciones cómodas para enlazar varios municipios.',
     parking: 'Una hora de estacionamiento en el centro o en los sectores comerciales vale entre $2.000 y $4.000 COP. Llanogrande y Unicentro ofrecen tarifa asociada al consumo.',
   },
