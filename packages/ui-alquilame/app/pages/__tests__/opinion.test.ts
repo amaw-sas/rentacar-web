@@ -17,7 +17,7 @@
  * `PublicContactForm`/`StarRating` se registran REALES — SCEN-4 y SCEN-6 son
  * escenarios del formulario, así que stubearlo sería probar el stub.
  */
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, computed, reactive, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { readFileSync } from 'node:fs'
@@ -65,11 +65,35 @@ const NuxtLink = {
   template: '<a :href="to"><slot /></a>',
 }
 
-const factory = () =>
-  mount(Opinion, {
+/**
+ * Todo lo montado se desmonta al terminar cada caso.
+ *
+ * Sin esto, un caso que califica con 4-5★ y NO usa temporizadores falsos deja
+ * vivo el `setTimeout` de la redirección. Cuando salta, ya corrió el
+ * `afterAll` que hace `unstubAllGlobals`, así que `navigateTo` ya no existe y
+ * vitest reporta un «Unhandled Error» — fuera de cualquier caso, con los 475
+ * en verde. Fue exactamente lo que rompió CI en el PR #485: bajar la espera de
+ * 800 ms a 300 movió la carrera y los temporizadores empezaron a saltar DENTRO
+ * de la corrida en vez de después de que el proceso terminara.
+ *
+ * Desmontar dispara el `onBeforeUnmount` de la página, que es quien limpia los
+ * dos temporizadores. O sea: esto no es solo higiene del test, ejercita el
+ * camino de limpieza real del componente.
+ */
+const mounted: { unmount: () => void }[] = []
+
+afterEach(() => {
+  while (mounted.length) mounted.pop()!.unmount()
+})
+
+const factory = () => {
+  const w = mount(Opinion, {
     attachTo: document.body,
     global: { components: { StarRating, PublicContactForm, NuxtLink } },
   })
+  mounted.push(w)
+  return w
+}
 
 type Wrapper = ReturnType<typeof factory>
 
