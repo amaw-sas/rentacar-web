@@ -1,0 +1,441 @@
+// @vitest-environment happy-dom
+/**
+ * /opinion — la página de calificación posterior al alquiler.
+ * Contrato: docs/specs/2026-07-29-alquilame-opinion-design.md — el mismo para
+ * las dos marcas. Esta suite es el puerto de la de ui-alquilame; si una cambia,
+ * la otra también.
+ *
+ *   - SCEN-1: recién cargada hay 5 estrellas huecas, sin formulario, y la ficha
+ *     de Google NO está en el DOM (verla antes de calificar delata el filtro).
+ *   - SCEN-2: 4★ agradece y a los 800 ms se va a la ficha de Google.
+ *   - SCEN-3: 2★ bloquea las estrellas, abre el formulario y NO navega.
+ *   - SCEN-4: enviar ese formulario postea a /api/contact con type 'resenas' y
+ *     la calificación como `estrellas`.
+ *   - SCEN-6: sin mensaje hay error inline y CERO llamadas a la API.
+ *   - SCEN-7: el mismo recorrido por teclado dispara la misma rama que el clic.
+ *   - SCEN-8: la página se marca noindex y queda fuera del sitemap.
+ *
+ * Montaje hermético (sin Nuxt): los auto-imports se exponen como globales y
+ * `PublicContactForm`/`StarRating` se registran REALES — SCEN-4 y SCEN-6 son
+ * escenarios del formulario, así que stubearlo sería probar el stub.
+ */
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { ref, computed, reactive, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import Opinion from '../opinion.vue'
+import StarRating from '~/components/StarRating.vue'
+import PublicContactForm from '~/components/PublicContactForm.vue'
+
+// Ficha de alquilatucarro con el cuadro de reseña abierto (`!12e1`). alquilame
+// usa la forma corta g.page/r/…; esta ficha no tiene ese alias.
+const GBP_URL
+  = 'https://www.google.com/maps/place//data=!4m3!3m2!1s0xa2258f5934dd7fc3:0x61229dafa110309c!12e1'
+/**
+ * Centinela de «la ficha no está en el DOM». Tiene que ser un trozo del enlace
+ * que NINGÚN otro texto de la página contenga: con la forma larga de Maps no
+ * sirve buscar 'google', que aparece en la copia («te llevamos a Google»).
+ */
+const GBP_SENTINEL = 'google.com/maps'
+
+let post: ReturnType<typeof vi.fn>
+let navigate: ReturnType<typeof vi.fn>
+let head: ReturnType<typeof vi.fn>
+
+beforeAll(() => {
+  vi.stubGlobal('ref', ref)
+  vi.stubGlobal('computed', computed)
+  vi.stubGlobal('reactive', reactive)
+  vi.stubGlobal('watch', watch)
+  vi.stubGlobal('nextTick', nextTick)
+  vi.stubGlobal('onMounted', onMounted)
+  vi.stubGlobal('onBeforeUnmount', onBeforeUnmount)
+  vi.stubGlobal('definePageMeta', () => {})
+  vi.stubGlobal('useSeoMeta', () => {})
+  vi.stubGlobal('useAppConfig', () => ({
+    organization: { brand: 'Alquilame', logo: '/images/brand/logo.svg' },
+  }))
+})
+afterAll(() => vi.unstubAllGlobals())
+
+beforeEach(() => {
+  document.body.innerHTML = ''
+  post = vi.fn(async () => ({ ok: true }))
+  navigate = vi.fn()
+  head = vi.fn()
+  vi.stubGlobal('$fetch', post)
+  vi.stubGlobal('navigateTo', navigate)
+  vi.stubGlobal('useHead', head)
+})
+
+// NuxtLink no existe fuera de Nuxt; se sustituye por el <a> que renderiza, que
+// es lo que hay que poder afirmar (a dónde lleva y cómo se llama).
+const NuxtLink = {
+  props: ['to'],
+  template: '<a :href="to"><slot /></a>',
+}
+
+const factory = () =>
+  mount(Opinion, {
+    attachTo: document.body,
+    global: { components: { StarRating, PublicContactForm, NuxtLink } },
+  })
+
+type Wrapper = ReturnType<typeof factory>
+
+// El parámetro de tipo es lo que da acceso a `.focus()`: sin él VTU devuelve
+// `DOMWrapper<Element>` y `element.focus()` no existe para TypeScript.
+const stars = (w: Wrapper) => w.findAll<HTMLButtonElement>('button[role="radio"]')
+const form = (w: Wrapper) => w.find('form')
+/** El acuse de recibo del formulario, no la región de la página. */
+const formStatus = (w: Wrapper) => w.find('form [role="status"]')
+
+/** Cuántas estrellas se ven doradas (el <svg> pinta ámbar sólo si lo están). */
+const gold = (w: Wrapper) => w.findAll('svg').filter((s) => s.attributes('fill') === '#d97706').length
+
+/** Rellena el formulario de queja. `omit` deja un campo obligatorio vacío. */
+async function fillForm(w: Wrapper, omit?: string) {
+  const values: Record<string, string> = {
+    nombre: 'Ana Ramírez',
+    email: 'ana@ejemplo.com',
+    mensaje: 'El carro llegó sin gasolina y esperé 40 minutos.',
+  }
+  for (const [name, value] of Object.entries(values)) {
+    if (name === omit) continue
+    await w.find(`#f-${name}`).setValue(value)
+  }
+}
+
+describe('SCEN-1 — la página recién cargada no delata el filtro', () => {
+  it('muestra cinco estrellas huecas y ningún formulario', () => {
+    const w = factory()
+    expect(stars(w)).toHaveLength(5)
+    expect(stars(w).every((s) => s.attributes('aria-checked') === 'false')).toBe(true)
+    expect(form(w).exists()).toBe(false)
+  })
+
+  it('la ficha de Google no aparece en el DOM antes de calificar', () => {
+    // Ojo con lo que esto NO dice: `GBP_URL` y el umbral viajan en claro dentro
+    // del chunk JS de la página, así que quien mire el bundle ve el filtro. Lo
+    // que se afirma aquí es sólo que la interfaz no lo enseña de entrada.
+    expect(factory().html()).not.toContain(GBP_SENTINEL)
+  })
+
+  it('la región de avisos ya existe, vacía, antes de calificar', () => {
+    // Un aria-live que se inserta con el texto ya dentro no lo anuncian ni NVDA
+    // ni VoiceOver: la región tiene que preexistir al cambio.
+    const region = factory().find('[role="status"]')
+    expect(region.exists()).toBe(true)
+    expect(region.text()).toBe('')
+  })
+})
+
+describe('SCEN-2 — 4★ va a la ficha de Google', () => {
+  it('agradece y redirige a los 800 ms', async () => {
+    vi.useFakeTimers()
+    try {
+      const w = factory()
+      await stars(w)[3]!.trigger('click')
+
+      expect(gold(w)).toBe(4)
+      expect(w.find('[role="status"]').text()).toContain('Redirigiendo…')
+      expect(w.html()).toContain(GBP_URL)
+      expect(form(w).exists()).toBe(false)
+
+      // Ni un milisegundo antes: el agradecimiento tiene que alcanzar a leerse.
+      vi.advanceTimersByTime(799)
+      expect(navigate).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(1)
+      // `replace`: sin esto, volver con Atrás restaura /opinion desde bfcache
+      // congelada en «Redirigiendo…» y con las estrellas muertas.
+      expect(navigate).toHaveBeenCalledWith(GBP_URL, { external: true, replace: true })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('5★ toma la misma rama', async () => {
+    vi.useFakeTimers()
+    try {
+      const w = factory()
+      await stars(w)[4]!.trigger('click')
+      vi.advanceTimersByTime(800)
+      expect(navigate).toHaveBeenCalledWith(GBP_URL, { external: true, replace: true })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('la salida manual dice a dónde lleva', async () => {
+    // "Si no pasa nada, entra aquí" no es un nombre accesible: en la lista de
+    // enlaces del lector de pantalla no se sabe que es la ficha de Google.
+    const w = factory()
+    await stars(w)[4]!.trigger('click')
+    const escape = w.findAll('a').find((a) => a.attributes('href') === GBP_URL)!
+    expect(escape.text()).toMatch(/Google/)
+    // `rel="noopener"` sin `target` no protege de nada y su `noreferrer` le
+    // quitaba a Google la atribución sólo por este camino.
+    expect(escape.attributes('rel')).toBeUndefined()
+  })
+
+  it('salir de la página antes de tiempo cancela la redirección', async () => {
+    vi.useFakeTimers()
+    try {
+      const w = factory()
+      await stars(w)[3]!.trigger('click')
+      w.unmount()
+      vi.advanceTimersByTime(5000)
+      expect(navigate).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('volver con Atrás desde Google no deja la página congelada', async () => {
+    // bfcache restaura el heap intacto: rating puesto y temporizador gastado.
+    // Sin recargar, queda un «Redirigiendo…» permanente sin forma de calificar.
+    const reload = vi.fn()
+    const w = factory()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, reload },
+    })
+    window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted: true }))
+    expect(reload).toHaveBeenCalled()
+
+    // Y una restauración normal (sin bfcache) no recarga nada.
+    reload.mockClear()
+    window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted: false }))
+    expect(reload).not.toHaveBeenCalled()
+    w.unmount()
+  })
+})
+
+describe('SCEN-3 — 1-3★ se queda en la página', () => {
+  it('bloquea las estrellas, abre el formulario y no navega', async () => {
+    vi.useFakeTimers()
+    try {
+      const w = factory()
+      await stars(w)[1]!.trigger('click')
+
+      expect(gold(w)).toBe(2)
+      expect(stars(w).filter((s) => s.attributes('aria-checked') === 'true')).toHaveLength(1)
+      expect(stars(w)[1]!.attributes('aria-checked')).toBe('true')
+      // Congelado con aria-disabled, no con `disabled`: el nativo desenfoca el
+      // botón enfocado y tira el foco a <body>.
+      expect(stars(w).every((s) => s.attributes('aria-disabled') === 'true')).toBe(true)
+      expect(stars(w).every((s) => s.attributes('disabled') === undefined)).toBe(true)
+      expect(form(w).exists()).toBe(true)
+      expect(w.html()).not.toContain(GBP_SENTINEL)
+
+      // Ninguna espera escondida que acabe llevándolo a Google igual.
+      vi.advanceTimersByTime(5000)
+      expect(navigate).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('el foco se va al formulario recién aparecido', async () => {
+    // En móvil el bloque nace bajo el pliegue: sin mover el foco, la persona ve
+    // las estrellas doradas, cree que terminó y cierra. Enfocar el encabezado
+    // lo anuncia y lo trae a la vista de una vez.
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await nextTick()
+
+    const heading = w.find('h2')
+    expect(heading.attributes('tabindex')).toBe('-1')
+    expect(document.activeElement).toBe(heading.element)
+  })
+
+  it('la página enlaza la política de privacidad donde pide datos', async () => {
+    // Nombre, correo, teléfono, número de reserva y texto libre: Ley 1581/2012.
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    expect(w.findAll('a').some((a) => a.attributes('href') === '/politica-privacidad')).toBe(true)
+  })
+
+  it('re-calificar es imposible: las estrellas ya no responden', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await stars(w)[4]!.trigger('click')
+
+    expect(stars(w)[1]!.attributes('aria-checked')).toBe('true')
+    expect(stars(w)[4]!.attributes('aria-checked')).toBe('false')
+    expect(gold(w)).toBe(2)
+    expect(form(w).exists()).toBe(true)
+    expect(navigate).not.toHaveBeenCalled()
+  })
+})
+
+describe('SCEN-4 — el envío lleva la calificación', () => {
+  it('postea a /api/contact con type resenas y estrellas "2 de 5"', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(1))
+
+    const [url, options] = post.mock.calls[0]!
+    expect(url).toBe('/api/contact')
+    expect(options.method).toBe('POST')
+    expect(options.body).toMatchObject({
+      type: 'resenas',
+      estrellas: '2 de 5',
+      nombre: 'Ana Ramírez',
+      email: 'ana@ejemplo.com',
+      mensaje: 'El carro llegó sin gasolina y esperé 40 minutos.',
+    })
+  })
+
+  it('la calificación enviada es la que se eligió, no una fija', async () => {
+    const w = factory()
+    await stars(w)[2]!.trigger('click')
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(1))
+
+    expect(post.mock.calls[0]![1].body.estrellas).toBe('3 de 5')
+  })
+
+  it('confirma el envío a quien escribió', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await vi.waitFor(() => expect(formStatus(w).text()).toContain('Gracias'))
+  })
+
+  it('volver a pulsar Enviar no borra el acuse de recibo', async () => {
+    // Los campos quedan vacíos tras enviar: un segundo envío los validaba y
+    // pintaba tres errores rojos encima del "gracias", así que quien SÍ había
+    // enviado su queja concluía que no se había enviado.
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await vi.waitFor(() => expect(formStatus(w).text()).toContain('Gracias'))
+
+    await form(w).trigger('submit')
+    expect(post).toHaveBeenCalledTimes(1)
+    expect(formStatus(w).text()).toContain('Gracias')
+    expect(w.find('#e-mensaje').exists()).toBe(false)
+    expect(w.find('button[type="submit"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('pero escribir de nuevo vuelve a habilitar el envío', async () => {
+    // El bloqueo es contra el doble clic, no un candado: quien tenga algo más
+    // que contar tiene que poder mandarlo sin recargar.
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await vi.waitFor(() => expect(formStatus(w).text()).toContain('Gracias'))
+
+    await fillForm(w)
+    expect(w.find('button[type="submit"]').attributes('disabled')).toBeUndefined()
+    await form(w).trigger('submit')
+    await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(2))
+  })
+})
+
+describe('SCEN-6 — sin mensaje no sale nada a la red', () => {
+  it('marca el campo y no llama a la API', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await fillForm(w, 'mensaje')
+    await form(w).trigger('submit')
+
+    expect(post).not.toHaveBeenCalled()
+    expect(w.find('#e-mensaje').exists()).toBe(true)
+    expect(w.find('#f-mensaje').attributes('aria-invalid')).toBe('true')
+  })
+
+  it('lo anuncia y lleva el foco al campo, en vez de fallar en silencio', async () => {
+    // Los mensajes inline son párrafos estáticos: sin región live ni foco, quien
+    // usa lector de pantalla sólo percibe que el botón no hace nada.
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await fillForm(w, 'mensaje')
+    await form(w).trigger('submit')
+
+    expect(w.find('form [role="alert"]').text()).toContain('Revisa los campos marcados')
+    expect(document.activeElement).toBe(w.find('#f-mensaje').element)
+  })
+})
+
+describe('SCEN-7 — por teclado se llega a la misma rama que con el clic', () => {
+  it('flecha derecha ×2 + Enter califica con 3 y abre el formulario', async () => {
+    const w = factory()
+    stars(w)[0]!.element.focus()
+
+    const press = async (key: string) => {
+      const focused = stars(w).find((s) => s.element === document.activeElement)
+      await focused!.trigger('keydown', { key })
+    }
+    await press('ArrowRight')
+    await press('ArrowRight')
+    // Pasar por la 2ª estrella no puede haber abierto ya el formulario, ni
+    // haber anunciado nada como marcado.
+    expect(form(w).exists()).toBe(false)
+    expect(stars(w).filter((s) => s.attributes('aria-checked') === 'true')).toHaveLength(0)
+
+    await press('Enter')
+    expect(form(w).exists()).toBe(true)
+    expect(stars(w)[2]!.attributes('aria-checked')).toBe('true')
+
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(1))
+    expect(post.mock.calls[0]![1].body.estrellas).toBe('3 de 5')
+  })
+
+  it('por teclado también se llega a la rama de Google', async () => {
+    vi.useFakeTimers()
+    try {
+      const w = factory()
+      stars(w)[3]!.element.focus()
+      await stars(w)[3]!.trigger('keydown', { key: 'Enter' })
+      vi.advanceTimersByTime(800)
+      expect(navigate).toHaveBeenCalledWith(GBP_URL, { external: true, replace: true })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+describe('SCEN-8 — fuera del índice de Google', () => {
+  const ROOT = join(__dirname, '..', '..', '..') // → packages/ui-alquilatucarro
+  const read = (rel: string): string => readFileSync(join(ROOT, rel), 'utf-8')
+
+  it('la página pide noindex, nofollow al montarse', () => {
+    // Se afirma sobre la LLAMADA, no sobre el texto del archivo: la cadena
+    // podría quedar en una rama muerta o en un comentario y el archivo seguiría
+    // conteniéndola.
+    factory()
+    expect(head).toHaveBeenCalled()
+    const metas = head.mock.calls.flatMap(([arg]) => arg?.meta ?? [])
+    expect(metas).toContainEqual({ name: 'robots', content: 'noindex, nofollow' })
+  })
+
+  it('nuxt.config la excluye del sitemap', () => {
+    const config = read('nuxt.config.ts')
+    const sitemapBlock = config.slice(config.indexOf('sitemap: {'))
+    expect(sitemapBlock).toContain("'/opinion'")
+  })
+
+  it('la cabecera HTTP dice lo mismo que el <meta>', () => {
+    // Sin el x-robots-tag, un crawler que solo mire cabeceras la trataría como
+    // indexable — la misma incoherencia que ya se cerró para /chat y /pendiente.
+    // Es una comprobación de TEXTO: nada aquí genera el sitemap ni sirve la
+    // ruta, así que un patrón que radix3 no resuelva pasaría igual (ver el
+    // precedente de /lab-** en los comentarios de nuxt.config.ts).
+    const config = read('nuxt.config.ts')
+    expect(config).toMatch(
+      /'\/opinion':\s*\{\s*robots:\s*'noindex, nofollow',\s*headers:\s*\{\s*'x-robots-tag':\s*'noindex, nofollow'/,
+    )
+  })
+})

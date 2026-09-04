@@ -1,6 +1,26 @@
-# Página de opinión de alquilame (`/opinion`)
+# Página de opinión (`/opinion`)
 
-Fecha: 2026-07-29 · Marca: alquilame · Paquete: `packages/ui-alquilame`
+Fecha: 2026-07-29 · Marcas: alquilame, alquilatucarro (desde 2026-09-03)
+Paquetes: `packages/ui-alquilame`, `packages/ui-alquilatucarro`
+
+> **Réplica en alquilatucarro (2026-09-03).** Este documento es el contrato de las DOS
+> páginas. Son la misma salvo tres cosas:
+>
+> | | alquilame | alquilatucarro |
+> |---|---|---|
+> | Ficha de Google | `https://g.page/r/Ce09QLF1RhqkEBM/review` | `https://www.google.com/maps/place//data=!4m3!3m2!1s0xa2258f5934dd7fc3:0x61229dafa110309c!12e1` |
+> | Paleta | escala `brand-*` (`theme.css`) | `red-*` de Tailwind — alquilatucarro no tiene escala `brand` |
+> | Remitente Resend | `Alquilame <onboarding@resend.dev>` | `Alquilatucarro <onboarding@resend.dev>` |
+>
+> alquilatucarro no tiene alias corto `g.page/r/…` en su panel de GBP; de ahí el enlace
+> largo de Maps. El `!12e1` del final es lo que abre el cuadro de reseña — sin él se cae
+> en la ficha. El `1s0x…:0x…` sale de expandir el enlace corto de Maps del negocio con
+> `curl -sIL -A "curl/8.0" <enlace-corto>`.
+>
+> Un cambio de comportamiento en una página tiene que replicarse en la otra: los dos
+> paquetes tienen copias independientes de `StarRating.vue`, `PublicContactForm.vue`,
+> `server/utils/contact-forms.ts` y `server/api/contact.post.ts`, y sus suites de tests
+> son gemelas.
 
 ## Qué es y de dónde viene
 
@@ -27,7 +47,7 @@ negative reviews, or selectively solicit positive reviews». No reabrir la discu
 | Destino Google | `https://g.page/r/Ce09QLF1RhqkEBM/review` — sin parámetros: el diálogo de Google **descarta** cualquier texto que se le pase (`?text=`, `?review=`, `?comment=` probados en navegador). No se puede prerrellenar la reseña, y la política de Google prohíbe pedir que incluya contenido concreto |
 | Destino del correo | `NUXT_CONTACT_EMAIL_TO` vía Resend (tubería existente) |
 | Indexación | `noindex, nofollow` + fuera del sitemap |
-| Alcance | Solo alquilame. No replicar en las otras dos marcas |
+| Alcance | alquilame y alquilatucarro (ver «Réplica en alquilatucarro»). alquicarros NO |
 
 Fuera de alcance: envío del enlace al cliente (sale del dashboard), persistencia en base
 de datos, réplica cross-marca.

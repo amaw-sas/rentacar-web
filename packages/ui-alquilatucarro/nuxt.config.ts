@@ -404,6 +404,19 @@ export default defineNuxtConfig({
     // Override with NUXT_RENTACAR_ADMIN_URL and NUXT_RENTACAR_ADMIN_API_KEY
     rentacarAdminUrl: '',
     rentacarAdminApiKey: '',
+    // Formularios públicos (hoy sólo las calificaciones bajas de /opinion) —
+    // server-only. Override con NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO /
+    // NUXT_CONTACT_EMAIL_FROM.
+    // El remitente es el sandbox de Resend (onboarding@resend.dev): NO requiere
+    // dominio verificado, pero Resend sólo entrega al correo dueño de la cuenta.
+    // Por eso el destino es info@artesyweb.com, igual que en alquilame. Si algún
+    // día se verifica alquilatucarro.com en Resend, basta cambiar estas dos
+    // variables por entorno.
+    // Nota: NO se envía copia a quien llena el formulario — el correo es una
+    // notificación interna; su dirección viaja en reply-to para poder responder.
+    resendApiKey: '',
+    contactEmailTo: 'info@artesyweb.com',
+    contactEmailFrom: 'Alquilatucarro <onboarding@resend.dev>',
     // Public config (exposed to client)
     public: {
       rentacarFranchise: "alquilatucarro",
@@ -518,6 +531,9 @@ export default defineNuxtConfig({
       '/pendiente': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/sindisponibilidad': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/reservado/**': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
+      // /opinion se envía por WhatsApp o correo después del alquiler; no es
+      // tráfico orgánico. Sin prerender: la página es interactiva.
+      '/opinion': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       // Issue #322 SCEN-322-N01 — ONE render strategy per route. Home + the 19
       // city landings used to be BOTH in prerender.routes and here with
       // `isr: 3600`; the prerendered snapshot won and ISR was dead letter, so
@@ -614,7 +630,7 @@ export default defineNuxtConfig({
       { loc: '/gana/politicas-privacidad' },
     ],
     sources: ['/api/__sitemap__/blog'],
-    exclude: ['/chat', '/tiktok', '/pendiente', '/sindisponibilidad', '/reservado/**', '/*/buscar-vehiculos/**', '/seo/**'],
+    exclude: ['/chat', '/tiktok', '/opinion', '/pendiente', '/sindisponibilidad', '/reservado/**', '/*/buscar-vehiculos/**', '/seo/**'],
   },
 
   robots: {
