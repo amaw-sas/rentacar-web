@@ -1,14 +1,14 @@
 ---
 brand: alquilame
 slug: pico-y-placa-carro-alquilado
-title: "En un carro alquilado, esa placa no la elegiste tú"
+title: "Pico y placa en un carro alquilado: qué preguntar"
 meta_title: "Pico y placa en un carro alquilado | Alquílame"
-description: "La exención de pico y placa es del vehículo, no de quien lo conduce. Estas son las preguntas que hay que hacer antes de recibir las llaves."
+description: "«Este carro no tiene pico y placa» casi siempre significa «aquí no lo tiene». Lo que conviene preguntar antes de recibir las llaves, y por qué."
 image: /img/blog/pico-y-placa-carro-alquilado.webp
 alt: "Unas llaves de carro sobre el mostrador de una oficina de alquiler, con un vehículo desenfocado al fondo, sin logos ni placas legibles"
 author_name: Diego Melo
 author_avatar: /img/blog/author-avatar.png
-date: 2026-08-24
+date: 2026-09-07
 category: tips
 tags:
   - pico-y-placa
@@ -16,19 +16,21 @@ tags:
   - viajes
   - multas
   - colombia
-reading_time: 10
+reading_time: 18
 featured: true
 ---
 
-Escoges el destino, las fechas y la categoría del carro. La placa no.
+Un carro de alquiler se reserva por categoría: económico, familiar, camioneta. Nunca por placa.
 
-La placa te la entregan en un mostrador, cinco minutos antes de arrancar, con el itinerario ya comprado y pagado. Si el último dígito cae mal, no hay nada que reorganizar: el vuelo es el que es, el hotel también, y el carro ya está a tu nombre.
+La placa la trae el carro que te asignen, y sabes cuál es en el mostrador, cinco minutos antes de arrancar, con el vuelo y el hotel ya pagados. Si el último dígito de ese carro está restringido el día que lo recoges, no puedes sacarlo. Si lo está el día que tienes que devolverlo, no puedes llevarlo de vuelta.
 
-Ahí está toda la diferencia entre este caso y el del que sale de su casa. El dueño de un carro sabe su dígito de memoria y arma la semana alrededor. Tú te enteras al final.
+Ahí está la diferencia con el que sale de su casa. El dueño de un carro conoce su dígito de memoria y arma la semana alrededor de él. Tú lo conoces al final, cuando ya no hay nada que mover.
 
-**Aviso antes de seguir:** esto lo escribimos nosotros, que alquilamos carros. Lo decimos de entrada porque el interés se nota igual y porque es justo lo que nos da algo que contar: sabemos qué se pregunta en el mostrador y, sobre todo, qué no se puede responder ahí. La contrapartida es que este artículo no te va a prometer que los carros de alquiler están exentos de nada. Te va a decir qué preguntar y cómo comprobarlo por tu cuenta.
+Se resuelve en el mostrador, y en dos minutos, porque ahí están las dos mitades del dato. La rentadora sabe todo del carro: la placa, en qué ciudad está matriculado, qué dice su licencia de tránsito. Tú sabes todo del viaje: a qué ciudades vas, qué días manejas y cuándo lo devuelves. Ninguna mitad sirve sola. Juntas, la respuesta sale en una hoja.
 
-## La restricción mira la placa, no al conductor
+**Aviso antes de seguir:** esto lo escribimos nosotros, que alquilamos carros. Lo decimos de entrada porque el interés se nota igual y porque es justo lo que nos da algo que contar: sabemos qué se pregunta en el mostrador y, sobre todo, qué no se puede responder ahí. La contrapartida es que este artículo no te va a prometer que los carros de alquiler están exentos de nada. Te va a decir qué datos hay que cruzar y dónde está cada uno.
+
+## Un carro de alquiler no tiene ningún régimen especial
 
 Un carro alquilado es un vehículo particular y cumple el pico y placa de la ciudad donde esté circulando, igual que cualquier otro. No hay régimen distinto para la flota de alquiler.
 
@@ -36,9 +38,9 @@ Lo revisamos donde más completo está escrito: el artículo 230 del Decreto Dis
 
 Eso ya descarta la pregunta más frecuente. Lo que sigue es más incómodo.
 
-## La exención es del vehículo, no de quien lo conduce
+## Y tu exención personal no se sube al carro que alquilas
 
-Esta es la parte que casi nadie explica y la que más problemas causa en un mostrador.
+Esta es la parte que casi nadie explica y la que más discusiones causa en un mostrador. Si tú tienes derecho a una excepción —por discapacidad, por ser periodista, por lo que sea— ese derecho no se traslada al carro que te acaban de entregar. Y la razón está en cómo están escritas las normas.
 
 Cuando la norma exceptúa a alguien, lo que exceptúa es un carro concreto. Mira cómo está redactada la excepción por discapacidad en el artículo 230:
 
@@ -52,7 +54,7 @@ La de autoridades judiciales está construida igual: habla de «vehículos de pr
 
 En todos los casos el sujeto de la frase es el carro. Que tú tengas derecho a una excepción no le sirve de nada a un vehículo que no es el tuyo, y ese es el punto de partida de cualquier viaje en carro alquilado.
 
-## Y hay exenciones que dependen de un registro al que no tienes acceso
+## El registro de exceptuados no lo publica ninguna ciudad
 
 La segunda mitad del problema es de operación, no de derecho.
 
@@ -62,30 +64,32 @@ La segunda mitad del problema es de operación, no de derecho.
 
 Traducido: ante un agente en la vía basta con demostrar la condición; ante una cámara hay que estar inscrito en el registro de exceptuados. Y ese registro es una base de datos de la secretaría, no una lista publicada.
 
-Para el que alquila esto significa una cosa muy concreta: **no puedes saber por tu cuenta si el carro que te entregaron está inscrito.** No lo dice la placa, no lo dice el contrato, no lo dice mirar el carro.
+Para el que alquila esto significa una cosa concreta: **mirar el carro no te dice si está inscrito.** No lo dice la placa ni lo dice la carrocería. Ese dato vive en la base de la secretaría y en los papeles del propietario, que en un alquiler es la empresa. Existe y se puede saber: hay que pedirlo, no adivinarlo.
 
 Con dos excepciones que vale la pena conocer, porque son las únicas ventanillas abiertas que encontramos:
 
 - **Bogotá** tiene una consulta pública por placa en `movilidadbogota.gov.co/web/SIMUR/excepciones/consultarPlaca/`. Un campo, la placa, un captcha. Ahí ves si esa placa figura como exceptuada y si la inscripción está vigente.
 - **Envigado** tiene su propio portal, y el decreto municipal se lo recomienda al conductor por escrito: la causal «será validada por el cuerpo operativo mediante la página web […], por lo anterior, se recomienda verificar la inscripción de la placa del vehículo en ese link, antes de transitar en la jurisdicción del municipio de Envigado» (Decreto 20260000804 del 24 de julio de 2026, numeral 4.23).
 
-En el resto del país no encontramos consulta pública por placa. Ahí la única vía es preguntar.
+En el resto del país no encontramos consulta pública por placa. Ahí el dato hay que pedírselo a quien tenga los papeles del carro.
 
-## Las cinco preguntas del mostrador
+## Los cinco datos que resuelven el viaje
 
-Esta es la parte útil. Son preguntas cortas, se responden en dos minutos y conviene hacerlas antes de firmar, no después.
+Esta es la parte útil. Son cinco datos, los cinco los tiene la rentadora a la mano, y con ellos ya puedes cruzar tu itinerario contra el calendario de cada ciudad.
 
 | Pregunta | Por qué importa | Qué haces con la respuesta |
 |---|---|---|
-| ¿Cuál es la placa? | Es el único dato con el que puedes verificar cualquier cosa | Anótala y crúzala con el calendario de cada ciudad de tu ruta |
+| ¿Cuál es la placa? | Es el único dato con el que puedes verificar cualquier cosa | Crúzala con el calendario del día que lo recoges, del día que lo devuelves y de cada ciudad de la ruta |
 | ¿En qué ciudad está matriculado el carro? | En varias ciudades el horario cambia según eso | Ver la sección siguiente |
-| ¿Qué dice el campo COMBUSTIBLE de la licencia de tránsito? | Es lo que decide la exención de eléctricos e híbridos | Si dice `GASOLINA` o `ACPM`, no hay exención por ese lado |
+| ¿Qué dice la casilla COMBUSTIBLE de la licencia de tránsito? | Es la que decide la exención de eléctricos e híbridos, y en un eléctrico dice `ELECTRICO` | Si dice `GASOLINA` o `ACPM`, no hay exención por ese lado |
 | ¿La placa está inscrita en el registro de exceptuados de las ciudades a las que voy? | Es lo que te protege frente a las cámaras | En Bogotá y Envigado compruébalo tú mismo por placa |
-| Si el carro queda inmovilizado, ¿quién paga grúa y patios? | Es la factura grande, y es contractual, no legal | Que te lo señalen en el contrato, no de palabra |
+| ¿A qué número llamo si el carro queda inmovilizado? | El carro es de la empresa, así que sacarlo de patios pasa por ella y cada hora cuenta | Guárdalo en el teléfono antes de salir, no lo busques desde la grúa |
 
-La tercera tiene truco a favor tuyo: la licencia de tránsito viaja con el carro y trae impreso el campo COMBUSTIBLE. No tienes que creerle a nadie, la lees. De hecho, los decretos de Envigado y de Itagüí exigen exhibir ese documento ante la autoridad justamente para acreditar que el vehículo es eléctrico o híbrido.
+**Si el dígito cae mal, pide otra unidad.** Es la salida más simple y casi nadie la usa. Nadie reserva una placa: se reserva una categoría, y en el patio suele haber varios carros de esa misma categoría con dígitos distintos. Pedir uno cuyo último dígito no esté restringido ni el día que lo recoges ni el día que lo devuelves es una petición normal. No siempre hay disponible, pero preguntarlo antes de firmar no cuesta nada. Después, cambiar de carro ya es rehacer el papeleo.
 
-La quinta no es una pregunta jurídica y por eso la respuesta cambia de empresa en empresa. Pídela por escrito.
+La tercera pregunta tiene truco a favor tuyo: la licencia de tránsito viaja con el carro y trae impresa esa casilla. Es un dato que puedes leer tú mismo, ahí en el mostrador. De hecho, los decretos de Envigado y de Itagüí exigen exhibir ese documento ante la autoridad justamente para acreditar que el vehículo es eléctrico o híbrido.
+
+La quinta parece de trámite y es la que más tiempo ahorra. Quién paga la multa no se discute: la paga quien iba manejando. Lo que sí cambia según a qué hora llames es cuánto tarda el carro en salir de patios, porque los papeles los tiene que presentar el propietario del vehículo.
 
 ## Por qué la ciudad de matrícula pesa tanto aquí
 
@@ -105,7 +109,7 @@ Itagüí y Sabaneta tienen la misma cláusula con idéntico límite de un día. 
 
 Léela con cuidado: exige placa de otro departamento. Si alquilaste en Medellín, el carro tiene placa de Antioquia y la cláusula no te cubre. Si llegaste manejando desde Bogotá en un carro alquilado allá, sí te cubre —el primer día, en tres de los cinco municipios, y solo si guardaste el tiquete del peaje de entrada al departamento—.
 
-## El combustible: lo único que sí vale en todo el país
+## La única exención que cruza todo el país es la del eléctrico
 
 Hay una sola exención de alcance nacional, y es la de los eléctricos.
 
@@ -117,7 +121,9 @@ Esa exención vive en una ley nacional, así que no depende de que la alcaldía 
 
 Los híbridos son otra historia: su exención es municipal, ciudad por ciudad, y depende de cómo quedó registrado el tipo de combustible del vehículo. Bogotá los exceptúa en el numeral 17 de su artículo 230; el RUNT solo maneja cuatro etiquetas para todo esto —`GASO ELEC`, `DIES ELEC`, `ELECTRICO` e `HIDROGENO`—, y lo que decide es cuál de ellas quedó en la matrícula. Lo desarrollamos en [el artículo sobre carros eléctricos e híbridos](/blog/carros-electricos-hibridos-pico-y-placa), que explica por qué un carro que la marca vende como «hybrid» puede estar matriculado como gasolina y no clasificar.
 
-De ahí que la pregunta útil en el mostrador no sea «¿este carro es híbrido?» sino «¿qué dice el campo COMBUSTIBLE de la licencia?».
+Un aviso sobre esas etiquetas, porque despistan. La licencia de tránsito llama **COMBUSTIBLE** a ese campo aunque el carro no queme nada: un eléctrico puro trae ahí escrita la palabra `ELECTRICO`. No es un error del documento, es el nombre que le puso el RUNT a la casilla, y es la casilla que se coteja.
+
+De ahí que la pregunta útil en el mostrador no sea «¿este carro es híbrido?» sino «¿qué dice esa casilla en la licencia?».
 
 ## El Pico y Placa Solidario no lo puedes comprar tú
 
@@ -141,7 +147,9 @@ El artículo 131 del Código Nacional de Tránsito, modificado por el artículo 
 
 La inmovilización está en el texto de la norma. Y el carro no llega solo a patios: llega en grúa, y sale pagando grúa y parqueadero.
 
-Para quien maneja en su ciudad eso es un mal día. Para quien va de viaje es otra cosa: el carro queda retenido en una ciudad de paso, con la reserva del hotel corriendo, el vuelo de vuelta en pie y un trámite de recuperación que hay que hacer en persona. Y encima el carro no es tuyo, así que el trámite pasa por la empresa.
+Para quien maneja en su ciudad eso es un mal día. Para quien va de viaje es otra cosa: el carro queda retenido en una ciudad de paso, con la reserva del hotel corriendo y el vuelo de vuelta en pie.
+
+La multa la paga quien iba manejando, y eso no lo discute nadie. Lo que cambia en un alquiler es el trámite: el carro es de la empresa, así que sacarlo de patios se hace entre las dos partes y no lo puede resolver el conductor solo. A la rentadora tampoco le sirve —un carro en patios es un carro que no está alquilado—, así que las dos quieren lo mismo, que es que esto no pase.
 
 La multa, para dimensionarla, son $633.111 en 2026, no los $875.452 que todavía circulan por ahí. La cuenta completa está en [el artículo sobre la multa de pico y placa](/blog/multa-pico-y-placa-2026-colombia).
 
@@ -161,11 +169,40 @@ Es el mejor resumen de por qué «consulta el calendario de la ciudad a la que v
 
 Esa última fila es la trampa perfecta para un viajero: la ciudad sin pico y placa lo activa exactamente los cuatro días del año en que más gente alquila un carro allá.
 
+## Una ciudad puede cambiar la regla de un día para otro
+
+Todo lo anterior supone que la ciudad a la que viajas tiene su regla de siempre. No siempre la tiene.
+
+Mientras se publica esto, Manizales corre una restricción temporal por el sismo del 10 de agosto. Rige hasta el **15 de septiembre de 2026**, todos los días, sábados y domingos incluidos, de cinco de la mañana a diez de la noche (Decreto 0292 del 31 de agosto de 2026). Y ojo con la trampa: Manizales no tiene pico y placa permanente para particulares, así que quien pregunte «¿allá hay pico y placa?» y se guíe por lo de siempre va a leer que no.
+
+Ese decreto trae tres frases que le pegan de lleno a quien alquila:
+
+- **Los eléctricos e híbridos están dentro de la restricción.** La exención nacional de la Ley 1964 no alcanza, porque la medida se ampara en las razones de seguridad que la propia ley deja fuera de su protección.
+- **La placa de otro municipio no basta por sí sola.** Exime a quien esté de paso o tenga la ciudad como destino, pero hay que acreditarlo con el comprobante de peaje de esa fecha y esa hora. Guardar el tiquete deja de ser un detalle.
+- **Estar exceptuado no te abre una vía cerrada.** Son dos medidas distintas y el decreto las separa.
+
+Hay un problema añadido, y es el peor para un viajero: los sitios donde la gente consulta el pico y placa tardan días en recoger un decreto de emergencia. Lo medimos durante trece días en Cali y Manizales y fallaron 30 de 52 veces, siempre en los días en que la regla no era la de siempre. Los números están en [el artículo sobre el pico y placa por emergencia](/blog/pico-y-placa-emergencia-colombia).
+
+## «Este carro no tiene pico y placa» casi siempre significa «aquí no lo tiene»
+
+Es la frase que más viajes daña, y lo peor es que casi nunca es mentira. Es verdad. Es verdad en el sitio donde te la dicen.
+
+Un carro puede estar libre de pico y placa por cuatro razones distintas, y tres de las cuatro se acaban en el límite del municipio:
+
+- **Porque esa ciudad no tiene la medida.** Manizales no tiene pico y placa permanente para particulares, y Barranquilla tampoco. La oficina que te entrega el carro te está diciendo la verdad: ahí no hay restricción. Manejas cuatro horas y sí la hay.
+- **Porque el carro está inscrito como exceptuado.** Esa inscripción vive en la base de datos de un municipio y no se hereda al cruzar el límite.
+- **Porque tiene Pico y Placa Solidario.** Ese permiso es de Bogotá, no sirve en el pico y placa regional y no sirve en el Día sin carro.
+- **Porque es híbrido.** Su exención la concede cada alcaldía. Bogotá la da; Manizales, mientras dure su medida temporal, no.
+
+Solo una razón viaja contigo a donde vayas: que el carro sea eléctrico puro, porque esa exención la da una ley nacional y no una alcaldía.
+
+De ahí que la pregunta útil no sea «¿este carro tiene pico y placa?» sino **«¿tiene pico y placa en las ciudades a las que voy?»**. Es la misma pregunta con el destino adentro, y cambia la respuesta.
+
 ## Lo que no viaja de una ciudad a otra
 
 Buscamos una norma de reconocimiento mutuo de exenciones entre municipios —nacional, departamental o metropolitana— y no existe. Lo que hay es lo contrario: cada decreto se declara territorial y remite a su propia base de datos. El de Bello, por ejemplo, dice que la medida «aplica en toda la jurisdicción del municipio de Bello» y habla de registrar la exención en la «base de datos locales».
 
-O sea que una inscripción no se hereda al cruzar el límite municipal. La única que sí cruza es la de la Ley 1964 para eléctricos y de cero emisiones. Los demás casos hay que mirarlos ciudad por ciudad, y en un viaje largo eso son varias ciudades: lo contamos con números en [el artículo sobre el viaje de Cali a Bogotá](/blog/pico-y-placa-viaje-cali-bogota). Y si tu ruta pasa por Bogotá, la lista completa de las dieciocho excepciones del artículo 230 —con cuáles exigen trámite y cuáles no— está en [el artículo sobre las exenciones de Bogotá](/blog/exenciones-pico-y-placa-bogota).
+O sea que una inscripción no se hereda al cruzar el límite municipal. La única que sí cruza es la de la Ley 1964 para eléctricos y de cero emisiones. Los demás casos hay que mirarlos ciudad por ciudad, y en un viaje largo eso son varias ciudades: un Cali–Bogotá con paradas cruza ocho municipios, con ocho decretos y ocho listas de excepciones que no se hablan entre sí. Y si tu ruta pasa por Bogotá, la lista completa de las dieciocho excepciones del artículo 230 —con cuáles exigen trámite y cuáles no— está en [el artículo sobre las exenciones de Bogotá](/blog/exenciones-pico-y-placa-bogota).
 
 ## Por qué escribimos esto nosotros
 
@@ -173,11 +210,13 @@ Cuando buscas «pico y placa carro alquilado» en Colombia, la primera página d
 
 La diferencia que intentamos poner es de método: cada afirmación de arriba tiene su norma, su artículo y su fecha, y lo que no pudimos verificar está declarado abajo. Nos parece más honesto que escribirlo sin firma y hacerlo pasar por neutral.
 
-Y por eso mismo no vas a encontrar aquí la frase «nuestros carros están exentos». Esa afirmación se responde placa por placa, no flota por flota, y quien la haga en general te está vendiendo algo.
+Y por eso mismo no vas a encontrar aquí la frase «nuestros carros están exentos». Esa afirmación se responde placa por placa, no flota por flota.
 
 ## Hasta cuándo vale esto
 
-Las normas citadas estaban vigentes al 21 de agosto de 2026. Los calendarios de pico y placa cambian por decreto varias veces al año y sin previo aviso: Cartagena rota cada trimestre, el Valle de Aburrá define su rotación por semestre. Los horarios y dígitos de este artículo son una fotografía de agosto de 2026 y sirven para entender el mecanismo, no para decidir si sacas el carro mañana. Para eso, la fuente oficial del municipio.
+Las normas citadas estaban vigentes al 21 de agosto de 2026, y volvimos a revisarlas el 2 de septiembre antes de publicar. Lo único que cambió en ese intervalo es lo que cuenta la sección de la medida temporal: Manizales prorrogó la suya hasta el 15 de septiembre por el Decreto 0292 del 31 de agosto.
+
+Los calendarios de pico y placa cambian por decreto varias veces al año y sin previo aviso: Cartagena rota cada trimestre, el Valle de Aburrá define su rotación por semestre. Los horarios y dígitos de este artículo son una fotografía y sirven para entender el mecanismo, no para decidir si sacas el carro mañana. Para eso, la fuente oficial del municipio.
 
 ## Lo que no pudimos cerrar
 
@@ -200,6 +239,7 @@ Las normas citadas estaban vigentes al 21 de agosto de 2026. Los calendarios de 
 - Decreto 202404000394 (Bello), artículos 8 y 9 — «base de datos locales» y ámbito municipal
 - Decreto 213 del 8 de mayo de 2026 (Santa Marta) — restricción diferenciada por ciudad de matrícula
 - Decreto 0015 de 2026 (Cartagena) — rotación y horarios de particulares
+- Decreto Extraordinario 012 del 13 de agosto de 2026 y Decreto 0292 del 31 de agosto de 2026 (Manizales) — medida temporal por el sismo y su prórroga
 - Registro Nacional de Cámaras de Fotodetección Autorizadas — Agencia Nacional de Seguridad Vial, `fotodeteccion.ansv.gov.co`
 - Dataset RUNT 2.0 de vehículos eléctricos e híbridos matriculados — `datos.gov.co`
 - Consulta pública de excepciones por placa, Secretaría Distrital de Movilidad — `movilidadbogota.gov.co/web/SIMUR/excepciones/consultarPlaca/`

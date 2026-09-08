@@ -16,7 +16,7 @@ tags:
   - normativa
   - movilidad
   - colombia
-reading_time: 14
+reading_time: 18
 featured: false
 ---
 
@@ -66,7 +66,9 @@ Cuatro cosas cambian al pasar de un municipio a otro: el horario, los dígitos, 
 
 Mira la fila de Manizales. Es la trampa del viaje.
 
-Manizales no tiene pico y placa permanente para carros particulares. Lo que tiene desde el 14 de agosto, después del sismo del 10, es una restricción temporal que corre **todos los días hasta el 31 de agosto de 2026**, domingos incluidos, de cinco de la mañana a diez de la noche. La ciudad publicó el calendario completo, fecha por fecha, en su propio portal. Y tiene 23 cámaras operando, todas habilitadas para C.14.
+Manizales no tiene pico y placa permanente para carros particulares. Lo que tiene desde el 14 de agosto, después del sismo del 10, es una restricción temporal que corre todos los días, domingos incluidos, de cinco de la mañana a diez de la noche. La creó el Decreto Extraordinario 012 del 13 de agosto de 2026 y la Alcaldía ya la prorrogó una vez: el Decreto 0292 del 31 de agosto la extendió **hasta el 15 de septiembre de 2026**. La ciudad publicó el calendario completo, fecha por fecha, en su propio portal. Y tiene 23 cámaras operando, todas habilitadas para C.14.
+
+Que la hayan prorrogado es justo el punto. Una medida de emergencia se anuncia con días de anticipación y se alarga con días de anticipación, así que ninguna fecha que leas en un artículo —este incluido— sustituye mirar el portal de la Alcaldía el día antes de manejar.
 
 Un domingo por la tarde, en una ciudad que normalmente no tiene pico y placa, con veintitrés cámaras encendidas. No hay forma de adivinarlo: hay que ir a mirarlo.
 
@@ -177,7 +179,7 @@ Vale la pena tener presente el matiz procesal: en Bogotá la Alcaldía explica q
 - **Si el carro es híbrido o de gas, mira el campo *combustible* de la tarjeta de propiedad.** Es lo que van a leer, en el RUNT o en la licencia. Si es eléctrico puro, la exención es nacional y no tienes que tramitar nada.
 - **Si vas a estar en Bogotá con un híbrido, tramita la inscripción con más de un mes.** Son 20 días hábiles y no puedes circular hasta que aparezca aprobada.
 - **Si entras a Antioquia por peaje, guarda el tiquete.** Te sirve el primer día en Envigado, Itagüí y Sabaneta, y no en Medellín ni en Bello.
-- **Si el carro es alquilado, pregúntale a la rentadora si la placa está inscrita en algún registro de exentos.** Varias exenciones dependen de padrones municipales que no son públicos: tú no puedes consultarlos, y la exención es del vehículo, no de quien lo conduce.
+- **Si el carro es alquilado, pídele a la rentadora el dato de la placa y de los registros.** Varias exenciones dependen de padrones que los municipios no publican, así que mirar el carro no dice nada; el dato está en los papeles del propietario. Y la exención es del vehículo, no de quien lo conduce: lo desarrollamos en [el artículo sobre el pico y placa en un carro alquilado](/blog/pico-y-placa-carro-alquilado).
 - **Si vuelves a Bogotá un domingo o un lunes de puente, revisa el pico y placa regional.** Funciona por paridad y solo en los corredores de entrada.
 
 ## Cómo verificamos esto y qué no pudimos cerrar
@@ -190,16 +192,15 @@ Lo que queda abierto:
 - **Autorizado no es lo mismo que sancionado.** El registro de la ANSV dice qué está habilitado cada punto, y su campo de estado va con rezago documentado en varias ciudades. Contamos solo los puntos en estado «Operando», que es el criterio conservador.
 - **La ruta que produce el 78% es la que pasa por el Valle de Aburrá y el Eje Cafetero.** El trayecto directo por La Línea da 155 de 314, el 49%. Elegimos la primera porque es la que hace un viaje de varios días con paradas, pero el número depende del itinerario y así hay que leerlo.
 - **No localizamos el decreto de pico y placa de Medellín para el segundo semestre de 2026.** La ficha oficial del trámite de exenciones, consultada el 20 de agosto de 2026, sigue remitiendo al Decreto 0102 de 2024, y ese es el texto que citamos.
-- **No pudimos citar el número del decreto de la medida temporal de Manizales.** El anuncio oficial confirma que existe, pero no lo enumera ni enlaza el PDF. El calendario día por día sí está publicado en texto en el portal de la Alcaldía.
 - **El horario de Santa Marta viene de prensa que cita el Decreto 213 del 8 de mayo de 2026,** no del decreto en su texto original. Marcado en su sección.
 - **No verificamos el formulario de inscripción de exentos de Bogotá.** Exige crear usuario en SIMUR y no iniciamos sesión, así que no sabemos si el sistema pide organismo de tránsito. La norma no lo exige; que la norma calle no garantiza que el software calle.
-- **En agosto de 2026 varias ciudades de la ruta tuvieron esquemas de emergencia** que rompen las suposiciones del régimen ordinario: cinco dígitos por día en lugar de dos, sábados incluidos, paridad en lugar de rotación. Son transitorios por su propio texto. Si viajas, esto es exactamente lo que hay que confirmar el día antes.
+- **En agosto de 2026 varias ciudades de la ruta tuvieron esquemas de emergencia** que rompen las suposiciones del régimen ordinario: cinco dígitos por día en lugar de dos, sábados incluidos, paridad en lugar de rotación. Son transitorios por su propio texto. Medimos durante trece días si los sitios donde se consulta el pico y placa recogían esos decretos, y fallaron 30 de 52 veces: está en [el artículo sobre el pico y placa por emergencia](/blog/pico-y-placa-emergencia-colombia). Si viajas, esto es exactamente lo que hay que confirmar el día antes.
 
 ## Hasta cuándo vale esto
 
 - El decreto de pico y placa de Cali rige hasta el **31 de diciembre de 2026**, y su rotación se renueva por decreto cada 1.º de enero y 1.º de julio.
 - La rotación del Valle de Aburrá se acordó para el **segundo semestre de 2026** y se revisa en el Consejo Metropolitano de Movilidad.
-- La medida temporal de Manizales termina el **31 de agosto de 2026**.
+- La medida temporal de Manizales rige **hasta el 15 de septiembre de 2026** por el Decreto 0292 del 31 de agosto, y puede prorrogarse otra vez.
 - Los horarios y las listas de excepciones de este artículo se verificaron el **20 de agosto de 2026**. Los decretos municipales se expiden por semestre; los de emergencia, en días.
 
 Lo que no tiene fecha de vencimiento es el hallazgo de fondo: no existe norma en Colombia que reconozca la exención de pico y placa otorgada por otro municipio. Ni una ley, ni un decreto nacional, ni un acuerdo metropolitano. El silencio es completo, y es simétrico: tampoco hay norma que lo prohíba. Mientras eso siga así, cruzar una frontera municipal es empezar de cero.
@@ -217,5 +218,5 @@ Lo que no tiene fecha de vencimiento es el hallazgo de fondo: no existe norma en
 - Ley 1964 de 2019, artículo 6 — exención nacional para eléctricos y de cero emisiones
 - Ley 769 de 2002, artículo 131, modificado por la Ley 1383 de 2010, artículo 21 — código C.14 e inmovilización
 - Consejo Metropolitano de Movilidad del Valle de Aburrá, sesión del 15 de julio de 2026 — rotación unificada
-- Portal de la Alcaldía de Manizales, `centrodeinformacion.manizales.gov.co` — medida temporal del 14 al 31 de agosto de 2026
+- Decreto Extraordinario 012 del 13 de agosto de 2026 y Decreto 0292 del 31 de agosto de 2026 (Manizales) — medida temporal por el sismo y su prórroga hasta el 15 de septiembre
 - Secretaría Distrital de Movilidad de Bogotá, boletín del 3 de agosto de 2026 — pico y placa regional del domingo 9 de agosto
