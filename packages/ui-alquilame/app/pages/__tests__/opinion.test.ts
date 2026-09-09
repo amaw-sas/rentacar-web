@@ -522,3 +522,89 @@ describe('SCEN-8 — fuera del índice de Google', () => {
     )
   })
 })
+
+describe('SCEN-10 — el tope de 2.000 no se descubre al enviar', () => {
+  /**
+   * El servidor rechaza a partir de 2.001 (contact-forms.ts, MAX_MESSAGE_LEN).
+   * Que la persona se entere DESPUÉS de escribir y pulsar Enviar es la peor
+   * versión posible: ya está molesta, y encima pierde el texto de vista.
+   *
+   * El `maxlength` del navegador es comodidad, no autoridad — el servidor valida
+   * igual, porque un `curl` no ve ningún atributo.
+   */
+  async function abrirFormulario() {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    return w
+  }
+
+  it('el navegador no deja pasar de 2.000 en el mensaje', async () => {
+    const w = await abrirFormulario()
+    expect(w.find('#f-mensaje').attributes('maxlength')).toBe('2000')
+  })
+
+  it('los demás campos también tienen tope, con los números del servidor', async () => {
+    const w = await abrirFormulario()
+    expect(w.find('#f-nombre').attributes('maxlength')).toBe('120')
+    expect(w.find('#f-email').attributes('maxlength')).toBe('254')
+    expect(w.find('#f-telefono').attributes('maxlength')).toBe('40')
+  })
+
+  it('callado mientras sobra espacio: nadie necesita un contador en 20 palabras', async () => {
+    const w = await abrirFormulario()
+    await w.find('#f-mensaje').setValue('x'.repeat(1000))
+    expect(w.text()).not.toMatch(/2000|2\.000/)
+  })
+
+  it('pero avisa al acercarse, con el número exacto', async () => {
+    const w = await abrirFormulario()
+    await w.find('#f-mensaje').setValue('x'.repeat(1501))
+    expect(w.text()).toMatch(/1501\s*\/\s*2000/)
+  })
+
+  it('el aviso lo anuncia el lector de pantalla sin interrumpir al escribir', async () => {
+    // `polite` y no `assertive`: un contador que corta la lectura en cada tecla
+    // es peor que no tenerlo.
+    const w = await abrirFormulario()
+    await w.find('#f-mensaje').setValue('x'.repeat(1900))
+    const contador = w.find('[data-test="contador-mensaje"]')
+    expect(contador.exists()).toBe(true)
+    expect(contador.attributes('aria-live')).toBe('polite')
+  })
+
+  it('si el servidor rechaza por largo, marca el campo culpable', async () => {
+    // El servidor manda `tooLong` igual que manda `missing`. Sin esto, la
+    // persona lee «hay campos demasiado largos» y no sabe cuál.
+    const w = await abrirFormulario()
+    post.mockRejectedValueOnce({
+      data: {
+        statusMessage: 'Hay campos demasiado largos. El mensaje admite hasta 2000 caracteres.',
+        data: { tooLong: ['mensaje'] },
+      },
+    })
+    await w.find('#f-nombre').setValue('Ana')
+    await w.find('#f-email').setValue('ana@ejemplo.com')
+    await w.find('#f-mensaje').setValue('texto')
+    await form(w).trigger('submit')
+    await nextTick()
+
+    expect(w.find('#f-mensaje').attributes('aria-invalid')).toBe('true')
+    expect(w.text()).toMatch(/demasiado largo/i)
+  })
+
+  it('el aviso de "espera un momento" del servidor se muestra tal cual', async () => {
+    // Es el 429 del tope por hora. El texto lo escribe el servidor en español;
+    // el formulario no debe taparlo con su mensaje genérico.
+    const w = await abrirFormulario()
+    post.mockRejectedValueOnce({
+      data: { statusMessage: 'Recibimos varios mensajes tuyos hace poco. Espera un momento y vuelve a intentarlo.' },
+    })
+    await w.find('#f-nombre').setValue('Ana')
+    await w.find('#f-email').setValue('ana@ejemplo.com')
+    await w.find('#f-mensaje').setValue('texto')
+    await form(w).trigger('submit')
+    await nextTick()
+
+    expect(w.text()).toContain('Espera un momento')
+  })
+})

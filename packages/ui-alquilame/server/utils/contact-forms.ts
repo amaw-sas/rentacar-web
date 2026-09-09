@@ -51,6 +51,7 @@ export type ValidationResult =
   | { ok: true; email: ComposedEmail }
   | { ok: false; reason: 'spam' }
   | { ok: false; reason: 'invalid'; missing: string[] }
+  | { ok: false; reason: 'too-long'; tooLong: string[] }
 
 const LABELS: Record<string, string> = {
   estrellas: 'Calificación',
@@ -130,6 +131,64 @@ const SUBJECT_NAME_MAX = 120
 
 const isEmail = (v: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
+/**
+ * Largo máximo por campo. Vive AQUÍ, en el servidor, porque el `maxlength` del
+ * formulario es comodidad para quien escribe, no autoridad: un `curl` no lo ve.
+ *
+ * Por qué hace falta: /api/contact es público y sin autenticar, y cada envío
+ * válido gasta un correo de Resend — la misma cuota por la que salen las
+ * confirmaciones de reserva. Sin tope, pegar megabytes en `mensaje` produce un
+ * correo de megabytes.
+ *
+ * Se mide en CARACTERES y no en bytes: 2.000 «ñ» son 4.000 bytes en UTF-8, y
+ * medir bytes le cobraría el doble a quien escribe en español.
+ *
+ * 2.000 en `mensaje` es decisión del dueño: ~350 palabras, de sobra para contar
+ * qué pasó con fechas y nombres. `nombre` hereda el tope del asunto del correo
+ * y `email` el máximo de la norma.
+ */
+/** Exportado: el handler lo nombra en el aviso al visitante, y así no se duplica. */
+export const MAX_MESSAGE_LEN = 2000
+
+const MAX_LEN: Record<string, number> = {
+  mensaje: MAX_MESSAGE_LEN,
+  nombre: SUBJECT_NAME_MAX,
+  negocio: SUBJECT_NAME_MAX,
+  email: 254,
+  telefono: 40,
+  reserva: 40,
+  vehiculos: 40,
+  estrellas: 40,
+  ciudad: 120,
+  ubicacion: 120,
+}
+
+/** Tope de la única lista que existe (`tipos`): 8 opciones reales, 20 de margen. */
+const MAX_LIST_ITEMS = 20
+const MAX_LIST_ITEM_LEN = 60
+
+/**
+ * Campos que se pasan de largo, en el orden de `FIELD_ORDER` para que el aviso
+ * al visitante siga el orden en que ve el formulario.
+ *
+ * Devuelve TODOS los que sobran, no el primero: reportar de a uno obliga a
+ * enviar, corregir y volver a fallar.
+ */
+function overLength(raw: ContactFormPayload): string[] {
+  return FIELD_ORDER.filter((field) => {
+    const value = raw[field as keyof ContactFormPayload]
+    if (Array.isArray(value)) {
+      return (
+        value.length > MAX_LIST_ITEMS
+        || value.some((item) => clean(item).length > MAX_LIST_ITEM_LEN)
+      )
+    }
+    const max = MAX_LEN[field]
+    // `clean` recorta antes de medir: los espacios de sobra no gastan tope.
+    return max !== undefined && clean(value).length > max
+  })
+}
+
 /** Un campo "tiene valor" según su forma: texto, lista o casilla marcada. */
 function hasValue(v: unknown): boolean {
   if (Array.isArray(v)) return v.filter((x) => clean(x)).length > 0
@@ -173,6 +232,11 @@ export function validateAndCompose(raw: ContactFormPayload): ValidationResult {
   if (email && !isEmail(email) && !missing.includes('email')) missing.push('email')
 
   if (missing.length) return { ok: false, reason: 'invalid', missing }
+
+  // Después de `missing` a propósito: a quien no puso el correo hay que decirle
+  // eso primero. El largo es un problema de segundo orden.
+  const tooLong = overLength(raw)
+  if (tooLong.length) return { ok: false, reason: 'too-long', tooLong }
 
   const lines = FIELD_ORDER.filter((f) => (FIELD_OWNER[f] ?? type) === type)
     .map((f) => render(f, raw[f as keyof ContactFormPayload]))
