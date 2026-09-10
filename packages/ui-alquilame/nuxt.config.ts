@@ -841,6 +841,12 @@ export default defineNuxtConfig({
     // Nota: NO se envía copia a quien llena el formulario — el correo es una
     // notificación interna; su dirección viaja en reply-to para poder responder.
     resendApiKey: '',
+    // Clave del canal PQRS hacia el dashboard. Propia y no la de reservas, para poder
+    // rotarla sin tumbar ese canal. Declarada aquí porque Nuxt ignora las env vars de
+    // claves ausentes de runtimeConfig: sin esta línea, NUXT_PQRS_API_KEY no llega, el
+    // fail-closed del endpoint dispara siempre y el formulario muere en producción con
+    // la variable bien puesta en Vercel.
+    pqrsApiKey: '',
     contactEmailTo: 'info@artesyweb.com',
     contactEmailFrom: 'Alquilame <onboarding@resend.dev>',
     // Public config (exposed to client)

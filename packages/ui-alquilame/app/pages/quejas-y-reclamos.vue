@@ -26,10 +26,18 @@
         type="quejas"
         :fields="fields"
         submit-label="Enviar mi queja"
-        success-message="Recibimos tu queja. Te responderemos al correo que nos dejaste."
+        :success-message="(r) => acuse(r)"
       />
 
-      <p class="mt-10 body-sm">
+      <p class="mt-6 body-sm">
+        Puedes leer nuestra
+        <NuxtLink to="/politica-privacidad" class="text-brand-700 font-semibold hover:underline">
+          política de privacidad
+        </NuxtLink>
+        antes de enviar.
+      </p>
+
+      <p class="mt-6 body-sm">
         ¿Prefieres hablar con alguien?
         <a :href="franchise.whatsapp" target="_blank" rel="noopener noreferrer" class="text-brand-700 font-semibold hover:underline">
           Escríbenos por WhatsApp
@@ -45,15 +53,42 @@
 
 <script setup lang="ts">
 import type { PublicFormField } from '~/components/PublicContactForm.vue'
+import { CONSENT_TEXT } from '~/utils/policy'
 
 const { franchise } = useAppConfig()
+
+/**
+ * El acuse de recibo. Con radicado lo muestra —es el número con el que la persona puede
+ * preguntar por su caso—, y sin él dice la verdad en vez de pintar un hueco: durante el
+ * corte el endpoint puede responder sin número, y prometer uno que no llegó sería peor
+ * que no prometer nada.
+ */
+function acuse(respuesta: unknown): string {
+  const radicado = (respuesta as { radicado?: string } | null)?.radicado
+  return radicado
+    ? `Recibimos tu queja. Tu número de radicado es ${radicado}; guárdalo para consultar tu caso. Te responderemos al correo que nos dejaste.`
+    : 'Recibimos tu queja. Te responderemos al correo que nos dejaste.'
+}
 
 const fields: PublicFormField[] = [
   { name: 'nombre', label: 'Nombre completo', type: 'text', required: true, autocomplete: 'name' },
   { name: 'email', label: 'Correo electrónico', type: 'email', required: true, autocomplete: 'email' },
   { name: 'telefono', label: 'Teléfono (opcional)', type: 'tel', inputmode: 'tel', autocomplete: 'tel' },
   { name: 'reserva', label: 'Número de reserva (opcional)', type: 'text' },
+  // `pqrs_type` y NO `type`: el cuerpo del POST se compone como
+  // `{ type: props.type, ...values }`, así que un campo llamado `type` pisaría el
+  // discriminante del endpoint y la queja dejaría de enrutarse.
+  {
+    name: 'pqrs_type',
+    label: '¿Qué nos quieres decir?',
+    type: 'radio',
+    required: true,
+    options: ['Petición', 'Queja', 'Reclamo', 'Sugerencia'],
+  },
   { name: 'mensaje', label: 'Cuéntanos qué pasó', type: 'textarea', required: true },
+  // El texto sale de la constante que también viaja con la radicación: lo que se
+  // enseña como prueba tiene que ser exactamente lo que la persona leyó.
+  { name: 'consentimiento', label: CONSENT_TEXT, type: 'checkbox', required: true },
 ]
 
 useHead({ title: 'Quejas y reclamos' })
