@@ -70,6 +70,39 @@
         </p>
       </fieldset>
 
+      <!--
+        Elección única entre varias. Va en <fieldset> con <legend> por la misma razón
+        que checkbox-group: un lector de pantalla necesita oír la pregunta antes de las
+        opciones, o lee cuatro etiquetas sueltas sin saber de qué van. Todos los
+        <input> comparten `name`, que es lo que hace que el navegador los agrupe y que
+        las flechas del teclado se muevan entre ellos.
+      -->
+      <fieldset v-else-if="f.type === 'radio'">
+        <legend class="block text-sm font-semibold text-gray-800 mb-2">
+          {{ f.label }}
+          <span v-if="f.required" class="text-brand-600" aria-hidden="true">*</span>
+          <span v-if="f.required" class="sr-only">(obligatorio)</span>
+        </legend>
+        <div class="flex flex-wrap gap-x-6 gap-y-3">
+          <div v-for="opt in f.options || []" :key="opt" class="flex items-center gap-2">
+            <input
+              :id="`f-${f.name}-${opt}`"
+              v-model="values[f.name]"
+              type="radio"
+              :name="`f-${f.name}`"
+              :value="opt"
+              :aria-invalid="Boolean(errors[f.name])"
+              :aria-describedby="errors[f.name] ? `e-${f.name}` : undefined"
+              class="size-5 border-gray-300 text-brand-600 focus:ring-2 focus:ring-brand-500"
+            >
+            <label :for="`f-${f.name}-${opt}`" class="text-sm text-gray-700">{{ opt }}</label>
+          </div>
+        </div>
+        <p v-if="errors[f.name]" :id="`e-${f.name}`" class="mt-1.5 text-sm text-brand-700">
+          {{ errors[f.name] }}
+        </p>
+      </fieldset>
+
       <template v-else>
       <label :for="`f-${f.name}`" class="block text-sm font-semibold text-gray-800 mb-1.5">
         {{ f.label }}
@@ -136,7 +169,7 @@
       aria-live="polite"
       :class="sent ? 'rounded-xl bg-green-50 border border-green-200 text-green-800 px-4 py-3' : 'sr-only'"
     >
-      {{ sent ? successMessage : '' }}
+      {{ sent ? successText : '' }}
     </p>
     <p
       role="alert"
@@ -151,11 +184,11 @@
 export interface PublicFormField {
   name: string
   label: string
-  type: 'text' | 'email' | 'tel' | 'number' | 'textarea' | 'checkbox' | 'checkbox-group'
+  type: 'text' | 'email' | 'tel' | 'number' | 'textarea' | 'checkbox' | 'checkbox-group' | 'radio'
   required?: boolean
   inputmode?: string
   autocomplete?: string
-  /** Sólo para checkbox-group: las opciones a marcar. */
+  /** Para checkbox-group y radio: las opciones. */
   options?: string[]
 }
 
@@ -169,7 +202,12 @@ const props = withDefaults(
     type: 'quejas' | 'flota' | 'referidos' | 'resenas'
     fields: PublicFormField[]
     submitLabel?: string
-    successMessage?: string
+    /**
+     * Texto del acuse, o una función que lo compone con lo que devolvió el servidor
+     * (el radicado de un PQRS). Función y no siempre-string porque los otros tres
+     * formularios lo pasan como texto y no tienen por qué enterarse del cambio.
+     */
+    successMessage?: string | ((response: unknown) => string)
     /**
      * Datos que la página añade al POST sin que existan como campo visible
      * (la calificación de /opinion). No se limpian al enviar: los pone la
@@ -197,8 +235,21 @@ for (const f of props.fields) {
 const errors = reactive<Record<string, string>>({})
 const sending = ref(false)
 const sent = ref(false)
+/** Lo que devolvió el servidor en el último envío correcto, para el acuse. */
+const response = ref<unknown>(null)
 const failed = ref('')
 const formEl = ref<HTMLFormElement | null>(null)
+
+/**
+ * El acuse ya compuesto. Si `successMessage` es función, se le pasa la respuesta del
+ * servidor — así el formulario de PQRS puede mostrar el radicado sin que el componente
+ * sepa qué es un radicado.
+ */
+const successText = computed(() =>
+  typeof props.successMessage === 'function'
+    ? props.successMessage(response.value)
+    : props.successMessage,
+)
 
 /**
  * Escribir cualquier cosa cancela el acuse anterior y vuelve a habilitar el
@@ -220,7 +271,7 @@ function focusFirstError() {
   const root = formEl.value
   const target =
     root?.querySelector<HTMLElement>(`#f-${first.name}`)
-    // Los grupos de casillas no tienen un control con ese id: se enfoca la 1ª opción.
+    // Los grupos (casillas y radios) no tienen un control con ese id: se enfoca la 1ª.
     ?? root?.querySelector<HTMLElement>(`[id^="f-${first.name}-"]`)
   target?.focus()
 }
@@ -233,6 +284,8 @@ function validateLocally(): boolean {
       if (!groups[f.name]?.length) errors[f.name] = 'Selecciona al menos una opción.'
     } else if (f.type === 'checkbox') {
       if (values[f.name] !== true) errors[f.name] = 'Debes aceptar esta condición para continuar.'
+    } else if (f.type === 'radio') {
+      if (!String(values[f.name] ?? '').trim()) errors[f.name] = 'Elige una opción.'
     } else if (!String(values[f.name] ?? '').trim()) {
       errors[f.name] = 'Este campo es obligatorio.'
     }
@@ -260,7 +313,7 @@ async function submit() {
   try {
     // `extraFields` va al final: lo que pone la página gana sobre un campo
     // homónimo del formulario.
-    await $fetch('/api/contact', {
+    response.value = await $fetch('/api/contact', {
       method: 'POST',
       // Sin tope, una conexión que se cuelga deja el botón en «Enviando…» para
       // siempre: la promesa nunca se resuelve y `finally` nunca corre.

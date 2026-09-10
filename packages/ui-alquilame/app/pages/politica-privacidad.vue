@@ -6,7 +6,15 @@
       <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 text-center">
         <h1 class="heading-page text-white">Política de Privacidad y Tratamiento de Datos Personales</h1>
         <div class="h-1 w-10 rounded-full bg-white/70 my-6 mx-auto" aria-hidden="true" />
-        <p class="text-sm text-white/75">Última actualización: Enero 2025</p>
+        <!--
+            La versión se publica desde la constante que también viaja con cada
+            consentimiento guardado (app/utils/policy.ts). Si divergieran, la fila del
+            PQRS apuntaría a un número que no aparece en ninguna parte y el titular no
+            podría comprobar contra qué aceptó.
+          -->
+          <p class="text-sm text-white/75">
+            Versión {{ POLICY_VERSION }} · Última actualización: Enero 2025
+          </p>
       </div>
     </section>
     <article class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
@@ -154,6 +162,7 @@
 </template>
 
 <script setup lang="ts">
+import { POLICY_VERSION } from '~/utils/policy'
 const { franchise } = useAppConfig()
 
 useHead({
