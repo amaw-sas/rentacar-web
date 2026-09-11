@@ -165,7 +165,8 @@ export default defineEventHandler(async (event) => {
   // producción, se apaga el correo para `type === 'quejas'` — una línea, ya prevista.
   let radicado: string | undefined
   if (body?.type === 'quejas') {
-    const adminUrl = config.rentacarAdminUrl as string | undefined
+    // Sin barra final: producción la tiene, y con ella la llamada sale a `//api/pqrs`.
+    const adminUrl = (config.rentacarAdminUrl as string | undefined)?.replace(/\/+$/, '')
     const pqrsKey = config.pqrsApiKey as string | undefined
     if (!adminUrl || !pqrsKey) {
       // Fail-closed y ruidoso. `pqrsApiKey` tiene que estar declarada en runtimeConfig
