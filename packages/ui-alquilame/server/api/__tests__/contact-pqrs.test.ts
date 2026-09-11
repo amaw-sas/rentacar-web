@@ -88,6 +88,13 @@ describe('una queja va al dashboard', () => {
     expect((opts as { headers: Record<string, string> }).headers['x-api-key']).toBe('clave-pqrs')
   })
 
+  it('una URL del dashboard con barra final no produce `//api/pqrs`', async () => {
+    // Producción tiene NUXT_RENTACAR_ADMIN_URL con barra final. Hoy el dashboard tolera
+    // la barra doble, pero depender de eso es depender de un detalle de otro servicio.
+    await run({ ...CONFIG, rentacarAdminUrl: 'https://dashboard.example/' })
+    expect(String(alDashboard()[0]![0])).toBe('https://dashboard.example/api/pqrs')
+  })
+
   it('SCEN-025: la marca la pone el servidor, no el navegador', async () => {
     body = { ...QUEJA, franchise: 'alquicarros' }
     await run()

@@ -66,8 +66,8 @@ const { franchise } = useAppConfig()
 function acuse(respuesta: unknown): string {
   const radicado = (respuesta as { radicado?: string } | null)?.radicado
   return radicado
-    ? `Recibimos tu queja. Tu número de radicado es ${radicado}; guárdalo para consultar tu caso. Te responderemos al correo que nos dejaste.`
-    : 'Recibimos tu queja. Te responderemos al correo que nos dejaste.'
+    ? `Recibimos tu solicitud. Tu número de radicado es ${radicado}; guárdalo para consultar tu caso. Te responderemos al correo que nos dejaste.`
+    : 'Recibimos tu solicitud. Te responderemos al correo que nos dejaste.'
 }
 
 const fields: PublicFormField[] = [

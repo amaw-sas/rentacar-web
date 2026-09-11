@@ -65,6 +65,15 @@ describe('el acuse muestra el radicado', () => {
     expect(pagina).toContain('radicado')
   })
 
+  it('el acuse no llama «queja» a una petición o una sugerencia', () => {
+    // El formulario radica cuatro tipos y el acuse no sabe cuál se eligió: tiene que
+    // servir para todos. Con el caso de prueba PQRS-2026-000001, una Petición, se leía
+    // «Recibimos tu queja».
+    const bloque = pagina.slice(pagina.indexOf('function acuse'), pagina.indexOf('const fields'))
+    expect(bloque).not.toMatch(/tu queja/i)
+    expect(bloque.match(/Recibimos tu solicitud/g)).toHaveLength(2)
+  })
+
   it('si no llegara radicado, el acuse no promete un número vacío', () => {
     // El endpoint puede responder sin él en la rama de convivencia; el texto tiene que
     // sostenerse igual.
