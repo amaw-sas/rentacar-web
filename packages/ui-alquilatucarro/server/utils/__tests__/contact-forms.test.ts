@@ -230,11 +230,35 @@ describe('calificación baja (/opinion)', () => {
     expect(r.ok && r.email.text.endsWith('Mensaje: Primera línea.\nSegunda línea.')).toBe(true)
   })
 
-  it('el asunto no arrastra saltos de línea ni nombres kilométricos', () => {
-    const r = validateAndCompose({ ...valido, nombre: `Ana\r\nBcc: exfiltra@evil.co${'x'.repeat(500)}` })
+  it('un nombre con salto de línea NO puede colar una cabecera en el asunto', () => {
+    // `Bcc:` tras un CRLF es el intento clásico de inyección de cabeceras. El
+    // nombre va dentro del tope de largo a propósito: así se prueba el aplanado,
+    // que es lo que defiende de verdad, y no el tope, que se prueba aparte.
+    const r = validateAndCompose({ ...valido, nombre: 'Ana\r\nBcc: exfiltra@evil.co' })
     expect(r.ok).toBe(true)
     if (!r.ok) return
     expect(r.email.subject).not.toMatch(/[\r\n]/)
+    expect(r.email.subject).toContain('Ana Bcc: exfiltra@evil.co')
+  })
+
+  it('y un nombre kilométrico ya ni llega a componerse', () => {
+    // Antes se recortaba a 120 y se dejaba pasar. Ahora se rechaza de entrada:
+    // el tope de largo (MAX_LEN.nombre) corre antes que la composición, así que
+    // el asunto nunca ve esos 500 caracteres. Es más estricto, no menos.
+    const r = validateAndCompose({ ...valido, nombre: 'x'.repeat(500) })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.reason).toBe('too-long')
+    expect(r.tooLong).toEqual(['nombre'])
+  })
+
+  it('el recorte del asunto sigue en pie para lo que sí pasa el tope', () => {
+    // 120 es a la vez el tope de entrada y el del asunto, así que hoy coinciden.
+    // La aserción se queda: si mañana MAX_LEN.nombre sube, esto avisa de que el
+    // asunto se puede desbordar.
+    const r = validateAndCompose({ ...valido, nombre: 'A'.repeat(120) })
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
     expect(r.email.subject.length).toBeLessThanOrEqual('Calificación baja de un cliente — '.length + 120)
   })
 
@@ -343,5 +367,120 @@ describe('antispam y entradas raras', () => {
     expect(r.ok).toBe(false)
     if (r.ok || r.reason !== 'invalid') return
     expect(r.missing).toContain('nombre')
+  })
+})
+
+describe('topes de largo — que una biblia pegada en el mensaje no nos afecte', () => {
+  /**
+   * `/api/contact` es público y sin autenticar: cada POST válido gasta un correo
+   * de Resend. Sin tope de largo, pegar megabytes en `mensaje` produce un correo
+   * de megabytes. Los máximos viven en el SERVIDOR porque el `maxlength` del
+   * formulario es comodidad, no autoridad: un `curl` no lo ve.
+   *
+   * Se RECHAZA, no se corta. Truncar en silencio se traga las palabras de un
+   * cliente que ya está molesto, y encima sin decírselo.
+   */
+  const base = { type: 'resenas' as const, nombre: 'Ana', email: 'a@b.co' }
+
+  it('2.000 caracteres de mensaje pasan: es el tope, no un caracter menos', () => {
+    const r = validateAndCompose({ ...base, mensaje: 'x'.repeat(2000) })
+    expect(r.ok).toBe(true)
+  })
+
+  it('2.001 se rechazan, y dice cuál campo', () => {
+    const r = validateAndCompose({ ...base, mensaje: 'x'.repeat(2001) })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.reason).toBe('too-long')
+    expect(r.tooLong).toEqual(['mensaje'])
+  })
+
+  it('el nombre también tiene tope: alimenta el asunto del correo', () => {
+    const r = validateAndCompose({ ...base, nombre: 'A'.repeat(121), mensaje: 'hola' })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.tooLong).toEqual(['nombre'])
+  })
+
+  it('varios campos largos se reportan TODOS, no solo el primero', () => {
+    // Devolver uno solo obliga a la persona a enviar, corregir y volver a fallar.
+    const r = validateAndCompose({
+      ...base,
+      nombre: 'A'.repeat(121),
+      mensaje: 'x'.repeat(2001),
+    })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.tooLong).toEqual(['nombre', 'mensaje'])
+  })
+
+  it('el correo largo se rechaza por largo, no por inválido', () => {
+    // 254 es el máximo de la norma. Un correo de 300 caracteres es basura.
+    const largo = 'a'.repeat(250) + '@ejemplo.com'
+    const r = validateAndCompose({ ...base, email: largo, mensaje: 'hola' })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.tooLong).toEqual(['email'])
+  })
+
+  it('una lista con demasiados elementos también se corta', () => {
+    // `tipos` tiene 8 opciones reales; 21 significa que alguien postea a mano.
+    const r = validateAndCompose({
+      type: 'flota',
+      negocio: 'N',
+      nombre: 'Ana',
+      telefono: '3001234567',
+      ubicacion: 'Cali',
+      vehiculos: '10',
+      compromiso: true,
+      tipos: Array.from({ length: 21 }, (_, i) => `t${i}`),
+    })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.tooLong).toEqual(['tipos'])
+  })
+
+  it('un elemento gigante dentro de la lista cuenta igual', () => {
+    const r = validateAndCompose({
+      type: 'flota',
+      negocio: 'N',
+      nombre: 'Ana',
+      telefono: '3001234567',
+      ubicacion: 'Cali',
+      vehiculos: '10',
+      compromiso: true,
+      tipos: ['SUV', 'x'.repeat(61)],
+    })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.tooLong).toEqual(['tipos'])
+  })
+
+  it('el honeypot gana al tope: un bot no merece saber por qué falló', () => {
+    // Si el orden fuera al revés, un bot aprendería el tamaño exacto del tope.
+    const r = validateAndCompose({ ...base, mensaje: 'x'.repeat(9999), website: 'spam' })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.reason).toBe('spam')
+  })
+
+  it('faltar un campo pesa más que pasarse de largo', () => {
+    // Quien no puso el correo tiene que saberlo primero; el largo es secundario.
+    const r = validateAndCompose({ type: 'resenas', nombre: 'Ana', mensaje: 'x'.repeat(2001) })
+    expect(r.ok).toBe(false)
+    if (r.ok) throw new Error('debía rechazar')
+    expect(r.reason).toBe('invalid')
+  })
+
+  it('el tope se mide en caracteres, no en bytes: los acentos no roban espacio', () => {
+    // 2.000 "ñ" son 4.000 bytes en UTF-8. Medir bytes castigaría al español.
+    const r = validateAndCompose({ ...base, mensaje: 'ñ'.repeat(2000) })
+    expect(r.ok).toBe(true)
+  })
+
+  it('los espacios de sobra no gastan tope', () => {
+    // `clean` recorta antes de medir: 2.000 útiles rodeados de espacios pasan.
+    const r = validateAndCompose({ ...base, mensaje: '   ' + 'x'.repeat(2000) + '   ' })
+    expect(r.ok).toBe(true)
   })
 })

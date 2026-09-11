@@ -14,9 +14,14 @@ vi.mock('h3', () => ({
   defineEventHandler: (fn: unknown) => fn,
   readBody: async () => body,
   getRequestIP: () => '190.1.2.3',
+  getRequestHeader: (_e: unknown, name: string) =>
+    name.toLowerCase() === 'content-length' ? '512' : undefined,
   createError: (options: Record<string, unknown>) =>
     Object.assign(new Error(String(options.statusMessage)), options),
 }))
+
+/** Auto-import de Nitro desde el layer `logic`; bajo vitest no existe (ver contact.post.test.ts). */
+let rateLimit: ReturnType<typeof vi.fn>
 
 const CONFIG = {
   resendApiKey: 're_test',
@@ -64,6 +69,8 @@ beforeEach(() => {
     return { id: 'resend-x' }
   })
   vi.stubGlobal('$fetch', fetchMock)
+  rateLimit = vi.fn(async () => ({ allowed: true, remaining: 9, resetAt: Date.now() + 3_600_000 }))
+  vi.stubGlobal('checkBlogRateLimit', rateLimit)
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -157,6 +164,26 @@ describe('una queja va al dashboard', () => {
     expect(error).toBeTruthy()
     const log = (console.error as unknown as ReturnType<typeof vi.fn>).mock.calls.flat().join(' ')
     expect(log).toMatch(/PQRS_API_KEY/)
+  })
+})
+
+/**
+ * Las guardas del #487 van antes de la radicación. Un radicado consume consecutivo y
+ * abre un plazo legal: lo que esas guardas rechazan no puede llegar al dashboard.
+ */
+describe('lo que las guardas del formulario cortan no se radica', () => {
+  it('honeypot: responde ok al bot y no llama al dashboard', async () => {
+    body = { ...QUEJA, website: 'http://spam.example' }
+    const { ok } = await run()
+    expect(ok).toEqual({ ok: true })
+    expect(alDashboard()).toHaveLength(0)
+  })
+
+  it('tope por IP: 429 y el dashboard no se entera', async () => {
+    rateLimit.mockResolvedValue({ allowed: false, remaining: 0, resetAt: Date.now() + 3_600_000 })
+    const { error } = await run()
+    expect(error?.statusCode).toBe(429)
+    expect(alDashboard()).toHaveLength(0)
   })
 })
 

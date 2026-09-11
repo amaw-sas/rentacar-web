@@ -115,8 +115,9 @@
         :id="`f-${f.name}`"
         v-model="values[f.name]"
         rows="5"
+        :maxlength="MAX_LEN[f.name]"
         :aria-invalid="Boolean(errors[f.name])"
-        :aria-describedby="errors[f.name] ? `e-${f.name}` : undefined"
+        :aria-describedby="describedBy(f.name)"
         class="w-full rounded-xl border px-4 py-3 text-gray-900 bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500"
         :class="errors[f.name] ? 'border-brand-600' : 'border-gray-300'"
       />
@@ -127,11 +128,36 @@
         :type="f.type"
         :inputmode="f.inputmode"
         :autocomplete="f.autocomplete"
+        :maxlength="MAX_LEN[f.name]"
         :aria-invalid="Boolean(errors[f.name])"
-        :aria-describedby="errors[f.name] ? `e-${f.name}` : undefined"
+        :aria-describedby="describedBy(f.name)"
         class="w-full rounded-xl border px-4 py-3 text-gray-900 bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500"
         :class="errors[f.name] ? 'border-brand-600' : 'border-gray-300'"
       >
+
+      <!--
+        Va DESPUÉS del <input v-else> a propósito: `v-else` tiene que ser
+        hermano inmediato de su `v-if`. Entre los dos, el v-else se enganchaba al
+        v-if del contador y `mensaje` pintaba un textarea Y un input fantasma con
+        el mismo id.
+
+        Contador. Callado mientras sobra espacio: en un mensaje de veinte
+        palabras un «34 / 2000» es ruido. Aparece al 75% del tope, que es cuando
+        empieza a importar.
+
+        `polite` y no `assertive`: un contador que interrumpe la lectura en cada
+        tecla es peor que no tenerlo.
+      -->
+      <p
+        v-if="f.type === 'textarea' && nearLimit(f.name)"
+        :id="`c-${f.name}`"
+        data-test="contador-mensaje"
+        role="status"
+        aria-live="polite"
+        class="mt-1.5 text-sm text-gray-600 text-right"
+      >
+        {{ String(values[f.name] ?? '').length }} / {{ MAX_LEN[f.name] }}
+      </p>
 
       <p v-if="errors[f.name]" :id="`e-${f.name}`" class="mt-1.5 text-sm text-brand-700">
         {{ errors[f.name] }}
@@ -232,6 +258,46 @@ for (const f of props.fields) {
   else values[f.name] = ''
 }
 
+/**
+ * Espejo de `server/utils/contact-forms.ts` (MAX_LEN). El servidor es la
+ * autoridad — un `curl` no ve ningún `maxlength` — y esto sólo evita que alguien
+ * escriba de más y se entere al pulsar Enviar, cuando ya está molesto.
+ *
+ * Si cambian allá, cambian aquí. Un número más GRANDE aquí que allá es el error
+ * peligroso: dejaría escribir algo que el servidor va a rechazar.
+ */
+const MAX_LEN: Record<string, number> = {
+  mensaje: 2000,
+  nombre: 120,
+  negocio: 120,
+  email: 254,
+  telefono: 40,
+  reserva: 40,
+  vehiculos: 40,
+  ciudad: 120,
+  ubicacion: 120,
+}
+
+/** Desde dónde se enseña el contador: 75% del tope. */
+const COUNTER_FROM = 0.75
+
+function nearLimit(name: string): boolean {
+  const max = MAX_LEN[name]
+  if (!max) return false
+  return String(values[name] ?? '').length > max * COUNTER_FROM
+}
+
+/**
+ * Un campo puede describirse por su error Y por su contador a la vez. Concatenar
+ * los ids es lo que manda la norma; devolver sólo uno perdía el otro.
+ */
+function describedBy(name: string): string | undefined {
+  const ids = [errors[name] ? `e-${name}` : '', nearLimit(name) ? `c-${name}` : '']
+    .filter(Boolean)
+    .join(' ')
+  return ids || undefined
+}
+
 const errors = reactive<Record<string, string>>({})
 const sending = ref(false)
 const sent = ref(false)
@@ -330,9 +396,20 @@ async function submit() {
   } catch (e) {
     // El servidor manda los campos faltantes cuando rechaza por validación.
     const missing = (e as { data?: { data?: { missing?: string[] } } })?.data?.data?.missing
+    // Y los que se pasan de largo, por el mismo camino. Sin esto la persona lee
+    // «hay campos demasiado largos» y no sabe cuál de ellos.
+    const tooLong = (e as { data?: { data?: { tooLong?: string[] } } })?.data?.data?.tooLong
     if (missing?.length) {
       for (const m of missing) errors[m] = 'Este campo es obligatorio.'
       failed.value = 'Revisa los campos marcados.'
+      focusFirstError()
+    } else if (tooLong?.length) {
+      for (const f of tooLong) {
+        errors[f] = `Este campo es demasiado largo (máximo ${MAX_LEN[f] ?? '—'} caracteres).`
+      }
+      failed.value =
+        (e as { data?: { statusMessage?: string } })?.data?.statusMessage
+        || 'Revisa los campos marcados.'
       focusFirstError()
     } else {
       failed.value =
