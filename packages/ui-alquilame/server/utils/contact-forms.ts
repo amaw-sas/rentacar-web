@@ -25,6 +25,15 @@ export interface ContactFormPayload {
   /** Sólo quejas y reseñas: número de reserva, opcional. */
   reserva?: string
   /**
+   * Sólo quejas: qué es (petición / queja / reclamo / sugerencia). Se llama `pqrs_type`
+   * y NO `type` porque el cuerpo se compone como `{ type: props.type, ...values }` en
+   * PublicContactForm: un campo llamado `type` pisaría el discriminante y la queja
+   * dejaría de enrutarse.
+   */
+  pqrs_type?: string
+  /** Sólo quejas: autorización de tratamiento de datos. Debe venir en true. */
+  consentimiento?: boolean
+  /**
    * Sólo reseñas: la calificación que dio el cliente, ya formateada ("2 de 5").
    * La pone la página, no un campo del formulario. Llega del cliente y es
    * falsificable; da igual, es una notificación interna, no una métrica.
@@ -65,11 +74,18 @@ const LABELS: Record<string, string> = {
   vehiculos: 'Cantidad de vehículos',
   tipos: 'Tipos de vehículo',
   compromiso: 'Acepta paridad de precios',
+  pqrs_type: 'Tipo de PQRS',
+  consentimiento: 'Autoriza el tratamiento de datos',
   mensaje: 'Mensaje',
 }
 
 /** Campos obligatorios por formulario. El resto son opcionales. */
 const REQUIRED: Record<ContactFormType, string[]> = {
+  // `pqrs_type` y `consentimiento` NO se exigen aquí, y es deliberado: esta ruta es la
+  // del correo, y rechazar una queja porque le falta el campo que la clasifica es
+  // justo el fallo que el módulo PQRS viene a evitar. La validación estricta vive en
+  // el endpoint del dashboard, que es donde se radica: allí el schema zod exige el
+  // consentimiento y un tipo de la lista. Aquí, si vienen, salen en el correo.
   quejas: ['nombre', 'email', 'mensaje'],
   // Convenios con rentadoras: lo mínimo para dimensionar el negocio y llamarlo.
   // `compromiso` es la condición de entrada (mismos precios que publica), así que
@@ -108,6 +124,11 @@ const FIELD_ORDER = [
   'tipos',
   'compromiso',
   'mensaje',
+  // Al final a propósito. `contact-forms.test.ts:250` fija la PRIMERA LÍNEA exacta de
+  // quejas, flota y referidos, y nació porque `estrellas` se coló al frente de esta
+  // lista. Los campos nuevos no desplazan nada de lo que ya se leía arriba.
+  'pqrs_type',
+  'consentimiento',
 ]
 
 const clean = (v: unknown): string => (typeof v === 'string' ? v.trim() : '')
@@ -161,6 +182,8 @@ const MAX_LEN: Record<string, number> = {
   estrellas: 40,
   ciudad: 120,
   ubicacion: 120,
+  // Las etiquetas reales («Sugerencia») miden 10; sin tope entraría cualquier cosa al correo.
+  pqrs_type: 40,
 }
 
 /** Tope de la única lista que existe (`tipos`): 8 opciones reales, 20 de margen. */
@@ -206,6 +229,9 @@ function render(field: string, v: unknown): string {
 
 /** Campos que sólo tienen sentido en un formulario concreto. */
 const FIELD_OWNER: Record<string, ContactFormType> = {
+  // Los otros tres formularios no los envían ni deben verlos en su correo.
+  pqrs_type: 'quejas',
+  consentimiento: 'quejas',
   // `estrellas` la pone /opinion. Si llega en una queja, un convenio o un
   // referido es alguien posteando a mano, y como va PRIMERA en el cuerpo le
   // regalaría la línea de apertura del correo a quien la mande.
