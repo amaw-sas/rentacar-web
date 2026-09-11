@@ -114,7 +114,7 @@ describe('tipo radio', () => {
     await w.find('form').trigger('submit')
     await new Promise((r) => setTimeout(r, 0))
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock.mock.calls[0][1].body).toMatchObject({ pqrs_type: 'Queja' })
+    expect(fetchMock.mock.calls[0]![1].body).toMatchObject({ pqrs_type: 'Queja' })
   })
 
   it('SCEN-026: el campo del tipo NO pisa el discriminante del endpoint', async () => {
@@ -124,7 +124,7 @@ describe('tipo radio', () => {
     await rellenar(w)
     await w.find('form').trigger('submit')
     await new Promise((r) => setTimeout(r, 0))
-    expect(fetchMock.mock.calls[0][1].body.type).toBe('quejas')
+    expect(fetchMock.mock.calls[0]![1].body.type).toBe('quejas')
   })
 })
 

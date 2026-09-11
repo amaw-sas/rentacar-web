@@ -56,6 +56,14 @@ describe('quejas con los campos de PQRS', () => {
     expect(r.ok && r.email.text.split('\n')[0]).toBe('Nombre: Ana Pérez')
   })
 
+  it('el tipo de PQRS tiene tope, como el resto de campos que llegan al correo', () => {
+    // Las etiquetas reales miden 10 caracteres como mucho. Sin tope, un POST a mano mete
+    // kilobytes en el cuerpo del correo, que es lo que los topes por campo existen para impedir.
+    const r = validateAndCompose({ ...queja, pqrs_type: 'x'.repeat(41) })
+    expect(r).toEqual({ ok: false, reason: 'too-long', tooLong: ['pqrs_type'] })
+    expect(validateAndCompose({ ...queja, pqrs_type: 'Sugerencia' }).ok).toBe(true)
+  })
+
   it('el asunto de quejas NO cambia', () => {
     const r = validateAndCompose(queja)
     expect(r.ok && r.email.subject).toBe('Nueva queja o reclamo — Ana Pérez')

@@ -182,6 +182,8 @@ const MAX_LEN: Record<string, number> = {
   estrellas: 40,
   ciudad: 120,
   ubicacion: 120,
+  // Las etiquetas reales («Sugerencia») miden 10; sin tope entraría cualquier cosa al correo.
+  pqrs_type: 40,
 }
 
 /** Tope de la única lista que existe (`tipos`): 8 opciones reales, 20 de margen. */
