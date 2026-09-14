@@ -85,6 +85,17 @@ function cleanSedeCards(value: unknown): SedeCardsPart | null {
   return unchanged ? original : { ...original, sedes };
 }
 
+// Rows that aren't objects would crash the quote template; drop them. A table left
+// with no rows is invalid unless it arrived with none (that renders as today).
+function cleanQuoteTable(value: unknown): QuoteTablePart | null {
+  if (!isObject(value) || !Array.isArray(value.filas)) return null;
+  const raw: unknown[] = value.filas;
+  const filas = raw.filter(isObject) as unknown as QuoteTablePart['filas'];
+  const original = value as unknown as QuoteTablePart;
+  if (filas.length === raw.length) return original;
+  return filas.length ? { ...original, filas } : null;
+}
+
 // Model entries that aren't objects would crash the card template; drop them.
 function cleanGamaCards(value: unknown): GamaCardsPart | null {
   if (!isObject(value) || !Array.isArray(value.modelos)) return null;
@@ -96,10 +107,10 @@ function cleanGamaCards(value: unknown): GamaCardsPart | null {
 
 function dataBlock(kind: DataKind, value: unknown): DataBlock | null {
   switch (kind) {
-    case 'quoteTable':
-      return isObject(value) && Array.isArray(value.filas)
-        ? { kind, data: value as unknown as QuoteTablePart }
-        : null;
+    case 'quoteTable': {
+      const data = cleanQuoteTable(value);
+      return data ? { kind, data } : null;
+    }
     case 'gamaCards': {
       const data = cleanGamaCards(value);
       return data ? { kind, data } : null;
@@ -125,9 +136,19 @@ function finalize(groups: ChatBubbleBlock[][]): ChatBubble[] {
   }));
 }
 
+// Drop the given blocks from their bubbles, and any bubble they leave empty.
+function removeBlocks(groups: ChatBubbleBlock[][], stale: Set<ChatBubbleBlock>) {
+  for (let i = groups.length - 1; i >= 0; i--) {
+    const kept = groups[i]!.filter((b) => !stale.has(b));
+    if (kept.length) groups[i] = kept;
+    else groups.splice(i, 1);
+  }
+}
+
 // Filled slots go at the end of the last bubble, in the legacy order — unless a
-// ref already rendered that same payload in place. A slot a later arrival
-// overrode (tool-output actions after data-buttons) still shows, as today.
+// ref already rendered that same payload in place. Actions replaced by a later
+// source (tool-output after data-buttons) show once, at the end: the earlier
+// in-place groups are removed so only the last one is visible, as today.
 function appendSlots(m: ChatBubbleSource, groups: ChatBubbleBlock[][], rendered: DataBlock[]) {
   for (const kind of LEGACY_DATA_ORDER) {
     const block = dataBlock(kind, m[kind]);
@@ -140,6 +161,9 @@ function appendSlots(m: ChatBubbleSource, groups: ChatBubbleBlock[][], rendered:
       return JSON.stringify(r.data) === json;
     });
     if (shown) continue;
+    if (kind === 'actions') {
+      removeBlocks(groups, new Set(rendered.filter((r) => r.kind === 'actions')));
+    }
     if (!groups.length) groups.push([]);
     groups[groups.length - 1]!.push(block);
   }

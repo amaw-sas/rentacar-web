@@ -680,8 +680,15 @@ export function createChatConversation(cfg: ChatConversationConfig) {
             // malformed payload can't crash the render.
             const d = event.data as QuoteTablePart | undefined;
             if (d && Array.isArray(d.filas)) {
-              quoteTable = d;
-              parts.push({ type: 'quoteTable', data: d });
+              // Rows that aren't objects would crash analytics and the render: drop
+              // them, and reject the table when nothing usable is left.
+              const raw: unknown[] = d.filas;
+              const filas = raw.filter((f) => !!f && typeof f === 'object') as QuoteTablePart['filas'];
+              if (filas.length === raw.length || filas.length > 0) {
+                const table = filas.length === raw.length ? d : { ...d, filas };
+                quoteTable = table;
+                parts.push({ type: 'quoteTable', data: table });
+              }
             }
           } else if (event.type === 'data-gamaCards') {
             lastPieceWasText = false;

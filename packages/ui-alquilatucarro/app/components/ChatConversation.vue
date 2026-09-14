@@ -439,6 +439,9 @@ function activateSurface() {
       const sep = el.querySelector('.cc-new-sep') as HTMLElement | null
       if (sep) sep.scrollIntoView({ block: 'start' })
       else el.scrollTop = el.scrollHeight
+      // Posicionar no siempre dispara scroll: recalcula aquí si quedó al fondo, o una
+      // foto que cargue después arrastraría la lista lejos del separador.
+      onMessagesScroll()
     }
     inputEl.value?.focus()
   })
@@ -699,6 +702,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .cc-cards + .cc-text,
 .cc-sedes + .cc-text,
 .cc-actions + .cc-text { margin-top: 0.5rem; }
+/* Dos textos seguidos en la misma burbuja (solo v2): mismo aire, no pegados. */
+.cc-text + .cc-text { margin-top: 0.5rem; }
 
 /* --- Tarjetas de sedes (data-sedeCards): informativas, sin acción --- */
 .cc-sedes { display: flex; flex-direction: column; gap: 0.375rem; margin-top: 0.5rem; }
