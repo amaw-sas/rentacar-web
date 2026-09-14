@@ -32,7 +32,7 @@
       </button>
     </header>
 
-    <div ref="scrollEl" class="cc-messages">
+    <div ref="scrollEl" class="cc-messages" @scroll.passive="onMessagesScroll">
       <p v-if="!messages.length" class="cc-empty">
         ¡Hola! 👋 Pregúntame por ciudades, precios, requisitos o tu reserva.
       </p>
@@ -59,8 +59,10 @@
           <span v-if="m.createdAt" class="cc-time">{{ fmtTime(m.createdAt) }}</span>
         </div>
 
-        <!-- Asistente "escribiendo": texto estático mientras llega la respuesta -->
-        <div v-else-if="!m.text && isStreaming" class="cc-msg is-assistant" :class="{ 'is-group-start': isGroupStart(msgIdx) }">
+        <!-- Asistente "escribiendo": texto estático mientras llega la respuesta.
+             Solo en el último mensaje: una respuesta anterior hecha solo de datos
+             no se tapa mientras llega el turno nuevo. -->
+        <div v-else-if="msgIdx === messages.length - 1 && !m.text && isStreaming" class="cc-msg is-assistant" :class="{ 'is-group-start': isGroupStart(msgIdx) }">
           <span class="cc-typing-text" aria-live="polite">escribiendo…</span>
         </div>
 
@@ -73,7 +75,8 @@
             :data-mid="i === 0 ? m.id : undefined"
             :class="{
               'has-time': !!m.createdAt,
-              'has-parts': i === bubblesFor(m).length - 1 && !!(m.quoteTable || m.gamaCards || m.actions),
+              'has-parts': chunk.endsWithPart,
+              'has-cards': chunk.hasCards,
               'is-group-start': i === 0 && isGroupStart(msgIdx),
             }"
             @touchstart.passive="onSwipeStart"
@@ -86,15 +89,17 @@
             <button type="button" class="cc-bubble-reply-btn" aria-label="Responder a este mensaje" @click="replyToBubble(m, chunk)">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11" /></svg>
             </button>
-            <span v-if="chunk" class="cc-text" v-html="renderChatMarkdown(chunk)" />
 
-            <!-- Partes "code-owned": solo en la última burbuja del mensaje -->
-            <template v-if="i === bubblesFor(m).length - 1">
+            <!-- Piezas en su lugar (layoutChatBubbles): texto y partes "code-owned".
+                 Sin la marca v2 las partes caen al final de la última burbuja, como antes. -->
+            <template v-for="(block, bi) in chunk.blocks" :key="bi">
+              <span v-if="block.kind === 'text'" class="cc-text" :class="{ 'cc-text-inner': bi < chunk.blocks.length - 1 }" v-html="renderChatMarkdown(block.text)" />
+
               <!-- Tabla de cotización: una fila por gama, precio formateado es-CO -->
-              <div v-if="m.quoteTable" class="cc-quote">
-                <span class="cc-quote-title">{{ m.quoteTable.dias }} día(s)<template v-if="m.quoteTable.horaRecogida"> · recoge {{ m.quoteTable.horaRecogida }}, entrega {{ m.quoteTable.horaDevolucion }}</template></span>
+              <div v-else-if="block.kind === 'quoteTable'" class="cc-quote">
+                <span class="cc-quote-title">{{ block.data.dias }} día(s)<template v-if="block.data.horaRecogida"> · recoge {{ block.data.horaRecogida }}, entrega {{ block.data.horaDevolucion }}</template></span>
                 <div
-                  v-for="f in m.quoteTable.filas"
+                  v-for="f in block.data.filas"
                   :key="f.categoria"
                   class="cc-quote-row cc-replyable"
                   role="button"
@@ -115,23 +120,23 @@
               </div>
 
               <!-- Tarjetas de modelos: foto + nombre, placeholder si no hay foto -->
-              <div v-if="m.gamaCards" class="cc-cards">
+              <div v-else-if="block.kind === 'gamaCards'" class="cc-cards">
                 <span class="cc-cards-title">
-                  Modelos de la Gama {{ m.gamaCards.gama }}<template v-if="m.gamaCards.descripcion"> · {{ m.gamaCards.descripcion }}</template>
+                  Modelos de la Gama {{ block.data.gama }}<template v-if="block.data.descripcion"> · {{ block.data.descripcion }}</template>
                 </span>
                 <div class="cc-cards-grid">
                   <div
-                    v-for="(mod, mi) in m.gamaCards.modelos"
+                    v-for="(mod, mi) in block.data.modelos"
                     :key="mi"
                     class="cc-card cc-replyable"
                     role="button"
                     tabindex="0"
                     :aria-label="`Responder sobre el modelo ${mod.nombre}`"
-                    @click="replyToModelo(mod, m.gamaCards, m.id)"
-                    @keydown.enter="replyToModelo(mod, m.gamaCards, m.id)"
+                    @click="replyToModelo(mod, block.data, m.id)"
+                    @keydown.enter="replyToModelo(mod, block.data, m.id)"
                     @touchstart.stop.passive="onSwipeStart"
                     @touchmove.stop.passive="onSwipeMove"
-                    @touchend.stop="onSwipeEnd($event, () => replyToModelo(mod, m.gamaCards, m.id))"
+                    @touchend.stop="onSwipeEnd($event, () => replyToModelo(mod, block.data, m.id))"
                   >
                     <img
                       v-if="mod.imagen"
@@ -140,6 +145,7 @@
                       loading="lazy"
                       decoding="async"
                       class="cc-card-img"
+                      @load="onCardImgLoad"
                     >
                     <span v-else class="cc-card-noimg">(sin foto)</span>
                     <span class="cc-card-name">{{ mod.nombre }}</span>
@@ -147,10 +153,31 @@
                 </div>
               </div>
 
-              <span v-if="m.actions" class="cc-actions">
-                <a v-if="m.actions.web" :href="m.actions.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
-                <a v-if="m.actions.whatsapp" :href="m.actions.whatsapp" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
-                <a v-if="m.actions.share" :href="m.actions.share" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" data-analytics-lead="false" class="cc-link-btn cc-link-btn-share">Compartir cotización</a>
+              <!-- Sedes de la ciudad: nombre destacado y horario debajo; tocar/deslizar una
+                   la cita en el área de escritura, igual que las tarjetas de modelos -->
+              <div v-else-if="block.kind === 'sedeCards'" class="cc-sedes">
+                <div
+                  v-for="(s, si) in block.data.sedes"
+                  :key="si"
+                  class="cc-sede cc-replyable"
+                  role="button"
+                  tabindex="0"
+                  :aria-label="`Responder sobre la sede ${s.nombre}`"
+                  @click="replyToSede(s, m.id)"
+                  @keydown.enter="replyToSede(s, m.id)"
+                  @touchstart.stop.passive="onSwipeStart"
+                  @touchmove.stop.passive="onSwipeMove"
+                  @touchend.stop="onSwipeEnd($event, () => replyToSede(s, m.id))"
+                >
+                  <strong class="cc-sede-name">{{ s.nombre }}</strong>
+                  <span v-if="s.horario" class="cc-sede-horario">{{ s.horario }}</span>
+                </div>
+              </div>
+
+              <span v-else-if="block.kind === 'actions'" class="cc-actions">
+                <a v-if="block.data.web" :href="block.data.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
+                <a v-if="block.data.whatsapp" :href="block.data.whatsapp" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
+                <a v-if="block.data.share" :href="block.data.share" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" data-analytics-lead="false" class="cc-link-btn cc-link-btn-share">Compartir cotización</a>
               </span>
             </template>
 
@@ -238,7 +265,7 @@
 
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { renderChatMarkdown, splitBubbles } from '@rentacar-main/logic/utils'
+import { layoutChatBubbles, renderChatMarkdown, type ChatBubble, type ChatBubbleSource } from '@rentacar-main/logic/utils'
 
 // Hora por mensaje (estilo WhatsApp), hora de Colombia, 12h.
 const timeFmt = new Intl.DateTimeFormat('es-CO', {
@@ -255,12 +282,11 @@ const copFmt = new Intl.NumberFormat('es-CO')
 function cop(n: number): string {
   return copFmt.format(n)
 }
-// Una burbuja por tema (separador --- del bot). Si no hay texto pero sí partes
-// "code-owned" (botones / tabla / tarjetas), deja una burbuja vacía para mostrarlas.
-function bubblesFor(m: { text: string; actions?: unknown; quoteTable?: unknown; gamaCards?: unknown }): string[] {
-  const chunks = splitBubbles(m.text)
-  if (chunks.length) return chunks
-  return m.actions || m.quoteTable || m.gamaCards ? [''] : []
+// Burbujas del mensaje, cada una con sus piezas en orden (texto, tabla, tarjetas,
+// sedes, botones). Sin la marca v2 del servidor sale igual que antes: una burbuja
+// por tema (separador ---) y las partes "code-owned" al final de la última.
+function bubblesFor(m: ChatBubbleSource): ChatBubble[] {
+  return layoutChatBubbles(m)
 }
 
 const props = withDefaults(
@@ -292,7 +318,7 @@ function isGroupStart(idx: number): boolean {
   const role = messages.value[idx]?.role
   for (let p = idx - 1; p >= 0; p--) {
     const m = messages.value[p]
-    if (m && m.role === 'assistant' && !m.text && !m.quoteTable && !m.gamaCards && !m.actions) continue
+    if (m && m.role === 'assistant' && !m.text && !m.quoteTable && !m.gamaCards && !m.actions && !m.sedeCards) continue
     return m?.role !== role
   }
   return true
@@ -326,12 +352,21 @@ function replyToModelo(mod: { nombre: string; imagen?: string }, cards: { gama: 
     targetId,
   }
 }
+function replyToSede(s: { nombre: string }, targetId?: string) {
+  replyTo.value = {
+    label: `Sede ${s.nombre}`,
+    context: `[El cliente responde sobre la sede ${s.nombre}.]`,
+    author: 'Asesora',
+    preview: `Sede ${s.nombre}`,
+    targetId,
+  }
+}
 // Cita de una burbuja de texto libre: preview sin tokens de markdown, recortada.
 function stripMd(s: string): string {
   return s.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim()
 }
-function replyToBubble(m: { id: string }, chunk: string) {
-  const preview = (stripMd(chunk) || 'Cotización').slice(0, 80)
+function replyToBubble(m: { id: string }, chunk: ChatBubble) {
+  const preview = (stripMd(chunk.text) || (chunk.blocks[0]?.kind === 'sedeCards' ? 'Sedes' : 'Cotización')).slice(0, 80)
   replyTo.value = {
     label: preview,
     context: `[El cliente responde a este mensaje de la asesora: "${preview}"]`,
@@ -392,13 +427,26 @@ function onSwipeEnd(e: TouchEvent, fire: () => void) {
   swiping = false
 }
 const scrollEl = ref<HTMLElement | null>(null)
+// isStreaming: una respuesta hecha solo de datos (sin texto) también baja al fondo.
 watch(
-  () => [messages.value.length, messages.value.at(-1)?.text],
+  () => [messages.value.length, messages.value.at(-1)?.text, isStreaming.value],
   () => nextTick(() => {
     const el = scrollEl.value
     if (el) el.scrollTop = el.scrollHeight
   }),
 )
+// Las fotos de las tarjetas (height:auto + lazy) agrandan la lista DESPUÉS del
+// scroll de arriba: al cargar cada una se vuelve al fondo, pero solo si el cliente
+// ya estaba abajo — nunca se lo arranca de lo que subió a leer.
+let stickToBottom = true
+function onMessagesScroll() {
+  const el = scrollEl.value
+  if (el) stickToBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 64
+}
+function onCardImgLoad() {
+  const el = scrollEl.value
+  if (el && stickToBottom) el.scrollTop = el.scrollHeight
+}
 
 // Reopen UX: the singleton keeps the transcript, so a reopened surface lands on
 // old messages (the scroll watch above is not immediate). On mount, position at
@@ -413,6 +461,9 @@ function activateSurface() {
       const sep = el.querySelector('.cc-new-sep') as HTMLElement | null
       if (sep) sep.scrollIntoView({ block: 'start' })
       else el.scrollTop = el.scrollHeight
+      // Posicionar no siempre dispara scroll: recalcula aquí si quedó al fondo, o una
+      // foto que cargue después arrastraría la lista lejos del separador.
+      onMessagesScroll()
     }
     inputEl.value?.focus()
   })
@@ -583,6 +634,9 @@ button { -webkit-tap-highlight-color: transparent; }
    ganar por orden — con menos clases el espaciador seguiría aplicando. */
 .cc-msg.is-assistant.has-parts .cc-time { position: static; display: block; margin-top: 0.25rem; text-align: right; }
 .cc-msg.is-assistant.has-parts .cc-text::after { content: none; }
+/* Texto seguido de otra pieza en la misma burbuja: la hora no cae en su última
+   línea, así que no reserva espacio. (0,5,1) le gana al espaciador (0,4,1). */
+.cc-msg.is-assistant.has-time .cc-text.cc-text-inner::after { content: none; }
 /* Chunk que termina en un CTA de markdown (bloque cc-link-btn): el espaciador
    caería en línea propia bajo el botón → mismo trato que has-parts. Navegadores
    sin :has() solo conservan la franja vacía (degradación sin solape). */
@@ -634,9 +688,14 @@ button { -webkit-tap-highlight-color: transparent; }
 /* --- Tarjetas de modelos (data-gamaCards) --- */
 .cc-cards { margin-top: 0.5rem; }
 .cc-cards-title { display: block; font-size: 0.85rem; font-weight: 600; color: #111827; }
-.cc-cards-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+/* Una tarjeta por fila a todo el ancho de la burbuja, foto completa sin recorte.
+   La burbuja con tarjetas toma el ancho máximo: si se ajustara al contenido, la
+   foto quedaría angosta. Tope de 26rem: en el /chat de escritorio las fotos no
+   llegan a ~1.180 px. */
+.cc-msg.has-cards { width: 85%; max-width: min(85%, 26rem); }
+.cc-cards-grid { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
 .cc-card {
-  width: 7rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -646,7 +705,9 @@ button { -webkit-tap-highlight-color: transparent; }
   border-radius: 0.5rem;
   background: #fff;
 }
-.cc-card-img { width: 100%; height: 5rem; object-fit: contain; }
+/* Caja 3:2 reservada antes de que cargue la foto lazy (sin CLS); ya cargada manda
+   su propia proporción: sin recorte y alto automático. */
+.cc-card-img { width: 100%; height: auto; aspect-ratio: auto 3 / 2; object-fit: contain; }
 .cc-card-noimg {
   width: 100%;
   height: 5rem;
@@ -656,7 +717,28 @@ button { -webkit-tap-highlight-color: transparent; }
   color: #bbb;
   font-size: 0.75rem;
 }
-.cc-card-name { font-size: 0.75rem; text-align: center; line-height: 1.3; color: #111827; }
+.cc-card-name { font-size: 0.85rem; text-align: center; line-height: 1.3; color: #111827; }
+
+/* Texto que retoma después de una pieza de datos dentro de la misma burbuja. */
+.cc-quote + .cc-text,
+.cc-cards + .cc-text,
+.cc-sedes + .cc-text,
+.cc-actions + .cc-text { margin-top: 0.5rem; }
+/* Dos textos seguidos en la misma burbuja (solo v2): mismo aire, no pegados. */
+.cc-text + .cc-text { margin-top: 0.5rem; }
+
+/* --- Tarjetas de sedes (data-sedeCards): informativas, sin acción --- */
+.cc-sedes { display: flex; flex-direction: column; gap: 0.375rem; margin-top: 0.5rem; }
+.cc-sede {
+  display: flex;
+  flex-direction: column;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+.cc-sede-name { font-size: 0.9rem; font-weight: 700; color: #111827; line-height: 1.3; }
+.cc-sede-horario { font-size: 0.8rem; color: #6b7280; line-height: 1.35; }
 .cc-error { align-self: center; color: #b91c1c; font-size: 0.8rem; text-align: center; }
 .cc-typing-text { font-style: italic; color: #6b7280; font-size: 0.875rem; }
 

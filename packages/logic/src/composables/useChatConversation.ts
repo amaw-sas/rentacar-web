@@ -34,8 +34,10 @@ import { publishChatUnread, takePreparedChatOpen } from './useChatUnreadBadge';
 // ALONGSIDE the streamed text. They arrive as `data-*` SSE events and are
 // rendered as rich UI (table / cards / buttons) — never as text. Shapes mirror the
 // reference renderer (rentacar-dashboard app/chat-test/chat-test-client.tsx): text,
-// data-quoteTable, data-gamaCards, and data-buttons {web, whatsapp, share}, plus the
-// crear_reserva tool-output fallback links. Keep them in sync when either side changes.
+// data-quoteTable, data-gamaCards, data-sedeCards, and data-buttons {web, whatsapp, share},
+// plus the crear_reserva tool-output fallback links. `data-partsOrder {v:2}` is not
+// rendered: it opts the turn into arrival-order layout. Keep them in sync when either
+// side changes.
 export interface QuoteTablePart {
   sede: string;
   dias: number;
@@ -60,6 +62,27 @@ export interface GamaCardsPart {
     imagen: string; // photo URL; "" when missing → placeholder
   }>;
 }
+
+// Branch list for a city (code-emitted `data-sedeCards`): name emphasized, schedule
+// below it. Informational only — tapping a card does nothing.
+export interface SedeCardsPart {
+  sedes: Array<{
+    code: string; // branch code, e.g. "AABOT"; '' when the server sent none
+    nombre: string;
+    horario: string; // human schedule, e.g. "Lun-Dom 6am-10pm"; '' when missing
+  }>;
+}
+
+// One piece of an assistant turn in ARRIVAL order. Each data ref carries the payload
+// it arrived with, so a repeated type (two gama card sets, a re-quote) renders in
+// each place; the message's single slots still hold the last payload. `newBubble` =
+// this text block started right after another text block.
+export type ChatPartRef =
+  | { type: 'text'; text: string; newBubble: boolean }
+  | { type: 'quoteTable'; data: QuoteTablePart }
+  | { type: 'gamaCards'; data: GamaCardsPart }
+  | { type: 'buttons'; data: ChatActions }
+  | { type: 'sedeCards'; data: SedeCardsPart };
 
 // A WhatsApp-style "reply to" reference the customer attaches by tapping/swiping
 // a quote gama row or a model card. `label` shows in the composer chip and as the
@@ -96,6 +119,22 @@ export interface ChatMessage {
   quoteTable?: QuoteTablePart;
   // Vehicle model cards (photo + name) per gama, emitted as `data-gamaCards`.
   gamaCards?: GamaCardsPart;
+  // Branch cards for a city, emitted as `data-sedeCards`.
+  sedeCards?: SedeCardsPart;
+  // Arrival order of text and data pieces. Present ONLY on messages whose stream
+  // carried `data-partsOrder {v:2}`; transcripts stored without them (and turns
+  // from servers that don't send the marker) render as before. See
+  // layoutChatBubbles.
+  partsOrder?: 2;
+  parts?: ChatPartRef[];
+}
+
+// Real content = non-blank text or any code-owned part. An assistant message
+// without it is an empty placeholder (rescue text / dangling-turn retry).
+function hasAssistantContent(m: ChatMessage): boolean {
+  return (
+    m.text.trim() !== '' || !!m.actions || !!m.quoteTable || !!m.gamaCards || !!m.sedeCards
+  );
 }
 
 type ChatStatus = 'ready' | 'submitting' | 'streaming' | 'error';
@@ -292,13 +331,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     const last = msgs.at(-1);
     if (!last) return false;
     if (last.role === 'user') return true;
-    return (
-      last.text.trim() === '' &&
-      !last.actions &&
-      !last.quoteTable &&
-      !last.gamaCards &&
-      msgs.at(-2)?.role === 'user'
-    );
+    return !hasAssistantContent(last) && msgs.at(-2)?.role === 'user';
   });
 
   function persistLastRead() {
@@ -468,6 +501,16 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     let actions: ChatActions | null = null;
     let quoteTable: QuoteTablePart | undefined;
     let gamaCards: GamaCardsPart | undefined;
+    let sedeCards: SedeCardsPart | undefined;
+    // Arrival order of every piece, recorded always but stored on the message only
+    // when the server opted in with `data-partsOrder {v:2}`. Every accepted data
+    // arrival gets its own ref with its payload; the slots above keep last-wins.
+    const parts: ChatPartRef[] = [];
+    let partsOrder: 2 | undefined;
+    // Whether the last text or KNOWN data piece was text. A known data piece holds
+    // its place even when its payload is rejected, so it still keeps the next text
+    // block in the same bubble; unknown data-*, tool output and the marker don't count.
+    let lastPieceWasText = false;
     let quoteAnalyticsSent = false;
     const emitQuoteAnalytics = () => {
       if (!quoteTable || quoteAnalyticsSent) return;
@@ -498,6 +541,14 @@ export function createChatConversation(cfg: ChatConversationConfig) {
       if (actions) assistant.actions = actions;
       if (quoteTable) assistant.quoteTable = quoteTable;
       if (gamaCards) assistant.gamaCards = gamaCards;
+      if (sedeCards) assistant.sedeCards = sedeCards;
+      if (partsOrder === 2) {
+        assistant.partsOrder = 2;
+        // Fresh copy on every flush: a mid-stream persist() flush must not leave the
+        // bubble holding the same raw array that keeps mutating without triggering
+        // reactivity.
+        assistant.parts = parts.map((p) => ({ ...p }));
+      }
     };
     // Expose the flush to persist() while this turn is in flight, so a
     // pagehide/tab-hidden snapshot captures the partial reply, not ''.
@@ -604,22 +655,76 @@ export function createChatConversation(cfg: ChatConversationConfig) {
             if (textBlocks > 1) {
               assistantText += textBlocks <= 3 ? '\n---\n' : '\n\n';
             }
+            // Mirror the separator rule above: only a 2nd+ block right after text
+            // breaks. A first text-start after deltas that came without one continues
+            // that block, as the flattened text does ("Hola" + "Mundo" → "HolaMundo").
+            const lastRef = parts.at(-1);
+            if (!(textBlocks === 1 && lastRef?.type === 'text')) {
+              parts.push({ type: 'text', text: '', newBubble: textBlocks > 1 && lastPieceWasText });
+            }
+            lastPieceWasText = true;
           } else if (event.type === 'text-delta' && typeof event.delta === 'string') {
             assistantText += event.delta;
+            const last = parts.at(-1);
+            if (last?.type === 'text') last.text += event.delta;
+            else parts.push({ type: 'text', text: event.delta, newBubble: false });
+            lastPieceWasText = true;
           } else if (event.type === 'tool-output-available') {
             // Render the fallback CTAs from the structured tool result — never
             // from model text (it corrupts long URLs).
             const a = extractChatActions(event.output);
             if (a) actions = a;
           } else if (event.type === 'data-quoteTable') {
+            lastPieceWasText = false;
             // Deterministic quote table (code-emitted). Guard the array so a
             // malformed payload can't crash the render.
             const d = event.data as QuoteTablePart | undefined;
-            if (d && Array.isArray(d.filas)) quoteTable = d;
+            if (d && Array.isArray(d.filas)) {
+              // Rows that aren't objects would crash analytics and the render: drop
+              // them, and reject the table when nothing usable is left.
+              const raw: unknown[] = d.filas;
+              const filas = raw.filter((f) => !!f && typeof f === 'object') as QuoteTablePart['filas'];
+              if (filas.length === raw.length || filas.length > 0) {
+                const table = filas.length === raw.length ? d : { ...d, filas };
+                quoteTable = table;
+                parts.push({ type: 'quoteTable', data: table });
+              }
+            }
           } else if (event.type === 'data-gamaCards') {
+            lastPieceWasText = false;
             const d = event.data as GamaCardsPart | undefined;
-            if (d && Array.isArray(d.modelos)) gamaCards = d;
+            if (d && Array.isArray(d.modelos)) {
+              gamaCards = d;
+              parts.push({ type: 'gamaCards', data: d });
+            }
+          } else if (event.type === 'data-sedeCards') {
+            lastPieceWasText = false;
+            // Keep only entries with a usable name; a list left empty renders nothing.
+            const d = event.data as { sedes?: unknown } | undefined;
+            if (Array.isArray(d?.sedes)) {
+              const sedes = d.sedes
+                .filter(
+                  (s): s is { code?: unknown; nombre: string; horario?: unknown } =>
+                    !!s &&
+                    typeof s === 'object' &&
+                    typeof (s as { nombre?: unknown }).nombre === 'string' &&
+                    (s as { nombre: string }).nombre !== '',
+                )
+                .map((s) => ({
+                  code: typeof s.code === 'string' ? s.code : '',
+                  nombre: s.nombre,
+                  horario: typeof s.horario === 'string' ? s.horario : '',
+                }));
+              if (sedes.length > 0) {
+                sedeCards = { sedes };
+                parts.push({ type: 'sedeCards', data: sedeCards });
+              }
+            }
+          } else if (event.type === 'data-partsOrder') {
+            // Server opt-in to arrival-order rendering. Never rendered itself.
+            if ((event.data as { v?: unknown } | undefined)?.v === 2) partsOrder = 2;
           } else if (event.type === 'data-buttons') {
+            lastPieceWasText = false;
             // Code-emitted CTAs feeding the SAME `actions` slot. Any button may arrive
             // alone (hablar_asesor → whatsapp only; self-serve → web + share); keep a
             // URL only if it's a non-empty string. `share` is the wa.me/?text=… quote
@@ -632,7 +737,10 @@ export function createChatConversation(cfg: ChatConversationConfig) {
             const whatsapp =
               typeof b?.whatsapp === 'string' && b.whatsapp ? b.whatsapp : undefined;
             const share = typeof b?.share === 'string' && b.share ? b.share : undefined;
-            if (web || whatsapp || share) actions = { web, whatsapp, share };
+            if (web || whatsapp || share) {
+              actions = { web, whatsapp, share };
+              parts.push({ type: 'buttons', data: actions });
+            }
           } else if (event.type === 'error') {
             throw new Error(event.errorText || 'stream error');
           }
@@ -647,14 +755,12 @@ export function createChatConversation(cfg: ChatConversationConfig) {
       // on a tool call, or the function was cut short) would otherwise leave an
       // empty white bubble. Replace it with a recoverable message — unless code
       // parts (buttons / table / cards) carry the answer on their own.
-      if (
-        assistant.text.trim() === '' &&
-        !assistant.actions &&
-        !assistant.quoteTable &&
-        !assistant.gamaCards
-      ) {
+      if (!hasAssistantContent(assistant)) {
         assistant.text =
           'Disculpa, no alcancé a completar esa respuesta. ¿Lo intentamos de nuevo?';
+        // Blank v2 refs would lay out nothing; drop them so the rescue text renders.
+        delete assistant.parts;
+        delete assistant.partsOrder;
       }
 
       status.value = 'ready';

@@ -6,7 +6,9 @@ export default defineConfig({
   // Vue plugin enables `.vue` SFC parsing for mount-based component tests
   // (SearcherSelectDrawer.mount.test.ts). Source-string tests don't need it,
   // but having it loaded globally is cheap and unblocks the mount path.
-  plugins: [vue()],
+  // Absolute asset URLs (`src="/images/asesora-avatar.webp"`) stay plain strings:
+  // they live in the logic layer's public/, which Vite can't resolve as imports.
+  plugins: [vue({ template: { transformAssetUrls: { includeAbsolute: false } } })],
   test: {
     globals: true,
     environment: 'node', // Simple node environment for utility function tests
