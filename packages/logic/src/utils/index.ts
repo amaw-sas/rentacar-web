@@ -21,6 +21,8 @@ export { slugify } from './slugify';
 export { cityPullQuotes, splitSentences } from './cityPullQuotes';
 export { renderChatMarkdown } from './renderChatMarkdown';
 export { splitBubbles } from './splitBubbles';
+export { layoutChatBubbles } from './layoutChatBubbles';
+export type { ChatBubble, ChatBubbleBlock, ChatBubbleSource } from './layoutChatBubbles';
 export { extractChatActions } from './extractChatActions';
 export type { ChatActions } from './extractChatActions';
 export { buildChatPayloadMessages, CHAT_PAYLOAD_TAIL } from './buildChatPayloadMessages';
