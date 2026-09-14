@@ -53,6 +53,14 @@ const SEDES = {
   ],
 }
 const data = (type: string, payload: unknown) => ({ type: `data-${type}`, data: payload })
+// Quote contract for a sede card (chat-sede-reply.scenarios.md), identical in the 3 brands.
+const sedeQuote = (nombre: string, targetId: string) => ({
+  label: `Sede ${nombre}`,
+  context: `[El cliente responde sobre la sede ${nombre}.]`,
+  author: 'Asesora',
+  preview: `Sede ${nombre}`,
+  targetId,
+})
 
 // fetch that answers every turn with the next queued SSE body, delivered whole.
 function sseFetch(turns: unknown[][]) {
@@ -319,7 +327,9 @@ describe('SCEN-E3 — v2 text → cards → text → buttons → text is one bub
 })
 
 describe('SCEN-E4 — v2 sede cards render in place', () => {
-  it('renders [text, 2 sede cards, text]; name emphasized, schedule below; tapping does nothing', async () => {
+  // The original "tapping a sede card does nothing" clause is superseded by the owner
+  // decision in chat-sede-reply.scenarios.md (SCEN-E11): tapping now quotes the sede.
+  it('renders [text, 2 sede cards, text]; name emphasized, schedule below; tapping quotes the sede', async () => {
     const instance = await converse([[MARKER, ...text('Sedes en Bogotá:'), data('sedeCards', SEDES), ...text('¿Cuál te queda mejor?')]])
     const w = await render(instance)
     const bubbles = assistantBubbles(w)
@@ -341,11 +351,9 @@ describe('SCEN-E4 — v2 sede cards render in place', () => {
       const name = card.element.querySelector('.cc-sede-name')!
       expect(name.tagName).toBe('STRONG')
       expect(name.nextElementSibling?.classList.contains('cc-sede-horario')).toBe(true)
-      expect(card.attributes('role')).toBeUndefined()
-      await card.trigger('click')
-      await card.trigger('keydown', { key: 'Enter' })
     }
-    expect(instance.replyTo.value).toBeNull()
+    await cards[0]!.trigger('click')
+    expect(instance.replyTo.value).toEqual(sedeQuote('Bogotá Aeropuerto', instance.messages.value.at(-1)!.id))
     expect(consoleError).not.toHaveBeenCalled()
   })
 })
@@ -510,5 +518,88 @@ describe('Reopen keeps the "Mensajes nuevos" separator when a photo loads late',
     list.height = 2600
     await w.find('.cc-card-img').trigger('load')
     expect(list.top).toBe(2600)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// chat-sede-reply.scenarios.md: sede cards are replyable like gama model cards
+// ─────────────────────────────────────────────────────────────────────────
+
+const CALI_TURN = [
+  MARKER, ...text('Sedes en Cali:'),
+  data('sedeCards', { sedes: [{ code: 'ACCLO', nombre: 'Cali Aeropuerto', horario: 'Lun-Dom 6am-10pm' }] }),
+]
+
+// jsdom's TouchEvent rejects plain `touches`; the swipe handlers only read clientX/Y.
+function touch(el: Element, type: 'touchstart' | 'touchmove' | 'touchend', clientX: number) {
+  const e = new Event(type, { bubbles: true, cancelable: true })
+  const points = [{ clientX, clientY: 0 }]
+  Object.defineProperty(e, 'touches', { value: type === 'touchend' ? [] : points })
+  Object.defineProperty(e, 'changedTouches', { value: points })
+  el.dispatchEvent(e)
+}
+
+describe('SCEN-E11 — tapping a sede card quotes it and the sent message carries the context', () => {
+  it('composer shows the quote, the request text is exact and the sent bubble shows it', async () => {
+    const fetchMock = sseFetch([CALI_TURN, text('Perfecto, Cali Aeropuerto.')])
+    vi.stubGlobal('fetch', fetchMock)
+    const instance = createChatConversation(cfg())
+    instance.input.value = 'sedes en cali'
+    await instance.submit()
+    const assistantId = instance.messages.value.at(-1)!.id
+
+    const w = await render(instance)
+    const card = w.find('.cc-sede')
+    expect(card.attributes('role')).toBe('button')
+    expect(card.attributes('aria-label')).toBe('Responder sobre la sede Cali Aeropuerto')
+    await card.trigger('click')
+
+    // Before sending: the reply card above the composer.
+    expect(instance.replyTo.value).toEqual(sedeQuote('Cali Aeropuerto', assistantId))
+    const bar = w.find('.cc-reply-bar')
+    expect(bar.exists()).toBe(true)
+    expect(bar.find('.cc-reply-author').text()).toBe('Asesora')
+    expect(bar.find('.cc-reply-preview').text()).toBe('Sede Cali Aeropuerto')
+
+    await w.find('.cc-input input').setValue('esta')
+    await w.find('form.cc-input').trigger('submit')
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(instance.isStreaming.value).toBe(false)
+    })
+    await w.vm.$nextTick()
+
+    const request = (fetchMock.mock.calls as unknown as Array<[string, { body: string }]>)[1]![1]
+    const sent = JSON.parse(request.body).messages.at(-1)
+    expect(sent.role).toBe('user')
+    expect(sent.parts[0].text).toBe('[El cliente responde sobre la sede Cali Aeropuerto.]\nesta')
+
+    const userBubbles = w.findAll('.cc-msg.is-user')
+    expect(userBubbles.at(-1)!.find('.cc-reply-preview').text()).toBe('Sede Cali Aeropuerto')
+    expect(instance.messages.value.at(-2)!.replyTo).toEqual(sedeQuote('Cali Aeropuerto', assistantId))
+    expect(w.find('.cc-reply-bar').exists()).toBe(false)
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+describe('SCEN-E11b — swiping a sede card and keyboard activation quote it the same way', () => {
+  it('Enter on the focused card and a right swipe past the threshold each produce the SCEN-E11 quote', async () => {
+    const instance = await converse([CALI_TURN])
+    const assistantId = instance.messages.value.at(-1)!.id
+    const w = await render(instance)
+    const card = w.find('.cc-sede')
+    expect(card.attributes('tabindex')).toBe('0')
+
+    await card.trigger('keydown', { key: 'Enter' })
+    expect(instance.replyTo.value).toEqual(sedeQuote('Cali Aeropuerto', assistantId))
+    await w.vm.$nextTick()
+    expect(w.find('.cc-reply-bar .cc-reply-preview').text()).toBe('Sede Cali Aeropuerto')
+
+    instance.replyTo.value = null
+    touch(card.element, 'touchstart', 0)
+    touch(card.element, 'touchmove', 60)
+    touch(card.element, 'touchend', 60)
+    expect(instance.replyTo.value).toEqual(sedeQuote('Cali Aeropuerto', assistantId))
+    expect(consoleError).not.toHaveBeenCalled()
   })
 })
