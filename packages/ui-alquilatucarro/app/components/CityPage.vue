@@ -265,6 +265,10 @@
               <div>
                 <h3 class="font-bold text-gray-900 mb-1">Pico y Placa</h3>
                 <p class="text-gray-600 text-sm">{{ expandedContent.drivingTips.picoPlaca }}</p>
+                <!-- Only pico y placa carries a date. Tolls and parking are
+                     approximate ranges; a restriction is a rule the city
+                     enforces, so the reader deserves to know how fresh it is. -->
+                <p v-if="picoPlacaVerified" class="text-gray-500 text-xs mt-2">{{ picoPlacaVerified }}</p>
               </div>
             </div>
             <div class="flex items-start gap-4">
@@ -396,6 +400,7 @@ import { isBookable } from '@rentacar-main/logic/utils'
 /** types */
 import type { CategoryData, City } from '@rentacar-main/logic/utils';
 import { isCategoryVisibleInCity } from '@rentacar-main/logic/utils';
+import { picoPlacaVerifiedLabel } from '@rentacar-main/logic/utils';
 
 /** imports */
 import { defineAsyncComponent } from "vue";
@@ -463,6 +468,7 @@ const testimonios = useCityTestimonials(props.city?.id);
 
 // Get expanded content for major cities (Bogotá, Medellín)
 const expandedContent = props.city?.name ? useCityExpandedContent(props.city.name) : null;
+const picoPlacaVerified = computed(() => picoPlacaVerifiedLabel(props.city?.name ?? ''));
 const hasExpandedContent = props.city?.name ? hasCityExpandedContent(props.city.name) : false;
 
 // Get related cities for internal linking

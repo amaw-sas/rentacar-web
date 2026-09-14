@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Cómo funciona el pico y placa para un carro alquilado en Armenia?',
-    content: 'La medida rota y funciona en horarios limitados. Cuando recibas el vehículo te indicamos la restricción vigente para su placa. Ten presente que la mayoría de los atractivos turísticos queda por fuera del perímetro urbano.',
+    content: 'Sí aplica, y no es corto: rige de 7:00 AM a 7:00 PM de lunes a viernes, en todo el perímetro urbano. Te indicamos la restricción vigente para tu placa cuando recibas el vehículo.',
   },
   {
     label: '¿Puedo llegar en carro al Parque del Café?',

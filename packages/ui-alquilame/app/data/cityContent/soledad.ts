@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'Soledad utiliza el mismo esquema de pico y placa de Barranquilla. La restricción depende del dígito final y rige de lunes a viernes. Opera de 7:00 a 9:00 AM y de 5:00 a 8:00 PM.',
+    picoPlaca: 'Soledad no tiene pico y placa para carros particulares, igual que Barranquilla. Puedes moverte por el área metropolitana cualquier día sin depender del número de la placa.',
     tolls: 'Hacia Cartagena hay dos peajes que suman cerca de $25.000 COP. El recorrido a Santa Marta incluye tres, con un total aproximado de $30.000 COP. La vía a Puerto Colombia no tiene peajes.',
     parking: 'En sectores comerciales como Gran Centro, el parqueadero cuesta entre $2.500 y $5.000 COP por hora. En los alrededores del aeropuerto hay opciones de larga estancia con precios más económicos.',
   },

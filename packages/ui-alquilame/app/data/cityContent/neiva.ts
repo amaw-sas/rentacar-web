@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'En Neiva, el pico y placa funciona de lunes a viernes según el último dígito de la placa. La franja de la mañana va de 7:00 a 8:00 AM. En la tarde rige de 6:00 a 7:00 PM.',
+    picoPlaca: 'Neiva no tiene pico y placa para carros particulares. Solo hay cierres puntuales en fechas de eventos, como el Día sin Carro.',
     tolls: 'La ruta hacia la Tatacoa no tiene peajes. Hacia San Agustín, estos cobros suman cerca de $25.000 COP. Esa carretera es larga, montañosa y se mantiene en buen estado.',
     parking: 'Los parqueaderos del centro y de las zonas comerciales cobran entre $2.000 y $3.500 COP por hora. En la Tatacoa, el estacionamiento suele ser informal y está disponible en hoteles y observatorios.',
   },

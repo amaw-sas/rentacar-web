@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'De lunes a viernes, Pereira aplica pico y placa por el último número de la placa. Las franjas son de 7:00 a 8:30 AM y de 5:30 a 7:00 PM; la medida no opera sábados, domingos ni festivos.',
+    picoPlaca: 'Pereira tiene una medida temporal por emergencias viales, distinta a la habitual: rige de lunes a sábado, de 8:00 AM a 6:00 PM, y va por par e impar. Lunes, miércoles y viernes descansan las placas pares; martes, jueves y sábado, las impares.',
     tolls: 'La ruta hacia Salento incluye un peaje de aproximadamente $8.700 COP. No pagas peaje para ir a Santa Rosa de Cabal, y las carreteras principales del Eje Cafetero se encuentran en excelente estado.',
     parking: 'Calcula entre $2.500 y $4.500 COP por hora para un parqueadero en el centro o la Circunvalar. En temporada alta hay pocos cupos en Salento, así que conviene llegar temprano.',
   },

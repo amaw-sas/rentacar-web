@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Cuándo se aplica la restricción de pico y placa en Cúcuta?',
-    content: 'La ciudad asigna horarios específicos de circulación según el último número de la placa. En la entrega te indicamos la regla correspondiente al vehículo. Los fines de semana no tienes esa restricción.',
+    content: 'Sí aplica, en tres franjas de lunes a viernes: 7:00 a 8:30 AM, 11:30 AM a 2:30 PM y 5:30 a 7:30 PM. Con placa de otra ciudad, dentro de los anillos viales la restricción es continua de 7:00 AM a 8:00 PM.',
   },
   {
     label: '¿Está permitido llevar el carro alquilado hasta Venezuela?',
