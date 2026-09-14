@@ -153,9 +153,22 @@
                 </div>
               </div>
 
-              <!-- Sedes de la ciudad: nombre destacado y horario debajo; solo informativas -->
+              <!-- Sedes de la ciudad: nombre destacado y horario debajo; tocar/deslizar una
+                   la cita en el área de escritura, igual que las tarjetas de modelos -->
               <div v-else-if="block.kind === 'sedeCards'" class="cc-sedes">
-                <div v-for="(s, si) in block.data.sedes" :key="si" class="cc-sede">
+                <div
+                  v-for="(s, si) in block.data.sedes"
+                  :key="si"
+                  class="cc-sede cc-replyable"
+                  role="button"
+                  tabindex="0"
+                  :aria-label="`Responder sobre la sede ${s.nombre}`"
+                  @click="replyToSede(s, m.id)"
+                  @keydown.enter="replyToSede(s, m.id)"
+                  @touchstart.stop.passive="onSwipeStart"
+                  @touchmove.stop.passive="onSwipeMove"
+                  @touchend.stop="onSwipeEnd($event, () => replyToSede(s, m.id))"
+                >
                   <strong class="cc-sede-name">{{ s.nombre }}</strong>
                   <span v-if="s.horario" class="cc-sede-horario">{{ s.horario }}</span>
                 </div>
@@ -336,6 +349,15 @@ function replyToModelo(mod: { nombre: string; imagen?: string }, cards: { gama: 
     author: 'Asesora',
     preview: `${mod.nombre} · Gama ${cards.gama}`,
     image: mod.imagen || undefined,
+    targetId,
+  }
+}
+function replyToSede(s: { nombre: string }, targetId?: string) {
+  replyTo.value = {
+    label: `Sede ${s.nombre}`,
+    context: `[El cliente responde sobre la sede ${s.nombre}.]`,
+    author: 'Asesora',
+    preview: `Sede ${s.nombre}`,
     targetId,
   }
 }
