@@ -436,3 +436,79 @@ describe('SCEN-E9 — gama photo sizing guards', () => {
     expect(source).toMatch(/\.cc-msg\.has-cards \{ width: 85%; max-width: min\(85%, 26rem\); \}/)
   })
 })
+
+describe('Two text blocks in one v2 bubble are spaced, not glued', () => {
+  const source = readFileSync(join(__dirname, '..', 'ChatConversation.vue'), 'utf8')
+
+  it('separates adjacent .cc-text blocks like text after a data piece', () => {
+    expect(source).toMatch(/\.cc-text \+ \.cc-text \{ margin-top: 0\.5rem; \}/)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// Reopen with unread replies: a late gama photo must not yank the list away
+// from the "Mensajes nuevos" separator. jsdom has no layout, so the list's
+// scroll geometry is defined by hand.
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('Reopen keeps the "Mensajes nuevos" separator when a photo loads late', () => {
+  const list = { top: 0, height: 2000, client: 500 }
+  const GEOMETRY = ['scrollHeight', 'clientHeight', 'scrollTop'] as const
+  const isList = (el: Element) => el.classList.contains('cc-messages')
+
+  beforeEach(() => {
+    Object.assign(list, { top: 0, height: 2000, client: 500 })
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get() { return isList(this) ? list.height : 0 },
+    })
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      get() { return isList(this) ? list.client : 0 },
+    })
+    Object.defineProperty(HTMLElement.prototype, 'scrollTop', {
+      configurable: true,
+      get() { return isList(this) ? list.top : 0 },
+      set(v: number) { if (isList(this)) list.top = v },
+    })
+  })
+
+  afterEach(() => {
+    for (const p of GEOMETRY) delete (HTMLElement.prototype as unknown as Record<string, unknown>)[p]
+  })
+
+  // Stored transcript whose reply has a photo card; `lastRead` decides whether it is unread.
+  function reopen(lastRead: string) {
+    const config = cfg()
+    const now = Date.now()
+    localStorage.setItem(config.messagesKey, JSON.stringify([
+      { id: 'u1', role: 'user', text: 'modelos', createdAt: now - 2000 },
+      { id: 'a1', role: 'assistant', text: 'Mira:', createdAt: now - 1000, gamaCards: CARDS },
+    ]))
+    localStorage.setItem(config.lastReadKey, lastRead)
+    return createChatConversation(config)
+  }
+
+  it('unread reply positioned away from the bottom → photo load does not jump to the bottom', async () => {
+    const w = await render(reopen('u1'))
+    await new Promise((r) => setTimeout(r))
+    expect(w.find('.cc-new-sep').exists()).toBe(true)
+    // scrollIntoView (a no-op here) left the list where the separator is: no scroll event fired.
+    expect(list.top).toBe(0)
+
+    list.height = 2600
+    await w.find('.cc-card-img').trigger('load')
+    expect(list.top).toBe(0)
+  })
+
+  it('no unread replies → the list sits at the bottom and a late photo keeps it there', async () => {
+    const w = await render(reopen('a1'))
+    await new Promise((r) => setTimeout(r))
+    expect(w.find('.cc-new-sep').exists()).toBe(false)
+    expect(list.top).toBe(2000)
+
+    list.height = 2600
+    await w.find('.cc-card-img').trigger('load')
+    expect(list.top).toBe(2600)
+  })
+})

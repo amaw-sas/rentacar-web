@@ -246,6 +246,39 @@ describe('corrupt stored entries never reach the template', () => {
     }
   });
 
+  it('drops quote rows that are not objects (legacy and v2)', () => {
+    const corruptTable = { ...quoteTable, filas: [null, quoteTable.filas[0]] } as unknown as QuoteTablePart;
+    for (const m of [
+      { text: 'A', quoteTable: corruptTable },
+      { text: 'A', quoteTable: corruptTable, partsOrder: 2 as const, parts: [t('A'), d('quoteTable', corruptTable)] },
+    ]) {
+      const bubbles = layoutChatBubbles(m);
+      expect(shape(bubbles)).toEqual([['text:A', 'quoteTable']]);
+      const block = bubbles[0]!.blocks[1] as { data: QuoteTablePart };
+      expect(block.data.filas).toEqual([quoteTable.filas[0]]);
+      expect(block.data.sede).toBe(quoteTable.sede);
+    }
+  });
+
+  it('a quote table whose rows are all invalid renders no table (legacy and v2)', () => {
+    for (const filas of [[null], [1]]) {
+      const bad = { ...quoteTable, filas } as unknown as QuoteTablePart;
+      expect(shape(layoutChatBubbles({ text: 'A', quoteTable: bad }))).toEqual([['text:A']]);
+      expect(
+        shape(layoutChatBubbles({ text: 'A', quoteTable: bad, partsOrder: 2, parts: [t('A'), d('quoteTable', bad)] })),
+      ).toEqual([['text:A']]);
+    }
+  });
+
+  it('a quote table with no rows at all is still a table, as today', () => {
+    const empty = { ...quoteTable, filas: [] };
+    const m = { text: 'A', quoteTable: empty };
+    expect(shape(layoutChatBubbles(m))).toEqual([['text:A', 'quoteTable']]);
+    expect(layoutChatBubbles(m)).toEqual(referenceTodayLayout(m));
+    // Valid rows keep the original object.
+    expect((layoutChatBubbles({ text: 'A', quoteTable }).at(-1)!.blocks[1] as { data: unknown }).data).toBe(quoteTable);
+  });
+
   it('drops gama model entries that are not objects (legacy and v2)', () => {
     const corruptCards = {
       gama: 'F',
@@ -444,16 +477,54 @@ describe('v2 edge cases', () => {
     expect(bubbles[0]!.endsWithPart).toBe(true);
   });
 
-  it('a slot overridden after its data ref (tool-output after data-buttons) also shows at the end', () => {
+  // Owner decision: one visible button group, last wins — as the legacy render does.
+  it('actions replaced after their data ref (tool-output after data-buttons) → one group, at the end', () => {
     const bubbles = layoutChatBubbles({
       text: 'Reserva:\n---\nListo.',
       actions, // tool-output-available replaced the data-buttons payload
       partsOrder: 2,
       parts: [t('Reserva:'), d('buttons', webOnly), t('Listo.')],
     });
-    expect(shape(bubbles)).toEqual([['text:Reserva:', 'actions', 'text:Listo.', 'actions']]);
+    expect(shape(bubbles)).toEqual([['text:Reserva:', 'text:Listo.', 'actions']]);
+    expect(bubbles[0]!.text).toBe('Reserva:\nListo.');
+    expect(bubbles[0]!.endsWithPart).toBe(true);
     const last = bubbles[0]!.blocks.at(-1) as { data: unknown };
     expect(last.data).toEqual(actions);
+  });
+
+  it('several data-buttons refs whose last payload is the slot stay in place (no extra group)', () => {
+    const shareOnly = { share: 'https://wa.me/?text=cotizacion' };
+    const bubbles = layoutChatBubbles({
+      text: 'A\n---\nB',
+      actions: shareOnly,
+      partsOrder: 2,
+      parts: [t('A'), d('buttons', webOnly), t('B'), d('buttons', shareOnly)],
+    });
+    expect(shape(bubbles)).toEqual([['text:A', 'actions', 'text:B', 'actions']]);
+  });
+
+  it('removing a replaced group drops a bubble left empty and recomputes the rest', () => {
+    const bubbles = layoutChatBubbles({
+      text: 'A\n---\nB',
+      actions,
+      partsOrder: 2,
+      parts: [d('buttons', webOnly), t('A', true), t('B', true)],
+    });
+    // [[actions], [A], [B]] → the stale group goes, its bubble with it; the slot lands last.
+    expect(shape(bubbles)).toEqual([['text:A'], ['text:B', 'actions']]);
+    expect(bubbles.map((b) => b.endsWithPart)).toEqual([false, true]);
+    expect(bubbles.flatMap((b) => b.blocks).filter((blk) => blk.kind === 'actions')).toHaveLength(1);
+  });
+
+  it('a replaced group that was the only content still leaves exactly one bubble with the slot', () => {
+    const bubbles = layoutChatBubbles({
+      text: '',
+      actions,
+      partsOrder: 2,
+      parts: [d('buttons', webOnly)],
+    });
+    expect(shape(bubbles)).toEqual([['actions']]);
+    expect((bubbles[0]!.blocks[0] as { data: unknown }).data).toEqual(actions);
   });
 
   it('only data, no text → one bubble with the data in order', () => {

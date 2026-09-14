@@ -516,7 +516,8 @@ describe('repeated data types in one v2 turn', () => {
     ).toEqual([3, 5]);
   });
 
-  it('tool-output actions overriding a data-buttons payload still show at the end', async () => {
+  // Owner decision: one visible button group, last wins — as the legacy render does.
+  it('tool-output actions replacing a data-buttons payload show as ONE group at the end', async () => {
     const m = await runTurn(createChatConversation(cfg()), [
       MARKER,
       ...text('Reserva:'),
@@ -529,8 +530,58 @@ describe('repeated data types in one v2 turn', () => {
     ]);
     expect(m.actions).toEqual({ web: 'https://reserva.test/y', whatsapp: 'https://wa.me/57300' });
     const bubbles = layoutChatBubbles(m);
-    expect(shape(bubbles)).toEqual([['text:Reserva:', 'actions', 'text:Listo.', 'actions']]);
+    expect(shape(bubbles)).toEqual([['text:Reserva:', 'text:Listo.', 'actions']]);
+    expect(bubbles.flatMap((b) => b.blocks).filter((blk) => blk.kind === 'actions')).toHaveLength(1);
     expect((bubbles[0]!.blocks.at(-1) as { data: unknown }).data).toEqual(m.actions);
+  });
+});
+
+describe('quote table rows that are not objects never reach analytics or the template', () => {
+  const row = quoteTable.filas[0];
+
+  it('the parser drops invalid rows before storing the table', async () => {
+    const m = await runTurn(createChatConversation(cfg()), [
+      MARKER,
+      ...text('Te cotizo:'),
+      { type: 'data-quoteTable', data: { ...quoteTable, filas: [null, row, 1] } },
+    ]);
+    expect(m.quoteTable).toEqual({ ...quoteTable, filas: [row] });
+    expect(m.parts?.find((p) => p.type === 'quoteTable')).toEqual({
+      type: 'quoteTable',
+      data: { ...quoteTable, filas: [row] },
+    });
+    expect(shape(layoutChatBubbles(m))).toEqual([['text:Te cotizo:', 'quoteTable']]);
+  });
+
+  it('a table whose rows are all invalid is rejected (and still holds the texts together)', async () => {
+    const m = await runTurn(createChatConversation(cfg()), [
+      MARKER,
+      ...text('A'),
+      { type: 'data-quoteTable', data: { ...quoteTable, filas: [null] } },
+      ...text('B'),
+    ]);
+    expect(m.quoteTable).toBeUndefined();
+    expect(m.parts?.some((p) => p.type === 'quoteTable')).toBe(false);
+    expect(shape(layoutChatBubbles(m))).toEqual([['text:A', 'text:B']]);
+  });
+
+  it('a stored transcript with corrupt rows restores and lays out without throwing', () => {
+    const c = cfg();
+    const now = Date.now();
+    store.setItem(
+      c.messagesKey,
+      JSON.stringify([
+        { id: 'u1', role: 'user', text: 'cotízame', createdAt: now },
+        { id: 'a1', role: 'assistant', text: 'A', quoteTable: { ...quoteTable, filas: [null, row] }, createdAt: now },
+        { id: 'a2', role: 'assistant', text: 'B', quoteTable: { ...quoteTable, filas: [null] }, createdAt: now },
+      ]),
+    );
+    const inst = createChatConversation(c);
+    const [, a1, a2] = inst.messages.value;
+    const withRow = layoutChatBubbles(a1!);
+    expect(shape(withRow)).toEqual([['text:A', 'quoteTable']]);
+    expect((withRow[0]!.blocks[1] as { data: { filas: unknown[] } }).data.filas).toEqual([row]);
+    expect(shape(layoutChatBubbles(a2!))).toEqual([['text:B']]);
   });
 });
 
