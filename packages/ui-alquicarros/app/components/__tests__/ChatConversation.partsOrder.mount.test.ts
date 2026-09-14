@@ -1,0 +1,438 @@
+// @vitest-environment jsdom
+//
+// chat-parts-order.scenarios.md (docs/specs/2026-09-13-chat-parts-order) at the
+// DOM level: a REAL conversation instance is driven by a stubbed SSE `fetch`, then
+// the component renders its messages. The source-string guards pin markup; this
+// suite pins what the customer sees — which bubbles exist and, inside each one,
+// the order of text, quote table, gama cards, sede cards and buttons.
+//
+// Legacy scenarios (E1, E6, E10) also pin today's bubble classes and time row, so
+// the "without the marker nothing changes" promise is checked against the DOM.
+
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mount, type VueWrapper } from '@vue/test-utils'
+import {
+  createChatConversation,
+  type ChatConversation as ChatInstance,
+  type ChatConversationConfig,
+} from '@rentacar-main/logic/composables/useChatConversation'
+import ChatConversation from '../ChatConversation.vue'
+
+// ─────────────────────────────────────────────────────────────────────────
+// Harness
+// ─────────────────────────────────────────────────────────────────────────
+
+const MARKER = { type: 'data-partsOrder', data: { v: 2 } }
+const text = (s: string) => [
+  { type: 'text-start', id: s },
+  { type: 'text-delta', id: s, delta: s },
+  { type: 'text-end', id: s },
+]
+const QUOTE = {
+  sede: 'AABOT',
+  dias: 3,
+  filas: [
+    { categoria: 'C', descripcion: 'Económico Mecánico', precioTotal: 350000, horasExtra: 0, precioHoraExtra: 0 },
+    { categoria: 'F', descripcion: 'Sedán Mecánico', precioTotal: 420000, horasExtra: 0, precioHoraExtra: 0 },
+  ],
+}
+const CARDS = {
+  gama: 'F',
+  descripcion: 'Sedán mecánico',
+  modelos: [
+    { nombre: 'Chevrolet Onix', imagen: 'https://img.test/onix.webp' },
+    { nombre: 'Kia Soluto', imagen: '' },
+  ],
+}
+const SEDES = {
+  sedes: [
+    { code: 'AABOT', nombre: 'Bogotá Aeropuerto', horario: 'Lun-Dom 6am-10pm' },
+    { code: 'ABCTR', nombre: 'Bogotá Centro', horario: 'Lun-Sáb 8am-6pm' },
+  ],
+}
+const data = (type: string, payload: unknown) => ({ type: `data-${type}`, data: payload })
+
+// fetch that answers every turn with the next queued SSE body, delivered whole.
+function sseFetch(turns: unknown[][]) {
+  const encoder = new TextEncoder()
+  const queue = [...turns]
+  return vi.fn(() => {
+    const events = queue.shift() ?? []
+    const chunks = [
+      { done: false, value: encoder.encode(events.map((e) => `data: ${JSON.stringify(e)}\n`).join('')) },
+      { done: true, value: undefined },
+    ]
+    return Promise.resolve({
+      ok: true,
+      headers: { get: () => null },
+      body: { getReader: () => ({ read: () => Promise.resolve(chunks.shift() ?? { done: true }) }) },
+    })
+  })
+}
+
+let brandSeq = 0
+function cfg(brand = `po-ui-${brandSeq++}`): ChatConversationConfig {
+  return {
+    brand,
+    api: 'http://api.test/api/chat',
+    messagesKey: `rentacar-chat:${brand}:messages`,
+    conversationKey: `rentacar-chat:${brand}:conversationId`,
+    lastReadKey: `rentacar-chat:${brand}:lastReadMessageId`,
+  }
+}
+
+async function converse(turns: unknown[][], config = cfg()): Promise<ChatInstance> {
+  vi.stubGlobal('fetch', sseFetch(turns))
+  const instance = createChatConversation(config)
+  for (let t = 0; t < turns.length; t++) {
+    instance.input.value = `pregunta ${t + 1}`
+    await instance.submit()
+  }
+  return instance
+}
+
+let wrapper: VueWrapper | null = null
+async function render(instance: ChatInstance) {
+  vi.stubGlobal('useChatConversation', () => instance)
+  wrapper = mount(ChatConversation, { props: { variant: 'page', active: true } })
+  await wrapper.vm.$nextTick()
+  return wrapper
+}
+
+// Normalized view of one assistant bubble: its data-bearing children in DOM order.
+type Child =
+  | { kind: 'text'; text: string }
+  | { kind: 'quote' | 'cards' | 'actions' }
+  | { kind: 'sedes'; sedes: Array<{ name: string; schedule: string }> }
+const KINDS: Array<[string, Child['kind']]> = [
+  ['cc-text', 'text'],
+  ['cc-quote', 'quote'],
+  ['cc-cards', 'cards'],
+  ['cc-sedes', 'sedes'],
+  ['cc-actions', 'actions'],
+]
+
+function assistantBubbles(w: VueWrapper): HTMLElement[] {
+  return Array.from(w.element.querySelectorAll<HTMLElement>('.cc-msg.is-assistant')).filter(
+    (el) => !el.querySelector('.cc-typing-text'),
+  )
+}
+
+function structure(el: HTMLElement): Child[] {
+  const out: Child[] = []
+  for (const child of Array.from(el.children)) {
+    const hit = KINDS.find(([cls]) => child.classList.contains(cls))
+    if (!hit) continue
+    const kind = hit[1]
+    if (kind === 'text') out.push({ kind, text: (child.textContent ?? '').trim() })
+    else if (kind === 'sedes') {
+      out.push({
+        kind,
+        sedes: Array.from(child.querySelectorAll('.cc-sede')).map((s) => ({
+          name: (s.querySelector('.cc-sede-name')?.textContent ?? '').trim(),
+          schedule: (s.querySelector('.cc-sede-horario')?.textContent ?? '').trim(),
+        })),
+      })
+    } else out.push({ kind })
+  }
+  return out
+}
+
+// Today's bubble chrome: classes (minus the new has-cards / flash) + time row.
+function chrome(el: HTMLElement) {
+  return {
+    classes: Array.from(el.classList).filter((c) => c !== 'has-cards' && c !== 'cc-flash').sort(),
+    time: !!el.querySelector(':scope > .cc-time'),
+  }
+}
+
+const T = (s: string): Child => ({ kind: 'text', text: s })
+const QUOTE_C: Child = { kind: 'quote' }
+const CARDS_C: Child = { kind: 'cards' }
+const ACTIONS_C: Child = { kind: 'actions' }
+const BASE = ['cc-msg', 'has-time', 'is-assistant']
+
+let consoleError: ReturnType<typeof vi.spyOn>
+let consoleWarn: ReturnType<typeof vi.spyOn>
+
+beforeEach(() => {
+  localStorage.clear()
+  // jsdom lacks these; the component calls them on mount / quote jump.
+  if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {}
+  if (typeof globalThis.CSS === 'undefined') vi.stubGlobal('CSS', { escape: (s: string) => s })
+  consoleError = vi.spyOn(console, 'error')
+  consoleWarn = vi.spyOn(console, 'warn')
+})
+
+afterEach(() => {
+  wrapper?.unmount()
+  wrapper = null
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// Legacy (no data-partsOrder): identical to today
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('SCEN-E1 — today\'s format without marker renders like today', () => {
+  it('3 bubbles A, B, C with table → cards → buttons at the end of the third', async () => {
+    const instance = await converse([[
+      ...text('A'), ...text('B'), ...text('C'),
+      data('quoteTable', QUOTE), data('gamaCards', CARDS), data('buttons', { web: 'https://web.test', whatsapp: 'https://wa.test' }),
+    ]])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles.map(structure)).toEqual([
+      [T('A')],
+      [T('B')],
+      [T('C'), QUOTE_C, CARDS_C, ACTIONS_C],
+    ])
+    expect(bubbles.map(chrome)).toEqual([
+      { classes: [...BASE, 'is-group-start'].sort(), time: true },
+      { classes: BASE, time: true },
+      { classes: [...BASE, 'has-parts'].sort(), time: true },
+    ])
+    expect(w.find('.cc-quote-note').text()).toBe('Total con IVA, tasas, seguro básico y km ilimitado.')
+    expect(consoleError).not.toHaveBeenCalled()
+    expect(consoleWarn).not.toHaveBeenCalled()
+  })
+
+  it('the bubble with gama cards carries has-cards', async () => {
+    const instance = await converse([[...text('A'), data('gamaCards', CARDS)]])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles).toHaveLength(1)
+    expect(bubbles[0]!.classList.contains('has-cards')).toBe(true)
+  })
+})
+
+describe('SCEN-E6 — transcripts saved before the change load identically', () => {
+  it('stored shape (A\\n---\\nB + table, cards, actions) → 2 bubbles, data at the end of the second, no errors', async () => {
+    const config = cfg()
+    const now = Date.now()
+    const stored = [
+      { id: 'u1', role: 'user', text: 'hola', createdAt: now - 2000 },
+      {
+        id: 'a1',
+        role: 'assistant',
+        text: 'A\n---\nB',
+        createdAt: now - 1000,
+        quoteTable: QUOTE,
+        gamaCards: CARDS,
+        actions: { web: 'https://web.test', whatsapp: 'https://wa.test' },
+      },
+    ]
+    localStorage.setItem(config.messagesKey, JSON.stringify(stored))
+    const instance = createChatConversation(config)
+    expect(JSON.parse(JSON.stringify(instance.messages.value))).toEqual(stored)
+
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles.map(structure)).toEqual([
+      [T('A')],
+      [T('B'), QUOTE_C, CARDS_C, ACTIONS_C],
+    ])
+    expect(bubbles.map(chrome)).toEqual([
+      { classes: [...BASE, 'is-group-start'].sort(), time: true },
+      { classes: [...BASE, 'has-parts'].sort(), time: true },
+    ])
+    expect(consoleError).not.toHaveBeenCalled()
+    expect(consoleWarn).not.toHaveBeenCalled()
+  })
+})
+
+describe('SCEN-E10 — production interleaving without marker renders like today', () => {
+  it('text → table → text → text = 3 bubbles, table at the end of the third; buttons → text = button below the text', async () => {
+    const instance = await converse([
+      [...text('Ida y vuelta.'), data('quoteTable', QUOTE), ...text('La más elegida es la C.'), ...text('¿Cuál reservamos?')],
+      [data('buttons', { web: 'https://web.test' }), ...text('Te dejo el enlace para reservar tú mismo abajo.')],
+    ])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles.map(structure)).toEqual([
+      [T('Ida y vuelta.')],
+      [T('La más elegida es la C.')],
+      [T('¿Cuál reservamos?'), QUOTE_C],
+      [T('Te dejo el enlace para reservar tú mismo abajo.'), ACTIONS_C],
+    ])
+    expect(bubbles.map(chrome)).toEqual([
+      { classes: [...BASE, 'is-group-start'].sort(), time: true },
+      { classes: BASE, time: true },
+      { classes: [...BASE, 'has-parts'].sort(), time: true },
+      { classes: [...BASE, 'has-parts', 'is-group-start'].sort(), time: true },
+    ])
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// v2 (data-partsOrder {v:2}): pieces in arrival order
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('SCEN-E2 — v2 text → table → text is one bubble in order', () => {
+  it('renders [text, table, text] in one bubble; ending in text drops has-parts', async () => {
+    const instance = await converse([[MARKER, ...text('Te cotizo:'), data('quoteTable', QUOTE), ...text('¿Cuál te gusta?')]])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles.map(structure)).toEqual([[T('Te cotizo:'), QUOTE_C, T('¿Cuál te gusta?')]])
+    expect(bubbles[0]!.classList.contains('has-parts')).toBe(false)
+    expect(bubbles[0]!.querySelector(':scope > .cc-time')).not.toBeNull()
+    expect(w.find('.cc-quote-note').text()).toBe('Total con IVA, tasas, seguro básico y km ilimitado.')
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+
+  it('a v2 bubble that ends in a data piece keeps has-parts', async () => {
+    const instance = await converse([[MARKER, ...text('Te cotizo:'), data('quoteTable', QUOTE)]])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles.map(structure)).toEqual([[T('Te cotizo:'), QUOTE_C]])
+    expect(bubbles[0]!.classList.contains('has-parts')).toBe(true)
+  })
+})
+
+describe('SCEN-E3 — v2 text → cards → text → buttons → text is one bubble in order', () => {
+  it('renders the five pieces in order and tapping a card still quotes it', async () => {
+    const instance = await converse([[
+      MARKER, ...text('Modelos:'), data('gamaCards', CARDS), ...text('Reserva aquí:'),
+      data('buttons', { web: 'https://web.test' }), ...text('¿Algo más?'),
+    ]])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles.map(structure)).toEqual([[T('Modelos:'), CARDS_C, T('Reserva aquí:'), ACTIONS_C, T('¿Algo más?')]])
+    expect(bubbles[0]!.classList.contains('has-cards')).toBe(true)
+
+    const assistantId = instance.messages.value.at(-1)!.id
+    await w.findAll('.cc-card')[0]!.trigger('click')
+    expect(instance.replyTo.value).toEqual({
+      label: 'Chevrolet Onix · Gama F',
+      context: '[El cliente responde sobre el modelo Chevrolet Onix de la Gama F.]',
+      author: 'Asesora',
+      preview: 'Chevrolet Onix · Gama F',
+      image: 'https://img.test/onix.webp',
+      targetId: assistantId,
+    })
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+describe('SCEN-E4 — v2 sede cards render in place', () => {
+  it('renders [text, 2 sede cards, text]; name emphasized, schedule below; tapping does nothing', async () => {
+    const instance = await converse([[MARKER, ...text('Sedes en Bogotá:'), data('sedeCards', SEDES), ...text('¿Cuál te queda mejor?')]])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles.map(structure)).toEqual([[
+      T('Sedes en Bogotá:'),
+      {
+        kind: 'sedes',
+        sedes: [
+          { name: 'Bogotá Aeropuerto', schedule: 'Lun-Dom 6am-10pm' },
+          { name: 'Bogotá Centro', schedule: 'Lun-Sáb 8am-6pm' },
+        ],
+      },
+      T('¿Cuál te queda mejor?'),
+    ]])
+
+    const cards = w.findAll('.cc-sede')
+    expect(cards).toHaveLength(2)
+    for (const card of cards) {
+      const name = card.element.querySelector('.cc-sede-name')!
+      expect(name.tagName).toBe('STRONG')
+      expect(name.nextElementSibling?.classList.contains('cc-sede-horario')).toBe(true)
+      expect(card.attributes('role')).toBeUndefined()
+      await card.trigger('click')
+      await card.trigger('keydown', { key: 'Enter' })
+    }
+    expect(instance.replyTo.value).toBeNull()
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+describe('SCEN-E5 — consecutive text blocks still split bubbles', () => {
+  it.each([
+    ['without marker', [] as unknown[]],
+    ['with v2', [MARKER]],
+  ])('%s → 2 bubbles "Hola" and "¿Ciudad?"', async (_label, prefix) => {
+    const instance = await converse([[...prefix, ...text('Hola'), ...text('¿Ciudad?')]])
+    const w = await render(instance)
+    expect(assistantBubbles(w).map(structure)).toEqual([[T('Hola')], [T('¿Ciudad?')]])
+  })
+})
+
+describe('SCEN-E7 — v2 order survives reload', () => {
+  it('a new instance over the same storage renders the same single bubble', async () => {
+    const config = cfg()
+    const first = await converse([[MARKER, ...text('Te cotizo:'), data('quoteTable', QUOTE), ...text('¿Cuál te gusta?')]], config)
+    const w1 = await render(first)
+    const before = assistantBubbles(w1).map(structure)
+    w1.unmount()
+    wrapper = null
+
+    const reloaded = createChatConversation(config)
+    const w2 = await render(reloaded)
+    const after = assistantBubbles(w2).map(structure)
+    expect(after).toEqual([[T('Te cotizo:'), QUOTE_C, T('¿Cuál te gusta?')]])
+    expect(after).toEqual(before)
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+describe('SCEN-E8 — empty sede cards and unknown data pieces render nothing', () => {
+  it('v2: rejected sede cards between texts render nothing and open no bubble', async () => {
+    const instance = await converse([[
+      MARKER, ...text('Antes.'),
+      data('sedeCards', {}), data('sedeCards', { sedes: [] }),
+      ...text('Después.'),
+    ]])
+    const w = await render(instance)
+    expect(w.find('.cc-sedes').exists()).toBe(false)
+    expect(assistantBubbles(w).map(structure)).toEqual([[T('Antes.'), T('Después.')]])
+    expect(consoleError).not.toHaveBeenCalled()
+    expect(consoleWarn).not.toHaveBeenCalled()
+  })
+
+  it('v2: an unknown data piece stays ignored — text → unknown → text = 2 bubbles', async () => {
+    const instance = await converse([[
+      MARKER, ...text('Antes.'), data('somethingUnknown', { x: 1 }), ...text('Después.'),
+    ]])
+    const w = await render(instance)
+    expect(assistantBubbles(w).map(structure)).toEqual([[T('Antes.')], [T('Después.')]])
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+describe('v2 repeated data pieces render each one in place', () => {
+  it('text → gamaCards C → text → gamaCards F = 1 bubble with both card sets in order', async () => {
+    const cardsC = { gama: 'C', descripcion: 'Económico', modelos: [{ nombre: 'Kia Picanto', imagen: '' }] }
+    const cardsF = { gama: 'F', descripcion: 'Sedán mecánico', modelos: [{ nombre: 'Chevrolet Onix', imagen: '' }] }
+    const instance = await converse([[
+      MARKER, ...text('Gama C:'), data('gamaCards', cardsC), ...text('Y la Gama F:'), data('gamaCards', cardsF),
+    ]])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles.map(structure)).toEqual([[T('Gama C:'), CARDS_C, T('Y la Gama F:'), CARDS_C]])
+    const titles = Array.from(bubbles[0]!.querySelectorAll(':scope > .cc-cards > .cc-cards-title')).map((t) =>
+      (t.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    )
+    expect(titles).toEqual(['Modelos de la Gama C · Económico', 'Modelos de la Gama F · Sedán mecánico'])
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// Card sizing (CSS, invisible to jsdom — pinned at source level)
+// ─────────────────────────────────────────────────────────────────────────
+
+describe('SCEN-E9 — gama photo sizing guards', () => {
+  // jsdom replaces the global URL, so resolve by path instead of import.meta.url.
+  const source = readFileSync(join(__dirname, '..', 'ChatConversation.vue'), 'utf8')
+
+  it('reserves a 3:2 box before the lazy photo loads, then uses its own ratio (no crop)', () => {
+    expect(source).toMatch(/\.cc-card-img \{ width: 100%; height: auto; aspect-ratio: auto 3 \/ 2; object-fit: contain; \}/)
+  })
+
+  it('caps the card bubble outside phone widths while still filling it', () => {
+    expect(source).toMatch(/\.cc-msg\.has-cards \{ width: 85%; max-width: min\(85%, 26rem\); \}/)
+  })
+})

@@ -127,7 +127,8 @@ describe('SCEN-ALQ-CHAT-B2 — la hora sigue metida en la burbuja', () => {
   })
 
   it('devuelve la hora a su propia fila en burbujas con partes estructuradas', () => {
-    expect(source).toMatch(/'has-parts': i === bubblesFor\(m\)\.length - 1 && !!\(m\.quoteTable \|\| m\.gamaCards \|\| m\.actions\),/)
+    // La burbuja termina en partes estructuradas cuando su ÚLTIMO bloque es un dato (layoutChatBubbles).
+    expect(source).toMatch(/'has-parts': chunk\.endsWithPart,/)
     // Guardia de especificidad: los selectores de opt-out tienen que llevar el
     // prefijo .cc-msg.is-assistant completo — con menos clases PIERDEN (0,3,1)
     // contra la regla del espaciador (0,4,1) y el override queda muerto.

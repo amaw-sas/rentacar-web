@@ -42,7 +42,8 @@ describe('SCEN-102 — timestamp tucked into the bottom-right corner', () => {
   })
 
   it('falls back to an own-row time on bubbles with structured parts', () => {
-    expect(source).toMatch(/'has-parts': i === bubblesFor\(m\)\.length - 1 && !!\(m\.quoteTable \|\| m\.gamaCards \|\| m\.actions\),/)
+    // A bubble ends in structured parts when its LAST block is data (layoutChatBubbles).
+    expect(source).toMatch(/'has-parts': chunk\.endsWithPart,/)
     // Specificity guard: the opt-out selectors must carry the full
     // .cc-msg.is-assistant prefix — with fewer classes they LOSE (0,3,1) vs
     // the (0,4,1) spacer rule and the override becomes dead CSS.
