@@ -479,6 +479,65 @@ describe('SCEN-R5b — a stale tab never deletes another tab\'s live conversatio
   });
 });
 
+describe('SCEN-R5b — a stale tab whose stream settles late never overwrites another tab\'s conversation', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // Tab A sends at T0 and its reply hangs; tab B chats at T0+24 h; A comes back at
+  // T0+25 h mid-stream (expiry skipped, pending). Returns once B's copy is in storage.
+  async function staleStreamingTabA() {
+    const c = cfg();
+    seed(c, [turn('u1', 0, 'user'), turn('a1', 0)], { conversationId: 'conv-A', lastRead: 'a1' });
+    fetchSpy.mockImplementation(((_url: string, init: { signal: AbortSignal }) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    })) as never);
+    const tabA = createChatConversation(c);
+    tabA.input.value = 'hola';
+    const settled = tabA.submit();
+    await Promise.resolve();
+
+    vi.setSystemTime(T0 + 25 * HOUR);
+    const tabB = [turn('bu1', HOUR, 'user'), turn('ba1', HOUR)];
+    store.setItem(c.messagesKey, JSON.stringify(tabB));
+    store.setItem(c.conversationKey, 'conv-B');
+    store.setItem(c.lastReadKey, 'ba1');
+    show();
+    expect(tabA.isStreaming.value).toBe(true);
+    return { c, tabA, tabB, settled };
+  }
+
+  function expectTabBKept(c: ChatConversationConfig, tabA: ReturnType<typeof createChatConversation>, tabB: ChatMessage[]) {
+    expect(JSON.parse(store.getItem(c.messagesKey)!)).toEqual(tabB);
+    expect(store.getItem(c.conversationKey)).toBe('conv-B');
+    expect(store.getItem(c.lastReadKey)).toBe('ba1');
+    expect(tabA.messages.value).toEqual(tabB);
+    expect(tabA.conversationId.value).toBe('conv-B');
+  }
+
+  it('stream stopped by the customer: tab B\'s messages and conversationId survive, tab A adopts them', async () => {
+    const { c, tabA, tabB, settled } = await staleStreamingTabA();
+    tabA.stop();
+    await settled;
+    expectTabBKept(c, tabA, tabB);
+    hide();
+    win.fire('pagehide');
+    expectTabBKept(c, tabA, tabB);
+  });
+
+  it('stream aborted by the watchdog: tab B\'s messages and conversationId survive, tab A adopts them', async () => {
+    const { c, tabA, tabB, settled } = await staleStreamingTabA();
+    await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+    await settled;
+    expect(tabA.isStreaming.value).toBe(false);
+    expectTabBKept(c, tabA, tabB);
+  });
+});
+
 describe('clear() and TTL expiry share one reset', () => {
   it('clear() also silences a pending aria-live announcement', () => {
     const c = cfg();

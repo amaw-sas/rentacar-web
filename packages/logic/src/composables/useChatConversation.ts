@@ -198,6 +198,15 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     }
   }
 
+  function restoreConversationId(): string | null {
+    if (!hasStorage) return null;
+    try {
+      return localStorage.getItem(conversationKey);
+    } catch {
+      return null;
+    }
+  }
+
   // Drop the LOCAL copy only (messages, server-conversation pointer, unread
   // marker). No network call: the Supabase record stays.
   function removeStoredConversation() {
@@ -435,7 +444,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
 
   function adoptStoredConversation(stored: ChatMessage[]) {
     messages.value = stored;
-    conversationId.value = hasStorage ? localStorage.getItem(conversationKey) : null;
+    conversationId.value = restoreConversationId();
     lastReadMessageId.value = restoreLastRead() ?? stored.at(-1)?.id ?? null;
     replyTo.value = null;
     error.value = null;
@@ -485,6 +494,13 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     // turn is in flight. Guarded on isStreaming so the terminal persist (which
     // runs after the empty-bubble fallback text) is never clobbered.
     if (isStreaming.value) flushInflight?.();
+    // A stale tab (own copy past the TTL) must not write over a younger transcript
+    // another tab left in storage; expireIfStale() adopts that one instead.
+    const now = Date.now();
+    if (isChatTranscriptExpired(messages.value, now)) {
+      const stored = restore();
+      if (stored.length && !isChatTranscriptExpired(stored, now)) return;
+    }
     try {
       localStorage.setItem(messagesKey, JSON.stringify(messages.value));
       if (conversationId.value) {
