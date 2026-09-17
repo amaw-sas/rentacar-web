@@ -12,7 +12,7 @@ spec (owner Q&A, code-grounded review ×3). This file holds the file map and ste
 |---|---|---|
 | `packages/logic/src/utils/chatTtl.ts` (new) | `CHAT_TTL_MS` (24 h) + `isChatTranscriptExpired(msgs, now)`; leaf, no imports | 3 |
 | `packages/logic/src/utils/index.ts` (exported as `@rentacar-main/logic/utils`) | re-export chatTtl | 3 |
-| `packages/logic/src/composables/useChatConversation.ts` | use helper at init; visible/pageshow expiry; re-export `CHAT_TTL_MS`; drop `ReplyContext.image` + reword `replyTo` comment (done in Step 3, track B owns this file) | 3 |
+| `packages/logic/src/composables/useChatConversation.ts` | use helper at init; visible/pageshow expiry; re-export `CHAT_TTL_MS`; track B owns this file in Steps 3-4 (TTL/expiry only); `ReplyContext.image` removal + `replyTo` comment reword happen in Step 6 | 3, 6 |
 | `packages/logic/src/composables/useChatUnreadBadge.ts` | TTL-aware `restore()`, re-restore on visible unless engine published | 4 |
 | `packages/logic/src/composables/useContactTeaser.ts` | own 15-day constant; NO import of `./useChatConversation` (that edge pulls the engine into the FAB graph) | 3 |
 | `packages/ui-{alquilatucarro,alquicarros,alquilame}/app/components/ChatConversation.vue` | reply targets, disabled send, hidden clear hit area | 1, 2, 5 |

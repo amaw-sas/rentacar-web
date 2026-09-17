@@ -15,11 +15,15 @@ record is never touched — it remains the business record.
 The TTL lives in one named constant (`CHAT_TTL_MS`, 15 days in ms) so it can be
 tuned without hunting magic numbers.
 
+> Superseded by docs/specs/2026-09-17-chat-reply-ttl-clear (SCEN-R4), owner decision 2026-09-17: TTL is 24 h. The 15-day ages below are historical; the test now uses 25 h / 23 h.
+
 Evidence source legend: `[unit]` — vitest in `packages/logic`.
 
 ---
 
 ## SCEN-001: conversation older than 15 days → fresh chat, keys cleared
+> Superseded by docs/specs/2026-09-17-chat-reply-ttl-clear (SCEN-R4), owner decision 2026-09-17: TTL is 24 h.
+
 **Given**: localStorage for brand `X` holds a transcript whose newest message
 `createdAt` is 16 days ago, plus a `conversationId` and a `lastReadMessageId`
 **When**: a new chat instance initializes (page load creates the singleton)
@@ -30,6 +34,8 @@ removed from localStorage
 **Evidence**: `[unit]` instance refs empty/null + `localStorage.getItem` returns null for the three keys
 
 ## SCEN-002: conversation 14 days old → everything intact
+> Superseded by docs/specs/2026-09-17-chat-reply-ttl-clear (SCEN-R4), owner decision 2026-09-17: TTL is 24 h.
+
 **Given**: localStorage for brand `X` holds a transcript whose newest message
 `createdAt` is 14 days ago, with 1 unread assistant reply (marker behind it),
 and a stored `conversationId`

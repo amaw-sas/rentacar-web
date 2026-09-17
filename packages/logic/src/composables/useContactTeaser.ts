@@ -18,13 +18,13 @@
  */
 import { ref } from 'vue';
 import { trackAnalyticsEvent } from '@rentacar-main/logic/utils';
-// Suppress-after-engagement window is aligned with the chat's local TTL (15d):
-// after a contact action, no teaser for the same span the chat history lives.
-import { CHAT_TTL_MS } from './useChatConversation';
 
 export const TEASER_FIRST_DELAY_MS = 5_000;
 export const TEASER_SECOND_DELAY_MS = 20_000;
-export const TEASER_SUPPRESS_MS = CHAT_TTL_MS; // 15 days
+// Suppress-after-engagement window: after a contact action, no teaser for 15
+// days. Its own constant on purpose: the chat's local TTL is 24 h, and importing
+// it from ./useChatConversation would pull the engine into the FAB chunk.
+export const TEASER_SUPPRESS_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
 // Displayed lines (line 1 carries an emoji for the visible bubble).
 export const TEASER_LINE_1 = '¡Hola! 👋 ¿Buscas carro? Escríbenos, respondemos ya.';
 export const TEASER_LINE_2 = '¿Dudas de requisitos o precios? Estamos en línea.';

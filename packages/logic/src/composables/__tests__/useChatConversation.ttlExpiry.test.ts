@@ -6,12 +6,16 @@ import {
   type ChatMessage,
 } from '../useChatConversation';
 
-// 15-day local conversation TTL (chat-ttl-expiry.scenarios.md): on init, a
-// transcript whose NEWEST message is older than CHAT_TTL_MS is wiped locally
-// (messages + conversationId + lastReadMessageId) — server record untouched.
-// Same stubbed-browser harness as useChatConversation.unread.test.ts.
+// 24 h local conversation TTL (chat-reply-ttl-clear.scenarios.md SCEN-R4, which
+// supersedes the 15-day ages of chat-ttl-expiry.scenarios.md): on init, and when
+// a live tab becomes visible again (SCEN-R5/R5b), a transcript whose NEWEST
+// message is older than CHAT_TTL_MS is wiped locally (messages + conversationId +
+// lastReadMessageId) — server record untouched. Same stubbed-browser harness as
+// useChatConversation.unread.test.ts, with listeners captured so tests can fire
+// visibilitychange / pageshow.
 
-const DAY = 24 * 60 * 60 * 1000;
+const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
 
 function makeStorage() {
   const store = new Map<string, string>();
@@ -23,19 +27,35 @@ function makeStorage() {
   };
 }
 
+type Handlers = Record<string, Array<() => void>>;
+
+function makeTarget<T extends object>(extra: T) {
+  const handlers: Handlers = {};
+  return Object.assign(extra, {
+    addEventListener: (t: string, cb: () => void) => void (handlers[t] ||= []).push(cb),
+    removeEventListener: (t: string, cb: () => void) => {
+      handlers[t] = (handlers[t] || []).filter((f) => f !== cb);
+    },
+    fire: (t: string) => (handlers[t] || []).forEach((f) => f()),
+  });
+}
+
 let store: ReturnType<typeof makeStorage>;
 let fetchSpy: ReturnType<typeof vi.fn>;
+let doc: ReturnType<typeof makeTarget<{ visibilityState: 'visible' | 'hidden' }>>;
+let win: ReturnType<typeof makeTarget<{ events: string[]; gtag: (kind: string, name: string) => void }>>;
 
 beforeEach(() => {
   store = makeStorage();
   fetchSpy = vi.fn();
-  vi.stubGlobal('localStorage', store);
-  vi.stubGlobal('document', {
-    visibilityState: 'visible',
-    addEventListener: () => {},
-    removeEventListener: () => {},
+  doc = makeTarget({ visibilityState: 'visible' as 'visible' | 'hidden' });
+  win = makeTarget({
+    events: [] as string[],
+    gtag: (_kind: string, name: string) => void win.events.push(name),
   });
-  vi.stubGlobal('window', { addEventListener: () => {} });
+  vi.stubGlobal('localStorage', store);
+  vi.stubGlobal('document', doc);
+  vi.stubGlobal('window', win);
   vi.stubGlobal('fetch', fetchSpy);
 });
 
@@ -70,10 +90,10 @@ function turn(id: string, ageMs: number, role: 'user' | 'assistant' = 'assistant
   return { id, role, text: `msg ${id}`, createdAt: Date.now() - ageMs };
 }
 
-describe('SCEN-001 — >15 days of inactivity → fresh chat, keys cleared', () => {
+describe('SCEN-R4 (was SCEN-001) — >24 h of inactivity → fresh chat, keys cleared', () => {
   it('wipes messages, conversationId and lastReadMessageId on init', () => {
     const c = cfg();
-    seed(c, [turn('u1', 16 * DAY, 'user'), turn('a1', 16 * DAY)], {
+    seed(c, [turn('u1', 25 * HOUR, 'user'), turn('a1', 25 * HOUR)], {
       conversationId: 'conv-old',
       lastRead: 'a1',
     });
@@ -94,7 +114,7 @@ describe('SCEN-001 — >15 days of inactivity → fresh chat, keys cleared', () 
   it('boundary: exactly at the TTL edge is NOT expired; just past it is', () => {
     vi.useFakeTimers();
     try {
-      // At exactly CHAT_TTL_MS the strict > keeps the conversation (15 days is
+      // At exactly CHAT_TTL_MS the strict > keeps the conversation (24 h is
       // the allowance, not the cutoff-inclusive).
       const cKeep = cfg();
       seed(cKeep, [turn('a1', CHAT_TTL_MS)]);
@@ -109,10 +129,10 @@ describe('SCEN-001 — >15 days of inactivity → fresh chat, keys cleared', () 
   });
 });
 
-describe('SCEN-002 — 14 days old → everything intact', () => {
+describe('SCEN-R4 (was SCEN-002) — 23 h old → everything intact', () => {
   it('restores transcript, unread badge and conversationId continuity', () => {
     const c = cfg();
-    seed(c, [turn('u1', 14 * DAY, 'user'), turn('a1', 14 * DAY)], {
+    seed(c, [turn('u1', 23 * HOUR, 'user'), turn('a1', 23 * HOUR)], {
       conversationId: 'conv-live',
       lastRead: 'u1', // marker behind the assistant reply → 1 unread
     });
@@ -126,7 +146,7 @@ describe('SCEN-002 — 14 days old → everything intact', () => {
 describe('SCEN-003 — an expired unread reply must NOT badge', () => {
   it('unread is 0 and no announcement after expiry wipes the marker state', () => {
     const c = cfg();
-    seed(c, [turn('u1', 16 * DAY, 'user'), turn('a1', 16 * DAY)], { lastRead: 'u1' });
+    seed(c, [turn('u1', 25 * HOUR, 'user'), turn('a1', 25 * HOUR)], { lastRead: 'u1' });
     const inst = createChatConversation(c);
     expect(inst.unread.value).toBe(0);
     expect(inst.announce.value).toBe('');
@@ -148,7 +168,7 @@ describe('SCEN-004 — legacy transcript with no datable message → expired', (
   it('a transcript where only SOME messages are datable uses the newest datable one', () => {
     const c = cfg();
     // Legacy head without createdAt + a recent stamped reply → NOT expired.
-    seed(c, [{ id: 'u1', role: 'user', text: 'hola' }, turn('a1', 2 * DAY)]);
+    seed(c, [{ id: 'u1', role: 'user', text: 'hola' }, turn('a1', 2 * HOUR)]);
     expect(createChatConversation(c).messages.value).toHaveLength(2);
   });
 });
@@ -180,9 +200,170 @@ describe('SCEN-006 — expiry is local-only, server never called', () => {
 });
 
 describe('SCEN-007 — dated by the NEWEST message', () => {
-  it('an ongoing conversation with 20-day-old history and a 2-day-old reply survives', () => {
+  it('an ongoing conversation with 3-day-old history and a 2-hour-old reply survives', () => {
     const c = cfg();
-    seed(c, [turn('u1', 25 * DAY, 'user'), turn('a1', 20 * DAY), turn('a2', 2 * DAY)]);
+    seed(c, [turn('u1', 3 * DAY, 'user'), turn('a1', 2 * DAY), turn('a2', 2 * HOUR)]);
     expect(createChatConversation(c).messages.value).toHaveLength(3);
+  });
+});
+
+// --- SCEN-R5 / R5b: a tab left open expires when it comes back ----------------
+// Fake timers pin Date.now(); vi.setSystemTime moves the clock WITHOUT running
+// timers, so a hanging stream's watchdog never fires while the tab "sleeps".
+
+const T0 = Date.UTC(2026, 8, 17, 12, 0, 0);
+
+function hide() {
+  doc.visibilityState = 'hidden';
+  doc.fire('visibilitychange');
+}
+
+function show() {
+  doc.visibilityState = 'visible';
+  doc.fire('visibilitychange');
+}
+
+function sentBodies(): Array<{ conversationId?: string }> {
+  return fetchSpy.mock.calls.map((call) => JSON.parse((call[1] as { body: string }).body));
+}
+
+// An open chat (singleton alive, surface mounted) holding a conversation that was
+// fresh 1 h ago, with a typed draft and a pending reply quote.
+function openLiveChat() {
+  const c = cfg();
+  seed(c, [turn('u1', HOUR, 'user'), turn('a1', HOUR)], {
+    conversationId: 'conv-live',
+    lastRead: 'a1',
+  });
+  const inst = createChatConversation(c);
+  inst.onSurfaceMounted();
+  inst.input.value = 'borrador sin enviar';
+  inst.replyTo.value = { label: 'Gama C' } as never;
+  return { c, inst };
+}
+
+function expectWiped(c: ChatConversationConfig, inst: ReturnType<typeof createChatConversation>) {
+  expect(inst.messages.value).toEqual([]);
+  expect(inst.conversationId.value).toBeNull();
+  expect(inst.replyTo.value).toBeNull();
+  expect(inst.unread.value).toBe(0);
+  expect(store.getItem(c.messagesKey)).toBeNull();
+  expect(store.getItem(c.conversationKey)).toBeNull();
+  expect(store.getItem(c.lastReadKey)).toBeNull();
+}
+
+describe('SCEN-R5 — a live tab expires when it becomes visible again', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+    fetchSpy.mockImplementation(() => new Promise(() => {}));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('visibilitychange → visible after 24 h wipes like SCEN-R4 and keeps the draft', () => {
+    const { c, inst } = openLiveChat();
+    hide();
+    vi.setSystemTime(T0 + DAY); // newest message is now 25 h old
+    show();
+    expectWiped(c, inst);
+    expect(inst.input.value).toBe('borrador sin enviar');
+  });
+
+  it('pageshow alone (bfcache restore) wipes too', () => {
+    const { c, inst } = openLiveChat();
+    vi.setSystemTime(T0 + DAY);
+    win.fire('pageshow');
+    expectWiped(c, inst);
+    expect(inst.input.value).toBe('borrador sin enviar');
+  });
+
+  it('after the wipe the next message is a fresh chat: no conversationId, first-message analytics again', () => {
+    const { inst } = openLiveChat();
+    vi.setSystemTime(T0 + DAY);
+    show();
+    win.events.length = 0;
+    void inst.submit(); // fetch is issued synchronously, then hangs
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(sentBodies()[0]!.conversationId).toBeUndefined();
+    expect(win.events).toContain('chat_message_sent');
+  });
+
+  it('is idempotent: pageshow + visibilitychange in either order, and a new chat started in between survives', () => {
+    const { c, inst } = openLiveChat();
+    vi.setSystemTime(T0 + DAY);
+    win.fire('pageshow');
+    show();
+    expectWiped(c, inst);
+
+    // A fresh conversation (completed turn stamped now) starts after the wipe.
+    inst.messages.value.push(turn('n1', 0, 'user'), turn('n2', 0));
+    show();
+    win.fire('pageshow');
+    expect(inst.messages.value.length).toBe(2);
+
+    const other = openLiveChat();
+    vi.setSystemTime(T0 + 2 * DAY + HOUR);
+    show();
+    win.fire('pageshow');
+    expectWiped(other.c, other.inst);
+  });
+
+  it('a conversation younger than 24 h is untouched on visible / pageshow', () => {
+    const { c, inst } = openLiveChat();
+    hide();
+    vi.setSystemTime(T0 + 22 * HOUR); // newest now 23 h old
+    show();
+    win.fire('pageshow');
+    expect(inst.messages.value).toHaveLength(2);
+    expect(inst.conversationId.value).toBe('conv-live');
+    expect(inst.replyTo.value).not.toBeNull();
+    expect(JSON.parse(store.getItem(c.messagesKey)!)).toHaveLength(2);
+    expect(store.getItem(c.conversationKey)).toBe('conv-live');
+  });
+
+  it('a stream in progress is never wiped', async () => {
+    const c = cfg();
+    const inst = createChatConversation(c);
+    inst.input.value = 'hola';
+    void inst.submit(); // fetch hangs → reply in flight
+    await Promise.resolve();
+    expect(inst.isStreaming.value).toBe(true);
+    vi.setSystemTime(T0 + 2 * DAY);
+    show();
+    win.fire('pageshow');
+    expect(inst.isStreaming.value).toBe(true);
+    expect(inst.messages.value).toHaveLength(2);
+  });
+});
+
+describe('SCEN-R5b — a stale tab never deletes another tab\'s live conversation', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('memory 25 h old + storage written 1 h ago by tab B → storage untouched', () => {
+    const c = cfg();
+    seed(c, [turn('u1', 0, 'user'), turn('a1', 0)], { conversationId: 'conv-A' });
+    const tabA = createChatConversation(c);
+    expect(tabA.messages.value).toHaveLength(2);
+
+    vi.setSystemTime(T0 + 25 * HOUR);
+    const tabB = [turn('bu1', HOUR, 'user'), turn('ba1', HOUR)];
+    store.setItem(c.messagesKey, JSON.stringify(tabB));
+    store.setItem(c.conversationKey, 'conv-B');
+    store.setItem(c.lastReadKey, 'ba1');
+
+    show();
+    win.fire('pageshow');
+
+    expect(JSON.parse(store.getItem(c.messagesKey)!)).toEqual(tabB);
+    expect(store.getItem(c.conversationKey)).toBe('conv-B');
+    expect(store.getItem(c.lastReadKey)).toBe('ba1');
   });
 });

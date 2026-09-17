@@ -24,6 +24,8 @@ Frequency: at most once per browser session (sessionStorage flag); after any
 contact engagement, suppressed for 15 days (localStorage, aligned with
 `CHAT_TTL_MS`).
 
+> Note (2026-09-17, docs/specs/2026-09-17-chat-reply-ttl-clear): `CHAT_TTL_MS` is now 24 h. The teaser keeps 15 days via its own constant `TEASER_SUPPRESS_MS`; behavior unchanged.
+
 Legend for evidence source:
 - `[unit]` — asserted by a vitest unit test in `packages/logic`.
 - `[manual]` — verified in a live browser (checklist at the end); the
