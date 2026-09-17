@@ -71,19 +71,25 @@ export function useChatUnreadBadge(brand: string) {
     announce.value = detail.announce
   }
 
-  // A tab left open with the chat never opened: drop yesterday's badge on return.
+  // A tab left open with the chat never opened: drop yesterday's badge on return
+  // (tab back in front, or page restored from the bfcache).
   function onVisibilityChange() {
     if (document.visibilityState === 'visible' && !enginePublished) restore()
+  }
+  function onPageShow() {
+    if (!enginePublished) restore()
   }
 
   onMounted(() => {
     restore()
     window.addEventListener(CHAT_UNREAD_EVENT, onUnread)
     document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pageshow', onPageShow)
   })
   onBeforeUnmount(() => {
     window.removeEventListener(CHAT_UNREAD_EVENT, onUnread)
     document.removeEventListener('visibilitychange', onVisibilityChange)
+    window.removeEventListener('pageshow', onPageShow)
   })
 
   return {

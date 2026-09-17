@@ -338,6 +338,81 @@ describe('SCEN-R5 — a live tab expires when it becomes visible again', () => {
   });
 });
 
+describe('SCEN-R5 — an expiry skipped during a stream runs when the stream settles', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // A conversation whose last activity is at T0, with a reply in flight.
+  function streamingStaleChat(fetchImpl: (url: string, init: { signal: AbortSignal }) => Promise<unknown>) {
+    const c = cfg();
+    seed(c, [turn('u1', 0, 'user'), turn('a1', 0)], { conversationId: 'conv-live', lastRead: 'a1' });
+    fetchSpy.mockImplementation(fetchImpl as never);
+    const inst = createChatConversation(c);
+    inst.onSurfaceMounted();
+    inst.input.value = 'hola';
+    const settled = inst.submit();
+    return { c, inst, settled };
+  }
+
+  it('aborted stream: visible during the stream is skipped, the wipe happens once it stops', async () => {
+    const { c, inst, settled } = streamingStaleChat((_url, init) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    }));
+    await Promise.resolve();
+    expect(inst.isStreaming.value).toBe(true);
+
+    vi.setSystemTime(T0 + 25 * HOUR);
+    show();
+    expect(inst.messages.value.length).toBeGreaterThan(0);
+
+    inst.stop();
+    await settled;
+    expectWiped(c, inst);
+  });
+
+  it('completed stream: the reply that lands after a skipped expiry is wiped with the rest', async () => {
+    let respond!: (value: unknown) => void;
+    const { c, inst, settled } = streamingStaleChat(() => new Promise((resolve) => { respond = resolve; }));
+    await Promise.resolve();
+    expect(inst.isStreaming.value).toBe(true);
+
+    vi.setSystemTime(T0 + 25 * HOUR);
+    show();
+    expect(inst.isStreaming.value).toBe(true);
+
+    const body = new TextEncoder().encode(
+      ['text-start', 'text-delta', 'text-end']
+        .map((type) => `data: ${JSON.stringify({ type, id: 't', delta: 'ok' })}\n`)
+        .join(''),
+    );
+    const chunks = [{ done: false, value: body }, { done: true, value: undefined }];
+    respond({
+      ok: true,
+      headers: { get: () => null },
+      body: { getReader: () => ({ read: () => Promise.resolve(chunks.shift() ?? { done: true }) }) },
+    });
+    await settled;
+    expectWiped(c, inst);
+  });
+
+  it('no expiry was skipped → a finished stream leaves the conversation alone', async () => {
+    const { c, inst, settled } = streamingStaleChat((_url, init) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    }));
+    await Promise.resolve();
+    vi.setSystemTime(T0 + 25 * HOUR);
+    inst.stop();
+    await settled;
+    expect(inst.messages.value.length).toBeGreaterThan(0);
+    expect(store.getItem(c.conversationKey)).toBe('conv-live');
+  });
+});
+
 describe('SCEN-R5b — a stale tab never deletes another tab\'s live conversation', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -365,5 +440,53 @@ describe('SCEN-R5b — a stale tab never deletes another tab\'s live conversatio
     expect(JSON.parse(store.getItem(c.messagesKey)!)).toEqual(tabB);
     expect(store.getItem(c.conversationKey)).toBe('conv-B');
     expect(store.getItem(c.lastReadKey)).toBe('ba1');
+
+    // Tab A adopted tab B's transcript, so hiding / leaving never writes the stale one back.
+    expect(tabA.messages.value).toEqual(tabB);
+    expect(tabA.conversationId.value).toBe('conv-B');
+    hide();
+    win.fire('pagehide');
+    expect(JSON.parse(store.getItem(c.messagesKey)!)).toEqual(tabB);
+    expect(store.getItem(c.conversationKey)).toBe('conv-B');
+    expect(store.getItem(c.lastReadKey)).toBe('ba1');
+  });
+
+  it('adoption: stale quote dropped, marker and first-message tracking follow the adopted transcript, next send continues conv-B', () => {
+    fetchSpy.mockImplementation(() => new Promise(() => {}));
+    const c = cfg();
+    // Tab A only ever saw the greeting: no user message → first message not tracked yet.
+    seed(c, [turn('a0', 0)], { conversationId: 'conv-A', lastRead: 'a0' });
+    const tabA = createChatConversation(c);
+    tabA.replyTo.value = { label: 'Gama C', context: '[Gama C]' };
+    tabA.input.value = 'borrador';
+
+    vi.setSystemTime(T0 + 25 * HOUR);
+    const tabB = [turn('bu1', HOUR, 'user'), turn('ba1', HOUR)];
+    store.setItem(c.messagesKey, JSON.stringify(tabB));
+    store.setItem(c.conversationKey, 'conv-B');
+    store.setItem(c.lastReadKey, 'bu1');
+
+    win.fire('pageshow');
+    expect(tabA.messages.value).toEqual(tabB);
+    expect(tabA.replyTo.value).toBeNull();
+    expect(tabA.input.value).toBe('borrador');
+    expect(tabA.unread.value).toBe(1); // marker adopted from storage: ba1 is unread
+
+    win.events.length = 0;
+    void tabA.submit();
+    expect(sentBodies()[0]!.conversationId).toBe('conv-B');
+    expect(win.events).not.toContain('chat_message_sent');
+  });
+});
+
+describe('clear() and TTL expiry share one reset', () => {
+  it('clear() also silences a pending aria-live announcement', () => {
+    const c = cfg();
+    seed(c, [turn('u1', HOUR, 'user'), turn('a1', HOUR)], { conversationId: 'conv-1', lastRead: 'u1' });
+    const inst = createChatConversation(c);
+    inst.announce.value = '1 mensaje nuevo en el chat';
+    inst.clear();
+    expect(inst.announce.value).toBe('');
+    expectWiped(c, inst);
   });
 });

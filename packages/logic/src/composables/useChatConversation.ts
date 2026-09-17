@@ -86,9 +86,9 @@ export type ChatPartRef =
   | { type: 'sedeCards'; data: SedeCardsPart };
 
 // A WhatsApp-style "reply to" reference the customer attaches by tapping/swiping
-// a quote gama row or a model card. `label` shows in the composer chip and as the
+// a quote gama row or a sede card. `label` shows in the composer chip and as the
 // quoted header above the user bubble; `context` is a natural-language hint
-// prepended to the text sent to the brain so the bot knows which gama/model they
+// prepended to the text sent to the brain so the bot knows which gama/sede they
 // mean without the customer typing it.
 export interface ReplyContext {
   label: string;
@@ -98,7 +98,6 @@ export interface ReplyContext {
   // persisted before these fields existed keep restoring (label fallback).
   author?: string;
   preview?: string;
-  image?: string;
   targetId?: string;
 }
 
@@ -106,7 +105,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
-  // Optional WhatsApp-style quote the user replied to (gama row / model card).
+  // Optional WhatsApp-style quote the user replied to (gama row / sede card).
   replyTo?: ReplyContext;
   // ms epoch stamped when the message is created (client). Persisted so the
   // WhatsApp-style time stays stable across reloads. Optional for legacy rows.
@@ -398,9 +397,9 @@ export function createChatConversation(cfg: ChatConversationConfig) {
   // Never mid-stream. Dated by the newest message across memory AND storage, so a
   // stale tab never deletes a conversation another tab kept fresh. The typed
   // draft (input) is kept.
-  function expireIfStale() {
-    if (isStreaming.value) return;
-    if (!isChatTranscriptExpired([...messages.value, ...restore()], Date.now())) return;
+  // Local reset shared by clear() and TTL expiry: empty conversation in memory and
+  // storage. The typed draft (`input`) is the caller's business.
+  function resetConversation() {
     messages.value = [];
     conversationId.value = null;
     replyTo.value = null;
@@ -411,6 +410,39 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     firstCustomerMessageTracked = false;
     lastReadMessageId.value = null;
     removeStoredConversation();
+  }
+
+  // A check skipped because a reply was streaming; submit() re-runs it once the
+  // turn settles, so a tab that came back mid-stream still expires.
+  let expiryPending = false;
+
+  function expireIfStale() {
+    if (isStreaming.value) {
+      expiryPending = true;
+      return;
+    }
+    expiryPending = false;
+    const now = Date.now();
+    const stored = restore();
+    if (!isChatTranscriptExpired([...messages.value, ...stored], now)) {
+      // Our copy is stale but another tab left a live one in storage: adopt it, so the
+      // next persist() (hide / pagehide) never writes the stale transcript over it.
+      if (isChatTranscriptExpired(messages.value, now)) adoptStoredConversation(stored);
+      return;
+    }
+    resetConversation();
+  }
+
+  function adoptStoredConversation(stored: ChatMessage[]) {
+    messages.value = stored;
+    conversationId.value = hasStorage ? localStorage.getItem(conversationKey) : null;
+    lastReadMessageId.value = restoreLastRead() ?? stored.at(-1)?.id ?? null;
+    replyTo.value = null;
+    error.value = null;
+    errorAction.value = null;
+    status.value = 'ready';
+    announce.value = '';
+    firstCustomerMessageTracked = stored.some((message) => message.role === 'user');
   }
 
   function onVisibilityChange() {
@@ -808,6 +840,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
       disarmWatchdog();
       controller = null;
       flushInflight = null;
+      if (expiryPending) expireIfStale();
     }
   }
 
@@ -833,23 +866,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
 
   function clear() {
     stop();
-    messages.value = [];
-    conversationId.value = null;
-    replyTo.value = null;
-    error.value = null;
-    errorAction.value = null;
-    status.value = 'ready';
-    firstCustomerMessageTracked = false;
-    lastReadMessageId.value = null;
-    if (hasStorage) {
-      try {
-        localStorage.removeItem(messagesKey);
-        localStorage.removeItem(conversationKey);
-        localStorage.removeItem(lastReadKey);
-      } catch {
-        /* private mode — non-fatal */
-      }
-    }
+    resetConversation();
   }
 
   return {

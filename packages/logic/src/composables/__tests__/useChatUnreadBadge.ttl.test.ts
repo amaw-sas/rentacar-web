@@ -95,6 +95,28 @@ describe('SCEN-R5c — a tab already open becomes visible again', () => {
     expect(badge.unread.value).toBe(0);
   });
 
+  it('re-restores on pageshow (bfcache restore) as well', () => {
+    const brand = `badge${brandSeq++}`;
+    seedUnread(brand, 23 * HOUR);
+    const badge = mountBadge(brand);
+    expect(badge.unread.value).toBe(1);
+
+    vi.setSystemTime(T0 + 2 * HOUR);
+    window.dispatchEvent(new Event('pageshow'));
+    expect(badge.unread.value).toBe(0);
+  });
+
+  it('pageshow after the live engine published does not re-read storage', () => {
+    const brand = `badge${brandSeq++}`;
+    seedUnread(brand, 23 * HOUR);
+    const badge = mountBadge(brand);
+    publishChatUnread({ brand, unread: 2, announce: '' });
+
+    vi.setSystemTime(T0 + 2 * HOUR);
+    window.dispatchEvent(new Event('pageshow'));
+    expect(badge.unread.value).toBe(2);
+  });
+
   it('once the live engine published a count, visible does not re-read storage', () => {
     const brand = `badge${brandSeq++}`;
     seedUnread(brand, 23 * HOUR);

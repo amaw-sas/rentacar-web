@@ -88,15 +88,17 @@ browser that keeps such a tab alive for days keeps showing the old conversation.
 
 On `visibilitychange` → visible and on `pageshow` (idempotent; both can fire on a
 bfcache restore), BEFORE `markRead()`:
-1. Skip if a reply is streaming.
+1. Skip if a reply is streaming, and re-run the check once that turn settles.
 2. Re-read the stored messages. Newest `createdAt` = max over memory and storage.
 3. If that newest is older than 24 h → wipe memory (messages, conversationId,
    replyTo, lastRead, first-message tracking) and the 3 keys. The typed draft
    `input` is kept.
 4. Otherwise do nothing. Storage younger than 24 h (e.g. another tab chatted) is
-   never deleted, and no cross-tab adoption is attempted (not requested).
-   Out of scope, pre-existing: a stale tab keeps its old transcript on screen and
-   its next `persist()` can overwrite the other tab's storage (true today too).
+   never deleted; a tab whose own copy is still live never adopts another tab's.
+   Data-safety fix (2026-09-17 review): when this tab's own copy is older than 24 h
+   but storage holds a younger transcript from another tab, the tab adopts the stored
+   one (messages, conversationId, lastRead; quote dropped; draft kept) so its next
+   `persist()` never writes the stale transcript over it.
 
 ### 3c. FAB unread badge
 `useChatUnreadBadge.restore()` reads the stored messages without TTL. It applies

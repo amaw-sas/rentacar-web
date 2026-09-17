@@ -37,6 +37,7 @@ between two text blocks does NOT open a bubble: it stays inside, in its place.
 **When**: the turn finishes
 **Then**: 1 bubble: text, gama cards, text, buttons, text — in that order; tapping a card still quotes it in the composer as today
 **Evidence**: layoutChatBubbles blocks + mounted DOM order + click → replyTo set, per brand
+> **Superseded in part** by docs/specs/2026-09-17-chat-reply-ttl-clear (SCEN-R2), owner decision 2026-09-17: the clause "tapping a card still quotes it" is retired; model cards quote nothing. The bubble order stands.
 
 ## SCEN-E4: v2 sede cards render in place
 **Given**: data-partsOrder v2, text "Sedes en Bogotá:", data-sedeCards {sedes:[{code:"AABOT",nombre:"Bogotá Aeropuerto",horario:"Lun-Dom 6am-10pm"},{code:"ABCTR",nombre:"Bogotá Centro",horario:"Lun-Sáb 8am-6pm"}]}, text "¿Cuál te queda mejor?"
