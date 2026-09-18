@@ -194,6 +194,8 @@ describe('SCEN-005 — frequency caps: session flag + 15-day boundary', () => {
   });
 
   it('engagedAt just under 15 days → suppressed; just over → allowed', () => {
+    // Pinned in days: the chat TTL dropped to 24 h, the teaser window did not.
+    expect(TEASER_SUPPRESS_MS).toBe(15 * 24 * 60 * 60 * 1000);
     const under = cfg();
     local.setItem(under.engagedKey, String(Date.now() - (TEASER_SUPPRESS_MS - 1)));
     const a = createContactTeaser(under);

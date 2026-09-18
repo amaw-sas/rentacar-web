@@ -28,6 +28,7 @@ import {
 } from '@rentacar-main/logic/utils';
 import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
 import { buildChatPayloadMessages } from '../utils/buildChatPayloadMessages';
+import { isChatTranscriptExpired } from '../utils/chatTtl';
 import { publishChatUnread, takePreparedChatOpen } from './useChatUnreadBadge';
 
 // Code-owned data parts emitted by the hybrid orchestrator (dashboard /api/chat)
@@ -85,9 +86,9 @@ export type ChatPartRef =
   | { type: 'sedeCards'; data: SedeCardsPart };
 
 // A WhatsApp-style "reply to" reference the customer attaches by tapping/swiping
-// a quote gama row or a model card. `label` shows in the composer chip and as the
+// a quote gama row or a sede card. `label` shows in the composer chip and as the
 // quoted header above the user bubble; `context` is a natural-language hint
-// prepended to the text sent to the brain so the bot knows which gama/model they
+// prepended to the text sent to the brain so the bot knows which gama/sede they
 // mean without the customer typing it.
 export interface ReplyContext {
   label: string;
@@ -97,7 +98,6 @@ export interface ReplyContext {
   // persisted before these fields existed keep restoring (label fallback).
   author?: string;
   preview?: string;
-  image?: string;
   targetId?: string;
 }
 
@@ -105,7 +105,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
-  // Optional WhatsApp-style quote the user replied to (gama row / model card).
+  // Optional WhatsApp-style quote the user replied to (gama row / sede card).
   replyTo?: ReplyContext;
   // ms epoch stamped when the message is created (client). Persisted so the
   // WhatsApp-style time stays stable across reloads. Optional for legacy rows.
@@ -153,11 +153,10 @@ export const CHAT_STREAM_IDLE_TIMEOUT_MS = 30_000;
 const CHAT_TIMEOUT_ERROR =
   'La respuesta está tardando demasiado. Intenta de nuevo en un momento.';
 
-// Local conversation TTL: after this much inactivity (measured from the NEWEST
-// message's createdAt) the browser copy is wiped on init and the chat starts
-// fresh — stale quotes from past seasons must not resurface. LOCAL ONLY: the
-// server-side Supabase conversation is the business record and is never touched.
-export const CHAT_TTL_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
+// Local conversation TTL (24 h from the NEWEST message): the browser copy is wiped
+// on init and when a live tab comes back, so stale quotes never resurface. Lives in
+// the leaf ../utils/chatTtl (shared with the FAB badge); re-exported for importers.
+export { CHAT_TTL_MS } from '../utils/chatTtl';
 
 // Per-instance config resolved once from the Nuxt context by the wrapper below,
 // so the factory itself is free of Nuxt auto-imports and unit-testable.
@@ -199,35 +198,33 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     }
   }
 
-  // --- Local TTL (CHAT_TTL_MS) ------------------------------------------------
-  // Dated by the NEWEST message so an ongoing conversation with old history
-  // survives. A non-empty transcript with NO datable message predates the
-  // createdAt feature entirely — older than any window → expired ("cannot be
-  // dated" fails toward killing stale quotes, not toward unbounded history).
-  function isExpired(msgs: ChatMessage[]): boolean {
-    if (!msgs.length) return false;
-    let newest = 0;
-    for (const m of msgs) {
-      if (typeof m.createdAt === 'number' && m.createdAt > newest) newest = m.createdAt;
+  function restoreConversationId(): string | null {
+    if (!hasStorage) return null;
+    try {
+      return localStorage.getItem(conversationKey);
+    } catch {
+      return null;
     }
-    if (!newest) return true;
-    return Date.now() - newest > CHAT_TTL_MS;
   }
 
-  let restoredMessages = restore();
-  if (isExpired(restoredMessages)) {
-    // Wipe the LOCAL copy only (messages, server-conversation pointer, unread
-    // marker) and start fresh. No network call: the Supabase record stays.
-    restoredMessages = [];
-    if (hasStorage) {
-      try {
-        localStorage.removeItem(messagesKey);
-        localStorage.removeItem(conversationKey);
-        localStorage.removeItem(lastReadKey);
-      } catch {
-        /* private mode — the in-memory state below is fresh regardless */
-      }
+  // Drop the LOCAL copy only (messages, server-conversation pointer, unread
+  // marker). No network call: the Supabase record stays.
+  function removeStoredConversation() {
+    if (!hasStorage) return;
+    try {
+      localStorage.removeItem(messagesKey);
+      localStorage.removeItem(conversationKey);
+      localStorage.removeItem(lastReadKey);
+    } catch {
+      /* private mode — the in-memory state is fresh regardless */
     }
+  }
+
+  // --- Local TTL (CHAT_TTL_MS, see ../utils/chatTtl) --------------------------
+  let restoredMessages = restore();
+  if (isChatTranscriptExpired(restoredMessages, Date.now())) {
+    restoredMessages = [];
+    removeStoredConversation();
   }
 
   const messages = ref<ChatMessage[]>(restoredMessages);
@@ -404,11 +401,66 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     trackAnalyticsEvent('chat_reopened_from_badge', { brand });
   }
 
+  // TTL for a tab that stayed alive (phone browsers keep them for days): runs
+  // when the page comes back (visible / pageshow — both may fire, so idempotent).
+  // Never mid-stream. Dated by the newest message across memory AND storage, so a
+  // stale tab never deletes a conversation another tab kept fresh. The typed
+  // draft (input) is kept.
+  // Local reset shared by clear() and TTL expiry: empty conversation in memory and
+  // storage. The typed draft (`input`) is the caller's business.
+  function resetConversation() {
+    messages.value = [];
+    conversationId.value = null;
+    replyTo.value = null;
+    error.value = null;
+    errorAction.value = null;
+    status.value = 'ready';
+    announce.value = '';
+    firstCustomerMessageTracked = false;
+    lastReadMessageId.value = null;
+    removeStoredConversation();
+  }
+
+  // A check skipped because a reply was streaming; submit() re-runs it once the
+  // turn settles, so a tab that came back mid-stream still expires.
+  let expiryPending = false;
+
+  function expireIfStale() {
+    if (isStreaming.value) {
+      expiryPending = true;
+      return;
+    }
+    expiryPending = false;
+    const now = Date.now();
+    const stored = restore();
+    if (!isChatTranscriptExpired([...messages.value, ...stored], now)) {
+      // Our copy is stale but another tab left a live one in storage: adopt it, so the
+      // next persist() (hide / pagehide) never writes the stale transcript over it.
+      if (isChatTranscriptExpired(messages.value, now)) adoptStoredConversation(stored);
+      return;
+    }
+    resetConversation();
+  }
+
+  function adoptStoredConversation(stored: ChatMessage[]) {
+    messages.value = stored;
+    conversationId.value = restoreConversationId();
+    lastReadMessageId.value = restoreLastRead() ?? stored.at(-1)?.id ?? null;
+    replyTo.value = null;
+    error.value = null;
+    errorAction.value = null;
+    status.value = 'ready';
+    announce.value = '';
+    firstCustomerMessageTracked = stored.some((message) => message.role === 'user');
+  }
+
   function onVisibilityChange() {
     if (!hasDocument) return;
     const visible = document.visibilityState === 'visible';
     docVisible.value = visible;
     if (visible) {
+      // Expire BEFORE markRead so the marker never lands on a dropped message.
+      expireIfStale();
       // Returning to a mounted surface clears unread with no further interaction.
       if (surfaceMounted.value) markRead();
     } else {
@@ -424,6 +476,8 @@ export function createChatConversation(cfg: ChatConversationConfig) {
   if (hasWindow) {
     // Hardening: persist a full snapshot on the terminal page-hide event.
     window.addEventListener('pagehide', () => persist());
+    // bfcache restore: the page comes back without a reload (no init TTL check).
+    window.addEventListener('pageshow', () => expireIfStale());
   }
 
   function genId(): string {
@@ -440,6 +494,13 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     // turn is in flight. Guarded on isStreaming so the terminal persist (which
     // runs after the empty-bubble fallback text) is never clobbered.
     if (isStreaming.value) flushInflight?.();
+    // A stale tab (own copy past the TTL) must not write over a younger transcript
+    // another tab left in storage; expireIfStale() adopts that one instead.
+    const now = Date.now();
+    if (isChatTranscriptExpired(messages.value, now)) {
+      const stored = restore();
+      if (stored.length && !isChatTranscriptExpired(stored, now)) return;
+    }
     try {
       localStorage.setItem(messagesKey, JSON.stringify(messages.value));
       if (conversationId.value) {
@@ -795,6 +856,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
       disarmWatchdog();
       controller = null;
       flushInflight = null;
+      if (expiryPending) expireIfStale();
     }
   }
 
@@ -820,23 +882,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
 
   function clear() {
     stop();
-    messages.value = [];
-    conversationId.value = null;
-    replyTo.value = null;
-    error.value = null;
-    errorAction.value = null;
-    status.value = 'ready';
-    firstCustomerMessageTracked = false;
-    lastReadMessageId.value = null;
-    if (hasStorage) {
-      try {
-        localStorage.removeItem(messagesKey);
-        localStorage.removeItem(conversationKey);
-        localStorage.removeItem(lastReadKey);
-      } catch {
-        /* private mode — non-fatal */
-      }
-    }
+    resetConversation();
   }
 
   return {

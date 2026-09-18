@@ -8,16 +8,17 @@ const source = readFileSync(
 )
 
 // WhatsApp-style reply-to (spec docs/specs/2026-07-17-chat-reply-whatsapp):
-// quote CARD in the composer (color bar, author, preview, thumb, X), tinted
-// quote block inside the sent bubble, any bot bubble replyable via swipe or
-// hover, ↩ swipe hint, and tap-quote → scroll to the original with a flash.
+// quote CARD in the composer (color bar, author, preview, X), tinted quote block
+// inside the sent bubble, and tap-quote → scroll to the original with a flash.
+// Since docs/specs/2026-09-17-chat-reply-ttl-clear only gama rows and sede cards
+// are replyable (SCEN-R1/R2, mounted in ChatConversation.partsOrder.mount.test.ts);
+// SCEN-203/204 and the SCEN-201 thumbnail are retired by owner decision.
 // Gesture/visual halves are browser QA; these anchors pin the structure.
 describe('SCEN-201 — composer reply card', () => {
-  it('renders author, preview, optional thumbnail and dismiss inside a card', () => {
+  it('renders author, preview and dismiss inside a card', () => {
     expect(source).toMatch(/class="cc-reply-card"/)
     expect(source).toMatch(/class="cc-reply-author">\{\{ replyTo\.author \|\| 'Referencia' \}\}/)
     expect(source).toMatch(/class="cc-reply-preview">\{\{ replyTo\.preview \|\| replyTo\.label \}\}/)
-    expect(source).toMatch(/v-if="replyTo\.image"[^>]*class="cc-reply-thumb"/)
     expect(source).toMatch(/class="cc-reply-bar-x" aria-label="Quitar referencia"/)
   })
 
@@ -40,28 +41,24 @@ describe('SCEN-202 — in-bubble quote block', () => {
   })
 })
 
-describe('SCEN-203 — any bot bubble is replyable', () => {
-  it('binds swipe handlers and a hover reply button on assistant text bubbles', () => {
-    expect(source).toMatch(/@touchstart\.passive="onSwipeStart"[\s\S]{0,220}@touchend="onSwipeEnd\(\$event, \(\) => replyToBubble\(m, chunk\)\)"/)
-    expect(source).toMatch(/class="cc-bubble-reply-btn"[^>]*aria-label="Responder a este mensaje"/)
+// SCEN-R1/R2 dead-code guard: the retired reply surfaces (bubble swipe/hover,
+// model cards, composer thumbnail) leave nothing behind in the component.
+describe('SCEN-R1/R2 — retired reply surfaces are gone from the source', () => {
+  it.each([
+    'replyToBubble',
+    'replyToModelo',
+    'cc-swipe-hint',
+    'cc-bubble-reply-btn',
+    'cc-reply-thumb',
+    '--cc-sdx',
+    'replyTo.image',
+  ])('no %s', (token) => {
+    expect(source).not.toContain(token)
   })
 
-  it('builds the quote with markdown stripped and the target message id', () => {
-    expect(source).toMatch(/function replyToBubble\(/)
-    expect(source).toMatch(/replace\(\/\\\*\\\*\/g, ''\)/)
-    expect(source).toMatch(/targetId: m\.id/)
-  })
-
-  it('keeps the wire contract: context is still the only server-facing field', () => {
-    expect(source).toMatch(/context: `\[El cliente responde a este mensaje de la asesora: "\$\{preview\}"\]`/)
-  })
-})
-
-describe('SCEN-204 — swipe reveals the ↩ hint', () => {
-  it('renders the hint element on replyable surfaces and drives it with a CSS var', () => {
-    expect(source).toMatch(/class="cc-swipe-hint" aria-hidden="true"/)
-    expect(source).toMatch(/setProperty\('--cc-sdx'/)
-    expect(source).toMatch(/\.cc-swipe-hint \{[\s\S]{0,320}opacity: var\(--cc-sdx, 0\);/)
+  it('assistant bubbles carry no swipe handlers', () => {
+    expect(source).not.toMatch(/@touchstart\.passive="onSwipeStart"/)
+    expect(source).not.toMatch(/\.cc-msg\.is-assistant \{ touch-action: pan-y; \}/)
   })
 })
 

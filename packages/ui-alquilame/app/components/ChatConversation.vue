@@ -23,6 +23,19 @@
       <div class="cc-titlewrap">
         <p class="cc-title">Camila · alquilame</p>
         <p class="cc-status">Responde al instante · 24/7</p>
+        <!-- Borrado oculto para el dueño: mantener presionado el título 2 s vacía la
+             conversación y el borrador. Zona transparente, fuera del árbol accesible;
+             no cambia cómo se ve la cabecera. -->
+        <span
+          class="cc-clear-hit"
+          aria-hidden="true"
+          @pointerdown="onClearHoldStart"
+          @pointermove="onClearHoldMove"
+          @pointerup="cancelClearHold"
+          @pointerleave="cancelClearHold"
+          @pointercancel="cancelClearHold"
+          @contextmenu.prevent
+        />
       </div>
 
       <button type="button" class="cc-dismiss" aria-label="Cerrar chat" @click="emit('dismiss')">
@@ -79,17 +92,7 @@
               'has-cards': chunk.hasCards,
               'is-group-start': i === 0 && isGroupStart(msgIdx),
             }"
-            @touchstart.passive="onSwipeStart"
-            @touchmove.passive="onSwipeMove"
-            @touchend="onSwipeEnd($event, () => replyToBubble(m, chunk))"
           >
-            <span class="cc-swipe-hint" aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11" /></svg>
-            </span>
-            <button type="button" class="cc-bubble-reply-btn" aria-label="Responder a este mensaje" @click="replyToBubble(m, chunk)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11" /></svg>
-            </button>
-
             <!-- Piezas en su lugar (layoutChatBubbles): texto y partes "code-owned".
                  Sin la marca v2 las partes caen al final de la última burbuja, como antes. -->
             <template v-for="(block, bi) in chunk.blocks" :key="bi">
@@ -119,7 +122,8 @@
                 </span>
               </div>
 
-              <!-- Tarjetas de modelos: foto + nombre, placeholder si no hay foto -->
+              <!-- Tarjetas de modelos: foto + nombre, placeholder si no hay foto. Solo
+                   informativas: no se citan (solo gamas y sedes) -->
               <div v-else-if="block.kind === 'gamaCards'" class="cc-cards">
                 <span class="cc-cards-title">
                   Modelos de la Gama {{ block.data.gama }}<template v-if="block.data.descripcion"> · {{ block.data.descripcion }}</template>
@@ -128,15 +132,7 @@
                   <div
                     v-for="(mod, mi) in block.data.modelos"
                     :key="mi"
-                    class="cc-card cc-replyable"
-                    role="button"
-                    tabindex="0"
-                    :aria-label="`Responder sobre el modelo ${mod.nombre}`"
-                    @click="replyToModelo(mod, block.data, m.id)"
-                    @keydown.enter="replyToModelo(mod, block.data, m.id)"
-                    @touchstart.stop.passive="onSwipeStart"
-                    @touchmove.stop.passive="onSwipeMove"
-                    @touchend.stop="onSwipeEnd($event, () => replyToModelo(mod, block.data, m.id))"
+                    class="cc-card"
                   >
                     <img
                       v-if="mod.imagen"
@@ -154,7 +150,7 @@
               </div>
 
               <!-- Sedes de la ciudad: nombre destacado y horario debajo; tocar/deslizar una
-                   la cita en el área de escritura, igual que las tarjetas de modelos -->
+                   la cita en el área de escritura, igual que las filas de gama -->
               <div v-else-if="block.kind === 'sedeCards'" class="cc-sedes">
                 <div
                   v-for="(s, si) in block.data.sedes"
@@ -212,7 +208,6 @@
           <span class="cc-reply-author">{{ replyTo.author || 'Referencia' }}</span>
           <span class="cc-reply-preview">{{ replyTo.preview || replyTo.label }}</span>
         </button>
-        <img v-if="replyTo.image" class="cc-reply-thumb" :src="replyTo.image" alt="">
         <button type="button" class="cc-reply-bar-x" aria-label="Quitar referencia" @click="replyTo = null">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -230,26 +225,14 @@
         placeholder="Escribe aquí tu pregunta…"
         aria-label="Escribe tu mensaje"
       >
-      <!-- SCEN-322-X04: while a reply streams the send slot becomes a visible
-           "detener" control that aborts the in-flight turn on demand (stop()
-           keeps whatever already streamed; no error banner). -->
+      <!-- SCEN-R3: mientras llega la respuesta el botón sigue siendo "enviar", pero
+           deshabilitado y apagado; lo escrito se queda en el campo (submit no envía
+           con isStreaming). No hay control para detener: al tocarlo el cliente
+           cortaba la respuesta del bot sin querer. -->
       <button
-        v-if="isStreaming"
-        type="button"
-        class="cc-send"
-        aria-label="Detener respuesta"
-        data-testid="chat-stop-test"
-        @click="stop"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <rect x="5" y="5" width="14" height="14" rx="2" />
-        </svg>
-      </button>
-      <button
-        v-else
         type="submit"
         class="cc-send"
-        :disabled="!input.trim()"
+        :disabled="isStreaming || !input.trim()"
         aria-label="Enviar mensaje"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -300,7 +283,7 @@ const {
   error,
   errorAction,
   submit,
-  stop,
+  clear,
   firstUnreadAssistantId,
   danglingUserTurn,
   onSurfaceMounted,
@@ -326,25 +309,16 @@ const inputEl = ref<HTMLInputElement | null>(null)
 // onSurfaceMounted() advances the read-marker (which would zero it out).
 const newSeparatorBeforeId = ref<string | null>(null)
 
-// --- "Responder a" estilo WhatsApp: tocar/clic o deslizar a la derecha una gama,
-// un modelo o cualquier burbuja del bot la cita arriba del área de escritura; el
-// bot recibe solo `context` (los demás campos son de UI, ver useChatConversation). ---
+// --- "Responder a" estilo WhatsApp: tocar/clic o deslizar a la derecha una fila de
+// gama o una sede la cita arriba del área de escritura (las burbujas y los modelos
+// no se citan); el bot recibe solo `context` (los demás campos son de UI, ver
+// useChatConversation). ---
 function replyToGama(f: { categoria: string; descripcion: string; precioTotal: number }, targetId?: string) {
   replyTo.value = {
     label: `Gama ${f.categoria} · ${f.descripcion}`,
     context: `[El cliente responde sobre la Gama ${f.categoria} (${f.descripcion}), total cotizado $${f.precioTotal}.]`,
     author: 'Asesora',
     preview: `Gama ${f.categoria} · ${f.descripcion}`,
-    targetId,
-  }
-}
-function replyToModelo(mod: { nombre: string; imagen?: string }, cards: { gama: string; descripcion?: string }, targetId?: string) {
-  replyTo.value = {
-    label: `${mod.nombre} · Gama ${cards.gama}`,
-    context: `[El cliente responde sobre el modelo ${mod.nombre} de la Gama ${cards.gama}.]`,
-    author: 'Asesora',
-    preview: `${mod.nombre} · Gama ${cards.gama}`,
-    image: mod.imagen || undefined,
     targetId,
   }
 }
@@ -355,20 +329,6 @@ function replyToSede(s: { nombre: string }, targetId?: string) {
     author: 'Asesora',
     preview: `Sede ${s.nombre}`,
     targetId,
-  }
-}
-// Cita de una burbuja de texto libre: preview sin tokens de markdown, recortada.
-function stripMd(s: string): string {
-  return s.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim()
-}
-function replyToBubble(m: { id: string }, chunk: ChatBubble) {
-  const preview = (stripMd(chunk.text) || (chunk.blocks[0]?.kind === 'sedeCards' ? 'Sedes' : 'Cotización')).slice(0, 80)
-  replyTo.value = {
-    label: preview,
-    context: `[El cliente responde a este mensaje de la asesora: "${preview}"]`,
-    author: 'Asesora',
-    preview,
-    targetId: m.id,
   }
 }
 // Tocar una cita salta al mensaje original y lo destella (no-op si el mensaje ya
@@ -411,17 +371,42 @@ function onSwipeMove(e: TouchEvent) {
   const el = e.currentTarget as HTMLElement
   const px = Math.max(0, Math.min(dx, 72))
   el.style.transform = `translateX(${px}px)`
-  // Alimenta el hint ↩ (opacidad/escala proporcionales al arrastre, tope en el umbral).
-  el.style.setProperty('--cc-sdx', String(Math.min(px / SWIPE_TRIGGER, 1)))
 }
 function onSwipeEnd(e: TouchEvent, fire: () => void) {
   const el = e.currentTarget as HTMLElement
   const endX = e.changedTouches[0]?.clientX ?? swipeX
   el.style.transform = ''
-  el.style.removeProperty('--cc-sdx')
   if (swiping && endX - swipeX >= SWIPE_TRIGGER) fire()
   swiping = false
 }
+// Borrado oculto (SCEN-R6/R7): 2 s sostenidos sobre el título llaman a clear() (que
+// corta un stream en curso y apaga el aviso aria-live) y además vacían el borrador,
+// que clear() no toca. Soltar, salir, cancelar o moverse más de 10 px antes lo anula.
+const CLEAR_HOLD_MS = 2000
+const CLEAR_HOLD_SLOP_PX = 10
+let clearHoldTimer: ReturnType<typeof setTimeout> | null = null
+let clearHoldX = 0
+let clearHoldY = 0
+function cancelClearHold() {
+  if (clearHoldTimer) clearTimeout(clearHoldTimer)
+  clearHoldTimer = null
+}
+function onClearHoldStart(e: PointerEvent) {
+  if (e.button !== 0) return
+  cancelClearHold()
+  clearHoldX = e.clientX
+  clearHoldY = e.clientY
+  clearHoldTimer = setTimeout(() => {
+    clearHoldTimer = null
+    clear()
+    input.value = ''
+  }, CLEAR_HOLD_MS)
+}
+function onClearHoldMove(e: PointerEvent) {
+  if (!clearHoldTimer) return
+  if (Math.hypot(e.clientX - clearHoldX, e.clientY - clearHoldY) > CLEAR_HOLD_SLOP_PX) cancelClearHold()
+}
+
 const scrollEl = ref<HTMLElement | null>(null)
 // isStreaming: una respuesta hecha solo de datos (sin texto) también baja al fondo.
 watch(
@@ -475,6 +460,7 @@ watch(() => props.active, (active, previous) => {
 // NEVER abort the stream on unmount — the singleton keeps streaming into the
 // same messages ref so a reopen sees the reply continue.
 onUnmounted(() => { if (props.active) onSurfaceUnmounted() })
+onUnmounted(cancelClearHold)
 </script>
 
 <style scoped>
@@ -538,7 +524,18 @@ button { -webkit-tap-highlight-color: transparent; }
   .cc-avatar-dot { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
   .cc-flash { animation: none; }
 }
-.cc-titlewrap { flex: 1; min-width: 0; }
+.cc-titlewrap { position: relative; flex: 1; min-width: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* Zona del borrado oculto: cubre el bloque del título (el gap de la cabecera la deja
+   a 10 px del botón cerrar). Ni ella ni el título de debajo admiten selección, menú
+   contextual o gestos del navegador que corten la pulsación larga en iOS/Android. */
+.cc-clear-hit {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 .cc-title { font-weight: 700; color: #fff; font-size: 1rem; line-height: 1.15; margin: 0; }
 .cc-status { font-size: 0.8rem; color: rgba(255, 255, 255, 0.82); margin: 0.125rem 0 0; }
 .cc-dismiss {
@@ -787,46 +784,6 @@ button { -webkit-tap-highlight-color: transparent; }
 /* --- "Responder a" estilo WhatsApp --- */
 .cc-replyable { position: relative; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease; touch-action: pan-y; }
 .cc-replyable:hover { background: rgba(0, 0, 0, 0.04); }
-/* Las burbujas del bot también son deslizables (touch-action deja pasar el scroll). */
-.cc-msg.is-assistant { touch-action: pan-y; }
-/* Hint ↩ al deslizar: opacidad/escala siguen a --cc-sdx (0→1 hasta el umbral). */
-.cc-swipe-hint {
-  position: absolute;
-  left: -2.5rem;
-  top: 50%;
-  width: 2rem;
-  height: 2rem;
-  margin-top: -1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: rgba(11, 20, 26, 0.18);
-  color: #fff;
-  opacity: var(--cc-sdx, 0);
-  transform: scale(calc(0.6 + 0.4 * var(--cc-sdx, 0)));
-  pointer-events: none;
-}
-/* Responder desde desktop: botón ↩ que aparece al pasar el mouse por la burbuja. */
-.cc-bubble-reply-btn {
-  position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  width: 1.6rem;
-  height: 1.6rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: #fff;
-  color: #54656f;
-  box-shadow: 0 1px 2px rgba(11, 20, 26, 0.2);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  pointer-events: none;
-}
-.cc-msg.is-assistant:hover .cc-bubble-reply-btn { opacity: 1; pointer-events: auto; }
-@media (hover: none) { .cc-bubble-reply-btn { display: none; } }
 /* Destello al saltar a la cita (WhatsApp): oscurece la burbuja un instante. */
 @keyframes cc-flash {
   0%, 100% { filter: none; }
@@ -894,12 +851,6 @@ button { -webkit-tap-highlight-color: transparent; }
   white-space: nowrap;
   text-overflow: ellipsis;
   -webkit-line-clamp: unset;
-}
-.cc-reply-thumb {
-  width: 3.25rem;
-  height: 3.25rem;
-  object-fit: cover;
-  flex-shrink: 0;
 }
 .cc-reply-bar-x {
   margin: 0 0.25rem;

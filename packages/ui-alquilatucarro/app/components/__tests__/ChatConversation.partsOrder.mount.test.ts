@@ -302,7 +302,9 @@ describe('SCEN-E2 — v2 text → table → text is one bubble in order', () => 
 })
 
 describe('SCEN-E3 — v2 text → cards → text → buttons → text is one bubble in order', () => {
-  it('renders the five pieces in order and tapping a card still quotes it', async () => {
+  // The original "tapping a card still quotes it" clause is superseded by SCEN-R2
+  // (chat-reply-ttl-clear.scenarios.md), covered below.
+  it('renders the five pieces in order', async () => {
     const instance = await converse([[
       MARKER, ...text('Modelos:'), data('gamaCards', CARDS), ...text('Reserva aquí:'),
       data('buttons', { web: 'https://web.test' }), ...text('¿Algo más?'),
@@ -311,17 +313,6 @@ describe('SCEN-E3 — v2 text → cards → text → buttons → text is one bub
     const bubbles = assistantBubbles(w)
     expect(bubbles.map(structure)).toEqual([[T('Modelos:'), CARDS_C, T('Reserva aquí:'), ACTIONS_C, T('¿Algo más?')]])
     expect(bubbles[0]!.classList.contains('has-cards')).toBe(true)
-
-    const assistantId = instance.messages.value.at(-1)!.id
-    await w.findAll('.cc-card')[0]!.trigger('click')
-    expect(instance.replyTo.value).toEqual({
-      label: 'Chevrolet Onix · Gama F',
-      context: '[El cliente responde sobre el modelo Chevrolet Onix de la Gama F.]',
-      author: 'Asesora',
-      preview: 'Chevrolet Onix · Gama F',
-      image: 'https://img.test/onix.webp',
-      targetId: assistantId,
-    })
     expect(consoleError).not.toHaveBeenCalled()
   })
 })
@@ -600,6 +591,135 @@ describe('SCEN-E11b — swiping a sede card and keyboard activation quote it the
     touch(card.element, 'touchmove', 60)
     touch(card.element, 'touchend', 60)
     expect(instance.replyTo.value).toEqual(sedeQuote('Cali Aeropuerto', assistantId))
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// chat-reply-ttl-clear.scenarios.md: only gama rows and sede cards are replyable
+// ─────────────────────────────────────────────────────────────────────────
+
+// Gama quote contract, unchanged by the reply-target narrowing.
+const gamaQuote = (categoria: string, descripcion: string, precioTotal: number, targetId: string) => ({
+  label: `Gama ${categoria} · ${descripcion}`,
+  context: `[El cliente responde sobre la Gama ${categoria} (${descripcion}), total cotizado $${precioTotal}.]`,
+  author: 'Asesora',
+  preview: `Gama ${categoria} · ${descripcion}`,
+  targetId,
+})
+
+function swipeRight(el: Element) {
+  touch(el, 'touchstart', 0)
+  touch(el, 'touchmove', 60)
+  touch(el, 'touchend', 60)
+}
+
+describe('SCEN-R1 — assistant bubbles are not replyable', () => {
+  it('a plain text bubble and a price-table bubble: swipe past 48 px quotes nothing; no reply button or swipe hint', async () => {
+    const instance = await converse([
+      [...text('Hola, ¿en qué ciudad recoges?')],
+      [MARKER, ...text('Te cotizo:'), data('quoteTable', QUOTE)],
+    ])
+    const w = await render(instance)
+    const bubbles = assistantBubbles(w)
+    expect(bubbles).toHaveLength(2)
+    expect(bubbles[1]!.querySelector('.cc-quote-row')).not.toBeNull()
+
+    for (const bubble of bubbles) {
+      expect(bubble.querySelector('.cc-bubble-reply-btn')).toBeNull()
+      expect(bubble.querySelector('.cc-swipe-hint')).toBeNull()
+      expect(bubble.querySelector('button')).toBeNull()
+
+      swipeRight(bubble)
+      await w.vm.$nextTick()
+      expect(instance.replyTo.value).toBeNull()
+      expect(bubble.style.transform).toBe('')
+    }
+    expect(w.find('.cc-reply-bar').exists()).toBe(false)
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+describe('SCEN-R2 — model cards are not replyable; gama rows and sede cards still are', () => {
+  const MIXED_TURN = [
+    MARKER, ...text('Te cotizo:'), data('quoteTable', QUOTE),
+    data('gamaCards', CARDS), data('sedeCards', SEDES),
+  ]
+
+  it('model card: tap, Enter and swipe quote nothing; the card is not focusable and not replyable', async () => {
+    const instance = await converse([MIXED_TURN])
+    const w = await render(instance)
+    const cards = w.findAll('.cc-card')
+    expect(cards).toHaveLength(2)
+    for (const card of cards) {
+      expect(card.attributes('tabindex')).toBeUndefined()
+      expect(card.attributes('role')).toBeUndefined()
+      expect(card.classes()).not.toContain('cc-replyable')
+
+      await card.trigger('click')
+      await card.trigger('keydown', { key: 'Enter' })
+      swipeRight(card.element)
+      await w.vm.$nextTick()
+      expect(instance.replyTo.value).toBeNull()
+    }
+    expect(w.find('.cc-reply-bar').exists()).toBe(false)
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+
+  it('gama row: tap quotes it, the composer shows it and the sent message carries its context', async () => {
+    const fetchMock = sseFetch([MIXED_TURN, text('La C, perfecto.')])
+    vi.stubGlobal('fetch', fetchMock)
+    const instance = createChatConversation(cfg())
+    instance.input.value = 'cotiza bogotá'
+    await instance.submit()
+    const assistantId = instance.messages.value.at(-1)!.id
+
+    const w = await render(instance)
+    const row = w.findAll('.cc-quote-row')[0]!
+    expect(row.attributes('role')).toBe('button')
+    expect(row.attributes('tabindex')).toBe('0')
+    await row.trigger('click')
+
+    const expected = gamaQuote('C', 'Económico Mecánico', 350000, assistantId)
+    expect(instance.replyTo.value).toEqual(expected)
+    await w.vm.$nextTick()
+    expect(w.find('.cc-reply-bar .cc-reply-author').text()).toBe('Asesora')
+    expect(w.find('.cc-reply-bar .cc-reply-preview').text()).toBe('Gama C · Económico Mecánico')
+
+    await w.find('.cc-input input').setValue('esta')
+    await w.find('form.cc-input').trigger('submit')
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(instance.isStreaming.value).toBe(false)
+    })
+    const request = (fetchMock.mock.calls as unknown as Array<[string, { body: string }]>)[1]![1]
+    const sent = JSON.parse(request.body).messages.at(-1)
+    expect(sent.parts[0].text).toBe('[El cliente responde sobre la Gama C (Económico Mecánico), total cotizado $350000.]\nesta')
+    expect(instance.messages.value.at(-2)!.replyTo).toEqual(expected)
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+
+  it('gama row: Enter and a right swipe quote it the same way', async () => {
+    const instance = await converse([MIXED_TURN])
+    const assistantId = instance.messages.value.at(-1)!.id
+    const w = await render(instance)
+    const row = w.findAll('.cc-quote-row')[1]!
+    const expected = gamaQuote('F', 'Sedán Mecánico', 420000, assistantId)
+
+    await row.trigger('keydown', { key: 'Enter' })
+    expect(instance.replyTo.value).toEqual(expected)
+
+    instance.replyTo.value = null
+    swipeRight(row.element)
+    expect(instance.replyTo.value).toEqual(expected)
+  })
+
+  it('sede card in the same turn still quotes with the SCEN-E11 contract', async () => {
+    const instance = await converse([MIXED_TURN])
+    const assistantId = instance.messages.value.at(-1)!.id
+    const w = await render(instance)
+    await w.findAll('.cc-sede')[1]!.trigger('click')
+    expect(instance.replyTo.value).toEqual(sedeQuote('Bogotá Centro', assistantId))
     expect(consoleError).not.toHaveBeenCalled()
   })
 })

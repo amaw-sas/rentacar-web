@@ -41,6 +41,7 @@ the quoted preview below in gray (single line, ellipsis), an X to dismiss, and
 thumbnail, WhatsApp-media style.
 **Evidence**: `[test]` card markup (author, preview, thumb, X) + card CSS;
 `[manual]` visual parity with the WhatsApp reference.
+> **Superseded in part** by docs/specs/2026-09-17-chat-reply-ttl-clear (SCEN-R2), owner decision 2026-09-17: model cards and bot bubbles are no longer replyable, so the model-photo thumbnail clause is retired. The rest of the card stands.
 
 ## SCEN-202: in-bubble quote block looks like WhatsApp
 **Given**: a sent user message with `replyTo`
@@ -64,6 +65,7 @@ triggers reply).
 **Evidence**: `[test]` swipe/hover bindings on the assistant chunk + builder
 with markdown strip; `[manual]` swipe a text bubble, send, bot answers in
 context.
+> **Superseded** by docs/specs/2026-09-17-chat-reply-ttl-clear (SCEN-R1), owner decision 2026-09-17: bot bubbles are not replyable (no swipe, no hover button).
 
 ## SCEN-204: swipe reveals the ↩ hint
 **Given**: any replyable element (bot bubble, gama row, model card)
@@ -74,6 +76,7 @@ trigger fires the reply, releasing early snaps back. Honors
 `prefers-reduced-motion`.
 **Evidence**: `[test]` hint element + CSS var wiring in `onSwipeMove`;
 `[manual]` gesture feel on mobile viewport.
+> **Superseded** by docs/specs/2026-09-17-chat-reply-ttl-clear (SCEN-R1), owner decision 2026-09-17: the ↩ hint lived only on bubbles and is retired. Gama rows and sede cards keep the translate feedback without the hint.
 
 ## SCEN-205: tapping a quote jumps to the original
 **Given**: a sent bubble whose `replyTo.targetId` points at a message still in

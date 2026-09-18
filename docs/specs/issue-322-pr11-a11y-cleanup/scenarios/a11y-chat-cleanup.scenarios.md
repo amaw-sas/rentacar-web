@@ -41,6 +41,7 @@ la rama results muerta de CityPage y la rama de vuelo del formulario.
 **When** pasa el umbral de inactividad
 **Then** el stream se aborta y cae en la rama de error existente (banner + WhatsApp), y el input se rehabilita
 **And** mientras `isStreaming` hay un control «detener» visible que aborta a demanda
+> **Superseded in part** by docs/specs/2026-09-17-chat-reply-ttl-clear (SCEN-R3), owner decision 2026-09-17: the visible stop control is removed; while streaming the send button stays, disabled. The watchdog clause stands.
 
 **Evidence**: unit test del watchdog con timers falsos + atributo del botón.
 
