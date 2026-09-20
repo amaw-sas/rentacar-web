@@ -76,7 +76,7 @@
              Solo en el último mensaje: una respuesta anterior hecha solo de datos
              no se tapa mientras llega el turno nuevo. -->
         <div v-else-if="msgIdx === messages.length - 1 && !m.text && isStreaming" class="cc-msg is-assistant" :class="{ 'is-group-start': isGroupStart(msgIdx) }">
-          <span class="cc-typing-text" aria-live="polite">escribiendo…</span>
+          <span class="cc-typing-text" :class="{ 'is-blink-off': !typingVisible }" aria-live="polite">escribiendo…</span>
         </div>
 
         <!-- Asistente: una burbuja por tema (separador ---) -->
@@ -407,6 +407,48 @@ function onClearHoldMove(e: PointerEvent) {
   if (Math.hypot(e.clientX - clearHoldX, e.clientY - clearHoldY) > CLEAR_HOLD_SLOP_PX) cancelClearHold()
 }
 
+// "escribiendo…" que respira: mientras llega la respuesta el renglón se apaga y se
+// vuelve a encender con ritmo irregular — visible 2-4 s, oculto 0,4-1 s, sorteado de
+// nuevo en cada ciclo, así no hay dos iguales — para que se lea como alguien que
+// escribe, se detiene y sigue. Apagarlo es SOLO visual (una clase que baja la
+// opacidad): el nodo nunca se desmonta, o el aria-live volvería a cantar
+// "escribiendo" en cada ciclo.
+const TYPING_VISIBLE_MS: [number, number] = [2000, 4000]
+const TYPING_HIDDEN_MS: [number, number] = [400, 1000]
+const typingVisible = ref(true)
+let typingTimer: ReturnType<typeof setTimeout> | null = null
+
+function randomSpan([min, max]: [number, number]): number {
+  return min + Math.random() * (max - min)
+}
+// Quien pidió menos movimiento lo conserva quieto, como hasta hoy: ni un
+// temporizador se agenda. matchMedia puede no existir (SSR, jsdom pelado) → se
+// asume que no hay preferencia.
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+function stopTypingBlink() {
+  if (typingTimer) clearTimeout(typingTimer)
+  typingTimer = null
+  // El turno siguiente arranca con el renglón visible.
+  typingVisible.value = true
+}
+function scheduleTypingBlink() {
+  typingTimer = setTimeout(() => {
+    typingVisible.value = !typingVisible.value
+    scheduleTypingBlink()
+  }, randomSpan(typingVisible.value ? TYPING_VISIBLE_MS : TYPING_HIDDEN_MS))
+}
+// Arranca con la respuesta y se apaga con ella: fin del stream, stop, error o el
+// borrado oculto (todos dejan isStreaming en false). Inmediato por si la superficie
+// se abre con un turno ya en vuelo.
+watch(isStreaming, (streaming) => {
+  stopTypingBlink()
+  if (streaming && !prefersReducedMotion()) scheduleTypingBlink()
+}, { immediate: true })
+onUnmounted(stopTypingBlink)
+
 const scrollEl = ref<HTMLElement | null>(null)
 // isStreaming: una respuesta hecha solo de datos (sin texto) también baja al fondo.
 watch(
@@ -523,6 +565,9 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .cc-avatar-dot { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
   .cc-flash { animation: none; }
+  /* El parpadeo no se agenda siquiera; esto es el cinturón por si alguna vez se cuela. */
+  .cc-typing-text { transition: none; }
+  .cc-typing-text.is-blink-off { opacity: 1; }
 }
 .cc-titlewrap { position: relative; flex: 1; min-width: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 /* Zona del borrado oculto: cubre el bloque del título (el gap de la cabecera la deja
@@ -735,7 +780,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .cc-sede-name { font-size: 0.9rem; font-weight: 700; color: #111827; line-height: 1.3; }
 .cc-sede-horario { font-size: 0.8rem; color: #6b7280; line-height: 1.35; }
 .cc-error { align-self: center; color: #b91c1c; font-size: 0.8rem; text-align: center; }
-.cc-typing-text { font-style: italic; color: #6b7280; font-size: 0.875rem; }
+.cc-typing-text { font-style: italic; color: #6b7280; font-size: 0.875rem; transition: opacity 120ms ease; }
+/* Pausa del que escribe: se apaga el pixel, no el nodo (sigue en el árbol accesible). */
+.cc-typing-text.is-blink-off { opacity: 0; }
 
 /* --- Separador "Mensajes nuevos" (reapertura con no leídos) --- */
 .cc-new-sep {
