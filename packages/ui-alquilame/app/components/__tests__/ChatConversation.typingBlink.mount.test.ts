@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 //
-// SCEN-T1..T5 (docs/specs/2026-09-20-chat-typing-blink): while the bot answers, the
-// "escribiendo…" row breathes — visible 2-4 s, hidden 0.4-1 s, a fresh draw every
-// cycle. A REAL conversation instance streams from a stubbed fetch whose body stays
+// SCEN-T1..T7 (docs/specs/2026-09-20-chat-typing-blink): while the bot answers, the
+// "escribiendo…" row breathes — visible 2-3 s, hidden 0,25-0,5 s, a fresh draw every
+// cycle, y el cambio es un CORTE, no un desvanecido (chat-typing-blink-timings-v2
+// manda sobre los tiempos y el fundido de T1/T2). A REAL conversation instance streams from a stubbed fetch whose body stays
 // open until the test releases it, so the component is observed mid-stream, with fake
 // timers driving the rhythm. The real blink on a phone is runtime QA.
 //
@@ -75,7 +76,7 @@ let clearTimeoutSpy: ReturnType<typeof vi.spyOn>
 // Fake timers never resolve promises: the stream is advanced by draining microtasks.
 const flush = async (times = 30) => { for (let i = 0; i < times; i++) await Promise.resolve() }
 
-// Los temporizadores del parpadeo: los únicos setTimeout en [400, 4000] ms. Deja
+// Los temporizadores del parpadeo: los únicos setTimeout en [250, 3000] ms. Deja
 // fuera el vigía de 30 s del composable y los de 0 ms que mete el entorno (jsdom +
 // fake timers), que son los que hacen inútil un conteo absoluto de pendientes.
 type BlinkCall = { delay: number; id: unknown }
@@ -84,7 +85,7 @@ const spyResults = (spy: ReturnType<typeof vi.spyOn>) => spy.mock.results as unk
 const blinkCalls = (): BlinkCall[] =>
   spyCalls(setTimeoutSpy)
     .map((c, i) => ({ delay: c[1] as number, id: spyResults(setTimeoutSpy)[i]!.value }))
-    .filter((x) => typeof x.delay === 'number' && x.delay >= 400 && x.delay <= 4000)
+    .filter((x) => typeof x.delay === 'number' && x.delay >= 250 && x.delay <= 3000)
 const blinkDelays = (): number[] => blinkCalls().map((x) => x.delay)
 
 // "No queda ningún temporizador del parpadeo": el último agendado fue devuelto a
@@ -171,15 +172,15 @@ async function sample(w: VueWrapper, ms: number, step = 50) {
 const transitions = (seen: boolean[]) => seen.filter((v, i) => i > 0 && v !== seen[i - 1]).length
 
 describe('SCEN-T1 — el renglón se apaga y vuelve mientras la respuesta sigue llegando', () => {
-  it('se oculta dentro de los primeros 4,1 s y reaparece en el 1,1 s siguiente', async () => {
+  it('se oculta dentro de los primeros 3,1 s y reaparece en los 0,6 s siguientes', async () => {
     const { w } = await streaming()
     expect(isHidden(w)).toBe(false)
 
-    const first = await sample(w, 4100)
-    expect(first, 'el renglón nunca se ocultó en los primeros 4,1 s').toContain(true)
+    const first = await sample(w, 3100)
+    expect(first, 'el renglón nunca se ocultó en los primeros 3,1 s').toContain(true)
 
-    const second = await sample(w, 1100)
-    expect(second, 'el renglón no volvió a verse en el 1,1 s siguiente').toContain(false)
+    const second = await sample(w, 600)
+    expect(second, 'el renglón no volvió a verse en los 0,6 s siguientes').toContain(false)
 
     // El ciclo se repite mientras dure el stream: varios cambios más en 12 s.
     expect(transitions(await sample(w, 12_000))).toBeGreaterThanOrEqual(3)
@@ -187,15 +188,15 @@ describe('SCEN-T1 — el renglón se apaga y vuelve mientras la respuesta sigue 
   })
 })
 
-describe('SCEN-T2 — ningún ciclo dura lo mismo que el anterior', () => {
-  it('cada tramo visible cae en [2000, 4000] ms, cada tramo oculto en [400, 1000] ms, y los visibles no son todos iguales', async () => {
+describe('SCEN-T2/T7 — ningún ciclo dura lo mismo que el anterior, y son cortos', () => {
+  it('cada tramo visible cae en [2000, 3000] ms, cada tramo oculto en [250, 500] ms, y los visibles no son todos iguales', async () => {
     vi.spyOn(Math, 'random')
       .mockReturnValueOnce(0)     // visible 2000
-      .mockReturnValueOnce(0.5)   // oculto   700
-      .mockReturnValueOnce(0.25)  // visible 2500
-      .mockReturnValueOnce(0.9)   // oculto   940
-      .mockReturnValueOnce(0.75)  // visible 3500
-      .mockReturnValueOnce(0.1)   // oculto   460
+      .mockReturnValueOnce(0.5)   // oculto   375
+      .mockReturnValueOnce(0.25)  // visible 2250
+      .mockReturnValueOnce(0.9)   // oculto   475
+      .mockReturnValueOnce(0.75)  // visible 2750
+      .mockReturnValueOnce(0.1)   // oculto   275
       .mockReturnValue(0.5)
 
     const { w } = await streaming()
@@ -206,15 +207,15 @@ describe('SCEN-T2 — ningún ciclo dura lo mismo que el anterior', () => {
     const visible = delays.filter((_, i) => i % 2 === 0)
     const hiddenSpans = delays.filter((_, i) => i % 2 === 1)
 
-    expect(visible.slice(0, 3)).toEqual([2000, 2500, 3500])
-    expect(hiddenSpans.slice(0, 3)).toEqual([700, 940, 460])
+    expect(visible.slice(0, 3)).toEqual([2000, 2250, 2750])
+    expect(hiddenSpans.slice(0, 3)).toEqual([375, 475, 275])
     for (const d of visible) {
       expect(d).toBeGreaterThanOrEqual(2000)
-      expect(d).toBeLessThanOrEqual(4000)
+      expect(d).toBeLessThanOrEqual(3000)
     }
     for (const d of hiddenSpans) {
-      expect(d).toBeGreaterThanOrEqual(400)
-      expect(d).toBeLessThanOrEqual(1000)
+      expect(d).toBeGreaterThanOrEqual(250)
+      expect(d).toBeLessThanOrEqual(500)
     }
     expect(new Set(visible.slice(0, 3)).size).toBe(3)
   })
@@ -226,11 +227,11 @@ describe('SCEN-T2 — ningún ciclo dura lo mismo que el anterior', () => {
     expect(delays.length).toBeGreaterThanOrEqual(6)
     for (const d of delays.filter((_, i) => i % 2 === 0)) {
       expect(d).toBeGreaterThanOrEqual(2000)
-      expect(d).toBeLessThanOrEqual(4000)
+      expect(d).toBeLessThanOrEqual(3000)
     }
     for (const d of delays.filter((_, i) => i % 2 === 1)) {
-      expect(d).toBeGreaterThanOrEqual(400)
-      expect(d).toBeLessThanOrEqual(1000)
+      expect(d).toBeGreaterThanOrEqual(250)
+      expect(d).toBeLessThanOrEqual(500)
     }
   })
 })
@@ -265,6 +266,45 @@ describe('SCEN-T3 — ocultar es solo visual: el lector de pantalla oye "escribi
       expect(r).not.toMatch(/display:\s*none/)
       expect(r).not.toMatch(/visibility:\s*hidden/)
     }
+  })
+})
+
+describe('SCEN-T6 — el renglón corta, no se desvanece', () => {
+  // El SFC lleva sus estilos en <style scoped> y vitest no los inyecta (css no está
+  // activado): se meten a mano en el documento para poder leer el estilo COMPUTADO
+  // del nodo montado. Ojo: jsdom no expande el atajo a longhands — `transitionDuration`
+  // devuelve "0s" aunque haya fundido declarado, así que leerlo sería un verde falso.
+  // La afirmación va sobre `transition`, que sí refleja lo declarado.
+  function injectSfcStyles() {
+    const css = [...source.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n')
+    expect(css).toContain('.cc-typing-text')
+    const tag = document.createElement('style')
+    tag.textContent = css
+    document.head.appendChild(tag)
+    return () => tag.remove()
+  }
+
+  it('el nodo montado no declara transición, ni visible ni oculto', async () => {
+    const drop = injectSfcStyles()
+    try {
+      const { w } = await streaming()
+      const node = typingEl(w).element
+
+      expect(getComputedStyle(node).fontStyle, 'los estilos del SFC no llegaron al documento').toBe('italic')
+      expect(getComputedStyle(node).transition, 'el renglón todavía se desvanece').toBe('')
+
+      const seen = await sample(w, 4000)
+      expect(seen, 'no llegó a ocultarse: no se comprobó el corte de vuelta').toContain(true)
+      expect(getComputedStyle(node).transition).toBe('')
+    } finally {
+      drop()
+    }
+  })
+
+  it('ninguna regla del renglón declara transición', () => {
+    const rules = [...source.matchAll(/\.cc-typing-text[^{]*\{[^}]*\}/g)].map((m) => m[0])
+    expect(rules.length).toBeGreaterThan(0)
+    for (const r of rules) expect(r, r).not.toMatch(/transition/)
   })
 })
 

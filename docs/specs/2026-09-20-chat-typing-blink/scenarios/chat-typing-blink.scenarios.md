@@ -15,6 +15,14 @@ typing again. Today it is painted once and stays fixed for the whole wait
 All scenarios hold identically in the 3 brands (alquilatucarro, alquicarros,
 alquilame), and alquilatucarro ≡ alquicarros stays byte-identical.
 
+> **Superseded in part (2026-09-21)** — the owner watched the preview on a phone and
+> tightened the rhythm: visible now [2000, 3000] ms, hidden now [250, 500] ms, and the
+> 120 ms fade is gone (the indicator cuts). See
+> `chat-typing-blink-timings-v2.scenarios.md` (SCEN-T6, SCEN-T7). Only the timing and
+> fade clauses of SCEN-T1 and SCEN-T2 below change; everything else in this file —
+> visual-only hiding, one aria-live announcement, reduced motion, no timer left
+> behind — stands as written.
+
 ## SCEN-T1: the indicator hides and comes back while the reply is still streaming
 **Given**: a streaming reply with no text yet, and the typing row rendered
 **When**: 4.1 s of streaming elapse, then 1.1 s more

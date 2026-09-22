@@ -412,13 +412,14 @@ function onClearHoldMove(e: PointerEvent) {
 }
 
 // "escribiendo…" que respira: mientras llega la respuesta el renglón se apaga y se
-// vuelve a encender con ritmo irregular — visible 2-4 s, oculto 0,4-1 s, sorteado de
-// nuevo en cada ciclo, así no hay dos iguales — para que se lea como alguien que
-// escribe, se detiene y sigue. Apagarlo es SOLO visual (una clase que baja la
+// vuelve a encender con ritmo irregular — visible 2-3 s, oculto 0,25-0,5 s, sorteado
+// de nuevo en cada ciclo, así no hay dos iguales — para que se lea como alguien que
+// escribe, se detiene y sigue. Corta seco, sin fundido (decisión del dueño tras ver
+// la vista previa en el teléfono). Apagarlo es SOLO visual (una clase que baja la
 // opacidad): el nodo nunca se desmonta, o el aria-live volvería a cantar
 // "escribiendo" en cada ciclo.
-const TYPING_VISIBLE_MS: [number, number] = [2000, 4000]
-const TYPING_HIDDEN_MS: [number, number] = [400, 1000]
+const TYPING_VISIBLE_MS: [number, number] = [2000, 3000]
+const TYPING_HIDDEN_MS: [number, number] = [250, 500]
 const typingVisible = ref(true)
 let typingTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -564,7 +565,6 @@ button { -webkit-tap-highlight-color: transparent; }
   .cc-avatar-dot { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
   .cc-flash { animation: none; }
   /* El parpadeo no se agenda siquiera; esto es el cinturón por si alguna vez se cuela. */
-  .cc-typing-text { transition: none; }
   .cc-typing-text.is-blink-off { opacity: 1; }
 }
 .cc-titlewrap { position: relative; flex: 1; min-width: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
@@ -782,8 +782,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .cc-sede-name { font-size: 0.9rem; font-weight: 700; color: #111827; line-height: 1.3; }
 .cc-sede-horario { font-size: 0.8rem; color: #6b7280; line-height: 1.35; }
 .cc-error { align-self: center; color: #b91c1c; font-size: 0.8rem; text-align: center; }
-.cc-typing-text { font-style: italic; color: #6b7280; font-size: 0.875rem; transition: opacity 120ms ease; }
-/* Pausa del que escribe: se apaga el pixel, no el nodo (sigue en el árbol accesible). */
+.cc-typing-text { font-style: italic; color: #6b7280; font-size: 0.875rem; }
+/* Pausa del que escribe: se apaga el pixel de golpe (sin fundido) y el nodo se queda
+   donde está, en el árbol accesible. */
 .cc-typing-text.is-blink-off { opacity: 0; }
 
 /* --- Separador "Mensajes nuevos" (reapertura con no leídos) --- */
