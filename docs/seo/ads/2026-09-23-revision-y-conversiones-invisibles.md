@@ -158,6 +158,23 @@ Con pasaporte el ticket es 1,65 veces mayor, alquilan más días y toman más se
 - Cali y Pereira: se sostiene con un ajuste. Durante la pausa, Cali tuvo 11 reservas en el dashboard, 6 de asesor. La regla de salida tiene que mirar también esas reservas.
 - Campaña de extranjeros: la premisa se confirma. Antes de lanzarla hay que arreglar la medición, porque también se vería por debajo de lo real.
 
+## Cambios hechos
+
+**2026-09-23: reparadas las conversiones secundarias de teléfono y WhatsApp (punto 1 de «Cómo medir mejor»).** Con el visto bueno del dueño se crearon dos eventos personalizados en Google Analytics, propiedad «alquilatucarro.com - GA4», en Flujos de datos › Crear eventos personalizados:
+
+| Evento nuevo | Condiciones |
+|---|---|
+| `clic_boton_whatsapp` | `event_name` es igual a `contact_click` y `method` es igual a `whatsapp` |
+| `clic_boton_llamada` | `event_name` es igual a `contact_click` y `method` es igual a `telephone` |
+
+Los dos copian los parámetros del evento de origen. Ya eran eventos clave en Analytics y Google Ads ya los importaba como conversiones secundarias, así que no hubo que tocar Google Ads ni el sitio. Las reglas de `reserva_confirmada`, `reserva_pendiente` y `sin_disponibilidad` no se tocaron.
+
+Límites: cuentan desde el día de la creación, no recuperan los contactos del 18 de julio al 23 de septiembre, y al ser secundarias no cambian la puja.
+
+Cómo comprobarlo: en «Tiempo real» de Analytics deben aparecer `clic_boton_whatsapp` y `clic_boton_llamada` cuando haya clics en esos botones. En 24 a 48 horas, las acciones de Google Ads deben pasar de «No hay conversiones recientes» a «Activa». Si no pasa, lo primero es confirmar que `contact_click` llega con el parámetro `method`. Se deshace borrando los dos eventos personalizados.
+
+`sin_disponibilidad` sigue sin datos. Su regla busca `/sindisponibilidad` en la dirección, y falta comprobar qué página o evento usa hoy el sitio para ese caso.
+
 ## Fuentes
 
 - Base de datos del dashboard, tabla `reservations` (y `referrals`, `locations`), consultada el 2026-09-23 en modo lectura.
