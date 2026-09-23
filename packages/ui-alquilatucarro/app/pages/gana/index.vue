@@ -175,7 +175,7 @@
           </a>
           o contáctanos a través de WhatsApp en el número
           <a :href="franchise.whatsapp" target="_blank" class="text-amber-400 hover:underline">
-            +57 310 434 5165
+            {{ whatsappDisplay }}
           </a>
         </p>
         <p class="text-gray-300">Estamos aquí para ayudarte.</p>
@@ -202,6 +202,11 @@
 
 <script lang="ts" setup>
 const { franchise } = useAppConfig()
+// WhatsApp and calls are separate lines, so the link text is derived from the
+// wa.me URL itself: "https://wa.me/573104345165" -> "+57 310 434 5165".
+const whatsappDisplay = String(franchise.whatsapp ?? '')
+  .replace(/\D/g, '')
+  .replace(/^(\d{2})(\d{3})(\d{3})(\d{4})$/, '+$1 $2 $3 $4')
 
 const currentYear = new Date().getFullYear()
 

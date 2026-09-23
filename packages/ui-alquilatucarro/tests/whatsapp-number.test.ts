@@ -48,10 +48,17 @@ describe('alquilatucarro WhatsApp is 310 434 5165, calls stay on 301 672 9250', 
     )
   })
 
-  it('/gana shows the new number as the WhatsApp link text, not franchise.phone', () => {
+  it('/gana derives the WhatsApp link text from franchise.whatsapp, not franchise.phone', () => {
     const gana = read('app/pages/gana/index.vue')
-    expect(gana).toMatch(/:href="franchise\.whatsapp"[^>]*>\s*\+57 310 434 5165\s*<\/a>/)
+    expect(gana).toMatch(/:href="franchise\.whatsapp"[^>]*>\s*\{\{ whatsappDisplay \}\}\s*<\/a>/)
+    expect(gana).toMatch(/const whatsappDisplay = String\(franchise\.whatsapp/)
     expect(gana).toContain('nuestro WhatsApp +57 310 434 5165')
+  })
+
+  it("alquilame's cross-brand fallback map carries the new alquilatucarro line", () => {
+    expect(read('../ui-alquilame/app/components/CategorySelectionSection.vue')).toContain(
+      'alquilatucarro: { phone: "3104345165", display: "310 434 5165" }',
+    )
   })
 
   it.each(WHATSAPP_SURFACES)('%s carries no WhatsApp reference to 301 672 9250', (file) => {
