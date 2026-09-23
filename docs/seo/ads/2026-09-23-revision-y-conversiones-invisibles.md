@@ -73,7 +73,7 @@ Google cuenta la reserva en el momento en que se hace. De las 479 reservas con g
 
 Todas son propuestas. Google Ads documenta las opciones, y la ayuda oficial se leyó el 23 de septiembre de 2026.
 
-1. **Contar los clics de teléfono y WhatsApp como conversión secundaria.** El sitio ya envía a GA4 el evento `generate_lead` cada vez que alguien toca el teléfono o WhatsApp, con el método. Importado a Ads como secundaria, no cambia la puja, pero deja ver por grupo cuántos contactos genera cada anuncio. Es lo más barato y lo más rápido. Hoy los objetivos «Cliente potencial por teléfono» y «Contacto» figuran como mal configurados, y este evento los llenaría.
+1. **Reparar las conversiones secundarias de teléfono y WhatsApp.** Ya existen en Google Ads: «clic_boton_llamada» y «clic_boton_whatsapp», como secundarias. Pero marcan cero y «No hay conversiones recientes». El 18 de julio de 2026 un cambio del sitio (commit `037d9ba`) sustituyó esos eventos por `generate_lead` y `contact_click`, y Google Ads sigue esperando los nombres viejos. Se arregla de dos maneras: que las acciones escuchen `generate_lead` o que el sitio vuelva a enviar los nombres viejos. Es lo más barato y lo más rápido. Corregido el 2026-09-23: una versión anterior decía que no estaban configuradas.
 
 2. **Número de desvío de Google en el sitio.** Google cambia el número del sitio por uno propio solo para quien llegó desde un anuncio, y cuenta como conversión las llamadas que duran más de un mínimo. Colombia está en la lista de países con números de desvío. Mide llamadas, no reservas, pero ligadas a la palabra clave y al grupo exactos. El costo es que los clientes ven otro número, y hay que acordarlo con el equipo.
 
@@ -132,6 +132,31 @@ Lo que el agente recomienda no hacer: tocar horarios (excluir la madrugada ahorr
 4. Revisar si el conector de WhatsApp guarda el gclid y cómo pasa a la reserva del asesor.
 5. El 7 de octubre, revisar los grupos nuevos con el dashboard al lado, por sede.
 6. Solo después: presupuesto, Bucaramanga, Medellín y la campaña de extranjeros.
+
+## Aclaraciones del 2026-09-23 (tarde)
+
+**El saldo quedó recargado.** El aviso de saldo desapareció. La campaña aparece ahora «Apta (en fase de aprendizaje)» por los cambios del día: grupos nuevos, AI Max apagado, Cali y Pereira activos. Mientras siga aprendiendo, conviene no hacer más cambios de puja ni de estructura.
+
+**Los extranjeros sí dejan más.** Reservas de alquilatucarro desde el 16 de junio, según el documento del cliente:
+
+| Documento | Reservas | Utilizadas | Ticket medio utilizado | Días medios | Con seguro | Por Google Ads | Por asesor |
+|---|---|---|---|---|---|---|---|
+| Cédula (CC) | 2.208 | 39,4 % | 401.927 COP | 2,6 | 7,3 % | 47,5 % | 37,9 % |
+| Pasaporte (PP) | 125 | 45,6 % | 663.312 COP | 4,2 | 16,8 % | 31,2 % | 47,2 % |
+
+Con pasaporte el ticket es 1,65 veces mayor, alquilan más días y toman más seguro. También usan más al asesor, así que Google los ve todavía menos. El umbral de «ticket al menos el doble» que propuso el agente no lo cumple ni el extranjero de hoy. Uno de 1,5 veces es más realista.
+
+**Uso de las reservas por sede.** Medellín utilizó solo 14 de 57 reservas (25 %), frente a 32 % en Bogotá y 46 a 49 % en Cartagena y Santa Marta. Vale averiguar por qué antes de gastar más en su anuncio.
+
+**Cómo queda cada punto de la revisión con los datos del dashboard:**
+
+- Saldo: resuelto.
+- Bucaramanga: se sostiene a medias. El dato de Google es sólido, pero 8 de las 25 reservas de la sede las hizo un asesor, y el local puede estar llamando en vez de reservar en la web. No excluir la ciudad hasta medir las llamadas.
+- Medellín: se sostiene. La posición no depende de cómo se cuenten las conversiones, y además es la sede que menos reservas convierte en alquiler.
+- Palabras inglesas de «genericos»: se sostiene en Google, pero el extranjero usa más al asesor, así que Google lo subestima más. No pausar solo por eso.
+- Presupuesto: se sostiene y se refuerza, porque el costo real por reserva es menor que el que muestra Google. Pero hay que esperar a que termine el aprendizaje y a la revisión del 7 de octubre.
+- Cali y Pereira: se sostiene con un ajuste. Durante la pausa, Cali tuvo 11 reservas en el dashboard, 6 de asesor. La regla de salida tiene que mirar también esas reservas.
+- Campaña de extranjeros: la premisa se confirma. Antes de lanzarla hay que arreglar la medición, porque también se vería por debajo de lo real.
 
 ## Fuentes
 
