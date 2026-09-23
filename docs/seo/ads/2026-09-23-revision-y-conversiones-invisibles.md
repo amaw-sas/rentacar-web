@@ -171,6 +171,8 @@ Los dos copian los parámetros del evento de origen. Ya eran eventos clave en An
 
 Límites: cuentan desde el día de la creación, no recuperan los contactos del 18 de julio al 23 de septiembre, y al ser secundarias no cambian la puja.
 
+**Verificado el mismo día:** minutos después de crear las reglas, la tarjeta «Eventos clave» de «Tiempo real» mostró `clic_boton_llamada` 1 y `clic_boton_whatsapp` 1, con tráfico real del sitio. Falta ver el paso a «Activa» en Google Ads.
+
 Cómo comprobarlo: en «Tiempo real» de Analytics deben aparecer `clic_boton_whatsapp` y `clic_boton_llamada` cuando haya clics en esos botones. En 24 a 48 horas, las acciones de Google Ads deben pasar de «No hay conversiones recientes» a «Activa». Si no pasa, lo primero es confirmar que `contact_click` llega con el parámetro `method`. Se deshace borrando los dos eventos personalizados.
 
 `sin_disponibilidad` sigue sin datos. Su regla busca `/sindisponibilidad` en la dirección, y falta comprobar qué página o evento usa hoy el sitio para ese caso.
