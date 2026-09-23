@@ -43,7 +43,7 @@ export default defineAppConfig({
     svglogo: "/images/brand/logo.svg",
     ogImage: "/img/og-alquilatucarro.jpg",
     phone: "+57 301 672 9250",
-    whatsapp: "https://wa.me/573016729250",
+    whatsapp: "https://wa.me/573104345165",
     email: "alquilatucarro@gmail.com",
     socialmedia: [
       "https://www.facebook.com/alquilerdecarroscolombia",

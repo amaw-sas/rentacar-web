@@ -175,7 +175,7 @@
           </a>
           o contáctanos a través de WhatsApp en el número
           <a :href="franchise.whatsapp" target="_blank" class="text-amber-400 hover:underline">
-            {{ franchise.phone }}
+            +57 310 434 5165
           </a>
         </p>
         <p class="text-gray-300">Estamos aquí para ayudarte.</p>
@@ -291,7 +291,7 @@ const preguntas = computed(() => [
   },
   {
     label: '¿Qué hago si tengo problemas con mi enlace o mis comisiones?',
-    content: 'Puedes contactarnos a través de nuestro correo info@alquilatucarro.com o nuestro WhatsApp +57 301 672 9250.'
+    content: 'Puedes contactarnos a través de nuestro correo info@alquilatucarro.com o nuestro WhatsApp +57 310 434 5165.'
   },
   {
     label: '¿En qué ciudades de Colombia está disponible el servicio?',
