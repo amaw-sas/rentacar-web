@@ -21,3 +21,7 @@ Se dividen en dos grupos: marcas de competencia (conduapps, carsfort, eurocarent
 ## Fuentes que NO están aquí
 
 Search Console se consulta en vivo con `gcloud auth application-default print-access-token` más el header `x-goog-user-project: diego-seo-audit` (sin ese header devuelve 403). Los datos propios están en Supabase, proyecto `ilhdholjrnbycyvejsub`.
+
+**`terminos-busqueda-2026-08-23_2026-09-21.csv`** (3.178 filas) — términos de búsqueda de los 30 días previos a crear los grupos «genericos» y «Marca». Es la línea base de `docs/seo/ads/2026-09-23-grupos-genericos-y-marca.md`.
+
+⚠️ No es la exportación de Google: se leyó de la tabla en pantalla el 2026-09-22. Una fila por término, grupo y palabra clave, sin las filas de totales. Los números van en formato colombiano («3.727», «39,03», «14.551 COP»). Suman 11.052 clics, 40.941 impresiones y 433,21 conversiones, igual que la cabecera del informe en la cuenta.
