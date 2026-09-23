@@ -96,6 +96,15 @@ Cada uno tiene 34 negativas propias. De ellas, **16 son las exactas del plan**: 
 
 Una negativa exacta como [alquiler de carros] bloquea solo esa búsqueda sin más palabras. «alquiler de carros bogota» sigue entrando por la amplia de Bogotá.
 
+## Cambios del mismo día que afectan la revisión
+
+El 2026-09-23, después de crear los grupos, el dueño hizo dos cambios más. Los verifiqué en la cuenta:
+
+- **AI Max quedó desactivado en la campaña.** Con él se apagan la personalización de texto y la expansión de URL final. Desde ese día cada anuncio lleva a su propia URL.
+- **Cali y Pereira quedaron habilitados** y en estado «Apto». Son grupos sin base comparable: entre junio y agosto estuvieron activos poco tiempo (Cali 50 clics y 1 conversión, Pereira 127 clics y 2). El 7 de octubre se miran aparte, sin mezclarlos con el comparativo de los otros 14. Sus anuncios también llevan el título con «Alquier».
+
+Los dos cambios mueven el total de la campaña. Por eso la revisión se hace grupo por grupo, como está en la tabla de arriba.
+
 ## Qué esperamos ver
 
 La regla documentada de Google es que una palabra exacta idéntica a la búsqueda gana sobre cualquier amplia. La cuenta no tiene campaña de Máximo Rendimiento: «máximo rendimiento» era la puja «Maximiza las conversiones». Con eso:
