@@ -98,12 +98,11 @@ Una negativa exacta como [alquiler de carros] bloquea solo esa búsqueda sin má
 
 ## Qué esperamos ver
 
-La regla documentada de Google es que una palabra exacta idéntica a la búsqueda gana sobre cualquier amplia y sobre Máximo Rendimiento. Con eso:
+La regla documentada de Google es que una palabra exacta idéntica a la búsqueda gana sobre cualquier amplia. La cuenta no tiene campaña de Máximo Rendimiento: «máximo rendimiento» era la puja «Maximiza las conversiones». Con eso:
 
 1. «rent a car», «alquiler de carros» y las demás deberían aparecer en «genericos» y dejar de salir en los grupos de ciudad.
 2. La marca debería aparecer solo en «Marca», con un CPC más bajo que los 685 a 3.269 COP de antes.
-3. Parte del gasto de Máximo Rendimiento en esas búsquedas puede pasar a Búsqueda. Si pasa, no es gasto nuevo: es la misma plata cambiando de bolsillo.
-4. El CPA de Bogotá puede verse algo peor en el comparativo. Pierde «alquila tu carro bogota», que le daba 11 clics y 1,6 conversiones al mes y ahora va a «Marca».
+3. El CPA de Bogotá puede verse algo peor en el comparativo. Pierde «alquila tu carro bogota», que le daba 11 clics y 1,6 conversiones al mes y ahora va a «Marca».
 
 ## Cómo revisar el 7 de octubre
 
