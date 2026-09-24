@@ -15,12 +15,12 @@ Fecha: 2026-09-24. Plan y razones en `2026-09-24-plan-campana-extranjeros.md`. C
 | Segmentos de audiencia | Ninguno |
 | AI Max y concordancia amplia | Apagados. Desmarcar «concordancia de términos de búsqueda» si aparece marcada: convierte la exacta en amplia |
 | Presupuesto | 30.000 COP al día |
-| Puja | «Clics», con puja de CPC máxima de 3.000 COP durante 2 semanas. Luego, «Conversiones» |
+| Puja | «Maximiza las conversiones», sin CPA objetivo, igual que la campaña actual. Es decisión del dueño del 2026-09-24, por su experiencia con la cuenta |
 | Programación | Todos los días, todo el día |
 | Opciones de URL de la campaña | Sufijo de URL final: utm_source=google&utm_medium=cpc-exterior |
 | Extensiones | Sin extensión de llamada. Se pueden asociar los 7 enlaces de sitio que ya existen en la cuenta |
 
-Los 3.000 COP de tope por clic son una suposición: no hay datos de CPC en España para estas palabras. Si en la primera semana la campaña gasta muy poco del presupuesto, se sube el tope a 4.000.
+Riesgo a vigilar: sin datos de España, Google puede pujar alto al principio. Revisar el CPC los primeros 2 o 3 días. Si hay clics de más de 4.000 o 5.000 COP sin reservas, se revisa.
 
 ## 2. Palabras clave negativas de la campaña
 
@@ -59,11 +59,13 @@ carnet de conducir
 
 ## 3. Grupos de anuncios
 
-Las palabras clave se pegan tal cual: los corchetes marcan la concordancia exacta y las comillas la de frase. Cada grupo lleva un anuncio adaptable con 14 o 15 títulos y 4 descripciones. Los títulos y las descripciones comunes se repiten en los seis grupos.
+Las palabras clave se pegan tal cual: las comillas marcan la concordancia de frase y los corchetes la exacta. Cada grupo lleva un anuncio adaptable con 15 títulos y 4 descripciones.
 
-### Colombia
+Regla que se siguió: cada palabra clave aparece completa en al menos un título o una descripción. Así se ve en la guía de Google «incluye estas palabras clave». Las de ciudad llevan «colombia» para no atraer la Cartagena de Murcia ni el Medellín de Badajoz. Son más largas que los 30 caracteres de un título, así que van completas en la descripción y cortas en el título. Google trata como la misma palabra clave el singular y el plural, y las formas con o sin «de» y «en», así que no hacen falta más variantes.
 
-URL final: https://alquilatucarro.com/
+### Colombia (cargado el 2026-09-24, eficacia «Buena»)
+
+URL final: https://alquilatucarro.com/ · Ruta visible: colombia/coches
 
 Palabras clave:
 
@@ -82,29 +84,29 @@ Palabras clave:
 Títulos:
 
 ```
+Alquilatucarro
 Alquiler de coches Colombia
 Alquiler coche en Colombia
-Alquila tu coche en Colombia
+Alquilar coche en Colombia
 Coches de alquiler Colombia
 Alquiler coches: precios
 Sin pago anticipado
 Reserva ahora, paga después
-Pagas al recoger el coche
+Alquiler de carros en Colombia
 Reserva con tu pasaporte
 Hasta 60 % reservando antes
 Recogida en el aeropuerto
 Chat 24 horas
 Precio en pesos colombianos
 19 ciudades de Colombia
-AlquilaTuCarro.com
 ```
 
 Descripciones:
 
 ```
 Alquiler de coches en Colombia: 19 ciudades y agencias en aeropuertos. Chat 24 horas.
-Reserva sin pagar nada por adelantado. Pagas al recoger el coche con tarjeta de crédito.
-Hasta un 60 % de descuento si reservas con antelación. Compactos, sedanes y camionetas.
+Alquilar coche en Colombia sin pago anticipado: pagas al recoger con tarjeta de crédito.
+Alquiler de carros en Colombia con hasta un 60 % de descuento si reservas con antelación.
 Al recoger necesitas pasaporte, carné de conducir vigente y tarjeta de crédito.
 ```
 
@@ -116,9 +118,7 @@ Palabras clave:
 
 ```
 "alquiler coche cartagena colombia"
-"alquiler de coches en cartagena colombia"
 "alquiler coche cartagena de indias"
-"alquiler de coches en cartagena de indias"
 "alquiler de carros en cartagena colombia"
 ```
 
@@ -127,26 +127,27 @@ Títulos:
 ```
 Alquiler coche Cartagena
 Coche en Cartagena de Indias
+Alquiler carros Cartagena
 Aeropuerto de Cartagena
-Alquiler coches Cartagena
 Sin pago anticipado
 Reserva ahora, paga después
-Pagas al recoger el coche
 Reserva con tu pasaporte
 Hasta 60 % reservando antes
 Recogida en el aeropuerto
 Chat 24 horas
 Precio en pesos colombianos
 19 ciudades de Colombia
-AlquilaTuCarro.com
+Alquilatucarro
+Pagas al recoger el coche
+Compactos, sedanes, camionetas
 ```
 
 Descripciones:
 
 ```
-Alquiler de coches en Cartagena de Indias, Colombia. Recoge en el aeropuerto.
+Alquiler coche Cartagena, Colombia. Alquiler coche Cartagena de Indias en el aeropuerto.
+Alquiler de carros en Cartagena, Colombia: hasta 60 % de descuento si reservas antes.
 Reserva sin pagar nada por adelantado. Pagas al recoger el coche con tarjeta de crédito.
-Hasta un 60 % de descuento si reservas con antelación. Compactos, sedanes y camionetas.
 Al recoger necesitas pasaporte, carné de conducir vigente y tarjeta de crédito.
 ```
 
@@ -158,9 +159,7 @@ Palabras clave:
 
 ```
 "alquiler coche bogota"
-"alquiler de coches en bogota"
 "alquiler coche aeropuerto bogota"
-"alquiler coches bogota"
 "alquiler de carros en bogota colombia"
 ```
 
@@ -168,27 +167,28 @@ Títulos:
 
 ```
 Alquiler coche Bogotá
-Alquiler de coches en Bogotá
+Coche aeropuerto de Bogotá
+Alquiler de carros en Bogotá
 Aeropuerto El Dorado
-Coche en el aeropuerto Bogotá
 Sin pago anticipado
 Reserva ahora, paga después
-Pagas al recoger el coche
 Reserva con tu pasaporte
 Hasta 60 % reservando antes
 Recogida en el aeropuerto
 Chat 24 horas
 Precio en pesos colombianos
 19 ciudades de Colombia
-AlquilaTuCarro.com
+Alquilatucarro
+Pagas al recoger el coche
+Compactos, sedanes, camionetas
 ```
 
 Descripciones:
 
 ```
-Alquiler de coches en Bogotá: recoge en el aeropuerto El Dorado o en la ciudad.
+Alquiler coche en el aeropuerto de Bogotá, El Dorado, o en la ciudad. Chat 24 horas.
+Alquiler de carros en Bogotá, Colombia: hasta 60 % de descuento si reservas antes.
 Reserva sin pagar nada por adelantado. Pagas al recoger el coche con tarjeta de crédito.
-Hasta un 60 % de descuento si reservas con antelación. Compactos, sedanes y camionetas.
 Al recoger necesitas pasaporte, carné de conducir vigente y tarjeta de crédito.
 ```
 
@@ -200,9 +200,7 @@ Palabras clave:
 
 ```
 "alquiler coche medellin colombia"
-"alquiler de coches en medellin colombia"
 "alquiler coche aeropuerto rionegro"
-"alquiler coche medellin antioquia"
 "alquiler de carros en medellin colombia"
 ```
 
@@ -210,27 +208,28 @@ Títulos:
 
 ```
 Alquiler coche Medellín
-Alquiler coches Medellín
-Aeropuerto de Rionegro
+Alquiler coche Rionegro
+Alquiler carros Medellín
 Coche en Medellín, Colombia
 Sin pago anticipado
 Reserva ahora, paga después
-Pagas al recoger el coche
 Reserva con tu pasaporte
 Hasta 60 % reservando antes
 Recogida en el aeropuerto
 Chat 24 horas
 Precio en pesos colombianos
 19 ciudades de Colombia
-AlquilaTuCarro.com
+Alquilatucarro
+Pagas al recoger el coche
+Compactos, sedanes, camionetas
 ```
 
 Descripciones:
 
 ```
-Alquiler de coches en Medellín, Colombia. Recoge en el aeropuerto de Rionegro.
+Alquiler coche Medellín, Colombia. Alquiler coche en el aeropuerto de Rionegro.
+Alquiler de carros en Medellín, Colombia: hasta 60 % de descuento si reservas antes.
 Reserva sin pagar nada por adelantado. Pagas al recoger el coche con tarjeta de crédito.
-Hasta un 60 % de descuento si reservas con antelación. Compactos, sedanes y camionetas.
 Al recoger necesitas pasaporte, carné de conducir vigente y tarjeta de crédito.
 ```
 
@@ -242,7 +241,6 @@ Palabras clave:
 
 ```
 "alquiler coche santa marta colombia"
-"alquiler de coches en santa marta colombia"
 "alquiler coche aeropuerto santa marta"
 "alquiler de carros en santa marta colombia"
 ```
@@ -251,27 +249,28 @@ Títulos:
 
 ```
 Alquiler coche Santa Marta
-Coches en Santa Marta
 Aeropuerto de Santa Marta
+Alquiler carros Santa Marta
 Santa Marta y el Caribe
 Sin pago anticipado
 Reserva ahora, paga después
-Pagas al recoger el coche
 Reserva con tu pasaporte
 Hasta 60 % reservando antes
 Recogida en el aeropuerto
 Chat 24 horas
 Precio en pesos colombianos
 19 ciudades de Colombia
-AlquilaTuCarro.com
+Alquilatucarro
+Pagas al recoger el coche
+Compactos, sedanes, camionetas
 ```
 
 Descripciones:
 
 ```
-Alquiler de coches en Santa Marta, Colombia. Recoge en el aeropuerto y viaja.
+Alquiler coche Santa Marta, Colombia. Alquiler coche en el aeropuerto de Santa Marta.
+Alquiler de carros en Santa Marta, Colombia: hasta 60 % de descuento si reservas antes.
 Reserva sin pagar nada por adelantado. Pagas al recoger el coche con tarjeta de crédito.
-Hasta un 60 % de descuento si reservas con antelación. Compactos, sedanes y camionetas.
 Al recoger necesitas pasaporte, carné de conducir vigente y tarjeta de crédito.
 ```
 
@@ -283,7 +282,6 @@ Palabras clave:
 
 ```
 "alquiler coche eje cafetero"
-"alquiler de coches eje cafetero"
 "alquiler coche armenia colombia"
 "alquiler coche pereira colombia"
 "alquiler coche salento"
@@ -293,29 +291,47 @@ Títulos:
 
 ```
 Alquiler coche Eje Cafetero
-Coche en el Eje Cafetero
-Armenia y Pereira
-Coche para ir a Salento
+Alquiler coche Armenia
+Alquiler coche Pereira
+Alquiler coche Salento
 Sin pago anticipado
 Reserva ahora, paga después
-Pagas al recoger el coche
 Reserva con tu pasaporte
 Hasta 60 % reservando antes
 Recogida en el aeropuerto
 Chat 24 horas
 Precio en pesos colombianos
 19 ciudades de Colombia
-AlquilaTuCarro.com
+Alquilatucarro
+Pagas al recoger el coche
+Compactos, sedanes, camionetas
 ```
 
 Descripciones:
 
 ```
-Alquiler de coches en el Eje Cafetero: recoge en Armenia o Pereira, Colombia.
+Alquiler coche Armenia, Colombia, y alquiler coche Pereira, Colombia. Eje Cafetero.
+Alquiler coche Salento y Eje Cafetero: hasta 60 % de descuento si reservas antes.
 Reserva sin pagar nada por adelantado. Pagas al recoger el coche con tarjeta de crédito.
-Hasta un 60 % de descuento si reservas con antelación. Compactos, sedanes y camionetas.
 Al recoger necesitas pasaporte, carné de conducir vigente y tarjeta de crédito.
 ```
+
+## 3b. Enlaces de sitio (solo esta campaña)
+
+Creados el 2026-09-24 a nivel de campaña en «Viajeros – España». Al guardar quedaron los 8 como «Pendiente, en proceso de revisión».
+
+Textos nuevos con «coche» para España. Límites comprobados: 25 caracteres el texto del enlace y 35 cada línea de descripción. Se dejó fuera la calificación 4,9 que muestra la portada, porque una auditoría de julio marcó como dudosa la calificación del sitio.
+
+| Texto del enlace | URL | Descripción 1 | Descripción 2 |
+|---|---|---|---|
+| Hasta 60 % de descuento | https://alquilatucarro.com/#video | Si reservas con antelación | Y pagas al recoger el coche |
+| Requisitos para alquilar | https://alquilatucarro.com/#requisitos | Pasaporte y carné de conducir | Tarjeta de crédito al recoger |
+| Tipos de coche | https://alquilatucarro.com/#categorias | Compactos, sedanes, camionetas | Elige el que necesites |
+| Nuestras sedes | https://alquilatucarro.com/#sedes | 19 ciudades de Colombia | Varias en aeropuertos |
+| Preguntas frecuentes | https://alquilatucarro.com/#faqs | Pagos, recogida y requisitos | Resuelve tus dudas antes |
+| Opiniones de clientes | https://alquilatucarro.com/#testimonios | Lo que cuentan quienes alquilan | Lee sus testimonios |
+| Alquiler en Cartagena | https://alquilatucarro.com/cartagena | Cartagena de Indias, Colombia | Recoge en el aeropuerto |
+| Alquiler en Medellín | https://alquilatucarro.com/medellin | Medellín y aeropuerto Rionegro | Reserva sin pago anticipado |
 
 ## 4. Antes de publicar
 
@@ -326,5 +342,14 @@ Al recoger necesitas pasaporte, carné de conducir vigente y tarjeta de crédito
 ## 5. Después de publicar
 
 - A los 3 días: mirar los términos de búsqueda y añadir negativas si entra algo de España que no sea viaje a Colombia.
-- A las 2 semanas: pasar la puja de «Clics» a «Conversiones».
 - A las 4 semanas: evaluar con la tabla del plan, usando las reservas del dashboard con `utm_medium = 'cpc-exterior'`.
+
+## 6. Estado al 2026-09-24
+
+- Campaña publicada desde el Chrome del dueño. En Orca, el asistente de Google no avanzaba y pedía verificación telefónica.
+- Puja: «Maximiza las conversiones», sin CPA objetivo. Objetivo: «Compras», el predeterminado de la cuenta. 30.000 COP al día.
+- España con Colombia excluida, idioma español, solo red de Búsqueda, AI Max apagado.
+- El dueño añadió el sufijo de URL y las 28 negativas. Son 28 y no 29: se quitó «trabajo».
+- Hay un grupo, «Grupo de anuncios 1», que debe renombrarse a «Colombia». Tiene 9 palabras clave y 1 anuncio «Apto».
+- 8 enlaces de sitio creados a nivel de campaña, pendientes de revisión.
+- Faltan: los 5 grupos de ciudad y renombrar el grupo. Hay un borrador sobrante de la campaña en «Borradores».

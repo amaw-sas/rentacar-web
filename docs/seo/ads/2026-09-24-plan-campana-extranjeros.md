@@ -75,7 +75,7 @@ Las respuestas cambian el orden. Una campaña en inglés prometería un servicio
 | Ubicación | España, opción «Presencia». Excluir Colombia |
 | Idioma | Español |
 | Presupuesto | 30.000 COP al día, aparte del de la campaña actual, unos 900.000 al mes |
-| Puja | Maximizar clics con un tope de CPC durante las 2 primeras semanas, porque la campaña empieza sin conversiones. Después, maximizar conversiones |
+| Puja | Maximizar conversiones sin CPA objetivo. Es decisión del dueño del 2026-09-24: le funciona mejor que fijar un valor |
 | Campaña actual | No se toca. Sigue en Colombia, en inglés y español |
 | Grupos | Uno general («alquiler coche colombia») y uno por ciudad turística: Cartagena, Bogotá, Medellín, Santa Marta y Eje Cafetero |
 | Palabras clave | Siempre con «colombia» o con una ciudad que no exista en España: «alquiler de coches en colombia», «alquiler coche colombia», «alquiler coches colombia precios», «alquiler de carros en colombia», «alquiler de coches cartagena colombia», «alquiler coche medellin colombia», «alquiler coche bogota». Exacta y frase |
