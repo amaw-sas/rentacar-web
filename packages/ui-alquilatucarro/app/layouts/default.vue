@@ -261,8 +261,9 @@ const mobileItems = computed<SiteNavigationItem[]>(() => [
   },
 ])
 
-// Menú móvil: tel: con el número de la marca.
-const telHref = computed(() => `tel:${(franchise.phone ?? '').replace(/[^\d+]/g, '')}`)
+// Menú móvil: tel: con el número de llamada (el de desvío de Google si el
+// visitante llegó por un anuncio; si no, el de la marca).
+const { telHref } = useCallPhone()
 
 // Click en un item del menú móvil. Para destinos de ancla en página (#seccion)
 // el scroll inmediato se pierde: el slideover sigue abierto y bloquea el scroll

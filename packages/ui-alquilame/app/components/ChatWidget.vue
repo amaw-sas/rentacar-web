@@ -151,6 +151,7 @@ import { chatPanelLiftPx } from '@rentacar-main/logic/utils/chatPanelLift'
 const ChatConversation = defineAsyncComponent(() => import('./ChatConversation.vue'))
 
 const { franchise } = useAppConfig()
+// alquilame no tiene acceso tel: (delta de marca), así que no usa useCallPhone.
 const route = useRoute()
 const { reservationOverlayOpen } = storeToRefs(useStoreSearchData())
 // Visibilidad del chat = el switch por marca del dashboard manda (auto-import

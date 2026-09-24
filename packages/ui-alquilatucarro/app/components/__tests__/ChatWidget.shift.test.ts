@@ -115,6 +115,13 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
     // propia y su FAB va relleno de marca con el icono en blanco, no en blanco
     // con el icono de marca. Pintado con el token, nunca con el hex quemado
     // (P386 en ui-alquicarros).
+    // 2026-09-23: las marcas vivas marcan con el número de llamada (el de
+    // desvío de Google si el visitante llegó por un anuncio). alquilame no
+    // tiene acceso tel:, así que en esa línea sólo deja constancia.
+    [
+      '// alquilame no tiene acceso tel: (delta de marca), así que no usa useCallPhone.',
+      'const { tel: callTel, display: callDisplay } = useCallPhone()',
+    ],
     [
       '.fab-chat { background: var(--ui-primary, #cc022b); color: #fff; }',
       '.fab-chat { color: var(--ui-primary, #cc022b); }',

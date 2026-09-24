@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { useChatStatus } from '@rentacar-main/logic/composables/useChatStatus'
+import { useCallPhone } from '@rentacar-main/logic/composables/useCallPhone'
 import ChatWidget from '../ChatWidget.vue'
 
 // D4 — real MOUNT test for the WhatsApp schedule gate. The previous version of
@@ -49,6 +50,7 @@ function stubNuxtGlobals() {
   }))
   // The real composable under test — same code path the app runs.
   vi.stubGlobal('useChatStatus', useChatStatus)
+  vi.stubGlobal('useCallPhone', useCallPhone)
   vi.stubGlobal('useChatUnreadBadge', () => ({
     unread: ref(0),
     announce: ref(''),

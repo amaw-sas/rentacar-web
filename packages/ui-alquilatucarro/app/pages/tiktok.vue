@@ -151,8 +151,9 @@ const contactOpen = ref(false)
 // (mismo origen de verdad que el ChatWidget de los layouts; /tiktok no usa layout).
 const { enabled: chatEnabled } = useChatStatus(franchise.shortname as string)
 
-// tel: con el número de la marca, solo dígitos y el +.
-const telHref = computed(() => `tel:${(franchise.phone ?? '').replace(/[^\d+]/g, '')}`)
+// tel: con el número de llamada (el de desvío de Google si el visitante llegó
+// por un anuncio; si no, el de la marca).
+const { telHref } = useCallPhone()
 
 // WhatsApp con mensaje pre-cargado que identifica el origen (TikTok) para el asesor.
 const WA_MESSAGE = 'Hola, vi su página de alquiler de carros en TikTok y quiero saber los requisitos'
