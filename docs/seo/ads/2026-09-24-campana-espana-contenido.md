@@ -353,3 +353,19 @@ Textos nuevos con «coche» para España. Límites comprobados: 25 caracteres el
 - Hay un grupo, «Grupo de anuncios 1», que debe renombrarse a «Colombia». Tiene 9 palabras clave y 1 anuncio «Apto».
 - 8 enlaces de sitio creados a nivel de campaña, pendientes de revisión.
 - Faltan: los 5 grupos de ciudad y renombrar el grupo. Hay un borrador sobrante de la campaña en «Borradores».
+
+## 7. Textos destacados y extractos (2026-09-24)
+
+El dueño asoció a «Viajeros – España» los 13 textos destacados y los 2 extractos de la campaña principal. Se corrigieron solo en esta campaña. La principal no se tocó: se comprobó que conserva sus 13 textos destacados y sus 2 extractos.
+
+**Textos destacados que quedaron (12):** Entrega en el aeropuerto · Precios sin sorpresas · Atención personalizada · Soporte todos los días · Paga en Sede Sin Anticipo · Úsalo en toda Colombia · Alquiler diario y mensual · Ahorra reservando antes · Camionetas de 7 plazas · Coches en perfecto estado · Cotiza y reserva rápido · Chat 24 horas.
+
+**Quitados de esta campaña (8):**
+- Seis tenían erratas o decían «carro»: Ahorra Seperando hoy · Planees diario y mensual · Cotiza y Reserva Rapido · Carros Excelente Estado · Usalo en Todo Colombia · Camionetas 7 Puestos.
+- Dos prometen algo que la web no dice: Kilometraje Sin Limite · Flota nueva y variada. Se vuelven a poner si el dueño confirma que son ciertos.
+
+**Extractos:** «Servicios» se mantiene. El «Tipos» viejo prometía coches mecánicos y 4x4, y hoy la web solo lista automáticos. Se sustituyó por «Tipos: Compacto automático, Sedán automático, Sedán híbrido, Camioneta automática, Camioneta híbrida, Camioneta de 7 plazas», en español de España.
+
+**Cómo quitar un recurso de una sola campaña.** En Recursos › Asociaciones, con la campaña seleccionada arriba, se marcan las filas y se pulsa «Quitar». El aviso dice que se quitarán «de las cuentas, las campañas…», pero solo quita la asociación de esa campaña. Se probó primero con un recurso y la principal lo conservó. Límite: 20 textos destacados por campaña.
+
+**Mensaje y llamada:** no se añaden. Llamar o escribir por SMS desde España cuesta dinero al cliente, y la mañana española cae de madrugada en Colombia. El canal es el chat de 24 horas y WhatsApp.
