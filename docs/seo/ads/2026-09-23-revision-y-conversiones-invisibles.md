@@ -177,6 +177,21 @@ Cómo comprobarlo: en «Tiempo real» de Analytics deben aparecer `clic_boton_wh
 
 `sin_disponibilidad` sigue sin datos. Su regla busca `/sindisponibilidad` en la dirección, y falta comprobar qué página o evento usa hoy el sitio para ese caso.
 
+**2026-09-23: número de desvío de Google en los enlaces de llamada (punto 2), en código y sin publicar.** En Google Ads se creó la acción «Llamada (+57 301 672 9250)». Está marcada como secundaria, en la categoría «Cliente potencial por teléfono», así que no cambia la puja. En el sitio de alquilatucarro, el commit `9db0658` de la rama `diego-alex-melo/Google-Ads` añade la etiqueta de Google Ads con esa acción. Cuando alguien llega por un anuncio, Google le da un número de desvío y los botones de llamar del menú, de /tiktok y del chat pasan a marcar ese número. Así Google cuenta la llamada aunque la reserva la haga un asesor.
+
+Lo que no cambia:
+
+- Quien llega por búsqueda orgánica sigue viendo y marcando el número real.
+- WhatsApp usa siempre el número real, porque es el mismo número y un desvío no sirve en WhatsApp.
+- Los datos estructurados para Google conservan el número real.
+- alquilame y alquicarros no cargan la etiqueta.
+
+Si Google devolviera un número vacío o sin dígitos suficientes, se ignora y queda el real.
+
+Comprobado en local, con la respuesta de Google simulada: el enlace pasó de `tel:+573016729250` a `tel:+576015550100`, WhatsApp no cambió, la consola no mostró errores y ninguna petición falló. Las 4.376 pruebas pasan, entre ellas una que monta el chat real con el número de desvío.
+
+Falta publicarlo, y eso lo decide el dueño. Después de publicar hay que hacer la prueba real que pide Google: entrar por un anuncio, que cuesta un clic, comprobar que aparece otro número y borrar la cookie `gwcc` antes de repetir. La acción debe pasar de «Inactiva» a «Activa». Para deshacerlo basta con revertir el commit.
+
 ## Fuentes
 
 - Base de datos del dashboard, tabla `reservations` (y `referrals`, `locations`), consultada el 2026-09-23 en modo lectura.
