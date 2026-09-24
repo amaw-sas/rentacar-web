@@ -39,75 +39,90 @@ Los eventos clave incluyen clics en llamar y WhatsApp, no solo reservas. España
 
 «Rent a car» también lo escribe mucho el colombiano, así que esa cifra no sirve para medir extranjeros.
 
-**El dashboard no guarda la campaña.** El sitio envía `utm_campaign`, pero la tabla de reservas solo guarda `utm_source`, `utm_medium` y `gclid`. Hoy no se puede separar en el dashboard una reserva de la campaña nueva de una de la actual.
+**El dashboard no guarda la campaña.** El sitio envía `utm_campaign`, pero la tabla de reservas solo guarda `utm_source`, `utm_medium` y `gclid`. La salida sin tocar el dashboard está en el paso 1: una etiqueta propia en `utm_medium`.
 
-## El plan en tres pasos
+## Lo que muestra Search Console
 
-### Paso 0: requisitos antes de gastar
+Búsqueda orgánica del 24 de junio al 21 de septiembre de 2026, por país del usuario:
 
-1. **Pasar la revisión del 7 de octubre.** La campaña actual está en aprendizaje por los cambios del 23 de septiembre. No conviene moverla antes.
-2. **Guardar la campaña en el dashboard.** Es un cambio pequeño en rentacar-dashboard: una columna para `utm_campaign`. Sin eso, el resultado solo se ve en Google Ads, y ya sabemos que Google no ve casi la mitad de las reservas.
-3. **Confirmar si los asesores atienden en inglés.** Casi la mitad de los clientes con pasaporte reservan con un asesor. Si el anuncio dice «English support» y nadie contesta en inglés, se pierde la venta.
+| País | alquilame.co | alquilatucarro.com | alquicarros.com |
+|---|---|---|---|
+| Colombia | 1.862 clics | 1.546 clics | 365 clics |
+| España | 340 clics | 45 clics | 20 clics |
+| Estados Unidos | 118 clics | 33 clics | 17 clics |
+| Canadá | 45 clics | 12 clics | 2 clics |
 
-### Paso 1: «Viajeros en Colombia», en inglés
+- **España es el país de fuera que más busca, y lo hace en español.** Las búsquedas son del tipo «alquiler de coches en colombia», «alquiler coche colombia» o «alquiler de coches en colombia precios». La palabra «coche» es de España, así que no es un colombiano de viaje. Entre alquilame y alquilatucarro, las búsquedas con «coche» suman 4.229 impresiones desde España en tres meses, frente a 1.532 desde Colombia.
+- **Las búsquedas en inglés vienen sobre todo de dentro de Colombia.** «Rent a car», «car rental» y similares suman 3.073 impresiones desde Colombia en alquilame y 1.811 en alquilatucarro. Desde Estados Unidos son 766 y 326. El extranjero que busca en inglés ya está en el país.
+- **Desde Estados Unidos también se busca en español**, con frases como «renta de carros en bogota colombia» o «rentar carro en colombia». Parece la comunidad colombiana y latina en Estados Unidos.
+- **alquilame gana el tráfico orgánico de España** y alquilatucarro casi no aparece ahí. Si alquilatucarro pauta en España, a veces saldrán los dos: el anuncio de alquilatucarro y el resultado orgánico de alquilame. Eso no choca con la política de Google, que habla de anuncios, no de resultados orgánicos.
 
-Es el paso con más probabilidad de funcionar, porque va a donde está el cliente que ya reserva.
+## Respuestas del dueño (2026-09-24)
 
-| Ajuste | Valor |
-|---|---|
-| Campaña nueva | «Viajeros – inglés», en la misma cuenta de alquilatucarro |
-| Ubicación | Colombia, opción «Presencia», igual que la actual |
-| Idioma | Solo inglés |
-| Cambio en la campaña actual | Pasar el idioma de «Inglés y español» a «Español». Así las dos campañas no se pisan: quien usa Google en inglés ve la nueva, y el resto ve la actual |
-| Presupuesto | Unos 20.000 COP al día. Hoy los términos en inglés gastan unos 14.000 al día dentro de la campaña actual, así que es sobre todo dinero que se mueve de una campaña a otra |
-| Puja | Maximizar conversiones, sin CPA objetivo, igual que la actual |
-| Grupos | Uno por ciudad con más reservas de pasaporte: Bogotá, Cartagena, Medellín, Armenia (Eje Cafetero) y Santa Marta |
-| Palabras clave | Inglés con ciudad, en exacta y frase: «car rental cartagena», «rent a car cartagena airport», «cartagena car hire»… |
-| Anuncios | En inglés. Deben decir que se recoge en el aeropuerto, que se reserva con pasaporte, los días y el seguro. Si el paso 0.3 lo confirma, también «Support in English on WhatsApp» |
-| Landing | La página de la ciudad, que está en español. Es el punto débil de esta fase |
+1. **Los asesores y el WhatsApp no atienden en inglés.**
+2. **La campaña de extranjeros es dinero nuevo.** No sale de la campaña actual.
+3. **La nacionalidad del cliente no se conoce.** Search Console es la mejor pista disponible, y apunta a España.
 
-Por qué primero esto: el extranjero con pasaporte deja 1,65 veces más por reserva, alquila más días y toma más seguro. Hoy ve anuncios en español. Un anuncio en inglés en el momento de buscar debería subir el porcentaje de clics sin salir de Colombia.
+## El plan, reordenado
 
-Riesgo: cambiar el idioma de la campaña actual es tocar algo que funciona. Si al comparar dos semanas antes y después la campaña actual pierde más del 10 % de conversiones, se vuelve a «Inglés y español».
+Las respuestas cambian el orden. Una campaña en inglés prometería un servicio que no existe: el anuncio en inglés lleva a una web en español y a un asesor que no habla inglés. España, en cambio, encaja: busca en español, el sitio está en español y el asesor le puede atender.
 
-### Paso 2: prueba pequeña desde el exterior
-
-Solo si el paso 1 funciona y el dashboard ya guarda la campaña.
+### Paso 1: «Viajeros – España», con dinero nuevo
 
 | Ajuste | Valor |
 |---|---|
-| Campaña nueva | «Viajeros – exterior» |
-| Ubicación | Estados Unidos y España, opción «Presencia». Excluir Colombia |
-| Idioma | Inglés y español |
-| Presupuesto | 30.000 COP al día |
-| Palabras clave | Siempre con ciudad y «colombia»: «car rental cartagena colombia», «alquiler de carros cartagena colombia». Sin «colombia», «Cartagena» atrae búsquedas de la Cartagena de Murcia, «Medellín» las de Medellín en España y «Armenia» las del país |
-| Negativas | «murcia», «españa», «spain», «yerevan», «armenia country» |
-| Anuncios | Los del paso 1, más reserva anticipada y precio fijo en pesos |
+| Campaña nueva | «Viajeros – España», en la cuenta de alquilatucarro |
+| Ubicación | España, opción «Presencia». Excluir Colombia |
+| Idioma | Español |
+| Presupuesto | 30.000 COP al día, aparte del de la campaña actual, unos 900.000 al mes |
+| Puja | Maximizar clics con un tope de CPC durante las 2 primeras semanas, porque la campaña empieza sin conversiones. Después, maximizar conversiones |
+| Campaña actual | No se toca. Sigue en Colombia, en inglés y español |
+| Grupos | Uno general («alquiler coche colombia») y uno por ciudad turística: Cartagena, Bogotá, Medellín, Santa Marta y Eje Cafetero |
+| Palabras clave | Siempre con «colombia» o con una ciudad que no exista en España: «alquiler de coches en colombia», «alquiler coche colombia», «alquiler coches colombia precios», «alquiler de carros en colombia», «alquiler de coches cartagena colombia», «alquiler coche medellin colombia», «alquiler coche bogota». Exacta y frase |
+| Negativas | «murcia», «cartagena murcia», «badajoz», «medellin badajoz», «yerevan», «armenia pais». Sin «colombia», «Cartagena» atrae búsquedas de la Cartagena de Murcia y «Medellín» las del pueblo de Badajoz |
+| Anuncios | En español de España: «coche», «recogida en el aeropuerto», «reserva con pasaporte», «precio en pesos colombianos», «reserva ahora y paga al recoger» si es cierto. Nada en inglés |
+| Landing | La página de la ciudad o la portada |
+| Etiqueta de la campaña | Sufijo de URL de la campaña: `utm_source=google&utm_medium=cpc-exterior` |
 
-España va por delante de Estados Unidos: tiene menos usuarios, pero convierte más del doble, y el sitio en español le sirve.
+**Cómo se mide sin tocar el dashboard.** El dashboard guarda `utm_medium` tal cual en cada reserva. Además marca como Google Ads cualquier reserva que llegue con el identificador de clic de Google (`gclid`), sea cual sea el `utm_medium`. Con el sufijo de arriba, las reservas de esta campaña siguen contando como Google Ads y se pueden filtrar por `utm_medium = 'cpc-exterior'`. Hoy todas las de Google Ads llevan `cpc`. Al crear la campaña hay que confirmar que el sufijo de la campaña manda sobre el de la cuenta.
+
+**Se puede lanzar antes del 7 de octubre.** La campaña actual no se toca, así que no interfiere con su aprendizaje.
+
+### Paso 2: Estados Unidos en español
+
+Solo si España cumple. Tendría los mismos ajustes, con ubicación en Estados Unidos e idioma español. Las palabras clave serían las que usa esa comunidad, como «renta de carros en bogota colombia» o «rentar carro en colombia», con un presupuesto de 20.000 COP al día. En Analytics, el visitante de Estados Unidos convierte peor (1,67 %), así que va después.
+
+### Descartado por ahora: anuncios en inglés
+
+No mientras nadie atienda en inglés. Se vuelve a considerar si llegan a darse las dos cosas: alguien que atienda en inglés y una landing en inglés para Cartagena, Bogotá y Medellín.
 
 ## Cómo se juzga
 
-Cada campaña se evalúa a las 4 semanas contra la campaña actual, con los datos del dashboard y no solo con los de Google.
+A las 4 semanas, con las reservas del dashboard filtradas por `utm_medium = 'cpc-exterior'`:
 
-| Criterio | Paso 1 | Paso 2 |
+En 4 semanas la campaña gasta unos 840.000 COP. El coste por reserva sale de dividir eso entre las reservas:
+
+| Reservas en 4 semanas | Coste por reserva | Decisión |
 |---|---|---|
-| Reservas atribuidas | 8 o más | 5 o más |
-| Coste por reserva en el dashboard | Hasta 25.000 COP | Hasta 35.000 COP |
-| Precio medio de la reserva | 1,5 veces el nacional o más | 1,5 veces el nacional o más |
-| Reservas que se usan | 40 % o más | 40 % o más |
+| 24 o más | Hasta 35.000 COP | Funciona. Se sube el presupuesto y se prepara el paso 2 |
+| De 8 a 23 | De 36.000 a 105.000 COP | Hay señal. Se deja 4 semanas más, se afinan palabras y anuncios, y se vuelve a medir |
+| Menos de 8 | Más de 105.000 COP | Se pausa |
 
-Si no se cumple, se pausa la campaña y el presupuesto vuelve a la actual. Si la campaña se queda muy por debajo, hay que medir las llamadas del asesor antes de cerrarla, porque este cliente usa más al asesor.
+El tope de 35.000 sale de la campaña actual. Hoy cada reserva de Google Ads cuesta unos 18.000 COP y la reserva con pasaporte deja 1,65 veces más, así que pagar hasta el doble por ella tiene sentido.
 
-## El paso que más movería la aguja
+Además, en cualquier caso:
 
-Una landing en inglés para Cartagena, Bogotá y Medellín. Con el sitio solo en español, el paso 2 parte con desventaja: Estados Unidos convierte al 1,67 % y Colombia al 5,74 %. Es un proyecto aparte, en el código del sitio, y conviene decidirlo según lo que muestre el paso 1.
+- El precio medio de estas reservas debe ser al menos 1,5 veces el nacional.
+- Al menos el 40 % de las reservas se debe utilizar, medido cuando pasen las fechas de recogida.
 
-## Preguntas para el dueño
+Quien planea desde España reserva con semanas de antelación, así que muchas recogidas caerán después de las 4 semanas. Las reservas se cuentan por fecha de creación. El porcentaje de utilizadas se revisa un mes después.
 
-1. ¿Los asesores y el WhatsApp atienden en inglés?
-2. ¿El presupuesto del paso 2 es dinero nuevo o sale de la campaña actual?
-3. ¿De qué países cree que vienen sus clientes con pasaporte? El dashboard no guarda la nacionalidad, solo el tipo de documento.
+Si no se cumple, se pausa. Antes de cerrarla hay que mirar también las reservas de asesor con pasaporte en esas fechas, porque este cliente usa mucho al asesor y la llamada puede no llevar la etiqueta.
+
+## Preguntas que quedan
+
+1. ¿Se puede reservar y pagar al recoger? El anuncio lo diría solo si es cierto.
+2. ¿El asesor sabe atender a alguien que llama o escribe desde España? El prefijo, el horario (España va 7 horas por delante de Bogotá en el verano europeo y 6 en invierno) y el WhatsApp internacional.
 
 ## Fuentes
 
@@ -115,4 +130,6 @@ Una landing en inglés para Cartagena, Bogotá y Medellín. Con el sitio solo en
 - Analytics, propiedad «alquilatucarro.com - GA4», informe «Detalles demográficos: País», del 25 de junio al 22 de septiembre de 2026.
 - `docs/seo/data/ads/terminos-busqueda-2026-08-23_2026-09-21.csv`.
 - Ajustes de la campaña: `2026-09-23-estado-cuenta-google-ads.md`.
+- Search Console API, propiedades de dominio alquilame.co, alquilatucarro.com y alquicarros.com, del 2026-06-24 al 2026-09-21, consultada el 2026-09-24.
+- Código del dashboard: `lib/attribution/derive-channel.ts` en rentacar-dashboard, regla 2 (el `gclid` manda).
 - Política de Google Ads «Abuso de la red de publicidad: Ventaja desleal» (support.google.com/adspolicy/answer/15936768), leída el 2026-09-24. Por esta política el plan se queda en una sola marca.
