@@ -80,7 +80,7 @@ Las respuestas cambian el orden. Una campaña en inglés prometería un servicio
 | Grupos | Uno general («alquiler coche colombia») y uno por ciudad turística: Cartagena, Bogotá, Medellín, Santa Marta y Eje Cafetero |
 | Palabras clave | Siempre con «colombia» o con una ciudad que no exista en España: «alquiler de coches en colombia», «alquiler coche colombia», «alquiler coches colombia precios», «alquiler de carros en colombia», «alquiler de coches cartagena colombia», «alquiler coche medellin colombia», «alquiler coche bogota». Exacta y frase |
 | Negativas | «murcia», «cartagena murcia», «badajoz», «medellin badajoz», «yerevan», «armenia pais». Sin «colombia», «Cartagena» atrae búsquedas de la Cartagena de Murcia y «Medellín» las del pueblo de Badajoz |
-| Anuncios | En español de España: «coche», «recogida en el aeropuerto», «reserva con pasaporte», «precio en pesos colombianos», «reserva ahora y paga al recoger» si es cierto. Nada en inglés |
+| Anuncios | En español de España: «coche», «recogida en el aeropuerto», «reserva con pasaporte», «precio en pesos colombianos», «sin pago anticipado: pagas al recoger», «chat 24 horas». Una descripción debe decir que al recoger se necesita tarjeta de crédito y pasaporte, para no atraer a quien busca alquilar sin tarjeta. Nada en inglés |
 | Landing | La página de la ciudad o la portada |
 | Etiqueta de la campaña | Sufijo de URL de la campaña: `utm_source=google&utm_medium=cpc-exterior` |
 
@@ -119,10 +119,28 @@ Quien planea desde España reserva con semanas de antelación, así que muchas r
 
 Si no se cumple, se pausa. Antes de cerrarla hay que mirar también las reservas de asesor con pasaporte en esas fechas, porque este cliente usa mucho al asesor y la llamada puede no llevar la etiqueta.
 
+## Respuestas del dueño, segunda tanda (2026-09-24)
+
+1. **Se reserva sin pagar y se paga al recoger.** Es la única forma: no se puede pagar antes. Para quien reserva desde España es un argumento fuerte, porque no arriesga dinero. Al recoger se paga con tarjeta de crédito, así que el anuncio dice «sin pago anticipado» y nunca «sin tarjeta».
+2. **Atienden el chat nuevo, que funciona las 24 horas, y las asesoras de 7:00 a 19:00, hora de Colombia.**
+
+## Horario frente a España
+
+| Hora en Colombia | España en verano (hasta el 24 de octubre) | España en invierno (desde el 25 de octubre) |
+|---|---|---|
+| 7:00, entran las asesoras | 14:00 | 13:00 |
+| 19:00, salen las asesoras | 2:00 | 1:00 |
+
+La mañana española, de 8:00 a 13:00, cae de madrugada en Colombia. En esas horas solo atiende el chat. Así queda la campaña:
+
+- **Los anuncios salen todo el día.** El chat cubre la mañana española y quien planea un viaje no necesita respuesta inmediata. A las 4 semanas se revisa el rendimiento por hora. Si la mañana española gasta y no reserva, se baja la puja en esas horas.
+- **Sin extensión de llamada en esta campaña.** Llamar a un móvil colombiano desde España cuesta dinero, y de madrugada nadie contesta. El camino es el chat y el WhatsApp, que desde España es gratis.
+- **Los anuncios invitan al chat.** Deben decir «chat 24 horas», y no «llámanos».
+- **Hay que avisar a las asesoras.** Van a recibir mensajes de gente en España que recoge el coche dentro de semanas, no mañana. Conviene que sepan que es la campaña nueva y que ese cliente pide sobre todo seguro total y, si viaja con niños, silla.
+
 ## Preguntas que quedan
 
-1. ¿Se puede reservar y pagar al recoger? El anuncio lo diría solo si es cierto.
-2. ¿El asesor sabe atender a alguien que llama o escribe desde España? El prefijo, el horario (España va 7 horas por delante de Bogotá en el verano europeo y 6 en invierno) y el WhatsApp internacional.
+Ninguna bloquea el lanzamiento. Falta que decidas si se lanza y cuándo. El plan no toca la campaña actual.
 
 ## Fuentes
 
