@@ -130,9 +130,9 @@
           </li>
 <li class="flex">
             <a
-              :href="`tel:${franchise.phone}`"
+              :href="`tel:${callTel}`"
               class="fab-item"
-              :aria-label="`Llamar al ${franchise.phone}`"
+              :aria-label="`Llamar al ${callDisplay}`"
               @click="teaser.engage('llamada')"
             >
               <span class="fab-label">Llámanos</span>
@@ -164,6 +164,7 @@ import { chatPanelLiftPx } from '@rentacar-main/logic/utils/chatPanelLift'
 const ChatConversation = defineAsyncComponent(() => import('./ChatConversation.vue'))
 
 const { franchise } = useAppConfig()
+const { tel: callTel, display: callDisplay } = useCallPhone()
 const route = useRoute()
 const { reservationOverlayOpen } = storeToRefs(useStoreSearchData())
 // Visibilidad del chat = el switch por marca del dashboard manda (auto-import

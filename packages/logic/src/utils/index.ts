@@ -100,6 +100,17 @@ export {
 } from './attribution/attributionStorage';
 
 // ============================================================================
+// Google Ads call forwarding (website call conversions)
+// ============================================================================
+export {
+  buildPhoneConversionConfig,
+  resolveCallPhone,
+  toTelHref,
+  CALL_FORWARDING_STATE_KEY,
+} from './callForwarding';
+export type { CallForwardingNumber, PhoneConversionConfig } from './callForwarding';
+
+// ============================================================================
 // Server Helpers
 // ============================================================================
 export { extractStructuredError } from './helpers/extractStructuredError';
