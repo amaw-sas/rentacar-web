@@ -363,7 +363,7 @@ const isInventoryEmpty = computed(
 );
 const config = useRuntimeConfig();
 const whatsappContacts: Record<string, { phone: string; display: string }> = {
-  alquilatucarro: { phone: "3016729250", display: "301 672 9250" },
+  alquilatucarro: { phone: "3104345165", display: "310 434 5165" },
   alquilame: { phone: "3002436677", display: "300 243 6677" },
   alquicarros: { phone: "3187703670", display: "318 770 3670" },
 };
