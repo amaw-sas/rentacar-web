@@ -62,10 +62,12 @@ describe('SCEN-001/002/003: call links follow the call phone', () => {
 })
 
 describe('SCEN-004: WhatsApp is never touched', () => {
-  it('/gana WhatsApp link keeps showing the real number', () => {
+  it('/gana WhatsApp link shows the WhatsApp line, never the call phone', () => {
     const wa = (gana.match(/<a\b[\s\S]*?<\/a>/g) ?? []).find((a) => /franchise\.whatsapp/.test(a))
     expect(wa).toBeDefined()
-    expect(wa).toMatch(/\{\{\s*franchise\.phone\s*\}\}/)
+    expect(wa).toMatch(/\{\{\s*whatsappDisplay\s*\}\}/)
+    expect(gana).toMatch(/const whatsappDisplay = String\(franchise\.whatsapp/)
+    expect(gana).not.toMatch(/useCallPhone/)
   })
 })
 

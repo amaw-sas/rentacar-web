@@ -15,7 +15,7 @@ const TUE_10H = '2026-07-21T15:00:00Z' // Tue 10:00 Bogota — WhatsApp open
 
 const franchise = {
   shortname: 'alquilatucarro',
-  whatsapp: 'https://wa.me/573016729250',
+  whatsapp: 'https://wa.me/573104345165',
   phone: '+57 301 672 9250',
 }
 
@@ -103,10 +103,10 @@ describe('ChatWidget call button follows Google’s forwarding number', () => {
     expect(callLink()?.getAttribute('aria-label')).toBe('Llamar al +57 601 555 0100')
   })
 
-  it('SCEN-004: WhatsApp keeps the real number for an ad visitor', async () => {
+  it('SCEN-004: WhatsApp keeps its own line for an ad visitor', async () => {
     await mountWidget()
     state.get(CALL_FORWARDING_STATE_KEY)!.value = { display: '+57 601 555 0100', tel: '+576015550100' }
     await nextTick()
-    expect(waLink()?.getAttribute('href')).toContain('wa.me/573016729250')
+    expect(waLink()?.getAttribute('href')).toContain('wa.me/573104345165')
   })
 })
