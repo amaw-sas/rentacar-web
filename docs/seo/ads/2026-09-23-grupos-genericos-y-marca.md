@@ -133,6 +133,23 @@ Periodo: **23 sep – 6 oct (14 días)**. La línea base es de 30 días, así qu
 
 Para la extracción: la tabla de Google Ads es virtual. Solo pinta unas 12 filas a la vez y hay que recorrerla con scroll. La flecha suelta junto a las fechas cambia el rango a «hoy». Para paginar, usar la flecha que está dentro del paginador de la tabla.
 
+
+## Cambio del 2026-09-24: textos destacados y extractos de la campaña principal
+
+Con el visto bueno del dueño. Según su experiencia, estos recursos no afectan el rendimiento. Se corrigieron en «Búsqueda» con vocabulario colombiano.
+
+- **7 textos destacados reemplazados:**
+  - «Ahorra Seperando hoy» → «Ahorra reservando antes»
+  - «Planees diario y mensual» → «Alquiler diario y mensual»
+  - «Cotiza y Reserva Rapido» → «Cotiza y reserva rápido»
+  - «Carros Excelente Estado» → «Carros en perfecto estado»
+  - «Usalo en Todo Colombia» → «Úsalo en toda Colombia»
+  - «Camionetas 7 Puestos» → «Camionetas de 7 puestos»
+  - «Kilometraje Sin Limite» → «Kilometraje sin límite». Se mantiene la promesa, que ya estaba. Falta confirmar que es cierta.
+- **Quedan igual:** Precios sin sorpresas · Paga en Sede Sin Anticipo · Entrega en el aeropuerto · Flota nueva y variada · Soporte todos los días · Atención personalizada.
+- **Extracto «Tipos».** Decía «Compacto Economico, Sedán Mecanico… Camioneta 4x4», pero la web hoy solo lista automáticos. Ahora dice «Compacto automático, Sedán automático, Sedán híbrido, Camioneta automática, Camioneta híbrida, Camioneta 7 puestos».
+- **Los textos nuevos empiezan sin historial.** Los viejos tenían CTR y conversiones desde el 16 de junio. En la revisión del 7 de octubre, mira los recursos por separado de los grupos.
+
 ## Pendientes que no son parte de este cambio
 
 - Los anuncios de Barranquilla y Cartagena dicen «60% Dtos en **Alquier** de Carros». Llevan unos 2.400 clics con esa falta.
