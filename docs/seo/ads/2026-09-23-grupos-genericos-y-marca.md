@@ -115,6 +115,8 @@ La regla documentada de Google es que una palabra exacta idéntica a la búsqued
 
 ## Cómo revisar el 7 de octubre
 
+**Fase de aprendizaje.** El 23 de septiembre por la noche, Google mostraba la campaña «Apta (en fase de aprendizaje)», con 5 días restantes. La causa son los cambios de ese día: los grupos nuevos, AI Max apagado y Cali y Pereira activas. El aprendizaje debería terminar hacia el 28 o 29 de septiembre. En la revisión, compara sobre todo del 29 de septiembre al 6 de octubre: los días anteriores están distorsionados por el aprendizaje. Hasta que termine no se cambian presupuesto, puja, grupos ni palabras clave, porque cada cambio lo reinicia.
+
 Periodo: **23 sep – 6 oct (14 días)**. La línea base es de 30 días, así que se compara por día o se multiplica la base por 14/30.
 
 | Qué mirar | Dónde | Funcionó si |
