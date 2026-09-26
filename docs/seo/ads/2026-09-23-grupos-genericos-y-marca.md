@@ -150,6 +150,32 @@ Con el visto bueno del dueño. Según su experiencia, estos recursos no afectan 
 - **Extracto «Tipos».** Decía «Compacto Economico, Sedán Mecanico… Camioneta 4x4», pero la web hoy solo lista automáticos. Ahora dice «Compacto automático, Sedán automático, Sedán híbrido, Camioneta automática, Camioneta híbrida, Camioneta 7 puestos».
 - **Los textos nuevos empiezan sin historial.** Los viejos tenían CTR y conversiones desde el 16 de junio. En la revisión del 7 de octubre, mira los recursos por separado de los grupos.
 
+
+## Lectura temprana: términos del 23 al 26 de septiembre
+
+Se leyó el informe de términos de búsqueda de «Búsqueda». En el periodo hubo 962 términos, 1.118 clics y 942.041 COP. Se extrajeron los 300 términos con más clics, que suman 1.002 clics, el 90 %. El resto tiene 1 clic o ninguno. La campaña estaba en fase de aprendizaje, así que las conversiones de estos días no sirven todavía para juzgar.
+
+| Grupo | Términos | Clics | Coste | Conversiones |
+|---|---|---|---|---|
+| genericos | 22 | 59 | 59.559 COP | 1,19 |
+| Marca | 7 | 29 | 27.543 COP | 0,18 |
+| 16 grupos de ciudad | 271 | 914 | 746.013 COP | 39,25 |
+
+**«genericos» está limpio.** Los 22 términos son genéricos y ninguno lleva ciudad. Los principales son «alquiler de carros» (14 clics), «rent a car» (8), «rentacar» (6) y «renta car» (5). Todos entran por sus exactas o por variantes cercanas, como «renta carro», «carros en alquiler» o «donde puedo alquilar un carro». No hace falta ninguna negativa. Su coste por conversión, unos 50.000 COP, es alto frente a los ~19.000 de la campaña, pero lleva 4 días y en aprendizaje. Se juzga el 7 de octubre.
+
+**«Marca» tiene una fuga.** La exacta [alquila tu carro bogota] atrae, como variante cercana, búsquedas genéricas de Bogotá sin marca: «renta de carros bogota», «rentar carro bogota» y «rentar carros bogota». Suman 6 clics y 7.092 COP. Esas búsquedas ven el anuncio de marca «Sitio Oficial» en lugar del de Bogotá, y además compiten con el grupo Bogotá, donde «renta de carros bogota» tuvo 14 clics. Por su propio texto, esa exacta solo trajo 2 clics.
+
+**La marca ya no se cuela en los grupos de ciudad.** Ninguna búsqueda con «alquilatucarro» o «alquila tu carro» cayó fuera de «Marca». Las negativas exactas funcionan.
+
+**Los grupos de ciudad siguen recibiendo algunos genéricos por la amplia.** Son 24 términos, 33 clics (el 3,6 % de sus clics), 22.112 COP y 3 conversiones. Por ejemplo, «alquiler de carros colombia», «carros en alquiler» o «alquiler vehiculos» entran por la amplia de Bogotá. Las exactas de «genericos» no los bloquean, porque son variantes más largas. Por ahora el volumen es pequeño. También aparecen marcas de la competencia en la amplia de Barranquilla, como «quilla rent a car» y «quillami rent car» (6 clics, 0 conversiones).
+
+**Propuesta. El dueño decide y se hace de una vez, después del aprendizaje (hacia el 29 de septiembre):**
+
+1. **Pausar la exacta [alquila tu carro bogota] en «Marca».** Así se cierra la fuga, y las búsquedas genéricas de Bogotá vuelven a su grupo. Si prefieres conservarla, la alternativa es poner [renta de carros bogota], [rentar carro bogota] y [rentar carros bogota] como negativas exactas en «Marca».
+2. **Opcional: negativas de competidores en Barranquilla,** «quilla» y «quillami».
+3. **No hace falta ningún cambio en «genericos».** Se evalúa el 7 de octubre con los criterios de este informe.
+4. **Los genéricos que entran por la amplia de ciudad se miran el 7 de octubre.** Si crecen, se decide si pasan a frase en «genericos».
+
 ## Pendientes que no son parte de este cambio
 
 - Los anuncios de Barranquilla y Cartagena dicen «60% Dtos en **Alquier** de Carros». Llevan unos 2.400 clics con esa falta.
