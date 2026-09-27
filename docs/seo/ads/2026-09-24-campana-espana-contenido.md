@@ -369,3 +369,47 @@ El dueño asoció a «Viajeros – España» los 13 textos destacados y los 2 ex
 **Cómo quitar un recurso de una sola campaña.** En Recursos › Asociaciones, con la campaña seleccionada arriba, se marcan las filas y se pulsa «Quitar». El aviso dice que se quitarán «de las cuentas, las campañas…», pero solo quita la asociación de esa campaña. Se probó primero con un recurso y la principal lo conservó. Límite: 20 textos destacados por campaña.
 
 **Mensaje y llamada:** no se añaden. Llamar o escribir por SMS desde España cuesta dinero al cliente, y la mañana española cae de madrugada en Colombia. El canal es el chat de 24 horas y WhatsApp.
+
+## 8. Propuesta del dueño del 2026-09-27: amplias y listas de negativas
+
+El dueño pausó en «GA-españa» las exactas que no tenían ninguna impresión. Casi todo entra por la frase «alquiler de coches en colombia»: 24 de 26 clics, 26.593 COP y 0 conversiones del 24 al 26 de septiembre. Propone lo siguiente:
+
+1. **Pasar a amplia y aplicar sus listas de negativas.**
+2. **No crear grupos de ciudad,** porque hay poco volumen.
+3. **Bloquear marcas como en la campaña principal.**
+4. **Probar la competencia en una campaña aparte.**
+
+**Datos para decidir:**
+
+- **La frase ya actúa por significado.** De 43 términos, entraron «rentar auto bucaramanga», «renta carros tunja», «alquiler de carros en cali colombia» (4 clics) y «europcar colombia». Todos son de Colombia, y ninguno es de alquiler dentro de España.
+- **«Carros» contra «coches» desde España,** en orgánico, sumando las tres marcas, del 26 de junio al 24 de septiembre:
+
+  | Búsquedas con | Impresiones | Clics |
+  |---|---|---|
+  | coche(s) | 4.551 | 26 |
+  | carro(s) | 3.040 | 81 |
+
+  «Carro» se usa menos, pero se clica tres veces más. Apunta a colombianos que viven en España. La amplia cubre las dos palabras.
+- **Listas de negativas de la cuenta:** COMPETIDORES (142), ZONAS SIN SEDE (74), OTROS VEHICULOS (40), VENTA, USADOS, LEASING (21), NO COMERCIAL (17), SERVICIOS CON CHOFER (14), OTROS SERVICIOS (11), EMPLEO (9) y COMPRA (8). Hoy las 9 solo están aplicadas a «Búsqueda». «Viajeros – España» no tiene ninguna.
+- **Competidores nuevos que no están en COMPETIDORES,** en los términos del 23 de agosto al 26 de septiembre:
+
+  | Término | Clics | Coste |
+  |---|---|---|
+  | rencar | 8 | 5.971 COP |
+  | rentadora olam | 4 | 2.488 COP |
+  | andes auto rental | 2 | 4.154 COP |
+  | rentacarmedellin | 3 | 3.374 COP |
+  | carlujos | 3 | 1.505 COP |
+  | quillami, quilla rent a car | 5 | ~3.000 COP |
+  | renty car | 2 | 662 COP |
+  | renticar | 2 | 1.110 COP |
+  | carbian | 1 | 1.267 COP |
+  | automoviles club | 1 | 580 COP |
+
+  Ninguno convirtió. Además hay variantes que la lista no bloquea porque se escriben distinto:
+  - «trans alquilan». La lista tiene «transalquilan».
+  - «rentacar expres». La lista tiene «rentacar express».
+  - «deytour». La lista tiene «rentacardeytour».
+  - «gama car». La lista tiene «gama rent» y «gamma car».
+
+**Riesgo de la amplia en España:** que «alquiler de coches en colombia» en amplia pierda «Colombia» y entre en el alquiler dentro de España («alquiler coche málaga», «alquiler de coches aeropuerto madrid»). Es muchísimo volumen. La mitigación es añadir negativas de ciudades y aeropuertos españoles y revisar los términos cada 2 o 3 días durante la primera semana.
