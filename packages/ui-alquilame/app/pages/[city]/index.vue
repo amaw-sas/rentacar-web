@@ -4,20 +4,20 @@
 
 <script lang="ts" setup>
 import { useAlquilameCityPageSEO } from '~/composables/useAlquilameCityPageSEO'
+import { cityLookupError } from '@rentacar-main/logic/utils'
 
 definePageMeta({ middleware: ['rentacar-data'] })
 
 const { city } = useAlquilameCityPageSEO()
+const { cities } = useData()
 
-// Lanzar error 404 si la ciudad no existe. `fatal: true` es necesario para que
-// la página de error (error.vue) también se muestre en navegación client-side
-// (p. ej. al llegar desde un NuxtLink). Sin fatal, en cliente el error no
-// reemplaza la pantalla y queda la página anterior / el layout vacío.
-if (!city) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: 'Ciudad no encontrada',
-    fatal: true,
-  })
+// `fatal: true` es necesario para que la página de error (error.vue) también
+// se muestre en navegación client-side. 404 SOLO con catálogo poblado: con el
+// catálogo vacío el mismo lookup fallido es un fallo de datos y responder
+// «Página no encontrada» para una URL válida fue el 404 fantasma de producción
+// (SCEN-005, docs/specs/2026-09-30-hydration-stale-catalog-race).
+const lookupError = cityLookupError(Boolean(city), cities.value.length)
+if (lookupError) {
+  throw createError(lookupError)
 }
 </script>

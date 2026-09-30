@@ -6,6 +6,7 @@
       <button
         id="select-branch-mobile"
         type="button"
+        data-select-branch-prehydrate
         aria-label="Selecciona ciudad de recogida"
         :class="[
           'select-branch-critical relative flex items-center w-full rounded-xl text-black py-6 pl-10 pr-12 border border-gray-400 text-left',
@@ -66,12 +67,14 @@
     </div>
     <!-- Desktop: USelectMenu con búsqueda -->
     <USelectMenu
+      v-model:open="menuOpen"
       :search-input="{
         placeholder: 'Buscar...',
       }"
       size="xl"
       placeholder="Elige una ciudad"
       aria-label="Selecciona ciudad de recogida"
+      data-select-branch-prehydrate
       :items
       :class="[
         'select-branch-critical hidden sm:flex w-full rounded-xl text-black border border-gray-400',
@@ -143,6 +146,7 @@ const selectedBranch = ref<BranchData['code'] | null>(null)
 /** mobile drawer state (directiva 2026-06-23): full-screen slideover with a
  * non-autofocusing search, mirroring the searcher select drawers. */
 const drawerOpen = ref<boolean>(false)
+const menuOpen = ref<boolean>(false)
 const query = ref<string>('')
 
 const filteredBranches = computed<BranchData[]>(() => {
@@ -164,13 +168,44 @@ const handlePageShow = (event: PageTransitionEvent) => {
   if (event.persisted) {
     selectedBranch.value = null
     drawerOpen.value = false
+    menuOpen.value = false
     query.value = ''
+  }
+}
+
+/**
+ * SCEN-006: consume el clic pre-hidratación que capturó el script inline del
+ * head (app.vue). Antes de esto, el control SSR se veía interactivo pero
+ * tragaba los clics en silencio hasta terminar la hidratación (~6 s medidos
+ * en producción). Consume la PRIMERA instancia montada — válido hoy porque la
+ * única SelectBranch clicable pre-hidratación es la del hero (las de los
+ * modales no montan cerradas); si algún día conviven dos siempre-renderizadas,
+ * hay que comprobar visibilidad del trigger. El flag y el estado de carga se
+ * retiran siempre.
+ */
+type PrehydrateWindow = Window & { __sbHydrated?: boolean; __sbPendingOpen?: boolean }
+
+const consumePrehydrationClick = () => {
+  const win = window as PrehydrateWindow
+  const firstConsumer = win.__sbHydrated !== true
+  win.__sbHydrated = true
+  const pending = win.__sbPendingOpen === true
+  win.__sbPendingOpen = false
+  document.documentElement.classList.remove('sb-prehydrate-wait')
+  if (!pending || !firstConsumer) return
+  // El mismo breakpoint `sm` que separa los dos controles en el template
+  // decide cuál diálogo abre el clic capturado.
+  if (window.matchMedia('(min-width: 640px)').matches) {
+    menuOpen.value = true
+  } else {
+    drawerOpen.value = true
   }
 }
 
 onMounted(() => {
   if (import.meta.client) {
     window.addEventListener('pageshow', handlePageShow)
+    consumePrehydrationClick()
   }
 })
 

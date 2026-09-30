@@ -182,9 +182,9 @@ describe('useRentacarData', () => {
   })
 
   it('the hourly refresh drops a floor the server no longer publishes', async () => {
-    // clearCatalog + copyCatalog together. Without the clear, an open tab pinned
-    // its original number for the life of the tab and the 7-day staleness guard
-    // could never reach the title.
+    // copyCatalog applies absent/null on every successful refresh, so an open
+    // tab never pins its original number for the life of the tab and the 7-day
+    // staleness guard verdict keeps reaching the title.
     vi.useFakeTimers()
     const now = new Date('2026-08-28T20:00:00Z')
     vi.setSystemTime(now)
@@ -211,6 +211,144 @@ describe('useRentacarData', () => {
 
     expect('dayPriceFloorGross' in expired.value).toBe(true)
     expect(expired.value.dayPriceFloorGross).toBeNull()
+  })
+
+  /**
+   * SCEN-001/002/003 (docs/specs/2026-09-30-hydration-stale-catalog-race):
+   * clearing the shared catalog before refetching raced the initial hydration
+   * in production — phantom client 404s on city pages and hydration node
+   * mismatches. The refresh must keep serving the previous snapshot until the
+   * fresh one arrives, and must never mutate the catalog while Vue is still
+   * hydrating the server HTML.
+   */
+  describe('stale refresh never empties the catalog mid-flight', () => {
+    const stubFreshnessEnv = (nuxtAppOverrides: Record<string, unknown> = {}) => {
+      const hooks = new Map<string, () => unknown>()
+      const nuxtApp = {
+        isHydrating: false,
+        hook: vi.fn((name: string, callback: () => unknown) => hooks.set(name, callback)),
+        // La API real: el Hookable vive en nuxtApp.hooks (no hay shortcut hookOnce).
+        hooks: {
+          hookOnce: vi.fn((name: string, callback: () => unknown) => hooks.set(name, callback)),
+        },
+        ...nuxtAppOverrides,
+      }
+      vi.stubGlobal('useNuxtApp', () => nuxtApp)
+      vi.stubGlobal('useRouter', () => ({ currentRoute: ref({ meta: { middleware: ['rentacar-data'] } }) }))
+      vi.stubGlobal('window', { addEventListener: vi.fn(), removeEventListener: vi.fn() })
+      vi.stubGlobal('document', { visibilityState: 'visible', addEventListener: vi.fn(), removeEventListener: vi.fn() })
+      return { nuxtApp, hooks }
+    }
+
+    it('SCEN-001: keeps the stale cities and loaded=true while the fresh fetch is in flight', async () => {
+      vi.useFakeTimers()
+      const now = new Date('2026-09-30T04:00:00Z')
+      vi.setSystemTime(now)
+      stubFreshnessEnv()
+
+      const expired = ref({
+        ...catalogPayload,
+        catalogFetchedAt: now.getTime() - CATALOG_MAX_AGE_MS,
+      })
+      const loaded = ref(true)
+      const observedDuringFetch: { cities?: unknown[]; loaded?: boolean } = {}
+      vi.stubGlobal('$fetch', vi.fn(async () => {
+        observedDuringFetch.cities = [...expired.value.cities]
+        observedDuringFetch.loaded = loaded.value
+        return { ...catalogPayload, categories: [{ id: 'FRESH' }], catalogFetchedAt: now.getTime() }
+      }))
+
+      const controller = installRouteCatalogFreshness(expired, loaded)
+      await controller?.check()
+
+      // The window a hydrating page reads from: it must still see Bogotá.
+      expect(observedDuringFetch.cities).toEqual([{ id: 'bogota', name: 'Bogotá', description: '' }])
+      expect(observedDuringFetch.loaded).toBe(true)
+      // And the fresh snapshot lands once resolved.
+      expect(expired.value.categories).toEqual([{ id: 'FRESH' }])
+      expect(loaded.value).toBe(true)
+    })
+
+    it('SCEN-002: a failed refresh keeps the previous snapshot and schedules a retry', async () => {
+      vi.useFakeTimers()
+      const now = new Date('2026-09-30T04:00:00Z')
+      vi.setSystemTime(now)
+      stubFreshnessEnv()
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const expired = ref({
+        ...catalogPayload,
+        catalogFetchedAt: now.getTime() - CATALOG_MAX_AGE_MS,
+      })
+      const loaded = ref(true)
+      vi.stubGlobal('$fetch', vi.fn(async () => { throw new Error('network down') }))
+
+      const controller = installRouteCatalogFreshness(expired, loaded)
+      await controller?.check()
+
+      expect(expired.value.cities).toEqual([{ id: 'bogota', name: 'Bogotá', description: '' }])
+      expect(expired.value.branches).toEqual([{ code: 'BOG-01' }])
+      expect(loaded.value).toBe(true)
+      expect(vi.getTimerCount()).toBeGreaterThan(0)
+      expect(consoleSpy).toHaveBeenCalled()
+    })
+
+    it('SCEN-003: defers any refresh until hydration finishes', async () => {
+      vi.useFakeTimers()
+      const now = new Date('2026-09-30T04:00:00Z')
+      vi.setSystemTime(now)
+      const { nuxtApp, hooks } = stubFreshnessEnv({ isHydrating: true })
+
+      const expired = ref({
+        ...catalogPayload,
+        catalogFetchedAt: now.getTime() - CATALOG_MAX_AGE_MS,
+      })
+      const fetchSpy = vi.fn(async () => ({ ...catalogPayload, catalogFetchedAt: now.getTime() }))
+      vi.stubGlobal('$fetch', fetchSpy)
+
+      const controller = installRouteCatalogFreshness(expired, ref(true))
+      await controller?.check()
+
+      // While hydrating: no fetch, no mutation.
+      expect(fetchSpy).not.toHaveBeenCalled()
+      expect(expired.value.cities).toEqual([{ id: 'bogota', name: 'Bogotá', description: '' }])
+
+      // Hydration ends → the deferred check runs the refresh exactly once.
+      nuxtApp.isHydrating = false
+      await hooks.get('app:suspense:resolve')?.()
+      // Flush the refresh promise chain without advancing the clock — the
+      // 1-hour expiry timer re-checking later is expected behavior.
+      await vi.advanceTimersByTimeAsync(0)
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('blocks a cold client navigation on the in-flight lazy fetch', async () => {
+    // Footer link from a route without the rentacar-data middleware (blog,
+    // /opinion): the lazy asyncData used to resolve before the fetch landed,
+    // so the city page setup read an empty catalog and threw a fatal error
+    // for a valid URL. The middleware must now wait for the data.
+    let resolveFetch: (value: unknown) => void = () => {}
+    const data = ref<unknown>(null)
+    const execute = vi.fn(() => new Promise((resolve) => {
+      resolveFetch = (value) => { data.value = value; resolve(undefined) }
+    }))
+    vi.stubGlobal('useAsyncData', vi.fn(async () => ({ data, error: ref(null), execute })))
+
+    let settled = false
+    const pending = useRentacarData().then(() => { settled = true })
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(execute).toHaveBeenCalledWith({ dedupe: 'defer' })
+    expect(settled).toBe(false)
+
+    resolveFetch({ ...catalogPayload, catalogFetchedAt: Date.now() })
+    await pending
+
+    expect(settled).toBe(true)
+    expect(states.get('rentacar-data-loaded')?.value).toBe(true)
+    expect((states.get('rentacar-data')?.value as { cities: unknown[] }).cities).toEqual(catalogPayload.cities)
   })
 
   it('does not schedule another request after the route catalog is loaded', async () => {
