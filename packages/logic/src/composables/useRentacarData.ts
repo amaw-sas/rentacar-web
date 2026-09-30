@@ -38,23 +38,6 @@ function copyCatalog(target: ReservasApiData, source: ReservasApiData): void {
   target.extras = source.extras
 }
 
-function clearCatalog(target: ReservasApiData): void {
-  delete target.catalogFetchedAt
-  // Without this an open tab pinned its original floor for the life of the tab:
-  // the hourly refresh clears and re-copies, so a server that has since started
-  // answering `null` (cron missed, table unreachable) never reached the title.
-  // The 7-day guard in priceFloors.ts is only worth having if its verdict can
-  // actually arrive.
-  delete target.dayPriceFloorGross
-  target.categories.splice(0)
-  target.branches.splice(0)
-  target.cities.splice(0)
-  target.faqs.splice(0)
-  for (const key of Object.keys(target.vehicleCategories)) delete target.vehicleCategories[key]
-  for (const key of Object.keys(target.franchiseTestimonials)) delete target.franchiseTestimonials[key]
-  target.extras = undefined
-}
-
 interface CatalogFreshnessController {
   check: () => Promise<void>
 }
@@ -110,8 +93,13 @@ export function installRouteCatalogFreshness(
     }
     if (refreshPromise) return refreshPromise
 
-    clearCatalog(catalog.value)
-    loaded.value = false
+    // Keep serving the previous snapshot while the fresh one is in flight.
+    // Clearing first raced the initial hydration in production: a page born
+    // from a ≥1h ISR snapshot saw the emptied catalog, its city lookup threw a
+    // phantom 404 and hydrated v-ifs collapsed into comment nodes (hydration
+    // mismatch). A server that now answers `null` for dayPriceFloorGross still
+    // reaches the title: copyCatalog applies absent/null on every successful
+    // refresh, so the 7-day guard verdict in priceFloors.ts keeps arriving.
     refreshPromise = $fetch<ReservasApiData>('/api/rentacar-data')
       .then((fresh) => {
         if (!hasFreshCatalog(fresh)) {
@@ -123,6 +111,7 @@ export function installRouteCatalogFreshness(
       })
       .catch((error) => {
         console.error('[rentacar-data] stale refresh failed:', error)
+        if (retryTimer) clearTimeout(retryTimer)
         retryTimer = setTimeout(() => { void fetchFresh() }, CATALOG_REFRESH_CHECK_MS)
       })
       .finally(() => {
@@ -132,12 +121,30 @@ export function installRouteCatalogFreshness(
     return refreshPromise
   }
 
+  let hydrationDeferred = false
+
   const check = (): Promise<void> => {
     if (!routeUsesCatalog(router)) {
       clearTimers()
       return Promise.resolve()
     }
     if (!loaded.value) return Promise.resolve()
+    // Never mutate the catalog while Vue is still adopting the server HTML:
+    // app:mounted fires before the page's Suspense finishes hydrating, and a
+    // mid-hydration swap is what flipped hydrated v-ifs into comments. Defer
+    // the whole check to app:suspense:resolve (isHydrating is already false
+    // when that hook runs — nuxt/dist/app/nuxt.js deferHydration).
+    if (nuxtApp.isHydrating) {
+      if (!hydrationDeferred) {
+        hydrationDeferred = true
+        // `nuxtApp.hooks` is the Hookable; there is no `nuxtApp.hookOnce` shortcut.
+        nuxtApp.hooks.hookOnce('app:suspense:resolve', () => {
+          hydrationDeferred = false
+          void check()
+        })
+      }
+      return Promise.resolve()
+    }
     if (!hasFreshCatalog(catalog.value)) return fetchFresh()
     scheduleAtExpiry()
     return Promise.resolve()
@@ -147,17 +154,18 @@ export function installRouteCatalogFreshness(
   const onVisibilityChange = () => {
     if (document.visibilityState === 'visible') void check()
   }
-  const cleanup = () => {
-    clearTimers()
-    window.removeEventListener('focus', onFocus)
-    document.removeEventListener('visibilitychange', onVisibilityChange)
-  }
 
   nuxtApp.hook('app:mounted', () => { void check() })
   nuxtApp.hook('page:finish', () => { void check() })
   window.addEventListener('focus', onFocus)
   document.addEventListener('visibilitychange', onVisibilityChange)
-  window.addEventListener('pagehide', cleanup, { once: true })
+  // pagehide/pageshow instead of a once-cleanup: a bfcache restore used to
+  // come back with every listener removed, so the restored tab served a
+  // catalog that aged without limit. On a real unload the page dies anyway.
+  window.addEventListener('pagehide', () => { clearTimers() })
+  window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+    if (event.persisted) void check()
+  })
 
   nuxtApp._routeCatalogFreshness = { check }
   return nuxtApp._routeCatalogFreshness
@@ -235,6 +243,17 @@ export async function useRentacarData() {
   watch(asyncData.error, fail)
 
   freshness = installRouteCatalogFreshness(catalog, loaded)
+
+  // Cold client-side navigation (e.g. footer link from a route that never ran
+  // this middleware — blog, /opinion): `lazy: true` resolves this composable
+  // before the fetch lands, so the city page's setup used to read an empty
+  // catalog and throw a fatal error for a valid URL. Block the navigation on
+  // the in-flight request instead; warm navigations (loaded) stay instant.
+  if (!import.meta.server && !loaded.value && !asyncData.error.value) {
+    await asyncData.execute({ dedupe: 'defer' }).catch(() => {
+      // The error watcher above already surfaced it via showError.
+    })
+  }
 
   if (asyncData.error.value) {
     throw new Error('[rentacar-data] Failed to load reservation data', {
