@@ -39,7 +39,16 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   // #10 SCEN-004.
   const { categories: categoriesAdminData } = storeToRefs(storeAdminData);
   const storeForm = useStoreReservationForm();
-  const { haveMonthlyReservation, selectedPickupLocation, fechaRecogida } = storeToRefs(storeForm);
+  const {
+    haveMonthlyReservation,
+    selectedPickupLocation,
+    fechaRecogida,
+    lugarRecogida,
+    lugarDevolucion,
+    fechaDevolucion,
+    horaRecogida,
+    horaDevolucion,
+  } = storeToRefs(storeForm);
   const { createErrorMessage } = useMessages();
   const categoriesAvailabilityData = ref<CategoryAvailabilityData[] | null>(
     null
@@ -56,6 +65,10 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   // viewport while the customer completes the reservation.
   const reservationOverlayOpen = ref<boolean>(false);
   const noAvailableCategories = ref<boolean>(false);
+  // True once the search params changed after the last search: the current
+  // (nulled) availability says nothing about the new params, so the UI must
+  // prompt a new search instead of claiming "no cars" for a date nobody queried.
+  const searchOutdated = ref<boolean>(false);
 
   // Whether a category is offered for monthly rental is derived from its
   // pricing (issue #28, Ola A), not a hardcoded code list: a category offers
@@ -76,13 +89,44 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   // Issue 322 SCEN-322-E06: discard out-of-order availability responses so a
   // slow first search cannot overwrite a newer one or clear `pending` early.
   let searchGeneration = 0;
+  // Snapshot of the params the last search() was fired with. Same fields the
+  // availability request is built from (place/date/hour of pickup and return).
+  const paramsKey = (): string =>
+    [
+      lugarRecogida.value,
+      lugarDevolucion.value,
+      fechaRecogida.value,
+      fechaDevolucion.value,
+      horaRecogida.value,
+      horaDevolucion.value,
+    ].join('|');
+  let lastSearchedKey: string | null = null;
   let checkoutTrackedForCategory: string | null = null;
+
+  // Called by the debounced param watcher in useSearch. Returns true when the
+  // displayed results no longer match the form. A no-op (returns the current
+  // flag) when the params equal those of the last search: hydration writes and
+  // the debounce firing after a fast result must not invent "Cambiaste los datos".
+  // Change-then-revert stays outdated because the data was already nulled.
+  const invalidateIfParamsChanged = (): boolean => {
+    if (lastSearchedKey !== null && paramsKey() === lastSearchedKey) {
+      return searchOutdated.value;
+    }
+    categoriesAvailabilityData.value = null;
+    searchOutdated.value = true;
+    return true;
+  };
 
   const search = async () => {
     const gen = ++searchGeneration;
     error.value = null;
     pending.value = true;
     categoriesAvailabilityData.value = null;
+    // Fresh search = nothing outdated yet. Kept (not redundant): the no-op branch
+    // of invalidateIfParamsChanged returns this flag, so it must not carry a
+    // stale `true` from the previous search into an in-flight one.
+    searchOutdated.value = false;
+    lastSearchedKey = paramsKey();
     // Nueva búsqueda = nueva reserva potencial: desbloquear submit consumido (E03).
     storeForm.formSubmitLocked = false;
     // Issue #366 D4/D7: el código va con el lock, no un tick después. Si sobrevive,
@@ -181,6 +225,10 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     // Re-check before clearing pending: a concurrent search may have started
     // during toast/UI work above.
     if (gen !== searchGeneration) return;
+    // Recomputed (not cleared) before `pending` drops: if the params changed
+    // while the request was in flight, these results belong to the OLD params
+    // and the notice must stay; otherwise the results are current.
+    searchOutdated.value = paramsKey() !== lastSearchedKey;
     pending.value = false;
 
     if (isBlockingSearchError(errorResponse.value)) {
@@ -338,6 +386,8 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     selectedCategory,
     reservationOverlayOpen,
     noAvailableCategories,
+    searchOutdated,
+    invalidateIfParamsChanged,
     trackVehicleSelection,
     trackCheckoutStarted,
   };

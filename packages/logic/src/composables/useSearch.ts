@@ -102,7 +102,7 @@ function useSearchInstance() {
     selectedReturnLocation,
   } = storeToRefs(storeForm);
 
-  const { error: errorSearchResponse, categoriesAvailabilityData } = storeToRefs(storeSearchData);
+  const { error: errorSearchResponse, categoriesAvailabilityData, searchOutdated } = storeToRefs(storeSearchData);
   
   const firstSearch = ref<boolean>(true);
   const stopWatching = ref<boolean>(false);
@@ -110,7 +110,7 @@ function useSearchInstance() {
   // noAvailableCategories.value = false;
   
   // functions
-  const { search } = storeSearchData;
+  const { search, invalidateIfParamsChanged } = storeSearchData;
   const { createMessage, flushMessages } = useMessages();
   const { searchBranchByCity, searchBranchByCode } = storeAdminData;
   
@@ -298,8 +298,10 @@ function useSearchInstance() {
   watchDebounced(
     [lugarRecogida, lugarDevolucion, fechaRecogida, fechaDevolucion, horaRecogida, horaDevolucion],
     () => {
-      categoriesAvailabilityData.value = null;
-      animateSearchButton.value = true;
+      // Nulls data + flags the search outdated only when the params really
+      // differ from the last search (see the store). `error` is left alone:
+      // alquicarros reads it from the shared store.
+      if (invalidateIfParamsChanged()) animateSearchButton.value = true;
     },
     { debounce: 50 }
   );
@@ -311,7 +313,8 @@ function useSearchInstance() {
   // #129 re-dispara doSearch). Un resultado real o inventario vacío
   // (no_available_categories_error) sí lo deshabilita (dedup). Dogfood #1.
   watch(categoriesAvailabilityData, (newValue) => {
-    if (newValue !== null && !isBlockingSearchError(errorSearchResponse.value)) {
+    // Never while the search is outdated: the notice asks the user to click Buscar.
+    if (newValue !== null && !searchOutdated.value && !isBlockingSearchError(errorSearchResponse.value)) {
       animateSearchButton.value = false;
     }
   });
