@@ -1,6 +1,6 @@
 # Chat web: contexto del visitante (fase 1)
 
-Fecha: 2026-10-01 · Estado: aprobado por el dueño en conversación · Repos: `rentacar-web` (widget) y `rentacar-dashboard` (API `/api/chat` y bandeja)
+Fecha: 2026-10-01 · Estado: aprobado por el dueño (2026-10-01) · Repos: `rentacar-web` (widget) y `rentacar-dashboard` (API `/api/chat` y bandeja)
 
 ## Para qué
 
@@ -67,7 +67,7 @@ Ningún dato de contexto puede tumbar el chat ni impedir que se guarde el hilo. 
 
 ### 6. Privacidad
 
-Se guarda ciudad aproximada, tipo de aparato y rutas del sitio; no IP, ni user-agent crudo, ni texto sin enviar. El consentimiento existente (migración 087, tras `CHAT_HABEAS_DATA`) cubre solo el dato explícito antes de reservar, no lo que se toma al abrir el chat. **Decisión del dueño, pendiente**: añadir o no una línea al aviso del chat. `visitor` y `page_path` viven en las filas de la conversación y del mensaje, así que borrar una conversación los borra con ella.
+Se guarda ciudad aproximada, tipo de aparato y rutas del sitio; no IP, ni user-agent crudo, ni texto sin enviar. El consentimiento existente (migración 087, tras `CHAT_HABEAS_DATA`) cubre solo el dato explícito antes de reservar, no lo que se toma al abrir el chat. **Decisión del dueño (2026-10-01): no se añade línea al aviso del chat.** `visitor` y `page_path` viven en las filas de la conversación y del mensaje, así que borrar una conversación los borra con ella.
 
 ### 7. Despliegue
 
