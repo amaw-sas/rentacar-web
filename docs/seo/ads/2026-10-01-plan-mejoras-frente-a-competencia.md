@@ -88,3 +88,44 @@ Todos los títulos tienen 30 caracteres o menos y todas las descripciones 90 o m
 **Límites:**
 - «Aeropuerto Bogotá 24 horas» y la descripción del aeropuerto solo van en el grupo Bogotá.
 - Los $12.000 de los extras valen para alquileres de hasta 3 días. Desde el cuarto día, Budget y Green Motion salen más baratos en extras, porque cobran una tarifa por todo el alquiler. Este argumento se usa como dato, no como «más barato».
+
+## Comparación de precios con Localiza e intermediarios (otra sesión, 2026-10-01)
+
+La búsqueda: Bogotá Aeropuerto, del 3 al 5 de octubre, 2 días, Picanto mecánico. Los precios incluyen IVA.
+
+| Quién | Precio de lista | Con conductor y silla | Con protección total | Bloqueo en la tarjeta | Cómo se paga |
+|---|---|---|---|---|---|
+| Nosotros | $460.000 | $508.000, se piden al reservar | $607.483, deducible en cero | Ninguno | En pesos, al recoger |
+| Localiza.com, pagando en la agencia | $460.000 | $508.000, los extras solo se piden en la agencia | $607.484, deducible en cero | Pide una preautorización y no dice de cuánto | En pesos, al recoger |
+| Localiza.com, pagando en línea | ≈$421.600, 10 % de descuento | No los vende en línea | ≈$521.100 sin extras | Igual | En pesos, por adelantado |
+| Localiza en Booking | $473.560, y $487.100 al abrir la oferta | Conductor $12.000 al día en el mostrador; la silla no la menciona | Reembolso de un seguro aparte | $600.000 | En dólares, por adelantado |
+| Budget en Booking | $323.640 | $477.900 | Reembolso de un seguro aparte | $12.000.000 | En dólares, la mayor parte por adelantado |
+| Kayak y Skyscanner (lo más barato) | $290.000 – $346.000 | Casi ninguno ofrece silla | Reembolso de un seguro aparte | $1 millón – $12 millones | En dólares, la mayoría por adelantado |
+
+**Qué cambia en los mensajes:**
+
+- **Frente a Localiza directo cobramos lo mismo, peso por peso.** Los dos ofrecen pagar al recoger en pesos y un seguro con deducible cero. Lo único que nos distingue es esto:
+  1. **No bloqueamos cupo.** Localiza pide una preautorización. Es el único argumento que nadie más ofrece, así que va primero en todos los anuncios.
+  2. **La silla y el conductor se piden al reservar.** En Localiza.com solo se piden en la agencia.
+- **Frente a los intermediarios (Booking, Kayak, Skyscanner)** perdemos en el precio de lista: entre $114.000 y $170.000 más caros en el Picanto. Ganamos en todo lo demás: no bloqueamos cupo, se paga en pesos al recoger, el deducible es cero sin reembolsos, y ofrecemos silla.
+- **Localiza da un 10 % de descuento si se paga en línea.** No lo igualamos. Ningún anuncio puede presentar el precio como ventaja.
+- **El Seguro Total cuesta unos $73.700 al día en el Picanto**, con IVA: $607.483 − $460.000 = $147.483 en 2 días. Esto confirma que el precio de $38.000 de la primera sesión no vale. El precio del seguro no va en los anuncios.
+
+**Ideas nuevas** (títulos de 30 caracteres o menos, descripciones de 90 o menos):
+
+- Silla y conductor al reservar
+- Pide la silla desde la web
+- Conductor extra desde la web
+- Sin preautorización en tarjeta
+- Sin depósito en tu tarjeta
+- Deducible $0, sin reembolsos
+- Lo pides todo al reservar
+- Pide silla y conductor en línea, sin esperar al mostrador. Y no te bloqueamos cupo.
+- En el mostrador no te piden depósito: pagas el alquiler en pesos y te llevas el carro.
+
+**Orden de prioridad en cada anuncio:**
+1. No bloqueamos cupo.
+2. Pagas al recoger, en pesos.
+3. Deducible $0 con Seguro Total, sin reembolsos.
+4. Silla y conductor desde la reserva.
+5. Ciudad y aeropuerto.
