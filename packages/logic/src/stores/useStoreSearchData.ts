@@ -108,13 +108,32 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
   // flag) when the params equal those of the last search: hydration writes and
   // the debounce firing after a fast result must not invent "Cambiaste los datos".
   // Change-then-revert stays outdated because the data was already nulled.
+  // With no search ever run it still returns true (re-arm BUSCAR) but leaves
+  // the flag alone.
   const invalidateIfParamsChanged = (): boolean => {
     if (lastSearchedKey !== null && paramsKey() === lastSearchedKey) {
       return searchOutdated.value;
     }
     categoriesAvailabilityData.value = null;
+    // Before any real search there is nothing to be "outdated" against (e.g. a
+    // deep link whose doSearch bailed on a guard): keep BUSCAR armed but do not
+    // claim "Cambiaste los datos" — that copy is only honest after a search ran.
+    if (lastSearchedKey === null) return true;
     searchOutdated.value = true;
     return true;
+  };
+
+  // The form was adjusted by the app itself (hour-clamp watchers) right after a
+  // search went out, not by the user: take the current params as the ones that
+  // were searched so that adjustment never reads as "Cambiaste los datos". No-op
+  // before any real search; data is left alone. If the search already settled
+  // (a very fast response can land before the app's own adjustment is accepted)
+  // its end-of-search flag was computed against the old snapshot: recompute it.
+  // While pending, search() recomputes it itself when it resolves.
+  const acceptCurrentParamsAsSearched = (): void => {
+    if (lastSearchedKey === null) return;
+    lastSearchedKey = paramsKey();
+    if (!pending.value) searchOutdated.value = false;
   };
 
   const search = async () => {
@@ -388,6 +407,7 @@ const useStoreSearchData = defineStore("storeSearchData", () => {
     noAvailableCategories,
     searchOutdated,
     invalidateIfParamsChanged,
+    acceptCurrentParamsAsSearched,
     trackVehicleSelection,
     trackCheckoutStarted,
   };

@@ -115,13 +115,14 @@ describe('useStoreSearchData searchOutdated flag', () => {
     expect(store.categoriesAvailabilityData).toEqual([])
   })
 
-  it('invalidate before any search nulls data and flags outdated', async () => {
+  it('invalidate before any real search nulls data and returns true but does NOT flag outdated', async () => {
     const { default: useStoreSearchData } = await import('../useStoreSearchData')
     await setParams('2026-10-20')
     const store = useStoreSearchData()
     store.categoriesAvailabilityData = []
     expect(store.invalidateIfParamsChanged()).toBe(true)
-    expect(store.searchOutdated).toBe(true)
+    // Deliberate: "Cambiaste los datos" is only honest after a search ran.
+    expect(store.searchOutdated).toBe(false)
     expect(store.categoriesAvailabilityData).toBeNull()
   })
 
@@ -143,6 +144,53 @@ describe('useStoreSearchData searchOutdated flag', () => {
     expect(store.searchOutdated).toBe(true)
     resolveSecond({ data: ref([]), error: ref(null) })
     await second
+    expect(store.searchOutdated).toBe(false)
+  })
+
+  it('acceptCurrentParamsAsSearched is a no-op before any real search', async () => {
+    const { default: useStoreSearchData } = await import('../useStoreSearchData')
+    const form = await setParams('2026-10-20')
+    const store = useStoreSearchData()
+    store.acceptCurrentParamsAsSearched()
+    form.fechaRecogida = '2026-10-21'
+    // Still no baseline: invalidation keeps its "no search yet" rule.
+    expect(store.invalidateIfParamsChanged()).toBe(true)
+    expect(store.searchOutdated).toBe(false)
+  })
+
+  it('acceptCurrentParamsAsSearched rebases the snapshot after a search, leaving data and flag alone', async () => {
+    const { default: useStoreSearchData } = await import('../useStoreSearchData')
+    const form = await setParams('2026-10-20')
+    const store = useStoreSearchData()
+    FETCH_AVAILABILITY.mockResolvedValue({ data: ref([]), error: ref(null) })
+    await store.search()
+
+    form.fechaRecogida = '2026-10-21' // app-side adjustment after the search
+    store.acceptCurrentParamsAsSearched()
+    expect(store.categoriesAvailabilityData).toEqual([])
+    expect(store.searchOutdated).toBe(false)
+    // The adjusted params are now the searched ones: a debounce firing is a no-op.
+    expect(store.invalidateIfParamsChanged()).toBe(false)
+    expect(store.categoriesAvailabilityData).toEqual([])
+    // A later real change is still detected.
+    form.fechaRecogida = '2026-10-22'
+    expect(store.invalidateIfParamsChanged()).toBe(true)
+    expect(store.searchOutdated).toBe(true)
+  })
+
+  it('acceptCurrentParamsAsSearched recomputes the flag of a search that already settled with a divergent snapshot', async () => {
+    const { default: useStoreSearchData } = await import('../useStoreSearchData')
+    const form = await setParams('2026-10-20')
+    const store = useStoreSearchData()
+    let resolveFetch!: (v: unknown) => void
+    FETCH_AVAILABILITY.mockReturnValue(new Promise((r) => { resolveFetch = r }))
+    const inFlight = store.search()
+    form.fechaRecogida = '2026-10-21' // app-side adjustment while in flight
+    resolveFetch({ data: ref([]), error: ref(null) })
+    await inFlight
+    expect(store.searchOutdated).toBe(true) // settled against the old snapshot
+
+    store.acceptCurrentParamsAsSearched()
     expect(store.searchOutdated).toBe(false)
   })
 })

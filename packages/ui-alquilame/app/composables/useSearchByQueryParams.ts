@@ -12,7 +12,7 @@
 //
 // SSR-safety: all store access happens inside onMounted, exactly like the shared
 // route-param driver, to avoid Pinia-before-app SSR errors.
-import { onMounted, watch } from 'vue';
+import { nextTick, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import {
   parseTime12hOr24h,
@@ -45,6 +45,7 @@ export default function useSearchByQueryParams() {
     // stores (client-only — SSR-safe, mirrors useSearchByRouteParams)
     const storeForm = useStoreReservationForm();
     const storeAdminData = useStoreAdminData();
+    const storeSearch = useStoreSearchData();
     const { doSearch } = useSearch();
     const { createMessage } = useMessages();
 
@@ -119,6 +120,18 @@ export default function useSearchByQueryParams() {
       // date, inverted range) the user already has a message explaining why there
       // is no quote — adding the branch one would give two competing notices.
       const searchDispatched = doSearch();
+
+      // The pre-flush hour-clamp watchers of useSearch() adjust the form right
+      // after doSearch (they were registered before these writes, so they only
+      // run on the next flush). That adjustment is the app's, not the user's, so
+      // it must not mark the results outdated: re-baseline the store's params
+      // snapshot once the flush is done. The request itself still goes out with
+      // the link's hours, exactly as before the outdated-search notice existed.
+      // Callback form on purpose: this function stays synchronous, so errors keep
+      // flowing through the same channel as before.
+      if (searchDispatched) {
+        nextTick(() => storeSearch.acceptCurrentParamsAsSearched());
+      }
 
       if (returnBranch.corrected && !searchDispatched) {
         // The search bailed, so the notice stays silent — which means the
