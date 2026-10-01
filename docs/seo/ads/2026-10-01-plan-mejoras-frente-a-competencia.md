@@ -47,3 +47,44 @@ Vienen de otra sesión, con datos del 30 de septiembre. Antes de ponerlos en un 
 
 1. **El cupo.** Al entregar el carro, ¿se retiene o se cobra algo en la tarjeta? ¿Solo el valor del alquiler, o hay además un depósito de garantía?
 2. **El Seguro Total.** ¿Cuánto cuesta hoy al día en la gama C, con IVA? ¿El deducible queda en $0?
+
+## Respuestas del dueño y verificación (2026-10-01)
+
+- **El cupo.** El dueño confirma que en la sede solo se cobra el valor del alquiler y que no se bloquea ningún valor en la tarjeta. «No bloqueamos cupo» y «Sin depósito de garantía» quedan confirmados. La FAQ de la web («cupo disponible suficiente para cubrir el valor del alquiler») se refiere al cobro del alquiler, no a un bloqueo.
+- **El deducible.** En el paso de cobertura del asistente de reserva, el Seguro Total dice «Cubre el 100% del vehículo, daño o robo» y «Sin participación obligatoria». Deducible $0 confirmado.
+- **Ojo: con el Seguro Básico el deducible NO es bajo.** Es $3.570.000 en carros y $4.200.000 en camionetas (tabla `rental_companies` del dashboard). Ningún anuncio puede decir «nuestros deducibles son bajos». Hay que decir «con Seguro Total, deducible $0».
+- **El precio del Seguro Total.** La web pública no lo muestra: el recargo diario sale de la tarifa de cada mes y cambió el 1 de octubre. Las reservas de agosto y septiembre dan una mediana de $29.000 al día en carros y $49.000 en camionetas. Mientras no se mire en el asistente, los anuncios no llevan precio del seguro.
+- **Lo que confirma la página de Bogotá:** el precio incluye seguro básico, impuestos y kilometraje ilimitado («Sin cargos ocultos ni sorpresas»), y el aeropuerto de Bogotá abre las 24 horas.
+
+## Ideas de mensajes «otros… / nosotros…»
+
+Todos los títulos tienen 30 caracteres o menos y todas las descripciones 90 o menos. Ninguno nombra a la competencia: se dice «otros» o «otras rentadoras».
+
+**Títulos**
+
+| Tema | Títulos |
+|---|---|
+| Tarjeta | No bloqueamos cupo · Tu tarjeta sin bloqueos · Cero bloqueo en tu tarjeta · Otros bloquean, aquí no · Sin congelar tu cupo |
+| Pago | Pagas al recoger el carro · Nada que pagar por adelantado · Reserva gratis, paga después · Pagas en pesos, no en dólares · Precio en pesos, sin sorpresa |
+| Seguro | Seguro Total: deducible $0 · Deducible $0 con Seguro Total · Sin reembolsos ni reclamos |
+| Precio claro | Kilometraje ilimitado · IVA y seguro básico incluidos · Precio final, sin cargos extra |
+| Extras | Conductor extra $12.000/día · Silla de bebé $12.000 por día |
+| Cobertura y servicio | Aeropuerto Bogotá 24 horas · 19 ciudades de Colombia · Recoge en el aeropuerto · Chat 24 horas · Alquila desde los 18 años · Hasta 60 % reservando antes |
+
+**Descripciones**
+
+- Otras rentadoras bloquean millones en tu tarjeta. Nosotros no: pagas solo el alquiler.
+- Otros cobran antes y en dólares. Aquí reservas gratis y pagas al recoger, en pesos.
+- Otros cobran el daño y lo reembolsan después. Con Seguro Total tu deducible es $0.
+- Con Seguro Total tu deducible es $0: sin reembolsos ni reclamos después.
+- Reserva sin pagar nada. Pagas en la sede, en pesos, y no te bloqueamos cupo en la tarjeta.
+- Tu cupo queda libre para el viaje: no congelamos dinero al entregarte el carro.
+- Sin depósito de garantía: en la sede pagas el alquiler y te llevas el carro.
+- El precio que ves ya trae IVA, seguro básico y kilometraje ilimitado. Sin cargos ocultos.
+- Agrega conductor adicional o silla de bebé por $12.000 al día cada uno.
+- Recoge en el aeropuerto de Bogotá, abierto 24 horas. 19 ciudades y más de 30 agencias.
+- Reserva con antelación y ahorra hasta un 60 %. Sin pagar nada hasta el día de recogida.
+
+**Límites:**
+- «Aeropuerto Bogotá 24 horas» y la descripción del aeropuerto solo van en el grupo Bogotá.
+- Los $12.000 de los extras valen para alquileres de hasta 3 días. Desde el cuarto día, Budget y Green Motion salen más baratos en extras, porque cobran una tarifa por todo el alquiler. Este argumento se usa como dato, no como «más barato».
