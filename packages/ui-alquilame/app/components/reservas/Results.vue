@@ -96,6 +96,7 @@ useSearchByRouteParams()
 const pendingSearch = ref(false)
 const filteredCategories = ref<unknown[]>([])
 const searchError = ref<unknown>(null)
+const searchOutdated = ref(false)
 
 onMounted(() => {
   const storeSearch = useStoreSearchData()
@@ -103,10 +104,13 @@ onMounted(() => {
   watch(() => refs.pending.value, (val) => (pendingSearch.value = val), { immediate: true })
   watch(() => refs.filteredCategories.value, (val) => (filteredCategories.value = val), { immediate: true })
   watch(() => refs.error.value, (val) => (searchError.value = val), { immediate: true })
+  watch(() => refs.searchOutdated.value, (val) => (searchOutdated.value = val), { immediate: true })
 })
 
+// searchOutdated keeps the block mounted after the params change (data is nulled)
+// so CategorySelectionSection can show the "Actualiza tu búsqueda" notice.
 const resultsActive = computed(
-  () => pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value,
+  () => pendingSearch.value || filteredCategories.value.length > 0 || !!searchError.value || searchOutdated.value,
 )
 
 const Searcher = defineAsyncComponent(() => import('../Searcher.vue'))

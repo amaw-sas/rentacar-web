@@ -454,7 +454,9 @@ const onSearchClick = (e: MouseEvent) => {
   // let NuxtLink's harmless same-URL no-op run instead of swallowing the tap.
   const target = router.resolve({ name: searchLinkName.value, params: searchLinkParams.value });
   const current = router.resolve(route.fullPath);
-  if (target.href === current.href && doSearchFn.value) {
+  // Compare PATHS: route.fullPath keeps ?utm_/gclid (validateSearchParams), which
+  // the target never carries, so href equality would miss a same-search click.
+  if (target.path === current.path && doSearchFn.value) {
     e.preventDefault();
     doSearchFn.value();
   }
