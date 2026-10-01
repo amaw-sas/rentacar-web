@@ -30,12 +30,22 @@ const NO_AVAILABILITY_BODY = {
   shortText: 'LLNRAG009',
 };
 
+// Same helper as clic-foto-abre-reserva.spec.ts: dates relative to today so the
+// spec never goes stale.
+const futureDate = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+const PICKUP_DATE = futureDate(20);
+const RETURN_DATE = futureDate(23);
+
 const BOGOTA_URL =
   '/bogota/buscar-vehiculos' +
   '/lugar-recogida/bogota-aeropuerto' +
   '/lugar-devolucion/bogota-aeropuerto' +
-  '/fecha-recogida/2026-10-20' +
-  '/fecha-devolucion/2026-10-23' +
+  `/fecha-recogida/${PICKUP_DATE}` +
+  `/fecha-devolucion/${RETURN_DATE}` +
   '/hora-recogida/08:00am' +
   '/hora-devolucion/08:00am';
 
@@ -203,7 +213,7 @@ test.describe('Outdated search notice', () => {
 
     await changePickupDate(page);
     await expect(page.locator(NOTICE)).toBeVisible();
-    await revertPickupDate(page, '2026-10-20');
+    await revertPickupDate(page, PICKUP_DATE);
     // Give the 50ms debounce room to (wrongly) clear it.
     await page.waitForTimeout(500);
     await expect(page.locator(NOTICE)).toBeVisible();

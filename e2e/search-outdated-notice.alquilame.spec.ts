@@ -9,16 +9,27 @@ import { test, expect, type Route, type Page } from '@playwright/test';
  *   SCEN-1: results loaded → change pickup date → notice, no Oops, no results
  *   SCEN-2: click BUSCAR → notice gone, results visible
  *   SCEN-4: after LLNRAG009, change date → notice, no Oops
+ *   SCEN-8: cold /reservas?query load, same-day off-grid hour → results, no notice
  */
 
 const NOTICE = '[data-testid="search-outdated-notice"]';
 const CITY_RESTRICTED = new Set(['CX', 'GY']);
 
+// Same helper as clic-foto-abre-reserva.spec.ts: dates relative to today so the
+// spec never goes stale.
+const futureDate = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+const PICKUP_DATE = futureDate(20);
+const RETURN_DATE = futureDate(23);
+
 const URL_ =
   '/reservas/lugar-recogida/bogota-aeropuerto' +
   '/lugar-devolucion/bogota-aeropuerto' +
-  '/fecha-recogida/2026-10-20' +
-  '/fecha-devolucion/2026-10-23' +
+  `/fecha-recogida/${PICKUP_DATE}` +
+  `/fecha-devolucion/${RETURN_DATE}` +
   '/hora-recogida/08:00am' +
   '/hora-devolucion/08:00am';
 
@@ -80,7 +91,7 @@ const available = (page: Page) => page.getByText('¡Vehículos Disponibles!');
 const buscar = (page: Page) => page.getByRole('link', { name: /BUSCAR VEH/i }).first();
 
 test.describe('alquilame outdated search notice', () => {
-  test.use({ viewport: { width: 1280, height: 900 } });
+  test.use({ viewport: { width: 1280, height: 900 }, timezoneId: 'America/Bogota' });
 
   let code: string;
 
@@ -128,5 +139,43 @@ test.describe('alquilame outdated search notice', () => {
     await expect(page.locator(NOTICE)).toBeVisible();
     await expect(oops(page)).toHaveCount(0);
     await expect(page.locator('.categoria-no-disponible')).toHaveCount(0);
+  });
+
+  test('SCEN-8: cold /reservas?query load with a same-day off-grid hour shows results, not the notice', async ({ page }) => {
+    // The app runs on America/Bogota: the browser timezone is pinned above and
+    // the link's dates/hour are computed for that zone, whatever the runner's is.
+    const bogota = (d: Date) => {
+      const p = Object.fromEntries(
+        new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/Bogota',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hourCycle: 'h23',
+        })
+          .formatToParts(d)
+          .map((x) => [x.type, x.value]),
+      );
+      return { date: `${p.year}-${p.month}-${p.day}`, hour: `${p.hour}:${p.minute}` };
+    };
+    const now = new Date();
+    const here = bogota(now);
+    test.skip(Number(here.hour.slice(0, 2)) >= 22, 'too close to midnight for a same-day pickup');
+    // Pickup = today, now + 30 min (not a bookable slot, so useSearch clamps it).
+    const pickup = bogota(new Date(now.getTime() + 30 * 60_000));
+    const returnDay = bogota(new Date(now.getTime() + 2 * 86_400_000)).date;
+
+    await page.route('**/api/reservations/availability', successStub(code));
+    await page.goto(
+      `/reservas?lugar_recogida=bogota-aeropuerto&fecha_recogida=${here.date}&fecha_devolucion=${returnDay}` +
+        `&hora_recogida=${pickup.hour}&hora_devolucion=${pickup.hour}`,
+    );
+
+    await expect(available(page)).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(500); // past the 50 ms debounced watcher
+    await expect(page.locator(NOTICE)).toHaveCount(0);
+    await expect(available(page)).toBeVisible();
   });
 });
