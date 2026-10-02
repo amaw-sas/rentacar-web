@@ -21,6 +21,7 @@
  */
 import { computed, ref, watch } from 'vue';
 import {
+  buildChatContext,
   readStoredAttribution,
   trackAnalyticsEvent,
   trackGenerateLead,
@@ -651,6 +652,10 @@ export function createChatConversation(cfg: ChatConversationConfig) {
           // reservation keeps its true "Origen" (TikTok/Meta/Google/…) instead of
           // "Desconocido". Same source as a normal web reservation; {} = "Directo".
           attribution: readStoredAttribution() ?? {},
+          // Where the visitor is and how they got here (current page, entry page, last
+          // pages browsed) for the advisor inbox. Never throws: {page:'',entry:null,trail:[]}
+          // on any failure, so blocked storage can't stop the chat.
+          context: buildChatContext(),
         }),
         signal: controller.signal,
       });
