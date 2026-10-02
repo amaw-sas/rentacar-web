@@ -1,5 +1,17 @@
 <template>
-  <div v-if="isServerError && !showLoadingResults" class="text-center">
+  <!-- Params changed since the last search: the (nulled) data says nothing about
+       the new date/branch, so ask for a new search instead of showing "Oops" or
+       a stale error banner. Loading placeholders keep priority (awaitingSearch
+       is false while pending). -->
+  <div v-if="awaitingSearch" class="text-center" data-testid="search-outdated-notice">
+    <div class="text-white text-center">
+      <div class="text-3xl">Actualiza tu búsqueda</div>
+      <p class="text-lg mt-2">
+        Cambiaste los datos. Dale clic a «Buscar vehículos» para ver los carros y precios disponibles.
+      </p>
+    </div>
+  </div>
+  <div v-else-if="isServerError && !showLoadingResults" class="text-center">
     <div class="text-white text-center">
       <div class="text-3xl">Servicio temporalmente no disponible</div>
       <p class="text-lg mt-2">
@@ -35,7 +47,7 @@
     <!-- Issue #313 — nivel flujo: TODAS las gamas caen más allá del horizonte de
          tarifas (caso 2027). Fail-closed: no se cotiza, se ofrece contacto. -->
     <div
-      v-if="allBeyondHorizon"
+      v-if="allBeyondHorizon && !awaitingSearch"
       class="text-center mb-6"
       data-testid="pricing-horizon-unavailable-test"
     >
@@ -63,7 +75,7 @@
        push the entire incoming grid down by 52 + 32 = 84px. Inline geometry is
        intentional: it must exist on first paint, before Tailwind is fetched. -->
   <div
-    v-if="showLoadingResults || hasRenderableAvailable"
+    v-if="showLoadingResults || (hasRenderableAvailable && !awaitingSearch)"
     class="text-white text-center"
     style="min-height: 52px"
     :aria-hidden="showLoadingResults || undefined"
@@ -287,6 +299,7 @@ const {
   reservationOverlayOpen,
   filteredCategories,
   error: searchError,
+  searchOutdated,
 } = storeToRefs(storeSearch);
 const {
   vehiculo,
@@ -318,6 +331,9 @@ watch(
 const showLoadingResults = computed(() =>
   pendingSearch.value || !initialSearchSettled.value
 );
+// Search params changed after the last search and nothing is loading: results
+// and error banners describe the OLD params, so hide them (see the notice).
+const awaitingSearch = computed(() => searchOutdated.value && !showLoadingResults.value);
 
 /**
  * Fuente única de los flags del payload (useRecordReservationForm), espejo del
@@ -387,7 +403,9 @@ const safePlaceholderCount = computed(() =>
 const resultSlots = computed(() =>
   showLoadingResults.value
     ? Array.from({ length: safePlaceholderCount.value }, () => null)
-    : renderableCategories.value,
+    : awaitingSearch.value
+      ? []
+      : renderableCategories.value,
 );
 const hasRenderableAvailable = computed(() =>
   renderableCategories.value.some((c: { estimatedTotalAmount: number }) => c.estimatedTotalAmount !== 999999999),

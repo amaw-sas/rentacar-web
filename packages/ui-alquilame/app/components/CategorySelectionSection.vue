@@ -3,7 +3,19 @@
        sobre el degradado oscuro del layout: el texto es oscuro y el acento es
        brand-600, no blanco/amarillo. Si el fondo vuelve a ser oscuro hay que
        revertir estos colores. -->
-  <div v-if="isServerError && !pendingSearch" class="text-center">
+  <!-- Params changed since the last search: the (nulled) data says nothing about
+       the new date/branch, so ask for a new search instead of showing "Oops" or
+       a stale error banner. Loading keeps priority (awaitingSearch is false
+       while pending). -->
+  <div v-if="awaitingSearch" class="text-center" data-testid="search-outdated-notice">
+    <div class="text-gray-900 text-center">
+      <div class="font-heading text-3xl">Actualiza tu búsqueda</div>
+      <p class="text-lg mt-2">
+        Cambiaste los datos. Dale clic a «Buscar vehículos» para ver los carros y precios disponibles.
+      </p>
+    </div>
+  </div>
+  <div v-else-if="isServerError && !pendingSearch" class="text-center">
     <div class="text-gray-900 text-center">
       <div class="font-heading text-3xl">Servicio temporalmente no disponible</div>
       <p class="text-lg mt-2">
@@ -39,7 +51,7 @@
     <!-- Issue #313 — nivel flujo: TODAS las gamas caen más allá del horizonte de
          tarifas (caso 2027). Fail-closed: no se cotiza, se ofrece contacto. -->
     <div
-      v-if="allBeyondHorizon"
+      v-if="allBeyondHorizon && !awaitingSearch"
       class="text-center mb-6"
       data-testid="pricing-horizon-unavailable-test"
     >
@@ -61,7 +73,7 @@
         </p>
       </div>
     </div>
-    <div v-if="hasRenderableAvailable" class="text-gray-900 text-center mb-6">
+    <div v-if="hasRenderableAvailable && !awaitingSearch" class="text-gray-900 text-center mb-6">
       <span class="inline-block h-1 w-10 rounded-full bg-brand-600 mb-3" aria-hidden="true"></span>
       <div class="font-heading text-lg md:text-2xl font-extrabold">¡Vehículos Disponibles!</div>
       <div class="text-sm md:text-base mt-1 text-gray-700">
@@ -69,7 +81,7 @@
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div v-if="!awaitingSearch" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       <!-- Iterate renderableCategories so iteration === render and the
            availability banner (hasRenderableAvailable) can't disagree with the
            grid. A category missing from vehicleCategories has no card to show
@@ -244,6 +256,7 @@ const {
   reservationOverlayOpen,
   filteredCategories,
   error: searchError,
+  searchOutdated,
 } = storeToRefs(storeSearch);
 const {
   vehiculo,
@@ -292,6 +305,9 @@ watch(pendingSearch, (isPending, wasPending) => {
   }
 });
 
+// Search params changed after the last search and nothing is loading: results
+// and error banners describe the OLD params, so hide them (see the notice).
+const awaitingSearch = computed(() => searchOutdated.value && !pendingSearch.value);
 const isServerError = computed(() => searchError.value?.error === 'server_error');
 // Inline "¡Oops! Nos quedamos sin carritos" is reserved for genuine empty
 // inventory (LLNRAG009) or no error at all. Other Localiza errors surface

@@ -95,6 +95,7 @@ function stubEnvironment(opts: Options) {
   vi.stubGlobal('useStoreSearchData', () => ({
     hasAvailableCategories: ref(Boolean(opts.reusable)),
     selectedCategory: ref(opts.reusable ? { categoryCode: 'C' } : null),
+    acceptCurrentParamsAsSearched: vi.fn(),
   }))
   vi.stubGlobal('useSearch', () => ({ doSearch }))
   vi.stubGlobal('useMessages', () => ({ createMessage }))

@@ -45,10 +45,14 @@ const BUSCAR_VEHICULOS_FLOW_SPECS = [
   '**/reservation-phone-revalidation.spec.ts',
   '**/reservation-privacy-consent.spec.ts',
   '**/reservation-submit-back-unlocks-searcher.spec.ts',
+  '**/search-outdated-notice.spec.ts',
   '**/time-format-12h.spec.ts',
   '**/tooltip-price-close-delay.spec.ts',
   '**/unable-cards-on-empty-inventory.spec.ts',
 ];
+
+// Specs that only make sense on alquilame (its /reservas PATH results flow).
+const ALQUILAME_ONLY_SPECS = ['**/*.alquilame.spec.ts'];
 
 /**
  * Configuración de Playwright para pruebas E2E
@@ -56,7 +60,10 @@ const BUSCAR_VEHICULOS_FLOW_SPECS = [
  */
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: ['alquicarros', 'alquilame'].includes(brand) ? BUSCAR_VEHICULOS_FLOW_SPECS : [],
+  testIgnore: [
+    ...(['alquicarros', 'alquilame'].includes(brand) ? BUSCAR_VEHICULOS_FLOW_SPECS : []),
+    ...(brand === 'alquilame' ? [] : ALQUILAME_ONLY_SPECS),
+  ],
 
   // Tiempo máximo de ejecución de una prueba (aumentado para Nuxt)
   timeout: 60 * 1000,

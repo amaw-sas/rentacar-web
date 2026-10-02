@@ -85,6 +85,7 @@ function stubEnvironment(opts: Options) {
       branches.find((b) => b.slug === value) ??
       branches.find((b) => b.code === value.toUpperCase()),
   }))
+  vi.stubGlobal('useStoreSearchData', () => ({ acceptCurrentParamsAsSearched: vi.fn() }))
   vi.stubGlobal('useSearch', () => ({ doSearch }))
   vi.stubGlobal('useMessages', () => ({ createMessage }))
 }

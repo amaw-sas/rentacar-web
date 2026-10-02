@@ -70,3 +70,40 @@ describe('CategorySelectionSection — explicit heading utilities', () => {
     expect(source).not.toMatch(/\bheading-(section|card)\b/)
   })
 })
+
+describe('CategorySelectionSection — outdated-search notice', () => {
+  // Assert on template / script fragments with HTML comments stripped, so a
+  // comment mentioning the same words cannot satisfy a guard.
+  const scriptStart = source.indexOf('<script setup')
+  const template = source.slice(0, scriptStart).replace(/<!--[\s\S]*?-->/g, '')
+  const script = source.slice(scriptStart)
+  const roots = template.slice(template.indexOf('<template>') + '<template>'.length).trimStart()
+
+  it('the notice is the FIRST branch of the v-if chain that holds the Oops block', () => {
+    expect(roots).toMatch(/^<div v-if="awaitingSearch"[^>]*data-testid="search-outdated-notice"/)
+    const oopsAt = roots.indexOf('Nos quedamos sin carritos')
+    const chainHead = roots.slice(0, oopsAt)
+    // exactly one v-if opens the chain; every later branch up to Oops is v-else-if
+    expect(chainHead.match(/<div v-if=/g)?.length).toBe(1)
+    expect(chainHead).toMatch(/<div v-else-if="isServerError/)
+    expect(chainHead).toMatch(/<div v-else-if="!hasRenderableAvailable/)
+  })
+
+  it('renders the notice copy inside the notice block', () => {
+    const start = roots.indexOf('data-testid="search-outdated-notice"')
+    const block = roots.slice(start, roots.indexOf('<div v-else-if', start))
+    expect(block).toContain('Actualiza tu búsqueda')
+    expect(block).toContain('Cambiaste los datos. Dale clic a «Buscar vehículos» para ver los carros y precios disponibles.')
+  })
+
+  it('defines awaitingSearch as outdated AND not loading (script)', () => {
+    expect(script).toMatch(/const awaitingSearch = computed\(\(\) => searchOutdated\.value && !pendingSearch\.value\)/)
+    expect(script).toMatch(/searchOutdated,?\s*\n?\s*\} = storeToRefs\(storeSearch\)/)
+  })
+
+  it('hides horizon banner, results header and grid while awaitingSearch', () => {
+    expect(template).toMatch(/v-if="allBeyondHorizon && !awaitingSearch"/)
+    expect(template).toMatch(/v-if="hasRenderableAvailable && !awaitingSearch"/)
+    expect(template).toMatch(/<div v-if="!awaitingSearch" class="grid /)
+  })
+})
