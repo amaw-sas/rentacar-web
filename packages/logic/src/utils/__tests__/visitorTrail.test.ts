@@ -157,3 +157,37 @@ describe('visitorTrail', () => {
     expect(buildChatContext()).toEqual({ page: '', entry: null, trail: [] });
   });
 });
+
+// On mobile the chat FAB navigates to the full-screen /chat page, so the current
+// pathname at send time is always /chat. The advisor needs the page the visitor was
+// on BEFORE opening the chat (SCEN-002), and /chat itself is not a browsed page.
+describe('the /chat page is not a visited page', () => {
+  it('is never recorded in the trail nor as entry', () => {
+    const s = memoryStorage();
+    recordVisit('/chat', s);
+    recordVisit('/bogota', s);
+    recordVisit('/chat', s);
+    recordVisit('/medellin', s);
+    recordVisit('/chat/', s);
+    expect(readVisitorTrail(s)).toEqual({ entry: '/bogota', trail: ['/bogota', '/medellin'] });
+  });
+
+  it('reports the last browsed page when the message is sent from /chat', () => {
+    const s = memoryStorage();
+    recordVisit('/bogota', s);
+    recordVisit('/chat', s);
+    recordVisit('/medellin', s);
+    recordVisit('/chat', s);
+    expect(buildChatContext(s, '/chat').page).toBe('/medellin');
+  });
+
+  it('sends no page when the visitor opened /chat directly', () => {
+    expect(buildChatContext(memoryStorage(), '/chat')).toEqual({ page: '', entry: null, trail: [] });
+  });
+
+  it('keeps the current page when the chat is a panel (desktop)', () => {
+    const s = memoryStorage();
+    recordVisit('/bogota', s);
+    expect(buildChatContext(s, '/bogota').page).toBe('/bogota');
+  });
+});

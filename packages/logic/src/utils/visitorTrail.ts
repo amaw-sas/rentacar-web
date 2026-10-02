@@ -3,6 +3,10 @@
 // only: query/hash stripped (utm params) and reservation codes redacted
 // (/reservado/<code> is stored as /reservado), so neither ever leaves the browser.
 //
+// /chat is not a browsed page: on mobile the chat FAB navigates to that full-screen
+// route, so it is never recorded, and a message sent from it reports the last page
+// the visitor was on before opening the chat.
+//
 // sessionStorage, not localStorage: "entry" means the first page of THIS visit.
 // Storage is injected so the logic is testable, and every access is guarded — SSR,
 // privacy mode and quota errors degrade to an empty result instead of throwing; a
@@ -11,6 +15,7 @@
 export const VISIT_ENTRY_KEY = 'rentacar_visit_entry';
 export const VISIT_TRAIL_KEY = 'rentacar_visit_trail';
 export const VISIT_TRAIL_MAX = 10;
+const CHAT_PATH = '/chat';
 
 export type TrailStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
@@ -58,7 +63,7 @@ export function recordVisit(
 ): void {
   if (!storage) return;
   const pathname = toPathname(path);
-  if (!pathname) return;
+  if (!pathname || pathname === CHAT_PATH) return;
   try {
     if (!storage.getItem(VISIT_ENTRY_KEY)) storage.setItem(VISIT_ENTRY_KEY, pathname);
     const trail = readTrailList(storage);
@@ -87,8 +92,10 @@ export function buildChatContext(
   page?: string,
 ): ChatContext {
   try {
-    const current = page ?? (typeof window !== 'undefined' ? window.location.pathname : '');
-    return { page: toPathname(current), ...readVisitorTrail(storage) };
+    const current = toPathname(page ?? (typeof window !== 'undefined' ? window.location.pathname : ''));
+    const visited = readVisitorTrail(storage);
+    const where = current === CHAT_PATH ? (visited.trail[visited.trail.length - 1] ?? '') : current;
+    return { page: where, ...visited };
   } catch {
     return { page: '', entry: null, trail: [] };
   }
