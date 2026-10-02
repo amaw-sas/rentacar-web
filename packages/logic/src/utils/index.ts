@@ -102,6 +102,12 @@ export {
 } from './attribution/attributionStorage';
 
 // ============================================================================
+// Visitor trail (chat context: entry page + pages browsed this session)
+// ============================================================================
+export { recordVisit, buildChatContext } from './visitorTrail';
+export type { ChatContext } from './visitorTrail';
+
+// ============================================================================
 // Google Ads call forwarding (website call conversions)
 // ============================================================================
 export {
