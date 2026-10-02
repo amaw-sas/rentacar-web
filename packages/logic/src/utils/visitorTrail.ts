@@ -40,7 +40,7 @@ function toPathname(path: string): string {
   if (typeof path !== 'string') return ''; // JS callers can still pass junk
   let pathname = path.split(/[?#]/)[0] ?? '';
   if (pathname.length > 1) pathname = pathname.replace(/\/+$/, '') || '/';
-  return /^\/reservado\/./.test(pathname) ? '/reservado' : pathname;
+  return /^\/reservado\/./i.test(pathname) ? '/reservado' : pathname;
 }
 
 // Callers wrap this in their own try/catch (getItem can throw); only parse is local.
@@ -63,7 +63,7 @@ export function recordVisit(
 ): void {
   if (!storage) return;
   const pathname = toPathname(path);
-  if (!pathname || pathname === CHAT_PATH) return;
+  if (!pathname || pathname.toLowerCase() === CHAT_PATH) return;
   try {
     if (!storage.getItem(VISIT_ENTRY_KEY)) storage.setItem(VISIT_ENTRY_KEY, pathname);
     const trail = readTrailList(storage);
@@ -94,7 +94,7 @@ export function buildChatContext(
   try {
     const current = toPathname(page ?? (typeof window !== 'undefined' ? window.location.pathname : ''));
     const visited = readVisitorTrail(storage);
-    const where = current === CHAT_PATH ? (visited.trail[visited.trail.length - 1] ?? '') : current;
+    const where = current.toLowerCase() === CHAT_PATH ? (visited.trail[visited.trail.length - 1] ?? '') : current;
     return { page: where, ...visited };
   } catch {
     return { page: '', entry: null, trail: [] };

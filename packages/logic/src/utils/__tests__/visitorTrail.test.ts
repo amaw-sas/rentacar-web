@@ -191,3 +191,21 @@ describe('the /chat page is not a visited page', () => {
     expect(buildChatContext(s, '/bogota').page).toBe('/bogota');
   });
 });
+
+describe('reservation code redaction is case-insensitive', () => {
+  it('redacts /RESERVADO/<code> too (Vue Router matches paths case-insensitively)', () => {
+    const s = memoryStorage();
+    recordVisit('/RESERVADO/ABC123', s);
+    expect(readVisitorTrail(s).trail).toEqual(['/reservado']);
+  });
+});
+
+describe('/chat detection is case-insensitive', () => {
+  it('never records /Chat and reports the previous page from it', () => {
+    const s = memoryStorage();
+    recordVisit('/bogota', s);
+    recordVisit('/Chat', s);
+    expect(readVisitorTrail(s).trail).toEqual(['/bogota']);
+    expect(buildChatContext(s, '/CHAT').page).toBe('/bogota');
+  });
+});
