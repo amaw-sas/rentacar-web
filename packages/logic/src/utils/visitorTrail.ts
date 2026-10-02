@@ -1,6 +1,7 @@
 // Per-session browsing trail the chat forwards to the dashboard, so an advisor sees
 // where the visitor entered and which pages they browsed before writing. Pathname
-// only (query/hash stripped: utm params and reservation codes never leave here).
+// only: query/hash stripped (utm params) and reservation codes redacted
+// (/reservado/<code> is stored as /reservado), so neither ever leaves the browser.
 //
 // sessionStorage, not localStorage: "entry" means the first page of THIS visit.
 // Storage is injected so the logic is testable, and every access is guarded — SSR,
@@ -30,21 +31,25 @@ function defaultStorage(): TrailStorage | null {
   }
 }
 
-function toPathname(path: unknown): string {
-  if (typeof path !== 'string') return '';
-  return path.split(/[?#]/)[0] ?? '';
+function toPathname(path: string): string {
+  if (typeof path !== 'string') return ''; // JS callers can still pass junk
+  let pathname = path.split(/[?#]/)[0] ?? '';
+  if (pathname.length > 1) pathname = pathname.replace(/\/+$/, '') || '/';
+  return /^\/reservado\/./.test(pathname) ? '/reservado' : pathname;
 }
 
+// Callers wrap this in their own try/catch (getItem can throw); only parse is local.
 function readTrailList(storage: TrailStorage): string[] {
+  const raw = storage.getItem(VISIT_TRAIL_KEY);
+  if (!raw) return [];
+  let parsed: unknown;
   try {
-    const raw = storage.getItem(VISIT_TRAIL_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((p): p is string => typeof p === 'string' && p !== '');
+    parsed = JSON.parse(raw);
   } catch {
-    return []; // corrupt JSON / access error
+    return []; // corrupt JSON
   }
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter((p): p is string => typeof p === 'string' && p !== '');
 }
 
 export function recordVisit(

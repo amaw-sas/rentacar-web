@@ -13,7 +13,11 @@ export default defineNuxtPlugin(() => {
 
   try {
     recordVisit(window.location.pathname);
-    useRouter().afterEach((to) => recordVisit(to.path));
+    // afterEach also fires for the initial navigation (deduped by recordVisit);
+    // failures (aborted/duplicated navigations) are not visits.
+    useRouter().afterEach((to, _from, failure) => {
+      if (!failure) recordVisit(to.path);
+    });
   } catch {
     /* tracker is best-effort */
   }

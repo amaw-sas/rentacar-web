@@ -104,15 +104,8 @@ export {
 // ============================================================================
 // Visitor trail (chat context: entry page + pages browsed this session)
 // ============================================================================
-export {
-  recordVisit,
-  readVisitorTrail,
-  buildChatContext,
-  VISIT_ENTRY_KEY,
-  VISIT_TRAIL_KEY,
-  VISIT_TRAIL_MAX,
-} from './visitorTrail';
-export type { ChatContext, TrailStorage, VisitorTrail } from './visitorTrail';
+export { recordVisit, buildChatContext } from './visitorTrail';
+export type { ChatContext } from './visitorTrail';
 
 // ============================================================================
 // Google Ads call forwarding (website call conversions)

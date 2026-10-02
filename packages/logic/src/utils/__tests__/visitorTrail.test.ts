@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   recordVisit,
   readVisitorTrail,
@@ -43,6 +43,27 @@ describe('visitorTrail', () => {
     const s = memoryStorage();
     recordVisit('/bogota?utm_source=google&gclid=x#top', s);
     expect(readVisitorTrail(s)).toEqual({ entry: '/bogota', trail: ['/bogota'] });
+  });
+
+  it('redacts reservation codes: /reservado/<anything> is stored as /reservado', () => {
+    const s = memoryStorage();
+    recordVisit('/reservado/ABC123?x=1', s);
+    recordVisit('/reservado/ABC123/', s);
+    expect(readVisitorTrail(s)).toEqual({ entry: '/reservado', trail: ['/reservado'] });
+    expect(buildChatContext(s, '/reservado/ABC123').page).toBe('/reservado');
+    expect(JSON.stringify([...s.data.values()])).not.toContain('ABC123');
+  });
+
+  it('does not redact paths that merely start with the word reservado', () => {
+    const s = memoryStorage();
+    recordVisit('/reservadora', s);
+    expect(readVisitorTrail(s).trail).toEqual(['/reservadora']);
+  });
+
+  it('dedupes a trailing slash against the bare path, keeps root as /', () => {
+    const s = memoryStorage();
+    ['/tarifas/', '/tarifas', '/'].forEach((p) => recordVisit(p, s));
+    expect(readVisitorTrail(s).trail).toEqual(['/tarifas', '/']);
   });
 
   it('skips consecutive duplicates but keeps non-consecutive repeats', () => {
@@ -112,6 +133,23 @@ describe('visitorTrail', () => {
       entry: null,
       trail: [],
     });
+  });
+
+  it('buildChatContext survives the sessionStorage global getter itself throwing', () => {
+    vi.stubGlobal('window', { location: { pathname: '/x' } });
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      get(): never {
+        throw new Error('SecurityError');
+      },
+    });
+    try {
+      expect(() => buildChatContext()).not.toThrow();
+      expect(buildChatContext()).toEqual({ page: '/x', entry: null, trail: [] });
+    } finally {
+      delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+      vi.unstubAllGlobals();
+    }
   });
 
   it('buildChatContext falls back to the empty context when everything fails', () => {

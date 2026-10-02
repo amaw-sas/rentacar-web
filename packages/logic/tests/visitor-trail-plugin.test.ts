@@ -18,32 +18,44 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+type Hook = (to: { path: string }, from: unknown, failure?: unknown) => void;
+
+async function loadPlugin(storage = memoryStorage(), initial = '/medellin') {
+  let navHook: Hook | undefined;
+  vi.stubGlobal('window', { location: { pathname: initial } });
+  vi.stubGlobal('sessionStorage', storage);
+  vi.stubGlobal('defineNuxtPlugin', (plugin: unknown) => plugin);
+  vi.stubGlobal('useRouter', () => ({
+    afterEach: (cb: Hook) => {
+      navHook = cb;
+    },
+  }));
+  const { default: plugin } = await import('../plugins/visitor-trail.client');
+  (plugin as () => void)();
+  return { storage, navHook: navHook! };
+}
+
+const trailOf = (s: ReturnType<typeof memoryStorage>) =>
+  JSON.parse(s.data.get('rentacar_visit_trail') ?? '[]');
+
 describe('visitor-trail.client plugin', () => {
-  it('records the initial path once, then each navigation, with no network', async () => {
-    const storage = memoryStorage();
+  it('records the initial path once (Nuxt replays it through afterEach), then each navigation, with no network', async () => {
     const fetchSpy = vi.fn();
-    let afterEach: ((to: { path: string }) => void) | undefined;
-
-    vi.stubGlobal('window', { location: { pathname: '/medellin' }, sessionStorage: storage });
-    vi.stubGlobal('sessionStorage', storage);
     vi.stubGlobal('fetch', fetchSpy);
-    vi.stubGlobal('defineNuxtPlugin', (plugin: unknown) => plugin);
-    vi.stubGlobal('useRouter', () => ({
-      afterEach: (cb: (to: { path: string }) => void) => {
-        afterEach = cb;
-      },
-    }));
+    const { storage, navHook } = await loadPlugin();
 
-    const { default: plugin } = await import('../plugins/visitor-trail.client');
-    (plugin as () => void)();
-    afterEach?.({ path: '/tarifas' });
+    navHook({ path: '/medellin' }, {}); // initial navigation replay
+    navHook({ path: '/tarifas' }, {});
 
-    expect(JSON.parse(storage.data.get('rentacar_visit_trail') ?? '[]')).toEqual([
-      '/medellin',
-      '/tarifas',
-    ]);
+    expect(trailOf(storage)).toEqual(['/medellin', '/tarifas']);
     expect(storage.data.get('rentacar_visit_entry')).toBe('/medellin');
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not record aborted or duplicated navigations (failure set)', async () => {
+    const { storage, navHook } = await loadPlugin();
+    navHook({ path: '/blocked' }, {}, new Error('NavigationAborted'));
+    expect(trailOf(storage)).toEqual(['/medellin']);
   });
 
   it('never throws when the router and storage both fail', async () => {
