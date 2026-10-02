@@ -54,7 +54,7 @@ describe('useSearchByQueryParams — same-day deep link, hour handling around th
     toastAdd = vi.fn()
     // Fake only Date: the 50 ms debounce of the param watcher must stay real.
     vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2030-06-15T10:00:00'))
+    vi.setSystemTime(new Date('2030-06-15T10:00:00-05:00')) // Bogotá, the app's timezone — CI runs in UTC
     setActivePinia(createPinia())
     vi.stubGlobal('useState', () => ref(ADMIN_PAYLOAD))
     vi.stubGlobal('useToast', () => ({ add: toastAdd, clear: vi.fn() }))
