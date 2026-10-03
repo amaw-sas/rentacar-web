@@ -22,7 +22,7 @@ export const faqs: FAQ[] = [
         },
         {
             label: '¿Existe pico y placa para particulares en Santa Marta?',
-            content: 'No. Los carros particulares no tienen esa limitación en Santa Marta y pueden circular por la ciudad cualquier día de la semana.'
+            content: 'Sí, y depende de dónde esté matriculado el carro. Con placa de otra ciudad, que es el caso de casi todo carro alquilado, la restricción es continua de 7:00 AM a 8:00 PM de lunes a viernes. Con placa del distrito son tres franjas más cortas. Te confirmamos la de tu vehículo al entregarlo.'
         },
         {
             label: '¿Qué destinos puedo conectar por carretera desde Santa Marta?',

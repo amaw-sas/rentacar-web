@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Los vehículos particulares pueden circular cualquier día y a cualquier hora, pues Santa Marta no les aplica restricción de pico y placa.',
+            picoPlaca: 'Santa Marta cobra distinto según dónde esté matriculado el carro. Si la placa es de otra ciudad, que es el caso de casi todo carro alquilado, la restricción es continua de 7:00 AM a 8:00 PM. Los matriculados en el distrito tienen tres franjas: 7:00 a 9:00 AM, 11:30 AM a 2:00 PM y 5:00 a 8:00 PM. Rige de lunes a viernes.',
             tolls: 'Hacia Palomino se paga un peaje de unos $9.200 COP. El recorrido a Barranquilla incluye 3, que suman cerca de $30.000 COP. Para subir a Minca o llegar a Taganga no pasas por ninguno.',
             parking: 'Una hora en los estacionamientos del centro histórico o El Rodadero cuesta entre $3.000 y $6.000 COP. En Taganga hay pocos lugares para parquear y encontrarlos se vuelve más difícil durante la temporada alta.'
         },

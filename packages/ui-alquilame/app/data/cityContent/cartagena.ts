@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Los automóviles particulares no están sujetos a pico y placa en Cartagena. Eso permite moverte por la ciudad a cualquier hora, durante todos los días de la semana.',
+            picoPlaca: 'Cartagena sí restringe la circulación de particulares, aunque muchas guías digan lo contrario. Rige de lunes a viernes por el último dígito de la placa, de 7:00 a 9:00 AM y de 6:00 a 8:00 PM. No opera los fines de semana ni los festivos.',
             tolls: 'Para llegar a Barú debes pasar un peaje de aproximadamente $9.000 COP. La carretera hacia Santa Marta suma varios, por cerca de $45.000 COP en total. El recorrido al Volcán del Totumo no cobra peaje.',
             parking: 'Calcula entre $5.000 y $10.000 COP por cada hora de estacionamiento en Bocagrande o el Centro Histórico. Getsemaní tiene alternativas más económicas. Usa siempre un parqueadero y evita dejar el vehículo en la calle.'
         },

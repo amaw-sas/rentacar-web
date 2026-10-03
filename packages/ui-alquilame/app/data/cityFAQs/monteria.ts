@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Los carros particulares tienen pico y placa en Montería?',
-    content: 'No hay una restricción vigente para vehículos particulares. Puedes conducir cualquier día de la semana tanto dentro de Montería como por el resto del departamento.',
+    content: 'Montería no tiene pico y placa para carros particulares. Puedes conducir cualquier día de la semana tanto en la ciudad como por el resto del departamento.',
   },
   {
     label: '¿Cuánto tarda el viaje desde Montería hasta las playas?',

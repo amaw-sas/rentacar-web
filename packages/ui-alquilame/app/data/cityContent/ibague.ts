@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'La medida de pico y placa funciona de lunes a viernes por el último número de la placa. En la mañana va de 7:00 a 8:00 AM y, en la tarde, de 6:00 a 7:30 PM.',
+    picoPlaca: 'Ibagué restringe de lunes a viernes, de 6:00 AM a 9:00 PM. Los carros matriculados en la ciudad descansan en hora valle, de 9:00 a 11:00 AM y de 3:00 a 5:00 PM; una placa de otra ciudad no tiene esa pausa y cumple las quince horas seguidas.',
     tolls: 'El recorrido hacia Bogotá por la Línea suma peajes por cerca de COP 32.000. No hay cobros en el camino al Cañón del Combeima; hacia Armenia encuentras uno de aproximadamente $15.500 COP.',
     parking: 'Una hora en los parqueaderos del centro o de las áreas comerciales está entre $2.000 y $4.000 COP. La Estación y otros centros comerciales manejan opciones ligadas al consumo.',
   },

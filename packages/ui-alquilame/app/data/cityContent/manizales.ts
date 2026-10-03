@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'La restricción por último dígito rige de lunes a viernes, entre 7:00 y 8:30 AM y nuevamente de 5:30 a 7:00 PM. En las calles muy empinadas de Manizales, apóyate en el freno de motor.',
+    picoPlaca: 'Manizales tiene una medida temporal por el sismo, mucho más amplia que la habitual: de 5:00 AM a 10:00 PM, todos los días, incluidos sábados, domingos y festivos. Cobija también a híbridos y eléctricos. Va del 1 al 15 de septiembre de 2026, así que confirma antes de viajar.',
     tolls: 'Para ir al Nevado del Ruiz no cruzas peajes, aunque debes pagar la entrada al parque: cerca de $23.000 COP para extranjeros y $18.000 COP para colombianos. El trayecto a Pereira sí tiene un peaje de unos $9.400 COP.',
     parking: 'Parquear sobre una calle inclinada puede ser incómodo. Mejor usa un parqueadero: la hora cuesta entre $2.500 y $5.000 COP. En Cable Plaza y otros centros comerciales encuentras más opciones.',
   },

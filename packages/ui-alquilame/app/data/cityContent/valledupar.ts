@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
     },
   ],
   drivingTips: {
-    picoPlaca: 'Valledupar aplica pico y placa de lunes a viernes con base en el último dígito de la matrícula. Hay una franja de 7:30 a 8:30 AM y otra entre 12:00 y 2:00 PM. Es un horario distinto al de otras ciudades.',
+    picoPlaca: 'Valledupar no tiene pico y placa para carros particulares. La Alcaldía ha desmentido varias veces los rumores en redes sobre su entrada en vigencia.',
     tolls: 'No encontrarás peajes en el camino hacia Manaure. Para una ruta más larga hasta Santa Marta, calcula varios cobros que suman cerca de $40.000 COP. Las carreteras que conducen a los balnearios próximos a Valledupar se encuentran en buen estado.',
     parking: 'En el centro y en las áreas comerciales, una hora de parqueadero vale entre $2.000 y $4.000 COP. Junto al Guatapurí y otros balnearios se usa estacionamiento informal. La referencia allí es de unos $5.000 COP por día.',
   },
