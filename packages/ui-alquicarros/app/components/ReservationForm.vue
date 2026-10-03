@@ -59,6 +59,33 @@
             :ui="inputUi"
           ></u-input>
         </u-form-field>
+        <u-form-field
+          class="md:col-span-2"
+          name="tipoLicencia"
+          label="¿Tu licencia de conducción es colombiana o extranjera?"
+        >
+          <!-- id determinista: URadioGroup usa useFormField con bind:false, que deja el
+               error de UForm con id undefined; firstInvalidFieldEl resuelve por name
+               hacia este id (mismo tratamiento que telefono, issue #366 D6). -->
+          <u-radio-group
+            id="tipoLicencia"
+            v-model="formState.tipoLicencia"
+            orientation="horizontal"
+            :items="licenseTypeOptions"
+            aria-label="¿Tu licencia de conducción es colombiana o extranjera?"
+            data-testid="driver-license-type"
+          />
+        </u-form-field>
+        <!-- Región viva SIEMPRE montada: si naciera con el v-if junto al texto,
+             el lector de pantalla no anuncia el primer aviso. El aviso es solo
+             UI: no viaja en el payload (useRecordReservationForm no lo lee). -->
+        <div class="md:col-span-2" role="status" aria-live="polite">
+          <p
+            v-if="licenseNotice"
+            class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+            data-testid="license-document-notice"
+          >{{ licenseNotice }}</p>
+        </div>
         <u-form-field class="md:col-span-2" name="email" label="Correo electrónico">
           <u-input
             v-model="formState.email"
@@ -162,6 +189,8 @@
 <script setup lang="ts">
 import {
   ReservationFormValidationSchema,
+  DRIVER_LICENSE_OPTIONS,
+  driverLicenseNotice,
 } from '@rentacar-main/logic/utils';
 import { RESERVATION_REQUIREMENTS } from '~/config/reservationRequirements';
 
@@ -181,6 +210,7 @@ const {
   apellidos,
   identificacion,
   tipoIdentificacion,
+  tipoLicencia,
   telefono,
   email,
   politicaPrivacidad,
@@ -201,6 +231,11 @@ const identificationTypeOptions = [
   { value: "Pasaporte", label: "Pasaporte" },
 ];
 
+// Pregunta de licencia: textos y opciones viven en packages/logic (una sola
+// fuente para las 3 marcas). El spread evita el readonly del `as const`.
+const licenseTypeOptions = [...DRIVER_LICENSE_OPTIONS];
+const licenseNotice = computed(() => driverLicenseNotice(tipoLicencia.value));
+
 const inputUi = {
   base: 'bg-gray-100 border border-gray-300 text-black py-3',
 };
@@ -216,6 +251,7 @@ const baseForm = {
   apellidos,
   identificacion,
   tipoIdentificacion,
+  tipoLicencia,
   telefono,
   email,
   politicaPrivacidad,

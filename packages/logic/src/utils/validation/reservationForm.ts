@@ -3,6 +3,7 @@ import '@valibot/i18n/es';
 v.setGlobalConfig({ lang: 'es' });
 
 import { CategoryFormValidationSchema } from './categoryForm';
+import type { DriverLicenseType } from '../types/type/DriverLicenseType';
 import { userInformationEntries, identificationError, extraDriverDocumentError } from './userInformationForm';
 
 const isBlank = (value: unknown) => String(value ?? '').trim() === '';
@@ -26,6 +27,19 @@ export const reservationEntries = {
     // store, where the schema cannot reach it.
     // `nullish`, NOT `optional`: the store refs start at `null` and `optional` only
     // neutralises `undefined`, which would reject every reservation in every brand.
+    // Licencia de conducción: obligatoria para que el cliente vea el aviso de
+    // qué documento presentar al recoger. Solo UI: nunca viaja en el payload
+    // del registro. `nullish(unknown)` normaliza clave ausente y `null` (el
+    // valor inicial del store) al mismo caso: un picklist desnudo dejaría que
+    // el objeto emitiera su genérico «Se esperaba "tipoLicencia"…» con la
+    // clave ausente, en vez del mensaje del formulario.
+    tipoLicencia: v.pipe(
+        v.nullish(v.unknown(), null),
+        v.custom<DriverLicenseType>(
+            (input) => input === 'colombiana' || input === 'extranjera',
+            'Selecciona el tipo de licencia de conducción',
+        ),
+    ),
     conductorAdicional: v.nullish(v.boolean(), false),
     conductorAdicionalNombre: v.nullish(v.string(), ''),
     conductorAdicionalIdentificacion: v.nullish(v.string(), ''),

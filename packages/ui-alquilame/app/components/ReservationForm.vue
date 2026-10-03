@@ -69,6 +69,30 @@
             :ui="inputUi"
           ></u-input>
         </u-form-field>
+        <u-form-field
+          class="col-span-2"
+          name="tipoLicencia"
+          :ui="formFieldUi"
+          label="¿Tu licencia de conducción es colombiana o extranjera?"
+        >
+          <u-radio-group
+            v-model="formState.tipoLicencia"
+            orientation="horizontal"
+            :items="licenseTypeOptions"
+            aria-label="¿Tu licencia de conducción es colombiana o extranjera?"
+            data-testid="driver-license-type"
+          />
+        </u-form-field>
+        <!-- Región viva SIEMPRE montada: si naciera con el v-if junto al texto,
+             el lector de pantalla no anuncia el primer aviso. El aviso es solo
+             UI: no viaja en el payload (useRecordReservationForm no lo lee). -->
+        <div class="col-span-2" role="status" aria-live="polite">
+          <p
+            v-if="licenseNotice"
+            class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+            data-testid="license-document-notice"
+          >{{ licenseNotice }}</p>
+        </div>
         <u-form-field class="col-span-2" name="email" :ui="formFieldUi" label="Correo electrónico">
           <u-input
             v-model="formState.email"
@@ -172,6 +196,8 @@
 <script setup lang="ts">
 import {
   ReservationFormValidationSchema,
+  DRIVER_LICENSE_OPTIONS,
+  driverLicenseNotice,
 } from '@rentacar-main/logic/utils';
 
 // Lazy load vue-tel-input (solo se carga cuando se renderiza el formulario)
@@ -190,6 +216,7 @@ const {
   apellidos,
   identificacion,
   tipoIdentificacion,
+  tipoLicencia,
   telefono,
   email,
   politicaPrivacidad,
@@ -209,6 +236,11 @@ const identificationTypeOptions = [
   { value: "Cedula Ciudadania", label: "Cédula" },
   { value: "Pasaporte", label: "Pasaporte" },
 ];
+
+// Pregunta de licencia: textos y opciones viven en packages/logic (una sola
+// fuente para las 3 marcas). El spread evita el readonly del `as const`.
+const licenseTypeOptions = [...DRIVER_LICENSE_OPTIONS];
+const licenseNotice = computed(() => driverLicenseNotice(tipoLicencia.value));
 
 // El label de UFormField sale en zinc-700 por defecto: otra rampa de gris que
 // convivía con el gris-800 del resto del cuerpo. Se fuerza la tinta del Resumen.
@@ -231,6 +263,7 @@ const baseForm = {
   apellidos,
   identificacion,
   tipoIdentificacion,
+  tipoLicencia,
   telefono,
   email,
   politicaPrivacidad,

@@ -144,7 +144,9 @@ describe('UserInformationFormValidationSchema — full form integration', () => 
 // SCEN-007 — the reservation schemas the brand forms actually bind to inherit the
 // same hardening, with no per-brand code.
 describe('Reservation schemas inherit identification hardening', () => {
-  const reservationBase = { ...validBase, vehiculo: 'C' }
+  // `tipoLicencia` is mandatory since the license selector (SCEN-LIC-04) and
+  // orthogonal to the identification hardening this suite pins.
+  const reservationBase = { ...validBase, vehiculo: 'C', tipoLicencia: 'colombiana' }
 
   it('ReservationFormValidationSchema passes a valid CC and blocks a sentinel', () => {
     expect(
