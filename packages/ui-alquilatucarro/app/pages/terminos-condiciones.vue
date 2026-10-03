@@ -153,7 +153,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">12. Contacto</h2>
         <p>Para cualquier consulta sobre estos Términos y Condiciones:</p>
         <ul class="list-disc pl-6 space-y-2">
-          <li><strong>WhatsApp:</strong> +57 310 434 5165</li>
+          <li><strong>WhatsApp:</strong> +57 301 672 9250</li>
           <li><strong>Correo:</strong> info@alquilatucarro.com</li>
         </ul>
 

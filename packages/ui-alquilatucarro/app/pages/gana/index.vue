@@ -203,7 +203,7 @@
 <script lang="ts" setup>
 const { franchise } = useAppConfig()
 // WhatsApp and calls are separate lines, so the link text is derived from the
-// wa.me URL itself: "https://wa.me/573104345165" -> "+57 310 434 5165".
+// wa.me URL itself: "https://wa.me/573016729250" -> "+57 301 672 9250".
 const whatsappDisplay = String(franchise.whatsapp ?? '')
   .replace(/\D/g, '')
   .replace(/^(\d{2})(\d{3})(\d{3})(\d{4})$/, '+$1 $2 $3 $4')
@@ -296,7 +296,7 @@ const preguntas = computed(() => [
   },
   {
     label: '¿Qué hago si tengo problemas con mi enlace o mis comisiones?',
-    content: 'Puedes contactarnos a través de nuestro correo info@alquilatucarro.com o nuestro WhatsApp +57 310 434 5165.'
+    content: 'Puedes contactarnos a través de nuestro correo info@alquilatucarro.com o nuestro WhatsApp +57 301 672 9250.'
   },
   {
     label: '¿En qué ciudades de Colombia está disponible el servicio?',

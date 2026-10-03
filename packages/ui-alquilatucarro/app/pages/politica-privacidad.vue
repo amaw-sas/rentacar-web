@@ -67,7 +67,7 @@
         </p>
         <ul class="list-disc pl-6 space-y-2">
           <li><strong>Correo electrónico:</strong> info@amawsas.com</li>
-          <li><strong>WhatsApp:</strong> +57 310 434 5165</li>
+          <li><strong>WhatsApp:</strong> +57 301 672 9250</li>
           <li><strong>Formulario de PQRS:</strong> disponible en nuestro sitio web</li>
         </ul>
         <p class="mt-4">

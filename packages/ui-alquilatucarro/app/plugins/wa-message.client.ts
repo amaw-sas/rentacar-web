@@ -7,7 +7,7 @@
 // floating chat modal) and survives SPA route changes without re-binding, with
 // zero edits to the button components.
 //
-// SCOPE: only the contact-number anchors (`wa.me/573104345165`). The "share"
+// SCOPE: only the contact-number anchors (`wa.me/573016729250`). The "share"
 // links (`wa.me/?text=...`) and any other numbers are left untouched.
 //
 // NOTE ON ATTRIBUTION: page + paid keyword attribution comes from the click
@@ -28,7 +28,7 @@ const CITY_BY_ID: Readonly<Record<string, string>> = Object.fromEntries(
   PUBLIC_CITIES.map(city => [city.id, city.name]),
 )
 
-const WA_NUMBER = '573104345165'
+const WA_NUMBER = '573016729250'
 
 function buildMessage(): string {
   // First non-empty path segment = city id, for both the landing and the
