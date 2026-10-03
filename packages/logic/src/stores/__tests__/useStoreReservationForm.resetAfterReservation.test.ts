@@ -41,6 +41,7 @@ function fillClientA(store: Record<string, unknown>) {
   store.apellidos = 'ApellidoA'
   store.tipoIdentificacion = 'Cedula Ciudadania'
   store.identificacion = '1020304050'
+  store.tipoLicencia = 'extranjera'
   store.telefono = '+573001234567'
   store.email = 'clientea@example.com'
   store.referido = 'instagram'
@@ -131,6 +132,8 @@ describe('useStoreReservationForm — el siguiente cliente empieza limpio (issue
     expect(store.apellidos).toBeNull()
     expect(store.tipoIdentificacion).toBeNull()
     expect(store.identificacion).toBeNull()
+    // SCEN-LIC-07: la respuesta de licencia de A no condiciona el aviso de B.
+    expect(store.tipoLicencia).toBeNull()
     expect(store.telefono).toBeNull()
     expect(store.email).toBeNull()
     expect(store.referido).toBeNull()
@@ -232,6 +235,7 @@ describe('useStoreReservationForm — el siguiente cliente empieza limpio (issue
 
     const BORRADOS = [
       'nombreCompleto', 'apellidos', 'tipoIdentificacion', 'identificacion',
+      'tipoLicencia',
       'telefono', 'email', 'referido', 'conductorAdicionalNombre',
       'conductorAdicionalIdentificacion', 'politicaPrivacidad',
       'vehiculo', 'haveTotalInsurance', 'haveMonthlyReservation',
