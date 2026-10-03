@@ -182,7 +182,7 @@ Cómo comprobarlo: en «Tiempo real» de Analytics deben aparecer `clic_boton_wh
 Lo que no cambia:
 
 - Quien llega por búsqueda orgánica sigue viendo y marcando el número real.
-- WhatsApp nunca toma el número de desvío. Desde el PR #494 la web usa para WhatsApp la línea 310 434 5165, y las llamadas siguen en 301 672 9250.
+- WhatsApp nunca toma el número de desvío. Desde el PR #494 la web usa para WhatsApp la línea 310 434 5165, y las llamadas siguen en 301 672 9250. Desde el 2026-10-03 WhatsApp volvió al 301 672 9250, el mismo número de las llamadas.
 - Los datos estructurados para Google conservan el número real.
 - alquilame y alquicarros no cargan la etiqueta.
 

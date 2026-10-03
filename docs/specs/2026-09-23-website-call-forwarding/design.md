@@ -70,6 +70,7 @@ scenarios live here, committed before implementation, with the same contract.
 **When**: the visitor looks at any WhatsApp link, including the /gana "Contáctanos" link whose text shows the number
 **Then**: WhatsApp links still point to the brand's WhatsApp line and the /gana link text still shows that line, never the forwarding number
 **Amended 2026-09-24**: PR #494 moved the web WhatsApp line to https://wa.me/573104345165 ("+57 310 434 5165") while calls stay on +57 301 672 9250. The original values were the WhatsApp line at the time; the invariant (WhatsApp never takes the forwarding number) is unchanged.
+**Amended 2026-10-03**: the 301 line was restored and WhatsApp went back to https://wa.me/573016729250 ("+57 301 672 9250"), the same number as calls. The invariant is unchanged: WhatsApp never takes the forwarding number.
 **Evidence**: DOM href/text of wa.me anchors after the callback fires
 
 ### SCEN-005: search engines keep the real number
