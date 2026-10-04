@@ -380,6 +380,14 @@ export default defineNuxtConfig({
 
   colorMode: {
     preference: 'light',
+    // Cookie, not localStorage: strict-privacy browsers throw on the storage
+    // PROPERTY ACCESS, which kills color-mode's inline script before it defines
+    // window.__NUXT_COLOR_MODE__ and the client plugin then crashes
+    // (helper.removeColorScheme is not a function). document.cookie never
+    // throws. The module's client plugin DOES write the cookie on every load
+    // (immediate preference watcher), always 'light': there is no theme toggle,
+    // so the rendered HTML is identical with or without the cookie.
+    storage: 'cookie',
   },
 
   // Auto-imports desde logic layer (manejado automáticamente por extends)

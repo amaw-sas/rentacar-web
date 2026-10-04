@@ -103,6 +103,11 @@ export {
 } from './attribution/attributionStorage';
 
 // ============================================================================
+// Safe web storage (strict privacy mode: the property access itself throws)
+// ============================================================================
+export { getSessionStorageSafe, getLocalStorageSafe } from './safeWebStorage';
+
+// ============================================================================
 // Visitor trail (chat context: entry page + pages browsed this session)
 // ============================================================================
 export { recordVisit, buildChatContext } from './visitorTrail';

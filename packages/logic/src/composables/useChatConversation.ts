@@ -30,6 +30,7 @@ import {
 import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
 import { buildChatPayloadMessages } from '../utils/buildChatPayloadMessages';
 import { isChatTranscriptExpired } from '../utils/chatTtl';
+import { getLocalStorageSafe } from '../utils/safeWebStorage';
 import { publishChatUnread, takePreparedChatOpen } from './useChatUnreadBadge';
 
 // Code-owned data parts emitted by the hybrid orchestrator (dashboard /api/chat)
@@ -170,13 +171,16 @@ export interface ChatConversationConfig {
 }
 
 // The full conversation instance. Browser access is FEATURE-DETECTED
-// (typeof localStorage/document/window) rather than gated on import.meta.client:
-// that keeps it inert during SSR (no browser globals) AND drivable under vitest
-// with stubbed globals, while the wrapper's import.meta.client guard is what
-// prevents cross-request memo pollution on the server.
+// (typeof document/window, safeWebStorage for localStorage) rather than gated
+// on import.meta.client: that keeps it inert during SSR (no browser globals)
+// AND drivable under vitest with stubbed globals, while the wrapper's
+// import.meta.client guard is what prevents cross-request memo pollution on the
+// server. localStorage is NOT detected with bare `typeof`: strict-privacy
+// browsers throw on the property access itself, and that would unmount the
+// chat surface instead of just skipping persistence.
 export function createChatConversation(cfg: ChatConversationConfig) {
   const { brand, api, messagesKey, conversationKey, lastReadKey } = cfg;
-  const hasStorage = typeof localStorage !== 'undefined';
+  const hasStorage = getLocalStorageSafe() !== null;
   const hasDocument = typeof document !== 'undefined';
   const hasWindow = typeof window !== 'undefined';
 
@@ -238,9 +242,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
   // the chat is turned off, so a mid-conversation shut-off hands the customer somewhere
   // to go instead of a dead end. Set from the server's error JSON (`{error, whatsapp}`).
   const errorAction = ref<{ whatsapp?: string } | null>(null);
-  const conversationId = ref<string | null>(
-    hasStorage ? localStorage.getItem(conversationKey) : null,
-  );
+  const conversationId = ref<string | null>(restoreConversationId());
   const isStreaming = computed(
     () => status.value === 'submitting' || status.value === 'streaming',
   );
