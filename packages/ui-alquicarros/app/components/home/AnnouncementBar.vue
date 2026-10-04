@@ -65,11 +65,17 @@ const STORAGE_KEY = 'announcement-dismissed'
 const dismissed = ref(false)
 
 onMounted(() => {
-  if (sessionStorage.getItem(STORAGE_KEY) === 'true') dismissed.value = true
+  // Guarded: strict privacy mode throws on the sessionStorage access itself,
+  // and the bar must simply re-show rather than log an error.
+  try {
+    if (sessionStorage.getItem(STORAGE_KEY) === 'true') dismissed.value = true
+  } catch { /* blocked storage — bar shows again next visit */ }
 })
 
 function dismiss(): void {
   dismissed.value = true
-  sessionStorage.setItem(STORAGE_KEY, 'true')
+  try {
+    sessionStorage.setItem(STORAGE_KEY, 'true')
+  } catch { /* blocked storage — dismissal lasts this page only */ }
 }
 </script>

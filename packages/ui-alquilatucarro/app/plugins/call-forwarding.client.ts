@@ -6,6 +6,8 @@
 import {
   buildPhoneConversionConfig,
   CALL_FORWARDING_STATE_KEY,
+  getLocalStorageSafe,
+  getSessionStorageSafe,
   type CallForwardingNumber,
 } from '@rentacar-main/logic/utils'
 
@@ -25,6 +27,14 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (typeof gtag !== 'function') return
     try {
       gtag('config', ADS_TAG_ID)
+      // Strict privacy mode (the storage PROPERTY ACCESS throws): skip the
+      // phone-conversion config. Google's call-tracking script reads BOTH
+      // localStorage and sessionStorage inside its own async chain — our
+      // try/catch cannot reach those unhandled rejections — and without
+      // storage it cannot attribute the ad click anyway. The visitor keeps the
+      // real number, with no console error. gtag itself guards its storage
+      // reads, so the base config stays.
+      if (getLocalStorageSafe() === null || getSessionStorageSafe() === null) return
       gtag(
         'config',
         `${ADS_TAG_ID}/${CALL_CONVERSION_LABEL}`,

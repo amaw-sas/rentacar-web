@@ -18,6 +18,7 @@
  */
 import { ref } from 'vue';
 import { trackAnalyticsEvent } from '@rentacar-main/logic/utils';
+import { getLocalStorageSafe, getSessionStorageSafe } from '../utils/safeWebStorage';
 
 export const TEASER_FIRST_DELAY_MS = 5_000;
 export const TEASER_SECOND_DELAY_MS = 20_000;
@@ -63,15 +64,17 @@ export interface ContactTeaserConfig {
   engagedKey: string;
 }
 
-// The teaser instance. Browser access is FEATURE-DETECTED (typeof
-// window/sessionStorage/localStorage) so it stays inert during SSR and is
-// drivable under vitest with stubbed globals; the wrapper's import.meta.client
-// guard is what prevents cross-request memo pollution on the server.
+// The teaser instance. Browser access is FEATURE-DETECTED so it stays inert
+// during SSR and is drivable under vitest with stubbed globals; the wrapper's
+// import.meta.client guard is what prevents cross-request memo pollution on the
+// server. Storage detection goes through safeWebStorage, never bare `typeof`:
+// strict-privacy browsers throw on the property access itself, and that getter
+// runs inside ChatWidget's setup — an escaped throw unmounts the contact FAB.
 export function createContactTeaser(cfg: ContactTeaserConfig) {
   const { brand, shownKey, engagedKey } = cfg;
   const hasWindow = typeof window !== 'undefined';
-  const hasSession = typeof sessionStorage !== 'undefined';
-  const hasLocal = typeof localStorage !== 'undefined';
+  const sessionStore = getSessionStorageSafe();
+  const localStore = getLocalStorageSafe();
 
   const syntheticCount = ref<0 | 1 | 2>(0);
   const teaserStep = ref<0 | 1 | 2>(0);
@@ -104,25 +107,25 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
   // Every access is try/catch-guarded: Safari private mode throws on write, and
   // the accepted trade-off is the teaser may re-show rather than break.
   function sessionShown(): boolean {
-    if (!hasSession) return false;
+    if (!sessionStore) return false;
     try {
-      return sessionStorage.getItem(shownKey) === '1';
+      return sessionStore.getItem(shownKey) === '1';
     } catch {
       return false;
     }
   }
   function markSessionShown() {
-    if (!hasSession) return;
+    if (!sessionStore) return;
     try {
-      sessionStorage.setItem(shownKey, '1');
+      sessionStore.setItem(shownKey, '1');
     } catch {
       /* private mode — fail-open */
     }
   }
   function recentlyEngaged(): boolean {
-    if (!hasLocal) return false;
+    if (!localStore) return false;
     try {
-      const raw = localStorage.getItem(engagedKey);
+      const raw = localStore.getItem(engagedKey);
       if (!raw) return false;
       const at = Number(raw);
       if (!Number.isFinite(at)) return false;
@@ -132,9 +135,9 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     }
   }
   function stampEngaged() {
-    if (!hasLocal) return;
+    if (!localStore) return;
     try {
-      localStorage.setItem(engagedKey, String(Date.now()));
+      localStore.setItem(engagedKey, String(Date.now()));
     } catch {
       /* private mode — fail-open */
     }
