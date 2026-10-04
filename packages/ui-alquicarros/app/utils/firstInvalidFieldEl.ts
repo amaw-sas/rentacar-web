@@ -22,13 +22,26 @@ export function firstInvalidFieldEl(
     // VueTelInput no usa useFormField, así que el id que UFormField registra para `telefono`
     // no existe en el DOM; usePhoneField fija `id: "telefono"` de forma determinista. Sin
     // este caso el scroll falla en silencio en el campo más frágil.
-    .map((err) => (err?.name === 'telefono' ? 'telefono' : err?.id))
+    // `tipoLicencia` tiene el defecto gemelo: URadioGroup usa useFormField con bind:false,
+    // que anula inputId, y el error llega con `id: undefined` — el radiogroup lleva
+    // `id="tipoLicencia"` explícito en el template y aquí se resuelve por name.
+    .map((err) =>
+      err?.name === 'telefono' || err?.name === 'tipoLicencia' ? err.name : err?.id,
+    )
     .map((id) => (id ? doc.getElementById(id) : null))
     .filter((el): el is HTMLElement => el !== null);
 
   if (!fields.length) return null;
 
-  return fields.reduce((earliest, el) =>
-    earliest.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING ? el : earliest,
+  const earliest = fields.reduce((a, el) =>
+    a.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING ? el : a,
   );
+
+  // UFormField puede registrar el id del error en un CONTENEDOR no enfocable
+  // (u-radio-group pone el id en su div raíz, sin tabindex): `focus()` sobre él
+  // es un no-op mudo. El orden-de-DOM ya se decidió sobre el contenedor; aquí
+  // solo se baja al primer control enfocable interno para que el foco prenda.
+  const FOCUSABLE = 'input, select, textarea, button, [tabindex]';
+  if (earliest.matches(FOCUSABLE)) return earliest;
+  return earliest.querySelector<HTMLElement>(FOCUSABLE) ?? earliest;
 }

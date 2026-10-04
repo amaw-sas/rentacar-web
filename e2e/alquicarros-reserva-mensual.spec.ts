@@ -134,6 +134,9 @@ async function submitFrom(page: Page) {
   await page.getByRole('combobox', { name: 'Tipo de identificación' }).click();
   await page.getByRole('option', { name: 'Cédula' }).click();
 
+  // Pregunta de licencia (SCEN-LIC-04): obligatoria desde el selector de licencia.
+  await page.getByRole('radio', { name: 'Colombiana' }).check();
+
   // VueTelInput solo produce el +57 que exige isValidPhoneNumber tras teclear + blur.
   const phone = page.locator('input#telefono');
   await phone.click();

@@ -121,6 +121,8 @@ async function fillReservationForm(page: Page) {
   // Tipo de identificación es un combobox (@nuxt/ui u-select): abrir + elegir opción.
   await page.getByRole('combobox', { name: 'Tipo de identificación' }).click();
   await page.getByRole('option', { name: 'Cédula' }).click();
+  // Pregunta de licencia (SCEN-LIC-04): obligatoria desde el selector de licencia.
+  await page.getByRole('radio', { name: 'Colombiana' }).check();
   const phone = page.locator('input#telefono');
   await phone.click();
   await phone.pressSequentially('3001234567', { delay: 40 });
@@ -272,6 +274,11 @@ test.describe('alquicarros — wizard de reserva (desktop)', () => {
     // Tipo de identificación es un combobox (@nuxt/ui u-select): abrir + elegir opción.
     await page.getByRole('combobox', { name: 'Tipo de identificación' }).click();
     await page.getByRole('option', { name: 'Cédula' }).click();
+
+    // La licencia se responde aquí a propósito: está ANTES del email en el DOM,
+    // y este caso necesita que el primer inválido en orden de documento siga
+    // siendo el email para que la comparación por posición discrimine.
+    await page.getByRole('radio', { name: 'Colombiana' }).check();
 
     // El foco va al primer campo inválido en ORDEN DE DOM, no al primero de la lista de
     // errores (issue #366, D6). Con correo y teléfono vacíos los dos órdenes discrepan y

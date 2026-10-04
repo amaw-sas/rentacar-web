@@ -46,6 +46,7 @@ import type {
   BranchData,
   MonthlyMileage,
   IdentificationType,
+  DriverLicenseType,
   DateObject,
   TimeObject,
   ReservationFormValidationSchemaType,
@@ -73,6 +74,10 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   const apellidos = ref<string | null>(null);
   const tipoIdentificacion = ref<IdentificationType | null>(null);
   const identificacion = ref<string | null>(null);
+  // Licencia colombiana/extranjera. Solo UI: decide el aviso de qué documento
+  // presentar al recoger; nunca entra al payload (useRecordReservationForm no
+  // lo destructura). Obligatoria sin default: la respuesta debe ser expresa.
+  const tipoLicencia = ref<DriverLicenseType | null>(null);
   const telefono = ref<string | null>(null);
   const email = ref<string | null>(null);
 
@@ -362,6 +367,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     apellidos.value = null;
     tipoIdentificacion.value = null;
     identificacion.value = null;
+    tipoLicencia.value = null;
     telefono.value = null;
     email.value = null;
     referido.value = null;
@@ -516,6 +522,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     apellidos,
     tipoIdentificacion,
     identificacion,
+    tipoLicencia,
     telefono,
     email,
     vehiculo,

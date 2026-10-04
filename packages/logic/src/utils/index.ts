@@ -18,6 +18,7 @@ export * from './useValidateFunctions';
 // String Functions
 // ============================================================================
 export { slugify } from './slugify';
+export { DRIVER_LICENSE_OPTIONS, driverLicenseNotice } from './driverLicense';
 export { cityPullQuotes, splitSentences } from './cityPullQuotes';
 export { renderChatMarkdown } from './renderChatMarkdown';
 export { splitBubbles } from './splitBubbles';
@@ -181,6 +182,7 @@ export type * from './types/type/BlogPost';
 export type { CategoryType } from './types/type/CategoryType';
 export type { default as ErrorMessage } from './types/type/ErrorMessage';
 export type { IdentificationType } from './types/type/IdentificationType';
+export type { DriverLicenseType } from './types/type/DriverLicenseType';
 export type { default as Message } from './types/type/Message';
 export type { MonthlyMileage } from './types/type/MonthlyMileage';
 export type { default as PhoneInputOptionsType } from './types/type/PhoneInputOptionsType';

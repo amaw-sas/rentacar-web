@@ -39,6 +39,7 @@ const BUSCAR_VEHICULOS_FLOW_SPECS = [
   '**/availability-error-feedback.spec.ts',
   '**/city-branch-validation.spec.ts',
   '**/clic-foto-abre-reserva.spec.ts',
+  '**/driver-license-notice.spec.ts',
   '**/reservation-a11y-single-dialog.spec.ts',
   '**/reservation-back-returns-to-listing.spec.ts',
   '**/reservation-back-url-cleanup.spec.ts',

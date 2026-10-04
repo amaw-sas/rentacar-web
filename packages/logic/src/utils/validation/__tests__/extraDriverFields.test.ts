@@ -28,6 +28,8 @@ const validReservation = {
   telefono: '+573001234567',
   email: 'juan@example.com',
   politicaPrivacidad: true,
+  // Mandatory since the license selector (SCEN-LIC-04); orthogonal to this suite.
+  tipoLicencia: 'colombiana',
 }
 
 function parse(overrides: Record<string, unknown> = {}) {
