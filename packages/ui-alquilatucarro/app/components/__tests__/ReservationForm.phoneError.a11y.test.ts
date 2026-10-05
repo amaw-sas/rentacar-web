@@ -112,3 +112,36 @@ describe('visitor-country phone field — flag change revalidates', () => {
     expect(scriptSetup).toMatch(/\bphoneFieldInvalid,[\s\S]*?=\s*usePhoneField\(reservationForm/)
   })
 })
+
+// SCEN-016..018 (colombian-mobile-hint.scenarios.md): a Colombian mobile typed
+// under a foreign flag shows a non-blocking hint inside the telefono field. It is
+// plain help text, not the #error slot, so it never marks the field invalid.
+describe('visitor-country phone field — Colombian mobile hint', () => {
+  const hint =
+    phoneField.match(/<p\b[^>]*id="telefono-hint"[^>]*>[\s\S]*?<\/p>/)?.[0] ?? ''
+  const hintTag = hint.match(/^<p\b[^>]*>/)?.[0] ?? ''
+  const errorSlot = phoneField.match(/<template #error[\s\S]*?<\/template>/)?.[0] ?? ''
+
+  it('renders the owner-approved text inside the telefono field', () => {
+    expect(hint).toContain('¿Es un celular de Colombia? Cambia la bandera a Colombia.')
+    expect(hint).toMatch(/\bid="telefono-hint"/)
+    expect(hint).toMatch(/\baria-live="polite"/)
+  })
+
+  it('keeps the live region mounted and toggles only its text (announced reliably)', () => {
+    expect(hintTag).not.toMatch(/\bv-if=/)
+    expect(hint).toMatch(/<span\b[^>]*v-if="showColombianMobileHint"[^>]*>¿Es un celular de Colombia\? Cambia la bandera a Colombia\.<\/span>/)
+  })
+
+  it('keeps the hint out of the #error slot', () => {
+    expect(errorSlot).not.toBe('')
+    expect(errorSlot).not.toContain('showColombianMobileHint')
+    expect(errorSlot).not.toContain('¿Es un celular de Colombia?')
+  })
+
+  it('derives it from the typed number and the flag on screen', () => {
+    expect(scriptSetup).toMatch(
+      /showColombianMobileHint\s*=\s*computed\(\s*\(\)\s*=>\s*shouldHintColombianMobile\(\s*formState\.value\.telefono,\s*telefonoPais\.value\s*\)\s*\)/,
+    )
+  })
+})

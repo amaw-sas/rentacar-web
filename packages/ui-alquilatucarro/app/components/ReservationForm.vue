@@ -139,6 +139,10 @@
               class="h-[46px] rounded-lg border border-gray-400 bg-gray-100"
             ></div>
           </div>
+          <!-- SCEN-016..018: a Colombian mobile typed under a foreign flag is
+               also a valid number there, so this is help text, never an error. -->
+          <!-- Always mounted: a live region that appears with v-if is often not announced. -->
+          <p id="telefono-hint" aria-live="polite" class="text-xs text-amber-800" :class="{ 'mt-1.5': showColombianMobileHint }"><span v-if="showColombianMobileHint">¿Es un celular de Colombia? Cambia la bandera a Colombia.</span></p>
           <!-- SCEN-322-X01: deterministic id for the error message so the input's
                aria-describedby (set via phoneInputOptions while invalid) points
                here. UFormField wraps this slot in its own error container. -->
@@ -219,6 +223,7 @@ import {
   ReservationFormValidationSchema,
   DRIVER_LICENSE_OPTIONS,
   driverLicenseNotice,
+  shouldHintColombianMobile,
 } from '@rentacar-main/logic/utils';
 
 // The phone field appears only once the input component, the full phone
@@ -245,6 +250,7 @@ const {
   tipoIdentificacion,
   tipoLicencia,
   telefono,
+  telefonoPais,
   email,
   politicaPrivacidad,
   conductorAdicionalNombre,
@@ -317,6 +323,10 @@ const {
   phoneFieldInvalid,
   validatePhoneField,
 } = usePhoneField(reservationForm, () => formState.value.telefono);
+
+// Flag on screen vs typed number (SCEN-016..018). The field only mounts once
+// the validator is loaded, so both inputs here are reactive refs.
+const showColombianMobileHint = computed(() => shouldHintColombianMobile(formState.value.telefono, telefonoPais.value));
 
 
 

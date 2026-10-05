@@ -118,8 +118,19 @@ export function phoneInvalidMessage(input: unknown): string {
 
 function colombianFlagMessage(nationalDigits: string): string {
   if (hasPhoneLengthProblem(nationalDigits, "CO")) return PHONE_MSG_INCOMPLETE;
-  if (COLOMBIAN_SHAPE.test(nationalDigits) && nationalDigits.length !== 10) return PHONE_MSG_INCOMPLETE;
+  // The shape is judged without the prefixes customers add by habit (0, 0057,
+  // 57 without +): `0 300…` or `57 300 123 456` are Colombian typos too.
+  const core = stripColombianPrefixes(nationalDigits);
+  if (COLOMBIAN_SHAPE.test(core) && (core.length !== 10 || isValidPhone(`+57${core}`))) {
+    return PHONE_MSG_INCOMPLETE;
+  }
   return PHONE_MSG_NOT_COLOMBIA;
+}
+
+function stripColombianPrefixes(digits: string): string {
+  let core = digits.replace(/^00/, "");
+  if (/^57(3|60)/.test(core) && core.length >= 11) core = core.slice(2);
+  return core.replace(/^0+/, "");
 }
 
 // Shared field entries. Exported so composed schemas spread them WITHOUT the

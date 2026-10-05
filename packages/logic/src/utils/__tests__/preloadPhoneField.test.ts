@@ -40,9 +40,13 @@ describe('preloadPhoneField', () => {
     vi.unstubAllGlobals()
   })
 
-  it('schedules the three loads with requestIdleCallback when available', async () => {
+  // Pre-PR performance review 2026-10-05 (SCEN-019): start 2 s after the results
+  // appear, so the downloads do not compete with the result cards' photos, then
+  // at the next idle moment — at most 3 s later, so a busy page still preloads.
+  it('waits 2 s, then schedules the three loads at idle with a 3 s cap', async () => {
+    vi.useFakeTimers()
     let idle: (() => void) | undefined
-    const ric = vi.fn((cb: () => void) => {
+    const ric = vi.fn((cb: () => void, _opts?: { timeout?: number }) => {
       idle = cb
       return 1
     })
@@ -51,7 +55,11 @@ describe('preloadPhoneField', () => {
     const preload = await freshPreload()
 
     preload(importComponent)
+    vi.advanceTimersByTime(1999)
+    expect(ric).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
     expect(ric).toHaveBeenCalledTimes(1)
+    expect(ric.mock.calls[0]![1]).toEqual({ timeout: 3000 })
     expect(importComponent).not.toHaveBeenCalled()
 
     idle!()
@@ -60,14 +68,14 @@ describe('preloadPhoneField', () => {
     expect(fetchVisitorCountry).toHaveBeenCalledTimes(1)
   })
 
-  it('falls back to a 1.5 s timeout without requestIdleCallback', async () => {
+  it('without requestIdleCallback, runs the loads 2 s after being called', async () => {
     vi.useFakeTimers()
     vi.stubGlobal('requestIdleCallback', undefined)
     const importComponent = vi.fn().mockResolvedValue({})
     const preload = await freshPreload()
 
     preload(importComponent)
-    vi.advanceTimersByTime(1499)
+    vi.advanceTimersByTime(1999)
     expect(importComponent).not.toHaveBeenCalled()
     vi.advanceTimersByTime(1)
     expect(importComponent).toHaveBeenCalledTimes(1)
@@ -76,6 +84,7 @@ describe('preloadPhoneField', () => {
   })
 
   it('runs once per page, however many times it is called', async () => {
+    vi.useFakeTimers()
     const ric = vi.fn((cb: () => void) => {
       cb()
       return 1
@@ -87,6 +96,7 @@ describe('preloadPhoneField', () => {
     preload(importComponent)
     preload(importComponent)
     preload(importComponent)
+    vi.advanceTimersByTime(2000)
     expect(ric).toHaveBeenCalledTimes(1)
     expect(importComponent).toHaveBeenCalledTimes(1)
     expect(loadPhoneValidator).toHaveBeenCalledTimes(1)
@@ -123,9 +133,12 @@ describe('preloadPhoneField', () => {
         imports++
         return Promise.reject(new Error('chunk failed'))
       }
+      vi.useFakeTimers()
       const preload = await freshPreload()
 
       preload(importComponent)
+      vi.advanceTimersByTime(2000)
+      vi.useRealTimers()
       // Two macrotasks: long enough for Node to flag an unhandled rejection.
       await new Promise((resolve) => setTimeout(resolve, 0))
       await new Promise((resolve) => setTimeout(resolve, 0))

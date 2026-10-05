@@ -357,3 +357,42 @@ describe('phoneInvalidMessage — numbers with a dial code are judged by length 
     expect(phoneInvalidMessage('+1 300 123 4567')).toBe(OTHER_MSG)
   })
 })
+
+// Pre-PR review 2026-10-05: a Colombian number written with a leading 0, 0057
+// or 57 (no +) and one digit wrong is still Colombian-shaped once those
+// prefixes are stripped — it must get "incomplete", not "pick another flag".
+// Neighbouring countries keep the Colombia message.
+describe('phoneInvalidMessage — Colombian numbers with 0 / 0057 / 57 prefixes', () => {
+  const CO_MSG = 'Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.'
+  const OTHER_MSG = 'Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.'
+  const INCOMPLETE_MSG =
+    'Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.'
+
+  afterEach(() => setActivePhoneCountry(null))
+
+  it.each([
+    ['0 300 123 4567'],
+    ['03001234567'],
+    ['0057 300 123 4567'],
+    ['57300123456'],
+    ['5730012345678'],
+  ])('CO flag, %s → incomplete message', (typed) => {
+    setActivePhoneCountry('CO')
+    expect(phoneInvalidMessage(typed)).toBe(INCOMPLETE_MSG)
+  })
+
+  it('+57 followed by 57 again → incomplete message', () => {
+    expect(phoneInvalidMessage('+57 57 300 123 4567')).toBe(INCOMPLETE_MSG)
+  })
+
+  it('CO flag, Venezuelan and Ecuadorian mobiles keep the Colombia message', () => {
+    setActivePhoneCountry('CO')
+    expect(phoneInvalidMessage('04121234567')).toBe(CO_MSG)
+    expect(phoneInvalidMessage('0991234567')).toBe(CO_MSG)
+  })
+
+  it('a dial code that does not exist → incomplete message, not "wrong country"', () => {
+    expect(phoneInvalidMessage('+999 1234567')).toBe(INCOMPLETE_MSG)
+    expect(phoneInvalidMessage('+1 300 123 4567')).toBe(OTHER_MSG)
+  })
+})

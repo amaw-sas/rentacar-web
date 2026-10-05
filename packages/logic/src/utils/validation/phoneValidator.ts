@@ -69,8 +69,8 @@ export function getActivePhoneCountry(): string | null {
 }
 
 /**
- * True when the digit count cannot be right: too short, too long, or between two
- * valid lengths. `text` is either an international number (`+…`, `country`
+ * True when the digit count cannot be right: too short, too long, between two
+ * valid lengths, or behind a dial code that does not exist. `text` is either an international number (`+…`, `country`
  * omitted) or national digits for `country`. Without the metadata or a country
  * nothing can be measured, so it counts as a length problem (the neutral
  * "incomplete" message).
@@ -80,7 +80,12 @@ export function hasPhoneLengthProblem(text: string, country?: string | null): bo
   if (!text.startsWith("+") && !country) return true;
   try {
     const result = api.validatePhoneNumberLength(text, (country ?? undefined) as CountryCode | undefined);
-    return result === "TOO_SHORT" || result === "TOO_LONG" || result === "INVALID_LENGTH";
+    return (
+      result === "TOO_SHORT" ||
+      result === "TOO_LONG" ||
+      result === "INVALID_LENGTH" ||
+      result === "INVALID_COUNTRY"
+    );
   } catch {
     return true;
   }

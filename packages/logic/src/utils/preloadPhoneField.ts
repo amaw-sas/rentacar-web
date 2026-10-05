@@ -6,17 +6,20 @@ import { fetchVisitorCountry } from './fetchVisitorCountry';
 // field is usually ready when the form opens. usePhoneFieldLoader then gets the
 // same promises: the module and both loaders are cached.
 //
-// Idle time, not right away: the results are rendering and must not wait for a
-// chunk the customer may never need. Silent on failure, like the loader (PR #501):
+// Not right away: 2 s after the results appear, so the downloads do not compete
+// with the result cards' photos, then at the next idle moment — capped at 3 s so
+// a busy page (results + chat) still preloads before the form opens (pre-PR
+// performance review, SCEN-019). Silent on failure, like the loader (PR #501):
 // the form reports a failed load when it opens.
 
-const IDLE_FALLBACK_MS = 1500;
+const START_DELAY_MS = 2000;
+const IDLE_TIMEOUT_MS = 3000;
 
 // Read through globalThis: the utils barrel also reaches the server tsconfig,
 // which has no DOM lib to declare `window` or `requestIdleCallback`.
 const scope = globalThis as {
   window?: unknown;
-  requestIdleCallback?: (callback: () => void) => unknown;
+  requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => unknown;
 };
 
 let started = false;
@@ -31,6 +34,11 @@ export function preloadPhoneField(importComponent: () => Promise<unknown>): void
     fetchVisitorCountry();
   };
 
-  if (typeof scope.requestIdleCallback === 'function') scope.requestIdleCallback(run);
-  else setTimeout(run, IDLE_FALLBACK_MS);
+  setTimeout(() => {
+    if (typeof scope.requestIdleCallback === 'function') {
+      scope.requestIdleCallback(run, { timeout: IDLE_TIMEOUT_MS });
+    } else {
+      run();
+    }
+  }, START_DELAY_MS);
 }
