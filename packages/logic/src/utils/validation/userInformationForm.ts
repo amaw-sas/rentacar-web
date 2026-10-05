@@ -1,7 +1,12 @@
 
 import * as v from "valibot";
 import { normalizePhoneNumber } from "./normalizePhoneNumber";
-import { isPhoneValidatorReady, isValidPhone } from "./phoneValidator";
+import {
+  getActivePhoneCountry,
+  isPhoneValidatorReady,
+  isTooShortForActiveCountry,
+  isValidPhone,
+} from "./phoneValidator";
 import "@valibot/i18n/es";
 v.setGlobalConfig({ lang: "es" });
 
@@ -69,25 +74,31 @@ export function extraDriverDocumentError(documento: unknown): string | null {
     : "El documento debe tener entre 6 y 15 caracteres (letras y números)";
 }
 
+const PHONE_MSG_GENERIC = "Número de teléfono o WhatsApp no válido";
+const PHONE_MSG_NOT_COLOMBIA =
+  "Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.";
+const PHONE_MSG_OTHER_FLAG =
+  "Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.";
+const PHONE_MSG_INCOMPLETE =
+  "Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.";
+
 /**
- * Message for a phone number the full metadata rejects, chosen by the raw value.
- * vue-tel-input prefixes what the customer types with the flag's dial code, so
- * the prefix tells which flag was showing: `+57` means the Colombian flag (the
- * usual case of a foreign number typed under it), another `+` code means a
- * different flag, and no `+` means vue-tel-input could not build the number with
- * the flag at all (almost always incomplete).
+ * Message for a phone number the full metadata rejects. vue-tel-input prefixes
+ * what the customer types with the flag's dial code only when its own (min)
+ * metadata accepts the number, so:
+ * - `+57…` → the Colombian flag was showing (the usual foreign-number case);
+ * - another `+code` → a different flag;
+ * - raw digits → judged against the flag on screen: too short for that country
+ *   means incomplete, otherwise the flag's own message.
  * Without the metadata loaded nothing can be judged, so the generic message.
  */
 export function phoneInvalidMessage(input: unknown): string {
-  if (!isPhoneValidatorReady()) return "Número de teléfono o WhatsApp no válido";
+  if (!isPhoneValidatorReady()) return PHONE_MSG_GENERIC;
   const value = String(input ?? "").trim();
-  if (value.startsWith("+57")) {
-    return "Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.";
-  }
-  if (value.startsWith("+")) {
-    return "Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.";
-  }
-  return "Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.";
+  if (value.startsWith("+57")) return PHONE_MSG_NOT_COLOMBIA;
+  if (value.startsWith("+")) return PHONE_MSG_OTHER_FLAG;
+  if (isTooShortForActiveCountry(value.replace(/\D/g, ""))) return PHONE_MSG_INCOMPLETE;
+  return getActivePhoneCountry() === "CO" ? PHONE_MSG_NOT_COLOMBIA : PHONE_MSG_OTHER_FLAG;
 }
 
 // Shared field entries. Exported so composed schemas spread them WITHOUT the

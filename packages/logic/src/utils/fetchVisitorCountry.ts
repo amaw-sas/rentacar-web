@@ -26,7 +26,10 @@ export function fetchVisitorCountry(): Promise<string | null> {
       resolve(value)
     }
     try {
-      ;($fetch as (url: string) => Promise<unknown>)('/api/visitor-country')
+      // retry: 0 — ofetch retries a failed GET once by default; one lookup is enough.
+      ;($fetch as (url: string, opts: { retry: number }) => Promise<unknown>)('/api/visitor-country', {
+        retry: 0,
+      })
         .then((body) => done(parseCountry(body)))
         .catch(() => done(null))
     } catch {

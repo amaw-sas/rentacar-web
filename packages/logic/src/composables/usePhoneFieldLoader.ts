@@ -4,7 +4,7 @@ import type { Component } from 'vue';
 
 // Internal dependencies
 import useStoreReservationForm from '../stores/useStoreReservationForm';
-import { loadPhoneValidator } from '../utils/validation/phoneValidator';
+import { loadPhoneValidator, setActivePhoneCountry } from '../utils/validation/phoneValidator';
 import { fetchVisitorCountry } from '../utils/fetchVisitorCountry';
 import { pickPhoneCountry } from '../utils/pickPhoneCountry';
 
@@ -74,7 +74,10 @@ export default function usePhoneFieldLoader(importComponent: () => Promise<Compo
   });
 
   function onPhoneCountryChanged(country: { iso2?: string }) {
-    if (country?.iso2) store.telefonoPais = country.iso2.toUpperCase();
+    if (!country?.iso2) return;
+    const iso2 = country.iso2.toUpperCase();
+    store.telefonoPais = iso2;
+    setActivePhoneCountry(iso2);
   }
 
   return {

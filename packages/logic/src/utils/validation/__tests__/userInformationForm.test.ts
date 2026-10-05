@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import * as v from 'valibot'
 import {
   identificationError,
   phoneInvalidMessage,
   UserInformationFormValidationSchema,
 } from '../userInformationForm'
-import { loadPhoneValidator } from '../phoneValidator'
+import { loadPhoneValidator, setActivePhoneCountry } from '../phoneValidator'
 import { ReservationFormValidationSchema } from '../reservationForm'
 // ReservationWithFlightFormValidationSchema removed (issue #322 SCEN-322-X07):
 // the flight branch was dead code — no template ever collected flight fields.
@@ -266,5 +266,50 @@ describe('phoneInvalidMessage — message chosen by the raw value', () => {
     expect(phoneInvalidMessage('300123')).toBe(
       'Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.'
     )
+  })
+})
+
+// vue-tel-input only prefixes the dial code when ITS (min) metadata accepts the
+// number; otherwise the raw national digits arrive. The flag shown then decides
+// the message: too short for that country → incomplete; complete length but not
+// a real number → the flag message (SCEN-010 as seen in the browser, SCEN-014).
+describe('phoneInvalidMessage — raw digits use the flag on screen', () => {
+  const CO_MSG = 'Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.'
+  const OTHER_MSG = 'Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.'
+  const INCOMPLETE_MSG =
+    'Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.'
+
+  afterEach(() => setActivePhoneCountry(null))
+
+  it('US flag, a Colombian mobile typed as national digits → wrong-country message (SCEN-010)', () => {
+    setActivePhoneCountry('US')
+    expect(phoneInvalidMessage('300 123 4567')).toBe(OTHER_MSG)
+    const result = v.safeParse(UserInformationFormValidationSchema, {
+      ...validBase, tipoIdentificacion: CC, identificacion: '1020304050', telefono: '300 123 4567',
+    })
+    expect(result.success).toBe(false)
+    const messages = (result.issues ?? [])
+      .filter((i) => i.path?.some((p) => (p as { key?: unknown }).key === 'telefono'))
+      .map((i) => i.message)
+    expect(messages).toEqual([OTHER_MSG])
+  })
+
+  it('US flag, too few digits → incomplete message', () => {
+    setActivePhoneCountry('US')
+    expect(phoneInvalidMessage('817 522')).toBe(INCOMPLETE_MSG)
+  })
+
+  it('CO flag, too few digits → incomplete message (SCEN-014)', () => {
+    setActivePhoneCountry('CO')
+    expect(phoneInvalidMessage('300123')).toBe(INCOMPLETE_MSG)
+  })
+
+  it('CO flag, too many digits → Colombia message', () => {
+    setActivePhoneCountry('CO')
+    expect(phoneInvalidMessage('30012345678901')).toBe(CO_MSG)
+  })
+
+  it('no flag known → incomplete message', () => {
+    expect(phoneInvalidMessage('300 123 4567')).toBe(INCOMPLETE_MSG)
   })
 })

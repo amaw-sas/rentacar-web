@@ -29,8 +29,10 @@ function deferred<T>(): Deferred<T> {
 let validator: Deferred<void>
 let visitor: Deferred<string | null>
 
+const setActivePhoneCountry = vi.fn()
 vi.mock('../../utils/validation/phoneValidator', () => ({
   loadPhoneValidator: () => validator.promise,
+  setActivePhoneCountry: (iso2: string | null) => setActivePhoneCountry(iso2),
 }))
 vi.mock('../../utils/fetchVisitorCountry', () => ({
   fetchVisitorCountry: () => visitor.promise,
@@ -167,6 +169,13 @@ describe('usePhoneFieldLoader', () => {
     const { out } = mountHost(() => new Promise(() => {}))
     out.api!.onPhoneCountryChanged({ iso2: 'us' })
     expect(useStoreReservationForm().telefonoPais).toBe('US')
+  })
+
+  it('tells the validator which flag is on screen, so raw digits get the right message', () => {
+    setActivePhoneCountry.mockClear()
+    const { out } = mountHost(() => new Promise(() => {}))
+    out.api!.onPhoneCountryChanged({ iso2: 'us' })
+    expect(setActivePhoneCountry).toHaveBeenLastCalledWith('US')
   })
 
   it('ignores a country change without iso2', () => {

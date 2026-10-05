@@ -35,6 +35,13 @@ describe('fetchVisitorCountry (client)', () => {
     expect(f).toHaveBeenCalledTimes(1)
   })
 
+  it('asks once, without automatic retries (a failed lookup must not double the noise)', async () => {
+    const f = vi.fn().mockResolvedValue({ country: 'US', source: 'cf' })
+    vi.stubGlobal('$fetch', f)
+    await fetchVisitorCountry()
+    expect(f).toHaveBeenCalledWith('/api/visitor-country', expect.objectContaining({ retry: 0 }))
+  })
+
   it('returns null when the request rejects', async () => {
     vi.stubGlobal('$fetch', vi.fn().mockRejectedValue(new Error('boom')))
     expect(await fetchVisitorCountry()).toBeNull()

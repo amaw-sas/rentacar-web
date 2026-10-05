@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Scenarios: docs/specs/2026-10-04-telefono-pais-visitante/scenarios/phone-country.scenarios.md
 //
-// The full libphonenumber metadata (~40 kB gzip) is loaded on demand. Each test
+// The full libphonenumber metadata (~40 kB gzip) is loaded on demand through
+// ../phoneValidatorMax, the dynamic-import target mocked here. Each test
 // gets a fresh copy of the module under test so the memoized state never leaks.
 
 type PhoneValidatorModule = typeof import('../phoneValidator')
@@ -13,7 +14,7 @@ const freshModule = async (): Promise<PhoneValidatorModule> => {
 }
 
 afterEach(() => {
-  vi.doUnmock('libphonenumber-js/max')
+  vi.doUnmock('../phoneValidatorMax')
   vi.resetModules()
 })
 
@@ -33,9 +34,9 @@ describe('phoneValidator — loading', () => {
   })
 
   it('imports the metadata once, whether calls overlap or come after the first finished', async () => {
-    vi.doMock('libphonenumber-js/max', async () => {
+    vi.doMock('../phoneValidatorMax', async () => {
       importCount++
-      const actual = await vi.importActual<typeof import('libphonenumber-js/max')>('libphonenumber-js/max')
+      const actual = await vi.importActual<typeof import('../phoneValidatorMax')>('../phoneValidatorMax')
       return { ...actual }
     })
     const mod = await freshModule()
@@ -53,10 +54,10 @@ describe('phoneValidator — loading', () => {
   })
 
   it('forgets a failed import so the next call retries and succeeds', async () => {
-    vi.doMock('libphonenumber-js/max', async () => {
+    vi.doMock('../phoneValidatorMax', async () => {
       importCount++
       if (importCount === 1) throw new Error('chunk failed to load')
-      const actual = await vi.importActual<typeof import('libphonenumber-js/max')>('libphonenumber-js/max')
+      const actual = await vi.importActual<typeof import('../phoneValidatorMax')>('../phoneValidatorMax')
       return { ...actual }
     })
     const mod = await freshModule()

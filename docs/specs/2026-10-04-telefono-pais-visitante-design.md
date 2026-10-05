@@ -33,6 +33,8 @@ Medido el 2026-10-04 en la base del tablero (365 días, 8.088 reservas): 16 rese
   - `normalizePhoneNumber.ts` usa `isValidPhone`; sin validador cargado devuelve la entrada intacta. El esquema la rechaza antes de guardar, así que el caso mexicano no cambia.
   - El loader del campo (§2) espera también `loadPhoneValidator()`.
   - Resultado esperado: los metadatos `min` salen del chunk de entrada (solo los usa `vue-tel-input`, que ya es diferido) y los `max` van en un chunk aparte que baja al abrir el formulario.
+  - El `import()` apunta a `phoneValidatorMax.ts`, que reexporta con nombre solo `isValidPhoneNumber` y `validatePhoneNumberLength`. Importar `libphonenumber-js/max` directo de forma dinámica arrastra el módulo completo (56,8 kB gzip frente a 41,3 kB).
+  - Medido (build de producción de alquilatucarro, 2026-10-04): JS inicial de `/bogota` 346,9 → 317,7 kB gzip; entry 203,2 → 173,9 kB; al abrir el formulario bajan 81,3 kB (`vue-tel-input` + `min` 30,8; `max` 41,3; núcleo compartido 9,2), contra 10,2 kB antes.
 - Se mide con un build de producción de alquilatucarro, antes (ya medido: §Estado actual) y después: kB gzip del entry, del chunk de `max` y del de `vue-tel-input`, y confirmación de que ninguno de los dos metadatos es alcanzable con imports estáticos desde el entry ni desde la página de `/bogota`.
 
 ### 2. País inicial según el visitante
@@ -54,7 +56,10 @@ El `v.custom` del teléfono pasa a recibir el mensaje como función del valor:
 
 - Empieza por `+57` y es inválido: «Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.» (aprobado 2026-10-04)
 - Empieza por otro `+código` y es inválido: «Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.» (aprobado 2026-10-04)
-- No empieza por `+` (`vue-tel-input` no lo pudo armar con la bandera; casi siempre está incompleto): «Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.» (aprobado 2026-10-04)
+- No empieza por `+`: `vue-tel-input` solo antepone el código cuando sus metadatos `min` aceptan el número; si no, llega el texto crudo (con bandera USA, `300 123 4567` llega así). Se juzga contra la bandera en pantalla, que el cargador le avisa al validador con cada `country-changed` (`setActivePhoneCountry`):
+  - le faltan dígitos para ese país (`validatePhoneNumberLength` = `TOO_SHORT`) o no hay bandera conocida: «Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.» (aprobado 2026-10-04)
+  - tiene los dígitos pero no existe: el mensaje de la bandera (Colombia → el de Colombia; otra → «no corresponde al país»).
+  - Ajuste del 2026-10-04 tras la prueba en navegador (SCEN-010 fallaba con la regla «sin `+` → incompleto»). Los textos no cambian.
 - Vacío o con menos de 5 caracteres: sin cambios («Escribe tu número de WhatsApp o teléfono»).
 
 ## Alcance de los cambios (blast radius)

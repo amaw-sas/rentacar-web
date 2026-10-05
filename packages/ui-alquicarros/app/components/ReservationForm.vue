@@ -114,13 +114,13 @@
             @blur="validatePhoneField"
             @country-changed="onPhoneCountryChanged"
           />
-          <!-- Same height and frame as the loaded .vue-tel-input (vendor CSS:
-               1.5px border + 0.75rem input padding + 24px line), so the fields
-               below don't jump when it swaps in. -->
+          <!-- Same height and frame as the loaded .vue-tel-input (46px measured
+               in the browser on the 3 brands: 1px border + 44px input), so the
+               fields below don't jump when it swaps in. -->
           <div
             v-else
             aria-hidden="true"
-            class="h-[51px] rounded-lg border-[1.5px] border-gray-400 bg-gray-100"
+            class="h-[46px] rounded-lg border border-gray-400 bg-gray-100"
           ></div>
           <!-- SCEN-322-X01: deterministic id for the error message so the input's
                aria-describedby (set via phoneInputOptions while invalid) points
