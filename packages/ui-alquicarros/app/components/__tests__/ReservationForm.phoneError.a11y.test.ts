@@ -24,3 +24,124 @@ describe('SCEN-322-X01 — telefono error message is referenceable', () => {
     expect(form).toMatch(/usePhoneField\(reservationForm/)
   })
 })
+
+// Visitor-country phone field (spec 2026-10-04 §2-§3): the field mounts only
+// once usePhoneFieldLoader has the component, the metadata and the country, and
+// a same-height placeholder holds its place meanwhile. Assertions run on the
+// telefono <u-form-field> fragment so comments elsewhere can't trip them.
+const phoneField =
+  form.match(/<u-form-field[^>]*name="telefono"[^>]*>[\s\S]*?<\/u-form-field>/)?.[0] ?? ''
+const phoneComponentTag = phoneField.match(/<component\b[\s\S]*?\/>/)?.[0] ?? ''
+const scriptSetup = form.match(/<script setup[^>]*>([\s\S]*?)<\/script>/)?.[1] ?? ''
+// Vue allows comments between the v-if and v-else siblings.
+const afterComponent = phoneField
+  .slice(phoneField.indexOf(phoneComponentTag) + phoneComponentTag.length)
+  .replace(/^(\s*<!--[\s\S]*?-->)+/, '')
+const placeholderTag = afterComponent.match(/^\s*<div\b[^>]*>/)?.[0] ?? ''
+// The v-else wrapper up to the #error slot that follows it.
+const placeholder = afterComponent.split(/<template #error/)[0] ?? ''
+
+describe('visitor-country phone field — loader wiring', () => {
+  it('loads the field through usePhoneFieldLoader, not defineAsyncComponent', () => {
+    expect(scriptSetup).not.toMatch(/defineAsyncComponent\(/)
+    expect(scriptSetup).toMatch(
+      /usePhoneFieldLoader\(\s*\(\) => import\('vue-tel-input'\)\.then\(\(m\) => m\.VueTelInput\)/,
+    )
+  })
+
+  it('renders the loaded component with the resolved country', () => {
+    expect(phoneComponentTag).toMatch(/:is="phoneComponent"/)
+    expect(phoneComponentTag).toMatch(/v-if="phoneComponent"/)
+    expect(phoneComponentTag).toMatch(/:default-country="phoneInitialCountry"/)
+    expect(phoneComponentTag).toMatch(/@country-changed="onPhoneCountryChanged"/)
+    expect(phoneField).not.toMatch(/defaultCountry="CO"/)
+    expect(phoneField).not.toMatch(/<VueTelInput\b/)
+  })
+
+  it('keeps the existing bindings on the phone component', () => {
+    expect(phoneComponentTag).toMatch(/v-model="formState\.telefono"/)
+    expect(phoneComponentTag).toMatch(/mode="international"/)
+    expect(phoneComponentTag).toMatch(/:dropdownOptions="phoneDropdownOptions"/)
+    expect(phoneComponentTag).toMatch(/:inputOptions="phoneInputOptions"/)
+    expect(phoneComponentTag).toMatch(/:preferred-countries="phonePreferredCountries"/)
+    expect(phoneComponentTag).toMatch(/@blur="validatePhoneField"/)
+  })
+
+  it('holds the place with a v-else wrapper right after it, aria-hidden while loading', () => {
+    expect(phoneComponentTag).not.toBe('')
+    expect(placeholderTag).toMatch(/^\s*<div\b[^>]*\bv-else\b[^>]*>/)
+    // The grey box is aria-hidden; the wrapper is not, because it also hosts the
+    // load-failure notice, which must be read out.
+    expect(placeholder).toMatch(/<div\b[^>]*\bv-else\b[^>]*\baria-hidden="true"[^>]*>/)
+    expect(placeholderTag).not.toMatch(/aria-hidden/)
+  })
+})
+
+// Review fix 1: when the component or the metadata fails to load, the browser
+// keeps the failed import for the life of the page (whatwg/html#6768), so only a
+// reload helps. The placeholder turns into a notice with a reload button, and it
+// carries id="telefono" so the label and the first-invalid-field scroll reach it
+// while the real input is missing.
+describe('visitor-country phone field — load failure', () => {
+  it('gives the placeholder the input id, focusable from script only', () => {
+    expect(placeholderTag).toMatch(/\bid="telefono"/)
+    expect(placeholderTag).toMatch(/\btabindex="-1"/)
+  })
+
+  it('switches to the notice on phoneLoadFailed', () => {
+    expect(placeholder).toMatch(/v-if="phoneLoadFailed"/)
+    expect(scriptSetup).toMatch(/\bphoneLoadFailed\b[\s\S]*?=\s*usePhoneFieldLoader\(/)
+  })
+
+  it('tells the customer and offers a reload', () => {
+    expect(placeholder).toContain('No pudimos cargar el campo del teléfono.')
+    expect(placeholder).toContain('Recargar la página')
+    expect(placeholder).toMatch(/<button\b[^>]*\btype="button"[^>]*@click="reloadNuxtApp\(/)
+  })
+})
+
+// Review fix 2: changing only the flag does not change `telefono`, so the
+// debounced revalidation never runs and the old message would stay under the new
+// flag. The loader calls back on every flag change; the form re-checks only when
+// an error is showing (no nagging on a field the customer has not finished).
+describe('visitor-country phone field — flag change revalidates', () => {
+  it('re-validates on a flag change only while the field shows an error', () => {
+    expect(scriptSetup).toMatch(
+      /usePhoneFieldLoader\([\s\S]*?\{\s*onCountryChanged:\s*\(\)\s*=>\s*\{\s*if\s*\(phoneFieldInvalid\.value\)\s*validatePhoneField\(\);?\s*\},?\s*\}\s*\)/,
+    )
+    expect(scriptSetup).toMatch(/\bphoneFieldInvalid,[\s\S]*?=\s*usePhoneField\(reservationForm/)
+  })
+})
+
+// SCEN-016..018 (colombian-mobile-hint.scenarios.md): a Colombian mobile typed
+// under a foreign flag shows a non-blocking hint inside the telefono field. It is
+// plain help text, not the #error slot, so it never marks the field invalid.
+describe('visitor-country phone field — Colombian mobile hint', () => {
+  const hint =
+    phoneField.match(/<p\b[^>]*id="telefono-hint"[^>]*>[\s\S]*?<\/p>/)?.[0] ?? ''
+  const hintTag = hint.match(/^<p\b[^>]*>/)?.[0] ?? ''
+  const errorSlot = phoneField.match(/<template #error[\s\S]*?<\/template>/)?.[0] ?? ''
+
+  it('renders the owner-approved text inside the telefono field', () => {
+    expect(hint).toContain('¿Es un celular de Colombia? Cambia la bandera a Colombia.')
+    expect(hint).toMatch(/\bid="telefono-hint"/)
+    expect(hint).toMatch(/\baria-live="polite"/)
+  })
+
+  it('keeps the live region mounted and toggles only its text (announced reliably)', () => {
+    expect(hintTag).not.toMatch(/\bv-if=/)
+    expect(hint).toMatch(/<span\b[^>]*v-if="showColombianMobileHint"[^>]*>¿Es un celular de Colombia\? Cambia la bandera a Colombia\.<\/span>/)
+  })
+
+  it('keeps the hint out of the #error slot', () => {
+    expect(errorSlot).not.toBe('')
+    expect(errorSlot).not.toContain('showColombianMobileHint')
+    expect(errorSlot).not.toContain('¿Es un celular de Colombia?')
+  })
+
+  it('derives it from the typed number and the flag on screen', () => {
+    expect(scriptSetup).toMatch(
+      /showColombianMobileHint\s*=\s*computed\(\s*\(\)\s*=>\s*shouldHintColombianMobile\(\s*formState\.value\.telefono,\s*telefonoPais\.value\s*\)\s*\)/,
+    )
+  })
+})

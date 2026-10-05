@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import * as v from 'valibot'
 import { extraDriverDocumentError } from '../userInformationForm'
 import { ReservationFormValidationSchema } from '../reservationForm'
+import { loadPhoneValidator } from '../phoneValidator'
 
 // Scenarios: docs/specs/issue-396-conductor-adicional/scenarios/conductor-adicional-datos.scenarios.md
 //
@@ -39,6 +40,10 @@ function parse(overrides: Record<string, unknown> = {}) {
 function issueFor(result: ReturnType<typeof parse>, key: string) {
   return result.issues?.find((issue) => issue.path?.[0]?.key === key)
 }
+
+beforeAll(async () => {
+  await loadPhoneValidator()
+})
 
 describe('extraDriverDocumentError — SCEN-396-03, SCEN-396-04', () => {
   it('accepts a Colombian cédula', () => {

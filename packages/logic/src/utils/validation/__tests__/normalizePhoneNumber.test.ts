@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
-import { isValidPhoneNumber } from 'libphonenumber-js'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import * as v from 'valibot'
 import { normalizePhoneNumber } from '../normalizePhoneNumber'
 import { UserInformationFormValidationSchema } from '../userInformationForm'
+import { loadPhoneValidator } from '../phoneValidator'
 
 // Scenarios: docs/specs/mx-phone-legacy-prefix/scenarios/mx-phone-legacy-prefix.scenarios.md
 //
@@ -10,6 +10,15 @@ import { UserInformationFormValidationSchema } from '../userInformationForm'
 // (+52 1 …). E.164 / libphonenumber-js treats +521XXXXXXXXXX (11 digits) as
 // INVALID; the canonical form is +52XXXXXXXXXX (10 digits). Operators copy the
 // number verbatim from the client's WhatsApp, so the form rejected a real number.
+
+// Independent oracle: the same full metadata the validator loads, imported here
+// directly so the assertions do not go through the code under test.
+let isValidPhoneNumber: (text: string) => boolean
+
+beforeAll(async () => {
+  await loadPhoneValidator()
+  isValidPhoneNumber = (await import('libphonenumber-js/max')).isValidPhoneNumber
+})
 
 const validBase = {
   nombreCompleto: 'Juan',
@@ -76,5 +85,18 @@ describe('UserInformationFormValidationSchema — MX legacy prefix acceptance', 
   // SCEN-005
   it('still rejects a bogus number that only looks like the legacy form', () => {
     expect(parsePhone('+52 1 55 5').success).toBe(false)
+  })
+})
+
+// Scenarios: docs/specs/2026-10-04-telefono-pais-visitante/scenarios/phone-country.scenarios.md
+describe('normalizePhoneNumber — validator not loaded', () => {
+  // The MX rule needs the metadata to confirm the stripped number; without it the
+  // input passes through untouched (the schema rejects it before it is saved).
+  it('returns a legacy MX mobile unchanged', async () => {
+    vi.resetModules()
+    const validator = await import('../phoneValidator')
+    const fresh = await import('../normalizePhoneNumber')
+    expect(validator.isPhoneValidatorReady()).toBe(false)
+    expect(fresh.normalizePhoneNumber('+5215512345678')).toBe('+5215512345678')
   })
 })

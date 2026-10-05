@@ -109,15 +109,50 @@
                for="telefono" ↔ inputOptions.id="telefono" → nombre accesible
                "Teléfono" determinista (issue #65 SCEN-008). -->
           <label for="telefono" class="block font-medium text-sm text-gray-800 mb-1.5">Teléfono</label>
-          <VueTelInput
+          <component
+            :is="phoneComponent"
+            v-if="phoneComponent"
             v-model="formState.telefono"
             mode="international"
-            defaultCountry="CO"
+            :default-country="phoneInitialCountry"
             :dropdownOptions="phoneDropdownOptions"
             :inputOptions="phoneInputOptions"
             :preferred-countries="phonePreferredCountries"
             @blur="validatePhoneField"
+            @country-changed="onPhoneCountryChanged"
           />
+          <!-- Holds the input's place. id="telefono" + tabindex="-1" let the
+               first-invalid-field scroll land here while the input is missing. -->
+          <div v-else id="telefono" tabindex="-1">
+            <!-- A failed import stays failed for the life of the page
+                 (whatwg/html#6768): only a reload brings the field back.
+                 force: a click must reload even inside reloadNuxtApp's 10 s
+                 loop guard. -->
+            <div
+              v-if="phoneLoadFailed"
+              role="alert"
+              class="flex min-h-[46px] flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+            >
+              <span>No pudimos cargar el campo del teléfono.</span>
+              <button
+                type="button"
+                class="underline font-medium text-blue-700 hover:text-blue-800"
+                @click="reloadNuxtApp({ force: true })"
+              >Recargar la página</button>
+            </div>
+            <!-- Same height and frame as the loaded .vue-tel-input (46px measured
+                 in the browser on the 3 brands: 1px border + 44px input), so the
+                 fields below don't jump when it swaps in. -->
+            <div
+              v-else
+              aria-hidden="true"
+              class="h-[46px] rounded-lg border border-gray-400 bg-gray-100"
+            ></div>
+          </div>
+          <!-- SCEN-016..018: a Colombian mobile typed under a foreign flag is
+               also a valid number there, so this is help text, never an error. -->
+          <!-- Always mounted: a live region that appears with v-if is often not announced. -->
+          <p id="telefono-hint" aria-live="polite" class="text-xs text-amber-800" :class="{ 'mt-1.5': showColombianMobileHint }"><span v-if="showColombianMobileHint">¿Es un celular de Colombia? Cambia la bandera a Colombia.</span></p>
           <!-- SCEN-322-X01: deterministic id for the error message so the input's
                aria-describedby (set via phoneInputOptions while invalid) points
                here. UFormField wraps this slot in its own error container. -->
@@ -198,12 +233,19 @@ import {
   ReservationFormValidationSchema,
   DRIVER_LICENSE_OPTIONS,
   driverLicenseNotice,
+  shouldHintColombianMobile,
 } from '@rentacar-main/logic/utils';
 
-// Lazy load vue-tel-input (solo se carga cuando se renderiza el formulario)
-const VueTelInput = defineAsyncComponent(() =>
-  import('vue-tel-input').then(m => m.VueTelInput)
-);
+// The phone field appears only once the input component, the full phone
+// metadata and the visitor's country are ready (see usePhoneFieldLoader).
+// A flag change alone leaves `telefono` untouched, so the debounced revalidation
+// never runs: re-check here, only while an error is showing.
+const { phoneComponent, phoneInitialCountry, phoneLoadFailed, onPhoneCountryChanged } =
+  usePhoneFieldLoader(() => import('vue-tel-input').then((m) => m.VueTelInput), {
+    onCountryChanged: () => {
+      if (phoneFieldInvalid.value) validatePhoneField();
+    },
+  });
 
 /** stores */
 const storeSearch = useStoreSearchData();
@@ -218,6 +260,7 @@ const {
   tipoIdentificacion,
   tipoLicencia,
   telefono,
+  telefonoPais,
   email,
   politicaPrivacidad,
   conductorAdicionalNombre,
@@ -291,8 +334,13 @@ const {
   phoneDropdownOptions,
   phoneInputOptions,
   phonePreferredCountries,
+  phoneFieldInvalid,
   validatePhoneField,
 } = usePhoneField(reservationForm, () => formState.value.telefono);
+
+// Flag on screen vs typed number (SCEN-016..018). The field only mounts once
+// the validator is loaded, so both inputs here are reactive refs.
+const showColombianMobileHint = computed(() => shouldHintColombianMobile(formState.value.telefono, telefonoPais.value));
 
 
 

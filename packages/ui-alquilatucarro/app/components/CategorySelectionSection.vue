@@ -284,7 +284,7 @@ const props = withDefaults(defineProps<{
 });
 
 /** utils */
-import { allRenderableBeyondHorizon } from "@rentacar-main/logic/utils";
+import { allRenderableBeyondHorizon, preloadPhoneField } from "@rentacar-main/logic/utils";
 
 // Note: composables and functions are auto-imported by Nuxt
 
@@ -409,6 +409,16 @@ const resultSlots = computed(() =>
 );
 const hasRenderableAvailable = computed(() =>
   renderableCategories.value.some((c: { estimatedTotalAmount: number }) => c.estimatedTotalAmount !== 999999999),
+);
+// While the customer browses the results, warm up the reservation form's phone
+// field (component, metadata, country) so it is ready when the form opens.
+watch(
+  hasRenderableAvailable,
+  (available) => {
+    // @ts-expect-error vue-tel-input ships no type declarations (TS7016).
+    if (available) preloadPhoneField(() => import('vue-tel-input'));
+  },
+  { immediate: true },
 );
 // Issue #313 — nivel flujo: en reserva mensual, TODAS las gamas renderizables
 // caen más allá del horizonte de tarifas (caso 2027). Fail-closed: banner de

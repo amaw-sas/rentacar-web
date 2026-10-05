@@ -1,7 +1,12 @@
 
-import { isValidPhoneNumber } from 'libphonenumber-js';
 import * as v from "valibot";
 import { normalizePhoneNumber } from "./normalizePhoneNumber";
+import {
+  getActivePhoneCountry,
+  hasPhoneLengthProblem,
+  isPhoneValidatorReady,
+  isValidPhone,
+} from "./phoneValidator";
 import "@valibot/i18n/es";
 v.setGlobalConfig({ lang: "es" });
 
@@ -69,6 +74,65 @@ export function extraDriverDocumentError(documento: unknown): string | null {
     : "El documento debe tener entre 6 y 15 caracteres (letras y números)";
 }
 
+const PHONE_MSG_GENERIC = "Número de teléfono o WhatsApp no válido";
+const PHONE_MSG_NOT_COLOMBIA =
+  "Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.";
+const PHONE_MSG_OTHER_FLAG =
+  "Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.";
+const PHONE_MSG_INCOMPLETE =
+  "Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.";
+
+// Colombian numbers are exactly 10 digits: mobiles start with 3, landlines with
+// 60 + a department digit (1, 2, 4, 5, 6, 7, 8).
+const COLOMBIAN_SHAPE = /^(3|60[1245678])/;
+
+/**
+ * Message for a phone number the full metadata rejects. vue-tel-input prefixes
+ * what the customer types with the flag's dial code only when its own (min)
+ * metadata accepts the number; otherwise raw digits arrive and are judged
+ * against the flag on screen (set by usePhoneFieldLoader).
+ *
+ * Length comes first: a wrong digit count is "incomplete", never "pick another
+ * flag". Under Colombia, a Colombian-shaped number that is not 10 digits is a
+ * typo too. Only a complete number that does not exist gets the flag message —
+ * the case of a US number typed under the Colombian flag (+57 1 817…, +57 609…).
+ * Without the metadata loaded nothing can be judged, so the generic message.
+ */
+export function phoneInvalidMessage(input: unknown): string {
+  if (!isPhoneValidatorReady()) return PHONE_MSG_GENERIC;
+  const value = String(input ?? "").trim();
+  const digits = value.replace(/\D/g, "");
+
+  if (value.startsWith("+")) {
+    if (!value.startsWith("+57")) {
+      return hasPhoneLengthProblem(value) ? PHONE_MSG_INCOMPLETE : PHONE_MSG_OTHER_FLAG;
+    }
+    return colombianFlagMessage(digits.slice(2));
+  }
+
+  const flag = getActivePhoneCountry();
+  if (flag === "CO") return colombianFlagMessage(digits);
+  if (!flag || hasPhoneLengthProblem(digits, flag)) return PHONE_MSG_INCOMPLETE;
+  return PHONE_MSG_OTHER_FLAG;
+}
+
+function colombianFlagMessage(nationalDigits: string): string {
+  if (hasPhoneLengthProblem(nationalDigits, "CO")) return PHONE_MSG_INCOMPLETE;
+  // The shape is judged without the prefixes customers add by habit (0, 0057,
+  // 57 without +): `0 300…` or `57 300 123 456` are Colombian typos too.
+  const core = stripColombianPrefixes(nationalDigits);
+  if (COLOMBIAN_SHAPE.test(core) && (core.length !== 10 || isValidPhone(`+57${core}`))) {
+    return PHONE_MSG_INCOMPLETE;
+  }
+  return PHONE_MSG_NOT_COLOMBIA;
+}
+
+function stripColombianPrefixes(digits: string): string {
+  let core = digits.replace(/^00/, "");
+  if (/^57(3|60)/.test(core) && core.length >= 11) core = core.slice(2);
+  return core.replace(/^0+/, "");
+}
+
 // Shared field entries. Exported so composed schemas spread them WITHOUT the
 // object-level identification check (which `.entries` would drop) and re-apply it
 // themselves. The check itself is inlined per schema — valibot only infers the
@@ -85,7 +149,10 @@ export const userInformationEntries = {
   telefono: v.pipe(
     v.string("Escribe tu número de teléfono o WhatsApp"),
     v.minLength(5, "Escribe tu número de WhatsApp o teléfono"),
-    v.custom((input) => isValidPhoneNumber(normalizePhoneNumber(input as string)), "Número de teléfono o WhatsApp no válido")
+    v.custom(
+      (input) => isValidPhone(normalizePhoneNumber(input as string)),
+      (issue) => phoneInvalidMessage(issue.input)
+    )
   ),
   email: v.pipe(v.string("Escribe tu email o correo electrónico"), v.email("Email no válido")),
   politicaPrivacidad: v.pipe(
