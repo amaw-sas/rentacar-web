@@ -184,7 +184,7 @@ import { carrySelection } from '~/composables/useSelectionCarryOver'
 import { noticeMessage, useWizardNotice } from '~/composables/useWizardNotice'
 
 // utils
-import { isBeyondPricingHorizon } from '@rentacar-main/logic/utils'
+import { isBeyondPricingHorizon, preloadPhoneField } from '@rentacar-main/logic/utils'
 
 // Types
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
@@ -260,6 +260,17 @@ const rowByCode = computed(() => {
 // devolviera >1 fila por categoryCode (code-review F2).
 const groups = computed<SegmentGroup[]>(() =>
   groupBySegment([...new Set(renderable.value.map((r) => r.categoryCode))]),
+)
+
+// While the customer browses the vehicles, warm up the Paso 3 phone field
+// (component, metadata, country) so it is ready when the data step opens.
+watch(
+  () => groups.value.length > 0,
+  (available) => {
+    // @ts-expect-error vue-tel-input ships no type declarations (TS7016).
+    if (available) preloadPhoneField(() => import('vue-tel-input'))
+  },
+  { immediate: true },
 )
 
 /**

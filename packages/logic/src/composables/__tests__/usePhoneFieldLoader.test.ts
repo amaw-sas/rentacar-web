@@ -9,6 +9,8 @@ import { setActivePinia, createPinia } from 'pinia'
 //   SCEN-007 the flag stored in the form wins over the visitor country
 //   SCEN-008 the field appears only once component, validator and country are
 //            all settled, with the country already decided (never changes after)
+// Review fixes: a failed load is reported (phoneLoadFailed) so the form can offer
+// a reload, and a flag change notifies the form so a stale error is re-checked.
 
 type Deferred<T> = {
   promise: Promise<T>
@@ -54,11 +56,14 @@ const FakeTel = {
 
 type Loader = ReturnType<typeof usePhoneFieldLoader>
 
-function mountHost(importComponent: () => Promise<Component>) {
+function mountHost(
+  importComponent: () => Promise<Component>,
+  options?: Parameters<typeof usePhoneFieldLoader>[1],
+) {
   const out: { api?: Loader; countryWhenShown?: string } = {}
   const Host = defineComponent({
     setup() {
-      const api = usePhoneFieldLoader(importComponent)
+      const api = usePhoneFieldLoader(importComponent, options)
       out.api = api
       watch(api.phoneComponent, (component) => {
         if (component) out.countryWhenShown = api.phoneInitialCountry.value
@@ -215,6 +220,80 @@ describe('usePhoneFieldLoader', () => {
     validator.resolve()
     await flushPromises()
     expect(second.out.api!.phoneComponent.value).toBe(FakeTel)
+  })
+
+  it('reports no load failure while loading or once the field is shown', async () => {
+    const { out } = mountHost(() => Promise.resolve(FakeTel))
+    expect(out.api!.phoneLoadFailed.value).toBe(false)
+    validator.resolve()
+    visitor.resolve('US')
+    await flushPromises()
+    expect(out.api!.phoneComponent.value).toBe(FakeTel)
+    expect(out.api!.phoneLoadFailed.value).toBe(false)
+  })
+
+  it('reports a load failure, silently, when the component import fails', async () => {
+    const { out } = mountHost(() => Promise.reject(new Error('chunk failed')))
+    validator.resolve()
+    visitor.resolve('US')
+    await flushPromises()
+    expect(out.api!.phoneLoadFailed.value).toBe(true)
+    expect(errorSpy).not.toHaveBeenCalled()
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  it('reports a load failure, silently, when the validator fails', async () => {
+    const { out } = mountHost(() => Promise.resolve(FakeTel))
+    validator.reject(new Error('metadata failed'))
+    visitor.resolve('US')
+    await flushPromises()
+    expect(out.api!.phoneLoadFailed.value).toBe(true)
+    expect(errorSpy).not.toHaveBeenCalled()
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  it('reports the failure without waiting for the visitor country', async () => {
+    const { out } = mountHost(() => Promise.reject(new Error('chunk failed')))
+    validator.resolve()
+    await flushPromises()
+    expect(out.api!.phoneLoadFailed.value).toBe(true)
+  })
+
+  it('reports nothing when unmounted before a failure settles', async () => {
+    const { wrapper, out } = mountHost(() => Promise.reject(new Error('chunk failed')))
+    wrapper.unmount()
+    validator.resolve()
+    visitor.resolve('US')
+    await flushPromises()
+    expect(out.api!.phoneLoadFailed.value).toBe(false)
+  })
+
+  it('calls onCountryChanged after the store and the validator know the new flag', () => {
+    setActivePhoneCountry.mockClear()
+    const seen: Array<{ stored: string | null; active: unknown }> = []
+    const onCountryChanged = vi.fn(() => {
+      seen.push({
+        stored: useStoreReservationForm().telefonoPais,
+        active: setActivePhoneCountry.mock.lastCall?.[0],
+      })
+    })
+    const { out } = mountHost(() => new Promise(() => {}), { onCountryChanged })
+    out.api!.onPhoneCountryChanged({ iso2: 'us' })
+    expect(onCountryChanged).toHaveBeenCalledTimes(1)
+    expect(seen).toEqual([{ stored: 'US', active: 'US' }])
+  })
+
+  it('does not call onCountryChanged for a change without iso2', () => {
+    const onCountryChanged = vi.fn()
+    const { out } = mountHost(() => new Promise(() => {}), { onCountryChanged })
+    out.api!.onPhoneCountryChanged({})
+    expect(onCountryChanged).not.toHaveBeenCalled()
+  })
+
+  it('handles a flag change without an onCountryChanged option', () => {
+    const { out } = mountHost(() => new Promise(() => {}))
+    expect(() => out.api!.onPhoneCountryChanged({ iso2: 'es' })).not.toThrow()
+    expect(useStoreReservationForm().telefonoPais).toBe('ES')
   })
 
   it('sets nothing when unmounted before everything settles', async () => {

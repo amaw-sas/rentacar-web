@@ -28,7 +28,17 @@ let activeCountry: string | null = null;
  */
 export function loadPhoneValidator(): Promise<void> {
   if (!loading) {
-    loading = import("./phoneValidatorMax").then(
+    // Client only. The server never validates phones, and keeping the import()
+    // out of the Nitro bundle matters: there libphonenumber-js is external, and
+    // once this module became reachable from SSR pages Rollup merged
+    // phoneValidatorMax into the shared server chunk with a bare
+    // `import '…/max/index.js'` — "isValidPhoneNumber is not defined", a 500 on
+    // every page. `import.meta.server` is a build-time constant, so the branch
+    // and the import() are dropped from the server build.
+    const source: Promise<PhoneValidatorApi> = import.meta.server
+      ? Promise.reject(new Error("phone validation is client-only"))
+      : import("./phoneValidatorMax");
+    loading = source.then(
       (mod) => {
         api = mod;
       },
@@ -59,14 +69,18 @@ export function getActivePhoneCountry(): string | null {
 }
 
 /**
- * True when national digits typed under the active flag are fewer than that
- * country needs. Unknown flag or metadata not loaded → true (treated as
- * incomplete, the most neutral message).
+ * True when the digit count cannot be right: too short, too long, or between two
+ * valid lengths. `text` is either an international number (`+…`, `country`
+ * omitted) or national digits for `country`. Without the metadata or a country
+ * nothing can be measured, so it counts as a length problem (the neutral
+ * "incomplete" message).
  */
-export function isTooShortForActiveCountry(digits: string): boolean {
-  if (!api || !activeCountry) return true;
+export function hasPhoneLengthProblem(text: string, country?: string | null): boolean {
+  if (!api) return true;
+  if (!text.startsWith("+") && !country) return true;
   try {
-    return api.validatePhoneNumberLength(digits, activeCountry as CountryCode) === 'TOO_SHORT';
+    const result = api.validatePhoneNumberLength(text, (country ?? undefined) as CountryCode | undefined);
+    return result === "TOO_SHORT" || result === "TOO_LONG" || result === "INVALID_LENGTH";
   } catch {
     return true;
   }

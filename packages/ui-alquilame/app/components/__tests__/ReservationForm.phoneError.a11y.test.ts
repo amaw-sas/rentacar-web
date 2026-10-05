@@ -33,6 +33,13 @@ const phoneField =
   form.match(/<u-form-field[^>]*name="telefono"[^>]*>[\s\S]*?<\/u-form-field>/)?.[0] ?? ''
 const phoneComponentTag = phoneField.match(/<component\b[\s\S]*?\/>/)?.[0] ?? ''
 const scriptSetup = form.match(/<script setup[^>]*>([\s\S]*?)<\/script>/)?.[1] ?? ''
+// Vue allows comments between the v-if and v-else siblings.
+const afterComponent = phoneField
+  .slice(phoneField.indexOf(phoneComponentTag) + phoneComponentTag.length)
+  .replace(/^(\s*<!--[\s\S]*?-->)+/, '')
+const placeholderTag = afterComponent.match(/^\s*<div\b[^>]*>/)?.[0] ?? ''
+// The v-else wrapper up to the #error slot that follows it.
+const placeholder = afterComponent.split(/<template #error/)[0] ?? ''
 
 describe('visitor-country phone field — loader wiring', () => {
   it('loads the field through usePhoneFieldLoader, not defineAsyncComponent', () => {
@@ -60,13 +67,48 @@ describe('visitor-country phone field — loader wiring', () => {
     expect(phoneComponentTag).toMatch(/@blur="validatePhoneField"/)
   })
 
-  it('holds the place with an aria-hidden v-else placeholder right after it', () => {
-    // Vue allows comments between the v-if and v-else siblings.
-    const afterComponent = phoneField
-      .slice(phoneField.indexOf(phoneComponentTag) + phoneComponentTag.length)
-      .replace(/^(\s*<!--[\s\S]*?-->)+/, '')
+  it('holds the place with a v-else wrapper right after it, aria-hidden while loading', () => {
     expect(phoneComponentTag).not.toBe('')
-    expect(afterComponent).toMatch(/^\s*<div\b[^>]*\bv-else\b[^>]*>/)
-    expect(afterComponent.match(/^\s*<div\b[^>]*>/)?.[0]).toMatch(/aria-hidden="true"/)
+    expect(placeholderTag).toMatch(/^\s*<div\b[^>]*\bv-else\b[^>]*>/)
+    // The grey box is aria-hidden; the wrapper is not, because it also hosts the
+    // load-failure notice, which must be read out.
+    expect(placeholder).toMatch(/<div\b[^>]*\bv-else\b[^>]*\baria-hidden="true"[^>]*>/)
+    expect(placeholderTag).not.toMatch(/aria-hidden/)
+  })
+})
+
+// Review fix 1: when the component or the metadata fails to load, the browser
+// keeps the failed import for the life of the page (whatwg/html#6768), so only a
+// reload helps. The placeholder turns into a notice with a reload button, and it
+// carries id="telefono" so the label and the first-invalid-field scroll reach it
+// while the real input is missing.
+describe('visitor-country phone field — load failure', () => {
+  it('gives the placeholder the input id, focusable from script only', () => {
+    expect(placeholderTag).toMatch(/\bid="telefono"/)
+    expect(placeholderTag).toMatch(/\btabindex="-1"/)
+  })
+
+  it('switches to the notice on phoneLoadFailed', () => {
+    expect(placeholder).toMatch(/v-if="phoneLoadFailed"/)
+    expect(scriptSetup).toMatch(/\bphoneLoadFailed\b[\s\S]*?=\s*usePhoneFieldLoader\(/)
+  })
+
+  it('tells the customer and offers a reload', () => {
+    expect(placeholder).toContain('No pudimos cargar el campo del teléfono.')
+    expect(placeholder).toContain('Recargar la página')
+    expect(placeholder).toMatch(/<button\b[^>]*\btype="button"[^>]*@click="reloadNuxtApp\(/)
+  })
+})
+
+// Review fix 2: changing only the flag does not change `telefono`, so the
+// debounced revalidation never runs and the old message would stay under the new
+// flag. The loader calls back on every flag change; the form re-checks only when
+// an error is showing (no nagging on a field the customer has not finished).
+describe('visitor-country phone field — flag change revalidates', () => {
+  it('re-validates on a flag change only while the field shows an error', () => {
+    expect(scriptSetup).toMatch(
+      /usePhoneFieldLoader\([\s\S]*?\{\s*onCountryChanged:\s*\(\)\s*=>\s*\{\s*if\s*\(phoneFieldInvalid\.value\)\s*validatePhoneField\(\);?\s*\},?\s*\}\s*\)/,
+    )
+    expect(scriptSetup).toMatch(/\bphoneFieldInvalid,[\s\S]*?=\s*usePhoneField\(reservationForm/)
   })
 })

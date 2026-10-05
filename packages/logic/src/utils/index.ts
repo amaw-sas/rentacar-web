@@ -209,5 +209,6 @@ export * from './validation/normalizePhoneNumber';
 export * from './validation/userInformationForm';
 export * from './validation/phoneValidator';
 export * from './fetchVisitorCountry';
+export * from './preloadPhoneField';
 export * from './pickPhoneCountry';
 export * from './categoryReadingOrder';

@@ -304,12 +304,56 @@ describe('phoneInvalidMessage — raw digits use the flag on screen', () => {
     expect(phoneInvalidMessage('300123')).toBe(INCOMPLETE_MSG)
   })
 
-  it('CO flag, too many digits → Colombia message', () => {
+  // Review 2026-10-04: with the CO flag, a wrong digit count is almost always a
+  // typo by a Colombian customer — telling them to switch flag would mislead.
+  it('CO flag, too many digits → incomplete message, never "not from Colombia"', () => {
     setActivePhoneCountry('CO')
-    expect(phoneInvalidMessage('30012345678901')).toBe(CO_MSG)
+    expect(phoneInvalidMessage('30012345678901')).toBe(INCOMPLETE_MSG)
+  })
+
+  it('CO flag, a Colombian mobile with one digit missing or extra → incomplete message', () => {
+    setActivePhoneCountry('CO')
+    expect(phoneInvalidMessage('300 123 456')).toBe(INCOMPLETE_MSG) // 9: INVALID_LENGTH
+    expect(phoneInvalidMessage('3001 2345')).toBe(INCOMPLETE_MSG) // 8: legal length, mobile-shaped
+    expect(phoneInvalidMessage('300 123 45678')).toBe(INCOMPLETE_MSG) // 11: legal length, mobile-shaped
+  })
+
+  it('CO flag, ten digits that are not a Colombian number → Colombia message (US number without the 1)', () => {
+    setActivePhoneCountry('CO')
+    expect(phoneInvalidMessage('609 666 9993')).toBe(CO_MSG)
+    expect(phoneInvalidMessage('347 123 4567')).toBe(CO_MSG)
   })
 
   it('no flag known → incomplete message', () => {
     expect(phoneInvalidMessage('300 123 4567')).toBe(INCOMPLETE_MSG)
+  })
+})
+
+// The dial code already present (+57 typed or kept after deleting a digit) is
+// judged by length first, so a Colombian who drops a digit is not sent to the
+// flag list.
+describe('phoneInvalidMessage — numbers with a dial code are judged by length first', () => {
+  const CO_MSG = 'Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.'
+  const OTHER_MSG = 'Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.'
+  const INCOMPLETE_MSG =
+    'Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.'
+
+  it('+57 with a digit missing → incomplete message', () => {
+    expect(phoneInvalidMessage('+57 300 123456')).toBe(INCOMPLETE_MSG)
+  })
+
+  it('+57 mobile with a digit extra → incomplete message', () => {
+    expect(phoneInvalidMessage('+57 300 12345678')).toBe(INCOMPLETE_MSG)
+  })
+
+  it('+57 followed by a US number (with or without its 1) → Colombia message (SCEN-001, SCEN-002)', () => {
+    expect(phoneInvalidMessage('+57 1 817 5228026')).toBe(CO_MSG)
+    expect(phoneInvalidMessage('+57 609 6669993')).toBe(CO_MSG)
+    expect(phoneInvalidMessage('+57 347 1234567')).toBe(CO_MSG)
+  })
+
+  it('another dial code: too short → incomplete; complete but not real → wrong-country message', () => {
+    expect(phoneInvalidMessage('+1 817 522')).toBe(INCOMPLETE_MSG)
+    expect(phoneInvalidMessage('+1 300 123 4567')).toBe(OTHER_MSG)
   })
 })

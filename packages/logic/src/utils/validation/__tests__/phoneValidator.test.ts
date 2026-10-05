@@ -72,3 +72,18 @@ describe('phoneValidator — loading', () => {
     expect(mod.isValidPhone('+573001234567')).toBe(true)
   })
 })
+
+// Once phoneValidator became reachable from SSR pages, Rollup merged the
+// metadata module into the shared Nitro chunk and dropped its external import
+// bindings: every SSR page answered 500 ("isValidPhoneNumber is not defined").
+// The import() must stay behind the build-time `import.meta.server` constant so
+// it is removed from the server bundle. The HTTP tests in packages/ui-*/tests
+// catch the 500 itself; this guard fails fast.
+describe('phoneValidator — client-only metadata import', () => {
+  it('keeps the dynamic import out of the server build', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { fileURLToPath } = await import('node:url')
+    const source = readFileSync(fileURLToPath(new URL('../phoneValidator.ts', import.meta.url)), 'utf8')
+    expect(source).toMatch(/import\.meta\.server\s*\?[^:]*?Promise\.reject\([\s\S]*?:\s*import\(["']\.\/phoneValidatorMax["']\)/)
+  })
+})

@@ -54,12 +54,16 @@ Medido el 2026-10-04 en la base del tablero (365 días, 8.088 reservas): 16 rese
 
 El `v.custom` del teléfono pasa a recibir el mensaje como función del valor:
 
-- Empieza por `+57` y es inválido: «Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.» (aprobado 2026-10-04)
-- Empieza por otro `+código` y es inválido: «Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.» (aprobado 2026-10-04)
-- No empieza por `+`: `vue-tel-input` solo antepone el código cuando sus metadatos `min` aceptan el número; si no, llega el texto crudo (con bandera USA, `300 123 4567` llega así). Se juzga contra la bandera en pantalla, que el cargador le avisa al validador con cada `country-changed` (`setActivePhoneCountry`):
-  - le faltan dígitos para ese país (`validatePhoneNumberLength` = `TOO_SHORT`) o no hay bandera conocida: «Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.» (aprobado 2026-10-04)
-  - tiene los dígitos pero no existe: el mensaje de la bandera (Colombia → el de Colombia; otra → «no corresponde al país»).
-  - Ajuste del 2026-10-04 tras la prueba en navegador (SCEN-010 fallaba con la regla «sin `+` → incompleto»). Los textos no cambian.
+Los tres textos (aprobados por el dueño el 2026-10-04):
+- **Colombia:** «Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.»
+- **Otra bandera:** «Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.»
+- **Incompleto:** «Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.»
+
+Cuál se muestra (ajustado el 2026-10-04 tras la prueba en navegador y la revisión de casos borde; los textos no cambian):
+- **El largo va primero.** Si los dígitos no pueden ser un número completo (`validatePhoneNumberLength` = `TOO_SHORT`, `TOO_LONG` o `INVALID_LENGTH`), sale «Incompleto», nunca «elige otra bandera».
+- **Con `+57` o bandera Colombia:** un número con forma colombiana (empieza por `3` o por `60` + 1, 2, 4, 5, 6, 7 u 8) que no tiene exactamente 10 dígitos también es «Incompleto»: es un error de tecleo. Un número completo que no existe en Colombia sale con «Colombia». Es el caso de un número de USA bajo la bandera colombiana: `+57 1 817…`, `+57 609…`, `+57 347…`.
+- **Con otro `+código` u otra bandera:** un número completo que no existe sale con «Otra bandera».
+- **Texto sin `+`:** `vue-tel-input` solo antepone el código cuando sus metadatos `min` aceptan el número. Por eso con bandera USA, `300 123 4567` llega crudo. Ese texto se juzga contra la bandera en pantalla, que el cargador le pasa al validador en cada `country-changed` (`setActivePhoneCountry`). Si no hay bandera conocida, sale «Incompleto».
 - Vacío o con menos de 5 caracteres: sin cambios («Escribe tu número de WhatsApp o teléfono»).
 
 ## Alcance de los cambios (blast radius)

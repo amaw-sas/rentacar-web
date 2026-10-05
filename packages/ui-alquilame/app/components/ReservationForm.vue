@@ -121,14 +121,34 @@
             @blur="validatePhoneField"
             @country-changed="onPhoneCountryChanged"
           />
-          <!-- Same height and frame as the loaded .vue-tel-input (46px measured
-               in the browser on the 3 brands: 1px border + 44px input), so the
-               fields below don't jump when it swaps in. -->
-          <div
-            v-else
-            aria-hidden="true"
-            class="h-[46px] rounded-lg border border-gray-400 bg-gray-100"
-          ></div>
+          <!-- Holds the input's place. id="telefono" + tabindex="-1" let the
+               first-invalid-field scroll land here while the input is missing. -->
+          <div v-else id="telefono" tabindex="-1">
+            <!-- A failed import stays failed for the life of the page
+                 (whatwg/html#6768): only a reload brings the field back.
+                 force: a click must reload even inside reloadNuxtApp's 10 s
+                 loop guard. -->
+            <div
+              v-if="phoneLoadFailed"
+              role="alert"
+              class="flex min-h-[46px] flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+            >
+              <span>No pudimos cargar el campo del teléfono.</span>
+              <button
+                type="button"
+                class="underline font-medium text-blue-700 hover:text-blue-800"
+                @click="reloadNuxtApp({ force: true })"
+              >Recargar la página</button>
+            </div>
+            <!-- Same height and frame as the loaded .vue-tel-input (46px measured
+                 in the browser on the 3 brands: 1px border + 44px input), so the
+                 fields below don't jump when it swaps in. -->
+            <div
+              v-else
+              aria-hidden="true"
+              class="h-[46px] rounded-lg border border-gray-400 bg-gray-100"
+            ></div>
+          </div>
           <!-- SCEN-322-X01: deterministic id for the error message so the input's
                aria-describedby (set via phoneInputOptions while invalid) points
                here. UFormField wraps this slot in its own error container. -->
@@ -213,8 +233,14 @@ import {
 
 // The phone field appears only once the input component, the full phone
 // metadata and the visitor's country are ready (see usePhoneFieldLoader).
-const { phoneComponent, phoneInitialCountry, onPhoneCountryChanged } =
-  usePhoneFieldLoader(() => import('vue-tel-input').then((m) => m.VueTelInput));
+// A flag change alone leaves `telefono` untouched, so the debounced revalidation
+// never runs: re-check here, only while an error is showing.
+const { phoneComponent, phoneInitialCountry, phoneLoadFailed, onPhoneCountryChanged } =
+  usePhoneFieldLoader(() => import('vue-tel-input').then((m) => m.VueTelInput), {
+    onCountryChanged: () => {
+      if (phoneFieldInvalid.value) validatePhoneField();
+    },
+  });
 
 /** stores */
 const storeSearch = useStoreSearchData();
@@ -302,6 +328,7 @@ const {
   phoneDropdownOptions,
   phoneInputOptions,
   phonePreferredCountries,
+  phoneFieldInvalid,
   validatePhoneField,
 } = usePhoneField(reservationForm, () => formState.value.telefono);
 
