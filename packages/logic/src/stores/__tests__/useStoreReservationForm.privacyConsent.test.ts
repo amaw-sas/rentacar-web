@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import * as v from 'valibot'
 import { UserInformationFormValidationSchema } from '../../utils/validation/userInformationForm'
+import { loadPhoneValidator } from '../../utils/validation/phoneValidator'
 
 // Scenarios: docs/specs/2026-07-16-issue-311-consentimiento-datos/scenarios/
 //            consentimiento-datos-pre-marcado.scenarios.md
@@ -30,6 +31,10 @@ const validBase = {
   telefono: '+573001234567',
   email: 'pablo@example.com',
 }
+
+beforeAll(async () => {
+  await loadPhoneValidator()
+})
 
 describe('politicaPrivacidad — consentimiento expreso (issue #311)', () => {
   // SCEN-311-01: la casilla aparece SIN marcar al abrir el formulario.

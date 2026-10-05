@@ -1,7 +1,7 @@
 
-import { isValidPhoneNumber } from 'libphonenumber-js';
 import * as v from "valibot";
 import { normalizePhoneNumber } from "./normalizePhoneNumber";
+import { isPhoneValidatorReady, isValidPhone } from "./phoneValidator";
 import "@valibot/i18n/es";
 v.setGlobalConfig({ lang: "es" });
 
@@ -69,6 +69,27 @@ export function extraDriverDocumentError(documento: unknown): string | null {
     : "El documento debe tener entre 6 y 15 caracteres (letras y números)";
 }
 
+/**
+ * Message for a phone number the full metadata rejects, chosen by the raw value.
+ * vue-tel-input prefixes what the customer types with the flag's dial code, so
+ * the prefix tells which flag was showing: `+57` means the Colombian flag (the
+ * usual case of a foreign number typed under it), another `+` code means a
+ * different flag, and no `+` means vue-tel-input could not build the number with
+ * the flag at all (almost always incomplete).
+ * Without the metadata loaded nothing can be judged, so the generic message.
+ */
+export function phoneInvalidMessage(input: unknown): string {
+  if (!isPhoneValidatorReady()) return "Número de teléfono o WhatsApp no válido";
+  const value = String(input ?? "").trim();
+  if (value.startsWith("+57")) {
+    return "Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.";
+  }
+  if (value.startsWith("+")) {
+    return "Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.";
+  }
+  return "Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.";
+}
+
 // Shared field entries. Exported so composed schemas spread them WITHOUT the
 // object-level identification check (which `.entries` would drop) and re-apply it
 // themselves. The check itself is inlined per schema — valibot only infers the
@@ -85,7 +106,10 @@ export const userInformationEntries = {
   telefono: v.pipe(
     v.string("Escribe tu número de teléfono o WhatsApp"),
     v.minLength(5, "Escribe tu número de WhatsApp o teléfono"),
-    v.custom((input) => isValidPhoneNumber(normalizePhoneNumber(input as string)), "Número de teléfono o WhatsApp no válido")
+    v.custom(
+      (input) => isValidPhone(normalizePhoneNumber(input as string)),
+      (issue) => phoneInvalidMessage(issue.input)
+    )
   ),
   email: v.pipe(v.string("Escribe tu email o correo electrónico"), v.email("Email no válido")),
   politicaPrivacidad: v.pipe(

@@ -109,15 +109,26 @@
                for="telefono" ↔ inputOptions.id="telefono" → nombre accesible
                "Teléfono" determinista (issue #65 SCEN-008). -->
           <label for="telefono" class="block font-medium text-sm text-gray-800 mb-1.5">Teléfono</label>
-          <VueTelInput
+          <component
+            :is="phoneComponent"
+            v-if="phoneComponent"
             v-model="formState.telefono"
             mode="international"
-            defaultCountry="CO"
+            :default-country="phoneInitialCountry"
             :dropdownOptions="phoneDropdownOptions"
             :inputOptions="phoneInputOptions"
             :preferred-countries="phonePreferredCountries"
             @blur="validatePhoneField"
+            @country-changed="onPhoneCountryChanged"
           />
+          <!-- Same height and frame as the loaded .vue-tel-input (vendor CSS:
+               1.5px border + 0.75rem input padding + 24px line), so the fields
+               below don't jump when it swaps in. -->
+          <div
+            v-else
+            aria-hidden="true"
+            class="h-[51px] rounded-lg border-[1.5px] border-gray-400 bg-gray-100"
+          ></div>
           <!-- SCEN-322-X01: deterministic id for the error message so the input's
                aria-describedby (set via phoneInputOptions while invalid) points
                here. UFormField wraps this slot in its own error container. -->
@@ -200,10 +211,10 @@ import {
   driverLicenseNotice,
 } from '@rentacar-main/logic/utils';
 
-// Lazy load vue-tel-input (solo se carga cuando se renderiza el formulario)
-const VueTelInput = defineAsyncComponent(() =>
-  import('vue-tel-input').then(m => m.VueTelInput)
-);
+// The phone field appears only once the input component, the full phone
+// metadata and the visitor's country are ready (see usePhoneFieldLoader).
+const { phoneComponent, phoneInitialCountry, onPhoneCountryChanged } =
+  usePhoneFieldLoader(() => import('vue-tel-input').then((m) => m.VueTelInput));
 
 /** stores */
 const storeSearch = useStoreSearchData();

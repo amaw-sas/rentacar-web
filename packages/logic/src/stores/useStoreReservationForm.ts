@@ -79,6 +79,8 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
   // lo destructura). Obligatoria sin default: la respuesta debe ser expresa.
   const tipoLicencia = ref<DriverLicenseType | null>(null);
   const telefono = ref<string | null>(null);
+  // Last flag shown in the phone field (ISO2), so a remount of the form keeps the same flag; written from vue-tel-input's country-changed.
+  const telefonoPais = ref<string | null>(null);
   const email = ref<string | null>(null);
 
   // Marketing attribution (click-id + utm + external referrer). Captured by the
@@ -369,6 +371,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     identificacion.value = null;
     tipoLicencia.value = null;
     telefono.value = null;
+    telefonoPais.value = null;
     email.value = null;
     referido.value = null;
     conductorAdicionalNombre.value = null;
@@ -524,6 +527,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     identificacion,
     tipoLicencia,
     telefono,
+    telefonoPais,
     email,
     vehiculo,
     lastSubmittedCode,

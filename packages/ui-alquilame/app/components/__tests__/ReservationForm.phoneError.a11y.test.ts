@@ -24,3 +24,49 @@ describe('SCEN-322-X01 — telefono error message is referenceable', () => {
     expect(form).toMatch(/usePhoneField\(reservationForm/)
   })
 })
+
+// Visitor-country phone field (spec 2026-10-04 §2-§3): the field mounts only
+// once usePhoneFieldLoader has the component, the metadata and the country, and
+// a same-height placeholder holds its place meanwhile. Assertions run on the
+// telefono <u-form-field> fragment so comments elsewhere can't trip them.
+const phoneField =
+  form.match(/<u-form-field[^>]*name="telefono"[^>]*>[\s\S]*?<\/u-form-field>/)?.[0] ?? ''
+const phoneComponentTag = phoneField.match(/<component\b[\s\S]*?\/>/)?.[0] ?? ''
+const scriptSetup = form.match(/<script setup[^>]*>([\s\S]*?)<\/script>/)?.[1] ?? ''
+
+describe('visitor-country phone field — loader wiring', () => {
+  it('loads the field through usePhoneFieldLoader, not defineAsyncComponent', () => {
+    expect(scriptSetup).not.toMatch(/defineAsyncComponent\(/)
+    expect(scriptSetup).toMatch(
+      /usePhoneFieldLoader\(\s*\(\) => import\('vue-tel-input'\)\.then\(\(m\) => m\.VueTelInput\)/,
+    )
+  })
+
+  it('renders the loaded component with the resolved country', () => {
+    expect(phoneComponentTag).toMatch(/:is="phoneComponent"/)
+    expect(phoneComponentTag).toMatch(/v-if="phoneComponent"/)
+    expect(phoneComponentTag).toMatch(/:default-country="phoneInitialCountry"/)
+    expect(phoneComponentTag).toMatch(/@country-changed="onPhoneCountryChanged"/)
+    expect(phoneField).not.toMatch(/defaultCountry="CO"/)
+    expect(phoneField).not.toMatch(/<VueTelInput\b/)
+  })
+
+  it('keeps the existing bindings on the phone component', () => {
+    expect(phoneComponentTag).toMatch(/v-model="formState\.telefono"/)
+    expect(phoneComponentTag).toMatch(/mode="international"/)
+    expect(phoneComponentTag).toMatch(/:dropdownOptions="phoneDropdownOptions"/)
+    expect(phoneComponentTag).toMatch(/:inputOptions="phoneInputOptions"/)
+    expect(phoneComponentTag).toMatch(/:preferred-countries="phonePreferredCountries"/)
+    expect(phoneComponentTag).toMatch(/@blur="validatePhoneField"/)
+  })
+
+  it('holds the place with an aria-hidden v-else placeholder right after it', () => {
+    // Vue allows comments between the v-if and v-else siblings.
+    const afterComponent = phoneField
+      .slice(phoneField.indexOf(phoneComponentTag) + phoneComponentTag.length)
+      .replace(/^(\s*<!--[\s\S]*?-->)+/, '')
+    expect(phoneComponentTag).not.toBe('')
+    expect(afterComponent).toMatch(/^\s*<div\b[^>]*\bv-else\b[^>]*>/)
+    expect(afterComponent.match(/^\s*<div\b[^>]*>/)?.[0]).toMatch(/aria-hidden="true"/)
+  })
+})

@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import * as v from 'valibot'
 import {
   identificationError,
+  phoneInvalidMessage,
   UserInformationFormValidationSchema,
 } from '../userInformationForm'
+import { loadPhoneValidator } from '../phoneValidator'
 import { ReservationFormValidationSchema } from '../reservationForm'
 // ReservationWithFlightFormValidationSchema removed (issue #322 SCEN-322-X07):
 // the flight branch was dead code — no template ever collected flight fields.
@@ -38,6 +40,10 @@ const validBase = {
   email: 'juan@example.com',
   politicaPrivacidad: true,
 }
+
+beforeAll(async () => {
+  await loadPhoneValidator()
+})
 
 const parse = (tipoIdentificacion: string, identificacion: string) =>
   v.safeParse(UserInformationFormValidationSchema, {
@@ -174,5 +180,91 @@ describe('Reservation schemas inherit identification hardening', () => {
         ...reservationBase, tipoIdentificacion: PP, identificacion: '000000',
       }).success
     ).toBe(false)
+  })
+})
+
+// Scenarios: docs/specs/2026-10-04-telefono-pais-visitante/scenarios/phone-country.scenarios.md
+//
+// vue-tel-input prefixes what the customer types with the flag's dial code, so a
+// US number typed under the Colombian flag arrives as +57 1 817 …. The full
+// metadata rejects it, and the message points the customer at the flag.
+describe('UserInformationFormValidationSchema — phone validity and flag-aware messages', () => {
+  const COLOMBIA_MSG = 'Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.'
+  const OTHER_FLAG_MSG = 'Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.'
+  const NO_PREFIX_MSG = 'Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.'
+  const EMPTY_MSG = 'Escribe tu número de WhatsApp o teléfono'
+
+  const parsePhone = (telefono: string) =>
+    v.safeParse(UserInformationFormValidationSchema, {
+      ...validBase,
+      tipoIdentificacion: CC,
+      identificacion: '1020304050',
+      telefono,
+    })
+
+  const phoneMessages = (telefono: string) => {
+    const result = parsePhone(telefono)
+    if (result.success) return []
+    return result.issues
+      .filter((i) => i.path?.some((p) => (p as { key?: unknown }).key === 'telefono'))
+      .map((i) => i.message)
+  }
+
+  // SCEN-001
+  it('rejects a US number typed under the Colombian flag with the Colombia message', () => {
+    expect(parsePhone('+57 1 817 5228026').success).toBe(false)
+    expect(phoneMessages('+57 1 817 5228026')).toEqual([COLOMBIA_MSG])
+  })
+
+  // SCEN-002
+  it('rejects a +57 number that is not a real Colombian line', () => {
+    expect(parsePhone('+57 609 6669993').success).toBe(false)
+    expect(phoneMessages('+57 609 6669993')).toEqual([COLOMBIA_MSG])
+  })
+
+  // SCEN-003
+  it('accepts a real Colombian mobile', () => {
+    expect(parsePhone('+57 300 1234567').success).toBe(true)
+  })
+
+  // SCEN-004
+  it('accepts a real US number under the US flag', () => {
+    expect(parsePhone('+1 817 522 8026').success).toBe(true)
+  })
+
+  // SCEN-009
+  it('still accepts the WhatsApp-copied MX mobile with the legacy 1', () => {
+    expect(parsePhone('+52 1 55 1234 5678').success).toBe(true)
+  })
+
+  // SCEN-010
+  it('rejects a Colombian mobile typed under the US flag with the flag message', () => {
+    expect(parsePhone('+1 300 123 4567').success).toBe(false)
+    expect(phoneMessages('+1 300 123 4567')).toEqual([OTHER_FLAG_MSG])
+  })
+
+  // SCEN-014
+  it('rejects a short number without a dial code with the incomplete message', () => {
+    expect(parsePhone('300123').success).toBe(false)
+    expect(phoneMessages('300123')).toEqual([NO_PREFIX_MSG])
+  })
+
+  it('keeps the presence message for empty or under-5-character input', () => {
+    expect(phoneMessages('')).toEqual([EMPTY_MSG])
+    expect(phoneMessages('1234')).toEqual([EMPTY_MSG])
+  })
+})
+
+describe('phoneInvalidMessage — message chosen by the raw value', () => {
+  it('picks the message from the dial code, ignoring surrounding whitespace', () => {
+    expect(phoneInvalidMessage('  +57 1 817 5228026')).toBe(
+      'Este número no es de Colombia. ¿Es de otro país? Elige su bandera a la izquierda.'
+    )
+    expect(phoneInvalidMessage('+1 300 123 4567')).toBe(
+      'Este número no corresponde al país de la bandera. Revisa la bandera a la izquierda.'
+    )
+    expect(phoneInvalidMessage('300123')).toBe(
+      'Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.'
+    )
   })
 })

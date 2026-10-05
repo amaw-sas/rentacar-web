@@ -58,10 +58,26 @@ const AVAILABILITY_STUB = [
   },
 ];
 
-// El mensaje de error es exclusivo del campo teléfono: ninguna otra validación
-// del formulario menciona "teléfono"/"WhatsApp", así que aísla el error sin
-// necesitar llenar el resto de campos.
-const PHONE_INVALID_ERROR = 'Número de teléfono o WhatsApp no válido';
+// Mensaje para un número incompleto o que no corresponde a la bandera (el
+// caso de `300123` con Colombia). Es exclusivo del campo teléfono, así que
+// aísla el error sin necesitar llenar el resto de campos.
+const PHONE_INVALID_ERROR =
+  'Este número está incompleto o no corresponde a la bandera. Revísalo, y si es de otro país, elige su bandera a la izquierda.';
+
+/**
+ * Sin error de teléfono: `#telefono-error` no existe o no tiene texto. Cubre
+ * los tres mensajes posibles del campo, no solo el de número inválido.
+ */
+async function expectNoPhoneError(page: Page, timeout = 5_000) {
+  const error = page.locator('#telefono-error');
+  await expect
+    .poll(
+      async () =>
+        (await error.count()) === 0 ? '' : ((await error.first().textContent()) ?? '').trim(),
+      { timeout },
+    )
+    .toBe('');
+}
 
 async function stubAvailability(page: Page) {
   await page.route('**/api/reservations/availability', (route) =>
@@ -129,7 +145,7 @@ test.describe('Reserva — revalidación del teléfono (issue #276) — desktop'
     await phone.blur();
 
     // El error obsoleto desaparece por su cuenta (blur + watch debounced).
-    await expect(page.getByText(PHONE_INVALID_ERROR)).toHaveCount(0, { timeout: 10_000 });
+    await expectNoPhoneError(page, 10_000);
   });
 
   test('SCEN-276-01b: el error se limpia al terminar de escribir (debounce) SIN perder foco', async ({
@@ -151,7 +167,7 @@ test.describe('Reserva — revalidación del teléfono (issue #276) — desktop'
     await phone.press('End');
     await phone.pressSequentially('4567', { delay: 60 });
     await expect(page.locator('input#telefono')).toBeFocused();
-    await expect(page.getByText(PHONE_INVALID_ERROR)).toHaveCount(0, { timeout: 10_000 });
+    await expectNoPhoneError(page, 10_000);
     // El campo sigue enfocado: nunca se perdió el foco.
     await expect(phone).toBeFocused();
   });
@@ -168,7 +184,7 @@ test.describe('Reserva — revalidación del teléfono (issue #276) — desktop'
     await phone.pressSequentially('3001234567', { delay: 60 });
     await phone.blur();
 
-    await expect(page.getByText(PHONE_INVALID_ERROR)).toHaveCount(0);
+    await expectNoPhoneError(page);
   });
 
   test('SCEN-276-03: control — el campo nativo "Nombres" sí limpia su error al instante', async ({

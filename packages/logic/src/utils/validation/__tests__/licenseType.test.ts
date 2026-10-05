@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import * as v from 'valibot'
 import { ReservationFormValidationSchema } from '../reservationForm'
 import { DRIVER_LICENSE_OPTIONS, driverLicenseNotice } from '../../driverLicense'
+import { loadPhoneValidator } from '../phoneValidator'
 
 // Scenarios: docs/specs/2026-10-03-selector-licencia/scenarios/selector-licencia.scenarios.md
 //
@@ -31,6 +32,10 @@ function parse(overrides: Record<string, unknown> = {}) {
 function issueFor(result: ReturnType<typeof parse>, key: string) {
   return result.issues?.find((issue) => issue.path?.[0]?.key === key)
 }
+
+beforeAll(async () => {
+  await loadPhoneValidator()
+})
 
 describe('SCEN-LIC-04 — submit is blocked while the question is unanswered', () => {
   it('rejects a reservation without the field, pointing at tipoLicencia', () => {
