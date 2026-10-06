@@ -53,6 +53,12 @@ escogió: un dato que no es fotos sigue pegando
 después de sus fotos]. Hoy TODO es un muro, así que el tope no empeora nada
 **Evidence**: las burbujas de `layoutChatBubbles`
 
+> **Superseded in part**, decisión del dueño 2026-10-06 (Diego, con vista previa, el mismo día del
+> contrato): en la prueba en vivo el globo explicativo del redactor sumaba un 4º texto y el tope de
+> 3 pegaba el cierre bajo las fotos de la última gama. El tope sube a 6: tres gamas → 4 burbujas
+> ([par 1], [par 2], [par 3], [cierre]), y el cierre de dos gamas sale aparte aun con el globo
+> explicativo delante. El resto del escenario (un par por gama, en orden) queda igual.
+
 ## SCEN-006: lo guardado y lo legacy no se mueven
 **Given**: un mensaje restaurado de localStorage con marcas `newBubble` ya calculadas por la regla
 vieja, y un mensaje sin `partsOrder v2`
