@@ -37,3 +37,13 @@ The brain can send ACTION buttons next to the link buttons inside the same
 **Given** `opciones` containing non-strings / empty strings (stream or corrupt storage)
 **When** it renders
 **Then** only non-empty string entries render; with none left, the part behaves as before (dropped if no links)
+
+## SCEN-008: the quote table has no header of its own
+**Given** a `data-quoteTable {dias:4, horaRecogida, horaDevolucion, filas:[…]}` part
+**When** it renders
+**Then** the card shows only the gama rows: no "4 día(s)" line and no "recoge … entrega …" text (the bot's text already says pickup, return and total)
+
+## SCEN-009: the quote table has no footer of its own
+**Given** the same `data-quoteTable` part
+**When** it renders
+**Then** the card has no "Total con IVA, tasas, seguro básico y km ilimitado." line (the bot's text below already says it); rows stay tappable to quote a gama
