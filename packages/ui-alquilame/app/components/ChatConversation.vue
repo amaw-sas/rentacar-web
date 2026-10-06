@@ -100,7 +100,6 @@
 
               <!-- Tabla de cotización: una fila por gama, precio formateado es-CO -->
               <div v-else-if="block.kind === 'quoteTable'" class="cc-quote">
-                <span class="cc-quote-title">{{ block.data.dias }} día(s)<template v-if="block.data.horaRecogida"> · recoge {{ block.data.horaRecogida }}, entrega {{ block.data.horaDevolucion }}</template></span>
                 <div
                   v-for="f in block.data.filas"
                   :key="f.categoria"
@@ -117,9 +116,6 @@
                   <span class="cc-quote-gama">{{ f.descripcion }} <span class="cc-quote-desc">(Gama {{ f.categoria }})</span></span>
                   <strong class="cc-quote-price">${{ cop(f.precioTotal) }}</strong>
                 </div>
-                <span class="cc-quote-note">
-                  Total con IVA, tasas, seguro básico y km ilimitado.
-                </span>
               </div>
 
               <!-- Tarjetas de modelos: foto + nombre, placeholder si no hay foto. Solo
@@ -756,11 +752,9 @@ button { -webkit-tap-highlight-color: transparent; }
   border-radius: 0.5rem;
   background: #fff;
 }
-.cc-quote-title { font-size: 0.9rem; font-weight: 700; color: #111827; margin-bottom: 0.1rem; }
 .cc-quote-gama { font-size: 0.9rem; color: #111827; }
 .cc-quote-desc { color: #6b7280; }
 .cc-quote-price { font-size: 0.95rem; color: #111827; white-space: nowrap; }
-.cc-quote-note { font-size: 0.9rem; color: #111827; margin-top: 0.15rem; }
 
 /* --- Tarjetas de modelos (data-gamaCards) --- */
 .cc-cards { margin-top: 0.5rem; }

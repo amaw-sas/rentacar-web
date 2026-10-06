@@ -48,8 +48,9 @@ import { publishChatUnread, takePreparedChatOpen } from './useChatUnreadBadge';
 export interface QuoteTablePart {
   sede: string;
   dias: number;
-  // Formatted pickup/return hours ("4 pm", "mediodía") when the customer has confirmed them —
-  // rendered next to the day count as the quote-table title. Absent until hours are set.
+  // Formatted pickup/return hours ("4 pm", "mediodía") when the customer has confirmed them.
+  // Not rendered: the bot text above the table already states pickup, return and total.
+  // Absent until hours are set.
   horaRecogida?: string;
   horaDevolucion?: string;
   filas: Array<{
