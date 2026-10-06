@@ -33,6 +33,8 @@ const text = (s: string) => [
 const QUOTE = {
   sede: 'AABOT',
   dias: 3,
+  horaRecogida: '8 de la mañana',
+  horaDevolucion: '8 de la mañana',
   filas: [
     { categoria: 'C', descripcion: 'Económico Mecánico', precioTotal: 350000, horasExtra: 0, precioHoraExtra: 0 },
     { categoria: 'F', descripcion: 'Sedán Mecánico', precioTotal: 420000, horasExtra: 0, precioHoraExtra: 0 },
@@ -203,7 +205,10 @@ describe('SCEN-E1 — today\'s format without marker renders like today', () => 
       { classes: BASE, time: true },
       { classes: [...BASE, 'has-parts'].sort(), time: true },
     ])
-    expect(w.find('.cc-quote-note').text()).toBe('Total con IVA, tasas, seguro básico y km ilimitado.')
+    // SCEN-008/009: la tabla no trae cabecera ni pie propios; el texto del bot los dice.
+    expect(w.find('.cc-quote').text()).not.toMatch(/día\(s\)|recoge|entrega|Total con IVA/)
+    expect(w.find('.cc-quote-title').exists()).toBe(false)
+    expect(w.find('.cc-quote-note').exists()).toBe(false)
     expect(consoleError).not.toHaveBeenCalled()
     expect(consoleWarn).not.toHaveBeenCalled()
   })
@@ -288,7 +293,10 @@ describe('SCEN-E2 — v2 text → table → text is one bubble in order', () => 
     expect(bubbles.map(structure)).toEqual([[T('Te cotizo:'), QUOTE_C, T('¿Cuál te gusta?')]])
     expect(bubbles[0]!.classList.contains('has-parts')).toBe(false)
     expect(bubbles[0]!.querySelector(':scope > .cc-time')).not.toBeNull()
-    expect(w.find('.cc-quote-note').text()).toBe('Total con IVA, tasas, seguro básico y km ilimitado.')
+    // SCEN-008/009: la tabla no trae cabecera ni pie propios; el texto del bot los dice.
+    expect(w.find('.cc-quote').text()).not.toMatch(/día\(s\)|recoge|entrega|Total con IVA/)
+    expect(w.find('.cc-quote-title').exists()).toBe(false)
+    expect(w.find('.cc-quote-note').exists()).toBe(false)
     expect(consoleError).not.toHaveBeenCalled()
   })
 

@@ -100,7 +100,6 @@
 
               <!-- Tabla de cotización: una fila por gama, precio formateado es-CO -->
               <div v-else-if="block.kind === 'quoteTable'" class="cc-quote">
-                <span class="cc-quote-title">{{ block.data.dias }} día(s)<template v-if="block.data.horaRecogida"> · recoge {{ block.data.horaRecogida }}, entrega {{ block.data.horaDevolucion }}</template></span>
                 <div
                   v-for="f in block.data.filas"
                   :key="f.categoria"
@@ -117,9 +116,6 @@
                   <span class="cc-quote-gama">{{ f.descripcion }} <span class="cc-quote-desc">(Gama {{ f.categoria }})</span></span>
                   <strong class="cc-quote-price">${{ cop(f.precioTotal) }}</strong>
                 </div>
-                <span class="cc-quote-note">
-                  Total con IVA, tasas, seguro básico y km ilimitado.
-                </span>
               </div>
 
               <!-- Tarjetas de modelos: foto + nombre, placeholder si no hay foto. Solo
@@ -174,6 +170,17 @@
                 <a v-if="block.data.web" :href="block.data.web" target="_blank" rel="noopener noreferrer" class="cc-link-btn">Terminar mi reserva en la web</a>
                 <a v-if="block.data.whatsapp" :href="block.data.whatsapp" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" class="cc-link-btn cc-link-btn-wa">Escribir a un asesor</a>
                 <a v-if="block.data.share" :href="block.data.share" target="_blank" rel="noopener noreferrer" data-analytics-placement="chat" data-analytics-lead="false" class="cc-link-btn cc-link-btn-share">Compartir cotización</a>
+                <!-- Botones de acción (data-buttons.opciones): mandan su texto como
+                     mensaje del cliente. Solo vivos en el último mensaje y sin turno
+                     en curso, así un toque no se envía dos veces. -->
+                <button
+                  v-for="(op, oi) in block.data.opciones"
+                  :key="oi"
+                  type="button"
+                  class="cc-option-btn"
+                  :disabled="!optionsLive(msgIdx)"
+                  @click="sendOption(op)"
+                >{{ op }}</button>
               </span>
             </template>
 
@@ -286,6 +293,7 @@ const {
   error,
   errorAction,
   submit,
+  sendOption,
   clear,
   firstUnreadAssistantId,
   danglingUserTurn,
@@ -305,6 +313,12 @@ function isGroupStart(idx: number): boolean {
     return m?.role !== role
   }
   return true
+}
+
+// Los botones de opción solo responden en el último mensaje del asistente y sin
+// turno en curso: tocar uno agrega el mensaje del cliente y apaga la botonera.
+function optionsLive(idx: number): boolean {
+  return idx === messages.value.length - 1 && !isStreaming.value
 }
 
 const inputFocused = ref(false)
@@ -708,6 +722,26 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .cc-link-btn-share { background: #0d9488; } /* Compartir cotización → teal (paridad con /chat-test) */
 .cc-link-btn:hover { opacity: 0.92; }
+/* Opciones del bot: todas del mismo color (contorno de marca) para no
+   confundirse con los CTA sólidos de enlace. */
+.cc-option-btn {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  background: #fff;
+  /* Marca oscurecida: texto ≥ 4.5:1 sobre blanco aunque la marca sea clara. */
+  color: color-mix(in srgb, var(--ui-primary, #cc022b) 60%, #000);
+  border: 1.5px solid color-mix(in srgb, var(--ui-primary, #cc022b) 60%, #000);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+}
+.cc-option-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--ui-primary, #cc022b) 8%, #fff); }
+.cc-option-btn:disabled { cursor: default; opacity: 0.5; }
 
 /* --- Tabla de cotización (data-quoteTable) --- */
 .cc-quote { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; }
@@ -721,11 +755,9 @@ button { -webkit-tap-highlight-color: transparent; }
   border-radius: 0.5rem;
   background: #fff;
 }
-.cc-quote-title { font-size: 0.9rem; font-weight: 700; color: #111827; margin-bottom: 0.1rem; }
 .cc-quote-gama { font-size: 0.9rem; color: #111827; }
 .cc-quote-desc { color: #6b7280; }
 .cc-quote-price { font-size: 0.95rem; color: #111827; white-space: nowrap; }
-.cc-quote-note { font-size: 0.9rem; color: #111827; margin-top: 0.15rem; }
 
 /* --- Tarjetas de modelos (data-gamaCards) --- */
 .cc-cards { margin-top: 0.5rem; }
