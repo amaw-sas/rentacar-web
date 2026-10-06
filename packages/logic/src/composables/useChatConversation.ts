@@ -27,7 +27,11 @@ import {
   trackGenerateLead,
   type ChatOpenSource,
 } from '@rentacar-main/logic/utils';
-import { extractChatActions, type ChatActions } from '../utils/extractChatActions';
+import {
+  cleanChatOptions,
+  extractChatActions,
+  type ChatActions,
+} from '../utils/extractChatActions';
 import { buildChatPayloadMessages } from '../utils/buildChatPayloadMessages';
 import { isChatTranscriptExpired } from '../utils/chatTtl';
 import { getLocalStorageSafe } from '../utils/safeWebStorage';
@@ -519,6 +523,18 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     const text = input.value.trim();
     if (!text || isStreaming.value) return;
     input.value = '';
+    return send(text);
+  }
+
+  // Tap on a bot option button (`data-buttons.opciones`): sends the label verbatim
+  // as the customer's message, the same path as typing it, and leaves any draft in
+  // the input untouched. The isStreaming guard is what blocks a double tap.
+  function sendOption(text: string) {
+    if (!text.trim() || isStreaming.value) return;
+    return send(text);
+  }
+
+  async function send(text: string) {
     error.value = null;
     errorAction.value = null;
 
@@ -797,16 +813,19 @@ export function createChatConversation(cfg: ChatConversationConfig) {
             // alone (hablar_asesor → whatsapp only; self-serve → web + share); keep a
             // URL only if it's a non-empty string. `share` is the wa.me/?text=… quote
             // link the brain emits on the "tómate tu tiempo" path (rendered as
-            // "Compartir cotización") — previously dropped here.
+            // "Compartir cotización") — previously dropped here. `opciones` are action
+            // buttons whose label goes back as the customer's message; a part may
+            // carry them alone or next to the links.
             const b = event.data as
-              | { web?: unknown; whatsapp?: unknown; share?: unknown }
+              | { web?: unknown; whatsapp?: unknown; share?: unknown; opciones?: unknown }
               | undefined;
             const web = typeof b?.web === 'string' && b.web ? b.web : undefined;
             const whatsapp =
               typeof b?.whatsapp === 'string' && b.whatsapp ? b.whatsapp : undefined;
             const share = typeof b?.share === 'string' && b.share ? b.share : undefined;
-            if (web || whatsapp || share) {
-              actions = { web, whatsapp, share };
+            const opciones = cleanChatOptions(b?.opciones);
+            if (web || whatsapp || share || opciones) {
+              actions = { web, whatsapp, share, ...(opciones ? { opciones } : {}) };
               parts.push({ type: 'buttons', data: actions });
             }
           } else if (event.type === 'error') {
@@ -901,6 +920,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     error,
     errorAction,
     submit,
+    sendOption,
     stop,
     clear,
     conversationId,

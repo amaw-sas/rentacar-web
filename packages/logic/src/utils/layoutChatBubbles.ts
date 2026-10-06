@@ -21,7 +21,7 @@ import type {
   QuoteTablePart,
   SedeCardsPart,
 } from '../composables/useChatConversation';
-import type { ChatActions } from './extractChatActions';
+import { cleanChatOptions, type ChatActions } from './extractChatActions';
 import { splitBubbles } from './splitBubbles';
 
 export type ChatBubbleBlock =
@@ -105,6 +105,21 @@ function cleanGamaCards(value: unknown): GamaCardsPart | null {
   return modelos.length === raw.length ? original : { ...original, modelos };
 }
 
+// Option labels that aren't non-empty strings would render blank or crash the
+// template; drop them (and the key when none survive). Returns the original object
+// when nothing had to change; null when nothing renderable is left.
+function cleanActions(value: unknown): ChatActions | null {
+  if (!isObject(value)) return null;
+  const original = value as ChatActions;
+  if (!('opciones' in value)) return original;
+  const raw = value.opciones;
+  const opciones = cleanChatOptions(raw);
+  if (opciones && Array.isArray(raw) && opciones.length === raw.length) return original;
+  const data: ChatActions = { ...original, opciones };
+  if (!opciones) delete data.opciones;
+  return data.web || data.whatsapp || data.share || data.opciones ? data : null;
+}
+
 function dataBlock(kind: DataKind, value: unknown): DataBlock | null {
   switch (kind) {
     case 'quoteTable': {
@@ -119,8 +134,10 @@ function dataBlock(kind: DataKind, value: unknown): DataBlock | null {
       const data = cleanSedeCards(value);
       return data ? { kind, data } : null;
     }
-    case 'actions':
-      return isObject(value) ? { kind, data: value as ChatActions } : null;
+    case 'actions': {
+      const data = cleanActions(value);
+      return data ? { kind, data } : null;
+    }
   }
 }
 
