@@ -7,6 +7,8 @@
  * the document with no viewport at all (the site drawn as a zoomed-out desktop
  * page). Registering the same default on the client gives the head something to
  * fall back to; a page's own useHead still wins because it is pushed later.
+ * Keep the content equal to the server default (Nuxt's built-in app.head
+ * viewport; no brand overrides it today).
  */
 export default defineNuxtPlugin(() => {
   useHead({

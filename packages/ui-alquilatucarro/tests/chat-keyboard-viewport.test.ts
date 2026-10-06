@@ -13,6 +13,7 @@ const brands = ['ui-alquilatucarro', 'ui-alquilame', 'ui-alquicarros']
 describe('chat-keyboard-header SCEN-003: /chat viewport opt-in', () => {
   it.each(brands)('%s /chat declares a single viewport that keeps the base and adds resizes-content', (brand) => {
     const page = readFileSync(join(__dirname, '..', '..', brand, 'app/pages/chat.vue'), 'utf-8')
+    expect(page.match(/name: 'viewport'/g) ?? []).toHaveLength(1)
     const viewport = page.match(/name: 'viewport',\s*content: '([^']+)'/)
     expect(viewport, 'viewport meta in useHead').not.toBeNull()
     const content = viewport![1]
