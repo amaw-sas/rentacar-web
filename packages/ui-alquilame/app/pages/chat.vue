@@ -15,6 +15,11 @@
 // dentro de ChatConversation. El FAB no aparece aquí (layout:false).
 definePageMeta({ layout: false })
 useSeoMeta({ title: 'Chat', robots: 'noindex, nofollow' })
+// Android: el teclado encoge la página en vez de taparla, así la cabecera y los
+// mensajes siguen a la vista sobre el teclado (Safari iOS ignora esta clave).
+useHead({
+  meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1, interactive-widget=resizes-content' }],
+})
 
 // Visibilidad por marca: el switch del dashboard manda (mismo origen que el FAB,
 // useChatStatus). Guard SSR+cliente, fail-closed → si la marca está apagada (o el
