@@ -46,9 +46,10 @@
     </header>
 
     <div ref="scrollEl" class="cc-messages" @scroll.passive="onMessagesScroll">
-      <p v-if="!messages.length" class="cc-empty">
-        ¡Hola! 👋 Pregúntame por ciudades, precios, requisitos o tu reserva.
-      </p>
+      <template v-if="!messages.length">
+        <div class="cc-msg is-assistant is-group-start" data-greeting>{{ TEASER_LINE_1 }}</div>
+        <div class="cc-msg is-assistant" data-greeting>{{ TEASER_LINE_2 }}</div>
+      </template>
       <template v-for="(m, msgIdx) in messages" :key="m.id">
         <!-- Separador "Mensajes nuevos": antes del primer mensaje no leído -->
         <div v-if="newSeparatorBeforeId && m.id === newSeparatorBeforeId" class="cc-new-sep">
@@ -253,6 +254,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { layoutChatBubbles, renderChatMarkdown, type ChatBubble, type ChatBubbleSource } from '@rentacar-main/logic/utils'
+import { TEASER_LINE_1, TEASER_LINE_2 } from '@rentacar-main/logic/utils/chatGreeting'
 
 // Hora por mensaje (estilo WhatsApp), hora de Colombia, 12h.
 const timeFmt = new Intl.DateTimeFormat('es-CO', {
@@ -615,21 +617,6 @@ button { -webkit-tap-highlight-color: transparent; }
   flex-direction: column;
   gap: 0.5rem;
   background: #f7f8f9;
-}
-/* El saludo de bienvenida se presenta como lo que es —el primer mensaje de
-   Camila— en vez de como un cartel centrado en el vacío. */
-.cc-empty {
-  align-self: flex-start;
-  max-width: 85%;
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.45;
-  color: #111827;
-  background: #fff;
-  border-radius: 1rem;
-  border-bottom-left-radius: 0.25rem;
-  box-shadow: inset 0 0 0 1px #e6e8ec;
 }
 .cc-msg {
   position: relative;
