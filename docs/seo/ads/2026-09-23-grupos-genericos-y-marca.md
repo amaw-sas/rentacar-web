@@ -240,3 +240,17 @@ El dueño subió el presupuesto de «Búsqueda» el 1-oct (dos veces) y el 2-oct
 1. **Presupuesto de «Búsqueda».** Volver a unos 350.000 – 400.000 COP/día, o mantenerlo si la ganancia por reserva supera los ~50.000 COP que cuesta cada reserva extra. El dueño conoce el margen. Cualquier cambio reinicia el aprendizaje.
 2. **Investigar Santa Marta** antes de tocar su grupo.
 3. **Revisar de nuevo con una semana completa** (3 – 9 oct) antes de cambiar puja o grupos.
+
+### Respuestas del dueño (2026-10-07) y cuenta de rentabilidad
+
+- **Santa Marta:** hubo un problema de orden público. La caída no viene de la cuenta, así que no se toca el grupo. Se excluye de la evaluación hasta que se normalice.
+- **Ganancia por reserva.** Depende de los días de alquiler y de la gama. Datos del dueño:
+
+  | Mes | Reservas | Alquiler total | Columna 3 | Columna 4 |
+  |---|---|---|---|---|
+  | Septiembre 2026 | 472 | 208.390.381 | 31.258.557 | 34.401.097 |
+  | Agosto 2026 | 444 | 229.250.569 | 34.387.585 | 37.538.843 |
+
+  La columna 3 es el 15,0 % del alquiler. Se toma como la ganancia, entre 66.000 y 77.000 COP por alquiler realizado; con la columna 4 serían entre 73.000 y 85.000. Esta lectura falta confirmarla con el dueño.
+- **Solo una parte de las reservas por anuncio se realiza.** De las 470 reservas con gclid del 23-ago al 21-sep: 164 «utilizado», 187 «no_recogido», 87 «cancelado» y 28 todavía «reservado». Se realiza entre el 35 % y el 41 %. Así, una reserva con gclid vale entre 23.000 y 30.000 COP de ganancia esperada.
+- **Cuenta:** el costo promedio de 20.000 COP por reserva con gclid deja ganancia. Las reservas extra de la subida costaron entre 46.000 y 59.000 COP con gclid, y eso da pérdida. Pero ese mismo bloque también subió las reservas sin gclid (asesor y llamadas): el total pasó de 25,5 a 35,5 por día. Si esas también vienen de los anuncios, el costo extra cae a unos 23.000 COP por reserva, cerca del punto de equilibrio. **Se decide el 10-oct con la semana completa del 3 al 9 de octubre, mirando el total de reservas y no solo las que tienen gclid.**
