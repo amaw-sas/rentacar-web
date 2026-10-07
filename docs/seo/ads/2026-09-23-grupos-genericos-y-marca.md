@@ -201,3 +201,42 @@ Totales del grupo: 115 clics, 98.306 COP y 5,92 conversiones. Hay 4 palabras hab
 - **No se pausan las variantes «com».** Las 4 son negativas exactas en los 16 grupos de ciudad y en «genericos». Si se pausa una, su búsqueda puede quedarse sin anuncio, porque las negativas exactas no se amplían a variantes. Además no hay ahorro, y cualquier cambio reinicia el aprendizaje de «Búsqueda».
 
 **Añadido a la revisión del 7 de octubre:** abrir la «Comparativa de subastas» de «Marca». Si ningún competidor puja por la marca, el orgánico ya sale primero y se puede hablar de pagar menos por marca. [alquilatucarro] convierte poco (CPA 54.817 COP contra 8.506 de [alquila tu carro]). Si alguien puja, se deja como está.
+
+## Revisión del 2026-10-07 (periodo 29 sep – 6 oct, 8 días)
+
+Leído en la cuenta y en el dashboard. No se cambió nada.
+
+### Lo estructural funcionó
+
+- **Las genéricas solo aparecen en «genericos».** De 1.571 términos, ninguna de las 11 búsquedas exactas sale en un grupo de ciudad.
+- **La marca solo aparece en «Marca».** Hay dos excepciones de cola larga («alquila tu carro santa marta», 1.804 COP).
+- **Lo genérico sin ciudad en los grupos de ciudad bajó.** Pasó de unos 365 clics y 253.000 COP esperables en 8 días a 58 clics y 38.924 COP. Bogotá concentra 25.382 COP.
+- **El 1-oct Google quitó [renta car] de «genericos»** al aplicar una recomendación de «palabra clave redundante». Esa búsqueda ahora entra por [rentacar] como variante. Quedan 10 exactas.
+- **«genericos» rinde mejor que su base:** CPA 17.879 COP contra 22.446, con 12,26 conversiones.
+
+### Lo que no funcionó: el gasto subió y las reservas no lo siguieron
+
+El dueño subió el presupuesto de «Búsqueda» el 1-oct (dos veces) y el 2-oct. Hoy está en 468.875 COP/día.
+
+| Periodo | Gasto/día | Conv. Ads/día | CPA Ads | Reservas con gclid/día (dashboard) |
+|---|---|---|---|---|
+| Base 23 ago – 21 sep | 316.651 | 18,0 | 17.592 | 15,7 |
+| 29 sep – 2 oct (antes de la subida) | 345.781 | 15,7 | 21.960 | 13,3 |
+| 3 – 6 oct (después) | 576.260 | 19,6 | 29.449 | 18,3 |
+
+- **Cada reserva extra salió cara.** La subida añadió unos 230.000 COP/día y trajo unas 4 conversiones de Ads más por día (5 reservas con gclid en el dashboard): entre 46.000 y 59.000 COP por reserva adicional, contra un promedio de unos 20.000.
+- **Comparación de solo 4 días contra 4.** El segundo bloque incluye fin de semana y el primero no. Hay que confirmarlo con una semana completa.
+- **Por grupo, contra la base sin lo que se fue:** el gasto diario subió en casi todos (Bogotá +54 %, Medellín +80 %, Neiva +81 %, Manizales +54 %). El CPA subió entre 26 % y 88 % en la mayoría. Bucaramanga (−8 %) y Neiva (−6 %) mejoraron.
+- **Santa Marta se cayó de verdad:** 3 reservas con gclid en el dashboard contra 11,5 esperables, CPA de 73.118 COP en Ads. Barranquilla también bajó (9 contra 14,9). Medellín (11 contra 7,5) y Villavicencio (12 contra 10,4) subieron. Hay que investigar Santa Marta por separado: disponibilidad de la sede, precio o anuncio.
+- **Cali y Pereira, sin base:** Cali gastó 73.725 COP, con 2 conversiones (CPA 36.863) y 65 % de impresiones perdidas por ranking. Pereira gastó 117.772 COP, con 5,76 conversiones (CPA 20.447). En el dashboard, 3 y 4 reservas con gclid. Pereira está en el promedio de la cuenta. Cali necesita más tiempo.
+
+### «Marca»
+
+- 58 clics, 48.498 COP y 0,38 conversiones. El CPC es de 836 COP, por encima del objetivo de 685. No cumple el criterio. Del 23 al 28 de septiembre había hecho unas 5,5 conversiones, así que 8 días es una muestra corta.
+- **Comparativa de subastas (3 – 6 oct): sí hay competidores pujando en las búsquedas de marca.** Skyscanner aparece en el 60 %, Alkilautos en el 55 %, LATAM en el 52 %, Kayak en el 33 %, Booking en el 26 % y Viajes Falabella en el 19 %. Nosotros estamos en la posición superior absoluta el 95 % de las veces, y ellos el 0 %. Si se deja de pujar por la marca, esos anuncios quedarían encima del resultado orgánico. **Se mantiene «Marca».**
+
+### Pendiente para decidir con el dueño
+
+1. **Presupuesto de «Búsqueda».** Volver a unos 350.000 – 400.000 COP/día, o mantenerlo si la ganancia por reserva supera los ~50.000 COP que cuesta cada reserva extra. El dueño conoce el margen. Cualquier cambio reinicia el aprendizaje.
+2. **Investigar Santa Marta** antes de tocar su grupo.
+3. **Revisar de nuevo con una semana completa** (3 – 9 oct) antes de cambiar puja o grupos.
