@@ -46,9 +46,10 @@
     </header>
 
     <div ref="scrollEl" class="cc-messages" @scroll.passive="onMessagesScroll">
-      <p v-if="!messages.length" class="cc-empty">
-        ¡Hola! 👋 Pregúntame por ciudades, precios, requisitos o tu reserva.
-      </p>
+      <template v-if="!messages.length">
+        <div class="cc-msg is-assistant is-group-start" data-greeting>{{ TEASER_LINE_1 }}</div>
+        <div class="cc-msg is-assistant" data-greeting>{{ TEASER_LINE_2 }}</div>
+      </template>
       <template v-for="(m, msgIdx) in messages" :key="m.id">
         <!-- Separador "Mensajes nuevos": antes del primer mensaje no leído -->
         <div v-if="newSeparatorBeforeId && m.id === newSeparatorBeforeId" class="cc-new-sep">
@@ -256,6 +257,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { layoutChatBubbles, renderChatMarkdown, type ChatBubble, type ChatBubbleSource } from '@rentacar-main/logic/utils'
+import { TEASER_LINE_1, TEASER_LINE_2 } from '@rentacar-main/logic/utils/chatGreeting'
 
 // Hora por mensaje (estilo WhatsApp), hora de Colombia, 12h.
 const timeFmt = new Intl.DateTimeFormat('es-CO', {
@@ -614,7 +616,6 @@ button { -webkit-tap-highlight-color: transparent; }
   gap: 0.5rem;
   background: #ece5dd;
 }
-.cc-empty { color: #6b7280; font-size: 0.875rem; text-align: center; margin: auto 0; padding: 1rem; }
 .cc-msg {
   position: relative;
   max-width: 85%;

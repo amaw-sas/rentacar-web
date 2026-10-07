@@ -106,7 +106,9 @@ function expectCleared(config: ChatConversationConfig, instance: ChatInstance, w
   expect(instance.conversationId.value).toBeNull()
   expect(instance.input.value).toBe('')
   expect((w.find('.cc-input input').element as HTMLInputElement).value).toBe('')
-  expect(w.findAll('.cc-msg')).toHaveLength(0)
+  // Invariant kept: no real message survives the clear; the empty chat greets again.
+  expect(w.findAll('.cc-msg:not([data-greeting])')).toHaveLength(0)
+  expect(w.findAll('.cc-msg.is-assistant[data-greeting]')).toHaveLength(2)
   expect(localStorage.getItem(config.conversationKey)).toBeNull()
   expect(localStorage.getItem(config.lastReadKey)).toBeNull()
   expect([null, '[]']).toContain(localStorage.getItem(config.messagesKey))

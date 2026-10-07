@@ -18,6 +18,7 @@
  */
 import { ref } from 'vue';
 import { trackAnalyticsEvent } from '@rentacar-main/logic/utils';
+import { TEASER_LINE_1, TEASER_LINE_1_PLAIN, TEASER_LINE_2 } from '../utils/chatGreeting';
 import { getLocalStorageSafe, getSessionStorageSafe } from '../utils/safeWebStorage';
 
 export const TEASER_FIRST_DELAY_MS = 5_000;
@@ -26,12 +27,8 @@ export const TEASER_SECOND_DELAY_MS = 20_000;
 // days. Its own constant on purpose: the chat's local TTL is 24 h, and importing
 // it from ./useChatConversation would pull the engine into the FAB chunk.
 export const TEASER_SUPPRESS_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
-// Displayed lines (line 1 carries an emoji for the visible bubble).
-export const TEASER_LINE_1 = '¡Hola! 👋 ¿Buscas carro? Escríbenos, respondemos ya.';
-export const TEASER_LINE_2 = '¿Dudas de requisitos o precios? Estamos en línea.';
-// Screen-reader copy: emoji-free (line 1 without the waving hand). The visible
-// bubble uses the constants above; teaserAnnounce uses these.
-const TEASER_LINE_1_PLAIN = '¡Hola! ¿Buscas carro? Escríbenos, respondemos ya.';
+// The teaser copy lives in utils/chatGreeting (shared with the empty-chat greeting).
+export { TEASER_LINE_1, TEASER_LINE_2 };
 
 export type TeaserTarget = 'whatsapp' | 'llamada' | 'chat';
 
