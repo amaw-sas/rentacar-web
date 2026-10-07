@@ -69,3 +69,13 @@ Muchas de COMPETIDORES y OTROS VEHICULOS tienen 0 impresiones. Por ejemplo: ban,
 ## Pendiente
 
 En la campaña principal hay 577 negativas, casi todas cruzadas entre grupos de ciudad. No se revisaron una por una. Ya se sabía que están escritas con una sola ortografía (con tilde o sin ella), lo que deja pasar la otra.
+
+## Comprobación del 2026-10-06: ¿son empresas?
+
+Búsqueda en Google desde Colombia:
+
+- **«renta facil»:** sí. Renta Fácil es una rentadora de Bogotá (autosrentafacil.com) y aparece en Rentcars, Rentalcars y Skyscanner. Se queda en COMPETIDORES.
+- **«renta rapida»:** solo aparece una «RENTA RÁPIDA S.A.S.» en un directorio de empresas, sin web de alquiler. Es dudosa y su impacto es bajo. Se deja hasta tener datos.
+- **«tu rent a car»:** sí. TU Rent A Car es una rentadora del Eje Cafetero (turentacar.com). Hoy NO está en COMPETIDORES: en «Viajeros – España» costó 4.676 COP en 1 clic. Propuesta: añadir "tu rent a car" (frase) a COMPETIDORES.
+- **«alquilautos»:** es Alkilautos, un competidor. Se queda.
+- **«rentacar colombia»:** sigue siendo la única que conviene quitar (116 impresiones de una búsqueda genérica). «del eje» es opcional.
