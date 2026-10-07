@@ -82,14 +82,23 @@ async function mountWidget(payload: unknown, nowIso: string) {
   const wrapper = mount(ChatWidget, { global: { stubs } })
   await flushPromises()
   await nextTick()
+  await openMenu()
   return wrapper
 }
 
-// El rediseño de alquilame quitó el menú desplegable (#contact-fab-menu) y el
-// canal "Llámanos": quedan dos accesos directos colgando de un <ul>. Lo que esta
-// prueba vigila —la compuerta de horario sobre WhatsApp— no cambió; sólo cambió
-// dónde mirar y cuántos hermanos tiene la opción.
-const MENU = 'ul[aria-label="Canales de contacto"]'
+// Invariante intacto: la compuerta de horario se lee sobre las opciones que el
+// visitante ve. Ahora cuelgan del lanzador, así que se lee tras tocarlo.
+async function openMenu() {
+  document.body
+    .querySelector<HTMLButtonElement>('button[aria-controls="contact-fab-menu"]')!
+    .dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  await nextTick()
+}
+
+// 2026-10-06 (contact-fab-collapse): el menú (#contact-fab-menu) vuelve con el
+// lanzador. Lo que esta prueba vigila —la compuerta de horario sobre WhatsApp—
+// no cambió; sólo cambió dónde mirar (el <ul> del menú) y que hay que abrirlo.
+const MENU = 'ul#contact-fab-menu'
 
 /** Labels of the contact options currently in the DOM, in render order. */
 function menuLabels(): string[] {
@@ -153,6 +162,7 @@ describe('ChatWidget — WhatsApp option is gated by the schedule (mounted DOM)'
     mount(ChatWidget, { global: { stubs } })
     await flushPromises()
     await nextTick()
+    await openMenu()
     expect(menuLabels()).toContain('WhatsApp')
   })
 
@@ -178,7 +188,7 @@ describe('ChatWidget — the gate does not disturb the rest of the list', () => 
       TUE_20H,
     )
     const menu = document.querySelector(MENU)
-    expect(menu?.getAttribute('aria-label')).toBe('Canales de contacto')
+    expect(menu?.getAttribute('aria-label')).toBe('Opciones de contacto')
 
     // Chat keeps its own independent gate and stays present.
     expect(document.querySelector(`${MENU} .fab-chat`)).not.toBeNull()

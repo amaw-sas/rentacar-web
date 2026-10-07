@@ -8,10 +8,11 @@ import {
 // Las filas del stack miden 3rem (48px) y van separadas por gap-3 (12px).
 const row = (n: number) => n * 48 + (n - 1) * 12
 
-describe('chatPanelLiftPx — el panel se ancla sobre la pila real de canales', () => {
-  // SCEN-003: dos filas es exactamente el 9rem de hoy. Si esta cuenta cambia,
-  // alquilame se movería de sitio sin que nadie lo haya pedido.
-  it('SCEN-003 — con dos canales reproduce los 144px (9rem) actuales', () => {
+describe('chatPanelLiftPx — el panel se ancla sobre lo medido que tiene debajo', () => {
+  // SCEN-003: aritmética histórica de la pila de dos filas (el 9rem de la era
+  // pre-lanzador). La función es agnóstica a qué se mide; estas cuentas fijan
+  // su contrato con cualquier altura de entrada.
+  it('SCEN-003 — con dos canales reproduce los 144px (9rem) de la era pre-lanzador', () => {
     expect(row(2)).toBe(108)
     expect(chatPanelLiftPx(row(2))).toBe(144)
   })
@@ -38,14 +39,22 @@ describe('chatPanelLiftPx — el panel se ancla sobre la pila real de canales', 
     expect(84).toBeGreaterThan(FAB_STACK_BOTTOM_PX + row(1))
   })
 
+  // 2026-10-06 (contact-fab-collapse): el widget ya no mide la lista de canales
+  // sino el lanzador único de 56px (w-14). Es el caso que respalda el fallback
+  // CSS de 5.75rem: si esta cuenta cambia, el fallback de las 3 marcas miente.
+  it('el lanzador de 56px eleva el panel a 92px (5.75rem, el fallback CSS)', () => {
+    expect(chatPanelLiftPx(56)).toBe(92)
+    expect(92).toBeGreaterThan(FAB_STACK_BOTTOM_PX + 56)
+  })
+
   // Sin medida utilizable no se escribe la variable: manda el fallback CSS de
-  // 9rem, que es la pila de dos filas.
+  // 5.75rem, que es el lanzador colapsado (el único estado bajo el panel).
   it.each([
     ['altura cero (aún sin montar)', 0],
     ['altura negativa', -10],
     ['NaN', Number.NaN],
     ['Infinity', Number.POSITIVE_INFINITY],
-  ])('devuelve null con %s para caer en el fallback de 9rem', (_label, value) => {
+  ])('devuelve null con %s para caer en el fallback de 5.75rem', (_label, value) => {
     expect(chatPanelLiftPx(value as number)).toBeNull()
   })
 

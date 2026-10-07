@@ -1,11 +1,15 @@
 <template>
   <!--
-    FAB de contacto — 2 accesos directos: Chat 24/7 y WhatsApp.
+    FAB de contacto — un único botón flotante (lanzador) que despliega el menú
+    de canales: Chat 24/7 y WhatsApp.
       - Chat  → desktop abre el panel inline (overlay, sin navegar, patrón
                 Intercom/Crisp); móvil navega a /chat (pantalla completa). Lleva
                 un chip verde con brillo: el chat IA está disponible 24/7.
       - WhatsApp → enlace wa.me, visible sólo cuando su interruptor maestro y
                    su horario del dashboard lo permiten.
+      - Sin acceso telefónico: delta de marca, alquilame no lo ofrece (no hay
+                   fila de llamada ni número de desvío).
+    Colapsado por defecto: un solo círculo no tapa el contenido de la página.
 
     HTML/CSS plano (sin Reka UI Dialog, sin role="menu" — los hacks !important
     de base.css romperían colores). Todo bajo <ClientOnly>: SSR/ISR nunca
@@ -24,14 +28,15 @@
       <!-- Región aria-live del teaser proactivo (texto sin emoji, nunca v-if). -->
       <span class="sr-only" role="status" aria-live="polite">{{ teaserAllowed ? teaserAnnounce : '' }}</span>
 
-      <!-- Backdrop -->
+      <!-- Backdrop: atenúa la página con el menú o el panel abiertos. El inert del
+           fondo sigue siendo solo del panel; el menú se descarta al tocar fuera. -->
       <button
-        v-if="chatEnabled && panelOpen"
+        v-if="menuOpen || (chatEnabled && panelOpen)"
         type="button"
         aria-hidden="true"
         tabindex="-1"
         class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 cursor-default pointer-events-auto"
-        @click="closePanel"
+        @click="closeAll"
       />
 
       <!-- Panel de chat inline (solo desktop) -->
@@ -85,10 +90,12 @@
           </div>
         </div>
 
-        <!-- Los dos canales son visibles y accionables sin abrir un menú. -->
+        <!-- Menú de canales: oculto hasta tocar el lanzador (v-show, sin
+             transición). Sigue montado para que el lanzador lo controle por id. -->
         <ul
-          ref="channelsEl"
-          aria-label="Canales de contacto"
+          v-show="menuOpen"
+          id="contact-fab-menu"
+          aria-label="Opciones de contacto"
           class="flex flex-col items-end gap-3 pointer-events-auto"
         >
           <li v-if="chatEnabled" class="flex">
@@ -120,7 +127,7 @@
               rel="noopener noreferrer"
               class="fab-item"
               aria-label="Abrir WhatsApp"
-              @click="teaser.engage('whatsapp')"
+              @click="onChannelLink('whatsapp')"
             >
               <span class="fab-label">WhatsApp</span>
               <span class="fab-circle fab-whatsapp">
@@ -129,6 +136,32 @@
             </a>
           </li>
         </ul>
+
+        <!-- Lanzador (toggle). Con el menú o el panel abiertos es una X. Su altura
+             es lo único que queda bajo el panel, así que es lo que se mide. -->
+        <button
+          ref="launcherEl"
+          type="button"
+          :aria-expanded="menuOpen || panelOpen"
+          aria-controls="contact-fab-menu"
+          :aria-label="menuOpen || panelOpen ? 'Cerrar' : badgeCount > 0 ? `Abrir opciones de contacto (${badgeCount} ${badgeCount === 1 ? 'mensaje nuevo' : 'mensajes nuevos'})` : 'Abrir opciones de contacto'"
+          class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 hover:scale-105 transition-all duration-200 pointer-events-auto"
+          :class="{ 'animate-pulse-attention': !menuOpen && !panelOpen && badgeCount === 0 }"
+          @click="toggle"
+        >
+          <svg v-if="!menuOpen && !panelOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+
+          <!-- Insignia del lanzador: no leídos REALES mandan; si no hay, el contador
+               sintético del teaser. Abrir el menú NO limpia nada (solo abrir el chat
+               → markRead). Con el menú/panel abierto el lanzador es una X: la
+               insignia se OCULTA y el conteo vive en el círculo de Chat. -->
+          <span v-if="badgeCount > 0 && !menuOpen && !panelOpen" class="fab-badge" aria-hidden="true">{{ badgeCount > 9 ? '9+' : badgeCount }}</span>
+        </button>
       </div>
     </div>
     </Teleport>
@@ -165,42 +198,43 @@ const {
 } = useChatStatus(franchise.shortname as string)
 
 // Estado client-only: arranca colapsado (lección #109).
+const menuOpen = ref(false)
 const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
-// El panel se ancla SOBRE los canales visibles, nunca sobre una constante: el
-// switch de WhatsApp del dashboard cambia la pila entre 2 y 3 filas en caliente,
-// y `bottom: 9rem` (la pila de 2) dejaba la tercera fila DENTRO del panel
-// tapando el 40% del campo de texto. Se mide el <ul> y no `.contact-fab-stack`
-// porque el stack incluye el teaser-sizer oculto y su hueco (122 px medidos).
-const channelsEl = ref<HTMLElement | null>(null)
-const channelsHeight = ref(0)
-let channelsObserver: ResizeObserver | null = null
+// El panel se ancla SOBRE lo único que queda visible debajo de él: el lanzador.
+// `openChat` cierra el menú antes de abrir el panel, así que se mide el botón
+// (siempre montado mientras el stack lo esté) y no el <ul>, que con `v-show`
+// colapsado mide 0, ni `.contact-fab-stack`, que incluye el teaser-sizer oculto
+// y su hueco (122 px medidos).
+const launcherEl = ref<HTMLElement | null>(null)
+const launcherHeight = ref(0)
+let launcherObserver: ResizeObserver | null = null
 const panelLiftStyle = computed(() => {
-  const lift = chatPanelLiftPx(channelsHeight.value)
+  const lift = chatPanelLiftPx(launcherHeight.value)
   return lift === null ? undefined : `--panel-lift: ${lift}px`
 })
-function measureChannels() {
-  channelsHeight.value = channelsEl.value?.getBoundingClientRect().height ?? 0
+function measureLauncher() {
+  launcherHeight.value = launcherEl.value?.getBoundingClientRect().height ?? 0
 }
-// La lista vive detrás de un v-if (switches del dashboard, overlay de reserva),
+// El lanzador vive detrás de un v-if (switches del dashboard, overlay de reserva),
 // así que el observer se re-engancha cuando el elemento aparece o desaparece.
 // En servidor el ref es null y ResizeObserver nunca se toca.
-watch(channelsEl, (el) => {
-  channelsObserver?.disconnect()
-  channelsObserver = null
+watch(launcherEl, (el) => {
+  launcherObserver?.disconnect()
+  launcherObserver = null
   if (!el) return
-  measureChannels()
+  measureLauncher()
   // jsdom no implementa ResizeObserver. La medida sincrónica de `openChat`
   // basta para colocar el panel; sin observador solo se pierde el reajuste
   // posterior, que en un entorno sin layout no tiene nada que observar.
   if (typeof ResizeObserver === 'undefined') return
-  channelsObserver = new ResizeObserver(measureChannels)
-  channelsObserver.observe(el)
+  launcherObserver = new ResizeObserver(measureLauncher)
+  launcherObserver.observe(el)
 }, { immediate: true })
-onBeforeUnmount(() => channelsObserver?.disconnect())
+onBeforeUnmount(() => launcherObserver?.disconnect())
 
 // Desplazamiento a la izquierda de main (>=1024px), conservado tal cual.
 // OJO: hoy es INALCANZABLE — `hideContactButtons` de abajo desmonta el stack en
@@ -219,6 +253,13 @@ const shiftLeft = computed(() => isWideViewport.value && reservationSummaryOpen.
 // inferior del wizard de alquicarros (`lg:hidden fixed inset-x-0 bottom-0`)
 // ocupa el ancho completo. `isDesktop` sigue vivo para el panel inline del chat.
 const hideContactButtons = computed(() => reservationOverlayOpen.value)
+
+// Cuando el stack se desmonta (overlay de reserva, o ambos canales apagados) el
+// menú se cierra: sin esto reaparecería ya abierto al volver el stack. El panel
+// vive fuera del stack y conserva su propio watcher de `chatEnabled`.
+watch(() => (chatEnabled.value || whatsappVisible.value) && !hideContactButtons.value, (visible) => {
+  if (!visible) menuOpen.value = false
+})
 
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
 // la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
@@ -242,13 +283,22 @@ const displayedSyntheticCount = computed(() =>
   teaserAllowed.value ? syntheticCount.value : 0,
 )
 
+// La insignia del lanzador fusiona no leídos REALES (mandan, solo con el chat
+// encendido) con el contador sintético del teaser; el chip del ítem Chat del
+// menú sigue en el conteo real/sintético de la opción.
+const badgeCount = computed(() => {
+  if (chatEnabled.value && unread.value > 0) return unread.value
+  return displayedSyntheticCount.value
+})
+
 // La burbuja de saludo solo cuando NO hay no leídos reales y el FAB está
-// disponible y el panel está cerrado.
+// colapsado (ni menú ni panel abiertos).
 const teaserOpen = computed(
   () =>
     teaserAllowed.value &&
     teaserVisible.value &&
     unread.value === 0 &&
+    !menuOpen.value &&
     !panelOpen.value,
 )
 
@@ -293,7 +343,7 @@ watch(unread, (v) => { if (v > 0) teaser.suppressForSession() }, { immediate: tr
 
 // SCEN-322-A02: Escape cierra menú/panel; foco al panel al abrir.
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') closePanel()
+  if (e.key === 'Escape') closeAll()
 }
 watch(panelOpen, async (open) => {
   if (open) {
@@ -323,8 +373,30 @@ onBeforeUnmount(() => {
   teaser.stop()
 })
 
+function toggle() {
+  if (panelOpen.value) closePanel()
+  else menuOpen.value = !menuOpen.value
+}
 function closePanel() {
   panelOpen.value = false
+}
+// Si el foco está DENTRO del menú (los ítems van antes del lanzador en el orden
+// de tab), ocultar el <ul> lo mandaría a <body> y el siguiente Tab arrancaría
+// desde el inicio de la página. Se devuelve al lanzador ANTES de ocultar.
+function restoreFocusToLauncher() {
+  if (typeof document === 'undefined') return
+  const menuEl = document.getElementById('contact-fab-menu')
+  if (menuEl && menuEl.contains(document.activeElement)) launcherEl.value?.focus({ preventScroll: true })
+}
+function closeAll() {
+  restoreFocusToLauncher()
+  menuOpen.value = false
+  closePanel()
+}
+function onChannelLink(channel: 'whatsapp' | 'llamada') {
+  teaser.engage(channel)
+  restoreFocusToLauncher()
+  menuOpen.value = false
 }
 function toggleChat() {
   if (panelOpen.value) closePanel()
@@ -333,19 +405,23 @@ function toggleChat() {
 function openChat() {
   if (!chatEnabled.value) return
   prepareChatOpen(
-    unread.value > 0 ? 'unread_badge' : teaserVisible.value ? 'teaser' : 'fab',
+    // teaserOpen (no teaserVisible): con el menú abierto la burbuja está oculta,
+    // así que abrir el chat desde la fila del menú es 'fab'. Atribuir 'teaser'
+    // ahí inflaría el KPI del teaser de forma determinista.
+    unread.value > 0 ? 'unread_badge' : teaserOpen.value ? 'teaser' : 'fab',
   )
   // Cualquier acción de contacto limpia el teaser sintético y marca supresión 15d.
   teaser.engage('chat')
   // Abrir el chat (no el menú) es lo único que limpia la insignia — lo hace la
   // superficie al montar (onSurfaceMounted → markRead). Aquí solo el beacon.
   if (unread.value > 0) emitReopenedFromBadge()
+  menuOpen.value = false
   // Desktop: panel inline sobre la página (no navega). Móvil: /chat full-screen.
   if (isDesktop.value) {
-    // Medida sincrónica antes de abrir: el <ul> ya está montado porque el
-    // visitante acaba de pulsar el FAB, así que el panel nace con el bottom
+    // Medida sincrónica antes de abrir: el lanzador está montado siempre (el
+    // `v-show` del menú no lo afecta), así que el panel nace con el bottom
     // correcto en vez de saltar un frame desde el fallback.
-    measureChannels()
+    measureLauncher()
     panelOpen.value = true
   }
   else navigateTo('/chat')
@@ -415,7 +491,7 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .fab-chip-glow { animation: none; box-shadow: 0 0 5px 1px rgba(34, 197, 94, 0.8); }
 }
-/* Insignia roja de mensajes sobre el botón Chat. */
+/* Insignia roja de mensajes sobre el lanzador. */
 .fab-badge {
   position: absolute;
   top: -0.25rem;
@@ -506,8 +582,9 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* --- Panel inline (desktop) ---
-   `--panel-lift` lo escribe el widget midiendo la lista de canales; el fallback
-   de 9rem es la pila de dos filas (SSR y primer frame). El alto cede al espacio
+   `--panel-lift` lo escribe el widget midiendo el lanzador; el fallback de
+   5.75rem es el lanzador de 56 px + 24 px de la pila + 12 px de aire (SSR y
+   primer frame). El alto cede al espacio
    disponible antes que desbordar por arriba: el tope de 52rem solo llega a
    aplicar con ventanas de 940 px o más, así que en portátiles de 13" y 14"
    manda siempre el espacio libre y el alto no cambia. El ancho topa en 34rem
@@ -516,10 +593,10 @@ button { -webkit-tap-highlight-color: transparent; }
    más ancho solo añade margen vacío. */
 .chat-panel {
   position: absolute;
-  bottom: var(--panel-lift, 9rem);
+  bottom: var(--panel-lift, 5.75rem);
   right: 1.5rem;
   width: min(34rem, calc(100vw - 2rem));
-  height: min(52rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));
+  height: min(52rem, calc(100dvh - var(--panel-lift, 5.75rem) - 1.5rem));
   border-radius: 1rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
   overflow: hidden;

@@ -62,13 +62,29 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
     expect(chatWidget).toMatch(
       /\.contact-fab-stack\[data-shift-left='true'\]\s*\{[^}]*right:\s*auto;[^}]*left:\s*1\.5rem;[^}]*align-items:\s*flex-start/,
     )
-    // El rediseño eliminó el menú desplegable y con él el id #contact-fab-menu:
-    // los dos canales cuelgan de un <ul> directo, que es lo que hay que realinear.
+    // El menú (#contact-fab-menu, v-show) vuelve con el lanzador: sigue siendo un
+    // <ul> directo del stack, que es lo que hay que realinear a la izquierda.
     expect(chatWidget).toMatch(
       /\.contact-fab-stack\[data-shift-left='true'\]\s*ul\s*\{[^}]*align-items:\s*flex-start/,
     )
     expect(chatWidget).toMatch(
       /\.contact-fab-stack\[data-shift-left='true'\]\s*\.fab-item\s*\{[^}]*flex-direction:\s*row-reverse/,
+    )
+  })
+
+  // Invariante que mantiene el salto cubriendo el lanzador: es un hijo DIRECTO
+  // del stack (después del <ul>), así que el `align-items: flex-start` del
+  // contenedor lo lleva a la izquierda junto con las filas; no necesita regla
+  // propia ni un `:class` dinámico.
+  it('SCEN-3b — el lanzador es hijo directo del stack, tras el menú, y lo arrastra el salto', () => {
+    const ulEnd = chatWidget.indexOf('</ul>')
+    const launcherStart = chatWidget.indexOf('ref="launcherEl"')
+    const stackEnd = chatWidget.indexOf('</Teleport>')
+    expect(ulEnd).toBeGreaterThan(-1)
+    expect(launcherStart).toBeGreaterThan(ulEnd)
+    expect(launcherStart).toBeLessThan(stackEnd)
+    expect(chatWidget).toMatch(
+      /\.contact-fab-stack\[data-shift-left='true'\]\s*\{[^}]*align-items:\s*flex-start/,
     )
   })
 
@@ -105,6 +121,22 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
   // deriva nueva —un arreglo que aterrice en una copia y no en las otras, que es
   // lo que E10 existe para atrapar— sigue enrojeciendo.
   const DELTA_ALQUILAME: ReadonlyArray<readonly [string, string]> = [
+    // 2026-10-06 (contact-fab-collapse): la cabecera del widget documenta los
+    // canales del menú del lanzador. Las marcas vivas listan Llámanos; alquilame
+    // deja constancia de que no lo ofrece (misma decisión del dueño del <li>
+    // tel: de abajo — contact-announcement.test.ts veta la palabra en su widget).
+    [
+      '    de canales: Chat 24/7 y WhatsApp.',
+      '    de canales: Chat 24/7, WhatsApp y Llámanos.',
+    ],
+    [
+      '      - Sin acceso telefónico: delta de marca, alquilame no lo ofrece (no hay',
+      '      - Llámanos → enlace tel: (número de desvío de Google si el visitante llegó',
+    ],
+    [
+      '                   fila de llamada ni número de desvío).',
+      '                   por un anuncio).',
+    ],
     // PageSpeed wave 4: ancla el CSS crítico del FAB desde el primer paint y
     // elimina el desplazamiento de 226 px medido en producción.
     [
