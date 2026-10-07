@@ -85,7 +85,11 @@ CoE="$(grep -cE '^[[:space:]]*continue-on-error:' .github/workflows/ci.yml || tr
 
 # ---------------------------------------------------------------- SCEN-006
 head_ 'SCEN-006 — nothing silenced'
-DISABLES="$(git diff --unified=0 "$(git merge-base HEAD origin/main)"...HEAD -- . \
+# This script is excluded from its own search. It contains the very string it
+# looks for, four times, so including it makes the check count itself and report
+# 4 additions forever — a red that means nothing, which is worse than no check.
+DISABLES="$(git diff --unified=0 "$(git merge-base HEAD origin/main)"...HEAD \
+  -- . ':(exclude)scripts/verify-lint-scenarios.sh' \
   | grep -c '^+.*eslint-disable' || true)"
 [ "${DISABLES:-0}" -eq 0 ] && ok "no eslint-disable added in this branch" \
                            || bad "${DISABLES} eslint-disable added — each must be declared in the PR"
