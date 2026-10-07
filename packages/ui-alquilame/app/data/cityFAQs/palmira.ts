@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿Cómo opera el pico y placa para carros en Palmira?',
-    content: 'La restricción se aplica durante los días hábiles y depende del último dígito de la matrícula. Al momento de entregarte el vehículo te confirmaremos cuál medida está vigente. Los fines de semana no hay limitación vehicular.',
+    content: 'Palmira no tiene pico y placa permanente para carros particulares. La medida que mucha gente recuerda es la de Cali, que es la ciudad vecina.',
   },
   {
     label: '¿Me conviene alquilar el carro en Palmira o en Cali?',

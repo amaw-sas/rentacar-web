@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
   },
   {
     label: '¿El pico y placa de Manizales afecta a los carros alquilados?',
-    content: 'Sí. En días hábiles la medida cambia de acuerdo con el último número de la placa. Revisamos la restricción contigo en el momento de la entrega; no aplica durante fines de semana ni festivos.',
+    content: 'Sí, y en este momento rige una medida temporal por el sismo: de 5:00 AM a 10:00 PM todos los días, fines de semana y festivos incluidos. Confirma con nosotros antes de viajar, porque la fecha de vigencia cambia.',
   },
   {
     label: '¿Hasta dónde puedo subir en carro rumbo al Nevado del Ruiz?',

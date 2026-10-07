@@ -17,8 +17,8 @@ export const faqs: FAQ[] = [
     content: getCityPriceAnswer('Villavicencio'),
   },
   {
-    label: '¿Puedo circular cualquier día en Villavicencio?',
-    content: 'Sí. Los vehículos particulares no tienen pico y placa en Villavicencio. Pueden moverse cualquier día de la semana, tanto en la ciudad como en el departamento.',
+    label: '¿Aplica pico y placa en Villavicencio?',
+    content: 'Sí, no puedes circular cualquier día. La restricción va de lunes a viernes según el último dígito de la placa, de 6:30 a 9:30 AM y de 5:00 a 8:00 PM, dentro de un polígono del centro. Te indicamos la que corresponde a tu placa al entregarte el carro.',
   },
   {
     label: '¿Cuánto demora el viaje por carretera entre Bogotá y Villavicencio?',

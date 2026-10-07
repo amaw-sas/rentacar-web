@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'La ciudad restringe los vehículos de lunes a viernes de acuerdo con el último número de la placa. Los horarios son de 7:00 a 9:00 AM y de 5:00 a 8:00 PM. La medida no se aplica sábados, domingos ni festivos.',
+            picoPlaca: 'Barranquilla no tiene pico y placa para carros particulares. Puedes circular cualquier día y a cualquier hora sin mirar el último dígito de la placa.',
             tolls: 'En la carretera a Cartagena se pagan 2 peajes, por cerca de $25.000 COP en conjunto. Rumbo a Santa Marta son 3, con un total aproximado de $30.000 COP. La salida hacia Puerto Colombia no tiene cobros de este tipo.',
             parking: 'Los estacionamientos del norte y de los sectores comerciales cobran entre $3.000 y $6.000 COP por hora. Buenavista y Portal del Prado son centros comerciales que suelen vincular su tarifa de parqueo al consumo.'
         },

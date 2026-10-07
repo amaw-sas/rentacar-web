@@ -32,7 +32,7 @@ export const content: CityExpandedContent = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'El último dígito de la matrícula determina la restricción de lunes a viernes. Los dos periodos son de 6:00 a 8:00 AM y de 5:30 a 7:30 PM. Los sábados, domingos y días festivos no tienen pico y placa.',
+            picoPlaca: 'La restricción va por el último dígito de la placa y el horario es continuo: de lunes a viernes, de 6:00 AM a 8:00 PM. Los sábados también rige, de 9:00 AM a 1:00 PM. Domingos y festivos quedan libres.',
             tolls: 'La ruta al Cañón del Chicamocha pasa por un peaje que cuesta cerca de $10.000 COP. Para llegar a San Gil encontrarás 2, por unos $18.000 COP en total. Son carreteras de montaña con curvas, aunque se mantienen bien.',
             parking: 'En Cabecera y otros sectores comerciales, espera pagar de $2.500 a $5.000 COP por hora de estacionamiento. Cacique y Megamall manejan una tarifa asociada al consumo.'
         },

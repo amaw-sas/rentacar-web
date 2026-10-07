@@ -78,7 +78,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Cartagena NO tiene pico y placa para vehículos particulares. Puedes circular libremente cualquier día y hora por toda la ciudad.',
+            picoPlaca: 'En Cartagena sí hay restricción para particulares. Rige de lunes a viernes según el último dígito de la placa, de 7:00 a 9:00 AM y de 6:00 a 8:00 PM. Los fines de semana y los festivos quedan por fuera.',
             tolls: 'Hacia Barú hay un peaje (~$9.000 COP). La vía a Santa Marta tiene varios peajes (~$45.000 COP total). Hacia el Volcán del Totumo no hay peajes.',
             parking: 'En el Centro Histórico y Bocagrande los parqueaderos cuestan entre $5.000-10.000 COP/hora. En Getsemaní hay opciones más económicas. Nunca dejes el carro en la calle.'
         },
@@ -109,7 +109,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Barranquilla tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 9:00 AM y de 5:00 a 8:00 PM. Sábados, domingos y festivos no hay restricción.',
+            picoPlaca: 'Barranquilla no tiene pico y placa para vehículos particulares. Puedes circular cualquier día y a cualquier hora por toda la ciudad.',
             tolls: 'Hacia Cartagena hay 2 peajes (~$25.000 COP total). Hacia Santa Marta hay 3 peajes (~$30.000 COP total). Hacia Puerto Colombia no hay peajes.',
             parking: 'En el norte y zonas comerciales los parqueaderos cuestan entre $3.000-6.000 COP/hora. En centros comerciales como Buenavista o Portal del Prado suele haber tarifa con consumo.'
         },
@@ -140,7 +140,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Santa Marta NO tiene pico y placa para vehículos particulares. Puedes circular libremente cualquier día y hora.',
+            picoPlaca: 'Santa Marta aplica la restricción según dónde esté matriculado el vehículo. Con placa de otra ciudad, el caso de casi todo carro alquilado, es continua de 7:00 AM a 8:00 PM. Con placa del distrito son tres franjas: 7:00 a 9:00 AM, 11:30 AM a 2:00 PM y 5:00 a 8:00 PM, de lunes a viernes.',
             tolls: 'Hacia Palomino hay un peaje (~$9.200 COP). Hacia Barranquilla hay 3 peajes (~$30.000 COP total). No hay peajes hacia Minca ni Taganga.',
             parking: 'En el centro histórico y El Rodadero los parqueaderos cuestan entre $3.000-6.000 COP/hora. En Taganga el parqueo es limitado y en temporada alta se complica.'
         },
@@ -233,7 +233,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Bucaramanga tiene pico y placa de lunes a viernes según el último dígito de la placa, de 6:00 a 8:00 AM y de 5:30 a 7:30 PM. Sábados, domingos y festivos no hay restricción.',
+            picoPlaca: 'Bucaramanga restringe según el último dígito de la placa en horario continuo: de lunes a viernes, de 6:00 AM a 8:00 PM, y los sábados de 9:00 AM a 1:00 PM. Domingos y festivos sin restricción.',
             tolls: 'Hacia el Cañón del Chicamocha hay un peaje (~$10.000 COP). Hacia San Gil hay 2 peajes (~$18.000 COP total). Las vías son de montaña, bien mantenidas pero con curvas.',
             parking: 'En Cabecera y zonas comerciales los parqueaderos cuestan entre $2.500-5.000 COP/hora. En centros comerciales como Cacique o Megamall hay tarifa con consumo.'
         },
@@ -264,7 +264,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Pereira tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 8:30 AM y de 5:30 a 7:00 PM. Sábados, domingos y festivos no hay restricción.',
+            picoPlaca: 'Pereira tiene una medida temporal por emergencias viales, distinta a la habitual: rige de lunes a sábado, de 8:00 AM a 6:00 PM, por par e impar. Lunes, miércoles y viernes descansan las placas pares; martes, jueves y sábado, las impares.',
             tolls: 'Hacia Salento hay un peaje (~$8.700 COP). Las vías del Eje Cafetero están en excelente estado. Hacia Santa Rosa de Cabal no hay peajes.',
             parking: 'En el centro y Circunvalar los parqueaderos cuestan entre $2.500-4.500 COP/hora. En Salento el parqueo es limitado en temporada alta, llega temprano.'
         },
@@ -295,7 +295,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Armenia tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:30 a 8:30 AM y de 5:30 a 6:30 PM. Solo una hora en cada franja, muy manejable.',
+            picoPlaca: 'Armenia restringe de lunes a viernes según el último dígito de la placa, en horario continuo de 7:00 AM a 7:00 PM y en todo el perímetro urbano, no solo en el centro. El fin de semana y los festivos no cuentan.',
             tolls: 'Las vías dentro del Quindío no tienen peajes. Solo encuentras peaje si vas hacia Pereira (~$8.700 COP) o hacia Ibagué por la Línea (~$15.500 COP).',
             parking: 'En el centro de Armenia los parqueaderos cuestan entre $2.000-4.000 COP/hora. En los parques temáticos el parqueo suele estar incluido o cuesta $5.000-10.000 COP/día.'
         },
@@ -326,7 +326,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Manizales tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 8:30 AM y de 5:30 a 7:00 PM. Las calles son muy empinadas, usa freno de motor.',
+            picoPlaca: 'Manizales tiene una medida temporal por el sismo, mucho más amplia que la habitual: de 5:00 AM a 10:00 PM todos los días, incluidos sábados, domingos y festivos, y cobija también a híbridos y eléctricos. Va del 1 al 15 de septiembre de 2026: confirma antes de viajar.',
             tolls: 'Hacia el Nevado del Ruiz no hay peajes pero sí entrada al parque (~$23.000 COP extranjeros, $18.000 COP colombianos). Hacia Pereira hay un peaje (~$9.400 COP).',
             parking: 'Las calles empinadas de Manizales complican el parqueo en la calle. Usa parqueaderos (entre $2.500-5.000 COP/hora). En Cable Plaza y centros comerciales hay más opciones.'
         },
@@ -357,7 +357,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Cúcuta tiene pico y placa de lunes a viernes según el último dígito de la placa, de 6:30 a 8:30 AM y de 5:00 a 7:30 PM. La zona fronteriza tiene congestión adicional.',
+            picoPlaca: 'Cúcuta reparte la restricción en tres franjas de lunes a viernes: 7:00 a 8:30 AM, 11:30 AM a 2:30 PM y 5:30 a 7:30 PM. Con placa de otra ciudad, dentro de los anillos viales es continua de 7:00 AM a 8:00 PM.',
             tolls: 'Hacia Pamplona hay un peaje (~$11.300 COP). La vía es de montaña con muchas curvas, toma precauciones. No hay peajes dentro del área metropolitana.',
             parking: 'En Ventura Plaza, Unicentro y zonas comerciales los parqueaderos cuestan entre $2.000-4.000 COP/hora. En la zona de frontera el parqueo es más complicado, evita dejar el carro en la calle.'
         },
@@ -388,7 +388,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Ibagué tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 8:00 AM y de 6:00 a 7:30 PM. Solo una hora en la mañana.',
+            picoPlaca: 'Ibagué restringe de lunes a viernes de 6:00 AM a 9:00 PM. Los vehículos matriculados en la ciudad descansan en hora valle, de 9:00 a 11:00 AM y de 3:00 a 5:00 PM; una placa de otra ciudad no tiene esa pausa y cumple las quince horas seguidas.',
             tolls: 'Hacia Bogotá por la Línea hay peajes (~COP 32.000 total). Hacia el Cañón del Combeima no hay peajes. Hacia Armenia hay un peaje (~$15.500 COP).',
             parking: 'En el centro y zonas comerciales los parqueaderos cuestan entre $2.000-4.000 COP/hora. En La Estación y centros comerciales hay tarifas con consumo.'
         },
@@ -450,7 +450,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Neiva tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 8:00 AM y de 6:00 a 7:00 PM. Muy corto, solo una hora por franja.',
+            picoPlaca: 'Neiva no tiene pico y placa para vehículos particulares. Solo hay cierres puntuales en fechas de eventos, como el Día sin Carro.',
             tolls: 'Hacia la Tatacoa no hay peajes. Hacia San Agustín hay peajes (~$25.000 COP total) y la vía es de montaña, larga pero bien mantenida.',
             parking: 'En el centro y zonas comerciales los parqueaderos cuestan entre $2.000-3.500 COP/hora. En la Tatacoa hay parqueo informal en los hoteles y observatorios.'
         },
@@ -481,7 +481,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Valledupar tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:30 a 8:30 AM y de 12:00 a 2:00 PM. Horario diferente al de otras ciudades.',
+            picoPlaca: 'Valledupar no tiene pico y placa para vehículos particulares. La Alcaldía ha desmentido varias veces los rumores sobre su entrada en vigencia.',
             tolls: 'Hacia Manaure no hay peajes. Hacia Santa Marta hay varios peajes (~$40.000 COP total). Las vías a balnearios cercanos están en buen estado.',
             parking: 'En el centro y zonas comerciales los parqueaderos cuestan entre $2.000-4.000 COP/hora. En Guatapurí y balnearios hay parqueo informal (~$5.000 COP/día).'
         },
@@ -512,7 +512,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Villavicencio tiene pico y placa de lunes a viernes según el último dígito de la placa, de 6:30 a 8:30 AM y de 5:30 a 7:30 PM. Aplica en el casco urbano.',
+            picoPlaca: 'Villavicencio restringe de lunes a viernes según el último dígito de la placa, de 6:30 a 9:30 AM y de 5:00 a 8:00 PM, dentro de un polígono del centro y los sectores de más congestión. Sábados, domingos y festivos sin restricción.',
             tolls: 'La vía Bogotá-Villavicencio tiene 2 peajes (~$26.000 COP total). Es una vía de montaña espectacular pero con curvas. Hacia Acacías y Puerto López las vías son planas.',
             parking: 'En el centro y zonas comerciales los parqueaderos cuestan entre $2.000-4.000 COP/hora. En Viva Villavicencio y Unicentro hay tarifa con consumo.'
         },
@@ -543,7 +543,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Palmira tiene pico y placa de lunes a viernes según el último dígito de la placa, de 7:00 a 9:00 AM y de 5:00 a 7:00 PM. Los fines de semana sin restricción.',
+            picoPlaca: 'Palmira no tiene pico y placa permanente para vehículos particulares. La medida que mucha gente recuerda es la de Cali, la ciudad vecina.',
             tolls: 'Hacia Buga hay un peaje (~$10.500 COP). Hacia Cali no hay peajes por la vía principal. Las vías del Valle están en excelente estado, planas y bien señalizadas.',
             parking: 'En el centro y zonas comerciales los parqueaderos cuestan entre $2.000-4.000 COP/hora. En Llanogrande y Unicentro hay tarifa con consumo.'
         },
@@ -574,7 +574,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Soledad comparte esquema de pico y placa con Barranquilla: lunes a viernes según el último dígito de la placa, de 7:00 a 9:00 AM y de 5:00 a 8:00 PM.',
+            picoPlaca: 'Soledad no tiene pico y placa para vehículos particulares, igual que Barranquilla. Puedes circular por el área metropolitana cualquier día de la semana.',
             tolls: 'Hacia Cartagena hay 2 peajes (~$25.000 COP total). Hacia Santa Marta hay 3 peajes (~$30.000 COP total). Hacia Puerto Colombia no hay peajes.',
             parking: 'En zonas comerciales como Gran Centro los parqueaderos cuestan entre $2.500-5.000 COP/hora. Cerca del aeropuerto hay parqueaderos de largo plazo más económicos.'
         },
@@ -605,7 +605,7 @@ const cityExpandedContent: Record<string, CityExpandedContent> = {
             }
         ],
         drivingTips: {
-            picoPlaca: 'Floridablanca comparte esquema con Bucaramanga: pico y placa de lunes a viernes según el último dígito de la placa, de 6:00 a 8:00 AM y de 5:30 a 7:30 PM.',
+            picoPlaca: 'Floridablanca comparte esquema con Bucaramanga: de lunes a viernes la restricción es continua de 6:00 AM a 8:00 PM, y los sábados va de 9:00 AM a 1:00 PM. Domingos y festivos sin restricción.',
             tolls: 'Hacia el Cañón del Chicamocha hay un peaje (~$10.000 COP). Hacia San Gil hay 2 peajes (~$18.000 COP total). Las vías son de montaña pero bien mantenidas.',
             parking: 'En Cañaveral y zonas comerciales los parqueaderos cuestan entre $2.500-5.000 COP/hora. En centros comerciales como Cañaveral hay tarifa con consumo.'
         },

@@ -18,7 +18,7 @@ export const faqs: FAQ[] = [
         },
         {
             label: '¿Cómo funciona el pico y placa en Bucaramanga?',
-            content: 'Sí. La rotación se establece con el último dígito de la placa y te indicaremos la limitación cuando recibas el carro. Durante los fines de semana puedes manejar sin esa restricción.'
+            content: 'Sí aplica, y el horario es continuo: de lunes a viernes de 6:00 AM a 8:00 PM, y los sábados de 9:00 AM a 1:00 PM. Solo domingos y festivos quedan libres. Te indicamos la restricción de tu placa al entregarte el carro.'
         },
         {
             label: '¿Qué ruta tomo para llegar en carro al Cañón del Chicamocha?',
