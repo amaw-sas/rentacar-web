@@ -18,6 +18,7 @@
     "./utils/*": "./src/utils/*.ts"
   },
   "scripts": {
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage"
