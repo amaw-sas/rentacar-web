@@ -162,16 +162,17 @@ documents the previous such migration. Mapping:
 - `packages/ui-alquilame/app/components/ChatWidget.vue`
 - `packages/logic/src/utils/chatPanelLift.ts` (doc comment, maybe fallback
   constant) + its unit tests
-- Tests: `ui-alquilatucarro/__tests__/ChatWidget.shift.test.ts`,
-  `ChatWidget.inert.a11y.test.ts`; `ui-alquicarros/__tests__/
-  ChatWidget.burbuja-mission.test.ts`, `ChatWidget.fab-reservation.test.ts`,
-  `ChatWidget.whatsappSchedule.test.ts`, `ChatWidget.inert.a11y.test.ts`;
-  `ui-alquilame/__tests__/ChatWidget.a11y.test.ts`,
-  `ChatWidget.callForwarding.test.ts`, `ChatWidget.panel-clearance.test.ts`,
-  `ChatWidget.inert.a11y.test.ts`; `ui-alquilame/tests/
-  chat-fab-left-green.test.ts`; `ui-alquilame/.../home/__tests__/
-  contact-announcement.test.ts`. Any further guard that greps ChatWidget
-  source surfaces when the suite runs — same re-express rule applies.
+- Tests (mapping verified against the tree 2026-10-06):
+  `ui-alquilatucarro/app/components/__tests__/`: `ChatWidget.a11y`,
+  `ChatWidget.callForwarding`, `ChatWidget.inert.a11y`,
+  `ChatWidget.panel-clearance`, `ChatWidget.shift`;
+  `ui-alquicarros/app/components/__tests__/`: `ChatWidget.burbuja-mission`,
+  `ChatWidget.fab-reservation`, `ChatWidget.inert.a11y`,
+  `ChatWidget.whatsappSchedule`;
+  `ui-alquilame`: `app/components/__tests__/ChatWidget.inert.a11y`,
+  `tests/chat-fab-left-green`, `app/components/home/__tests__/
+  contact-announcement`. Any further guard that greps ChatWidget source
+  surfaces when the suite runs — same re-express rule applies.
 - No consumer imports `ChatWidget` state; it's a leaf mounted per layout.
   `/chat`, `ChatConversation`, dashboard: untouched.
 
