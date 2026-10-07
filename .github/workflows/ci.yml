@@ -41,9 +41,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The `continue-on-error: true` that used to sit here hid a lint that had
+      # been dead for a long time: `eslint` was in no package's dependencies, so
+      # every run died with "sh: eslint: command not found" while the job stayed
+      # green. The flag is gone — a lint failure now fails the PR. `pnpm lint` is
+      # a single eslint process over the whole monorepo (~8s for 1.177 files).
       - name: Lint - All packages
         run: pnpm lint
-        continue-on-error: true
 
       # Issue 322 PR3 — run unit suites for all packages, not only logic.
       # A failure in any package fails the job (no continue-on-error).

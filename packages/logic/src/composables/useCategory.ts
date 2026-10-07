@@ -407,7 +407,7 @@ export default function useCategory(categoryAvailableData: CategoryAvailabilityD
    })
    
    const getDiscount = computed<string>(() => {
-      let initial: number = 0, final: number = 0;
+      let initial: number, final: number;
 
       // Mensual: la base diaria llega en 0 (el precio vive en month_prices), así
       // que el ahorro se mide entre el precio de un día suelto y el día que sale

@@ -166,7 +166,6 @@
 </template>
 
 <script lang="ts" setup>
-const { franchise } = useAppConfig()
 
 useHead({
   title: 'Privacidad del programa de referidos',

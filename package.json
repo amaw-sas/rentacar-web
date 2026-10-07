@@ -58,7 +58,7 @@
     "og:generate": "npx tsx scripts/generate-og-images.ts",
     "typecheck": "pnpm --filter 'ui-*' typecheck",
     "typecheck:safe": "for b in alquilatucarro alquilame alquicarros; do echo \"▸ ui-$b\"; if command -v ionice >/dev/null 2>&1; then ionice -c3 nice -n19 pnpm --filter \"ui-$b\" typecheck || exit 1; else nice -n19 pnpm --filter \"ui-$b\" typecheck || exit 1; fi; done",
-    "lint": "pnpm -r lint"
+    "lint": "eslint . --max-warnings 201"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.80",
@@ -106,6 +106,7 @@
     ]
   },
   "devDependencies": {
+    "@nuxt/eslint-config": "^1.17.0",
     "@nuxt/test-utils": "^4.0.3",
     "@playwright/test": "^1.57.0",
     "@supabase/supabase-js": "^2.100.1",
@@ -113,6 +114,7 @@
     "@vercel/blob": "^2.3.3",
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.1",
+    "eslint": "^10.12.0",
     "googleapis": "^170.1.0",
     "playwright": "^1.49.0",
     "sharp": "^0.34.5",

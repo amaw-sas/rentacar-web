@@ -1,10 +1,10 @@
 import * as v from 'valibot';
 import '@valibot/i18n/es';
-v.setGlobalConfig({ lang: 'es' });
 
 import { CategoryFormValidationSchema } from './categoryForm';
 import type { DriverLicenseType } from '../types/type/DriverLicenseType';
 import { userInformationEntries, identificationError, extraDriverDocumentError } from './userInformationForm';
+v.setGlobalConfig({ lang: 'es' });
 
 const isBlank = (value: unknown) => String(value ?? '').trim() === '';
 

@@ -168,9 +168,9 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: ['rentacar-data'] })
-
 import useTariffs, { type TariffGama } from '@rentacar-main/logic/composables/useTariffs';
+
+definePageMeta({ middleware: ['rentacar-data'] })
 
 const { franchise } = useAppConfig();
 

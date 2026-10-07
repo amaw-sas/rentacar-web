@@ -275,6 +275,9 @@ import {
   IconsXIcon as XIcon
 } from "#components";
 
+/** utils */
+import { allRenderableBeyondHorizon, preloadPhoneField } from "@rentacar-main/logic/utils";
+
 const props = withDefaults(defineProps<{
   placeholderCount?: number;
   reserveInitialResults?: boolean;
@@ -282,9 +285,6 @@ const props = withDefaults(defineProps<{
   placeholderCount: 3,
   reserveInitialResults: false,
 });
-
-/** utils */
-import { allRenderableBeyondHorizon, preloadPhoneField } from "@rentacar-main/logic/utils";
 
 // Note: composables and functions are auto-imported by Nuxt
 
@@ -462,14 +462,13 @@ const modalContentProps = { 'aria-modal': 'true' } as Record<string, string>;
 /** Share functions */
 function getReservationShareUrl() {
   if (!import.meta.client) return '';
-  const router = useRouter();
   const route = useRoute();
 
   if (vehiculo.value) {
     // Generar URL semántica con /categoria/[codigo], incluyendo el seguro elegido
     // (#1) para que el enlace compartido reproduzca la cobertura, no caiga en Básico.
     const currentPath = route.path;
-    const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^\/]+$/, '');
+    const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^/]+$/, '');
     const newPath = `${basePathWithoutCategoria}/categoria/${vehiculo.value.toLowerCase()}`;
     const suffix = haveTotalInsurance.value ? '?seguro=total' : '';
     return `${window.location.origin}${newPath}${suffix}`;

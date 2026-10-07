@@ -119,7 +119,7 @@ describe('T2-G2 — fleet and footer text contrast', () => {
     expect(bottomBar).toMatch(/class="text-center text-footer-credit md:text-right"/)
     expect(bottomBar).not.toMatch(/text-gray-500/)
     expect(bottomBar).toContain('Elaborado por')
-    expect(bottomBar).toMatch(/class="text-gray-300[^\"]*"[\s\S]*?>Estrategias<\/a>/)
+    expect(bottomBar).toMatch(/class="text-gray-300[^"]*"[\s\S]*?>Estrategias<\/a>/)
     expect(ratio).toBeGreaterThanOrEqual(MIN_AA_RATIO)
     expect(contrast(TAILWIND_GRAY_300, '#000000')).toBeGreaterThanOrEqual(MIN_AA_RATIO)
   })

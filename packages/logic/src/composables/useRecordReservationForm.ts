@@ -64,7 +64,7 @@ export default async function useRecordReservationForm() {
 
   const { selectedCategory } = storeToRefs(useStoreSearchData());
 
-  let formData: FormRecordFields | {} = {};
+  let formData: FormRecordFields | Record<string, unknown>;
 
   const partialData: Partial<FormRecordFields> = {
     fullname: `${nombreCompleto.value} ${apellidos.value}`,
@@ -128,8 +128,7 @@ export default async function useRecordReservationForm() {
   // "Directo" to the dashboard; an absent key would signal "Desconocido".
   partialData.attribution = attribution.value ?? readStoredAttribution() ?? {};
 
-  let total_price_to_pay: number = 0,
-    total_price: number = 0;
+  let total_price_to_pay: number, total_price: number;
 
   // reserva de mensualidad
   if (haveMonthlyReservation.value && selectedMonthlyMileage.value) {

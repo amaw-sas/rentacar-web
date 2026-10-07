@@ -1,7 +1,6 @@
 // External dependencies
-import { defineStore } from 'pinia';
+import { defineStore, storeToRefs } from 'pinia';
 import { ref, computed, unref } from 'vue';
-import { storeToRefs } from 'pinia';
 
 // Internal dependencies - stores
 import useStoreAdminData from './useStoreAdminData';
@@ -9,7 +8,7 @@ import useStoreReservationForm from './useStoreReservationForm';
 
 // Internal dependencies - composables
 import useFetchCategoriesAvailabilityData from '../composables/useFetchCategoriesAvailabilityData';
-import useCategory from '../composables/useCategory';
+import type useCategory from '../composables/useCategory';
 import useMessages from '../composables/useMessages';
 
 // utils

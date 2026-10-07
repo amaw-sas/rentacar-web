@@ -391,14 +391,13 @@ const modalContentProps = { 'aria-modal': 'true' } as Record<string, string>;
 /** Share functions */
 function getReservationShareUrl() {
   if (!import.meta.client) return '';
-  const router = useRouter();
   const route = useRoute();
 
   if (vehiculo.value) {
     // Generar URL semántica con /categoria/[codigo], incluyendo el seguro elegido
     // (issue 322 SCEN-322-M04) para que el enlace compartido reproduzca la cobertura.
     const currentPath = route.path;
-    const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^\/]+$/, '');
+    const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^/]+$/, '');
     const newPath = `${basePathWithoutCategoria}/categoria/${vehiculo.value.toLowerCase()}`;
     const suffix = haveTotalInsurance.value ? '?seguro=total' : '';
     return `${window.location.origin}${newPath}${suffix}`;

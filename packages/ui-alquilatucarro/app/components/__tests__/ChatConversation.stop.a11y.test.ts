@@ -21,7 +21,7 @@ describe('SCEN-R3 — no stop control; the send button is disabled while streami
   })
 
   it('does not destructure stop from the chat singleton', () => {
-    expect(source).not.toMatch(/\n  stop,\n/)
+    expect(source).not.toMatch(/\n {2}stop,\n/)
   })
 
   it('disables the single submit button while streaming or with an empty draft', () => {

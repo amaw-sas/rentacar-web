@@ -57,7 +57,7 @@ describe('SCEN-ALQ-CHAT-03 — burbujas grafito sobre lienzo claro', () => {
   })
 
   it('usa radio de 1rem con la esquina viva del lado del remitente', () => {
-    expect(source).toMatch(/\.cc-msg \{\n  position: relative;\n  max-width: 85%;\n  padding: 0\.5rem 0\.75rem;\n  border-radius: 1rem;/)
+    expect(source).toMatch(/\.cc-msg \{\n {2}position: relative;\n {2}max-width: 85%;\n {2}padding: 0\.5rem 0\.75rem;\n {2}border-radius: 1rem;/)
     expect(source).toMatch(/\.cc-msg\.is-user \{[\s\S]{0,200}border-bottom-right-radius: 0\.25rem;/)
     expect(source).toMatch(/\.cc-msg\.is-assistant \{[\s\S]{0,200}border-bottom-left-radius: 0\.25rem;/)
   })
@@ -119,11 +119,11 @@ describe('SCEN-ALQ-CHAT-B1 — agrupación por remitente', () => {
 
 describe('SCEN-ALQ-CHAT-B2 — la hora sigue metida en la burbuja', () => {
   it('posiciona cc-time en la esquina inferior derecha', () => {
-    expect(source).toMatch(/\.cc-time \{\n  position: absolute;\n  right: 0\.5rem;\n  bottom: 0\.3125rem;/)
+    expect(source).toMatch(/\.cc-time \{\n {2}position: absolute;\n {2}right: 0\.5rem;\n {2}bottom: 0\.3125rem;/)
   })
 
   it('reserva el ancho de la hora con un espaciador en la última línea', () => {
-    expect(source).toMatch(/\.cc-msg\.is-user\.has-time::after,\n\.cc-msg\.is-assistant\.has-time \.cc-text::after \{[\s\S]{0,120}display: inline-block;\n  width: 4\.5em;/)
+    expect(source).toMatch(/\.cc-msg\.is-user\.has-time::after,\n\.cc-msg\.is-assistant\.has-time \.cc-text::after \{[\s\S]{0,120}display: inline-block;\n {2}width: 4\.5em;/)
   })
 
   it('devuelve la hora a su propia fila en burbujas con partes estructuradas', () => {

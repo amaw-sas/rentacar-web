@@ -26,8 +26,6 @@ test.describe('Color mode coherente', () => {
     // existe en runtime real, pero podemos disparar el ToastProvider via
     // composable expuesto por @nuxt/ui — en su lugar verificamos el contenedor
     // del toaster que se renderiza al cargar la app).
-    const toaster = page.locator('[data-sonner-toaster], section[aria-label*="oti" i]').first();
-
     // El toaster siempre se monta con UApp, aunque esté vacío. Verificamos que
     // el body NO tenga el atributo dark que indicaría tema invertido en toasts.
     const bodyTheme = await page.evaluate(() => {

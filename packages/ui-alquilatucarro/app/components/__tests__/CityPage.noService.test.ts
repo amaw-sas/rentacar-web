@@ -26,10 +26,22 @@ describe('CityPage — aviso de ciudad sin servicio', () => {
     expect(src).toMatch(/v-if="!cityIsBookable"/)
   })
 
-  it('importa isBookable explicitamente', () => {
+  it('importa isBookable explicitamente, y como valor', () => {
     // El auto-import de Nuxt cubre los composables `use*`, no una funcion suelta de utils. Sin
     // esta linea la pagina daba 500 en SSR — la pagina que la feature existe para mantener viva.
-    expect(src).toMatch(/import \{ isBookable \} from '@rentacar-main\/logic\/utils'/)
+    //
+    // Se mira la LISTA de especificadores, no la forma literal de un import suelto: `isBookable`
+    // puede compartir declaracion con otro valor del mismo modulo (asi lo exige
+    // import/no-duplicates) sin que eso cambie nada. Lo que no vale es que desaparezca, que
+    // cambie de modulo, ni que pase a ser de solo tipos: `import type { isBookable }` o
+    // `{ type isBookable }` se borran al compilar y devolverian el 500. La primera forma no
+    // casa con /import \{/ porque lleva `type` antes de la llave; la segunda la descarta el
+    // segundo filtro.
+    const declaraciones = src.match(/import \{([^}]*)\} from '@rentacar-main\/logic\/utils'/g) ?? []
+    const comoValor = declaraciones.some(
+      d => /\bisBookable\b/.test(d) && !/\btype\s+isBookable\b/.test(d),
+    )
+    expect(comoValor).toBe(true)
   })
 
   it('el aviso no va dentro de ClientOnly: una arana lo lee en el HTML servido', () => {

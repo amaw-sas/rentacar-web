@@ -392,10 +392,9 @@
 // `useBookableRelatedCities` y `useRelatedCities` no se importan), pero NO una funcion suelta de
 // `utils`. Sin esta linea la pagina revienta con un 500 en SSR — justo la pagina que esta feature
 // existe para mantener viva. Ningun test lo veia porque ninguno ejecuta este script.
-import { isBookable } from '@rentacar-main/logic/utils'
+import { isBookable, isCategoryVisibleInCity } from '@rentacar-main/logic/utils'
 /** types */
 import type { CategoryData, City } from '@rentacar-main/logic/utils';
-import { isCategoryVisibleInCity } from '@rentacar-main/logic/utils';
 
 /** imports */
 import { defineAsyncComponent } from "vue";

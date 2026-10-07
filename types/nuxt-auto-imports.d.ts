@@ -7,6 +7,9 @@
  */
 
 import type { AppConfig as NuxtAppConfig } from 'nuxt/schema'
+import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
+import type { UseSeoMetaInput } from '@unhead/schema'
+import type { UseHeadInput } from '@unhead/vue'
 
 // Extended AppConfig with franchise information
 interface AppConfig extends NuxtAppConfig {
@@ -30,9 +33,6 @@ interface AppConfig extends NuxtAppConfig {
   }
   [key: string]: any
 }
-import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
-import type { UseSeoMetaInput } from '@unhead/schema'
-import type { UseHeadInput } from '@unhead/vue'
 
 declare global {
   // Nuxt App Config

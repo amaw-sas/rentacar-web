@@ -210,7 +210,6 @@
 </template>
 
 <script lang="ts" setup>
-const { franchise } = useAppConfig()
 
 useHead({
   title: 'Términos del programa de referidos',

@@ -19,7 +19,7 @@ vi.stubGlobal('$fetch', (...args: unknown[]) => mockFetch(...args))
 vi.stubGlobal('useRuntimeConfig', () => mockUseRuntimeConfig())
 
 vi.mock('h3', () => ({
-  defineEventHandler: (handler: Function) => handler,
+  defineEventHandler: (handler: (...args: never[]) => unknown) => handler,
   readBody: (...args: unknown[]) => mockReadBody(...args),
   getRequestIP: (...args: unknown[]) => mockGetRequestIP(...args),
   createError: (e: any) => {
