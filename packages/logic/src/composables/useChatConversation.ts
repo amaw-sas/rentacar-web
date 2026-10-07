@@ -592,6 +592,11 @@ export function createChatConversation(cfg: ChatConversationConfig) {
     // its place even when its payload is rejected, so it still keeps the next text
     // block in the same bubble; unknown data-*, tool output and the marker don't count.
     let lastPieceWasText = false;
+    // Photo cards are the ONE data piece that breaks instead of gluing: a multi-gama
+    // answer sends [price, cards] per gama and the next price must open its own
+    // bubble (globos-separados-por-fotos SCEN-001..005; Diego 6-oct, with preview:
+    // the quote table and the sede list keep gluing exactly as before).
+    let lastPieceWasGamaCards = false;
     let quoteAnalyticsSent = false;
     const emitQuoteAnalytics = () => {
       if (!quoteTable || quoteAnalyticsSent) return;
@@ -740,20 +745,32 @@ export function createChatConversation(cfg: ChatConversationConfig) {
             if (textBlocks > 1) {
               assistantText += textBlocks <= 3 ? '\n---\n' : '\n\n';
             }
-            // Mirror the separator rule above: only a 2nd+ block right after text
-            // breaks. A first text-start after deltas that came without one continues
-            // that block, as the flattened text does ("Hola" + "Mundo" → "HolaMundo").
+            // Mirror the separator rule above: a 2nd+ block right after text breaks,
+            // and so does one right after rendered PHOTO cards (each gama's pair in
+            // its own bubble). A first text-start after deltas that came without one
+            // continues that block, as the flattened text does ("Hola" + "Mundo" →
+            // "HolaMundo").
             const lastRef = parts.at(-1);
             if (!(textBlocks === 1 && lastRef?.type === 'text')) {
-              parts.push({ type: 'text', text: '', newBubble: textBlocks > 1 && lastPieceWasText });
+              // The photo break stands on its own, outside the textBlocks counter:
+              // even the FIRST text block breaks when rendered cards precede it.
+              parts.push({
+                type: 'text',
+                text: '',
+                newBubble: (textBlocks > 1 && lastPieceWasText) || lastPieceWasGamaCards,
+              });
             }
             lastPieceWasText = true;
+            lastPieceWasGamaCards = false;
           } else if (event.type === 'text-delta' && typeof event.delta === 'string') {
             assistantText += event.delta;
             const last = parts.at(-1);
             if (last?.type === 'text') last.text += event.delta;
-            else parts.push({ type: 'text', text: event.delta, newBubble: false });
+            // A delta without its text-start still breaks after rendered photos:
+            // the break is about what the reader SEES above, not about the event.
+            else parts.push({ type: 'text', text: event.delta, newBubble: lastPieceWasGamaCards });
             lastPieceWasText = true;
+            lastPieceWasGamaCards = false;
           } else if (event.type === 'tool-output-available') {
             // Render the fallback CTAs from the structured tool result — never
             // from model text (it corrupts long URLs).
@@ -761,6 +778,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
             if (a) actions = a;
           } else if (event.type === 'data-quoteTable') {
             lastPieceWasText = false;
+            lastPieceWasGamaCards = false;
             // Deterministic quote table (code-emitted). Guard the array so a
             // malformed payload can't crash the render.
             const d = event.data as QuoteTablePart | undefined;
@@ -781,9 +799,15 @@ export function createChatConversation(cfg: ChatConversationConfig) {
             if (d && Array.isArray(d.modelos)) {
               gamaCards = d;
               parts.push({ type: 'gamaCards', data: d });
+              // Only RENDERED cards break the next text into its own bubble; a
+              // rejected payload holds its place and glues, like any other data.
+              lastPieceWasGamaCards = true;
+            } else {
+              lastPieceWasGamaCards = false;
             }
           } else if (event.type === 'data-sedeCards') {
             lastPieceWasText = false;
+            lastPieceWasGamaCards = false;
             // Keep only entries with a usable name; a list left empty renders nothing.
             const d = event.data as { sedes?: unknown } | undefined;
             if (Array.isArray(d?.sedes)) {
@@ -810,6 +834,7 @@ export function createChatConversation(cfg: ChatConversationConfig) {
             if ((event.data as { v?: unknown } | undefined)?.v === 2) partsOrder = 2;
           } else if (event.type === 'data-buttons') {
             lastPieceWasText = false;
+            lastPieceWasGamaCards = false;
             // Code-emitted CTAs feeding the SAME `actions` slot. Any button may arrive
             // alone (hablar_asesor → whatsapp only; self-serve → web + share); keep a
             // URL only if it's a non-empty string. `share` is the wa.me/?text=… quote

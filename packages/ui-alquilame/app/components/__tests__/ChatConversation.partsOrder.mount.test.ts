@@ -319,7 +319,13 @@ describe('SCEN-E3 — v2 text → cards → text → buttons → text is one bub
     ]])
     const w = await render(instance)
     const bubbles = assistantBubbles(w)
-    expect(bubbles.map(structure)).toEqual([[T('Modelos:'), CARDS_C, T('Reserva aquí:'), ACTIONS_C, T('¿Algo más?')]])
+    // Superseded in part by globos-separados-por-fotos (owner decision 2026-10-06,
+    // annotated in chat-parts-order.scenarios.md): rendered photo cards close their
+    // bubble; the next text opens a new one. Buttons still glue.
+    expect(bubbles.map(structure)).toEqual([
+      [T('Modelos:'), CARDS_C],
+      [T('Reserva aquí:'), ACTIONS_C, T('¿Algo más?')],
+    ])
     expect(bubbles[0]!.classList.contains('has-cards')).toBe(true)
     expect(consoleError).not.toHaveBeenCalled()
   })
@@ -419,9 +425,15 @@ describe('v2 repeated data pieces render each one in place', () => {
     ]])
     const w = await render(instance)
     const bubbles = assistantBubbles(w)
-    expect(bubbles.map(structure)).toEqual([[T('Gama C:'), CARDS_C, T('Y la Gama F:'), CARDS_C]])
-    const titles = Array.from(bubbles[0]!.querySelectorAll(':scope > .cc-cards > .cc-cards-title')).map((t) =>
-      (t.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    // globos-separados-por-fotos SCEN-001: each pair in its own bubble.
+    expect(bubbles.map(structure)).toEqual([
+      [T('Gama C:'), CARDS_C],
+      [T('Y la Gama F:'), CARDS_C],
+    ])
+    const titles = bubbles.flatMap((b) =>
+      Array.from(b.querySelectorAll(':scope > .cc-cards > .cc-cards-title')).map((t) =>
+        (t.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      ),
     )
     expect(titles).toEqual(['Modelos de la Gama C · Económico', 'Modelos de la Gama F · Sedán mecánico'])
   })

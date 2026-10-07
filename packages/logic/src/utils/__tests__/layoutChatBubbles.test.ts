@@ -401,25 +401,37 @@ describe('v2 edge cases', () => {
     expect(shape(bubbles)).toEqual([['text:A', 'quoteTable', 'text:B']]);
   });
 
-  it('caps text-block bubbles at 3; the 4th and 5th fold into the last text block', () => {
+  // Cap raised 3 → 6 (owner decision 2026-10-06, globos-separados-por-fotos
+  // SCEN-005 annotation): the photo break plus the explainer globo made real
+  // multi-gama answers overflow the old cap and re-glue the closing question.
+  it('caps text-block bubbles at 6; the 7th and 8th fold into the last text block', () => {
     const bubbles = layoutChatBubbles({
-      text: 'A\n---\nB\n---\nC\n\nD\n\nE',
+      text: 'A\n---\nB\n---\nC\n\nD\n\nE\n\nF\n\nG\n\nH',
       partsOrder: 2,
-      parts: [t('A'), t('B', true), t('C', true), t('D', true), t('E', true)],
+      parts: [
+        t('A'), t('B', true), t('C', true), t('D', true), t('E', true), t('F', true),
+        t('G', true), t('H', true),
+      ],
     });
-    expect(shape(bubbles)).toEqual([['text:A'], ['text:B'], ['text:C\n\nD\n\nE']]);
-    // Same result as today's flattened text for the same stream.
-    expect(bubbles).toEqual(referenceTodayLayout({ text: 'A\n---\nB\n---\nC\n\nD\n\nE' }));
+    expect(shape(bubbles)).toEqual([
+      ['text:A'], ['text:B'], ['text:C'], ['text:D'], ['text:E'], ['text:F\n\nG\n\nH'],
+    ]);
   });
 
   it('over the cap, a break after a data block appends a new text block instead of folding', () => {
     const bubbles = layoutChatBubbles({
-      text: 'A\n---\nB\n---\nC\n\nD',
+      text: 'A\n---\nB\n---\nC\n\nD\n\nE\n\nF\n\nG',
       quoteTable,
       partsOrder: 2,
-      parts: [t('A'), t('B', true), t('C', true), d('quoteTable', quoteTable), t('D', true)],
+      parts: [
+        t('A'), t('B', true), t('C', true), t('D', true), t('E', true), t('F', true),
+        d('quoteTable', quoteTable), t('G', true),
+      ],
     });
-    expect(shape(bubbles)).toEqual([['text:A'], ['text:B'], ['text:C', 'quoteTable', 'text:D']]);
+    expect(shape(bubbles)).toEqual([
+      ['text:A'], ['text:B'], ['text:C'], ['text:D'], ['text:E'],
+      ['text:F', 'quoteTable', 'text:G'],
+    ]);
   });
 
   it('model-written --- inside one text ref opens bubbles uncapped (as today)', () => {

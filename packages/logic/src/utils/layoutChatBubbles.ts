@@ -6,9 +6,10 @@
  *   `splitBubbles(text)` chunk, and every code-owned part appended to the LAST
  *   bubble in a fixed order (quote table, gama cards, sede cards, actions).
  *   Stored transcripts and servers without the v2 marker land here.
- * - V2: walk the recorded `parts` refs in arrival order. A text block that
- *   started right after another text block opens a new bubble (max 3; beyond
- *   that it folds into the last text block). A data piece stays inside the
+ * - V2: walk the recorded `parts` refs in arrival order. A text block whose ref
+ *   carries `newBubble: true` (the parser marks it after another text block or
+ *   after rendered gama photo cards) opens a new bubble, up to MAX_TEXT_BUBBLES;
+ *   beyond that it folds into the last text block. A data piece stays inside the
  *   current bubble, in its place, rendering the payload it arrived with.
  *
  * Invalid payloads (malformed or corrupt storage) are treated as absent and list
@@ -48,8 +49,13 @@ export type ChatBubbleSource = Pick<
 type DataKind = Exclude<ChatBubbleBlock['kind'], 'text'>;
 type DataBlock = Exclude<ChatBubbleBlock, { kind: 'text' }>;
 
-// Mirrors the parser's text-block cap (useChatConversation submit()).
-const MAX_TEXT_BUBBLES = 3;
+// Bubble cap for v2 breaks. Raised from 3 to 6 (owner decision 2026-10-06,
+// globos-separados-por-fotos SCEN-005 annotation): with the photo break, a
+// two-gama answer plus the explainer globo already carries 4 texts, and the old
+// cap glued the closing question under the last gama's photos. The parser's
+// flattened-text separator rule (`\n---\n` for blocks ≤3) is a different,
+// legacy-only concern and keeps its own threshold.
+const MAX_TEXT_BUBBLES = 6;
 const LEGACY_DATA_ORDER: DataKind[] = ['quoteTable', 'gamaCards', 'sedeCards', 'actions'];
 const REF_KIND = new Map<unknown, DataKind>([
   ['quoteTable', 'quoteTable'],

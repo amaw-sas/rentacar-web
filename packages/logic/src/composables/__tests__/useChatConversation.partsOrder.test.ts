@@ -229,7 +229,11 @@ describe('SCEN-E2 — v2 text → table → text', () => {
 });
 
 describe('SCEN-E3 — v2 text → cards → text → buttons → text', () => {
-  it('lays out 1 bubble in arrival order', async () => {
+  // Superseded in part by globos-separados-por-fotos (owner decision 2026-10-06,
+  // annotated in chat-parts-order.scenarios.md): a text right after RENDERED photo
+  // cards opens a new bubble. The arrival ORDER still holds, and a text after
+  // data-buttons still glues (only photo cards break).
+  it('lays out 2 bubbles: the cards close the first, the buttons glue the rest', async () => {
     const inst = createChatConversation(cfg());
     const m = await runTurn(inst, [
       MARKER,
@@ -242,7 +246,8 @@ describe('SCEN-E3 — v2 text → cards → text → buttons → text', () => {
     expect(m.actions).toEqual({ web: 'https://reserva.test/x', whatsapp: undefined, share: undefined });
     const bubbles = layoutChatBubbles(m);
     expect(shape(bubbles)).toEqual([
-      ['text:Modelos:', 'gamaCards', 'text:Reserva aquí:', 'actions', 'text:¿Algo más?'],
+      ['text:Modelos:', 'gamaCards'],
+      ['text:Reserva aquí:', 'actions', 'text:¿Algo más?'],
     ]);
     expect(bubbles[0]!.hasCards).toBe(true);
   });
@@ -490,11 +495,16 @@ describe('repeated data types in one v2 turn', () => {
     expect(m.gamaCards).toEqual(gamaF);
     const restored = createChatConversation(c).messages.value.at(-1)!;
     for (const msg of [m, restored]) {
+      // globos-separados-por-fotos SCEN-001: each pair in its own bubble, live and
+      // after reload (the persisted marks carry the break).
       const bubbles = layoutChatBubbles(msg);
-      expect(shape(bubbles)).toEqual([['text:Gama C:', 'gamaCards', 'text:Y la Gama F:', 'gamaCards']]);
-      const gamas = bubbles[0]!.blocks
-        .filter((b) => b.kind === 'gamaCards')
-        .map((b) => (b as { data: { gama: string } }).data.gama);
+      expect(shape(bubbles)).toEqual([
+        ['text:Gama C:', 'gamaCards'],
+        ['text:Y la Gama F:', 'gamaCards'],
+      ]);
+      const gamas = bubbles.flatMap((b) =>
+        b.blocks.filter((blk) => blk.kind === 'gamaCards').map((blk) => (blk as { data: { gama: string } }).data.gama),
+      );
       expect(gamas).toEqual(['C', 'F']);
     }
   });
