@@ -183,3 +183,21 @@ Se leyó el informe de términos de búsqueda de «Búsqueda». En el periodo hu
 - «aeropuerto» (41 clics, 0 conversiones) y «camioneta / suv» (102 clics, 0,5 conversiones). Antes de negativarlas conviene revisar a qué landing llegan.
 - Amplia con cero conversiones en Ibagué, Neiva y Valledupar. Queda como candidata a pausar si sigue igual el 7 de octubre.
 - Hay un aviso de saldo agotándose en la cuenta.
+
+## Lectura de «Marca» del 2026-10-06 (desde el 23-sep)
+
+Totales del grupo: 115 clics, 98.306 COP y 5,92 conversiones. Hay 4 palabras habilitadas.
+
+| Palabra (exacta) | Clics | Coste | Conv. | Calidad |
+|---|---|---|---|---|
+| [alquila tu carro] | 43 | 33.830 COP | 3,98 | 10/10 |
+| [alquilatucarro] | 38 | 30.671 COP | 0,56 | 10/10 |
+| [alquilatucarro com] | 13 | 11.866 COP | 0 | 10/10 |
+| [alquila tu carro com] | 7 | 7.019 COP | 0,38 | 8/10 (relevancia del anuncio por debajo de la media) |
+| [alquila tu carro bogota], ya no habilitada | 14 | 14.920 COP | 1 | — |
+
+- **La fuga de [alquila tu carro bogota] está cerrada.** De sus 31 términos, solo 1 era de marca. Los otros 30 eran genéricos de Bogotá («alquiler de carros bogota», «renta de carros bogota», «rent a car bogota»). Ya no está habilitada, así que el punto «pausarla» del día de cambios queda hecho.
+- **Las 4 que quedan están limpias.** [alquila tu carro] solo recogió «renta tu carro» y «arrienda tu auto» (660 COP).
+- **No se pausan las variantes «com».** Las 4 son negativas exactas en los 16 grupos de ciudad y en «genericos». Si se pausa una, su búsqueda puede quedarse sin anuncio, porque las negativas exactas no se amplían a variantes. Además no hay ahorro, y cualquier cambio reinicia el aprendizaje de «Búsqueda».
+
+**Añadido a la revisión del 7 de octubre:** abrir la «Comparativa de subastas» de «Marca». Si ningún competidor puja por la marca, el orgánico ya sale primero y se puede hablar de pagar menos por marca. [alquilatucarro] convierte poco (CPA 54.817 COP contra 8.506 de [alquila tu carro]). Si alguien puja, se deja como está.

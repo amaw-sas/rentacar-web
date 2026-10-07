@@ -444,3 +444,24 @@ Se leyó la cuenta en el navegador de Orca, sin cambiar nada.
 **Recomendación:** no pasar a amplia por ahora. La frase ya captura las variantes útiles, sin fugas, y la campaña convierte. La amplia solo añade el riesgo de entrar en el alquiler dentro de España. El cuello de botella es el presupuesto («Limitada por el presupuesto»), no la cobertura. Decide el dueño.
 
 **Llamadas (PR #495):** la acción «Llamada (+57 301 672 9250)» está **Activa**, como secundaria, con 14 conversiones del 1-ago al 5-oct. El objetivo «Clientes potenciales por teléfono» aparece como «Configuración errónea» porque no tiene ninguna acción principal. Es el estado esperado mientras las llamadas no se usen para pujar.
+
+## 10. Análisis de términos por tipo (24-sep a 5-oct)
+
+Se usaron los 253 términos extraídos y se cruzaron con las sedes que tuvieron reservas de alquilatucarro en los últimos 120 días (Palmira tiene sede).
+
+| Tipo | Términos | Clics | Coste | Conv. en Ads |
+|---|---|---|---|---|
+| Ciudad con sede | 177 | 105 | 150.235 COP | 2,38 |
+| Genérico con «colombia» | 35 | 29 | 34.130 COP | 0 |
+| Con «barato», «precio», «económico» o «camioneta» | 13 | 8 | 11.653 COP | 0 |
+| En inglés («rent a car», «rental car») | 14 | 4 | 8.465 COP | 0 |
+| Competidor (europcar, localiza) | 4 | 1 | 1.253 COP | 0 |
+| Aeropuerto | 7 | 2 | 935 COP | 0 |
+| Ciudad sin sede (Yopal, Popayán, Tunja) | 3 | 1 | 182 COP | 0 |
+
+«rental car colombia» quedó como genérico y costó 6.179 COP en 1 clic. Sumado a las otras búsquedas en inglés da 14.644 COP.
+
+- **No hay fugas de peso.** Lo que no es ciudad con sede ni genérico suma unos 22.000 COP, el 6 % del gasto.
+- **El punto ciego son los «otros términos» que Google oculta:** 97 clics y 150.938 COP, el 42 % del gasto.
+- **Por ciudad:** Cali 52.258 COP, sin ciudad 41.174, Bogotá 34.498, Pereira 26.062, Medellín 14.106 y Cúcuta 12.284. Las tres reservas reales fueron de Pereira (2) y Cali (1). Bogotá gasta y todavía no reserva.
+- **Candidatas a negativa en España:** «rental» (inglés puro) y quizá «tu rent a car» (4.676 COP en 1 clic) si es una empresa. «barato» no se bloquea: quien busca barato también reserva, y bloquearlo corta Cali y Bogotá.
