@@ -18,6 +18,24 @@
 
 import { createConfigForNuxt } from '@nuxt/eslint-config/flat'
 
+// CI pins NODE_VERSION 20, and eslint-flat-config-utils (a transitive dependency
+// of @nuxt/eslint-config) calls Object.groupBy, which only exists from Node 21.
+// Without this, `pnpm lint` dies with "TypeError: Object.groupBy is not a
+// function" before linting a single file — green on a dev machine running Node
+// 22+, red in CI. Nothing warned: that package declares no `engines` field.
+// Delete this shim once CI runs Node >= 21.
+if (typeof Object.groupBy !== 'function') {
+  Object.groupBy = (items, callback) => {
+    const out = Object.create(null)
+    let i = 0
+    for (const item of items) {
+      const key = callback(item, i++)
+      ;(out[key] ??= []).push(item)
+    }
+    return out
+  }
+}
+
 const TEST_FILES = [
   '**/__tests__/**/*.{ts,js,vue}',
   '**/*.{test,spec}.{ts,js}',
