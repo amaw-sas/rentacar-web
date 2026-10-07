@@ -254,3 +254,15 @@ El dueño subió el presupuesto de «Búsqueda» el 1-oct (dos veces) y el 2-oct
   La columna 3 es el 15,0 % del alquiler. Se toma como la ganancia, entre 66.000 y 77.000 COP por alquiler realizado; con la columna 4 serían entre 73.000 y 85.000. Esta lectura falta confirmarla con el dueño.
 - **Solo una parte de las reservas por anuncio se realiza.** De las 470 reservas con gclid del 23-ago al 21-sep: 164 «utilizado», 187 «no_recogido», 87 «cancelado» y 28 todavía «reservado». Se realiza entre el 35 % y el 41 %. Así, una reserva con gclid vale entre 23.000 y 30.000 COP de ganancia esperada.
 - **Cuenta:** el costo promedio de 20.000 COP por reserva con gclid deja ganancia. Las reservas extra de la subida costaron entre 46.000 y 59.000 COP con gclid, y eso da pérdida. Pero ese mismo bloque también subió las reservas sin gclid (asesor y llamadas): el total pasó de 25,5 a 35,5 por día. Si esas también vienen de los anuncios, el costo extra cae a unos 23.000 COP por reserva, cerca del punto de equilibrio. **Se decide el 10-oct con la semana completa del 3 al 9 de octubre, mirando el total de reservas y no solo las que tienen gclid.**
+- **Reservas para meses futuros (punto del dueño).** Su tabla mensual cuenta alquileres ya realizados. Lo que se reserva hoy para diciembre o enero se cobra después. Se recalculó contando solo las reservas cuya fecha de recogida ya pasó:
+  - Con gclid (23-ago a 21-sep): se usó el 38,1 % de las vencidas. El 8 % (39) son para fechas futuras y 10 de ellas para diciembre o más tarde.
+  - Sin gclid: se usó el 49,1 %, con la misma proporción de reservas futuras.
+  - Por anticipación (todas las reservas desde junio):
+
+    | Anticipación | Reservas | Precio medio | Se usan (vencidas) | Valor esperado |
+    |---|---|---|---|---|
+    | 3 días o menos | 2.007 | 440.193 | 44,2 % | ~194.000 |
+    | 4 a 30 días | 709 | 506.300 | 35,1 % | ~178.000 |
+    | Más de 30 días | 156 | 861.429 | 22,0 % | ~190.000 |
+
+  Las reservas lejanas valen el doble, pero se caen el doble. El valor esperado por reserva es casi igual. La estimación de 23.000 a 30.000 COP de ganancia esperada por reserva con gclid se mantiene. Lo que cambia es el momento del cobro: parte de lo que se paga en Ads hoy se cobra en diciembre o enero.
