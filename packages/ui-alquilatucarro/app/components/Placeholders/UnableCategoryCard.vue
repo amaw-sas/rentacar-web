@@ -70,10 +70,10 @@ import { defineAsyncComponent } from 'vue';
 
 /** Internal components */
 import ChevronRightIcon from '~/components/Icons/ChevronRightIcon.vue';
-const Carrusel = defineAsyncComponent(() => import('../Carrusel.vue'));
 
 /** Types */
 import type { CategoryProps } from '@rentacar-main/logic/utils';
+const Carrusel = defineAsyncComponent(() => import('../Carrusel.vue'));
 
 /** props */
 const props = withDefaults(defineProps<CategoryProps>(), {});

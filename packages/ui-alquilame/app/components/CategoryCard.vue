@@ -580,10 +580,10 @@ import {
   IconsChevronRightIcon as ChevronRightIcon
 } from '#components';
 import { defineAsyncComponent } from 'vue'
-const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 
 /** types */
 import type { CategoryProps } from '@rentacar-main/logic/utils';
+const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 
 /** props */
 // `priority` es local a la card (LCP): NO se agrega al tipo compartido CategoryProps,
@@ -612,9 +612,7 @@ const {
   withBabySeat,
   withWash,
   extraHoursQuantity,
-  extraHoursTotalAmount,
   categoryCode,
-  categoryDescription,
   categoryModels,
   isMonthlyPriceUnavailable,
   currencyTotalPrice,
@@ -633,8 +631,6 @@ const {
   currencyReturnFee,
   getDiscount,
   getFormattedDays,
-  isPicoyPlacaExempt,
-  hasDiscount,
   hasDiscountToShow,
   hasExtraHours,
   hasReturnFee,

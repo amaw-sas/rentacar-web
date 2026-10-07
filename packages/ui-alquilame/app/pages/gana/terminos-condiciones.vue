@@ -152,12 +152,10 @@
               </li>
               <li>
                 Las modificaciones serán publicadas en la página oficial:
-                <NuxtLink 
-                  to="/gana" 
+                <NuxtLink
+                  to="/gana"
                   class="text-brand-600 hover:underline"
-                  v-text="franchise.name + '/gana'"
-                >
-                </NuxtLink>.
+                >{{ franchise.name + '/gana' }}</NuxtLink>.
               </li>
               <li>
                 Los participantes serán notificados con 15 días de anticipación antes de que los nuevos

@@ -4,7 +4,7 @@ definePageMeta({
   middleware: ['seo-auth']
 })
 
-const { data: performanceData, pending, error } = await useFetch('/api/seo/performance', {
+const { data: performanceData, pending } = await useFetch('/api/seo/performance', {
   key: 'seo-performance',
   default: () => null
 })

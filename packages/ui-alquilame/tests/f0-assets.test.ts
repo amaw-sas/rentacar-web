@@ -71,7 +71,7 @@ describe('F0 step04 — optimize-images.mjs', () => {
 
   it('svgToPng rasterizes an SVG into a valid PNG (AC2 — feeds step05 og-logo)', async () => {
     const svg = join(workdir, 'fixture.svg')
-    readFileSync // keep import tree-shake-safe
+    void readFileSync // keep import tree-shake-safe
     const { writeFileSync } = await import('node:fs')
     writeFileSync(svg, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 55" width="200" height="55"><rect width="200" height="55" fill="#CC022B"/></svg>')
 

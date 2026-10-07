@@ -268,7 +268,6 @@
 <script setup lang="ts">
 // Note: composables are auto-imported by Nuxt
 import { defineAsyncComponent } from 'vue'
-const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 
 // Los iconos viven en components/Icons/, así que el auto-import los expone con
 // el prefijo de carpeta: sin este alias, <WhatsappIcon> se renderiza como
@@ -277,6 +276,7 @@ import { IconsWhatsappIcon as WhatsappIcon } from '#components'
 
 /** types */
 import type ReservationResumeProps from '@rentacar-main/logic/utils/types/props/ReservationResumeProps';
+const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 
 /** props */
 // `linkCopied` se declara aquí y no en ReservationResumeProps: ese tipo lo
@@ -293,7 +293,6 @@ const emit = defineEmits<{
 
 /** stores */
 const storeForm = useStoreReservationForm();
-const storeSearch = useStoreSearchData();
 
 /** refs */
 const {
@@ -317,9 +316,7 @@ const {
   currencyIvaAndTax,
   getFormattedDays,
   isMonthlyPriceUnavailable,
-  numberDays,
   isPicoyPlacaExempt,
-  hasDiscount,
   hasDiscountToShow,
   hasStruckBasePrice,
   hasExtraHours,

@@ -15,7 +15,6 @@
  * OBSERVA el valor de retorno, no solo la forma del código.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
 import type { CategoryAvailabilityData, CategoryMonthPriceData } from '@rentacar-main/logic/utils'
 
 // Contenedor hoisted para poder mutar el store singleton entre casos.

@@ -5,10 +5,9 @@ import {
     parseDateTime,
     parseTime,
     today,
-    now,
-    Time
+    now
 } from '@internationalized/date';
-import type { CalendarDate, CalendarDateTime } from '@internationalized/date';
+import type { CalendarDate, CalendarDateTime, Time } from '@internationalized/date';
 
 export type DateObject = CalendarDate;
 export type DateTimeObject = CalendarDateTime;

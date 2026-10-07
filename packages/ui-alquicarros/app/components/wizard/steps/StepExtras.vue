@@ -58,10 +58,14 @@ defineProps<{
   searchStale?: boolean
 }>()
 
+// Object syntax (Vue 3.3+) instead of two call signatures: the call-signature
+// form trips `unified-signatures`, and merging them into `(e: 'skip' |
+// 'adjust-search')` would orphan the comment below from its own event. Same two
+// events, no payload either way.
 const emit = defineEmits<{
-  (e: 'skip'): void
+  skip: []
   /** El usuario pide volver a la búsqueda desde el aviso de rancia. */
-  (e: 'adjust-search'): void
+  'adjust-search': []
 }>()
 
 const search = useStoreSearchData()

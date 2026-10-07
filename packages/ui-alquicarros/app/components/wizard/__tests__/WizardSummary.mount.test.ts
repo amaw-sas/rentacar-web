@@ -9,7 +9,7 @@
 // identidad porque nuestros stores-stub ya exponen refs; los stores auto-import
 // se stubean como globals. Los datos numéricos usan el MISMO formateador que
 // producción (Intl es-CO, 0 decimales) para que las cadenas sean fieles.
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'

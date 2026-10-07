@@ -118,7 +118,7 @@ const props = withDefaults(defineProps<{
 });
 
 /** consts */
-const { reservation, defaultTimezone } = useAppConfig();
+const { defaultTimezone } = useAppConfig();
 // The selector offers only what is on sale; the full catalog stays available elsewhere for the
 // city page's delivery points and for resolving existing deep links (SCEN-003).
 const { bookableBranches: branches } = storeToRefs(useStoreAdminData());

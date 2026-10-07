@@ -1,4 +1,4 @@
-import useCategory from '../../../composables/useCategory';
+import type useCategory from '../../../composables/useCategory';
 
 export default interface ReservationResumeProps {
   category: ReturnType<typeof useCategory>;

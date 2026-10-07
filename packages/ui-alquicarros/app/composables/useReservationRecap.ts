@@ -1,6 +1,5 @@
 import { computed } from 'vue'
-import { normalizeReservationCode, type ReservationSummary } from '@rentacar-main/logic/utils'
-import type { MonthlyMileage } from '@rentacar-main/logic/utils'
+import { normalizeReservationCode, type MonthlyMileage, type ReservationSummary } from '@rentacar-main/logic/utils'
 
 // Issue #368 hallazgo 1, Paso 2 — la confirmación lee el snapshot congelado en el
 // submit (lastReservationSummary) y decide si pintar el recap. Sin estado vivo:

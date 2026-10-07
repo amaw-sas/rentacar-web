@@ -1,5 +1,5 @@
-import { type CategoryType } from '../type/CategoryType';
-import { type MonthlyMileage } from '../type/MonthlyMileage';
+import type { CategoryType } from '../type/CategoryType';
+import type { MonthlyMileage } from '../type/MonthlyMileage';
 import type AttributionInput from '../type/AttributionInput';
 
 export default interface FormFields {

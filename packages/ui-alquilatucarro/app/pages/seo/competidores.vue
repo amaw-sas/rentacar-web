@@ -4,7 +4,7 @@ definePageMeta({
   middleware: ['seo-auth']
 })
 
-const { data: competitorsData, pending, error } = await useFetch('/api/seo/competitors', {
+const { data: competitorsData, pending } = await useFetch('/api/seo/competitors', {
   key: 'seo-competitors',
   default: () => null
 })

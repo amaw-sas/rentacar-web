@@ -51,7 +51,7 @@ export default defineEventHandler(async (event): Promise<UpdateResult> => {
     try {
       const content = readFileSync(resolve(dataDir, filename), 'utf-8')
       return JSON.parse(content)
-    } catch (e) {
+    } catch {
       return null
     }
   }
@@ -60,7 +60,7 @@ export default defineEventHandler(async (event): Promise<UpdateResult> => {
     try {
       writeFileSync(resolve(dataDir, filename), JSON.stringify(data, null, 2))
       return true
-    } catch (e) {
+    } catch {
       return false
     }
   }
@@ -240,7 +240,7 @@ export default defineEventHandler(async (event): Promise<UpdateResult> => {
     // Keep only last 50 entries
     activity.entries = activity.entries.slice(0, 50)
     writeJsonFile('activity.json', activity)
-  } catch (e) {
+  } catch {
     // Activity logging is optional
   }
 

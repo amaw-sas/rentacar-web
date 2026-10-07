@@ -34,11 +34,11 @@ describe('SCEN-101 — piquito on first bubble of a same-sender run', () => {
 
 describe('SCEN-102 — timestamp tucked into the bottom-right corner', () => {
   it('positions cc-time absolutely inside the bubble', () => {
-    expect(source).toMatch(/\.cc-time \{\n  position: absolute;\n  right: 0\.5rem;\n  bottom: 0\.3125rem;/)
+    expect(source).toMatch(/\.cc-time \{\n {2}position: absolute;\n {2}right: 0\.5rem;\n {2}bottom: 0\.3125rem;/)
   })
 
   it('reserves the time width with an inline spacer on the last text line', () => {
-    expect(source).toMatch(/\.cc-msg\.is-user\.has-time::after,\n\.cc-msg\.is-assistant\.has-time \.cc-text::after \{[\s\S]{0,120}display: inline-block;\n  width: 4\.5em;/)
+    expect(source).toMatch(/\.cc-msg\.is-user\.has-time::after,\n\.cc-msg\.is-assistant\.has-time \.cc-text::after \{[\s\S]{0,120}display: inline-block;\n {2}width: 4\.5em;/)
   })
 
   it('falls back to an own-row time on bubbles with structured parts', () => {
@@ -55,7 +55,7 @@ describe('SCEN-102 — timestamp tucked into the bottom-right corner', () => {
 
 describe('SCEN-103 — WhatsApp radius and shadow on both roles', () => {
   it('uses a uniform 7.5px radius with the tail corner squared only via is-group-start', () => {
-    expect(source).toMatch(/\.cc-msg \{\n  position: relative;\n  max-width: 85%;\n  padding: 0\.5rem 0\.75rem;\n  border-radius: 7\.5px;/)
+    expect(source).toMatch(/\.cc-msg \{\n {2}position: relative;\n {2}max-width: 85%;\n {2}padding: 0\.5rem 0\.75rem;\n {2}border-radius: 7\.5px;/)
     expect(source).not.toMatch(/border-bottom-right-radius: 0\.25rem/)
     expect(source).not.toMatch(/border-bottom-left-radius: 0\.25rem/)
   })

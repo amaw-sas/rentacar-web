@@ -43,7 +43,6 @@
 
 <script setup lang="ts">
 
-const { franchise } = useAppConfig()
 const store = useStoreReservationForm()
 
 const searchUrl = computed(() => {

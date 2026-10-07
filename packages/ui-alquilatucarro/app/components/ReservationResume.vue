@@ -139,17 +139,16 @@
 <script setup lang="ts">
 // Note: composables are auto-imported by Nuxt
 import { defineAsyncComponent } from 'vue'
-const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 
 /** types */
 import type ReservationResumeProps from '@rentacar-main/logic/utils/types/props/ReservationResumeProps';
+const Carrusel = defineAsyncComponent(() => import('./Carrusel.vue'))
 
 /** props */
 const props = defineProps<ReservationResumeProps>();
 
 /** stores */
 const storeForm = useStoreReservationForm();
-const storeSearch = useStoreSearchData();
 
 /** refs */
 const {
@@ -165,7 +164,6 @@ const {
   currencyAdditionalsTotal,
   currencyTotalToPayWithAdditionals,
   currencyIvaAndTax,
-  numberDays,
   isPicoyPlacaExempt,
   hasDiscount,
   hasStruckBasePrice,

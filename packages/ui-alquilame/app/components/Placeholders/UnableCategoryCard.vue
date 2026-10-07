@@ -88,10 +88,10 @@ import { computed, defineAsyncComponent } from 'vue';
 
 /** Internal components */
 import ChevronRightIcon from '~/components/Icons/ChevronRightIcon.vue';
-const Carrusel = defineAsyncComponent(() => import('../Carrusel.vue'));
 
 /** Types */
 import type { CategoryProps } from '@rentacar-main/logic/utils';
+const Carrusel = defineAsyncComponent(() => import('../Carrusel.vue'));
 
 type NearbyBranch = { city: string; name: string; slug?: string };
 

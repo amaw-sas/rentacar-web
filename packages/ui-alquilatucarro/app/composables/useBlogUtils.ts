@@ -1,4 +1,3 @@
-import type { BlogCategory } from '@rentacar-main/logic/src'
 
 const CATEGORY_LABELS: Record<string, string> = {
   guias: 'Guías',

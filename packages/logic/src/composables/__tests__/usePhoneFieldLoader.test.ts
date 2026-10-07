@@ -81,7 +81,7 @@ describe('usePhoneFieldLoader', () => {
 
   beforeEach(() => {
     setActivePinia(createPinia())
-    validator = deferred<void>()
+    validator = deferred()
     visitor = deferred<string | null>()
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -215,7 +215,7 @@ describe('usePhoneFieldLoader', () => {
     expect(warnSpy).not.toHaveBeenCalled()
     first.wrapper.unmount()
 
-    validator = deferred<void>()
+    validator = deferred()
     const second = mountHost(() => Promise.resolve(FakeTel))
     validator.resolve()
     await flushPromises()

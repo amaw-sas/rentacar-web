@@ -81,7 +81,7 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
     }
 
     const dismissBody = teaserSource.match(
-      /function dismiss\(\) \{[\s\S]*?\n  \}/,
+      /function dismiss\(\) \{[\s\S]*?\n {2}\}/,
     )?.[0]
     expect(dismissBody).toBeTruthy()
     expect(dismissBody).not.toMatch(/navigateTo|router|history|location/)

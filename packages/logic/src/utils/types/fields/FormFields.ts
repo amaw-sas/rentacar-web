@@ -1,4 +1,4 @@
-import { type CategoryType } from '../type/CategoryType';
+import type { CategoryType } from '../type/CategoryType';
 
 export default interface FormFields {
   nombreCompleto: string | null;

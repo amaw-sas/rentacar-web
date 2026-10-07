@@ -44,7 +44,6 @@
 </template>
 
 <script setup lang="ts">
-const { franchise } = useAppConfig()
 const store = useStoreReservationForm()
 
 // "Modificar búsqueda" vuelve al wizard `/reservas` (única superficie de reserva en

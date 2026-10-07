@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { optimizeImage } from '../image-optimizer'
-import type { ImageType } from '../image-optimizer'
 
 // Mock Sharp
 vi.mock('sharp', () => {
