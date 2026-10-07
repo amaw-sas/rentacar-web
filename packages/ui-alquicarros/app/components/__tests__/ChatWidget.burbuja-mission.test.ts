@@ -31,7 +31,11 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
       )
       expect(source, brand).toContain('<li v-if="chatEnabled"')
       expect(source, brand).toContain('<li v-if="whatsappVisible"')
-      expect(source, brand).not.toContain('menuOpen')
+      // Invariante intacto (los canales son hermanos de un solo menú, sin
+      // ramas por marca): ahora ese menú es el que despliega el lanzador, y
+      // todas las marcas lo declaran igual.
+      expect(source, brand).toContain('id="contact-fab-menu"')
+      expect(source, brand).toContain('aria-controls="contact-fab-menu"')
       // 2026-07-27, decisión del dueño: el canal tel: se queda en las marcas
       // vivas; alquilame es la única sin teléfono.
       if (brand === 'ui-alquilame') expect(source, brand).not.toContain('fab-call')
@@ -97,7 +101,7 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
     )
   })
 
-  it('E4 — ON keeps direct Chat + WhatsApp and the normal teaser start path', () => {
+  it('E4 — ON keeps direct Chat + WhatsApp (one tap from the launcher) and the normal teaser start path', () => {
     for (const { brand, source } of brandWidgets) {
       expect(source, brand).toContain('<li v-if="chatEnabled"')
       expect(source, brand).toContain('<li v-if="whatsappVisible"')
@@ -105,7 +109,11 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
       if (brand === 'ui-alquilame')
         expect(source, brand).not.toContain('class="fab-circle fab-call"')
       else expect(source, brand).toContain('class="fab-circle fab-call"')
-      expect(source, brand).not.toContain('contact-fab-menu')
+      // Invariante intacto: Chat y WhatsApp siguen siendo opciones directas, sin
+      // pasos intermedios; el menú es un solo nivel (v-show) y no hay submenús
+      // ni role="menu" que la hoja base.css pueda recolorear.
+      expect(source, brand).toMatch(/<ul[^>]*v-show="menuOpen"/)
+      expect(source, brand).not.toMatch(/<ul[^>]*role="menu"/)
       expect(source, brand).toMatch(
         /teaser\.start\(\{[\s\S]*allowed: \(\) => teaserAllowed\.value/,
       )

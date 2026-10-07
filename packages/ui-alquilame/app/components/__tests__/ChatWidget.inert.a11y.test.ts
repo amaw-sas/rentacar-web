@@ -28,6 +28,13 @@ describe('SCEN-322-X05 — background is inert while the chat panel is open', ()
     expect(source).toMatch(/onBeforeUnmount\(\(\) => setBackgroundInert\(false\)\)/)
   })
 
+  // Invariant: el inert del fondo es solo del PANEL (modal). El menú es una
+  // capa de descarte (atenuada, clic para cerrar), no un modal.
+  it('menuOpen never drives the background inert', () => {
+    expect(source).not.toMatch(/setBackgroundInert\(menuOpen/)
+    expect(source).not.toMatch(/watch\(menuOpen/)
+  })
+
   it('is SSR-safe (document guarded)', () => {
     expect(source).toMatch(/typeof document === 'undefined'/)
   })

@@ -1,9 +1,10 @@
 /**
- * SCEN-FAB1 — two direct floating contact buttons, bottom-right.
+ * SCEN-FAB1 — one launcher FAB, bottom-right, expanding into the channel menu.
  *
- * The old expandable toggle and call action are gone. Chat 24/7 and WhatsApp
- * remain directly visible, independently gated by the dashboard, and the whole
- * stack stays anchored to the RIGHT in its normal bottom position.
+ * The launcher (restored 2026-10-06, spec contact-fab-collapse) is the only
+ * always-visible button. Chat 24/7 and WhatsApp live in the menu it opens,
+ * independently gated by the dashboard, and the whole stack stays anchored to
+ * the RIGHT in its normal bottom position. alquilame never had a call action.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -18,13 +19,18 @@ const LAYOUT = readFileSync(
   'utf-8',
 )
 
-describe('SCEN-FAB1: Chat and WhatsApp are direct dashboard-gated controls', () => {
-  it('renders only the two requested channels without an expandable menu', () => {
+describe('SCEN-FAB1: a single launcher opens the dashboard-gated Chat and WhatsApp menu', () => {
+  it('renders the two channels inside the launcher-controlled menu and no call action', () => {
+    // Invariant kept: only Chat + WhatsApp, each behind its own dashboard gate.
     expect(SRC).toContain('<li v-if="chatEnabled"')
     expect(SRC).toContain('<li v-if="whatsappVisible"')
     expect(SRC).toContain('<span class="fab-label">Chat 24 horas</span>')
     expect(SRC).toContain('<span class="fab-label">WhatsApp</span>')
-    expect(SRC).not.toContain('menuOpen')
+    // Re-pointed: the old "no menu" assertion became "menu is collapsed behind one launcher".
+    expect(SRC).toContain('v-show="menuOpen"')
+    expect(SRC).toContain('id="contact-fab-menu"')
+    expect(SRC).toContain('aria-controls="contact-fab-menu"')
+    // Unchanged: alquilame has no call action.
     expect(SRC).not.toContain('Llámanos')
     expect(SRC).not.toContain('fab-call')
   })

@@ -73,6 +73,15 @@ async function mountWidget() {
   await nextTick()
 }
 
+// The links live inside the launcher's menu (v-show). The invariant — the real
+// or forwarding number reaches the rendered tel: link — is read the way a visitor
+// reaches it: after tapping the launcher.
+const openMenu = async () => {
+  document.body
+    .querySelector<HTMLButtonElement>('button[aria-controls="contact-fab-menu"]')!
+    .dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  await nextTick()
+}
 const callLink = () => document.body.querySelector<HTMLAnchorElement>('a[href^="tel:"]')
 const waLink = () => document.body.querySelector<HTMLAnchorElement>('a[href*="wa.me"]')
 
@@ -91,12 +100,14 @@ afterEach(() => {
 describe('ChatWidget call button follows Google’s forwarding number', () => {
   it('SCEN-003: an organic visitor dials the real number', async () => {
     await mountWidget()
+    await openMenu()
     expect(callLink()?.getAttribute('href')).toBe('tel:+573016729250')
     expect(callLink()?.getAttribute('aria-label')).toBe('Llamar al +57 301 672 9250')
   })
 
   it('SCEN-001/002: an ad visitor dials and hears the forwarding number', async () => {
     await mountWidget()
+    await openMenu()
     state.get(CALL_FORWARDING_STATE_KEY)!.value = { display: '+57 601 555 0100', tel: '+576015550100' }
     await nextTick()
     expect(callLink()?.getAttribute('href')).toBe('tel:+576015550100')
@@ -105,6 +116,7 @@ describe('ChatWidget call button follows Google’s forwarding number', () => {
 
   it('SCEN-004: WhatsApp keeps its own line for an ad visitor', async () => {
     await mountWidget()
+    await openMenu()
     state.get(CALL_FORWARDING_STATE_KEY)!.value = { display: '+57 601 555 0100', tel: '+576015550100' }
     await nextTick()
     expect(waLink()?.getAttribute('href')).toContain('wa.me/573016729250')

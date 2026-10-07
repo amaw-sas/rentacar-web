@@ -18,74 +18,72 @@ const brandWidgets = brands.map(brand => ({
 // `fab-label` en vez del campo — el clic cerraba el chat. Causa: `bottom: 9rem`
 // es la altura de una pila de DOS filas y las marcas vivas rinden TRES.
 //
+// 2026-10-06 (contact-fab-collapse): la pila vuelve a ser UN lanzador que
+// despliega el menú. El <ul> pasa a `v-show` (altura 0 colapsado), así que lo
+// que queda bajo el panel es el lanzador de 56 px y es lo que se mide; el
+// fallback pasa de 9rem a 5.75rem (56 + 24 + 12 px). El invariante no cambia:
+// el panel se ancla sobre lo MEDIDO que tiene debajo, nunca sobre una constante
+// que adivina cuántas filas hay.
+//
 // Estas pruebas fijan el mecanismo en las tres copias. La geometría real se
 // verifica en el navegador (getBoundingClientRect + elementFromPoint), no aquí:
 // jsdom no tiene motor de maquetación y un test de fuente por sí solo ya dejó
 // pasar un bug de render en este repo.
 describe('SCEN-001/002 — el panel se ancla sobre la pila medida, no sobre una constante', () => {
-  it('deriva el bottom de --panel-lift con el fallback de la pila de 2 filas', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('bottom: var(--panel-lift, 9rem);')
-      expect(source, brand).not.toMatch(/^\s*bottom: 9rem;$/m)
-    }
+  it.each(brandWidgets)('deriva el bottom de --panel-lift con el fallback del lanzador (5.75rem) — $brand', ({ brand, source }) => {
+    expect(source, brand).toContain('bottom: var(--panel-lift, 5.75rem);')
+    expect(source, brand).not.toMatch(/^\s*bottom: \d+(\.\d+)?rem;$/m)
   })
 
-  it('mide la lista de canales, no el stack entero', () => {
-    for (const { brand, source } of brandWidgets) {
-      // El stack incluye el teaser-sizer oculto y su hueco (122px medidos):
-      // medirlo sobre-elevaría el panel.
-      expect(source, brand).toMatch(/<ul\s+ref="channelsEl"/)
-      expect(source, brand).toMatch(/channelsEl\.value\?\.getBoundingClientRect\(\)/)
-    }
+  it.each(brandWidgets)('mide el lanzador, no el stack entero ni el menú colapsado — $brand', ({ brand, source }) => {
+    // El stack incluye el teaser-sizer oculto y su hueco (122px medidos):
+    // medirlo sobre-elevaría el panel. El <ul> con v-show mide 0 colapsado.
+    expect(source, brand).toMatch(/<button\s+ref="launcherEl"/)
+    expect(source, brand).toMatch(/launcherEl\.value\?\.getBoundingClientRect\(\)/)
+    expect(source, brand).not.toContain('channelsEl')
   })
 
-  it('reutiliza la aritmética compartida de logic en vez de repetir números', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('chatPanelLiftPx')
-      expect(source, brand).toMatch(
-        /from '@rentacar-main\/logic\/utils\/chatPanelLift'/,
-      )
-    }
+  it.each(brandWidgets)('reutiliza la aritmética compartida de logic en vez de repetir números — $brand', ({ brand, source }) => {
+    expect(source, brand).toContain('chatPanelLiftPx')
+    expect(source, brand).toMatch(
+      /from '@rentacar-main\/logic\/utils\/chatPanelLift'/,
+    )
   })
 
-  it('mide antes de abrir para que el panel no nazca en el sitio equivocado', () => {
-    for (const { brand, source } of brandWidgets) {
-      const openChat = source.slice(source.indexOf('function openChat'))
-      const measure = openChat.indexOf('measureChannels()')
-      const open = openChat.indexOf('panelOpen.value = true')
-      expect(measure, `${brand}: openChat no mide los canales`).toBeGreaterThan(-1)
-      expect(open, `${brand}: openChat no abre el panel`).toBeGreaterThan(-1)
-      expect(
-        measure,
-        `${brand}: mide DESPUÉS de abrir → el panel salta un frame`,
-      ).toBeLessThan(open)
-    }
+  it.each(brandWidgets)('mide antes de abrir para que el panel no nazca en el sitio equivocado — $brand', ({ brand, source }) => {
+    const openChat = source.slice(source.indexOf('function openChat'))
+    const measure = openChat.indexOf('measureLauncher()')
+    const open = openChat.indexOf('panelOpen.value = true')
+    expect(measure, `${brand}: openChat no mide el lanzador`).toBeGreaterThan(-1)
+    expect(open, `${brand}: openChat no abre el panel`).toBeGreaterThan(-1)
+    expect(
+      measure,
+      `${brand}: mide DESPUÉS de abrir → el panel salta un frame`,
+    ).toBeLessThan(open)
   })
 
   // Regresión: la primera versión construía el ResizeObserver sin comprobar que
   // existiera y reventaba en jsdom con `ReferenceError` en cuanto otra suite
   // MONTABA el widget (ChatWidget.whatsappSchedule.test.ts en ui-alquicarros).
-  it('no construye el observador donde el entorno no lo tiene', () => {
-    for (const { brand, source } of brandWidgets) {
-      const guard = source.indexOf("if (typeof ResizeObserver === 'undefined') return")
-      const build = source.indexOf('new ResizeObserver(')
-      expect(guard, `${brand}: falta la guarda de ResizeObserver`).toBeGreaterThan(-1)
-      expect(
-        guard,
-        `${brand}: la guarda va DESPUÉS de construirlo`,
-      ).toBeLessThan(build)
-    }
+  it.each(brandWidgets)('no construye el observador donde el entorno no lo tiene — $brand', ({ brand, source }) => {
+    const guard = source.indexOf("if (typeof ResizeObserver === 'undefined') return")
+    const build = source.indexOf('new ResizeObserver(')
+    expect(guard, `${brand}: falta la guarda de ResizeObserver`).toBeGreaterThan(-1)
+    expect(
+      guard,
+      `${brand}: la guarda va DESPUÉS de construirlo`,
+    ).toBeLessThan(build)
   })
 
-  it('SCEN-006 — reobserva la pila para seguir el horario de WhatsApp', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('ResizeObserver')
-      expect(source, brand).toMatch(/channelsObserver\?\.disconnect\(\)/)
-      expect(
-        source,
-        `${brand}: el observer sobrevive al unmount`,
-      ).toMatch(/onBeforeUnmount\(\(\) => channelsObserver\?\.disconnect\(\)\)/)
-    }
+  // Invariante intacto: la medida sigue viva ante cambios de tamaño del elemento
+  // medido (ahora el lanzador) y el observer no sobrevive al unmount.
+  it.each(brandWidgets)('SCEN-006 — reobserva el lanzador y suelta el observer al desmontar — $brand', ({ brand, source }) => {
+    expect(source, brand).toContain('ResizeObserver')
+    expect(source, brand).toMatch(/launcherObserver\?\.disconnect\(\)/)
+    expect(
+      source,
+      `${brand}: el observer sobrevive al unmount`,
+    ).toMatch(/onBeforeUnmount\(\(\) => launcherObserver\?\.disconnect\(\)\)/)
   })
 })
 
@@ -94,39 +92,31 @@ describe('SCEN-004/005 — el panel usa el área aprobada y se encoge en pantall
   // Medido en navegador: a 28rem se partían 3 de 4. No sube más porque la
   // columna de conversación topa en 413 px (burbujas al 85%, ajustadas a su
   // contenido) y todo lo que exceda es margen vacío.
-  it('mide 34rem de ancho acotado al viewport', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('width: min(34rem, calc(100vw - 2rem));')
-      expect(source, brand).not.toMatch(/^\s*width: 24rem;$/m)
-    }
+  it.each(brandWidgets)('mide 34rem de ancho acotado al viewport — $brand', ({ brand, source }) => {
+    expect(source, brand).toContain('width: min(34rem, calc(100vw - 2rem));')
+    expect(source, brand).not.toMatch(/^\s*width: 24rem;$/m)
   })
 
-  // El tope de 52rem solo llega a aplicar con ventanas de 940 px o más de alto
-  // (1 fila) o 1060 px (3 filas). Por debajo — cualquier portátil de 13" o 14" —
+  // El tope de 52rem solo llega a aplicar con ventanas de unos 940 px o más de
+  // alto. Por debajo — cualquier portátil de 13" o 14" —
   // manda el espacio disponible y el alto es el mismo que antes de subir el tope.
-  it('techo de 52rem que cede al alto disponible en vez de desbordar', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain(
-        'height: min(52rem, calc(100dvh - var(--panel-lift, 9rem) - 1.5rem));',
-      )
-      // El par height:32rem + max-height:min(75dvh,40rem) se contradecía: el
-      // techo permitía 640px pero el alto fijo cortaba en 512.
-      expect(source, brand).not.toMatch(/^\s*height: 32rem;$/m)
-      expect(source, brand).not.toContain('max-height: min(75dvh, 40rem);')
-    }
+  it.each(brandWidgets)('techo de 52rem que cede al alto disponible en vez de desbordar — $brand', ({ brand, source }) => {
+    expect(source, brand).toContain(
+      'height: min(52rem, calc(100dvh - var(--panel-lift, 5.75rem) - 1.5rem));',
+    )
+    // El par height:32rem + max-height:min(75dvh,40rem) se contradecía: el
+    // techo permitía 640px pero el alto fijo cortaba en 512.
+    expect(source, brand).not.toMatch(/^\s*height: 32rem;$/m)
+    expect(source, brand).not.toContain('max-height: min(75dvh, 40rem);')
   })
 })
 
 describe('SCEN-007 — el cambio no toca lo que otros guardias congelan', () => {
-  it('la pila conserva su literal de posición', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('.contact-fab-stack { bottom: 1.5rem; }')
-    }
+  it.each(brandWidgets)('la pila conserva su literal de posición — $brand', ({ brand, source }) => {
+    expect(source, brand).toContain('.contact-fab-stack { bottom: 1.5rem; }')
   })
 
-  it('el panel sigue detrás del switch del dashboard', () => {
-    for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('v-if="chatEnabled && panelOpen"')
-    }
+  it.each(brandWidgets)('el panel sigue detrás del switch del dashboard — $brand', ({ brand, source }) => {
+    expect(source, brand).toContain('v-if="chatEnabled && panelOpen"')
   })
 })

@@ -226,6 +226,31 @@ check the launcher next to the open menu's Chat circle — both are
 primary-on-white-icon, a possible visual duplicate to judge on screen. Chat
 probes last (1 h per-IP rate limit — validate everything else first).
 
+## Implementation deviations (2026-10-06, quality integration)
+
+Three fixes from the post-implementation review agents, all strengthening the
+spec's intent; each is test-first and replicated in the 3 brands:
+
+1. `aria-expanded="menuOpen || panelOpen"` instead of the literal
+   `="menuOpen"` above: with the panel open the launcher is an X labeled
+   «Cerrar», and announcing it as collapsed contradicted the visible state for
+   screen readers. The spec's literal was carried over from the pre-July code,
+   which had the same inconsistency.
+2. `closeAll`/`onChannelLink` restore focus to the launcher when the menu
+   hides while focus is on a menu item (menu items precede the launcher in
+   tab order; hiding the `<ul>` dropped focus to `<body>`).
+3. The chat-open beacon uses `teaserOpen` (bubble actually visible), not
+   `teaserVisible` (timer alive): opening from the menu row now reports
+   `fab`, never a deterministic false `teaser` — this protects the very
+   contact-volume metric named in «Why».
+
+Declined after review, with reasons: menu-only backdrop keeps the blur on
+mobile (certified pre-July look; transient, user-initiated cost — follow-up if
+low-end QA shows jank); cosmetic refactors of certified restored code (ternary
+label, repeated collapse condition, `chatPanelLiftPx` param name) are not worth
+re-touching 3 parity-locked copies; teaser aria-live while hidden and
+menu-survives-client-navigation are pre-existing LOW behaviors.
+
 ## Out of scope
 
 Chat conversation internals, `/chat` page, dashboard, conversion
