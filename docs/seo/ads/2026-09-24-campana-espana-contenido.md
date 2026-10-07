@@ -413,3 +413,34 @@ El dueño pausó en «GA-españa» las exactas que no tenían ninguna impresión
   - «gama car». La lista tiene «gama rent» y «gamma car».
 
 **Riesgo de la amplia en España:** que «alquiler de coches en colombia» en amplia pierda «Colombia» y entre en el alquiler dentro de España («alquiler coche málaga», «alquiler de coches aeropuerto madrid»). Es muchísimo volumen. La mitigación es añadir negativas de ciudades y aeropuertos españoles y revisar los términos cada 2 o 3 días durante la primera semana.
+
+## 9. Lectura del 2026-10-06 (desde el 24-sep hasta el 5-oct)
+
+Se leyó la cuenta en el navegador de Orca, sin cambiar nada.
+
+- **La amplia no se aplicó.** Siguen 4 palabras clave: la frase «alquiler de coches en colombia» y 3 exactas.
+- **Totales de la campaña:** 249 clics, 1.138 impresiones, 358.795 COP y 3,55 conversiones en Ads. Estado: «Limitada por el presupuesto» (30.000 COP/día).
+- **La frase ya trae casi todo:** 210 clics, 307.141 COP, nivel de calidad 9/10.
+- **Términos de búsqueda:** 255 visibles (152 clics, 207.857 COP, según el total de Google) y 97 clics en «otros términos» que Google oculta. La tabla por grupos suma 253 términos extraídos; a la extracción le faltan 2 clics y 1.004 COP.
+
+  | Grupo de términos | Términos | Clics | Coste |
+  |---|---|---|---|
+  | Ciudad de Colombia («alquiler de carros bogota», «…cali colombia») | 193 | 114 | 163.343 COP |
+  | Genérico con «colombia» | 38 | 31 | 39.921 COP |
+  | Competidores (europcar, localiza) | 9 | 1 | 1.253 COP |
+  | Otros (Palmira, Yopal, aeropuertos) | 13 | 4 | 2.336 COP |
+
+  Ningún término es de alquiler dentro de España. La frase ya entra por significado, con «carro» y con ciudades.
+- **Reservas reales en el dashboard con `utm_medium = 'cpc-exterior'`: 3**, todas de alquilatucarro, con gclid y en estado «reservado».
+
+  | Creada | Sede | Recogida | Total |
+  |---|---|---|---|
+  | 2026-09-27 | Pereira Aeropuerto | 2026-11-27 | 3.562.729 COP |
+  | 2026-10-05 | Pereira Aeropuerto | 2026-11-14 | 1.554.126 COP |
+  | 2026-10-06 | Cali Norte Chipichape | 2027-01-05 | 2.112.377 COP |
+
+  Son 7,2 M COP de alquiler por 358.795 COP de gasto. Reservan con 6 a 13 semanas de anticipación, tal como suponía el plan para el viajero desde fuera.
+
+**Recomendación:** no pasar a amplia por ahora. La frase ya captura las variantes útiles, sin fugas, y la campaña convierte. La amplia solo añade el riesgo de entrar en el alquiler dentro de España. El cuello de botella es el presupuesto («Limitada por el presupuesto»), no la cobertura. Decide el dueño.
+
+**Llamadas (PR #495):** la acción «Llamada (+57 301 672 9250)» está **Activa**, como secundaria, con 14 conversiones del 1-ago al 5-oct. El objetivo «Clientes potenciales por teléfono» aparece como «Configuración errónea» porque no tiene ninguna acción principal. Es el estado esperado mientras las llamadas no se usen para pujar.
