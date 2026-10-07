@@ -79,3 +79,5 @@ Búsqueda en Google desde Colombia:
 - **«tu rent a car»:** sí. TU Rent A Car es una rentadora del Eje Cafetero (turentacar.com). Hoy NO está en COMPETIDORES: en «Viajeros – España» costó 4.676 COP en 1 clic. Propuesta: añadir "tu rent a car" (frase) a COMPETIDORES.
 - **«alquilautos»:** es Alkilautos, un competidor. Se queda.
 - **«rentacar colombia»:** sigue siendo la única que conviene quitar (116 impresiones de una búsqueda genérica). «del eje» es opcional.
+
+**Aplicado por el dueño el 2026-10-06 y verificado leyendo la lista:** "tu rent a car" (frase) está en COMPETIDORES y "rentacar colombia" ya no está. La lista sigue con 154 palabras. Como la lista también la usa «Búsqueda», este cambio cuenta para la revisión del 7 de octubre.
