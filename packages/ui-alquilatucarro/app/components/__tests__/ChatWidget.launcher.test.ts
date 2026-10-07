@@ -139,10 +139,6 @@ async function click(el: Element | null) {
   el!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
   await settle()
 }
-async function pressEscape() {
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-  await settle()
-}
 
 beforeEach(() => {
   state = new Map()
