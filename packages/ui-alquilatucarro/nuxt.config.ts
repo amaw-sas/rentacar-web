@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
 import { imageScreens } from './image-screens';
+import { deferredClarityBootstrap } from '../logic/src/utils/deferredClarity';
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -323,6 +324,11 @@ export default defineNuxtConfig({
         {
           innerHTML:
             "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-1G7MWTDK71',{send_page_view:false});",
+        },
+        // Microsoft Clarity (heatmaps + recordings). Loads on first interaction
+        // or 4s after window.load to stay off the critical path.
+        {
+          innerHTML: deferredClarityBootstrap('yuw76trk8s'),
         },
         // WhatsApp attribution click beacon (shared connector). Event delegation
         // over wa.me anchors — fires a ping on every WhatsApp click without

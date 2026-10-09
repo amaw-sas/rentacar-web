@@ -1,6 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
 import { DEFERRED_GTAG_BOOTSTRAP } from './utils/deferred-gtag';
+import { deferredClarityBootstrap } from '../logic/src/utils/deferredClarity';
 
 // Páginas de diseño desechables (`lab-*`). En julio cinco de ellas llegaron a
 // producción Y al sitemap; esta guarda sobrevive a la lab de turno.
@@ -736,6 +737,10 @@ export default defineNuxtConfig({
         // The bootstrap loads it on first interaction or 4s after window.load.
         {
           innerHTML: DEFERRED_GTAG_BOOTSTRAP,
+        },
+        // Microsoft Clarity (heatmaps + recordings), deferred like gtag above.
+        {
+          innerHTML: deferredClarityBootstrap('yuw7k2nhpt'),
         },
       ],
     },
