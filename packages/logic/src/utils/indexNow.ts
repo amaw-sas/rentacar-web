@@ -33,8 +33,11 @@ export function blogPostUrls(brand: IndexNowBrand, slug: string): string[] {
   return [`${origin}/blog/${encodeURIComponent(slug)}`, `${origin}/blog`]
 }
 
+const XML_ENTITIES: Record<string, string> = { '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'", '&amp;': '&' }
+
 export function sitemapLocs(xml: string): string[] {
-  return [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(match => match[1]!.replaceAll('&amp;', '&'))
+  return [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)]
+    .map(match => match[1]!.replace(/&(?:lt|gt|quot|apos|amp);/g, entity => XML_ENTITIES[entity]!))
 }
 
 /**
@@ -69,6 +72,7 @@ export async function submitToIndexNow(
     method: 'POST',
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10_000),
   })
   return { status: response.status, ok: response.status === 200 || response.status === 202, submitted: payload.urlList }
 }

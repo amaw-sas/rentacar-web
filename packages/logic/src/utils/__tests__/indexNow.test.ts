@@ -33,6 +33,10 @@ describe('IndexNow', () => {
     ])
   })
 
+  it('decodes every XML entity, not only &amp;', () => {
+    expect(sitemapLocs("<loc>https://alquilame.co/a?q=&quot;x&quot;&amp;n=&apos;1&apos;&amp;amp;</loc>")).toEqual(['https://alquilame.co/a?q="x"&n=\'1\'&amp;'])
+  })
+
   it('reads every <loc> from a sitemap, decoding &amp;', () => {
     const xml = '<urlset><url><loc>https://alquilame.co/</loc></url><url><loc> https://alquilame.co/a?x=1&amp;y=2 </loc><image:loc>https://alquilame.co/i.webp</image:loc></url></urlset>'
 

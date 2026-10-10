@@ -712,7 +712,7 @@ async function notifyIndexNow(brand: string, slug: string) {
   if (!isIndexNowBrand(brand)) return
   const urls = blogPostUrls(brand, slug)
   try {
-    const page = await fetch(`${urls[0]}?cb=${Date.now()}`)
+    const page = await fetch(`${urls[0]}?cb=${Date.now()}`, { signal: AbortSignal.timeout(10_000) })
     if (!page.ok) {
       console.warn(`  ⚠ IndexNow no enviado: ${urls[0]} respondió ${page.status}`)
       return
