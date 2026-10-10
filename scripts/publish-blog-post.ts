@@ -41,6 +41,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml } from 'yaml'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { blogPostUrls, isIndexNowBrand, submitToIndexNow } from '../packages/logic/src/utils/indexNow'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
@@ -701,6 +702,30 @@ function reviewOnly(articles: Article[]): number {
   return failed
 }
 
+/**
+ * Tells Bing the article exists right after the row is live. The page is first
+ * requested with a cache-buster: a 404 cached by ISR before publishing would
+ * otherwise be what the crawler sees for up to an hour. A failure here only
+ * warns, because the article is already published.
+ */
+async function notifyIndexNow(brand: string, slug: string) {
+  if (!isIndexNowBrand(brand)) return
+  const urls = blogPostUrls(brand, slug)
+  try {
+    const page = await fetch(`${urls[0]}?cb=${Date.now()}`, { signal: AbortSignal.timeout(10_000) })
+    if (!page.ok) {
+      console.warn(`  ⚠ IndexNow no enviado: ${urls[0]} respondió ${page.status}`)
+      return
+    }
+    const result = await submitToIndexNow(brand, urls)
+    if (result.ok) console.log(`  ✅ IndexNow ${result.status} · Bing avisado`)
+    else console.warn(`  ⚠ IndexNow respondió ${result.status}; reintenta con pnpm indexnow --brand=${brand} --url=${urls[0]}`)
+  }
+  catch (error) {
+    console.warn(`  ⚠ IndexNow falló: ${(error as Error).message}`)
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2)
   const flag = (name: string) => args.some((a) => a === `--${name}`)
@@ -829,6 +854,7 @@ async function main() {
       process.exit(1)
     }
     console.log(`  ✅ publicado · ${article.brand}/${article.slug} · body ${liveMd5.slice(0, 8)}`)
+    await notifyIndexNow(article.brand, article.slug)
   }
 
   if (failed) {
