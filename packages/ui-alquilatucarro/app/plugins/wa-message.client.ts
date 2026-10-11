@@ -23,6 +23,8 @@
 // cities. Other top-level routes (home, blog, gana, seo, tarifas, …) are not
 // city ids, so they fall through to the generic message.
 import { PUBLIC_CITIES } from '@rentacar-main/logic/composables/usePublicCities'
+import { readStoredAttribution } from '@rentacar-main/logic/utils'
+import { buildWaContactMessage, isTikTokVisitor } from '../utils/waContactMessage'
 
 const CITY_BY_ID: Readonly<Record<string, string>> = Object.fromEntries(
   PUBLIC_CITIES.map(city => [city.id, city.name]),
@@ -30,15 +32,15 @@ const CITY_BY_ID: Readonly<Record<string, string>> = Object.fromEntries(
 
 const WA_NUMBER = '573016729250'
 
+// TikTok visitors keep that source in the text: /tiktok used to write it into
+// its own link, and this rewrite erased it on click.
 function buildMessage(): string {
-  // First non-empty path segment = city id, for both the landing and the
-  // search flow. Extra segments (dates, locations, category) are ignored.
-  const firstSegment = window.location.pathname.split('/').filter(Boolean)[0] ?? ''
-  const city = CITY_BY_ID[firstSegment]
-  const base = 'Hola, vi su página de alquiler de carros'
-  return city
-    ? `${base} en ${city} y quiero saber los requisitos`
-    : `${base} y quiero saber los requisitos`
+  const { pathname } = window.location
+  return buildWaContactMessage({
+    pathname,
+    fromTikTok: isTikTokVisitor(pathname, readStoredAttribution()),
+    cities: CITY_BY_ID,
+  })
 }
 
 export default defineNuxtPlugin(() => {
