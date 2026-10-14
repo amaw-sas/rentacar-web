@@ -1,4 +1,11 @@
-import { defineEventHandler, readBody, createError, setResponseStatus, getRequestIP } from 'h3'
+import {
+  defineEventHandler,
+  readBody,
+  createError,
+  setResponseStatus,
+  getRequestIP,
+  getRequestHeader,
+} from 'h3'
 import { extractStructuredError, RECORD_FETCH_TIMEOUT_MS } from '@rentacar-main/logic/utils'
 
 export default defineEventHandler(async (event) => {
@@ -20,6 +27,13 @@ export default defineEventHandler(async (event) => {
   // egress IP, masking every operator behind one IP. Omit when unavailable.
   const clientIp = getRequestIP(event, { xForwardedFor: true })
 
+  // The 3 brand sites sit behind Cloudflare, which stamps `cf-ipcountry` with
+  // the visitor's country (same rationale as /api/visitor-country: Vercel's
+  // x-vercel-ip-country reflects Cloudflare's egress, not the visitor).
+  // "XX" = Cloudflare "unknown"; omit the header when unknown or absent.
+  const rawCountry = (getRequestHeader(event, 'cf-ipcountry') ?? '').trim().toUpperCase()
+  const clientCountry = /^[A-Z]{2}$/.test(rawCountry) && rawCountry !== 'XX' ? rawCountry : null
+
   try {
     // Explicit generic: EXTERNAL URL (admin backend), not an internal route —
     // typing it stops Nuxt matching the string against the internal route union
@@ -31,6 +45,7 @@ export default defineEventHandler(async (event) => {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
         ...(clientIp ? { 'x-real-client-ip': clientIp } : {}),
+        ...(clientCountry ? { 'x-real-client-country': clientCountry } : {}),
       },
       body,
     })
