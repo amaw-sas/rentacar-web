@@ -142,7 +142,7 @@ describe('reservations proxy — visitor country forwarding', () => {
     mockGetRequestHeader.mockReturnValue('CO')
 
     const handler = await loadRecord()
-    await handler({} as any)
+    await handler({} as never)
 
     expect(mockGetRequestHeader).toHaveBeenCalledWith(expect.anything(), 'cf-ipcountry')
     expect(mockFetch).toHaveBeenCalledWith(
@@ -160,7 +160,7 @@ describe('reservations proxy — visitor country forwarding', () => {
     mockGetRequestHeader.mockReturnValue('XX')
 
     const handler = await loadRecord()
-    await handler({} as any)
+    await handler({} as never)
 
     const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>
     expect(headers).not.toHaveProperty('x-real-client-country')
@@ -170,7 +170,7 @@ describe('reservations proxy — visitor country forwarding', () => {
     mockGetRequestHeader.mockReturnValue(undefined)
 
     const handler = await loadRecord()
-    await handler({} as any)
+    await handler({} as never)
 
     const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>
     expect(headers).not.toHaveProperty('x-real-client-country')
@@ -180,7 +180,7 @@ describe('reservations proxy — visitor country forwarding', () => {
     mockGetRequestHeader.mockReturnValue('Colombia')
 
     const handler = await loadRecord()
-    await handler({} as any)
+    await handler({} as never)
 
     const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>
     expect(headers).not.toHaveProperty('x-real-client-country')
