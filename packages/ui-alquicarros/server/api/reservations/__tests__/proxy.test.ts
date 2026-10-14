@@ -14,6 +14,7 @@ const mockReadBody = vi.fn()
 const mockFetch = vi.fn()
 const mockUseRuntimeConfig = vi.fn()
 const mockGetRequestIP = vi.fn()
+const mockGetRequestHeader = vi.fn()
 
 vi.stubGlobal('$fetch', (...args: unknown[]) => mockFetch(...args))
 vi.stubGlobal('useRuntimeConfig', () => mockUseRuntimeConfig())
@@ -22,6 +23,7 @@ vi.mock('h3', () => ({
   defineEventHandler: (handler: (...args: never[]) => unknown) => handler,
   readBody: (...args: unknown[]) => mockReadBody(...args),
   getRequestIP: (...args: unknown[]) => mockGetRequestIP(...args),
+  getRequestHeader: (...args: unknown[]) => mockGetRequestHeader(...args),
   createError: (e: any) => {
     const err = new Error(e.statusMessage || 'error') as Error & {
       statusCode?: number
@@ -115,6 +117,73 @@ describe('reservations proxy — real client IP forwarding (Fix B)', () => {
     const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>
     expect(headers).not.toHaveProperty('x-real-client-ip')
     expect(headers['x-api-key']).toBe('secret-key')
+  })
+})
+
+// record.post forwards the visitor's country to the admin in the custom header
+// x-real-client-country, read from Cloudflare's `cf-ipcountry` (the 3 brand
+// sites are proxied by Cloudflare; x-vercel-ip-country reflects Cloudflare's
+// egress, not the visitor). "XX" means Cloudflare "unknown". The header is
+// OMITTED when the country is unknown, malformed, or absent.
+describe('reservations proxy — visitor country forwarding', () => {
+  const ADMIN = {
+    rentacarAdminUrl: 'https://admin.example.com',
+    rentacarAdminApiKey: 'secret-key',
+  }
+
+  beforeEach(() => {
+    mockUseRuntimeConfig.mockReturnValue(ADMIN)
+    mockReadBody.mockResolvedValue({ fullname: 'Juan Perez' })
+    mockGetRequestIP.mockReturnValue('181.63.178.28')
+    mockFetch.mockResolvedValue({ id: 'res-123' })
+  })
+
+  it('record.post forwards cf-ipcountry in x-real-client-country', async () => {
+    mockGetRequestHeader.mockReturnValue('CO')
+
+    const handler = await loadRecord()
+    await handler({} as never)
+
+    expect(mockGetRequestHeader).toHaveBeenCalledWith(expect.anything(), 'cf-ipcountry')
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://admin.example.com/api/reservations',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'x-real-client-country': 'CO',
+          'x-real-client-ip': '181.63.178.28',
+        }),
+      })
+    )
+  })
+
+  it('omits x-real-client-country when cf-ipcountry is "XX" (unknown)', async () => {
+    mockGetRequestHeader.mockReturnValue('XX')
+
+    const handler = await loadRecord()
+    await handler({} as never)
+
+    const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>
+    expect(headers).not.toHaveProperty('x-real-client-country')
+  })
+
+  it('omits x-real-client-country when cf-ipcountry is absent', async () => {
+    mockGetRequestHeader.mockReturnValue(undefined)
+
+    const handler = await loadRecord()
+    await handler({} as never)
+
+    const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>
+    expect(headers).not.toHaveProperty('x-real-client-country')
+  })
+
+  it('omits x-real-client-country when cf-ipcountry is malformed', async () => {
+    mockGetRequestHeader.mockReturnValue('Colombia')
+
+    const handler = await loadRecord()
+    await handler({} as never)
+
+    const headers = mockFetch.mock.calls[0][1].headers as Record<string, string>
+    expect(headers).not.toHaveProperty('x-real-client-country')
   })
 })
 
