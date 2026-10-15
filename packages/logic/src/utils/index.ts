@@ -103,6 +103,18 @@ export {
 } from './attribution/attributionStorage';
 
 // ============================================================================
+// Bot conversation id (`?chat=` on the bot's link → `chat_ref` in the record)
+// ============================================================================
+export {
+  normalizeChatRef,
+  persistChatRef,
+  readStoredChatRef,
+  CHAT_REF_QUERY_KEY,
+  CHAT_REF_STORAGE_KEY,
+  CHAT_REF_TTL_MS,
+} from './chatRef/chatRefStorage';
+
+// ============================================================================
 // Safe web storage (strict privacy mode: the property access itself throws)
 // ============================================================================
 export { getSessionStorageSafe, getLocalStorageSafe } from './safeWebStorage';

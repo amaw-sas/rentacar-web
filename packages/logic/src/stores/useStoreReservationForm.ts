@@ -36,6 +36,9 @@ import {
   buildAttributionTouch,
   persistAttribution,
   readStoredAttribution,
+  normalizeChatRef,
+  persistChatRef,
+  readStoredChatRef,
   trackAnalyticsEvent,
   trackReservationOutcome,
 } from '@rentacar-main/logic/utils';
@@ -115,6 +118,32 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
       /* never block the flow on attribution capture */
     }
   }
+
+  // Bot conversation id (`?chat=<id>` on the link the bot sends). Captured by
+  // the shared layer plugin (plugins/chat-ref.client.ts) on load and on every
+  // navigation; forwarded by useRecordReservationForm as `chat_ref`. Persisted
+  // like attribution (30 days, last wins) so it survives the funnel and reloads.
+  // Not reset after a reservation: a second booking from the same conversation
+  // still belongs to that conversation.
+  const chatRef = ref<string | null>(null);
+
+  // `raw` is whatever the URL carried (string | string[] | null | undefined).
+  // A usable value overwrites the stored one; anything else seeds from storage
+  // so a store re-created by a reload gets the id back. Never throws.
+  function captureChatRef(raw: unknown): void {
+    try {
+      const next = normalizeChatRef(raw);
+      if (next) {
+        chatRef.value = next;
+        persistChatRef(next);
+      } else if (chatRef.value === null) {
+        chatRef.value = readStoredChatRef();
+      }
+    } catch {
+      /* never block the flow on chat-ref capture */
+    }
+  }
+
   const referido = ref<string | null>(null);
 
   const vehiculo = ref<CategoryType | null>(null);
@@ -543,6 +572,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     conductorAdicionalIdentificacion,
     referido,
     attribution,
+    chatRef,
     // other vars
     selectedDays,
     rentalDays,
@@ -555,6 +585,7 @@ const useStoreReservationForm = defineStore("reservationForm", () => {
     haveMonthlyReservation,
     // functions
     captureAttribution,
+    captureChatRef,
     registerConvertion,
     serverFailed,
     submitForm,

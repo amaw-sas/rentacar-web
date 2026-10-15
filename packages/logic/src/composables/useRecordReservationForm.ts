@@ -11,6 +11,7 @@ import useStoreSearchData from '../stores/useStoreSearchData';
 // Internal dependencies - utils
 import {
   readStoredAttribution,
+  readStoredChatRef,
   normalizePhoneNumber,
   IVA_PERCENTAGE,
   trackAnalyticsEvent,
@@ -60,6 +61,7 @@ export default async function useRecordReservationForm() {
     haveMonthlyReservation,
     selectedMonthlyMileage,
     attribution,
+    chatRef,
   } = storeToRefs(storeForm);
 
   const { selectedCategory } = storeToRefs(useStoreSearchData());
@@ -113,6 +115,14 @@ export default async function useRecordReservationForm() {
   };
 
   if (referido.value) partialData["user"] = referido.value;
+
+  // Bot conversation id (`?chat=` on the bot's link): the dashboard opens that
+  // conversation from the reservation. Store first, storage fallback for a store
+  // re-created after a reload. Key ABSENT when there is none — never null/"" —
+  // the server validates and discards, the web never blocks on it. Assigned
+  // before both branches so the `...partialData` spread keeps it.
+  const chatRefValue = chatRef.value || readStoredChatRef();
+  if (chatRefValue) partialData.chat_ref = chatRefValue;
 
   // Issue #396: the extra driver's identity travels only while the add-on is
   // contracted. Keys absent — not empty — otherwise a customer who ticked the

@@ -248,6 +248,10 @@ describe('useStoreReservationForm — el siguiente cliente empieza limpio (issue
       'lugarRecogida', 'lugarDevolucion', 'fechaRecogida', 'fechaDevolucion',
       'horaRecogida', 'horaDevolucion',
       'lastReservationSummary', 'lastSubmittedCode', 'attribution',
+      // El id de la conversación del bot se conserva como `attribution`: una
+      // segunda reserva desde la misma conversación sigue siendo de esa
+      // conversación (docs/specs/chat-ref-reserva, SCEN-010).
+      'chatRef',
     ]
 
     const clasificados = new Set([...BORRADOS, ...CONSERVADOS])
@@ -270,7 +274,7 @@ describe('useStoreReservationForm — el siguiente cliente empieza limpio (issue
       ([k, v]) =>
         !['lugarRecogida', 'lugarDevolucion', 'fechaRecogida', 'fechaDevolucion',
           'horaRecogida', 'horaDevolucion', 'lastReservationSummary',
-          'lastSubmittedCode', 'attribution'].includes(k) &&
+          'lastSubmittedCode', 'attribution', 'chatRef'].includes(k) &&
         v !== null && v !== false && v !== '',
     )
 

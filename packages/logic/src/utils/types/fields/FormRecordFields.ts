@@ -48,4 +48,8 @@ export default interface FormFields {
   flight?: number | undefined;
   monthly_mileage?: MonthlyMileage | null;
   attribution?: AttributionInput;
+  // Bot conversation id from the `?chat=` query on the bot's link. Key ABSENT
+  // when there is none (never null / ""). The server validates and discards
+  // what it does not recognise; `chat_conversation_id` is ignored on purpose.
+  chat_ref?: string;
 }
