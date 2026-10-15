@@ -963,6 +963,15 @@ export default defineNuxtConfig({
       '/aviso-proteccion-de-datos.html': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
       '/AVISO-DE-PROTECCIÓN-DE-DATOS-ALQUILAME.CO.pdf': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
 
+      // Enlaces cortos de la bio de Facebook e Instagram. 302 a propósito: si
+      // cambian los UTM, el navegador no debe quedarse con el destino viejo.
+      // La variante con barra final va explícita para no depender de cómo
+      // normaliza cada capa (Nitro local vs. rutas de Vercel).
+      '/fb': { redirect: { to: '/?utm_source=facebook&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/fb/': { redirect: { to: '/?utm_source=facebook&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/ig': { redirect: { to: '/?utm_source=instagram&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/ig/': { redirect: { to: '/?utm_source=instagram&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+
       // Issue 322 SCEN-322-S04 — baseline security headers (all responses).
       // CSP is limited to frame-ancestors so we don't break Nuxt inline assets;
       // full script-src CSP would need a separate hardening pass.
