@@ -594,6 +594,11 @@ export default defineNuxtConfig({
       '/images/carros2.png': { redirect: { to: '/', statusCode: 301 } },
       '/imacion/ani2a.png': { redirect: { to: '/', statusCode: 301 } },
       '/-coche-en-espana/': { redirect: { to: '/', statusCode: 301 } },
+      // Botón «Sitio web» del perfil de Google Maps. 302 para que un cambio de
+      // UTM no quede en la caché del navegador; google/organic deja la visita
+      // en «Búsqueda orgánica» de GA4 y la campaña la separa del resto. Sin
+      // entrada para `/maps/`: en Vercel ambas generan `maps.func` → EEXIST.
+      '/maps': { redirect: { to: '/?utm_source=google&utm_medium=organic&utm_campaign=perfil-maps', statusCode: 302 } },
     },
     prerender: {
       routes: [

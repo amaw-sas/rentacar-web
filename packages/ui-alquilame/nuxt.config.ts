@@ -970,6 +970,9 @@ export default defineNuxtConfig({
       // generan la misma función `fb.func` → EEXIST y el build cae.
       '/fb': { redirect: { to: '/?utm_source=facebook&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
       '/ig': { redirect: { to: '/?utm_source=instagram&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      // Botón «Sitio web» del perfil de Google Maps. google/organic deja la
+      // visita en «Búsqueda orgánica» de GA4; la campaña la separa del resto.
+      '/maps': { redirect: { to: '/?utm_source=google&utm_medium=organic&utm_campaign=perfil-maps', statusCode: 302 } },
 
       // Issue 322 SCEN-322-S04 — baseline security headers (all responses).
       // CSP is limited to frame-ancestors so we don't break Nuxt inline assets;
