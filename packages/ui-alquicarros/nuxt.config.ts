@@ -677,6 +677,17 @@ export default defineNuxtConfig({
       '/reservado/**': { robots: 'noindex, nofollow', headers: { 'x-robots-tag': 'noindex, nofollow' } },
       '/reservas/lugar-recogida/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } },
       '/reservas/referido/**': { robots: 'noindex, follow', headers: { 'x-robots-tag': 'noindex, follow' } },
+      // Enlaces cortos de la bio de cada red social y del perfil de Google Maps.
+      // 302 para que un cambio de UTM no quede en la caché del navegador. Sin
+      // entrada aparte para `/fb/` y compañía: en Vercel `/fb` y `/fb/` generan
+      // la misma función `fb.func` → EEXIST y el build cae.
+      '/fb': { redirect: { to: '/?utm_source=facebook&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/ig': { redirect: { to: '/?utm_source=instagram&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/yt': { redirect: { to: '/?utm_source=youtube&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/x': { redirect: { to: '/?utm_source=x&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/tiktok': { redirect: { to: '/?utm_source=tiktok&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      // google/organic deja la visita en «Búsqueda orgánica» de GA4.
+      '/maps': { redirect: { to: '/?utm_source=google&utm_medium=organic&utm_campaign=perfil-maps', statusCode: 302 } },
       // Independencia de enrutamiento (directiva): `/{city}/buscar-vehiculos/...` es
       // exclusiva de alquilatucarro. En alquicarros la superficie de reserva es el
       // wizard en `/reservas` (PATH). El 301 lo emite ahora

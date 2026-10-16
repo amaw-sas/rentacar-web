@@ -599,6 +599,12 @@ export default defineNuxtConfig({
       // en «Búsqueda orgánica» de GA4 y la campaña la separa del resto. Sin
       // entrada para `/maps/`: en Vercel ambas generan `maps.func` → EEXIST.
       '/maps': { redirect: { to: '/?utm_source=google&utm_medium=organic&utm_campaign=perfil-maps', statusCode: 302 } },
+      // Enlaces cortos de la bio de cada red social, con el mismo criterio. Sin
+      // `/tiktok`: aquí es una página propia (la landing de la bio de TikTok).
+      '/fb': { redirect: { to: '/?utm_source=facebook&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/ig': { redirect: { to: '/?utm_source=instagram&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/yt': { redirect: { to: '/?utm_source=youtube&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/x': { redirect: { to: '/?utm_source=x&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
     },
     prerender: {
       routes: [

@@ -963,13 +963,18 @@ export default defineNuxtConfig({
       '/aviso-proteccion-de-datos.html': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
       '/AVISO-DE-PROTECCIÓN-DE-DATOS-ALQUILAME.CO.pdf': { redirect: { to: '/politica-privacidad', statusCode: 301 } },
 
-      // Enlaces cortos de la bio de Facebook e Instagram. 302 a propósito: si
+      // Enlaces cortos de la bio de cada red social. 302 a propósito: si
       // cambian los UTM, el navegador no debe quedarse con el destino viejo.
       // Sin entrada aparte para `/fb/`: la misma regla ya cubre la barra final
       // (como `/registratuflota/` en producción), y en Vercel `/fb` y `/fb/`
       // generan la misma función `fb.func` → EEXIST y el build cae.
       '/fb': { redirect: { to: '/?utm_source=facebook&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
       '/ig': { redirect: { to: '/?utm_source=instagram&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/yt': { redirect: { to: '/?utm_source=youtube&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      '/x': { redirect: { to: '/?utm_source=x&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
+      // TikTok bloquea el dominio alquilame.co en la bio; queda listo por si
+      // levantan el bloqueo.
+      '/tiktok': { redirect: { to: '/?utm_source=tiktok&utm_medium=social&utm_campaign=bio', statusCode: 302 } },
       // Botón «Sitio web» del perfil de Google Maps. google/organic deja la
       // visita en «Búsqueda orgánica» de GA4; la campaña la separa del resto.
       '/maps': { redirect: { to: '/?utm_source=google&utm_medium=organic&utm_campaign=perfil-maps', statusCode: 302 } },
