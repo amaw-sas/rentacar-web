@@ -1,31 +1,28 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-blue-900 to-blue-950 flex flex-col">
+  <div class="ep-root" style="--ep-from: #1e3a8a; --ep-to: #172554">
     <!-- Header simplificado -->
-    <header class="py-4 px-6">
-      <NuxtLink to="/" class="flex items-center justify-center gap-2">
-        <IconsColombiaFlag cls="h-6 md:h-7 w-auto" />
-        <Logo cls="h-8 md:h-10 w-auto" />
+    <header class="ep-header">
+      <NuxtLink to="/" class="ep-brand">
+        <IconsColombiaFlag cls="ep-flag" />
+        <Logo cls="ep-logo" />
       </NuxtLink>
     </header>
 
     <!-- Contenido principal -->
-    <main class="flex-1 flex items-center justify-center px-4">
-      <div class="text-center max-w-lg">
+    <main class="ep-main">
+      <div class="ep-content">
         <!-- Código de error -->
-        <div class="mb-6">
-          <span class="text-8xl md:text-9xl font-bold text-amber-500">
-            {{ error?.statusCode || 404 }}
-          </span>
-        </div>
+        <span class="ep-code">{{ statusCode }}</span>
 
         <!-- Icono de carro -->
-        <div class="mb-6 flex justify-center">
+        <div class="ep-icon-wrap">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="w-24 h-24 text-white/80"
+            class="ep-icon"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               stroke-linecap="round"
@@ -43,39 +40,35 @@
         </div>
 
         <!-- Mensaje -->
-        <h1 class="text-2xl md:text-3xl font-bold text-white mb-4">
-          {{ errorTitle }}
-        </h1>
-        <p class="text-gray-300 mb-8 text-lg">
-          {{ errorMessage }}
-        </p>
+        <h1 class="ep-title">{{ errorTitle }}</h1>
+        <p class="ep-text">{{ errorMessage }}</p>
 
-        <!-- Botones de acción. Clases Tailwind explícitas (no color de UButton):
-             'amber'/'white' no son colores válidos del tema Nuxt UI y dejaban los
-             botones sin fondo, ilegibles sobre el azul. -->
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <NuxtLink
-            to="/"
-            class="inline-flex items-center justify-center rounded-lg px-6 py-3 font-bold text-base bg-amber-500 text-white hover:bg-amber-600 transition-colors"
-          >
-            Ir al inicio
-          </NuxtLink>
-          <button
-            type="button"
-            class="inline-flex items-center justify-center rounded-lg px-6 py-3 font-bold text-base border-2 border-white text-white hover:bg-white/10 transition-colors"
-            @click="handleError"
-          >
+        <!-- Botones de acción -->
+        <div class="ep-actions">
+          <NuxtLink to="/" class="ep-btn ep-btn-primary">Ir al inicio</NuxtLink>
+          <button type="button" class="ep-btn ep-btn-secondary" @click="handleBack">
             Volver atrás
           </button>
         </div>
 
+        <!-- Ciudades: solo en 404, para que el visitante tenga a dónde ir -->
+        <section v-if="statusCode === 404" class="ep-cities-section">
+          <h2 class="ep-cities-title">¿Buscabas alquilar en alguna ciudad?</h2>
+          <ul class="ep-cities">
+            <li v-for="city in cities" :key="city.id">
+              <NuxtLink :to="`/${city.id}`" class="ep-city">{{ city.name }}</NuxtLink>
+            </li>
+          </ul>
+        </section>
+
         <!-- Contacto -->
-        <p class="mt-12 text-gray-400 text-sm">
+        <p class="ep-contact">
           ¿Necesitas ayuda?
           <a
             :href="franchise.whatsapp"
             target="_blank"
-            class="text-amber-500 hover:underline"
+            rel="noopener"
+            class="ep-link"
           >
             Contáctanos por WhatsApp
           </a>
@@ -84,7 +77,7 @@
     </main>
 
     <!-- Footer mínimo -->
-    <footer class="py-4 text-center text-gray-500 text-sm">
+    <footer class="ep-footer">
       © {{ new Date().getFullYear() }} {{ franchise.name }} - Todos los derechos reservados
     </footer>
   </div>
@@ -92,37 +85,65 @@
 
 <script setup lang="ts">
 import type { NuxtError } from '#app'
-const { franchise } = useAppConfig();
+// La hoja va inline por useHead: entry.css se quita del HTML fuera de la home
+// y esta página nunca lo recupera, así que no puede depender de Tailwind.
+import errorPageCss from '@rentacar-main/logic/assets/error-page.css?inline'
+
+const { franchise } = useAppConfig()
+const { cities } = usePublicCities()
+const router = useRouter()
 
 const props = defineProps<{
   error: NuxtError
 }>()
 
+const statusCode = computed(() => props.error?.statusCode || 404)
+
 const errorTitle = computed(() => {
-  if (props.error?.statusCode === 404) {
+  if (statusCode.value === 404) {
     return '¡Ups! Página no encontrada'
   }
-  if (props.error?.statusCode === 500) {
+  if (statusCode.value === 500) {
     return 'Error del servidor'
   }
   return 'Algo salió mal'
 })
 
 const errorMessage = computed(() => {
-  if (props.error?.statusCode === 404) {
+  if (statusCode.value === 404) {
     return 'Parece que esta ruta tomó un desvío. La página que buscas no existe o fue movida.'
   }
-  if (props.error?.statusCode === 500) {
+  if (statusCode.value === 500) {
     return 'Estamos teniendo problemas técnicos. Por favor intenta de nuevo en unos minutos.'
   }
   return props.error?.message || 'Ha ocurrido un error inesperado.'
 })
 
-const handleError = () => {
-  clearError({ redirect: '/' })
-}
+const handleBack = () =>
+  goBackOrHome({
+    hasInAppBack: import.meta.client && !!window.history.state?.back,
+    clearError,
+    back: () => router.back(),
+  })
 
+// El título de pestaña lo completa la plantilla del sitio con la marca.
+const pageTitle = statusCode.value === 404 ? 'Página no encontrada' : 'Algo salió mal'
+const unhead = injectHead()
 useHead({
-  title: `Error ${props.error?.statusCode || 404} | ${franchise.name}`
+  title: pageTitle,
+  style: [{ key: 'error-page', innerHTML: errorPageCss }],
+})
+
+// Cuando el 404 se lanza durante el arranque (p. ej. /medellin/xyz), nuxt pinta
+// el head en `app:error`, antes de que esta página registre su título, y deja en
+// el DOM el de respaldo de nuxt-seo-utils ("404 - Page not found: ..."). Unhead
+// descarta un invalidate() hecho mientras hay un render en curso, así que se
+// repinta de nuevo cuando ese render termina.
+onMounted(() => {
+  const off = unhead.hooks.hook('dom:rendered', () => {
+    off()
+    setTimeout(() => unhead.invalidate())
+  })
+  unhead.invalidate()
 })
 </script>
