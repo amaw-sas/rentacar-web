@@ -17,7 +17,7 @@ import { resolve } from 'node:path'
  */
 
 const BLOG_DIR = resolve(__dirname, '..')
-const authorData = readFileSync(resolve(BLOG_DIR, 'autores/elisa-arcos.author.ts'), 'utf-8')
+const authorData = readFileSync(resolve(BLOG_DIR, '../../data/blog-authors/elisa-arcos.ts'), 'utf-8')
 const authorPage = readFileSync(resolve(BLOG_DIR, 'autores/elisa-arcos.vue'), 'utf-8')
 const postPage = readFileSync(resolve(BLOG_DIR, '[...slug].vue'), 'utf-8')
 const nuxtConfig = readFileSync(resolve(BLOG_DIR, '../../../nuxt.config.ts'), 'utf-8')

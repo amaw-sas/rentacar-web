@@ -11,8 +11,9 @@
  * desconfianza, y quien busque a Elisa Arcos y no encuentre a nadie hace un daño
  * que no se arregla con SEO.
  *
- * Falta la foto, en `./images/elisa-arcos.{avif,webp,jpg,jpeg,png}`. La página se
- * ve bien sin ella; agregarla es soltar el archivo ahí.
+ * Falta la foto, en `app/pages/blog/autores/images/elisa-arcos.{avif,webp,jpg,jpeg,png}`
+ * (el glob vive en `pages/blog/autores/elisa-arcos.vue`). La página se ve bien
+ * sin ella; agregarla es soltar el archivo ahí.
  */
 export const AUTHOR = {
   name: 'Elisa Arcos',
