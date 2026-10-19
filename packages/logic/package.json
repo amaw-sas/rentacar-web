@@ -15,7 +15,8 @@
     "./stores/*": "./src/stores/*.ts",
     "./middleware/*": "./src/middleware/*.ts",
     "./utils": "./src/utils/index.ts",
-    "./utils/*": "./src/utils/*.ts"
+    "./utils/*": "./src/utils/*.ts",
+    "./assets/*": "./src/assets/*"
   },
   "scripts": {
     "lint": "eslint .",

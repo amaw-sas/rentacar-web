@@ -416,7 +416,7 @@
 import type { BlogPosting, BreadcrumbList } from 'schema-dts'
 import type { MDCRoot, Toc } from '@nuxtjs/mdc'
 import type { BlogPost } from '@rentacar-main/logic/src'
-import { AUTHOR } from './autores/elisa-arcos.author'
+import { AUTHOR } from '../../data/blog-authors/elisa-arcos'
 
 // The post-detail endpoint augments BlogPost with the parsed MDC `body`
 // (toc merged in) — list endpoints return the bare BlogPost without it.

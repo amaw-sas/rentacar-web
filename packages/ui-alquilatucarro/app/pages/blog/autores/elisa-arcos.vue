@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import type { BlogPost } from '@rentacar-main/logic/src'
-import { AUTHOR } from './elisa-arcos.author'
+import { AUTHOR } from '../../../data/blog-authors/elisa-arcos'
 
 const { franchise } = useAppConfig()
 const authorPhotoFiles = import.meta.glob(

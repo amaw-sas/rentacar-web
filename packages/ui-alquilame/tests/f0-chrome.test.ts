@@ -163,9 +163,17 @@ describe('chrome — de-blue error.vue + typography .link-*', () => {
   const typography = read('app/assets/css/rentacar-main/typography.css')
 
   it('error boundary background is brand red, not blue', () => {
-    expect(error).toMatch(/from-hero-from\s+to-brand-950/)
-    expect(error).not.toMatch(/from-blue-900/)
-    expect(error).not.toMatch(/to-blue-950/)
+    // error.vue no recibe entry.css (ni los tokens del tema), así que fija el
+    // degradado en hex: deben ser los mismos valores de hero-from y brand-950.
+    const theme = read('app/assets/css/theme.css')
+    const token = (name: string) => theme.match(new RegExp(`--color-${name}:\\s*(#[0-9a-f]{6})`, 'i'))?.[1]
+    const heroFrom = token('hero-from')
+    const brand950 = token('brand-950')
+    expect(heroFrom).toBeTruthy()
+    expect(brand950).toBeTruthy()
+    expect(error).toContain(`--ep-from: ${heroFrom}`)
+    expect(error).toContain(`--ep-to: ${brand950}`)
+    expect(error).not.toMatch(/blue-9[05]0|#1e3a8a|#172554/i)
   })
 
   it('.link-light / .link-dark use brand tokens, not text-blue-*', () => {
