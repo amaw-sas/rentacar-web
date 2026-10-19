@@ -4,7 +4,7 @@
     <header class="ep-header">
       <NuxtLink to="/" class="ep-brand">
         <IconsColombiaFlag cls="ep-flag" />
-        <Logo cls="ep-logo" />
+        <Logo cls="ep-logo" variant="white" />
       </NuxtLink>
     </header>
 

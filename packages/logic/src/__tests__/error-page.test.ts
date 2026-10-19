@@ -100,6 +100,10 @@ describe('variables por marca', () => {
     expect(s).toContain('--ep-from: #1e3a8a')
     expect(s).toContain('--ep-to: #172554')
   })
+  it('alquicarros pinta el logo en blanco (el de color tiene letras #1a1a1a, ilegibles sobre azul)', () => {
+    const s = read('packages/ui-alquicarros/app/error.vue')
+    expect(s).toMatch(/<Logo[^>]*variant="white"/)
+  })
   it('alquilatucarro mantiene el número 301 fijo (lo vigila whatsapp-number.test.ts)', () => {
     const s = read('packages/ui-alquilatucarro/app/error.vue')
     expect(s).toContain('href="https://wa.me/573016729250"')
