@@ -203,6 +203,14 @@
     >
       {{ failed }}
     </p>
+    <!--
+      Salida opt-in: solo la pinta la página que pasa `fallbackWhatsapp` (hoy
+      /opinion) y solo si el ÚLTIMO envío falló por nuestro lado (5xx). Un 400 o un
+      429 tienen arreglo dentro del formulario; ahí la línea distraería.
+    -->
+    <p v-if="showWhatsappFallback" data-test="salida-whatsapp" class="text-sm text-gray-700">
+      Si prefieres, escríbenos por <a :href="fallbackWhatsapp" target="_blank" rel="noopener" class="text-brand-700 font-semibold underline">WhatsApp</a>
+    </p>
   </form>
 </template>
 
@@ -235,6 +243,12 @@ const props = withDefaults(
      */
     successMessage?: string | ((response: unknown) => string)
     /**
+     * Enlace de WhatsApp de la marca. Si se pasa, un fallo 5xx del envío muestra
+     * «Si prefieres, escríbenos por WhatsApp» bajo el aviso rojo. Opt-in: el texto
+     * se aprobó solo para /opinion, y los otros formularios no lo pasan.
+     */
+    fallbackWhatsapp?: string
+    /**
      * Datos que la página añade al POST sin que existan como campo visible
      * (la calificación de /opinion). No se limpian al enviar: los pone la
      * página, no la persona.
@@ -244,6 +258,8 @@ const props = withDefaults(
   {
     submitLabel: 'Enviar',
     successMessage: '¡Listo! Recibimos tu mensaje y te responderemos pronto.',
+    // Vacío = sin salida por WhatsApp: los otros formularios no la muestran.
+    fallbackWhatsapp: '',
   },
 )
 
@@ -304,6 +320,16 @@ const sent = ref(false)
 /** Lo que devolvió el servidor en el último envío correcto, para el acuse. */
 const response = ref<unknown>(null)
 const failed = ref('')
+/** Código HTTP del último envío fallido; null si no falló o no hubo respuesta. */
+const failedStatus = ref<number | null>(null)
+const showWhatsappFallback = computed(
+  () =>
+    Boolean(props.fallbackWhatsapp)
+    && Boolean(failed.value)
+    && failedStatus.value !== null
+    && failedStatus.value >= 500
+    && failedStatus.value < 600,
+)
 const formEl = ref<HTMLFormElement | null>(null)
 
 /**
@@ -369,6 +395,7 @@ async function submit() {
   if (sending.value || sent.value) return
 
   failed.value = ''
+  failedStatus.value = null
   if (!validateLocally()) {
     failed.value = 'Revisa los campos marcados.'
     focusFirstError()
@@ -394,6 +421,15 @@ async function submit() {
       else values[f.name] = ''
     }
   } catch (e) {
+    // ofetch pone el código en statusCode/status; el cuerpo de h3 lo repite en data.
+    const err = e as {
+      statusCode?: number
+      status?: number
+      response?: { status?: number }
+      data?: { statusCode?: number }
+    }
+    failedStatus.value =
+      err?.statusCode ?? err?.status ?? err?.response?.status ?? err?.data?.statusCode ?? null
     // El servidor manda los campos faltantes cuando rechaza por validación.
     const missing = (e as { data?: { data?: { missing?: string[] } } })?.data?.data?.missing
     // Y los que se pasan de largo, por el mismo camino. Sin esto la persona lee

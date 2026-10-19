@@ -69,6 +69,7 @@
           :extra-fields="extraFields"
           submit-label="Enviar mi comentario"
           success-message="Gracias por contarnos. Te respondemos al correo que nos dejaste."
+          :fallback-whatsapp="franchise.whatsapp"
         />
 
         <p class="body-sm mt-8">
@@ -122,6 +123,12 @@ import { OPINION_CONSENT_LEAD } from '~/utils/policy'
 
 /** Ficha de Google Business Profile de alquilame. */
 const GBP_URL = 'https://g.page/r/Ce09QLF1RhqkEBM/review'
+/**
+ * El WhatsApp de la marca, el mismo de la cabecera. Si el envío del formulario
+ * falla por nuestro lado (5xx), el formulario lo ofrece como salida
+ * (SCEN-11824). Sale del app config, nunca de un número escrito aquí.
+ */
+const { franchise } = useAppConfig()
 /** Desde cuántas estrellas se considera reseña pública. */
 const HIGH_RATING_MIN = 4
 /**

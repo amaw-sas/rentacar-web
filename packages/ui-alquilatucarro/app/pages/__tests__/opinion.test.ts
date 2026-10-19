@@ -54,12 +54,13 @@ beforeAll(() => {
   vi.stubGlobal('onBeforeUnmount', onBeforeUnmount)
   vi.stubGlobal('definePageMeta', () => {})
   vi.stubGlobal('useSeoMeta', () => {})
-  // La página NO llama a useAppConfig hoy, así que este stub no se ejerce. Se
-  // deja con la marca correcta a propósito: en cuanto alguien haga que la
-  // página lea la marca del appConfig, el stub dirá la verdad en vez de
-  // colar «Alquilame» dentro de la suite de alquilatucarro.
+  // La página lee `franchise.whatsapp` del appConfig (SCEN-11824); la marca se
+  // deja correcta a propósito: si alguien hace que la página lea también la
+  // marca, el stub dirá la verdad en vez de colar «Alquilame» en esta suite.
   vi.stubGlobal('useAppConfig', () => ({
     organization: { brand: 'Alquilatucarro', logo: '/images/brand/logo.svg' },
+    // La página lee el WhatsApp de la marca para la salida de SCEN-11824.
+    franchise: { whatsapp: 'https://wa.me/570000000000' },
   }))
 })
 afterAll(() => vi.unstubAllGlobals())
@@ -694,5 +695,114 @@ describe('SCEN-11804 — si el tablero falla, el formulario conserva lo escrito'
     expect((w.find('#f-mensaje').element as HTMLTextAreaElement).value).toBe(
       'El carro llegó sin gasolina y esperé 40 minutos.',
     )
+  })
+})
+
+/**
+ * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
+ * opinion-salida-whatsapp.scenarios.md — SCEN-11824 y SCEN-11825.
+ *
+ * Si el envío falla por nuestra culpa (500/502), la persona tiene por dónde
+ * escribirnos: «Si prefieres, escríbenos por WhatsApp», con el WhatsApp de ESTA
+ * marca. El número se lee de app.config.ts como texto y no se copia aquí: si
+ * alguien lo cambia allí, la prueba sigue diciendo la verdad.
+ */
+describe('SCEN-11824/11825 — la salida por WhatsApp cuando el envío falla por nuestra culpa', () => {
+  const WA_LINE = 'Si prefieres, escríbenos por WhatsApp'
+  const appConfigSrc = readFileSync(join(__dirname, '..', '..', 'app.config.ts'), 'utf8')
+  const BRAND_WHATSAPP = appConfigSrc.match(/whatsapp:\s*["']([^"']+)["']/)![1]!
+
+  beforeEach(() => {
+    vi.stubGlobal('useAppConfig', () => ({
+      organization: { brand: 'Marca', logo: '/images/brand/logo.svg' },
+      franchise: { whatsapp: BRAND_WHATSAPP },
+    }))
+  })
+
+  /** Lo que lanza $fetch (ofetch) ante una respuesta con error. */
+  const fetchError = (status: number, statusMessage: string, data?: Record<string, unknown>) => ({
+    statusCode: status,
+    status,
+    data: { statusCode: status, statusMessage, ...(data ? { data } : {}) },
+  })
+
+  async function enviarCon(outcome: 'ok' | ReturnType<typeof fetchError>) {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await nextTick()
+    if (outcome !== 'ok') post.mockRejectedValueOnce(outcome)
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await nextTick()
+    await nextTick()
+    return w
+  }
+
+  const waLink = (w: Wrapper) => w.find('[data-test="salida-whatsapp"] a')
+
+  it('el número de la marca se encontró en app.config.ts', () => {
+    expect(BRAND_WHATSAPP).toMatch(/^https:\/\/wa\.me\/57\d{10}$/)
+  })
+
+  it.each([502, 500])(
+    'SCEN-11824 — con %s aparece la línea, enlaza al WhatsApp de la marca en pestaña nueva y conserva lo escrito',
+    async (status) => {
+      const w = await enviarCon(
+        fetchError(status, 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.'),
+      )
+      expect(w.find('form [role="alert"]').text()).toContain('No pudimos enviar tu mensaje')
+      const line = w.find('[data-test="salida-whatsapp"]')
+      expect(line.exists()).toBe(true)
+      expect(line.text().replace(/\s+/g, ' ').trim()).toBe(WA_LINE)
+      expect(waLink(w).text().trim()).toBe('WhatsApp')
+      expect(waLink(w).attributes('href')).toBe(BRAND_WHATSAPP)
+      expect(waLink(w).attributes('target')).toBe('_blank')
+      expect(waLink(w).attributes('rel')).toContain('noopener')
+      expect((w.find('#f-nombre').element as HTMLInputElement).value).toBe('Ana Ramírez')
+      expect((w.find('#f-email').element as HTMLInputElement).value).toBe('ana@ejemplo.com')
+      expect((w.find('#f-mensaje').element as HTMLTextAreaElement).value).toBe(
+        'El carro llegó sin gasolina y esperé 40 minutos.',
+      )
+    },
+  )
+
+  it('SCEN-11825 (d) — antes de enviar no aparece', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await nextTick()
+    await fillForm(w)
+    expect(w.text()).not.toContain('Si prefieres')
+    expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(false)
+  })
+
+  it('SCEN-11825 (a) — con 200 no aparece', async () => {
+    const w = await enviarCon('ok')
+    expect(formStatus(w).text()).toContain('Gracias por contarnos')
+    expect(w.text()).not.toContain('Si prefieres')
+  })
+
+  it('SCEN-11825 (b) — con 400 por campos se ve solo el aviso de siempre', async () => {
+    const w = await enviarCon(fetchError(400, 'Faltan campos obligatorios', { missing: ['mensaje'] }))
+    expect(w.find('form [role="alert"]').text()).toContain('Revisa los campos marcados.')
+    expect(w.text()).not.toContain('Si prefieres')
+  })
+
+  it('SCEN-11825 (c) — con 429 se ve solo el aviso de siempre', async () => {
+    const msg = 'Recibimos varios mensajes tuyos hace poco. Espera un momento y vuelve a intentarlo.'
+    const w = await enviarCon(fetchError(429, msg))
+    expect(w.find('form [role="alert"]').text()).toContain(msg)
+    expect(w.text()).not.toContain('Si prefieres')
+  })
+
+  it('un 502 seguido de un reintento con 429 retira la línea', async () => {
+    // La línea habla del ÚLTIMO fallo: si el tope llega después, ya no aplica.
+    const w = await enviarCon(fetchError(502, 'No pudimos enviar tu mensaje.'))
+    expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(true)
+    post.mockRejectedValueOnce(fetchError(429, 'Espera un momento.'))
+    await form(w).trigger('submit')
+    await nextTick()
+    await nextTick()
+    expect(w.find('form [role="alert"]').text()).toContain('Espera un momento.')
+    expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(false)
   })
 })
