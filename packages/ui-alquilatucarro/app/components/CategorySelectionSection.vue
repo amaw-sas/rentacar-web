@@ -86,6 +86,7 @@
         <span>En <span class="text-yellow-400 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
+      <LazyCopyQuotePanel v-if="isAdvisor" :rows="renderableCategories" />
     </template>
   </div>
   <!-- Keep the same indexed wrappers from SSR loading through loaded cards.
@@ -291,6 +292,7 @@ const props = withDefaults(defineProps<{
 /** stores */
 const storeSearch = useStoreSearchData();
 const storeForm = useStoreReservationForm();
+const { isAdvisor } = useAdvisorMode();
 
 /** refs */
 const {

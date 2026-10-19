@@ -45,6 +45,7 @@ export { isBeyondPricingHorizon, allRenderableBeyondHorizon } from './pricingHor
 export { pickRepresentativeDailyPrice } from './pickRepresentativeDailyPrice';
 export { lowSeasonMonthly1k, lowSeasonDailyFrom30 } from './lowSeasonDailyPrice';
 export { categoryOffersMonthly } from './categoryOffersMonthly';
+export * from './monthlyPlans';
 export { pickEffectiveTotalCoverageUnitCharge } from './pickEffectiveTotalCoverage';
 export { applyMonthlyAnchorCap } from './applyMonthlyAnchorCap';
 export { IVA_PERCENTAGE } from './ivaRate';
@@ -153,6 +154,7 @@ export { pickupTimingIssue } from './helpers/pickupTimingIssue';
 export type { PickupTimingIssue } from './helpers/pickupTimingIssue';
 export { resolveReturnBranch } from './helpers/resolveReturnBranch';
 export type { ReturnBranchResolution } from './helpers/resolveReturnBranch';
+export * from './helpers/buildQuoteText';
 
 // ============================================================================
 // Type Definitions - Data

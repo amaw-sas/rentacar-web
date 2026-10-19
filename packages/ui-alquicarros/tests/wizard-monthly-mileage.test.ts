@@ -23,11 +23,14 @@ const stepper = read('components/wizard/WizardStepper.vue')
 const summary = read('components/wizard/WizardSummary.vue')
 const vehicle = read('components/wizard/steps/StepVehicle.vue')
 // Issue #368 B1: el cálculo de "qué planes vende la gama" salió de los dos
-// componentes a un helper puro. Las aserciones que miraban ese cálculo apuntan
-// aquí; su COMPORTAMIENTO se prueba ejecutando en
-// app/composables/__tests__/useMonthlyPlans.test.ts, que es evidencia más fuerte
+// componentes a un helper puro (hoy en packages/logic/src/utils/monthlyPlans.ts).
+// Las aserciones que miraban ese cálculo apuntan aquí; su COMPORTAMIENTO se prueba ejecutando en
+// logic/src/utils/__tests__/monthlyPlans.test.ts, que es evidencia más fuerte
 // que cualquiera de estas cadenas.
-const monthlyPlans = read('composables/useMonthlyPlans.ts')
+const monthlyPlans = readFileSync(
+  fileURLToPath(new URL('../../logic/src/utils/monthlyPlans.ts', import.meta.url)),
+  'utf-8',
+)
 
 describe('SCEN-ACM-04/06 — los flags del form se DERIVAN de la instancia', () => {
   it('ReservationWizard escribe selectedMonthlyMileage', () => {

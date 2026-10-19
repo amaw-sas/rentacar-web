@@ -13,6 +13,7 @@
       <p class="mt-1 body-base text-gray-500">
         Agrupamos las opciones por tipo. Abre un grupo y elige la gama que prefieras.
       </p>
+      <CopyQuotePanel v-if="isAdvisor" :rows="quoteRows" />
     </header>
 
     <!-- Aviso del wizard (#368 B1). Hermano por ENCIMA de las cuatro ramas de abajo,
@@ -171,7 +172,7 @@
 
 <script setup lang="ts">
 // External
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 
 // config
@@ -180,6 +181,8 @@ import { groupBySegment, segmentForCode, type SegmentGroup, type SegmentId } fro
 // composables (import explícito, no auto-import: así el componente es montable
 // en tests sin el runtime de Nuxt)
 import { canQuoteTotalCoverageFor, sellablePlans } from '~/composables/useMonthlyPlans'
+import { quoteRowsFromGroups } from '~/utils/quoteRowsFromGroups'
+import useAdvisorMode from '@rentacar-main/logic/composables/useAdvisorMode'
 import { carrySelection } from '~/composables/useSelectionCarryOver'
 import { noticeMessage, useWizardNotice } from '~/composables/useWizardNotice'
 
@@ -188,6 +191,10 @@ import { isBeyondPricingHorizon, preloadPhoneField } from '@rentacar-main/logic/
 
 // Types
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
+
+const CopyQuotePanel = defineAsyncComponent(() => import('../CopyQuotePanel.vue'))
+
+const { isAdvisor } = useAdvisorMode()
 
 defineProps<{
   /** Issue #401: el tramo cambió sin re-buscar → sustituye el grid por el aviso. */
@@ -260,6 +267,11 @@ const rowByCode = computed(() => {
 // devolviera >1 fila por categoryCode (code-review F2).
 const groups = computed<SegmentGroup[]>(() =>
   groupBySegment([...new Set(renderable.value.map((r) => r.categoryCode))]),
+)
+
+// Filas para «Copiar cotización»: todos los segmentos (no solo el abierto), en orden de segmento.
+const quoteRows = computed<CategoryAvailabilityData[]>(() =>
+  quoteRowsFromGroups(groups.value, rowByCode.value),
 )
 
 // While the customer browses the vehicles, warm up the Paso 3 phone field

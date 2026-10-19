@@ -80,6 +80,7 @@
         <span>En <span class="text-brand-600 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-brand-600 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
+      <LazyCopyQuotePanel v-if="isAdvisor" :rows="renderableCategories" />
     </div>
     <div v-if="!awaitingSearch" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       <!-- Iterate renderableCategories so iteration === render and the
@@ -248,6 +249,7 @@ import { allRenderableBeyondHorizon, preloadPhoneField } from "@rentacar-main/lo
 /** stores */
 const storeSearch = useStoreSearchData();
 const storeForm = useStoreReservationForm();
+const { isAdvisor } = useAdvisorMode();
 
 /** refs */
 const {

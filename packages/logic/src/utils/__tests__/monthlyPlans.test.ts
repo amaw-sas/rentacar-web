@@ -22,7 +22,7 @@
  */
 import { describe, it, expect } from 'vitest'
 
-import { canQuoteTotalCoverageFor, sellablePlans } from '../useMonthlyPlans'
+import { canQuoteTotalCoverageFor, sellablePlans } from '../monthlyPlans'
 
 import type { CategoryMonthPriceData } from '@rentacar-main/logic/utils'
 
