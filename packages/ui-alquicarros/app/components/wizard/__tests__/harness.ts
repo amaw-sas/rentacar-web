@@ -276,6 +276,8 @@ export async function mountWizard(options: MountWizardOptions = {}): Promise<Wiz
   vi.stubGlobal('useAppConfig', () => ({
     franchise: { phone: '+57 318 770 3670', whatsapp: 'https://wa.me/573187703670' },
   }))
+  // useAdvisorMode (panel de copiar cotización) captura useRouter al montar.
+  vi.stubGlobal('useRouter', () => ({ replace: vi.fn() }))
   vi.stubGlobal('useRoute', () => ({
     // Los seis parámetros de búsqueda. Sin `lugar_recogida` el shell entra en el
     // Paso 1 y no hay DOM que assertar.

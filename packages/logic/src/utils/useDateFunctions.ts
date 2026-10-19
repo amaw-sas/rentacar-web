@@ -414,3 +414,34 @@ export function isTime12hFormat(timeString: string): boolean {
 export function isTime24hFormat(timeString: string): boolean {
   return /^\d{2}:\d{2}$/.test(timeString);
 }
+
+const QUOTE_WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const QUOTE_MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/**
+ * Format a pickup/return moment for the copied quote text, e.g. "viernes 16 oct. 7:30am".
+ *
+ * Independent of the runtime timezone and locale: the weekday comes from the civil date
+ * in UTC and the clock is read verbatim from the string (no conversion).
+ * @param fecha - civil date, YYYY-MM-DD
+ * @param hora - wall clock, HH:mm (24h)
+ * @returns formatted text, or '' when either input is empty or invalid
+ */
+export function formatQuoteDateTime(fecha: string, hora: string): string {
+  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha ?? '');
+  const t = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(hora ?? '');
+  if (!d || !t) return '';
+
+  const [year, month, day] = [Number(d[1]), Number(d[2]), Number(d[3])];
+  const [hour24, minute] = [Number(t[1]), Number(t[2])];
+  if (hour24 > 23 || minute > 59) return '';
+
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  // Date.UTC rolls over impossible dates (2026-13-40); reject them.
+  if (utc.getUTCFullYear() !== year || utc.getUTCMonth() !== month - 1 || utc.getUTCDate() !== day) return '';
+
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  const suffix = hour24 < 12 ? 'am' : 'pm';
+
+  return `${QUOTE_WEEKDAYS[utc.getUTCDay()]} ${day} ${QUOTE_MONTHS[month - 1]}. ${hour12}:${t[2]}${suffix}`;
+}
