@@ -855,10 +855,11 @@ export default defineNuxtConfig({
     // notificación interna; su dirección viaja en reply-to para poder responder.
     resendApiKey: '',
     // Clave del canal PQRS hacia el dashboard. Propia y no la de reservas, para poder
-    // rotarla sin tumbar ese canal. Declarada aquí porque Nuxt ignora las env vars de
-    // claves ausentes de runtimeConfig: sin esta línea, NUXT_PQRS_API_KEY no llega, el
-    // fail-closed del endpoint dispara siempre y el formulario muere en producción con
-    // la variable bien puesta en Vercel.
+    // rotarla sin tumbar ese canal. Las calificaciones bajas de /opinion (POST
+    // /api/web-ratings del tablero) usan esta misma clave. Declarada aquí porque Nuxt
+    // ignora las env vars de claves ausentes de runtimeConfig: sin esta línea,
+    // NUXT_PQRS_API_KEY no llega, el fail-closed del endpoint dispara siempre y el
+    // formulario muere en producción con la variable bien puesta en Vercel.
     pqrsApiKey: '',
     contactEmailTo: 'info@artesyweb.com',
     contactEmailFrom: 'Alquilame <onboarding@resend.dev>',

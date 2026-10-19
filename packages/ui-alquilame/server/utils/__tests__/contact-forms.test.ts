@@ -262,12 +262,62 @@ describe('calificación baja (/opinion)', () => {
     expect(r.email.subject.length).toBeLessThanOrEqual('Calificación baja de un cliente — '.length + 120)
   })
 
-  it('sin estrellas el correo sale igual: perder al cliente molesto cuesta más', () => {
+  it('SCEN-11805: sin estrellas se rechaza — la fila del tablero las necesita', () => {
+    // Reemplaza a «sin estrellas el correo sale igual». La página siempre las manda;
+    // un envío sin ellas solo puede ser hecho a mano, y desde que la calificación se
+    // radica en el tablero (calificaciones-web, 19-oct-2026) sin estrellas no hay fila.
     const r = validateAndCompose({ ...valido, estrellas: undefined })
+    expect(r.ok).toBe(false)
+    if (r.ok || r.reason !== 'invalid') throw new Error('debía rechazar por faltante')
+    expect(r.missing).toEqual(['estrellas'])
+  })
+
+  it('SCEN-11805: estrellas en blanco cuentan como ausentes', () => {
+    const r = validateAndCompose({ ...valido, estrellas: '   ' })
+    expect(r.ok).toBe(false)
+    if (r.ok || r.reason !== 'invalid') throw new Error('debía rechazar por faltante')
+    expect(r.missing).toContain('estrellas')
+  })
+
+  /**
+   * Lo que se radica en el tablero tiene que ser texto. Un envío hecho a mano con
+   * `nombre: ['Ana']` pasaba `hasValue` (una lista con algo cuenta como valor),
+   * llegaba al tablero, el zod de allá lo rechazaba con 400 y aquí se registraba como
+   * «los contratos se separaron» cuando el culpable era el cuerpo. Se corta acá.
+   */
+  it.each([
+    ['nombre', ['Ana Ramírez']],
+    ['email', { correo: 'ana@ejemplo.com' }],
+    ['mensaje', ['El carro llegó sin gasolina.']],
+    ['telefono', ['300 123 4567']],
+    ['reserva', { codigo: 'AV33Y3U5QA' }],
+    ['telefono', 3001234567],
+  ])('un %s que no es texto se rechaza como inválido, nombrando el campo', (campo, valor) => {
+    const r = validateAndCompose({ ...valido, [campo]: valor } as unknown as Parameters<typeof validateAndCompose>[0])
+    expect(r.ok).toBe(false)
+    if (r.ok || r.reason !== 'invalid') throw new Error('debía rechazar por inválido')
+    expect(r.missing).toEqual([campo])
+  })
+
+  it('teléfono y reserva siguen siendo opcionales: ausentes o null no estorban', () => {
+    expect(validateAndCompose({ ...valido, telefono: undefined, reserva: undefined }).ok).toBe(true)
+    expect(
+      validateAndCompose({ ...valido, telefono: null, reserva: null } as unknown as Parameters<typeof validateAndCompose>[0]).ok,
+    ).toBe(true)
+  })
+
+  it('la regla de solo-texto es de reseñas: un convenio sigue mandando `tipos` como lista', () => {
+    const r = validateAndCompose({
+      type: 'flota',
+      negocio: 'Rentas',
+      nombre: 'Luis',
+      telefono: '300',
+      ubicacion: 'Bogotá',
+      vehiculos: '4',
+      tipos: ['Automóvil'],
+      compromiso: true,
+    })
     expect(r.ok).toBe(true)
-    if (!r.ok) return
-    expect(r.email.text).not.toContain('Calificación:')
-    expect(r.email.text.split('\n')[0]).toBe('Nombre: Ana Ramírez')
   })
 })
 
@@ -380,7 +430,8 @@ describe('topes de largo — que una biblia pegada en el mensaje no nos afecte',
    * Se RECHAZA, no se corta. Truncar en silencio se traga las palabras de un
    * cliente que ya está molesto, y encima sin decírselo.
    */
-  const base = { type: 'resenas' as const, nombre: 'Ana', email: 'a@b.co' }
+  // Con `estrellas`: es obligatoria en una calificación y aquí se prueba el largo, no eso.
+  const base = { type: 'resenas' as const, estrellas: '2 de 5', nombre: 'Ana', email: 'a@b.co' }
 
   it('2.000 caracteres de mensaje pasan: es el tope, no un caracter menos', () => {
     const r = validateAndCompose({ ...base, mensaje: 'x'.repeat(2000) })

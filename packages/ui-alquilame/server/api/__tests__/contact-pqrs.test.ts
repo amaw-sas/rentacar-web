@@ -201,11 +201,24 @@ describe('SCEN-027: los otros tres formularios no pasan por el dashboard', () =>
     { type: 'resenas', nombre: 'D', email: 'd@e.com', mensaje: 'x', estrellas: '2 de 5' },
   ]
 
+  const aPqrs = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/pqrs'))
+
   for (const payload of otros) {
-    it(`${payload.type}: solo Resend, y sin radicado en la respuesta`, async () => {
+    it(`${payload.type}: no se radica como PQRS, sale el correo y sin radicado en la respuesta`, async () => {
       body = payload
       const { ok } = await run()
-      expect(alDashboard()).toHaveLength(0)
+      expect(aPqrs()).toHaveLength(0)
+      if (payload.type === 'resenas') {
+        // SCEN-PQRS-027 queda reemplazado SOLO para reseñas por el diseño
+        // calificaciones-web (su §2 lo declara): la calificación baja se radica en el
+        // tablero, pero en /api/web-ratings y en ninguna otra ruta. flota y referidos
+        // siguen sin tocar el dashboard.
+        expect(alDashboard().map((c) => String(c[0]))).toEqual([
+          `${CONFIG.rentacarAdminUrl}/api/web-ratings`,
+        ])
+      } else {
+        expect(alDashboard()).toHaveLength(0)
+      }
       expect(aResend()).toHaveLength(1)
       expect(ok).toEqual({ ok: true })
     })

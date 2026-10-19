@@ -26,8 +26,9 @@ export interface ContactFormPayload {
   reserva?: string
   /**
    * Sólo reseñas: la calificación que dio el cliente, ya formateada ("2 de 5").
-   * La pone la página, no un campo del formulario. Llega del cliente y es
-   * falsificable; da igual, es una notificación interna, no una métrica.
+   * La pone la página, no un campo del formulario. Obligatoria: se radica en el
+   * tablero como número de 1 a 3 (el handler rechaza cualquier otra cosa). Llega
+   * del cliente y es falsificable dentro de ese rango.
    */
   estrellas?: string
   /** Cuántos vehículos tiene la flota. */
@@ -78,11 +79,14 @@ const REQUIRED: Record<ContactFormType, string[]> = {
   // Referidos: hace falta correo Y teléfono porque hay que entregarle su enlace
   // único y poder ubicarlo para pagarle la comisión.
   referidos: ['nombre', 'email', 'telefono'],
-  // Reseñas de 1-3★ que llegan de /opinion. Mismos mínimos que una queja: hay
-  // que saber quién es y poder responderle. `estrellas` NO se exige — la pone
-  // la página, y si algún día llegara sin ella el correo debe salir igual: un
-  // cliente molesto perdido pesa más que un asunto incompleto.
-  resenas: ['nombre', 'email', 'mensaje'],
+  // Reseñas de 1-3★ que llegan de /opinion. Mismos mínimos que una queja (hay
+  // que saber quién es y poder responderle) MÁS `estrellas`. Antes no se exigía,
+  // para que el correo saliera igual sin ella; eso quedó reemplazado
+  // (calificaciones-web, 19-oct-2026): la calificación ahora se radica en el
+  // tablero y la fila necesita las estrellas. La página siempre las manda, así
+  // que solo un envío hecho a mano llega sin ellas. El formato («N de 5», N de 1
+  // a 3) lo valida el handler, que es quien lo convierte en número.
+  resenas: ['nombre', 'email', 'mensaje', 'estrellas'],
 }
 
 const SUBJECT: Record<ContactFormType, string> = {
@@ -212,6 +216,26 @@ const FIELD_OWNER: Record<string, ContactFormType> = {
   estrellas: 'resenas',
 }
 
+/**
+ * Reseñas: los campos que se radican en el tablero tienen que llegar como texto. Una
+ * lista con algo dentro pasa `hasValue`, viajaría al tablero, su zod la rechazaría con
+ * 400 y el handler lo registraría como deriva de contrato, culpando al contrato de un
+ * cuerpo hecho a mano. Los obligatorios, siempre; los opcionales, cuando vienen.
+ */
+const TEXT_ONLY: Partial<Record<ContactFormType, { required: string[]; optional: string[] }>> = {
+  resenas: { required: ['nombre', 'email', 'mensaje'], optional: ['telefono', 'reserva'] },
+}
+
+function notText(type: ContactFormType, raw: ContactFormPayload): string[] {
+  const rule = TEXT_ONLY[type]
+  if (!rule) return []
+  const value = (f: string) => raw[f as keyof ContactFormPayload] as unknown
+  return [
+    ...rule.required.filter((f) => typeof value(f) !== 'string'),
+    ...rule.optional.filter((f) => value(f) !== undefined && value(f) !== null && typeof value(f) !== 'string'),
+  ]
+}
+
 export function validateAndCompose(raw: ContactFormPayload): ValidationResult {
   // Honeypot: descartar en silencio.
   if (clean(raw.website)) return { ok: false, reason: 'spam' }
@@ -230,6 +254,7 @@ export function validateAndCompose(raw: ContactFormPayload): ValidationResult {
   // si no, no hay forma de responderle a la persona.
   const email = clean(raw.email)
   if (email && !isEmail(email) && !missing.includes('email')) missing.push('email')
+  for (const f of notText(type, raw)) if (!missing.includes(f)) missing.push(f)
 
   if (missing.length) return { ok: false, reason: 'invalid', missing }
 
