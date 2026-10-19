@@ -11,8 +11,12 @@ disponibles con su precio, en el mismo formato que ya usa el bot. Hoy lo transcr
 
 1. **Solo asesores.** El cliente no ve el botón. Se activa abriendo cualquier página con
    `?asesor=1`; queda recordado en `localStorage` (vía `getLocalStorageSafe()`, clave
-   `rentacar:asesor`). `?asesor=0` lo borra. El parámetro se deja en la URL tal cual. No es
-   control de acceso: copia lo que ya está en pantalla.
+   `rentacar:asesor`). `?asesor=0` lo borra. Una vez leído, el parámetro se **quita de la URL**
+   (`router.replace`, conservando el resto de la query): si el asesor comparte la dirección de
+   la página con un cliente, el móvil del cliente no se vuelve «de asesor». Con
+   `localStorage` bloqueado el modo asesor dura lo que dure la sesión de la página (la
+   bandera vive en memoria; el watch ignora que la clave desaparezca). No es control de
+   acceso: copia lo que ya está en pantalla.
 2. **Mismo pie que el bot**, palabra por palabra (20 minutos, precios dinámicos, 6
    beneficios). La web no vence nada a los 20 minutos: es un aviso al cliente.
 3. **Seguro Total y silla de bebé** son casillas del panel de copiado, apagadas por
@@ -50,7 +54,7 @@ cotización
 [Silla de bebé: {total} ({N} días × {diario}), se paga al recoger.]   ← regular
 [Silla de bebé: {mensual} el mes, se paga al recoger.]                ← mensual
 Esta cotización estará disponible durante 20 minutos; luego se debe recotizar.
-Los precios son dinámicos e incluyen IVA, {seguro básico|Seguro Total} y {kilometraje ilimitado|1.000 km al mes|2.000 km al mes|los km del plan de cada gama}.
+Los precios son dinámicos e incluyen IVA, {seguro básico|Seguro Total|Seguro Total (salvo las gamas marcadas «sin Seguro Total»)} y {kilometraje ilimitado|N km al mes|los km del plan de cada gama}.
                                       ← mensual: el plan trae tope de km (decisión del dueño 2026-10-19)
 
 *Beneficios de reservar*
@@ -61,6 +65,13 @@ Los precios son dinámicos e incluyen IVA, {seguro básico|Seguro Total} y {kilo
 5. No bloqueamos cupo de tarjeta.
 6. Pagas al recoger el carro.
 ```
+
+Variantes del pie realmente implementadas:
+- Seguro: «seguro básico» (casilla apagada, o ninguna fila lo admite), «Seguro Total» (todas
+  las filas lo admiten) y «Seguro Total (salvo las gamas marcadas «sin Seguro Total»)» cuando
+  solo algunas filas no lo tienen.
+- Kilometraje: «kilometraje ilimitado» (regular), «N km al mes» (mensual, todas las filas
+  con el mismo plan) y «los km del plan de cada gama» (mensual con planes distintos).
 
 Reglas:
 - `*texto*` es negrita de WhatsApp (el bot usa `**` porque pinta markdown; aquí el destino
@@ -124,7 +135,7 @@ de Localiza).
 | `sellablePlans`, `canQuoteTotalCoverageFor` | se **mueven** de `ui-alquicarros/app/composables/useMonthlyPlans.ts` a `packages/logic/src/utils/monthlyPlans.ts`, con sus pruebas | el archivo de alquicarros los re-exporta; sus consumidores no cambian |
 | `useAdvisorMode()` | `packages/logic/src/composables/useAdvisorMode.ts` | en `onMounted` lee `?asesor` y `localStorage`; devuelve `isAdvisor` (falso en servidor) |
 | `useCopyQuote()` | `packages/logic/src/composables/useCopyQuote.ts` | recibe la lista de filas; arma filas con `useCategory`, llama `buildQuoteText`, copia, avisa con `useToast` (patrón de `useShareSearchParams`) |
-| `CopyQuotePanel.vue` | uno por marca | botón + 2 casillas, estilo de cada marca, dentro de `<ClientOnly>` |
+| `CopyQuotePanel.vue` | uno por marca | botón + 2 casillas, estilo de cada marca, montado con `v-if="isAdvisor"` y componente perezoso (`Lazy*` / `defineAsyncComponent`); el panel mismo lleva `v-if="canCopy"` |
 
 Montaje: alquilame y alquilatucarro en el encabezado «¡Vehículos Disponibles!» de
 `CategorySelectionSection.vue`; alquicarros en el `<header>` de `StepVehicle.vue`.
@@ -137,8 +148,12 @@ Los composables se auto-importan por la capa `logic`; solo `buildQuoteText`,
 - Portapapeles negado o inexistente → toast «No se pudo copiar». Nada se rompe.
 - `getLocalStorageSafe()` devuelve `null` → el modo asesor vale solo mientras la URL traiga
   `?asesor=1`.
-- Servidor: `isAdvisor` es falso y el panel está en `<ClientOnly>` → sin desajuste de
-  hidratación.
+- Servidor: `isAdvisor` es falso, así que el `v-if="isAdvisor"` no pinta el panel y no hay
+  desajuste de hidratación. No se usa `<ClientOnly>`: el panel es un componente perezoso que
+  solo se descarga para asesores.
+- Armar el texto (`buildText`) también va dentro del `try` de `copy()`: si lanza, sale el toast
+  «No se pudo copiar». Ningún `await` corre antes de `navigator.clipboard.writeText`, para no
+  perder la activación del clic.
 
 ## Pruebas
 
@@ -161,6 +176,9 @@ Los composables se auto-importan por la capa `logic`; solo `buildQuoteText`,
   (pasa a `packages/logic`), y la guarda de texto
   `ui-alquicarros/tests/wizard-monthly-mileage.test.ts` (lee el archivo y busca `price > 0` y
   `1k_kms`; debe apuntar al archivo nuevo).
+- Brecha conocida (sin cerrar): una gama mensual sin cargo diario recibe en el texto copiado
+  un precio con Seguro Total, mientras que las tarjetas de alquilame y alquilatucarro esconden
+  esa opción.
 - Diferencia conocida: en mensual, una gama sin cargo diario esconde Seguro Total en las
   tarjetas de alquilame y alquilatucarro, pero alquicarros sí lo vende y el texto copiado
   también. Se compara con alquicarros o con prueba unitaria.

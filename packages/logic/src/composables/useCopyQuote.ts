@@ -133,13 +133,14 @@ export default function useCopyQuote(
   const copy = async (opts: CopyQuoteOptions): Promise<boolean> => {
     if (import.meta.server) return false;
 
-    const text = buildText(opts);
-    if (text === null) {
-      toast.add({ title: 'No hay gamas para copiar', color: 'error' });
-      return false;
-    }
-
     try {
+      const text = buildText(opts);
+      if (text === null) {
+        toast.add({ title: 'No hay gamas para copiar', color: 'error' });
+        return false;
+      }
+
+      // Sin ningún await antes: el portapapeles exige la activación del clic.
       await navigator.clipboard.writeText(text);
       toast.add({
         title: 'Cotización copiada',

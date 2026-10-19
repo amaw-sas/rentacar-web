@@ -25,7 +25,9 @@ function makeStorage(initial: Record<string, string> = {}) {
 
 function setup(query: Record<string, unknown>, storage: unknown) {
   const route = reactive({ query })
+  const replace = vi.fn()
   vi.stubGlobal('useRoute', () => route)
+  vi.stubGlobal('useRouter', () => ({ replace }))
   if (storage === null) {
     delete (globalThis as Record<string, unknown>).localStorage
   } else {
@@ -33,7 +35,7 @@ function setup(query: Record<string, unknown>, storage: unknown) {
   }
   const mode = useAdvisorMode()
   const mount = () => mountHooks.splice(0).forEach((h) => h())
-  return { mode, mount, route }
+  return { mode, mount, route, replace }
 }
 
 beforeEach(() => {
@@ -134,10 +136,40 @@ describe('useAdvisorMode', () => {
     expect(storage._store.get(KEY)).toBe('1')
   })
 
-  it('does not rewrite the route query', () => {
-    const query = { asesor: '1' }
-    const { mount, route } = setup(query, makeStorage())
+  // Un enlace compartido con ?asesor=1 no debe volver asesor el móvil del cliente.
+  it('?asesor=1 strips the param from the URL but keeps other query keys', () => {
+    const { mount, replace } = setup({ asesor: '1', utm_source: 'fb' }, makeStorage())
     mount()
-    expect(route.query).toEqual({ asesor: '1' })
+    expect(replace).toHaveBeenCalledTimes(1)
+    expect(replace).toHaveBeenCalledWith({ query: { utm_source: 'fb' } })
+  })
+
+  it('?asesor=0 also strips the param', () => {
+    const { mount, replace } = setup({ asesor: '0' }, makeStorage({ [KEY]: '1' }))
+    mount()
+    expect(replace).toHaveBeenCalledWith({ query: {} })
+  })
+
+  it('does not touch the URL without the param', () => {
+    const { mount, replace } = setup({ utm_source: 'fb' }, makeStorage({ [KEY]: '1' }))
+    mount()
+    expect(replace).not.toHaveBeenCalled()
+  })
+
+  it('blocked storage: advisor flag survives the query losing asesor', async () => {
+    const { mode, mount, route } = setup({ asesor: '1' }, null)
+    mount()
+    expect(mode.isAdvisor.value).toBe(true)
+    route.query = {}
+    await Promise.resolve()
+    expect(mode.isAdvisor.value).toBe(true)
+  })
+
+  it('later navigation with ?asesor=1 also strips it', async () => {
+    const { mount, route, replace } = setup({}, makeStorage())
+    mount()
+    route.query = { asesor: '1', a: 'b' }
+    await Promise.resolve()
+    expect(replace).toHaveBeenCalledWith({ query: { a: 'b' } })
   })
 })

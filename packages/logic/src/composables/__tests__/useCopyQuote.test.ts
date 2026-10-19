@@ -233,6 +233,22 @@ describe('SCEN-008: el portapapeles falla', () => {
     )
   })
 
+  it('si armar el texto lanza: devuelve false, toast de error y no escribe', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const broken = row()
+    Object.defineProperty(broken, 'categoryCode', {
+      get() {
+        throw new Error('boom')
+      },
+    })
+    const ok = await useCopyQuote(ref([broken])).copy(OFF)
+    expect(ok).toBe(false)
+    expect(writeText).not.toHaveBeenCalled()
+    expect(h.toast.add).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'No se pudo copiar', color: 'error' }),
+    )
+  })
+
   it('éxito: escribe el texto y confirma', async () => {
     const q = useCopyQuote(ref([row()]))
     expect(await q.copy(OFF)).toBe(true)

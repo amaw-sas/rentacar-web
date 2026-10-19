@@ -272,6 +272,7 @@ describe('StepVehicle rancio (#401) — el aviso gana a "Sin vehículos" y al er
     vi.stubGlobal('useFetchRentacarData', () => ({ vehicleCategories: {} }))
     // StepVehicle llama useAdvisorMode() (lee ?asesor de la ruta)
     vi.stubGlobal('useRoute', () => ({ query: {} }))
+    vi.stubGlobal('useRouter', () => ({ replace: vi.fn() }))
     vi.stubGlobal('useMoneyFormat', () => ({ moneyFormat: (n: number) => money(n) }))
     // StepVehicle usa `useWizardNotice` (#368), que llama a `useState`. Con la ranura
     // en null el banner de aviso queda vacío, así que la única superficie es el aviso

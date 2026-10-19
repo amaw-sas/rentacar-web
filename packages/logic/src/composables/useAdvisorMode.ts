@@ -5,8 +5,10 @@
  * `?asesor=1` turns it on and remembers it in localStorage; `?asesor=0` turns it
  * off and forgets it. Without the param the stored value decides. Resolved in
  * `onMounted` only, so the server render (and hydration) always sees `false`.
- * Storage may be missing or throw (Safari private mode): then advisor mode lasts
- * only while the URL carries `?asesor=1`. The query is read, never rewritten.
+ * Once read, the param is stripped from the address bar (router.replace, other
+ * query keys kept) so a shared page URL never turns a customer's phone into an
+ * advisor device. The watch reacts only to '1'/'0', never to the key vanishing,
+ * so with blocked storage the in-memory flag lasts for the page session.
  */
 import { onMounted, readonly, ref, watch } from 'vue';
 import { getLocalStorageSafe } from '../utils/safeWebStorage';
@@ -28,17 +30,21 @@ function writeStored(value: '1' | null): void {
     if (value) storage.setItem(ADVISOR_KEY, value);
     else storage.removeItem(ADVISOR_KEY);
   } catch {
-    // storage unavailable: advisor mode then lives only while the URL has ?asesor=1
+    // storage unavailable: advisor mode then lasts only for this page session
   }
 }
 
 export default function useAdvisorMode() {
   const route = useRoute();
+  const router = useRouter();
   const isAdvisor = ref(false);
 
-  const resolve = () => {
-    const raw = route.query.asesor;
-    const param = Array.isArray(raw) ? raw[0] : raw;
+  const stripParam = () => {
+    const { asesor: _asesor, ...rest } = route.query;
+    router.replace({ query: rest });
+  };
+
+  const apply = (param: string | undefined) => {
     if (param === '1') {
       writeStored('1');
       isAdvisor.value = true;
@@ -46,13 +52,18 @@ export default function useAdvisorMode() {
       writeStored(null);
       isAdvisor.value = false;
     } else {
-      isAdvisor.value = readStored();
+      return false;
     }
+    stripParam();
+    return true;
   };
 
+  const readParam = (raw: unknown): string | undefined =>
+    (Array.isArray(raw) ? raw[0] : raw) as string | undefined;
+
   onMounted(() => {
-    resolve();
-    watch(() => route.query.asesor, resolve);
+    if (!apply(readParam(route.query.asesor))) isAdvisor.value = readStored();
+    watch(() => route.query.asesor, (raw) => void apply(readParam(raw)));
   });
 
   return { isAdvisor: readonly(isAdvisor) };

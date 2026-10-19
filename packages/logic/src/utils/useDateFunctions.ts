@@ -429,7 +429,7 @@ const QUOTE_MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
  */
 export function formatQuoteDateTime(fecha: string, hora: string): string {
   const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha ?? '');
-  const t = /^(\d{1,2}):(\d{2})$/.exec(hora ?? '');
+  const t = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(hora ?? '');
   if (!d || !t) return '';
 
   const [year, month, day] = [Number(d[1]), Number(d[2]), Number(d[3])];

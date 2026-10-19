@@ -7,6 +7,11 @@ describe('formatQuoteDateTime', () => {
     expect(formatQuoteDateTime('2026-10-18', '08:00')).toBe('domingo 18 oct. 8:00am');
   });
 
+  it('accepts an optional :ss suffix on the hour', () => {
+    expect(formatQuoteDateTime('2026-10-16', '07:30:00')).toBe('viernes 16 oct. 7:30am');
+    expect(formatQuoteDateTime('2026-10-16', '13:05:59')).toBe('viernes 16 oct. 1:05pm');
+  });
+
   it('covers the 12h edges', () => {
     expect(formatQuoteDateTime('2026-10-16', '00:15')).toBe('viernes 16 oct. 12:15am');
     expect(formatQuoteDateTime('2026-10-16', '12:00')).toBe('viernes 16 oct. 12:00pm');
