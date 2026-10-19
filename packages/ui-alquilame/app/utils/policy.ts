@@ -23,3 +23,20 @@ export const POLICY_VERSION = '2026-09'
 export const CONSENT_TEXT =
   'Autorizo el tratamiento de mis datos personales conforme a la Política de ' +
   'Privacidad de AMAW S.A.S para atender y responder mi solicitud.'
+
+/**
+ * La frase bajo el formulario de /opinion (calificaciones de 1 a 3 estrellas), en dos
+ * piezas porque la página la parte en dos: `OPINION_CONSENT_LEAD` va como texto y le
+ * sigue, en línea, el enlace «política de privacidad» y el punto.
+ *
+ * `OPINION_CONSENT_TEXT` es la frase completa que se guarda en el tablero con cada
+ * calificación baja, igual que `CONSENT_TEXT` con cada PQRS. La prueba de la página
+ * (opinion.test.ts) exige que el texto renderizado sea exactamente esta cadena, así que
+ * la frase mostrada y la guardada no pueden separarse.
+ *
+ * Si se edita, hay que subir POLICY_VERSION: el par (versión, texto) es la prueba.
+ */
+export const OPINION_CONSENT_LEAD =
+  'Al enviarlo autorizas el tratamiento de tus datos para atender tu caso, según la'
+
+export const OPINION_CONSENT_TEXT = `${OPINION_CONSENT_LEAD} política de privacidad.`

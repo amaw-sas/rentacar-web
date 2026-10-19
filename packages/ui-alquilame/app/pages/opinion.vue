@@ -72,11 +72,8 @@
         />
 
         <p class="body-sm mt-8">
-          Al enviarlo autorizas el tratamiento de tus datos para atender tu caso,
-          según la
-          <NuxtLink to="/politica-privacidad" class="text-brand-700 font-semibold hover:underline">
-            política de privacidad
-          </NuxtLink>.
+          {{ OPINION_CONSENT_LEAD }}
+          <NuxtLink to="/politica-privacidad" class="text-brand-700 font-semibold hover:underline">política de privacidad</NuxtLink>.
         </p>
       </div>
     </section>
@@ -107,6 +104,11 @@
  * No reabrir la discusión aquí.
  */
 import type { PublicFormField } from '~/components/PublicContactForm.vue'
+// La frase bajo el formulario sale de OPINION_CONSENT_LEAD y es la que se guarda en el
+// tablero con cada calificación (OPINION_CONSENT_TEXT). En el template, el enlace y el
+// punto van pegados y sin saltos de línea dentro: si no, el texto queda «privacidad .» y
+// deja de coincidir con lo guardado (opinion.test.ts, SCEN-11818).
+import { OPINION_CONSENT_LEAD } from '~/utils/policy'
 
 // Con el layout por defecto, igual que /quejas-y-reclamos, /aliados y /gana.
 // Se probó `definePageMeta({ layout: false })` para dejar una pantalla enfocada

@@ -27,6 +27,7 @@ import { join } from 'node:path'
 import Opinion from '../opinion.vue'
 import StarRating from '~/components/StarRating.vue'
 import PublicContactForm from '~/components/PublicContactForm.vue'
+import { OPINION_CONSENT_TEXT } from '../../utils/policy'
 
 // Ficha de alquilatucarro con el cuadro de reseña abierto (`!12e1`). alquilame
 // usa la forma corta g.page/r/…; esta ficha no tiene ese alias.
@@ -621,5 +622,77 @@ describe('SCEN-10 — el tope de 2.000 no se descubre al enviar', () => {
     await nextTick()
 
     expect(w.text()).toContain('Espera un momento')
+  })
+})
+
+/**
+ * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
+ * calificaciones-web.scenarios.md — SCEN-11818.
+ *
+ * El handler guarda `OPINION_CONSENT_TEXT` en el tablero como la frase que la
+ * persona aceptó. Eso solo prueba algo si es, letra por letra, lo que la página
+ * le mostró bajo el formulario.
+ */
+describe('SCEN-11818 — el consentimiento guardado es la frase que se leyó', () => {
+  /** El párrafo bajo el formulario: el que enlaza la política de privacidad. */
+  const consentParagraph = (w: Wrapper) =>
+    w.findAll('p').find((p) => p.find('a[href="/politica-privacidad"]').exists())
+
+  /** Espacios normalizados y el hueco antes del punto final cerrado. */
+  const normalize = (text: string) => text.replace(/\s+/g, ' ').trim().replace(/\s+\.$/, '.')
+
+  it('el texto renderizado es igual a OPINION_CONSENT_TEXT', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    const p = consentParagraph(w)
+    expect(p).toBeDefined()
+    expect(normalize(p!.element.textContent ?? '')).toBe(OPINION_CONSENT_TEXT)
+  })
+
+  it('sin hueco que cerrar: el enlace y el punto van pegados en el marcado', async () => {
+    // Si alguien vuelve a partir el enlace en líneas, el texto pasa a «privacidad .»
+    // y esta aserción, más estricta que la normalizada, lo dice antes que nadie.
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    const raw = consentParagraph(w)!.element.textContent!.replace(/\s+/g, ' ').trim()
+    expect(raw).toBe(OPINION_CONSENT_TEXT)
+  })
+
+  it('«política de privacidad» aparece una sola vez y es el enlace', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    const p = consentParagraph(w)!
+    const text = normalize(p.element.textContent ?? '')
+    expect(text.match(/política de privacidad/g)).toHaveLength(1)
+    expect(p.find('a').text().trim()).toBe('política de privacidad')
+  })
+})
+
+/**
+ * Holdout: SCEN-11804 (b, c, d), mitad de la página. Si el tablero no radica, el
+ * servidor responde 429 o 502 con su propio texto; la persona tiene que verlo y no
+ * perder lo que escribió, porque el reintento es lo único que le queda.
+ */
+describe('SCEN-11804 — si el tablero falla, el formulario conserva lo escrito', () => {
+  it.each([
+    ['502', 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.'],
+    ['429', 'Recibimos varios mensajes tuyos hace poco. Espera un momento y vuelve a intentarlo.'],
+  ])('con %s muestra el texto del servidor y deja los campos llenos', async (_status, statusMessage) => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await nextTick()
+    post.mockRejectedValueOnce({ data: { statusMessage } })
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await nextTick()
+    await nextTick()
+
+    expect(post).toHaveBeenCalledTimes(1)
+    expect(w.text()).toContain(statusMessage)
+    expect((w.find('#f-nombre').element as HTMLInputElement).value).toBe('Ana Ramírez')
+    expect((w.find('#f-email').element as HTMLInputElement).value).toBe('ana@ejemplo.com')
+    expect((w.find('#f-mensaje').element as HTMLTextAreaElement).value).toBe(
+      'El carro llegó sin gasolina y esperé 40 minutos.',
+    )
   })
 })
