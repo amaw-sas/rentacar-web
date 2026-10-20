@@ -93,6 +93,7 @@ const SUBJECT: Record<ContactFormType, string> = {
   quejas: 'Nueva queja o reclamo',
   flota: 'Nueva solicitud de convenio',
   referidos: 'Nuevo registro al programa de referidos',
+  // Se compone pero no se envía: las calificaciones bajas solo van al tablero (SCEN-12501).
   resenas: 'Calificación baja de un cliente',
 }
 

@@ -209,7 +209,9 @@ describe('SCEN-027: los otros tres formularios no pasan por el dashboard', () =>
   const aPqrs = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/pqrs'))
 
   for (const payload of otros) {
-    it(`${payload.type}: no se radica como PQRS, sale el correo y sin radicado en la respuesta`, async () => {
+    // resenas: SCEN-12501 le quitó el correo; flota y referidos lo conservan.
+    const correo = payload.type === 'resenas' ? 'sin correo (SCEN-12501)' : 'sale el correo'
+    it(`${payload.type}: no se radica como PQRS, ${correo} y sin radicado en la respuesta`, async () => {
       body = payload
       const { ok } = await run()
       expect(aPqrs()).toHaveLength(0)
@@ -224,7 +226,7 @@ describe('SCEN-027: los otros tres formularios no pasan por el dashboard', () =>
       } else {
         expect(alDashboard()).toHaveLength(0)
       }
-      expect(aResend()).toHaveLength(1)
+      expect(aResend()).toHaveLength(payload.type === 'resenas' ? 0 : 1)
       expect(ok).toEqual({ ok: true })
     })
   }
