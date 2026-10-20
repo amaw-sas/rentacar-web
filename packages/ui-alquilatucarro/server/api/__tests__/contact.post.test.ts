@@ -553,7 +553,7 @@ describe('calificación baja: el tablero es el único destino', () => {
     expect(logs()).not.toContain('contact-config')
   })
 
-  // SCEN-11919 (a) queda reemplazado por SCEN-12501: ya no hay correo secundario que pueda fallar.
+  // SCEN-11919 (a) y (b) quedan reemplazados por SCEN-12501 (y el «sale el correo» de SCEN-11928 (c)): ya no hay correo secundario que pueda fallar ni que registrar.
   it('SCEN-12501a: con Resend caído nadie lo llama: { ok: true } y sin log contact-send', async () => {
     send.mockImplementation(async (url: string) => {
       if (String(url).includes('/api/web-ratings')) return { id: 'r1', received_at: '2026-10-19T12:00:00Z' }
