@@ -418,6 +418,13 @@ export default defineNuxtConfig({
     // Override with NUXT_RENTACAR_ADMIN_URL and NUXT_RENTACAR_ADMIN_API_KEY
     rentacarAdminUrl: '',
     rentacarAdminApiKey: '',
+    // Clave con la que /api/contact radica las calificaciones bajas de /opinion en el
+    // tablero (POST /api/web-ratings). En Vercel va NUXT_PQRS_API_KEY con el MISMO valor
+    // que el PQRS_API_KEY del tablero. Declarada aquí porque Nuxt ignora las env vars de
+    // claves ausentes de runtimeConfig: sin esta línea la variable no llega, el
+    // fail-closed del endpoint dispara siempre y el formulario muere en producción con
+    // la variable bien puesta en Vercel.
+    pqrsApiKey: '',
     // Formularios públicos (hoy sólo las calificaciones bajas de /opinion) —
     // server-only. Override con NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO /
     // NUXT_CONTACT_EMAIL_FROM.

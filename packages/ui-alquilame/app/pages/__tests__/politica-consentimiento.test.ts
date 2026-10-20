@@ -13,7 +13,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { POLICY_VERSION, CONSENT_TEXT } from '../../utils/policy'
+import { POLICY_VERSION, CONSENT_TEXT, OPINION_CONSENT_LEAD, OPINION_CONSENT_TEXT } from '../../utils/policy'
 
 const raiz = join(__dirname, '../../..')
 const leer = (rel: string) => readFileSync(join(raiz, rel), 'utf8')
@@ -49,5 +49,22 @@ describe('versión de la política de privacidad', () => {
     if (CONSENT_TEXT.toLowerCase().includes('rectificar')) {
       expect(politica).toContain('rectificar')
     }
+  })
+})
+
+/**
+ * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
+ * calificaciones-web.scenarios.md — SCEN-11918. La frase bajo el formulario de
+ * /opinion se guarda con cada calificación baja: es la constante, no una copia.
+ */
+describe('frase de consentimiento de /opinion', () => {
+  it('el texto guardado es la frase que la página arma con el enlace', () => {
+    expect(OPINION_CONSENT_TEXT).toBe(`${OPINION_CONSENT_LEAD} política de privacidad.`)
+  })
+
+  it('es la frase que se lee hoy bajo el formulario, sin cambios para el cliente', () => {
+    expect(OPINION_CONSENT_TEXT).toBe(
+      'Al enviarlo autorizas el tratamiento de tus datos para atender tu caso, según la política de privacidad.',
+    )
   })
 })

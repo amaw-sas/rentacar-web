@@ -1,13 +1,17 @@
 import { defineEventHandler, readBody, createError, getRequestIP, getRequestHeader } from 'h3'
 import { validateAndCompose, MAX_MESSAGE_LEN, type ContactFormPayload } from '../utils/contact-forms'
 import { logger } from '../utils/logger'
+// Ruta relativa y no `~/utils/policy`: en las pruebas de esta marca `~` apunta a la
+// raíz del paquete (vitest.config.ts), no a app/, y el alias no resolvería.
+import { POLICY_VERSION, OPINION_CONSENT_TEXT } from '../../app/utils/policy'
 
 /**
  * Recepción de los formularios públicos y envío por correo al buzón del
  * operador. En alquilatucarro hoy sólo lo usan las calificaciones bajas de
- * /opinion; el resto de tipos que valida `contact-forms.ts` (quejas, flota,
- * referidos) existen porque el archivo es copia literal del de alquilame y las
- * dos copias deben poder moverse juntas.
+ * /opinion, que además se radican en el tablero (ver «Radicación de la
+ * calificación» abajo); el resto de tipos que valida `contact-forms.ts` (quejas, flota,
+ * referidos) existen porque el archivo comparte la forma con el de alquilame salvo
+ * los campos de PQRS, y las dos copias deben poder moverse juntas.
  *
  * Se usa la API REST de Resend con `fetch` en vez del SDK: es una sola llamada
  * HTTP y así no se suma una dependencia al bundle del servidor.
@@ -16,6 +20,10 @@ import { logger } from '../utils/logger'
  * endpoint devuelve 500 y deja el detalle en el log del servidor. Un formulario
  * que "parece" enviar pero se traga los mensajes es peor que uno que falla
  * visiblemente — el operador perdería clientes sin enterarse.
+ *
+ * Excepción, las calificaciones bajas (`resenas`): se radican primero en el tablero, y
+ * una vez radicadas el correo es secundario — si falta su configuración o Resend
+ * falla, queda en el log y la respuesta sigue siendo `{ ok: true }`.
  */
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 const SEND_TIMEOUT_MS = 10_000
@@ -63,6 +71,64 @@ const RATE_LIMITED = 'Recibimos varios mensajes tuyos hace poco. Espera un momen
  * descubrir después que sobran.
  */
 const MAX_BODY_BYTES = 16 * 1024
+
+/**
+ * Calificaciones bajas de /opinion: se radican en el tablero (`POST /api/web-ratings`)
+ * con la misma clave del canal PQRS.
+ *
+ * 6 s y no los 10 de Resend: el navegador se rinde a los 20 (PublicContactForm.vue), y
+ * 10 + 10 haría que un éxito lento se viera como fallo e invitara a reenviar. No hay
+ * llave de idempotencia; ese duplicado se acepta como riesgo (diseño §6).
+ */
+const WEB_RATING_TIMEOUT_MS = 6_000
+
+/**
+ * «2 de 5» → 2. Solo de 1 a 3: la página manda 4 y 5 a Google, y un 4 o un 5 aquí lo
+ * contaría el contador del tablero mientras todos sus filtros lo esconden.
+ */
+const RATING_PATTERN = /^([1-3]) de 5$/
+
+function parseRating(estrellas: unknown): number | undefined {
+  const match = typeof estrellas === 'string' ? RATING_PATTERN.exec(estrellas.trim()) : null
+  return match ? Number(match[1]) : undefined
+}
+
+/** El estado HTTP de un error de ofetch; sin respuesta (timeout, red caída) no hay. */
+function statusOf(error: unknown): number | undefined {
+  const e = error as { status?: number; statusCode?: number; response?: { status?: number } } | null
+  return e?.status ?? e?.statusCode ?? e?.response?.status
+}
+
+/**
+ * Con `redirect: 'error'`, undici rechaza un 3xx sin estado: FetchError «fetch failed»
+ * cuya causa dice «unexpected redirect». Se busca en la cadena de causas porque es lo
+ * único que lo separa de una red caída.
+ */
+function isRedirectRejection(error: unknown): boolean {
+  let current: unknown = error
+  for (let depth = 0; current && depth < 5; depth++) {
+    if (/redirect/i.test(String((current as { message?: unknown }).message ?? ''))) return true
+    current = (current as { cause?: unknown }).cause
+  }
+  return false
+}
+
+/**
+ * Qué llegó en lugar de `{ id }`, en una línea corta para el log: el tipo y, si es
+ * texto, su comienzo. Nunca el cuerpo entero (la página de /login pesa kilobytes) ni
+ * los valores de un objeto, solo sus llaves.
+ */
+function describeReceived(received: unknown): string {
+  if (received === undefined || received === null || received === '') return 'vacío'
+  if (typeof received === 'string') {
+    const start = received.slice(0, 60).replace(/\s+/g, ' ')
+    return `texto (${received.length} caracteres): ${start}`
+  }
+  if (typeof received === 'object') {
+    return `objeto con llaves: ${Object.keys(received).slice(0, 10).join(', ') || '(ninguna)'}`.slice(0, 120)
+  }
+  return typeof received
+}
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -130,6 +196,130 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // ── Radicación de la calificación en el tablero, solo para `resenas` ──
+  //
+  // Va DESPUÉS de tamaño, honeypot, tope y validación, y ANTES del gate de Resend: con
+  // ese gate delante, una variable de correo ausente impediría radicar, y el correo
+  // nunca podría apagarse limpio. El tablero es la fuente de verdad: si falla, no sale
+  // correo (un correo de «todo bien» sobre un registro perdido es el fallo que PQRS ya
+  // rechazó) y el visitante ve el error con lo que escribió intacto.
+  let ratingFiled = false
+  if (body.type === 'resenas') {
+    const rating = parseRating(body.estrellas)
+    if (rating === undefined) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Faltan campos obligatorios',
+        data: { missing: ['estrellas'] },
+      })
+    }
+
+    // Sin barra final: con ella la llamada sale a `//api/web-ratings`. El `trim` va
+    // antes porque un salto de línea pegado al final del valor en Vercel sobrevive al
+    // regex, y una URL de puros espacios cuenta como ausente.
+    const adminUrl = (config.rentacarAdminUrl as string | undefined)?.trim().replace(/\/+$/, '')
+    const pqrsKey = config.pqrsApiKey as string | undefined
+    if (!adminUrl || !pqrsKey) {
+      // Fail-closed y ruidoso: nunca quedarse en silencio con solo el correo.
+      // `pqrsApiKey` tiene que estar declarada en runtimeConfig o Nuxt ignora la
+      // variable de entorno (nuxt.config.ts lo explica junto a `pqrsApiKey`).
+      const missing = [
+        ...(adminUrl ? [] : ['NUXT_RENTACAR_ADMIN_URL']),
+        ...(pqrsKey ? [] : ['NUXT_PQRS_API_KEY']),
+      ]
+      logger.error(
+        'web-rating-config',
+        new Error(`Falta configuración para radicar la calificación: ${missing.join(' / ')}`),
+        { missing },
+      )
+      throw createError({ statusCode: 500, statusMessage: GENERIC_FAILURE })
+    }
+
+    const clientIp = getRequestIP(event, { xForwardedFor: true })
+    // El del visitante: sin reenviarlo, `source_user_agent` del tablero guardaría el de Nitro.
+    const userAgent = getRequestHeader(event, 'user-agent') ?? ''
+    // Opcionales en el formulario: en blanco viajan como null, no como texto vacío.
+    const optionalText = (v: unknown) => (typeof v === 'string' && v.trim() ? v : null)
+    let filed: unknown
+    try {
+      filed = await $fetch<{ id?: string; received_at?: string }>(`${adminUrl}/api/web-ratings`, {
+        method: 'POST',
+        timeout: WEB_RATING_TIMEOUT_MS,
+        // Una redirección nunca es el tablero respondiendo: el tablero sin la ruta
+        // contesta 307 a /login, y seguirla trae el HTML de /login con 200.
+        redirect: 'error',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': pqrsKey,
+          // Vercel sobrescribe x-forwarded-for con la NAT del funnel, que metería a
+          // todos los visitantes en el mismo cubo del tope del tablero.
+          ...(clientIp ? { 'x-real-client-ip': clientIp } : {}),
+          ...(userAgent ? { 'user-agent': userAgent } : {}),
+        },
+        body: {
+          // La marca la pone ESTE servidor, no el navegador: lo que venga en el
+          // cuerpo del visitante se ignora.
+          franchise: config.public.rentacarFranchise,
+          rating,
+          customer_name: body.nombre,
+          customer_email: body.email,
+          customer_phone: optionalText(body.telefono),
+          reservation_code: optionalText(body.reserva),
+          message: body.mensaje,
+          // La frase que la persona leyó bajo el formulario, y la versión de la
+          // política que esa frase enlaza.
+          consent_text: OPINION_CONSENT_TEXT,
+          consent_policy_version: POLICY_VERSION,
+          source_path: '/opinion',
+        },
+      })
+    } catch (error) {
+      const status = statusOf(error)
+      const context = { franchise: config.public.rentacarFranchise, status }
+      if (status === 429) {
+        logger.error('web-rating-rate-limit', error, {
+          ...context,
+          retryAfter: (error as { data?: { retry_after?: unknown } })?.data?.retry_after,
+        })
+        throw createError({ statusCode: 429, statusMessage: RATE_LIMITED })
+      }
+      if (status === 400) {
+        // Los dos contratos se separaron (p. ej. el `isEmail` de la web acepta algo
+        // que el zod del tablero rechaza): no es culpa del visitante. Los campos que
+        // rechazó van al log; sin ellos la deriva no dice dónde está.
+        logger.error('web-rating-contract', error, {
+          ...context,
+          fields: (error as { data?: { fields?: unknown } })?.data?.fields,
+        })
+        throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
+      }
+      if (status === undefined && isRedirectRejection(error)) {
+        // Lo que llega cuando el tablero desplegado aún no tiene la ruta.
+        logger.error('web-rating-contract', error, { ...context, received: 'redirect' })
+        throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
+      }
+      logger.error('web-rating-file', error, context)
+      throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
+    }
+    // Radicado es `201 { id, received_at }`, no cualquier promesa resuelta: una página
+    // de proxy, de mantenimiento o el /login también resuelven con 2xx. Va fuera del
+    // try para que el catch no lo reclasifique como `web-rating-file`.
+    const filedId = (filed as { id?: unknown } | null | undefined)?.id
+    if (typeof filedId !== 'string' || filedId.length === 0) {
+      logger.error(
+        'web-rating-contract',
+        new Error('El tablero respondió 2xx sin el id de la calificación radicada'),
+        { franchise: config.public.rentacarFranchise, status: '2xx', received: describeReceived(filed) },
+      )
+      throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
+    }
+    ratingFiled = true
+  }
+
+  // Desde aquí, si la calificación ya quedó en el tablero, el correo es secundario: su
+  // fallo se registra pero la respuesta sigue siendo `{ ok: true }` — decirle al
+  // cliente que falló sería falso e invitaría a un duplicado. Para los demás tipos
+  // nada cambia. Apagar el correo de `resenas` tras el corte es borrar su envío.
   if (!apiKey || !to || !from) {
     logger.error(
       'contact-config',
@@ -138,6 +328,7 @@ export default defineEventHandler(async (event) => {
       ),
       { hasApiKey: Boolean(apiKey), hasTo: Boolean(to), hasFrom: Boolean(from) },
     )
+    if (ratingFiled) return { ok: true }
     throw createError({ statusCode: 500, statusMessage: GENERIC_FAILURE })
   }
 
@@ -161,7 +352,7 @@ export default defineEventHandler(async (event) => {
     // Sin este log la queja se pierde SIN RASTRO: el cliente ve un mensaje
     // genérico y en el servidor no queda nada que explique por qué falló.
     logger.error('contact-send', error, { type: (body as ContactFormPayload)?.type })
-    throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
+    if (!ratingFiled) throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
   }
 
   return { ok: true }

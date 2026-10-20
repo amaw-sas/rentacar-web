@@ -63,6 +63,11 @@ beforeEach(() => {
   vi.resetModules()
   body = { ...QUEJA }
   fetchMock = vi.fn(async (url: string) => {
+    // Cada ruta del tablero con su propia respuesta: una calificación sin `id` no
+    // cuenta como radicada (SCEN-11928).
+    if (String(url).includes('dashboard.example/api/web-ratings')) {
+      return { id: '7d1f0c2e-5b7a-4f1e-9a51-0c4b9f3e2a10', received_at: '2026-10-20T12:00:00Z' }
+    }
     if (String(url).includes('dashboard.example')) {
       return { radicado: 'PQRS-2026-000123', due_at: '2026-10-01T04:59:59.999Z' }
     }
@@ -201,11 +206,24 @@ describe('SCEN-027: los otros tres formularios no pasan por el dashboard', () =>
     { type: 'resenas', nombre: 'D', email: 'd@e.com', mensaje: 'x', estrellas: '2 de 5' },
   ]
 
+  const aPqrs = () => fetchMock.mock.calls.filter((c) => String(c[0]).includes('/api/pqrs'))
+
   for (const payload of otros) {
-    it(`${payload.type}: solo Resend, y sin radicado en la respuesta`, async () => {
+    it(`${payload.type}: no se radica como PQRS, sale el correo y sin radicado en la respuesta`, async () => {
       body = payload
       const { ok } = await run()
-      expect(alDashboard()).toHaveLength(0)
+      expect(aPqrs()).toHaveLength(0)
+      if (payload.type === 'resenas') {
+        // SCEN-PQRS-027 queda reemplazado SOLO para reseñas por el diseño
+        // calificaciones-web (su §2 lo declara): la calificación baja se radica en el
+        // tablero, pero en /api/web-ratings y en ninguna otra ruta. flota y referidos
+        // siguen sin tocar el dashboard.
+        expect(alDashboard().map((c) => String(c[0]))).toEqual([
+          `${CONFIG.rentacarAdminUrl}/api/web-ratings`,
+        ])
+      } else {
+        expect(alDashboard()).toHaveLength(0)
+      }
       expect(aResend()).toHaveLength(1)
       expect(ok).toEqual({ ok: true })
     })

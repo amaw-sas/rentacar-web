@@ -25,6 +25,7 @@ import { join } from 'node:path'
 import Opinion from '../opinion.vue'
 import StarRating from '~/components/StarRating.vue'
 import PublicContactForm from '~/components/PublicContactForm.vue'
+import { OPINION_CONSENT_TEXT } from '../../utils/policy'
 
 const GBP_URL = 'https://g.page/r/Ce09QLF1RhqkEBM/review'
 
@@ -44,6 +45,8 @@ beforeAll(() => {
   vi.stubGlobal('useSeoMeta', () => {})
   vi.stubGlobal('useAppConfig', () => ({
     organization: { brand: 'Alquilame', logo: '/images/brand/logo.svg' },
+    // La página lee el WhatsApp de la marca para la salida de SCEN-11924.
+    franchise: { whatsapp: 'https://wa.me/570000000000' },
   }))
 })
 afterAll(() => vi.unstubAllGlobals())
@@ -606,5 +609,186 @@ describe('SCEN-10 — el tope de 2.000 no se descubre al enviar', () => {
     await nextTick()
 
     expect(w.text()).toContain('Espera un momento')
+  })
+})
+
+/**
+ * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
+ * calificaciones-web.scenarios.md — SCEN-11918.
+ *
+ * El handler guarda `OPINION_CONSENT_TEXT` en el tablero como la frase que la
+ * persona aceptó. Eso solo prueba algo si es, letra por letra, lo que la página
+ * le mostró bajo el formulario.
+ */
+describe('SCEN-11918 — el consentimiento guardado es la frase que se leyó', () => {
+  /** El párrafo bajo el formulario: el que enlaza la política de privacidad. */
+  const consentParagraph = (w: Wrapper) =>
+    w.findAll('p').find((p) => p.find('a[href="/politica-privacidad"]').exists())
+
+  /** Espacios normalizados y el hueco antes del punto final cerrado. */
+  const normalize = (text: string) => text.replace(/\s+/g, ' ').trim().replace(/\s+\.$/, '.')
+
+  it('el texto renderizado es igual a OPINION_CONSENT_TEXT', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    const p = consentParagraph(w)
+    expect(p).toBeDefined()
+    expect(normalize(p!.element.textContent ?? '')).toBe(OPINION_CONSENT_TEXT)
+  })
+
+  it('sin hueco que cerrar: el enlace y el punto van pegados en el marcado', async () => {
+    // Si alguien vuelve a partir el enlace en líneas, el texto pasa a «privacidad .»
+    // y esta aserción, más estricta que la normalizada, lo dice antes que nadie.
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    const raw = consentParagraph(w)!.element.textContent!.replace(/\s+/g, ' ').trim()
+    expect(raw).toBe(OPINION_CONSENT_TEXT)
+  })
+
+  it('«política de privacidad» aparece una sola vez y es el enlace', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    const p = consentParagraph(w)!
+    const text = normalize(p.element.textContent ?? '')
+    expect(text.match(/política de privacidad/g)).toHaveLength(1)
+    expect(p.find('a').text().trim()).toBe('política de privacidad')
+  })
+})
+
+/**
+ * Holdout: SCEN-11904 (b, c, d), mitad de la página. Si el tablero no radica, el
+ * servidor responde 429 o 502 con su propio texto; la persona tiene que verlo y no
+ * perder lo que escribió, porque el reintento es lo único que le queda.
+ */
+describe('SCEN-11904 — si el tablero falla, el formulario conserva lo escrito', () => {
+  it.each([
+    ['502', 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.'],
+    ['429', 'Recibimos varios mensajes tuyos hace poco. Espera un momento y vuelve a intentarlo.'],
+  ])('con %s muestra el texto del servidor y deja los campos llenos', async (_status, statusMessage) => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await nextTick()
+    post.mockRejectedValueOnce({ data: { statusMessage } })
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await nextTick()
+    await nextTick()
+
+    expect(post).toHaveBeenCalledTimes(1)
+    expect(w.text()).toContain(statusMessage)
+    expect((w.find('#f-nombre').element as HTMLInputElement).value).toBe('Ana Ramírez')
+    expect((w.find('#f-email').element as HTMLInputElement).value).toBe('ana@ejemplo.com')
+    expect((w.find('#f-mensaje').element as HTMLTextAreaElement).value).toBe(
+      'El carro llegó sin gasolina y esperé 40 minutos.',
+    )
+  })
+})
+
+/**
+ * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
+ * opinion-salida-whatsapp.scenarios.md — SCEN-11924 y SCEN-11925.
+ *
+ * Si el envío falla por nuestra culpa (500/502), la persona tiene por dónde
+ * escribirnos: «Si prefieres, escríbenos por WhatsApp», con el WhatsApp de ESTA
+ * marca. El número se lee de app.config.ts como texto y no se copia aquí: si
+ * alguien lo cambia allí, la prueba sigue diciendo la verdad.
+ */
+describe('SCEN-11924/11825 — la salida por WhatsApp cuando el envío falla por nuestra culpa', () => {
+  const WA_LINE = 'Si prefieres, escríbenos por WhatsApp'
+  const appConfigSrc = readFileSync(join(__dirname, '..', '..', 'app.config.ts'), 'utf8')
+  const BRAND_WHATSAPP = appConfigSrc.match(/whatsapp:\s*["']([^"']+)["']/)![1]!
+
+  beforeEach(() => {
+    vi.stubGlobal('useAppConfig', () => ({
+      organization: { brand: 'Marca', logo: '/images/brand/logo.svg' },
+      franchise: { whatsapp: BRAND_WHATSAPP },
+    }))
+  })
+
+  /** Lo que lanza $fetch (ofetch) ante una respuesta con error. */
+  const fetchError = (status: number, statusMessage: string, data?: Record<string, unknown>) => ({
+    statusCode: status,
+    status,
+    data: { statusCode: status, statusMessage, ...(data ? { data } : {}) },
+  })
+
+  async function enviarCon(outcome: 'ok' | ReturnType<typeof fetchError>) {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await nextTick()
+    if (outcome !== 'ok') post.mockRejectedValueOnce(outcome)
+    await fillForm(w)
+    await form(w).trigger('submit')
+    await nextTick()
+    await nextTick()
+    return w
+  }
+
+  const waLink = (w: Wrapper) => w.find('[data-test="salida-whatsapp"] a')
+
+  it('el número de la marca se encontró en app.config.ts', () => {
+    expect(BRAND_WHATSAPP).toMatch(/^https:\/\/wa\.me\/57\d{10}$/)
+  })
+
+  it.each([502, 500])(
+    'SCEN-11924 — con %s aparece la línea, enlaza al WhatsApp de la marca en pestaña nueva y conserva lo escrito',
+    async (status) => {
+      const w = await enviarCon(
+        fetchError(status, 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.'),
+      )
+      expect(w.find('form [role="alert"]').text()).toContain('No pudimos enviar tu mensaje')
+      const line = w.find('[data-test="salida-whatsapp"]')
+      expect(line.exists()).toBe(true)
+      expect(line.text().replace(/\s+/g, ' ').trim()).toBe(WA_LINE)
+      expect(waLink(w).text().trim()).toBe('WhatsApp')
+      expect(waLink(w).attributes('href')).toBe(BRAND_WHATSAPP)
+      expect(waLink(w).attributes('target')).toBe('_blank')
+      expect(waLink(w).attributes('rel')).toContain('noopener')
+      expect((w.find('#f-nombre').element as HTMLInputElement).value).toBe('Ana Ramírez')
+      expect((w.find('#f-email').element as HTMLInputElement).value).toBe('ana@ejemplo.com')
+      expect((w.find('#f-mensaje').element as HTMLTextAreaElement).value).toBe(
+        'El carro llegó sin gasolina y esperé 40 minutos.',
+      )
+    },
+  )
+
+  it('SCEN-11925 (d) — antes de enviar no aparece', async () => {
+    const w = factory()
+    await stars(w)[1]!.trigger('click')
+    await nextTick()
+    await fillForm(w)
+    expect(w.text()).not.toContain('Si prefieres')
+    expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(false)
+  })
+
+  it('SCEN-11925 (a) — con 200 no aparece', async () => {
+    const w = await enviarCon('ok')
+    expect(formStatus(w).text()).toContain('Gracias por contarnos')
+    expect(w.text()).not.toContain('Si prefieres')
+  })
+
+  it('SCEN-11925 (b) — con 400 por campos se ve solo el aviso de siempre', async () => {
+    const w = await enviarCon(fetchError(400, 'Faltan campos obligatorios', { missing: ['mensaje'] }))
+    expect(w.find('form [role="alert"]').text()).toContain('Revisa los campos marcados.')
+    expect(w.text()).not.toContain('Si prefieres')
+  })
+
+  it('SCEN-11925 (c) — con 429 se ve solo el aviso de siempre', async () => {
+    const msg = 'Recibimos varios mensajes tuyos hace poco. Espera un momento y vuelve a intentarlo.'
+    const w = await enviarCon(fetchError(429, msg))
+    expect(w.find('form [role="alert"]').text()).toContain(msg)
+    expect(w.text()).not.toContain('Si prefieres')
+  })
+
+  it('un 502 seguido de un reintento con 429 retira la línea', async () => {
+    // La línea habla del ÚLTIMO fallo: si el tope llega después, ya no aplica.
+    const w = await enviarCon(fetchError(502, 'No pudimos enviar tu mensaje.'))
+    expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(true)
+    post.mockRejectedValueOnce(fetchError(429, 'Espera un momento.'))
+    await form(w).trigger('submit')
+    await nextTick()
+    await nextTick()
+    expect(w.find('form [role="alert"]').text()).toContain('Espera un momento.')
+    expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(false)
   })
 })

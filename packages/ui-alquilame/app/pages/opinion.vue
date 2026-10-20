@@ -69,14 +69,12 @@
           :extra-fields="extraFields"
           submit-label="Enviar mi comentario"
           success-message="Gracias por contarnos. Te respondemos al correo que nos dejaste."
+          :fallback-whatsapp="franchise.whatsapp"
         />
 
         <p class="body-sm mt-8">
-          Al enviarlo autorizas el tratamiento de tus datos para atender tu caso,
-          según la
-          <NuxtLink to="/politica-privacidad" class="text-brand-700 font-semibold hover:underline">
-            política de privacidad
-          </NuxtLink>.
+          {{ OPINION_CONSENT_LEAD }}
+          <NuxtLink to="/politica-privacidad" class="text-brand-700 font-semibold hover:underline">política de privacidad</NuxtLink>.
         </p>
       </div>
     </section>
@@ -107,6 +105,11 @@
  * No reabrir la discusión aquí.
  */
 import type { PublicFormField } from '~/components/PublicContactForm.vue'
+// La frase bajo el formulario sale de OPINION_CONSENT_LEAD y es la que se guarda en el
+// tablero con cada calificación (OPINION_CONSENT_TEXT). En el template, el enlace y el
+// punto van pegados y sin saltos de línea dentro: si no, el texto queda «privacidad .» y
+// deja de coincidir con lo guardado (opinion.test.ts, SCEN-11918).
+import { OPINION_CONSENT_LEAD } from '~/utils/policy'
 
 // Con el layout por defecto, igual que /quejas-y-reclamos, /aliados y /gana.
 // Se probó `definePageMeta({ layout: false })` para dejar una pantalla enfocada
@@ -120,6 +123,12 @@ import type { PublicFormField } from '~/components/PublicContactForm.vue'
 
 /** Ficha de Google Business Profile de alquilame. */
 const GBP_URL = 'https://g.page/r/Ce09QLF1RhqkEBM/review'
+/**
+ * El WhatsApp de la marca, el mismo de la cabecera. Si el envío del formulario
+ * falla por nuestro lado (5xx), el formulario lo ofrece como salida
+ * (SCEN-11924). Sale del app config, nunca de un número escrito aquí.
+ */
+const { franchise } = useAppConfig()
 /** Desde cuántas estrellas se considera reseña pública. */
 const HIGH_RATING_MIN = 4
 /**

@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="text-center mb-10">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Política de Privacidad y Tratamiento de Datos Personales</h1>
-        <p class="text-gray-600">Última actualización: Enero 2025</p>
+        <p class="text-gray-600">Versión {{ POLICY_VERSION }} · Última actualización: Enero 2025</p>
       </div>
 
       <!-- Content -->
@@ -123,6 +123,12 @@
 </template>
 
 <script setup lang="ts">
+// La versión se publica desde la constante que también viaja con cada consentimiento
+// guardado en el tablero (app/utils/policy.ts). Si divergieran, la fila apuntaría a un
+// número que no aparece en ninguna parte y el titular no podría comprobar contra qué
+// aceptó. Ruta relativa: en las pruebas de esta marca `~` apunta a la raíz del paquete.
+import { POLICY_VERSION } from '../utils/policy'
+
 const { franchise } = useAppConfig()
 
 useHead({

@@ -16,17 +16,42 @@
  * h3 se sustituye entero: interesa la lógica del handler, no el ciclo HTTP.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { createRequire } from 'node:module'
+import { POLICY_VERSION, OPINION_CONSENT_TEXT } from '../../../app/utils/policy'
+
+/**
+ * El `createFetchError` de verdad, el que usa `$fetch` en Nitro. ofetch no es
+ * dependencia directa de esta marca (llega con nuxt), así que se resuelve desde nuxt:
+ * así los fallos del tablero en las pruebas tienen la forma real —getters sobre una
+ * `Response`, `data` sacado de `response._data`— y no un objeto armado a mano que
+ * `statusOf` podría leer aunque el real no.
+ */
+type FetchErrorContext = { request: string; options: { method: string }; response?: Response; error?: Error }
+const requireFromNuxt = createRequire(createRequire(import.meta.url).resolve('nuxt/package.json'))
+const { createFetchError } = requireFromNuxt('ofetch') as {
+  createFetchError: (ctx: FetchErrorContext) => Error
+}
+
+/** La marca que este despliegue tiene horneada en `runtimeConfig.public`. */
+const BRAND = 'alquilame'
+/** La versión de la política publicada de esta marca (app/utils/policy.ts). */
+const EXPECTED_POLICY_VERSION = '2026-09'
 
 let body: Record<string, unknown>
 let ip: string | undefined
 let contentLength: string | undefined
+let userAgent: string | undefined
 
 vi.mock('h3', () => ({
   defineEventHandler: (fn: unknown) => fn,
   readBody: async () => body,
   getRequestIP: () => ip,
-  getRequestHeader: (_e: unknown, name: string) =>
-    name.toLowerCase() === 'content-length' ? contentLength : undefined,
+  getRequestHeader: (_e: unknown, name: string) => {
+    const header = name.toLowerCase()
+    if (header === 'content-length') return contentLength
+    if (header === 'user-agent') return userAgent
+    return undefined
+  },
   createError: (options: Record<string, unknown>) =>
     Object.assign(new Error(String(options.statusMessage)), options),
 }))
@@ -50,6 +75,23 @@ const CONFIG = {
   resendApiKey: 're_test',
   contactEmailTo: 'buzon@ejemplo.com',
   contactEmailFrom: 'web@ejemplo.com',
+  // Sin estas dos una calificación baja falla cerrado antes de llegar a Resend.
+  rentacarAdminUrl: 'https://dashboard.example',
+  pqrsApiKey: 'clave-pqrs',
+  public: { rentacarFranchise: BRAND },
+}
+
+/**
+ * Los fallos de Resend que siguen siendo visibles son los de los OTROS formularios:
+ * en una calificación baja, Resend corre después de radicar en el tablero y su
+ * fallo ya no se le muestra al cliente (SCEN-11919). Por eso estos casos usan un
+ * referido.
+ */
+const REFERIDO_VALIDO = {
+  type: 'referidos',
+  nombre: 'Luis Gómez',
+  email: 'luis@ejemplo.com',
+  telefono: '3001112233',
 }
 
 let send: ReturnType<typeof vi.fn>
@@ -73,6 +115,7 @@ beforeEach(() => {
   body = { ...VALID }
   ip = '190.0.0.1'
   contentLength = '512'
+  userAgent = undefined
   send = vi.fn(async () => ({ id: 'x' }))
   rateLimit = vi.fn(async () => ({ allowed: true, remaining: 9, resetAt: Date.now() + 3_600_000 }))
   vi.stubGlobal('$fetch', send)
@@ -88,6 +131,7 @@ afterEach(() => {
 
 describe('configuración ausente', () => {
   it('no le enseña al visitante los nombres de las variables de entorno', async () => {
+    body = { ...REFERIDO_VALIDO }
     const { error } = await run({ contactEmailTo: 'a@b.co', contactEmailFrom: 'c@d.co' })
     expect(error?.statusCode).toBe(500)
     expect(String(error?.statusMessage)).not.toMatch(/NUXT_|RESEND|API_KEY/)
@@ -95,6 +139,7 @@ describe('configuración ausente', () => {
   })
 
   it('pero el detalle sí queda en el log del servidor', async () => {
+    body = { ...REFERIDO_VALIDO }
     await run({})
     expect(errorLog).toHaveBeenCalled()
     expect(errorLog.mock.calls.flat().join(' ')).toContain('NUXT_RESEND_API_KEY')
@@ -103,6 +148,7 @@ describe('configuración ausente', () => {
 
 describe('el proveedor de correo falla', () => {
   it('deja rastro en el log en vez de tragarse el error', async () => {
+    body = { ...REFERIDO_VALIDO }
     send.mockRejectedValueOnce(new Error('Resend 422: subject too long'))
     const { error } = await run()
     expect(error?.statusCode).toBe(502)
@@ -215,5 +261,364 @@ describe('mensaje demasiado largo', () => {
     body = { ...VALID, mensaje: 'x'.repeat(2001) }
     const { error } = await run()
     expect(String(error?.statusMessage)).toMatch(/2000|2\.000/)
+  })
+})
+
+/**
+ * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
+ * calificaciones-web.scenarios.md — SCEN-11904..11807, 11818 y 11819 (mitad web).
+ *
+ * Una calificación baja de /opinion se radica PRIMERO en el tablero
+ * (`POST <admin>/api/web-ratings`) y solo después sale el correo. El tablero es la
+ * fuente de verdad: si falla, no sale correo y el visitante ve el error; si acepta,
+ * el correo pasa a ser secundario y su fallo ya no le dice al cliente que falló.
+ */
+describe('calificación baja: el tablero antes que el correo', () => {
+  const alTablero = () => send.mock.calls.filter((c) => String(c[0]).includes('/api/web-ratings'))
+  const aResend = () => send.mock.calls.filter((c) => String(c[0]).includes('resend.com'))
+  const logs = () => errorLog.mock.calls.flat().join(' ')
+
+  /** La entrada del log con esa operación, ya parseada (logger.ts escribe JSON). */
+  type LogEntry = { operation?: string; context?: Record<string, unknown> }
+  const logEntry = (operation: string) =>
+    (errorLog.mock.calls as unknown[][])
+      .map((c): LogEntry => {
+        try {
+          return JSON.parse(String(c[0])) as LogEntry
+        } catch {
+          return {}
+        }
+      })
+      .find((entry) => entry.operation === operation)
+
+  /**
+   * Lo que lanza `$fetch` de verdad: un FetchError de ofetch sobre una `Response` real
+   * con su cuerpo ya parseado en `_data`. Sin `status`, el caso del timeout: no hay
+   * respuesta y ofetch envuelve el AbortError.
+   */
+  const fallaDelTablero = (status?: number, data?: unknown) => {
+    const response = status
+      ? Object.assign(new Response(JSON.stringify(data ?? {}), { status }), { _data: data })
+      : undefined
+    return createFetchError({
+      request: 'https://dashboard.example/api/web-ratings',
+      options: { method: 'POST' },
+      response,
+      error: status ? undefined : Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' }),
+    })
+  }
+
+  /** El tablero responde con `respuesta`; Resend contesta normal. */
+  const tableroResponde = (respuesta: () => unknown) =>
+    send.mockImplementation(async (url: string) => {
+      if (String(url).includes('/api/web-ratings')) return respuesta()
+      return { id: 'resend-x' }
+    })
+
+  it('SCEN-11904a: primero el tablero, después Resend, y responde { ok: true }', async () => {
+    const { ok } = await run()
+    expect(ok).toEqual({ ok: true })
+    expect(send.mock.calls.map((c) => String(c[0]))).toEqual([
+      'https://dashboard.example/api/web-ratings',
+      'https://api.resend.com/emails',
+    ])
+  })
+
+  it('SCEN-11904a: la llamada al tablero lleva la clave, la IP real, 6 s y el cuerpo del contrato', async () => {
+    body = { ...VALID, telefono: '300 123 4567', reserva: 'AV33Y3U5QA' }
+    await run()
+    const [url, opts] = alTablero()[0]!
+    expect(url).toBe('https://dashboard.example/api/web-ratings')
+    expect(opts).toMatchObject({
+      method: 'POST',
+      timeout: 6_000,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'clave-pqrs',
+        'x-real-client-ip': '190.0.0.1',
+      },
+    })
+    expect(opts.body).toEqual({
+      franchise: BRAND,
+      rating: 2,
+      customer_name: 'Ana Ramírez',
+      customer_email: 'ana@ejemplo.com',
+      customer_phone: '300 123 4567',
+      reservation_code: 'AV33Y3U5QA',
+      message: 'El carro llegó sin gasolina.',
+      consent_text: OPINION_CONSENT_TEXT,
+      consent_policy_version: POLICY_VERSION,
+      source_path: '/opinion',
+    })
+  })
+
+  it('SCEN-11918: lo que se guarda es la constante de la política de ESTA marca', async () => {
+    await run()
+    const enviado = alTablero()[0]![1].body
+    expect(enviado.consent_text).toBe(
+      'Al enviarlo autorizas el tratamiento de tus datos para atender tu caso, según la política de privacidad.',
+    )
+    expect(enviado.consent_policy_version).toBe(EXPECTED_POLICY_VERSION)
+  })
+
+  it('sin teléfono ni reserva viajan como null, no como undefined', async () => {
+    await run()
+    const enviado = alTablero()[0]![1].body
+    expect(enviado.customer_phone).toBeNull()
+    expect(enviado.reservation_code).toBeNull()
+  })
+
+  it('una URL del tablero con barra final no produce `//api/web-ratings`', async () => {
+    await run({ ...CONFIG, rentacarAdminUrl: 'https://dashboard.example/' })
+    expect(alTablero()[0]![0]).toBe('https://dashboard.example/api/web-ratings')
+  })
+
+  it('una URL con salto de línea final (pegada en Vercel) tampoco ensucia la ruta', async () => {
+    await run({ ...CONFIG, rentacarAdminUrl: 'https://x.app/\n' })
+    expect(alTablero()[0]![0]).toBe('https://x.app/api/web-ratings')
+  })
+
+  it('una URL de puros espacios cuenta como ausente: falla cerrado con su nombre en el log', async () => {
+    const { error } = await run({ ...CONFIG, rentacarAdminUrl: '  \n' })
+    expect(error?.statusCode).toBe(500)
+    expect(logs()).toContain('NUXT_RENTACAR_ADMIN_URL')
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it('reenvía el user agent del visitante, no el de Nitro', async () => {
+    userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'
+    await run()
+    expect(alTablero()[0]![1].headers['user-agent']).toBe(userAgent)
+  })
+
+  it.each([[undefined], ['']])('sin user agent (%j) no inventa la cabecera', async (ua) => {
+    userAgent = ua
+    await run()
+    expect(alTablero()[0]![1].headers).not.toHaveProperty('user-agent')
+  })
+
+  it.each([[''], ['   ']])('teléfono y reserva en blanco (%j) viajan como null', async (blanco) => {
+    body = { ...VALID, telefono: blanco, reserva: blanco }
+    await run()
+    const enviado = alTablero()[0]![1].body
+    expect(enviado.customer_phone).toBeNull()
+    expect(enviado.reservation_code).toBeNull()
+  })
+
+  it('sin IP identificable no inventa la cabecera', async () => {
+    ip = undefined
+    await run()
+    expect(alTablero()[0]![1].headers).not.toHaveProperty('x-real-client-ip')
+  })
+
+  it('SCEN-11907: la marca la pone el servidor, no el navegador', async () => {
+    body = { ...VALID, franchise: 'alquicarros' }
+    await run()
+    expect(alTablero()[0]![1].body.franchise).toBe(BRAND)
+  })
+
+  it('SCEN-11904b: tablero 429 → 429 con el texto de la web, sin correo', async () => {
+    tableroResponde(() => { throw fallaDelTablero(429, { error: 'rate_limit', retry_after: 1800 }) })
+    const { error } = await run()
+    expect(error?.statusCode).toBe(429)
+    expect(String(error?.statusMessage)).toMatch(/varios mensajes/i)
+    expect(aResend()).toHaveLength(0)
+  })
+
+  it('SCEN-11904b: el log del 429 lleva el retry_after que dio el tablero', async () => {
+    tableroResponde(() => { throw fallaDelTablero(429, { error: 'rate_limit', retry_after: 1800 }) })
+    await run()
+    expect(logEntry('web-rating-rate-limit')?.context).toMatchObject({ status: 429, retryAfter: 1800 })
+  })
+
+  it('SCEN-11904c: tablero 400 → log web-rating-contract y 502 genérico, sin correo', async () => {
+    tableroResponde(() => { throw fallaDelTablero(400, { error: 'validation', fields: { customer_email: 'Correo inválido' } }) })
+    const { error } = await run()
+    expect(error?.statusCode).toBe(502)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(logs()).toContain('web-rating-contract')
+    expect(aResend()).toHaveLength(0)
+  })
+
+  it('SCEN-11904c: el log del 400 dice qué campos rechazó el tablero', async () => {
+    // Sin esto, «los contratos se separaron» llega al log sin decir en qué campo.
+    const fields = { customer_email: 'Correo inválido', message: 'Mensaje vacío' }
+    tableroResponde(() => { throw fallaDelTablero(400, { error: 'validation', fields }) })
+    await run()
+    expect(logEntry('web-rating-contract')?.context).toMatchObject({ status: 400, fields })
+  })
+
+  it('SCEN-11904d: tablero 500 → log web-rating-file y 502 genérico, sin correo', async () => {
+    tableroResponde(() => { throw fallaDelTablero(500) })
+    const { error } = await run()
+    expect(error?.statusCode).toBe(502)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(logs()).toContain('web-rating-file')
+    expect(logs()).not.toContain('web-rating-contract')
+    expect(aResend()).toHaveLength(0)
+  })
+
+  it('SCEN-11904d: el tablero no responde en 6 s → log web-rating-file y 502, sin correo', async () => {
+    tableroResponde(() => { throw fallaDelTablero() })
+    const { error } = await run()
+    expect(error?.statusCode).toBe(502)
+    expect(logs()).toContain('web-rating-file')
+    expect(aResend()).toHaveLength(0)
+  })
+
+  // SCEN-11928: un 2xx que no es la respuesta del tablero (`201 { id, received_at }`)
+  // no cuenta como radicado. En producción el tablero sin la ruta contestó 307 a
+  // /login, `$fetch` siguió la redirección, recibió el HTML de /login con 200 y la web
+  // dijo `{ ok: true }` sin que existiera fila alguna.
+  it('SCEN-11928: la llamada al tablero no sigue redirecciones (redirect: error)', async () => {
+    await run()
+    expect(alTablero()[0]![1]).toMatchObject({ redirect: 'error' })
+  })
+
+  it('SCEN-11928b: tablero 200 con HTML (la página de /login) → log web-rating-contract y 502, sin correo', async () => {
+    tableroResponde(() => '<!DOCTYPE html><html><head><title>Iniciar sesión</title></head><body>' + 'x'.repeat(5000) + '</body></html>')
+    const { ok, error } = await run()
+    expect(ok).toBeNull()
+    expect(error?.statusCode).toBe(502)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(logs()).toContain('web-rating-contract')
+    expect(logs()).not.toContain('x'.repeat(500))
+    expect(aResend()).toHaveLength(0)
+  })
+
+  it.each([
+    ['{}', {}],
+    ['{ ok: true }', { ok: true }],
+    ['texto plano', 'OK'],
+    ['id vacío', { id: '' }],
+    ['id numérico', { id: 42 }],
+    ['nada', undefined],
+  ])('SCEN-11928b: tablero 200 con %s → log web-rating-contract y 502, sin correo', async (_label, respuesta) => {
+    tableroResponde(() => respuesta)
+    const { ok, error } = await run()
+    expect(ok).toBeNull()
+    expect(error?.statusCode).toBe(502)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(logs()).toContain('web-rating-contract')
+    expect(aResend()).toHaveLength(0)
+  })
+
+  it('SCEN-11928b: el log dice qué llegó en vez del id, sin copiar el HTML entero', async () => {
+    tableroResponde(() => '<!DOCTYPE html><html>' + 'x'.repeat(5000) + '</html>')
+    await run()
+    const context = logEntry('web-rating-contract')?.context
+    // `$fetch` entrega solo el cuerpo: el handler sabe que fue un 2xx, no cuál.
+    expect(context).toMatchObject({ status: '2xx' })
+    expect(String(context?.received).length).toBeLessThanOrEqual(120)
+    expect(JSON.stringify(context)).not.toContain('x'.repeat(200))
+  })
+
+  it('SCEN-11928a: tablero 307 → /login (ofetch rechaza por redirect: error) → log web-rating-contract y 502, sin correo', async () => {
+    // La forma real, comprobada contra un servidor que contesta 307 con undici: un
+    // FetchError sin estado cuya causa es «fetch failed» ← «unexpected redirect».
+    tableroResponde(() => {
+      throw createFetchError({
+        request: 'https://dashboard.example/api/web-ratings',
+        options: { method: 'POST' },
+        error: new TypeError('fetch failed', { cause: new Error('unexpected redirect') }),
+      })
+    })
+    const { ok, error } = await run()
+    expect(ok).toBeNull()
+    expect(error?.statusCode).toBe(502)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(logEntry('web-rating-contract')?.context).toMatchObject({ received: 'redirect' })
+    expect(logs()).not.toContain('web-rating-file')
+    expect(aResend()).toHaveLength(0)
+  })
+
+  it.each([
+    ['rentacarAdminUrl', 'NUXT_RENTACAR_ADMIN_URL'],
+    ['pqrsApiKey', 'NUXT_PQRS_API_KEY'],
+  ])('SCEN-11906b: sin %s falla cerrado: log con %s, 500 genérico, nadie recibe nada', async (key, envName) => {
+    const { error } = await run({ ...CONFIG, [key]: '' })
+    expect(error?.statusCode).toBe(500)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(String(error?.statusMessage)).not.toMatch(/NUXT_/)
+    expect(logs()).toContain(envName)
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it('el tablero radica aunque falte TODA la configuración de Resend', async () => {
+    // El gate de Resend va DESPUÉS: dejado delante, una variable de correo ausente
+    // impediría radicar, y el correo nunca podría apagarse limpio.
+    const { ok } = await run({ ...CONFIG, resendApiKey: '', contactEmailTo: '', contactEmailFrom: '' })
+    expect(ok).toEqual({ ok: true })
+    expect(alTablero()).toHaveLength(1)
+    expect(aResend()).toHaveLength(0)
+    expect(logs()).toContain('contact-config')
+  })
+
+  it('SCEN-11919b: tablero 201 y Resend falla → log contact-send y aun así { ok: true }', async () => {
+    send.mockImplementation(async (url: string) => {
+      if (String(url).includes('/api/web-ratings')) return { id: 'r1', received_at: '2026-10-19T12:00:00Z' }
+      throw new Error('Resend 422: subject too long')
+    })
+    const { ok, error } = await run()
+    expect(error).toBeNull()
+    expect(ok).toEqual({ ok: true })
+    expect(logs()).toContain('contact-send')
+    expect(logs()).toContain('subject too long')
+  })
+
+  it('SCEN-11919a: con el tablero y Resend bien, el correo de siempre sale al buzón', async () => {
+    await run()
+    const [, opts] = aResend()[0]!
+    expect(opts.body.to).toEqual(['buzon@ejemplo.com'])
+    expect(opts.body.subject).toBe('Calificación baja de un cliente — Ana Ramírez')
+  })
+
+  it.each([
+    ['3 de 5', 3],
+    ['1 de 5', 1],
+  ])('SCEN-11905: «%s» se radica con rating %i', async (estrellas, rating) => {
+    body = { ...VALID, estrellas }
+    await run()
+    expect(alTablero()[0]![1].body.rating).toBe(rating)
+  })
+
+  it.each([
+    ['4 de 5'],
+    ['5 de 5'],
+    ['7 de 5'],
+    ['0 de 5'],
+    ['tres'],
+    ['2 de 5 extra'],
+    [undefined],
+  ])('SCEN-11905: estrellas %s → 400 «Faltan campos obligatorios» sin llamar a nadie', async (estrellas) => {
+    body = { ...VALID, estrellas }
+    const { error } = await run()
+    expect(error?.statusCode).toBe(400)
+    expect(error?.statusMessage).toBe('Faltan campos obligatorios')
+    expect((error?.data as { missing?: string[] })?.missing).toContain('estrellas')
+    expect(send).not.toHaveBeenCalled()
+  })
+})
+
+describe('SCEN-11919: los demás formularios no cambian', () => {
+  it('un referido no toca el tablero de calificaciones', async () => {
+    body = { ...REFERIDO_VALIDO }
+    const { ok } = await run()
+    expect(ok).toEqual({ ok: true })
+    expect(send.mock.calls.map((c) => String(c[0]))).toEqual(['https://api.resend.com/emails'])
+  })
+
+  it('un referido sin configuración de Resend sigue fallando con 500', async () => {
+    body = { ...REFERIDO_VALIDO }
+    const { error } = await run({ ...CONFIG, resendApiKey: '' })
+    expect(error?.statusCode).toBe(500)
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it('un referido con Resend caído sigue fallando con 502', async () => {
+    body = { ...REFERIDO_VALIDO }
+    send.mockRejectedValueOnce(new Error('Resend 500'))
+    const { error } = await run()
+    expect(error?.statusCode).toBe(502)
   })
 })

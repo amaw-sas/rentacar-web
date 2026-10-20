@@ -12,6 +12,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref, computed, reactive, watch, nextTick } from 'vue'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 // Los auto-imports de Nuxt no existen fuera de Nuxt: el componente llama a `reactive`,
 // `ref` y `computed` como globales. Mismo arnés que opinion.test.ts, que es la única
@@ -161,4 +163,38 @@ describe('mensaje de éxito con la respuesta del servidor', () => {
     // Lo escrito sigue ahí: quien ya contó su problema no debería contarlo dos veces.
     expect(w.find<HTMLInputElement>('#f-nombre').element.value).toBe('Ana Pérez')
   })
+})
+
+/**
+ * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
+ * opinion-salida-whatsapp.scenarios.md — SCEN-11926.
+ *
+ * La línea de WhatsApp se aprobó solo para /opinion. El componente la pinta solo si
+ * la página le pasa `fallback-whatsapp`; los otros tres formularios no lo pasan.
+ */
+describe('SCEN-11926 — los otros formularios no muestran la salida por WhatsApp', () => {
+  it('un 502 sin `fallbackWhatsapp` muestra el aviso de siempre y nada más', async () => {
+    fetchMock.mockRejectedValue({
+      statusCode: 502,
+      status: 502,
+      data: { statusCode: 502, statusMessage: 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.' },
+    })
+    const w = montar()
+    await rellenar(w)
+    await w.find('form').trigger('submit')
+    await new Promise((r) => setTimeout(r, 0))
+    await w.vm.$nextTick()
+    expect(w.find('[role="alert"]').text()).toContain('No pudimos enviar')
+    expect(w.text()).not.toContain('Si prefieres')
+    expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(false)
+  })
+
+  it.each(['quejas-y-reclamos.vue', 'aliados.vue', 'gana/index.vue'])(
+    '%s no le pasa `fallback-whatsapp` al formulario',
+    (pagina) => {
+      const src = readFileSync(join(__dirname, '..', '..', 'pages', pagina), 'utf8')
+      expect(src).toContain('<PublicContactForm')
+      expect(src).not.toMatch(/fallback-?whatsapp/i)
+    },
+  )
 })

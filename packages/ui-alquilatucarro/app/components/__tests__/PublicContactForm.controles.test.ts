@@ -62,3 +62,27 @@ describe('un campo, un control', () => {
     expect(ids).toHaveLength(new Set(ids).size)
   })
 })
+
+/**
+ * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
+ * opinion-salida-whatsapp.scenarios.md — SCEN-11926, del lado del componente.
+ * La línea de WhatsApp es opt-in: sin `fallbackWhatsapp`, un 502 se ve como siempre.
+ */
+describe('SCEN-11926 — sin `fallbackWhatsapp` no hay salida por WhatsApp', () => {
+  it('un 502 muestra el aviso de siempre y nada más', async () => {
+    vi.stubGlobal('$fetch', vi.fn().mockRejectedValue({
+      statusCode: 502,
+      status: 502,
+      data: { statusCode: 502, statusMessage: 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.' },
+    }))
+    const w = factory()
+    await w.find('#f-nombre').setValue('Ana')
+    await w.find('#f-mensaje').setValue('texto')
+    await w.find('form').trigger('submit')
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+    expect(w.find('[role="alert"]').text()).toContain('No pudimos enviar')
+    expect(w.text()).not.toContain('Si prefieres')
+    expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(false)
+  })
+})
