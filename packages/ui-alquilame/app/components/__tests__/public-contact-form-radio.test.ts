@@ -167,12 +167,12 @@ describe('mensaje de éxito con la respuesta del servidor', () => {
 
 /**
  * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
- * opinion-salida-whatsapp.scenarios.md — SCEN-11826.
+ * opinion-salida-whatsapp.scenarios.md — SCEN-11926.
  *
  * La línea de WhatsApp se aprobó solo para /opinion. El componente la pinta solo si
  * la página le pasa `fallback-whatsapp`; los otros tres formularios no lo pasan.
  */
-describe('SCEN-11826 — los otros formularios no muestran la salida por WhatsApp', () => {
+describe('SCEN-11926 — los otros formularios no muestran la salida por WhatsApp', () => {
   it('un 502 sin `fallbackWhatsapp` muestra el aviso de siempre y nada más', async () => {
     fetchMock.mockRejectedValue({
       statusCode: 502,

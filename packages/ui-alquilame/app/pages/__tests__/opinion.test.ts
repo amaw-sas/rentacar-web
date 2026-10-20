@@ -45,7 +45,7 @@ beforeAll(() => {
   vi.stubGlobal('useSeoMeta', () => {})
   vi.stubGlobal('useAppConfig', () => ({
     organization: { brand: 'Alquilame', logo: '/images/brand/logo.svg' },
-    // La página lee el WhatsApp de la marca para la salida de SCEN-11824.
+    // La página lee el WhatsApp de la marca para la salida de SCEN-11924.
     franchise: { whatsapp: 'https://wa.me/570000000000' },
   }))
 })
@@ -614,13 +614,13 @@ describe('SCEN-10 — el tope de 2.000 no se descubre al enviar', () => {
 
 /**
  * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
- * calificaciones-web.scenarios.md — SCEN-11818.
+ * calificaciones-web.scenarios.md — SCEN-11918.
  *
  * El handler guarda `OPINION_CONSENT_TEXT` en el tablero como la frase que la
  * persona aceptó. Eso solo prueba algo si es, letra por letra, lo que la página
  * le mostró bajo el formulario.
  */
-describe('SCEN-11818 — el consentimiento guardado es la frase que se leyó', () => {
+describe('SCEN-11918 — el consentimiento guardado es la frase que se leyó', () => {
   /** El párrafo bajo el formulario: el que enlaza la política de privacidad. */
   const consentParagraph = (w: Wrapper) =>
     w.findAll('p').find((p) => p.find('a[href="/politica-privacidad"]').exists())
@@ -656,11 +656,11 @@ describe('SCEN-11818 — el consentimiento guardado es la frase que se leyó', (
 })
 
 /**
- * Holdout: SCEN-11804 (b, c, d), mitad de la página. Si el tablero no radica, el
+ * Holdout: SCEN-11904 (b, c, d), mitad de la página. Si el tablero no radica, el
  * servidor responde 429 o 502 con su propio texto; la persona tiene que verlo y no
  * perder lo que escribió, porque el reintento es lo único que le queda.
  */
-describe('SCEN-11804 — si el tablero falla, el formulario conserva lo escrito', () => {
+describe('SCEN-11904 — si el tablero falla, el formulario conserva lo escrito', () => {
   it.each([
     ['502', 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.'],
     ['429', 'Recibimos varios mensajes tuyos hace poco. Espera un momento y vuelve a intentarlo.'],
@@ -686,14 +686,14 @@ describe('SCEN-11804 — si el tablero falla, el formulario conserva lo escrito'
 
 /**
  * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
- * opinion-salida-whatsapp.scenarios.md — SCEN-11824 y SCEN-11825.
+ * opinion-salida-whatsapp.scenarios.md — SCEN-11924 y SCEN-11925.
  *
  * Si el envío falla por nuestra culpa (500/502), la persona tiene por dónde
  * escribirnos: «Si prefieres, escríbenos por WhatsApp», con el WhatsApp de ESTA
  * marca. El número se lee de app.config.ts como texto y no se copia aquí: si
  * alguien lo cambia allí, la prueba sigue diciendo la verdad.
  */
-describe('SCEN-11824/11825 — la salida por WhatsApp cuando el envío falla por nuestra culpa', () => {
+describe('SCEN-11924/11825 — la salida por WhatsApp cuando el envío falla por nuestra culpa', () => {
   const WA_LINE = 'Si prefieres, escríbenos por WhatsApp'
   const appConfigSrc = readFileSync(join(__dirname, '..', '..', 'app.config.ts'), 'utf8')
   const BRAND_WHATSAPP = appConfigSrc.match(/whatsapp:\s*["']([^"']+)["']/)![1]!
@@ -731,7 +731,7 @@ describe('SCEN-11824/11825 — la salida por WhatsApp cuando el envío falla por
   })
 
   it.each([502, 500])(
-    'SCEN-11824 — con %s aparece la línea, enlaza al WhatsApp de la marca en pestaña nueva y conserva lo escrito',
+    'SCEN-11924 — con %s aparece la línea, enlaza al WhatsApp de la marca en pestaña nueva y conserva lo escrito',
     async (status) => {
       const w = await enviarCon(
         fetchError(status, 'No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.'),
@@ -752,7 +752,7 @@ describe('SCEN-11824/11825 — la salida por WhatsApp cuando el envío falla por
     },
   )
 
-  it('SCEN-11825 (d) — antes de enviar no aparece', async () => {
+  it('SCEN-11925 (d) — antes de enviar no aparece', async () => {
     const w = factory()
     await stars(w)[1]!.trigger('click')
     await nextTick()
@@ -761,19 +761,19 @@ describe('SCEN-11824/11825 — la salida por WhatsApp cuando el envío falla por
     expect(w.find('[data-test="salida-whatsapp"]').exists()).toBe(false)
   })
 
-  it('SCEN-11825 (a) — con 200 no aparece', async () => {
+  it('SCEN-11925 (a) — con 200 no aparece', async () => {
     const w = await enviarCon('ok')
     expect(formStatus(w).text()).toContain('Gracias por contarnos')
     expect(w.text()).not.toContain('Si prefieres')
   })
 
-  it('SCEN-11825 (b) — con 400 por campos se ve solo el aviso de siempre', async () => {
+  it('SCEN-11925 (b) — con 400 por campos se ve solo el aviso de siempre', async () => {
     const w = await enviarCon(fetchError(400, 'Faltan campos obligatorios', { missing: ['mensaje'] }))
     expect(w.find('form [role="alert"]').text()).toContain('Revisa los campos marcados.')
     expect(w.text()).not.toContain('Si prefieres')
   })
 
-  it('SCEN-11825 (c) — con 429 se ve solo el aviso de siempre', async () => {
+  it('SCEN-11925 (c) — con 429 se ve solo el aviso de siempre', async () => {
     const msg = 'Recibimos varios mensajes tuyos hace poco. Espera un momento y vuelve a intentarlo.'
     const w = await enviarCon(fetchError(429, msg))
     expect(w.find('form [role="alert"]').text()).toContain(msg)

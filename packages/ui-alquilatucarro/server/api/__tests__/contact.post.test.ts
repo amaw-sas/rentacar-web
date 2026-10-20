@@ -84,7 +84,7 @@ const CONFIG = {
 /**
  * Los fallos de Resend que siguen siendo visibles son los de los OTROS formularios:
  * en una calificación baja, Resend corre después de radicar en el tablero y su
- * fallo ya no se le muestra al cliente (SCEN-11819). Por eso estos casos usan un
+ * fallo ya no se le muestra al cliente (SCEN-11919). Por eso estos casos usan un
  * referido.
  */
 const REFERIDO_VALIDO = {
@@ -266,7 +266,7 @@ describe('mensaje demasiado largo', () => {
 
 /**
  * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
- * calificaciones-web.scenarios.md — SCEN-11804..11807, 11818 y 11819 (mitad web).
+ * calificaciones-web.scenarios.md — SCEN-11904..11807, 11818 y 11819 (mitad web).
  *
  * Una calificación baja de /opinion se radica PRIMERO en el tablero
  * (`POST <admin>/api/web-ratings`) y solo después sale el correo. El tablero es la
@@ -315,7 +315,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
       return { id: 'resend-x' }
     })
 
-  it('SCEN-11804a: primero el tablero, después Resend, y responde { ok: true }', async () => {
+  it('SCEN-11904a: primero el tablero, después Resend, y responde { ok: true }', async () => {
     const { ok } = await run()
     expect(ok).toEqual({ ok: true })
     expect(send.mock.calls.map((c) => String(c[0]))).toEqual([
@@ -324,7 +324,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
     ])
   })
 
-  it('SCEN-11804a: la llamada al tablero lleva la clave, la IP real, 6 s y el cuerpo del contrato', async () => {
+  it('SCEN-11904a: la llamada al tablero lleva la clave, la IP real, 6 s y el cuerpo del contrato', async () => {
     body = { ...VALID, telefono: '300 123 4567', reserva: 'AV33Y3U5QA' }
     await run()
     const [url, opts] = alTablero()[0]!
@@ -352,7 +352,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
     })
   })
 
-  it('SCEN-11818: lo que se guarda es la constante de la política de ESTA marca', async () => {
+  it('SCEN-11918: lo que se guarda es la constante de la política de ESTA marca', async () => {
     await run()
     const enviado = alTablero()[0]![1].body
     expect(enviado.consent_text).toBe(
@@ -411,13 +411,13 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(alTablero()[0]![1].headers).not.toHaveProperty('x-real-client-ip')
   })
 
-  it('SCEN-11807: la marca la pone el servidor, no el navegador', async () => {
+  it('SCEN-11907: la marca la pone el servidor, no el navegador', async () => {
     body = { ...VALID, franchise: 'alquicarros' }
     await run()
     expect(alTablero()[0]![1].body.franchise).toBe(BRAND)
   })
 
-  it('SCEN-11804b: tablero 429 → 429 con el texto de la web, sin correo', async () => {
+  it('SCEN-11904b: tablero 429 → 429 con el texto de la web, sin correo', async () => {
     tableroResponde(() => { throw fallaDelTablero(429, { error: 'rate_limit', retry_after: 1800 }) })
     const { error } = await run()
     expect(error?.statusCode).toBe(429)
@@ -425,13 +425,13 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(aResend()).toHaveLength(0)
   })
 
-  it('SCEN-11804b: el log del 429 lleva el retry_after que dio el tablero', async () => {
+  it('SCEN-11904b: el log del 429 lleva el retry_after que dio el tablero', async () => {
     tableroResponde(() => { throw fallaDelTablero(429, { error: 'rate_limit', retry_after: 1800 }) })
     await run()
     expect(logEntry('web-rating-rate-limit')?.context).toMatchObject({ status: 429, retryAfter: 1800 })
   })
 
-  it('SCEN-11804c: tablero 400 → log web-rating-contract y 502 genérico, sin correo', async () => {
+  it('SCEN-11904c: tablero 400 → log web-rating-contract y 502 genérico, sin correo', async () => {
     tableroResponde(() => { throw fallaDelTablero(400, { error: 'validation', fields: { customer_email: 'Correo inválido' } }) })
     const { error } = await run()
     expect(error?.statusCode).toBe(502)
@@ -440,7 +440,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(aResend()).toHaveLength(0)
   })
 
-  it('SCEN-11804c: el log del 400 dice qué campos rechazó el tablero', async () => {
+  it('SCEN-11904c: el log del 400 dice qué campos rechazó el tablero', async () => {
     // Sin esto, «los contratos se separaron» llega al log sin decir en qué campo.
     const fields = { customer_email: 'Correo inválido', message: 'Mensaje vacío' }
     tableroResponde(() => { throw fallaDelTablero(400, { error: 'validation', fields }) })
@@ -448,7 +448,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(logEntry('web-rating-contract')?.context).toMatchObject({ status: 400, fields })
   })
 
-  it('SCEN-11804d: tablero 500 → log web-rating-file y 502 genérico, sin correo', async () => {
+  it('SCEN-11904d: tablero 500 → log web-rating-file y 502 genérico, sin correo', async () => {
     tableroResponde(() => { throw fallaDelTablero(500) })
     const { error } = await run()
     expect(error?.statusCode).toBe(502)
@@ -458,7 +458,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(aResend()).toHaveLength(0)
   })
 
-  it('SCEN-11804d: el tablero no responde en 6 s → log web-rating-file y 502, sin correo', async () => {
+  it('SCEN-11904d: el tablero no responde en 6 s → log web-rating-file y 502, sin correo', async () => {
     tableroResponde(() => { throw fallaDelTablero() })
     const { error } = await run()
     expect(error?.statusCode).toBe(502)
@@ -469,7 +469,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
   it.each([
     ['rentacarAdminUrl', 'NUXT_RENTACAR_ADMIN_URL'],
     ['pqrsApiKey', 'NUXT_PQRS_API_KEY'],
-  ])('SCEN-11806b: sin %s falla cerrado: log con %s, 500 genérico, nadie recibe nada', async (key, envName) => {
+  ])('SCEN-11906b: sin %s falla cerrado: log con %s, 500 genérico, nadie recibe nada', async (key, envName) => {
     const { error } = await run({ ...CONFIG, [key]: '' })
     expect(error?.statusCode).toBe(500)
     expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
@@ -488,7 +488,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(logs()).toContain('contact-config')
   })
 
-  it('SCEN-11819b: tablero 201 y Resend falla → log contact-send y aun así { ok: true }', async () => {
+  it('SCEN-11919b: tablero 201 y Resend falla → log contact-send y aun así { ok: true }', async () => {
     send.mockImplementation(async (url: string) => {
       if (String(url).includes('/api/web-ratings')) return { id: 'r1', received_at: '2026-10-19T12:00:00Z' }
       throw new Error('Resend 422: subject too long')
@@ -500,7 +500,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(logs()).toContain('subject too long')
   })
 
-  it('SCEN-11819a: con el tablero y Resend bien, el correo de siempre sale al buzón', async () => {
+  it('SCEN-11919a: con el tablero y Resend bien, el correo de siempre sale al buzón', async () => {
     await run()
     const [, opts] = aResend()[0]!
     expect(opts.body.to).toEqual(['buzon@ejemplo.com'])
@@ -510,7 +510,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
   it.each([
     ['3 de 5', 3],
     ['1 de 5', 1],
-  ])('SCEN-11805: «%s» se radica con rating %i', async (estrellas, rating) => {
+  ])('SCEN-11905: «%s» se radica con rating %i', async (estrellas, rating) => {
     body = { ...VALID, estrellas }
     await run()
     expect(alTablero()[0]![1].body.rating).toBe(rating)
@@ -524,7 +524,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
     ['tres'],
     ['2 de 5 extra'],
     [undefined],
-  ])('SCEN-11805: estrellas %s → 400 «Faltan campos obligatorios» sin llamar a nadie', async (estrellas) => {
+  ])('SCEN-11905: estrellas %s → 400 «Faltan campos obligatorios» sin llamar a nadie', async (estrellas) => {
     body = { ...VALID, estrellas }
     const { error } = await run()
     expect(error?.statusCode).toBe(400)
@@ -534,7 +534,7 @@ describe('calificación baja: el tablero antes que el correo', () => {
   })
 })
 
-describe('SCEN-11819: los demás formularios no cambian', () => {
+describe('SCEN-11919: los demás formularios no cambian', () => {
   it('un referido no toca el tablero de calificaciones', async () => {
     body = { ...REFERIDO_VALIDO }
     const { ok } = await run()

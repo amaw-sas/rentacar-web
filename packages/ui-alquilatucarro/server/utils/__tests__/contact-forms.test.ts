@@ -262,7 +262,7 @@ describe('calificación baja (/opinion)', () => {
     expect(r.email.subject.length).toBeLessThanOrEqual('Calificación baja de un cliente — '.length + 120)
   })
 
-  it('SCEN-11805: sin estrellas se rechaza — la fila del tablero las necesita', () => {
+  it('SCEN-11905: sin estrellas se rechaza — la fila del tablero las necesita', () => {
     // Reemplaza a «sin estrellas el correo sale igual». La página siempre las manda;
     // un envío sin ellas solo puede ser hecho a mano, y desde que la calificación se
     // radica en el tablero (calificaciones-web, 19-oct-2026) sin estrellas no hay fila.
@@ -272,7 +272,7 @@ describe('calificación baja (/opinion)', () => {
     expect(r.missing).toEqual(['estrellas'])
   })
 
-  it('SCEN-11805: estrellas en blanco cuentan como ausentes', () => {
+  it('SCEN-11905: estrellas en blanco cuentan como ausentes', () => {
     const r = validateAndCompose({ ...valido, estrellas: '   ' })
     expect(r.ok).toBe(false)
     if (r.ok || r.reason !== 'invalid') throw new Error('debía rechazar por faltante')

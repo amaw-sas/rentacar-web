@@ -2,7 +2,7 @@
 
 /**
  * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
- * calificaciones-web.scenarios.md — SCEN-11818 (la versión publicada) y SCEN-11806
+ * calificaciones-web.scenarios.md — SCEN-11918 (la versión publicada) y SCEN-11906
  * (`consent_policy_version: '2025-01'`).
  *
  * Cada calificación baja guarda en el tablero contra qué versión de la política se

@@ -65,10 +65,10 @@ describe('un campo, un control', () => {
 
 /**
  * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
- * opinion-salida-whatsapp.scenarios.md — SCEN-11826, del lado del componente.
+ * opinion-salida-whatsapp.scenarios.md — SCEN-11926, del lado del componente.
  * La línea de WhatsApp es opt-in: sin `fallbackWhatsapp`, un 502 se ve como siempre.
  */
-describe('SCEN-11826 — sin `fallbackWhatsapp` no hay salida por WhatsApp', () => {
+describe('SCEN-11926 — sin `fallbackWhatsapp` no hay salida por WhatsApp', () => {
   it('un 502 muestra el aviso de siempre y nada más', async () => {
     vi.stubGlobal('$fetch', vi.fn().mockRejectedValue({
       statusCode: 502,

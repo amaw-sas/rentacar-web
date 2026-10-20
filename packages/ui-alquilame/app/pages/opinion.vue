@@ -108,7 +108,7 @@ import type { PublicFormField } from '~/components/PublicContactForm.vue'
 // La frase bajo el formulario sale de OPINION_CONSENT_LEAD y es la que se guarda en el
 // tablero con cada calificación (OPINION_CONSENT_TEXT). En el template, el enlace y el
 // punto van pegados y sin saltos de línea dentro: si no, el texto queda «privacidad .» y
-// deja de coincidir con lo guardado (opinion.test.ts, SCEN-11818).
+// deja de coincidir con lo guardado (opinion.test.ts, SCEN-11918).
 import { OPINION_CONSENT_LEAD } from '~/utils/policy'
 
 // Con el layout por defecto, igual que /quejas-y-reclamos, /aliados y /gana.
@@ -126,7 +126,7 @@ const GBP_URL = 'https://g.page/r/Ce09QLF1RhqkEBM/review'
 /**
  * El WhatsApp de la marca, el mismo de la cabecera. Si el envío del formulario
  * falla por nuestro lado (5xx), el formulario lo ofrece como salida
- * (SCEN-11824). Sale del app config, nunca de un número escrito aquí.
+ * (SCEN-11924). Sale del app config, nunca de un número escrito aquí.
  */
 const { franchise } = useAppConfig()
 /** Desde cuántas estrellas se considera reseña pública. */

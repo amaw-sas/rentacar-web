@@ -54,7 +54,7 @@ describe('versión de la política de privacidad', () => {
 
 /**
  * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
- * calificaciones-web.scenarios.md — SCEN-11818. La frase bajo el formulario de
+ * calificaciones-web.scenarios.md — SCEN-11918. La frase bajo el formulario de
  * /opinion se guarda con cada calificación baja: es la constante, no una copia.
  */
 describe('frase de consentimiento de /opinion', () => {
