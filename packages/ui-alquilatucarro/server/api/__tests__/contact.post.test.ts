@@ -466,6 +466,72 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(aResend()).toHaveLength(0)
   })
 
+  // SCEN-11928: un 2xx que no es la respuesta del tablero (`201 { id, received_at }`)
+  // no cuenta como radicado. En producción el tablero sin la ruta contestó 307 a
+  // /login, `$fetch` siguió la redirección, recibió el HTML de /login con 200 y la web
+  // dijo `{ ok: true }` sin que existiera fila alguna.
+  it('SCEN-11928: la llamada al tablero no sigue redirecciones (redirect: error)', async () => {
+    await run()
+    expect(alTablero()[0]![1]).toMatchObject({ redirect: 'error' })
+  })
+
+  it('SCEN-11928b: tablero 200 con HTML (la página de /login) → log web-rating-contract y 502, sin correo', async () => {
+    tableroResponde(() => '<!DOCTYPE html><html><head><title>Iniciar sesión</title></head><body>' + 'x'.repeat(5000) + '</body></html>')
+    const { ok, error } = await run()
+    expect(ok).toBeNull()
+    expect(error?.statusCode).toBe(502)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(logs()).toContain('web-rating-contract')
+    expect(logs()).not.toContain('x'.repeat(500))
+    expect(aResend()).toHaveLength(0)
+  })
+
+  it.each([
+    ['{}', {}],
+    ['{ ok: true }', { ok: true }],
+    ['texto plano', 'OK'],
+    ['id vacío', { id: '' }],
+    ['id numérico', { id: 42 }],
+    ['nada', undefined],
+  ])('SCEN-11928b: tablero 200 con %s → log web-rating-contract y 502, sin correo', async (_label, respuesta) => {
+    tableroResponde(() => respuesta)
+    const { ok, error } = await run()
+    expect(ok).toBeNull()
+    expect(error?.statusCode).toBe(502)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(logs()).toContain('web-rating-contract')
+    expect(aResend()).toHaveLength(0)
+  })
+
+  it('SCEN-11928b: el log dice qué llegó en vez del id, sin copiar el HTML entero', async () => {
+    tableroResponde(() => '<!DOCTYPE html><html>' + 'x'.repeat(5000) + '</html>')
+    await run()
+    const context = logEntry('web-rating-contract')?.context
+    // `$fetch` entrega solo el cuerpo: el handler sabe que fue un 2xx, no cuál.
+    expect(context).toMatchObject({ status: '2xx' })
+    expect(String(context?.received).length).toBeLessThanOrEqual(120)
+    expect(JSON.stringify(context)).not.toContain('x'.repeat(200))
+  })
+
+  it('SCEN-11928a: tablero 307 → /login (ofetch rechaza por redirect: error) → log web-rating-contract y 502, sin correo', async () => {
+    // La forma real, comprobada contra un servidor que contesta 307 con undici: un
+    // FetchError sin estado cuya causa es «fetch failed» ← «unexpected redirect».
+    tableroResponde(() => {
+      throw createFetchError({
+        request: 'https://dashboard.example/api/web-ratings',
+        options: { method: 'POST' },
+        error: new TypeError('fetch failed', { cause: new Error('unexpected redirect') }),
+      })
+    })
+    const { ok, error } = await run()
+    expect(ok).toBeNull()
+    expect(error?.statusCode).toBe(502)
+    expect(error?.statusMessage).toBe('No pudimos enviar tu mensaje. Intenta de nuevo en unos minutos.')
+    expect(logEntry('web-rating-contract')?.context).toMatchObject({ received: 'redirect' })
+    expect(logs()).not.toContain('web-rating-file')
+    expect(aResend()).toHaveLength(0)
+  })
+
   it.each([
     ['rentacarAdminUrl', 'NUXT_RENTACAR_ADMIN_URL'],
     ['pqrsApiKey', 'NUXT_PQRS_API_KEY'],

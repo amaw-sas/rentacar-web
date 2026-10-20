@@ -63,6 +63,11 @@ beforeEach(() => {
   vi.resetModules()
   body = { ...QUEJA }
   fetchMock = vi.fn(async (url: string) => {
+    // Cada ruta del tablero con su propia respuesta: una calificación sin `id` no
+    // cuenta como radicada (SCEN-11928).
+    if (String(url).includes('dashboard.example/api/web-ratings')) {
+      return { id: '7d1f0c2e-5b7a-4f1e-9a51-0c4b9f3e2a10', received_at: '2026-10-20T12:00:00Z' }
+    }
     if (String(url).includes('dashboard.example')) {
       return { radicado: 'PQRS-2026-000123', due_at: '2026-10-01T04:59:59.999Z' }
     }

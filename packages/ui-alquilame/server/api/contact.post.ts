@@ -108,6 +108,37 @@ function statusOf(error: unknown): number | undefined {
   return e?.status ?? e?.statusCode ?? e?.response?.status
 }
 
+/**
+ * Con `redirect: 'error'`, undici rechaza un 3xx sin estado: FetchError «fetch failed»
+ * cuya causa dice «unexpected redirect». Se busca en la cadena de causas porque es lo
+ * único que lo separa de una red caída.
+ */
+function isRedirectRejection(error: unknown): boolean {
+  let current: unknown = error
+  for (let depth = 0; current && depth < 5; depth++) {
+    if (/redirect/i.test(String((current as { message?: unknown }).message ?? ''))) return true
+    current = (current as { cause?: unknown }).cause
+  }
+  return false
+}
+
+/**
+ * Qué llegó en lugar de `{ id }`, en una línea corta para el log: el tipo y, si es
+ * texto, su comienzo. Nunca el cuerpo entero (la página de /login pesa kilobytes) ni
+ * los valores de un objeto, solo sus llaves.
+ */
+function describeReceived(received: unknown): string {
+  if (received === undefined || received === null || received === '') return 'vacío'
+  if (typeof received === 'string') {
+    const start = received.slice(0, 60).replace(/\s+/g, ' ')
+    return `texto (${received.length} caracteres): ${start}`
+  }
+  if (typeof received === 'object') {
+    return `objeto con llaves: ${Object.keys(received).slice(0, 10).join(', ') || '(ninguna)'}`.slice(0, 120)
+  }
+  return typeof received
+}
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const apiKey = config.resendApiKey as string | undefined
@@ -218,10 +249,14 @@ export default defineEventHandler(async (event) => {
     const userAgent = getRequestHeader(event, 'user-agent') ?? ''
     // Opcionales en el formulario: en blanco viajan como null, no como texto vacío.
     const optionalText = (v: unknown) => (typeof v === 'string' && v.trim() ? v : null)
+    let filed: unknown
     try {
-      await $fetch<{ id?: string; received_at?: string }>(`${adminUrl}/api/web-ratings`, {
+      filed = await $fetch<{ id?: string; received_at?: string }>(`${adminUrl}/api/web-ratings`, {
         method: 'POST',
         timeout: WEB_RATING_TIMEOUT_MS,
+        // Una redirección nunca es el tablero respondiendo: el tablero sin la ruta
+        // contesta 307 a /login, y seguirla trae el HTML de /login con 200.
+        redirect: 'error',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': pqrsKey,
@@ -267,7 +302,24 @@ export default defineEventHandler(async (event) => {
         })
         throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
       }
+      if (status === undefined && isRedirectRejection(error)) {
+        // Lo que llega cuando el tablero desplegado aún no tiene la ruta.
+        logger.error('web-rating-contract', error, { ...context, received: 'redirect' })
+        throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
+      }
       logger.error('web-rating-file', error, context)
+      throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
+    }
+    // Radicado es `201 { id, received_at }`, no cualquier promesa resuelta: una página
+    // de proxy, de mantenimiento o el /login también resuelven con 2xx. Va fuera del
+    // try para que el catch no lo reclasifique como `web-rating-file`.
+    const filedId = (filed as { id?: unknown } | null | undefined)?.id
+    if (typeof filedId !== 'string' || filedId.length === 0) {
+      logger.error(
+        'web-rating-contract',
+        new Error('El tablero respondió 2xx sin el id de la calificación radicada'),
+        { franchise: config.public.rentacarFranchise, status: '2xx', received: describeReceived(filed) },
+      )
       throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
     }
     ratingFiled = true
