@@ -82,10 +82,9 @@ const CONFIG = {
 }
 
 /**
- * Los fallos de Resend que siguen siendo visibles son los de los OTROS formularios:
- * en una calificación baja, Resend corre después de radicar en el tablero y su
- * fallo ya no se le muestra al cliente (SCEN-11919). Por eso estos casos usan un
- * referido.
+ * Los fallos de Resend solo existen en los OTROS formularios: una calificación baja
+ * ya no manda correo, el tablero es su único destino (SCEN-12501). Por eso estos
+ * casos usan un referido.
  */
 const REFERIDO_VALIDO = {
   type: 'referidos',
@@ -266,14 +265,15 @@ describe('mensaje demasiado largo', () => {
 
 /**
  * Holdout: rentacar-dashboard docs/specs/2026-10-19-calificaciones-web/scenarios/
- * calificaciones-web.scenarios.md — SCEN-11904..11807, 11818 y 11819 (mitad web).
+ * calificaciones-web.scenarios.md — SCEN-11904..11807, 11818 y 11819 (mitad web), y
+ * una-sola-puerta.scenarios.md — SCEN-12501.
  *
- * Una calificación baja de /opinion se radica PRIMERO en el tablero
- * (`POST <admin>/api/web-ratings`) y solo después sale el correo. El tablero es la
- * fuente de verdad: si falla, no sale correo y el visitante ve el error; si acepta,
- * el correo pasa a ser secundario y su fallo ya no le dice al cliente que falló.
+ * Una calificación baja de /opinion se radica en el tablero
+ * (`POST <admin>/api/web-ratings`) y ahí termina: el tablero es su único destino y
+ * Resend no recibe nada (SCEN-12501, Diego 20-oct). Si el tablero falla, el
+ * visitante ve el error con lo que escribió intacto.
  */
-describe('calificación baja: el tablero antes que el correo', () => {
+describe('calificación baja: el tablero es el único destino', () => {
   const alTablero = () => send.mock.calls.filter((c) => String(c[0]).includes('/api/web-ratings'))
   const aResend = () => send.mock.calls.filter((c) => String(c[0]).includes('resend.com'))
   const logs = () => errorLog.mock.calls.flat().join(' ')
@@ -315,12 +315,12 @@ describe('calificación baja: el tablero antes que el correo', () => {
       return { id: 'resend-x' }
     })
 
-  it('SCEN-11904a: primero el tablero, después Resend, y responde { ok: true }', async () => {
+  // SCEN-12501 reemplaza el «después el correo por Resend» de SCEN-11904a.
+  it('SCEN-12501a: el tablero y nadie más, y responde { ok: true }', async () => {
     const { ok } = await run()
     expect(ok).toEqual({ ok: true })
     expect(send.mock.calls.map((c) => String(c[0]))).toEqual([
       'https://dashboard.example/api/web-ratings',
-      'https://api.resend.com/emails',
     ])
   })
 
@@ -544,17 +544,17 @@ describe('calificación baja: el tablero antes que el correo', () => {
     expect(send).not.toHaveBeenCalled()
   })
 
-  it('el tablero radica aunque falte TODA la configuración de Resend', async () => {
-    // El gate de Resend va DESPUÉS: dejado delante, una variable de correo ausente
-    // impediría radicar, y el correo nunca podría apagarse limpio.
+  it('SCEN-12501a: radica sin configuración de Resend y no la echa de menos en el log', async () => {
+    // La calificación ya no usa el correo: que falten sus variables no es un fallo.
     const { ok } = await run({ ...CONFIG, resendApiKey: '', contactEmailTo: '', contactEmailFrom: '' })
     expect(ok).toEqual({ ok: true })
     expect(alTablero()).toHaveLength(1)
     expect(aResend()).toHaveLength(0)
-    expect(logs()).toContain('contact-config')
+    expect(logs()).not.toContain('contact-config')
   })
 
-  it('SCEN-11919b: tablero 201 y Resend falla → log contact-send y aun así { ok: true }', async () => {
+  // SCEN-11919 (a) y (b) quedan reemplazados por SCEN-12501 (y el «sale el correo» de SCEN-11928 (c)): ya no hay correo secundario que pueda fallar ni que registrar.
+  it('SCEN-12501a: con Resend caído nadie lo llama: { ok: true } y sin log contact-send', async () => {
     send.mockImplementation(async (url: string) => {
       if (String(url).includes('/api/web-ratings')) return { id: 'r1', received_at: '2026-10-19T12:00:00Z' }
       throw new Error('Resend 422: subject too long')
@@ -562,15 +562,17 @@ describe('calificación baja: el tablero antes que el correo', () => {
     const { ok, error } = await run()
     expect(error).toBeNull()
     expect(ok).toEqual({ ok: true })
-    expect(logs()).toContain('contact-send')
-    expect(logs()).toContain('subject too long')
+    expect(aResend()).toHaveLength(0)
+    expect(logs()).not.toContain('contact-send')
   })
 
-  it('SCEN-11919a: con el tablero y Resend bien, el correo de siempre sale al buzón', async () => {
-    await run()
-    const [, opts] = aResend()[0]!
-    expect(opts.body.to).toEqual(['buzon@ejemplo.com'])
-    expect(opts.body.subject).toBe('Calificación baja de un cliente — Ana Ramírez')
+  it('SCEN-12501a: con la clave de Resend puesta, cero llamadas a Resend (ni «Calificación baja de un cliente» ni otro)', async () => {
+    tableroResponde(() => ({ id: 'r1', received_at: '2026-10-19T12:00:00Z' }))
+    const { ok } = await run()
+    expect(CONFIG.resendApiKey).toBe('re_test')
+    expect(ok).toEqual({ ok: true })
+    expect(alTablero()).toHaveLength(1)
+    expect(aResend()).toHaveLength(0)
   })
 
   it.each([
@@ -600,7 +602,21 @@ describe('calificación baja: el tablero antes que el correo', () => {
   })
 })
 
-describe('SCEN-11919: los demás formularios no cambian', () => {
+describe('SCEN-11919 / SCEN-12501c: los demás formularios no cambian', () => {
+  it.each([
+    ['quejas', { type: 'quejas', nombre: 'Ana Pérez', email: 'ana@ejemplo.com', mensaje: 'El carro llegó sucio.', pqrs_type: 'Queja', consentimiento: true }],
+    ['flota', { type: 'flota', negocio: 'R', nombre: 'L', telefono: '3001112233', ubicacion: 'B', vehiculos: '2', tipos: ['A'], compromiso: true }],
+    ['referidos', REFERIDO_VALIDO],
+  ])('SCEN-12501c: %s sigue mandando su correo de siempre por Resend', async (_type, payload) => {
+    body = { ...payload }
+    const { ok } = await run()
+    expect(ok).toMatchObject({ ok: true })
+    const correos = send.mock.calls.filter((c) => String(c[0]).includes('resend.com'))
+    expect(correos).toHaveLength(1)
+    expect(correos[0]![1].body.to).toEqual(['buzon@ejemplo.com'])
+    expect(send.mock.calls.filter((c) => String(c[0]).includes('/api/web-ratings'))).toHaveLength(0)
+  })
+
   it('un referido no toca el tablero de calificaciones', async () => {
     body = { ...REFERIDO_VALIDO }
     const { ok } = await run()

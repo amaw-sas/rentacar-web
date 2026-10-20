@@ -425,8 +425,8 @@ export default defineNuxtConfig({
     // fail-closed del endpoint dispara siempre y el formulario muere en producción con
     // la variable bien puesta en Vercel.
     pqrsApiKey: '',
-    // Formularios públicos (hoy sólo las calificaciones bajas de /opinion) —
-    // server-only. Override con NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO /
+    // Correo de los formularios públicos (las calificaciones bajas de /opinion ya no
+    // lo usan: van solo al tablero, SCEN-12501) — server-only. Override con NUXT_RESEND_API_KEY / NUXT_CONTACT_EMAIL_TO /
     // NUXT_CONTACT_EMAIL_FROM.
     // `from` debe ser un dominio verificado en Resend; si no, el envío es
     // rechazado.

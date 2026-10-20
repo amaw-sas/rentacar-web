@@ -8,8 +8,8 @@ import { POLICY_VERSION, OPINION_CONSENT_TEXT } from '../../app/utils/policy'
 /**
  * Recepción de los formularios públicos y envío por correo al buzón del
  * operador. En alquilatucarro hoy sólo lo usan las calificaciones bajas de
- * /opinion, que además se radican en el tablero (ver «Radicación de la
- * calificación» abajo); el resto de tipos que valida `contact-forms.ts` (quejas, flota,
+ * /opinion, que se radican en el tablero y no mandan correo (ver «Radicación de
+ * la calificación» abajo); el resto de tipos que valida `contact-forms.ts` (quejas, flota,
  * referidos) existen porque el archivo comparte la forma con el de alquilame salvo
  * los campos de PQRS, y las dos copias deben poder moverse juntas.
  *
@@ -21,9 +21,9 @@ import { POLICY_VERSION, OPINION_CONSENT_TEXT } from '../../app/utils/policy'
  * que "parece" enviar pero se traga los mensajes es peor que uno que falla
  * visiblemente — el operador perdería clientes sin enterarse.
  *
- * Excepción, las calificaciones bajas (`resenas`): se radican primero en el tablero, y
- * una vez radicadas el correo es secundario — si falta su configuración o Resend
- * falla, queda en el log y la respuesta sigue siendo `{ ok: true }`.
+ * Excepción, las calificaciones bajas (`resenas`): no mandan correo. Se radican en el
+ * tablero, que es su único destino (SCEN-12501, 20-oct-2026), y no dependen de la
+ * configuración de Resend.
  */
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 const SEND_TIMEOUT_MS = 10_000
@@ -198,12 +198,10 @@ export default defineEventHandler(async (event) => {
 
   // ── Radicación de la calificación en el tablero, solo para `resenas` ──
   //
-  // Va DESPUÉS de tamaño, honeypot, tope y validación, y ANTES del gate de Resend: con
-  // ese gate delante, una variable de correo ausente impediría radicar, y el correo
-  // nunca podría apagarse limpio. El tablero es la fuente de verdad: si falla, no sale
-  // correo (un correo de «todo bien» sobre un registro perdido es el fallo que PQRS ya
-  // rechazó) y el visitante ve el error con lo que escribió intacto.
-  let ratingFiled = false
+  // Va DESPUÉS de tamaño, honeypot, tope y validación, y ANTES del gate de Resend: una
+  // calificación no manda correo, así que una variable de correo ausente no puede
+  // impedir radicarla. El tablero es su único destino (SCEN-12501): si falla, el
+  // visitante ve el error con lo que escribió intacto; si radica, se responde ahí.
   if (body.type === 'resenas') {
     const rating = parseRating(body.estrellas)
     if (rating === undefined) {
@@ -220,7 +218,7 @@ export default defineEventHandler(async (event) => {
     const adminUrl = (config.rentacarAdminUrl as string | undefined)?.trim().replace(/\/+$/, '')
     const pqrsKey = config.pqrsApiKey as string | undefined
     if (!adminUrl || !pqrsKey) {
-      // Fail-closed y ruidoso: nunca quedarse en silencio con solo el correo.
+      // Fail-closed y ruidoso: sin tablero la calificación no tiene adónde ir.
       // `pqrsApiKey` tiene que estar declarada en runtimeConfig o Nuxt ignora la
       // variable de entorno (nuxt.config.ts lo explica junto a `pqrsApiKey`).
       const missing = [
@@ -313,13 +311,10 @@ export default defineEventHandler(async (event) => {
       )
       throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
     }
-    ratingFiled = true
+    // Radicada: el correo de `resenas` está apagado (SCEN-12501). Nada de Resend.
+    return { ok: true }
   }
 
-  // Desde aquí, si la calificación ya quedó en el tablero, el correo es secundario: su
-  // fallo se registra pero la respuesta sigue siendo `{ ok: true }` — decirle al
-  // cliente que falló sería falso e invitaría a un duplicado. Para los demás tipos
-  // nada cambia. Apagar el correo de `resenas` tras el corte es borrar su envío.
   if (!apiKey || !to || !from) {
     logger.error(
       'contact-config',
@@ -328,7 +323,6 @@ export default defineEventHandler(async (event) => {
       ),
       { hasApiKey: Boolean(apiKey), hasTo: Boolean(to), hasFrom: Boolean(from) },
     )
-    if (ratingFiled) return { ok: true }
     throw createError({ statusCode: 500, statusMessage: GENERIC_FAILURE })
   }
 
@@ -352,7 +346,7 @@ export default defineEventHandler(async (event) => {
     // Sin este log la queja se pierde SIN RASTRO: el cliente ve un mensaje
     // genérico y en el servidor no queda nada que explique por qué falló.
     logger.error('contact-send', error, { type: (body as ContactFormPayload)?.type })
-    if (!ratingFiled) throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
+    throw createError({ statusCode: 502, statusMessage: GENERIC_FAILURE })
   }
 
   return { ok: true }
