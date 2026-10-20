@@ -86,7 +86,7 @@
         <span>En <span class="text-yellow-400 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-yellow-400 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
-      <LazyCopyQuotePanel v-if="isAdvisor" :rows="renderableCategories" />
+      <LazyCopyQuotePanel v-if="advisor" :rows="renderableCategories" :advisor-name="advisor.name" />
     </template>
   </div>
   <!-- Keep the same indexed wrappers from SSR loading through loaded cards.
@@ -277,7 +277,7 @@ import {
 } from "#components";
 
 /** utils */
-import { allRenderableBeyondHorizon, preloadPhoneField } from "@rentacar-main/logic/utils";
+import { allRenderableBeyondHorizon, preloadPhoneField, buildReservationShareUrl } from "@rentacar-main/logic/utils";
 
 const props = withDefaults(defineProps<{
   placeholderCount?: number;
@@ -292,7 +292,7 @@ const props = withDefaults(defineProps<{
 /** stores */
 const storeSearch = useStoreSearchData();
 const storeForm = useStoreReservationForm();
-const { isAdvisor } = useAdvisorMode();
+const { advisor } = useAdvisorMode();
 
 /** refs */
 const {
@@ -469,11 +469,13 @@ function getReservationShareUrl() {
   if (vehiculo.value) {
     // Generar URL semántica con /categoria/[codigo], incluyendo el seguro elegido
     // (#1) para que el enlace compartido reproduzca la cobertura, no caiga en Básico.
-    const currentPath = route.path;
-    const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^/]+$/, '');
-    const newPath = `${basePathWithoutCategoria}/categoria/${vehiculo.value.toLowerCase()}`;
-    const suffix = haveTotalInsurance.value ? '?seguro=total' : '';
-    return `${window.location.origin}${newPath}${suffix}`;
+    return buildReservationShareUrl({
+      origin: window.location.origin,
+      path: route.path,
+      vehiculo: vehiculo.value,
+      totalInsurance: haveTotalInsurance.value,
+      advisorCode: advisor.value?.code,
+    });
   }
 
   return window.location.href;

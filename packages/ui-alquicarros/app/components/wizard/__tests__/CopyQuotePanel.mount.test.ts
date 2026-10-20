@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * Montaje real del panel «Copiar cotización» del wizard (solo asesores: StepVehicle
- * lo carga con defineAsyncComponent + v-if="isAdvisor"). useCopyQuote se dobla.
+ * lo carga con defineAsyncComponent + v-if="advisor"). useCopyQuote se dobla.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -79,13 +79,25 @@ describe('wizard CopyQuotePanel — montaje', () => {
 describe('StepVehicle — montaje del panel', () => {
   const step = readFileSync(resolve(process.cwd(), 'app/components/wizard/steps/StepVehicle.vue'), 'utf8')
 
-  it('carga el panel async y solo si isAdvisor (el visitante no lo descarga)', () => {
-    expect(step).toMatch(/<CopyQuotePanel\s+v-if="isAdvisor"\s+:rows="quoteRows"\s*\/>/)
+  it('carga el panel async y solo si hay asesor (el visitante no lo descarga)', () => {
+    expect(step).toMatch(/<CopyQuotePanel\s+v-if="advisor"\s+:rows="quoteRows"\s+:advisor-name="advisor\.name"\s*\/>/)
     expect(step).toMatch(/defineAsyncComponent\(\(\) => import\('\.\.\/CopyQuotePanel\.vue'\)\)/)
-    expect(step).toMatch(/const \{ isAdvisor \} = useAdvisorMode\(\)/)
+    expect(step).toMatch(/const \{ advisor \} = useAdvisorMode\(\)/)
   })
 
   it('construye las filas desde groups y rowByCode', () => {
     expect(step).toMatch(/quoteRowsFromGroups\(groups\.value,\s*rowByCode\.value\)/)
+  })
+})
+
+describe('CopyQuotePanel — nombre del asesor', () => {
+  it('muestra «Asesor: {nombre}» junto al botón', () => {
+    const w = mount(CopyQuotePanel, { props: { rows: [], advisorName: 'Daniela' }, global: { stubs: { UIcon: true } } })
+    expect(w.find('[data-testid="copy-quote-advisor"]').text()).toBe('Asesor: Daniela')
+  })
+
+  it('sin nombre no pinta la etiqueta', () => {
+    const w = mount(CopyQuotePanel, { props: { rows: [] }, global: { stubs: { UIcon: true } } })
+    expect(w.find('[data-testid="copy-quote-advisor"]').exists()).toBe(false)
   })
 })

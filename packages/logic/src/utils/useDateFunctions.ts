@@ -416,6 +416,7 @@ export function isTime24hFormat(timeString: string): boolean {
 }
 
 const QUOTE_WEEKDAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const QUOTE_WEEKDAYS_SHORT = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 const QUOTE_MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 /**
@@ -428,6 +429,17 @@ const QUOTE_MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
  * @returns formatted text, or '' when either input is empty or invalid
  */
 export function formatQuoteDateTime(fecha: string, hora: string): string {
+  return formatQuoteMoment(fecha, hora, QUOTE_WEEKDAYS);
+}
+
+/**
+ * Same as formatQuoteDateTime but with the abbreviated weekday, e.g. "vie 23 oct. 7:30am".
+ */
+export function formatQuoteDateTimeShort(fecha: string, hora: string): string {
+  return formatQuoteMoment(fecha, hora, QUOTE_WEEKDAYS_SHORT);
+}
+
+function formatQuoteMoment(fecha: string, hora: string, weekdays: string[]): string {
   const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha ?? '');
   const t = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(hora ?? '');
   if (!d || !t) return '';
@@ -443,5 +455,5 @@ export function formatQuoteDateTime(fecha: string, hora: string): string {
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
   const suffix = hour24 < 12 ? 'am' : 'pm';
 
-  return `${QUOTE_WEEKDAYS[utc.getUTCDay()]} ${day} ${QUOTE_MONTHS[month - 1]}. ${hour12}:${t[2]}${suffix}`;
+  return `${weekdays[utc.getUTCDay()]} ${day} ${QUOTE_MONTHS[month - 1]}. ${hour12}:${t[2]}${suffix}`;
 }

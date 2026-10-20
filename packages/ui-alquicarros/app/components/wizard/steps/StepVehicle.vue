@@ -13,7 +13,7 @@
       <p class="mt-1 body-base text-gray-500">
         Agrupamos las opciones por tipo. Abre un grupo y elige la gama que prefieras.
       </p>
-      <CopyQuotePanel v-if="isAdvisor" :rows="quoteRows" />
+      <CopyQuotePanel v-if="advisor" :rows="quoteRows" :advisor-name="advisor.name" />
     </header>
 
     <!-- Aviso del wizard (#368 B1). Hermano por ENCIMA de las cuatro ramas de abajo,
@@ -194,7 +194,7 @@ import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
 
 const CopyQuotePanel = defineAsyncComponent(() => import('../CopyQuotePanel.vue'))
 
-const { isAdvisor } = useAdvisorMode()
+const { advisor } = useAdvisorMode()
 
 defineProps<{
   /** Issue #401: el tramo cambió sin re-buscar → sustituye el grid por el aviso. */

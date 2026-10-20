@@ -1,16 +1,16 @@
 import { normalizeReservationCode } from '@rentacar-main/logic/utils'
+import { createIpWindowLimiter } from '../../../utils/ipWindowLimiter'
 import { useSupabaseAdminClient } from '../../../utils/supabase'
 
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX_REQUESTS = 30
 const RATE_LIMIT_MAX_IPS = 10_000
 
-interface RateLimitEntry {
-  count: number
-  resetAt: number
-}
-
-const requestsByIp = new Map<string, RateLimitEntry>()
+const limiter = createIpWindowLimiter({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX_REQUESTS,
+  maxIps: RATE_LIMIT_MAX_IPS,
+})
 
 function getClientIp(event: Parameters<typeof getRequestIP>[0]): string {
   return (
@@ -20,42 +20,9 @@ function getClientIp(event: Parameters<typeof getRequestIP>[0]): string {
   )
 }
 
-function pruneRateLimitEntries(now: number) {
-  for (const [ip, entry] of requestsByIp) {
-    if (entry.resetAt <= now) requestsByIp.delete(ip)
-  }
-
-  if (requestsByIp.size >= RATE_LIMIT_MAX_IPS) {
-    const oldestIp = requestsByIp.keys().next().value
-    if (typeof oldestIp === 'string') requestsByIp.delete(oldestIp)
-  }
-}
-
-function consumeRateLimit(ip: string, now = Date.now()) {
-  const current = requestsByIp.get(ip)
-
-  if (!current || current.resetAt <= now) {
-    pruneRateLimitEntries(now)
-    const entry = { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS }
-    requestsByIp.set(ip, entry)
-    return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - 1, ...entry }
-  }
-
-  if (current.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return { allowed: false, remaining: 0, ...current }
-  }
-
-  current.count += 1
-  return {
-    allowed: true,
-    remaining: RATE_LIMIT_MAX_REQUESTS - current.count,
-    ...current,
-  }
-}
-
 function enforceRateLimit(event: Parameters<typeof getRequestIP>[0]) {
   const now = Date.now()
-  const result = consumeRateLimit(getClientIp(event), now)
+  const result = limiter.consume(getClientIp(event), now)
 
   setResponseHeader(event, 'X-RateLimit-Limit', String(RATE_LIMIT_MAX_REQUESTS))
   setResponseHeader(event, 'X-RateLimit-Remaining', String(result.remaining))

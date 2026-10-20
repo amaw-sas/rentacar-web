@@ -154,7 +154,8 @@ export { pickupTimingIssue } from './helpers/pickupTimingIssue';
 export type { PickupTimingIssue } from './helpers/pickupTimingIssue';
 export { resolveReturnBranch } from './helpers/resolveReturnBranch';
 export type { ReturnBranchResolution } from './helpers/resolveReturnBranch';
-export * from './helpers/buildQuoteText';
+export * from './helpers/quoteText';
+export { withReferido, buildReservationShareUrl } from './referidoPath';
 
 // ============================================================================
 // Type Definitions - Data

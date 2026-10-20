@@ -11,15 +11,14 @@ import useStoreSearchData from '../stores/useStoreSearchData';
 
 // Internal dependencies - utils
 import {
-  buildQuoteText,
+  buildBrandQuoteText,
   canQuoteTotalCoverageFor,
-  formatQuoteDateTime,
   pickPriceForDate,
   sellablePlans,
 } from '@rentacar-main/logic/utils';
 
 // Types
-import type { CategoryAvailabilityData, QuoteTextRow } from '@rentacar-main/logic/utils';
+import type { CategoryAvailabilityData, QuoteFranchise, QuoteTextRow } from '@rentacar-main/logic/utils';
 
 export interface CopyQuoteOptions {
   totalCoverage: boolean;
@@ -29,6 +28,17 @@ export interface CopyQuoteOptions {
 // Mismo marcador que usa la tarjeta para una gama agotada.
 const SOLD_OUT_AMOUNT = 999999999;
 
+const FRANCHISES: readonly QuoteFranchise[] = ['alquilame', 'alquilatucarro', 'alquicarros'];
+
+function resolveFranchise(value: unknown): QuoteFranchise {
+  const found = FRANCHISES.find((f) => f === value);
+  if (!found) {
+    console.warn(`[useCopyQuote] rentacarFranchise missing or unknown (${String(value)}); using the alquilame template.`);
+    return 'alquilame';
+  }
+  return found;
+}
+
 export default function useCopyQuote(
   rows: Ref<CategoryAvailabilityData[]> | ComputedRef<CategoryAvailabilityData[]>,
 ) {
@@ -37,6 +47,7 @@ export default function useCopyQuote(
   const storeForm = useStoreReservationForm();
   const storeSearch = useStoreSearchData();
   const toast = useToast();
+  const franchise = resolveFranchise(useRuntimeConfig().public.rentacarFranchise);
   const { extras } = useFetchRentacarData();
   const {
     haveMonthlyReservation,
@@ -64,6 +75,7 @@ export default function useCopyQuote(
   const buildText = (opts: CopyQuoteOptions): string | null => {
     const monthly = haveMonthlyReservation.value;
     const kept: QuoteTextRow[] = [];
+    let returnFee = false;
     let first: ReturnType<typeof useCategory> | null = null;
 
     for (const row of rows.value) {
@@ -94,9 +106,9 @@ export default function useCopyQuote(
       const price = cat.getActualTotalPrice.value;
       if (!(price > 0)) continue;
 
+      if (cat.hasReturnFee()) returnFee = true;
       first ??= cat;
       kept.push({
-        code: row.categoryCode,
         description: row.categoryDescription,
         price,
         ...(withoutTotalCoverage && { withoutTotalCoverage }),
@@ -109,14 +121,17 @@ export default function useCopyQuote(
     const pickupBranch = selectedPickupLocation.value?.name ?? '';
     const returnBranch = selectedReturnLocation.value?.name ?? pickupBranch;
 
-    return buildQuoteText({
+    return buildBrandQuoteText({
       pickupBranch,
       returnBranch,
-      pickupDateTime: formatQuoteDateTime(fechaRecogida.value ?? '', horaRecogida.value ?? ''),
-      returnDateTime: formatQuoteDateTime(fechaDevolucion.value ?? '', horaDevolucion.value ?? ''),
+      pickupDate: fechaRecogida.value ?? '',
+      pickupTime: horaRecogida.value ?? '',
+      returnDate: fechaDevolucion.value ?? '',
+      returnTime: horaDevolucion.value ?? '',
       days: monthly ? 30 : first.numberDays.value,
       extraHours: monthly ? 0 : (first.extraHoursQuantity.value ?? 0),
       monthly,
+      returnFee,
       totalCoverage: opts.totalCoverage,
       rows: kept,
       babySeat: opts.babySeat
@@ -127,7 +142,7 @@ export default function useCopyQuote(
             monthly,
           }
         : null,
-    });
+    }, franchise);
   };
 
   const copy = async (opts: CopyQuoteOptions): Promise<boolean> => {

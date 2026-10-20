@@ -12,6 +12,7 @@
       :label="copied ? 'Copiada' : 'Copiar cotización'"
       @click="onCopy"
     />
+    <span v-if="advisorName" class="text-sm font-semibold" data-testid="copy-quote-advisor">Asesor: {{ advisorName }}</span>
     <UCheckbox
       v-model="totalCoverage"
       data-testid="copy-quote-total"
@@ -32,7 +33,7 @@
 <script setup lang="ts">
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
 
-const props = defineProps<{ rows: CategoryAvailabilityData[] }>()
+const props = defineProps<{ rows: CategoryAvailabilityData[]; advisorName?: string }>()
 
 const { canCopy, copy } = useCopyQuote(toRef(props, 'rows'))
 

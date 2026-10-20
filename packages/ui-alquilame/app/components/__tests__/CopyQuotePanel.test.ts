@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * Montaje real del panel «Copiar cotización» de alquilame (el panel solo se
- * monta para asesores: el padre lo carga con LazyCopyQuotePanel + v-if="isAdvisor").
+ * monta para asesores: el padre lo carga con LazyCopyQuotePanel + v-if="advisor").
  * useCopyQuote se dobla; UButton/UCheckbox se reducen a controles nativos.
  */
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
@@ -103,8 +103,20 @@ describe('CopyQuotePanel — montaje', () => {
 describe('CategorySelectionSection — montaje del panel', () => {
   const section = readFileSync(resolve(process.cwd(), 'app/components/CategorySelectionSection.vue'), 'utf8')
 
-  it('carga el panel con Lazy y solo si isAdvisor (el visitante no lo descarga)', () => {
-    expect(section).toMatch(/<LazyCopyQuotePanel\s+v-if="isAdvisor"\s+:rows="renderableCategories"\s*\/>/)
-    expect(section).toMatch(/const \{ isAdvisor \} = useAdvisorMode\(\)/)
+  it('carga el panel con Lazy y solo si hay asesor (el visitante no lo descarga)', () => {
+    expect(section).toMatch(/<LazyCopyQuotePanel\s+v-if="advisor"\s+:rows="renderableCategories"\s+:advisor-name="advisor\.name"\s*\/>/)
+    expect(section).toMatch(/const \{ advisor \} = useAdvisorMode\(\)/)
+  })
+})
+
+describe('CopyQuotePanel — nombre del asesor', () => {
+  it('muestra «Asesor: {nombre}» junto al botón', () => {
+    const w = mount(CopyQuotePanel, { props: { rows: [], advisorName: 'Daniela' }, global: { stubs: { UButton, UCheckbox } } })
+    expect(w.find('[data-testid="copy-quote-advisor"]').text()).toBe('Asesor: Daniela')
+  })
+
+  it('sin nombre no pinta la etiqueta', () => {
+    const w = mount(CopyQuotePanel, { props: { rows: [] }, global: { stubs: { UButton, UCheckbox } } })
+    expect(w.find('[data-testid="copy-quote-advisor"]').exists()).toBe(false)
   })
 })

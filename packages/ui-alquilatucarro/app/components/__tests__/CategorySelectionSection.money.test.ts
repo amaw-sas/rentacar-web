@@ -54,12 +54,19 @@ describe('SCEN-322-M04/M05/M06 — Seguro Total en la URL', () => {
     expect(source).toMatch(/params\.set\(['"]seguro['"],\s*['"]total['"]\)/)
   })
 
-  it('getReservationShareUrl incluye ?seguro=total solo con Seguro Total', () => {
-    expect(source).toMatch(/haveTotalInsurance\.value\s*\?\s*['"]\?seguro=total['"]/)
+  it('getReservationShareUrl pasa haveTotalInsurance a buildReservationShareUrl (el sufijo se prueba en logic)', () => {
+    expect(source).toMatch(/totalInsurance:\s*haveTotalInsurance\.value/)
   })
 
   it('al preseleccionar restaura withTotalCoverage desde seguro=total', () => {
     expect(source).toMatch(/readSeguroTotalFromUrl\(\)/)
     expect(source).toMatch(/withTotalCoverage\.value\s*=\s*true/)
+  })
+})
+
+describe('cotización por asesor — enlace compartido con /referido/{code}', () => {
+  // El comportamiento de la URL se prueba en logic (buildReservationShareUrl.test.ts).
+  it('getReservationShareUrl delega en buildReservationShareUrl con el código del asesor', () => {
+    expect(source).toMatch(/buildReservationShareUrl\(\{[\s\S]*?advisorCode:\s*advisor\.value\?\.code[\s\S]*?\}\)/)
   })
 })
