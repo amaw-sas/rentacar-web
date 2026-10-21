@@ -15,6 +15,7 @@
       <UIcon :name="copied ? 'i-lucide-check' : 'i-lucide-clipboard-copy'" class="size-4" />
       {{ copied ? 'Copiada' : 'Copiar cotización' }}
     </button>
+    <span v-if="advisorName" class="body-sm font-semibold text-gray-700" data-testid="copy-quote-advisor">Asesor: {{ advisorName }}</span>
     <label class="inline-flex items-center gap-2 body-sm text-gray-700">
       <input
         v-model="totalCoverage"
@@ -41,7 +42,7 @@ import { onBeforeUnmount, ref, toRef } from 'vue'
 import useCopyQuote from '@rentacar-main/logic/composables/useCopyQuote'
 import type { CategoryAvailabilityData } from '@rentacar-main/logic/utils'
 
-const props = defineProps<{ rows: CategoryAvailabilityData[] }>()
+const props = defineProps<{ rows: CategoryAvailabilityData[]; advisorName?: string }>()
 
 const { canCopy, copy } = useCopyQuote(toRef(props, 'rows'))
 

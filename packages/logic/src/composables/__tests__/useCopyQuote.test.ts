@@ -14,6 +14,7 @@ const h = vi.hoisted(() => ({
   search: null as unknown as Record<string, Ref<unknown>>,
   extras: null as null | { babySeatDayPrice: number | null; babySeatMonthPrice: number | null },
   toast: { add: vi.fn() },
+  franchise: 'alquilame' as string | undefined,
 }))
 
 vi.mock('pinia', async (importOriginal) => {
@@ -43,6 +44,7 @@ vi.mock('../../stores/useStoreSearchData', async () => {
 
 vi.stubGlobal('useFetchRentacarData', () => ({ extras: h.extras }))
 vi.stubGlobal('useToast', () => h.toast)
+vi.stubGlobal('useRuntimeConfig', () => ({ public: { rentacarFranchise: h.franchise } }))
 
 const { default: useCategory } = await import('../useCategory')
 const { default: useCopyQuote } = await import('../useCopyQuote')
@@ -105,6 +107,7 @@ beforeEach(() => {
   h.search.pending.value = false
   h.search.searchOutdated.value = false
   h.extras = null
+  h.franchise = 'alquilame'
   h.toast.add.mockReset()
   writeText = vi.fn().mockResolvedValue(undefined)
   vi.stubGlobal('navigator', { clipboard: { writeText } })
@@ -122,10 +125,9 @@ describe('SCEN-004: gamas agotadas', () => {
       row({ categoryCode: 'G', categoryDescription: 'Camioneta', estimatedTotalAmount: 1_234_000 }),
     ])
     const text = useCopyQuote(rows).buildText(OFF)!
-    expect(text).toContain('C    Económico    $250.000')
-    expect(text).toContain('G    Camioneta    $1.234.000')
+    expect(text).toContain('🚙 Económico — *$250.000 COP*')
+    expect(text).toContain('🚙 Camioneta — *$1.234.000 COP*')
     expect(text).not.toContain('Sedán')
-    expect(text).not.toMatch(/^F\s/m)
     expect(text).not.toContain('999.999.999')
   })
 
@@ -153,9 +155,9 @@ describe('SCEN-006: Seguro Total', () => {
     expect(expected).toBe(315_588)
 
     const text = useCopyQuote(ref([quotable, unquotable])).buildText({ totalCoverage: true, babySeat: false })!
-    expect(text).toContain('C    Económico    $315.588')
-    expect(text).toContain('F    Sedán    $310.000 (sin Seguro Total)')
-    expect(text).toContain('· Con Seguro Total (deducible $0)')
+    expect(text).toContain('🚙 Económico — *$315.588 COP*')
+    expect(text).toContain('🚙 Sedán — *$310.000 COP* (sin Seguro Total)')
+    expect(text).toContain('con Seguro Total')
   })
 
   it('en mensual exige total_insurance_price > 0 en la fila del mes', () => {
@@ -166,8 +168,8 @@ describe('SCEN-006: Seguro Total', () => {
       categoryMonthPrices: [monthRow({ total_insurance_price: 0 })],
     })
     const text = useCopyQuote(ref([withIns, noIns])).buildText({ totalCoverage: true, babySeat: false })!
-    expect(text).toContain('C    Económico mecánico    $3.400.000')
-    expect(text).toContain('F    Económico mecánico    $3.000.000 (sin Seguro Total)')
+    expect(text).toContain('*$3.400.000 COP*')
+    expect(text).toContain('*$3.000.000 COP* (sin Seguro Total)')
   })
 })
 
@@ -179,9 +181,9 @@ describe('SCEN-011: reserva mensual', () => {
   it('una gama que solo vende 2k se cotiza con el plan de 2.000 km', () => {
     const only2k = row({ categoryMonthPrices: [monthRow({ '1k_kms': 0 })] })
     const text = useCopyQuote(ref([only2k])).buildText(OFF)!
-    expect(text).toContain('$3.500.000')
-    expect(text).toContain('· Plan mensual de 2.000 km')
-    expect(text).toContain('*Total: 30 días*')
+    expect(text).toContain('$3.500.000 COP')
+    expect(text).toContain('plan de 2.000 km al mes')
+    expect(text).toContain('30 días')
     expect(text).not.toContain('horas extra')
   })
 
@@ -189,8 +191,8 @@ describe('SCEN-011: reserva mensual', () => {
     const good = row({ categoryCode: 'C', categoryMonthPrices: [monthRow()] })
     const noPrice = row({ categoryCode: 'F', categoryMonthPrices: [], returnFeeAmount: 80_000 })
     const text = useCopyQuote(ref([noPrice, good])).buildText(OFF)!
-    expect(text).toContain('C    Económico mecánico    $3.000.000')
-    expect(text).not.toMatch(/^F\s/m)
+    expect(text).toContain('*$3.000.000 COP*')
+    expect(text.match(/🚙/g)).toHaveLength(1)
     expect(text).not.toContain('$80.000')
   })
 
@@ -199,7 +201,7 @@ describe('SCEN-011: reserva mensual', () => {
       totalCoverage: false,
       babySeat: true,
     })!
-    expect(text).toContain('Silla de bebé: $100.000 el mes, se paga al recoger.')
+    expect(text).toContain('Silla de bebé: $100.000 COP el mes, se paga al recoger.')
   })
 })
 
@@ -207,18 +209,18 @@ describe('SCEN-007: silla de bebé aparte', () => {
   it('no cambia las líneas de precio y agrega la línea de la silla', () => {
     const rows = ref([row({ categoryCode: 'C', categoryDescription: 'Económico' })])
     const q = useCopyQuote(rows)
-    const priceLines = (t: string) => t.split('\n').filter((l) => l.startsWith('C    '))
+    const priceLines = (t: string) => t.split('\n').filter((l) => l.startsWith('🚙'))
     const off = q.buildText(OFF)!
     const on = q.buildText({ totalCoverage: false, babySeat: true })!
     expect(priceLines(on)).toEqual(priceLines(off))
-    expect(on).toContain('Silla de bebé: $24.000 (2 días × $12.000), se paga al recoger.')
+    expect(on).toContain('Silla de bebé: $24.000 COP (2 días × $12.000 COP), se paga al recoger.')
     expect(off).not.toContain('Silla de bebé')
   })
 
   it('usa el diario de extras cuando existe', () => {
     h.extras = { babySeatDayPrice: 15_000, babySeatMonthPrice: null }
     const text = useCopyQuote(ref([row()])).buildText({ totalCoverage: false, babySeat: true })!
-    expect(text).toContain('Silla de bebé: $30.000 (2 días × $15.000), se paga al recoger.')
+    expect(text).toContain('Silla de bebé: $30.000 COP (2 días × $15.000 COP), se paga al recoger.')
   })
 })
 
@@ -310,10 +312,61 @@ describe('SCEN-005: otra sede y horas extra', () => {
     h.form.selectedReturnLocation.value = { name: 'Cali Centro' }
     const r = row({ extraHoursQuantity: 3, extraHoursTotalAmount: 30_000, returnFeeAmount: 50_000, estimatedTotalAmount: 300_000 })
     const text = useCopyQuote(ref([r])).buildText(OFF)!
-    expect(text).toContain('*Entregas:*\nCali Centro')
-    expect(text).toContain('*Total: 2 días y 3 horas extra*')
-    expect(text).toContain('· Recoge en Cali Aeropuerto, entrega en Cali Centro')
-    expect(text).toContain('Cada precio incluye las horas extra.')
-    expect(text).toContain('$300.000')
+    expect(text).toContain('Cali Centro')
+    expect(text).toContain('2 días y 3 horas extra')
+    expect(text).toContain('la entrega en otra sede')
+    expect(text).toContain('$300.000 COP')
+  })
+  it('sin cargo por devolver en otra sede, el texto no lo menciona aunque la sede cambie', () => {
+    h.form.selectedReturnLocation.value = { name: 'Cali Centro' }
+    const text = useCopyQuote(ref([row({ returnFeeAmount: 0 })])).buildText(OFF)!
+    expect(text).toContain('Cali Centro')
+    expect(text).not.toContain('otra sede')
+  })
+})
+
+describe('plantilla por marca (SCEN-014)', () => {
+  it.each([
+    ['alquilame', 'Alquilame'],
+    ['alquilatucarro', 'Alquilatucarro'],
+    ['alquicarros', 'Alquicarros'],
+  ])('usa la plantilla de %s', (franchise, name) => {
+    h.franchise = franchise
+    const text = useCopyQuote(ref([row()])).buildText(OFF)!
+    expect(text).toContain(name)
+  })
+
+  it('franquicia ausente o desconocida cae a alquilame', () => {
+    for (const f of [undefined, 'otra']) {
+      h.franchise = f
+      const text = useCopyQuote(ref([row()])).buildText(OFF)!
+      expect(text).toContain('Esta es tu cotización en Alquilame')
+    }
+  })
+
+  it('franquicia ausente o desconocida avisa con console.warn una vez; una válida no avisa', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      for (const f of [undefined, 'otra']) {
+        warn.mockClear()
+        h.franchise = f
+        const q = useCopyQuote(ref([row()]))
+        q.buildText(OFF)
+        q.buildText(OFF)
+        expect(warn).toHaveBeenCalledTimes(1)
+        expect(String(warn.mock.calls[0]![0])).toContain('rentacarFranchise')
+      }
+      warn.mockClear()
+      h.franchise = 'alquicarros'
+      useCopyQuote(ref([row()])).buildText(OFF)
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  it('el código de la gama no aparece en el texto', () => {
+    const text = useCopyQuote(ref([row({ categoryCode: 'ZZQ' })])).buildText(OFF)!
+    expect(text).not.toContain('ZZQ')
   })
 })

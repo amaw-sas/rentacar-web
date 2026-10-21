@@ -80,7 +80,7 @@
         <span>En <span class="text-brand-600 font-semibold">{{ pickupBranchName }}</span> para el <span class="text-brand-600 font-semibold">{{ humanFormattedPickupDateShort }}</span>.</span>
         <span class="block md:inline"> ¡No te quedes sin el tuyo, Reserva ahora!</span>
       </div>
-      <LazyCopyQuotePanel v-if="isAdvisor" :rows="renderableCategories" />
+      <LazyCopyQuotePanel v-if="advisor" :rows="renderableCategories" :advisor-name="advisor.name" />
     </div>
     <div v-if="!awaitingSearch" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       <!-- Iterate renderableCategories so iteration === render and the
@@ -242,14 +242,14 @@ import {
 } from "#components";
 
 /** utils */
-import { allRenderableBeyondHorizon, preloadPhoneField } from "@rentacar-main/logic/utils";
+import { allRenderableBeyondHorizon, preloadPhoneField, buildReservationShareUrl } from "@rentacar-main/logic/utils";
 
 // Note: composables and functions are auto-imported by Nuxt
 
 /** stores */
 const storeSearch = useStoreSearchData();
 const storeForm = useStoreReservationForm();
-const { isAdvisor } = useAdvisorMode();
+const { advisor } = useAdvisorMode();
 
 /** refs */
 const {
@@ -398,11 +398,13 @@ function getReservationShareUrl() {
   if (vehiculo.value) {
     // Generar URL semántica con /categoria/[codigo], incluyendo el seguro elegido
     // (issue 322 SCEN-322-M04) para que el enlace compartido reproduzca la cobertura.
-    const currentPath = route.path;
-    const basePathWithoutCategoria = currentPath.replace(/\/categoria\/[^/]+$/, '');
-    const newPath = `${basePathWithoutCategoria}/categoria/${vehiculo.value.toLowerCase()}`;
-    const suffix = haveTotalInsurance.value ? '?seguro=total' : '';
-    return `${window.location.origin}${newPath}${suffix}`;
+    return buildReservationShareUrl({
+      origin: window.location.origin,
+      path: route.path,
+      vehiculo: vehiculo.value,
+      totalInsurance: haveTotalInsurance.value,
+      advisorCode: advisor.value?.code,
+    });
   }
 
   return window.location.href;

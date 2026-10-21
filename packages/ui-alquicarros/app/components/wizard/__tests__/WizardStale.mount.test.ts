@@ -270,7 +270,8 @@ describe('StepVehicle rancio (#401) — el aviso gana a "Sin vehículos" y al er
       fechaRecogida: ref('2026-08-01'),
     }))
     vi.stubGlobal('useFetchRentacarData', () => ({ vehicleCategories: {} }))
-    // StepVehicle llama useAdvisorMode() (lee ?asesor de la ruta)
+    // StepVehicle llama useAdvisorMode() (lee ?asesor de la ruta; captura useToast)
+    vi.stubGlobal('useToast', () => ({ add: vi.fn() }))
     vi.stubGlobal('useRoute', () => ({ query: {} }))
     vi.stubGlobal('useRouter', () => ({ replace: vi.fn() }))
     vi.stubGlobal('useMoneyFormat', () => ({ moneyFormat: (n: number) => money(n) }))

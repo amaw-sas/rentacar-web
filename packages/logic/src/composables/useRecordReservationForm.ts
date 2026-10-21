@@ -16,6 +16,7 @@ import {
   IVA_PERCENTAGE,
   trackAnalyticsEvent,
 } from '@rentacar-main/logic/utils';
+import { readStoredAdvisor } from '../utils/advisor/advisorStorage';
 import { RECORD_FETCH_TIMEOUT_MS } from '../utils/fetchTimeouts';
 
 // Types
@@ -114,7 +115,11 @@ export default async function useRecordReservationForm() {
     flight: 0,
   };
 
-  if (referido.value) partialData["user"] = referido.value;
+  // Reservation owner: the stored advisor code wins over the route referido
+  // (SCEN-013); without an advisor the route referido applies, else key absent.
+  // Assigned before both branches so the `...partialData` spread keeps it.
+  const userCode = readStoredAdvisor()?.code || referido.value;
+  if (userCode) partialData["user"] = userCode;
 
   // Bot conversation id (`?chat=` on the bot's link): the dashboard opens that
   // conversation from the reservation. Store first, storage fallback for a store
@@ -168,7 +173,6 @@ export default async function useRecordReservationForm() {
       total_price,
       total_price_to_pay,
       monthly_mileage: selectedMonthlyMileage.value,
-      //TODO add user field
     };
   }
   // reserva regular
@@ -197,7 +201,6 @@ export default async function useRecordReservationForm() {
       iva_fee: Math.round(selectedCategory.value?.getIVAFeePrice ?? 0),
       total_price,
       total_price_to_pay,
-      //TODO add user field
     };
   }
 
