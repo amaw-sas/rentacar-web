@@ -76,6 +76,17 @@ describe('SCEN-BC-01: the bar sits flush with the bottom edge, full width', () =
   })
 })
 
+describe('SCEN-BC-02: on desktop the bar becomes pills at bottom 1.5rem', () => {
+  it('md+ anchors the row bottom-right at 1.5rem, not full width', () => {
+    const media = SRC.slice(SRC.indexOf('@media (min-width: 768px) {'))
+    expect(SRC).toContain('@media (min-width: 768px) {')
+    const rule = media.match(/\.contact-bar \{[^}]*\}/)?.[0] ?? ''
+    expect(rule).toMatch(/bottom: 1\.5rem;/)
+    expect(rule).toMatch(/right: 1\.5rem;/)
+    expect(rule).toMatch(/left: auto;/)
+  })
+})
+
 // Unchanged until step 6 (SCEN-BC-08) swaps it for the bar height.
 describe('SCEN-FAB4: footer clearance on mobile', () => {
   it('reserves bottom space on mobile without changing desktop spacing', () => {

@@ -440,12 +440,42 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* --- Burbuja de saludo proactiva (teaser) ---
-   Por ahora a la derecha, encima de la barra. */
+   Por ahora a la derecha, encima de la barra (o de las píldoras en escritorio). */
 .teaser-anchor {
   position: absolute;
   right: 1rem;
   bottom: calc(64px + env(safe-area-inset-bottom) + 0.75rem);
   pointer-events: none;
+}
+
+/* --- Escritorio (≥ 768 px): sin barra, tres píldoras en fila abajo a la
+   derecha, mismo orden y colores; icono a la izquierda del texto. La fila queda
+   en bottom 1.5rem y cada píldora mide 44 px, así que FAB_STACK_BOTTOM_PX = 24
+   de chatPanelLift sigue siendo cierto y el fallback del panel es 5rem. --- */
+@media (min-width: 768px) {
+  .contact-bar {
+    left: auto;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    height: auto;
+    gap: 0.75rem;
+    box-shadow: none;
+  }
+  .bar-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    height: 44px;
+    padding: 0 1.25rem;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.18), 0 4px 6px -4px rgba(0, 0, 0, 0.12);
+    font-size: 0.9375rem;
+  }
+  .bar-item:focus-visible { outline: 3px solid #111827; outline-offset: 2px; }
+  .teaser-anchor {
+    right: 1.5rem;
+    bottom: calc(1.5rem + 44px + 0.75rem);
+  }
 }
 .teaser-slot {
   position: relative;
@@ -510,8 +540,8 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 /* --- Panel inline (desktop) ---
-   `--panel-lift` lo escribe el widget midiendo la barra; el fallback de
-   5.75rem (56 + 24 + 12 px) cubre SSR y el primer frame. El alto cede al espacio
+   `--panel-lift` lo escribe el widget midiendo la fila de píldoras; el fallback
+   de 5rem (píldora 44 + 24 + 12 px) cubre SSR y el primer frame. El alto cede al espacio
    disponible antes que desbordar por arriba: el tope de 52rem solo llega a
    aplicar con ventanas de 940 px o más, así que en portátiles de 13" y 14"
    manda siempre el espacio libre y el alto no cambia. El ancho topa en 34rem
@@ -520,10 +550,10 @@ button { -webkit-tap-highlight-color: transparent; }
    más ancho solo añade margen vacío. */
 .chat-panel {
   position: absolute;
-  bottom: var(--panel-lift, 5.75rem);
+  bottom: var(--panel-lift, 5rem);
   right: 1.5rem;
   width: min(34rem, calc(100vw - 2rem));
-  height: min(52rem, calc(100dvh - var(--panel-lift, 5.75rem) - 1.5rem));
+  height: min(52rem, calc(100dvh - var(--panel-lift, 5rem) - 1.5rem));
   border-radius: 1rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
   overflow: hidden;

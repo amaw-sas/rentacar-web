@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent, type Ref } from 'vue'
 import { useCallPhone } from '@rentacar-main/logic/composables/useCallPhone'
+import { chatPanelLiftPx } from '@rentacar-main/logic/utils/chatPanelLift'
 import ChatWidget from '../ChatWidget.vue'
 
 // The panel body is irrelevant here; avoid loading the real conversation graph.
@@ -393,7 +394,17 @@ describe('unread badge on Chat IA', () => {
   })
 })
 
-describe('desktop panel stays reachable from Chat IA (step 4 restyles it)', () => {
+describe('SCEN-BC-02 — desktop renders the same three channels, in order', () => {
+  it('same <nav>, same order; the pill layout is CSS only (no viewport branch in the markup)', async () => {
+    stubMatchMedia(true)
+    await mountWidget()
+    expect(document.body.querySelectorAll('nav[aria-label="Contacto"]')).toHaveLength(1)
+    expect(items().map(b => b.textContent?.trim())).toEqual(['Chat IA', 'Llamar', 'WhatsApp'])
+    expect(callLink()!.getAttribute('href')).toBe('tel:+573002436677')
+  })
+})
+
+describe('SCEN-BC-05 (desktop) / SCEN-BC-13 — Chat IA opens the inline panel, closing returns focus', () => {
   it('opens the panel lifted by the measured bar height + 36px, measured synchronously', async () => {
     stubMatchMedia(true)
     // jsdom has no ResizeObserver: the lift can only come from the synchronous
@@ -420,6 +431,14 @@ describe('desktop panel stays reachable from Chat IA (step 4 restyles it)', () =
     expect(document.activeElement).toBe(chatButton())
   })
 
+  it('background inert is the panel only: the pills alone never inert the page', async () => {
+    stubMatchMedia(true)
+    await mountWidget()
+    expect(document.getElementById('__nuxt')!.hasAttribute('inert')).toBe(false)
+    await click(callLink())
+    expect(document.getElementById('__nuxt')!.hasAttribute('inert')).toBe(false)
+  })
+
   it('Chat IA toggles the open panel closed', async () => {
     stubMatchMedia(true)
     await mountWidget()
@@ -433,6 +452,60 @@ describe('desktop panel stays reachable from Chat IA (step 4 restyles it)', () =
 
 describe('source-level wiring a mount cannot observe', () => {
   const source = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../ChatWidget.vue'), 'utf8')
+  // Body of the first `@media (min-width: 768px)` block (balanced braces).
+  const desktopCss = (() => {
+    const start = source.indexOf('@media (min-width: 768px) {')
+    if (start === -1) return ''
+    let depth = 0
+    for (let i = source.indexOf('{', start); i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}' && --depth === 0) return source.slice(start, i + 1)
+    }
+    return ''
+  })()
+  const desktopRule = (sel: string) =>
+    desktopCss.match(new RegExp(`${sel.replace(/[.]/g, '\\.')} \\{[^}]*\\}`))?.[0] ?? ''
+  const template = source.slice(0, source.indexOf('<script setup'))
+
+  it('SCEN-BC-02: md+ turns the bar into a bottom-right row of pills (no full-width bar)', () => {
+    expect(desktopCss, '@media (min-width: 768px) block').not.toBe('')
+    const nav = desktopRule('.contact-bar')
+    expect(nav).toMatch(/left: auto;/)
+    expect(nav).toMatch(/right: 1\.5rem;/)
+    expect(nav).toMatch(/bottom: 1\.5rem;/)
+    expect(nav).toMatch(/height: auto;/)
+    expect(nav).toMatch(/gap: 0\.75rem;/)
+    expect(nav).toMatch(/box-shadow: none;/)
+  })
+
+  it('SCEN-BC-02: each pill is a 44px rounded row, icon left of the label, own shadow', () => {
+    const pill = desktopRule('.bar-item')
+    expect(pill).toMatch(/flex: 0 0 auto;/)
+    expect(pill).toMatch(/flex-direction: row;/)
+    expect(pill).toMatch(/height: 44px;/)
+    expect(pill).toMatch(/padding: 0 1\.25rem;/)
+    expect(pill).toMatch(/gap: 0\.5rem;/)
+    expect(pill).toMatch(/border-radius: 9999px;/)
+    expect(pill).toMatch(/box-shadow: /)
+    expect(pill).toMatch(/font-size: 0\.9375rem;/)
+  })
+
+  it('SCEN-BC-02: the layout switch is CSS, never a viewport branch in the template', () => {
+    expect(template).not.toContain('isDesktop')
+  })
+
+  it('panel fallback is the pill row: 44 + 24 + 12 = 80px = 5rem, in bottom and height', () => {
+    expect(chatPanelLiftPx(44)).toBe(80)
+    expect(source).toContain('bottom: var(--panel-lift, 5rem);')
+    expect(source).toContain('height: min(52rem, calc(100dvh - var(--panel-lift, 5rem) - 1.5rem));')
+    expect(source).not.toContain('5.75rem')
+  })
+
+  it('provisional teaser sits above the pills on desktop, never over them', () => {
+    const anchor = desktopRule('.teaser-anchor')
+    expect(anchor).toMatch(/right: 1\.5rem;/)
+    expect(anchor).toMatch(/bottom: calc\(1\.5rem \+ 44px \+ 0\.75rem\);/)
+  })
   const theme = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../assets/css/theme.css'), 'utf8')
 
   it('SCEN-BC-01: the three tokens exist with the measured-contrast hexes', () => {
@@ -478,6 +551,16 @@ describe('source-level wiring a mount cannot observe', () => {
     expect(nav).toMatch(/right: 0;/)
   })
 
+  // SCEN-BC-13: Escape, backdrop and the panel «×» all go through closeAll,
+  // whose focus return to Chat IA is mount-tested through the backdrop above.
+  // The «×» is wired here at source level: the panel body is an async
+  // component and this harness cannot settle its real import across tests.
+  it('SCEN-BC-13: the panel «×» (ChatConversation dismiss) runs closeAll', () => {
+    expect(source).toMatch(/<ChatConversation [^>]*@dismiss="closeAll"/)
+    expect(source).toMatch(/function closeAll\(\) \{\s*if \(!panelOpen\.value\) return\s*closePanel\(\)\s*chatButtonEl\.value\?\.focus\(\{ preventScroll: true \}\)\s*\}/)
+    expect(source).toMatch(/<button\s+v-if="chatEnabled"\s+ref="chatButtonEl"/)
+  })
+
   it('Escape runs closeAll from the window keydown listener', () => {
     expect(source).toMatch(/function onKeydown\(e: KeyboardEvent\) \{\s*if \(e\.key === 'Escape'\) closeAll\(\)\s*\}/)
     expect(source).toMatch(/window\.addEventListener\('keydown', onKeydown\)/)
@@ -503,8 +586,12 @@ describe('source-level wiring a mount cannot observe', () => {
   })
 
   it('panel bottom derives from the measured --panel-lift, never a fixed rem', () => {
-    expect(source).toMatch(/bottom: var\(--panel-lift, \d+(\.\d+)?rem\);/)
-    expect(source).not.toMatch(/^\s*bottom: \d+(\.\d+)?rem;$/m)
+    // Scoped to the panel rule: the desktop pill row legitimately sits at
+    // `bottom: 1.5rem`, which is what the panel's lift arithmetic assumes.
+    const panelRule = source.match(/\.chat-panel \{[^}]*\}/)?.[0] ?? ''
+    expect(panelRule).toMatch(/bottom: var\(--panel-lift, \d+(\.\d+)?rem\);/)
+    expect(panelRule).not.toMatch(/^\s*bottom: \d+(\.\d+)?rem;$/m)
+    expect(source.match(/bottom: var\(--panel-lift/g)).toHaveLength(1)
   })
 
   it('panel keeps the 52rem ceiling that yields to the available height', () => {
