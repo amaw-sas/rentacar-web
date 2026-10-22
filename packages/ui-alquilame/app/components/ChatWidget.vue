@@ -240,16 +240,23 @@ const hideContactButtons = computed(() => reservationOverlayOpen.value)
 // Mientras una capa modal de reka está abierta pone `body { pointer-events:
 // none }` (la página de fuera queda inerte): la superficie se aparta igual.
 // Las capas no modales (popover) no lo hacen y no la ocultan.
+// Exige además una capa real en el DOM: reka 2.6.0 a veces deja ese `none`
+// pegado sin ninguna capa abierta (issues #25/#65), y en esa página muerta la
+// barra es la única salida. Nuxt UI porta cada capa directo a <body>, así que
+// basta con mirar sus hijos directos (sin subtree) para notar que se fue la
+// última.
 const modalLayerOpen = ref(false)
 let bodyObserver: MutationObserver | null = null
 function syncModalLayer() {
-  modalLayerOpen.value = document.body.style.pointerEvents === 'none'
+  modalLayerOpen.value =
+    document.body.style.pointerEvents === 'none'
+    && document.querySelector('[data-dismissable-layer]') !== null
 }
 onMounted(() => {
   if (typeof MutationObserver === 'undefined') return
   syncModalLayer()
   bodyObserver = new MutationObserver(syncModalLayer)
-  bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['style'] })
+  bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['style'], childList: true })
 })
 onBeforeUnmount(() => bodyObserver?.disconnect())
 
@@ -352,11 +359,14 @@ watch(
 // A focus revalidation can turn the switch OFF while the panel is open. Close
 // it locally so ChatConversation (and its typing indicator) immediately unmounts.
 // Chat IA desaparece con el switch, así que si el foco estaba dentro del panel
-// pasa a Llamar antes de cerrar, en vez de caer a <body>.
+// o en el propio Chat IA pasa a Llamar antes de cerrar, en vez de caer a <body>.
 watch(chatEnabled, (enabled) => {
   if (enabled) return
-  if (typeof document !== 'undefined' && panelEl.value?.contains(document.activeElement)) {
-    callLinkEl.value?.focus({ preventScroll: true })
+  if (typeof document !== 'undefined') {
+    const active = document.activeElement
+    if (panelEl.value?.contains(active) || chatButtonEl.value === active) {
+      callLinkEl.value?.focus({ preventScroll: true })
+    }
   }
   panelOpen.value = false
 })

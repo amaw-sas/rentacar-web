@@ -24,6 +24,11 @@ Herramientas: navegador embebido de Orca (390 px y escritorio) y Playwright Chro
 | SCEN-BC-16 primera pintura | ✅ | CLS portada móvil 0 (producción 0,053 por el FAB viejo); `/reservas` 0,029 (producción 0,087), el resto es la animación del botón de búsqueda, igual en ambos |
 | SCEN-BC-17 créditos del pie | ✅ | crédito termina en y 690, píldoras empiezan en 732, sin solape |
 
+Re-QA tras la revisión pre-PR (preview `rentacar-web-alquilame-hxyiljx7n`, con `origin/main`
+fusionado): todos los resultados de arriba se repiten iguales. Caso nuevo: `<body>` con
+`pointer-events: none` colgado y sin ninguna capa reka → la barra sigue visible y el toque
+en Llamar cae en `tel:+573002436677` (la barra sigue siendo la salida de una página bloqueada).
+
 Nota: en el navegador embebido de Orca las animaciones de cierre de los slideovers de
 Nuxt UI no terminan (el `<body>` queda con `pointer-events: none`). Pasa igual en
 producción, así que es del entorno; en Chromium (Playwright) cierran y la barra vuelve.

@@ -647,18 +647,31 @@ describe('SCEN-BC-15 — Llamar and WhatsApp clicks are attributed to the fab', 
 // modal reka layer is open it sets `body { pointer-events: none }` — the page
 // outside it is inert, and the contact surface follows it out of the way.
 describe('SCEN-BC-14 — the surface steps aside while a modal slideover/modal is open', () => {
+  // What a modal reka layer leaves in the DOM: its root carries
+  // `data-dismissable-layer` (reka-ui 2.6.0 DismissableLayer) and Nuxt UI
+  // portals it straight into <body>, next to our own teleported layer.
+  function openModalLayer() {
+    const layer = document.createElement('div')
+    layer.setAttribute('role', 'dialog')
+    layer.setAttribute('data-dismissable-layer', '')
+    document.body.appendChild(layer)
+    document.body.style.pointerEvents = 'none'
+    return layer
+  }
   afterEach(() => {
     document.body.style.pointerEvents = ''
+    document.querySelectorAll('[data-dismissable-layer]').forEach(el => el.remove())
   })
 
-  it('hides the bar and greeting while body pointer-events is none, and returns after', async () => {
+  it('hides the bar and greeting while a modal layer is open, and returns after it closes', async () => {
     h.teaserVisible.value = true
     await mountWidget()
     expect(bar()).not.toBeNull()
-    document.body.style.pointerEvents = 'none'
+    const layer = openModalLayer()
     await settle()
     expect(bar()).toBeNull()
     expect(q('.teaser-slot')).toBeNull()
+    layer.remove()
     document.body.style.pointerEvents = ''
     await settle()
     expect(bar()).not.toBeNull()
@@ -666,9 +679,44 @@ describe('SCEN-BC-14 — the surface steps aside while a modal slideover/modal i
   })
 
   it('a modal already open at mount keeps the surface hidden from the first paint', async () => {
-    document.body.style.pointerEvents = 'none'
+    openModalLayer()
     await mountWidget()
     expect(bar()).toBeNull()
+  })
+
+  // reka 2.6.0 can leave `body { pointer-events: none }` behind with no layer
+  // open (issues #25/#65). The bar is then the page's only way out; never hide it.
+  it('stale lock: pointer-events none with no layer in the DOM keeps the bar visible', async () => {
+    document.body.style.pointerEvents = 'none'
+    await mountWidget()
+    expect(bar()).not.toBeNull()
+  })
+
+  it('stale lock left behind: the last layer unmounts while the style stays none → the bar comes back', async () => {
+    await mountWidget()
+    const layer = openModalLayer()
+    await settle()
+    expect(bar()).toBeNull()
+    layer.remove()
+    // body style untouched: still 'none', as reka leaves it in the stuck case.
+    expect(document.body.style.pointerEvents).toBe('none')
+    await settle()
+    expect(bar()).not.toBeNull()
+  })
+
+  it('watches only <body> itself: its style and its direct children, never the subtree', async () => {
+    const observe = vi.spyOn(MutationObserver.prototype, 'observe')
+    const disconnect = vi.spyOn(MutationObserver.prototype, 'disconnect')
+    await mountWidget()
+    const call = observe.mock.calls.find(([target]) => target === document.body)
+    expect(call, 'observer on <body>').toBeDefined()
+    expect(call![1]).toEqual({ attributes: true, attributeFilter: ['style'], childList: true })
+    const before = disconnect.mock.calls.length
+    wrapper!.unmount()
+    wrapper = null
+    expect(disconnect.mock.calls.length).toBeGreaterThan(before)
+    observe.mockRestore()
+    disconnect.mockRestore()
   })
 
   it('an open desktop chat panel is not a modal layer: it never hides its own bar', async () => {
@@ -734,6 +782,27 @@ describe('chat switched off while the desktop panel holds focus', () => {
     await click(chatButton())
     panel()!.focus()
     expect(document.activeElement).toBe(panel())
+    h.chatEnabled.value = false
+    await settle()
+    expect(panel()).toBeNull()
+    expect(document.activeElement).toBe(callLink())
+  })
+
+  it('focus on Chat IA itself (panel closed) moves to Llamar when Chat IA disappears', async () => {
+    await mountWidget()
+    chatButton()!.focus()
+    expect(document.activeElement).toBe(chatButton())
+    h.chatEnabled.value = false
+    await settle()
+    expect(chatButton()).toBeNull()
+    expect(document.activeElement).toBe(callLink())
+  })
+
+  it('focus on Chat IA with the desktop panel open also moves to Llamar', async () => {
+    stubMatchMedia(true)
+    await mountWidget()
+    await click(chatButton())
+    chatButton()!.focus()
     h.chatEnabled.value = false
     await settle()
     expect(panel()).toBeNull()
