@@ -1,11 +1,13 @@
 <template>
   <div class="chat-page">
-    <ClientOnly>
-      <ChatConversation variant="page" @dismiss="dismiss" />
-      <template #fallback>
-        <div class="chat-loading">Cargando chat…</div>
-      </template>
-    </ClientOnly>
+    <div class="chat-column">
+      <ClientOnly>
+        <ChatConversation variant="page" @dismiss="dismiss" />
+        <template #fallback>
+          <div class="chat-loading">Cargando chat…</div>
+        </template>
+      </ClientOnly>
+    </div>
   </div>
 </template>
 
@@ -42,13 +44,27 @@ function dismiss() {
 
 <style scoped>
 /* 100dvh: en móvil descuenta las barras del navegador y evita que el input
-   quede tapado. ChatConversation rellena este contenedor (height:100%). */
+   quede tapado. ChatConversation rellena la columna (height:100%).
+   --ui-primary: el servidor quita entry.css fuera de la home y /chat (sin layout)
+   nunca la recupera; sin ella Nuxt UI deja el token vacío y la cabecera, el botón
+   de enviar y las opciones salen transparentes al entrar directo. Valor = brand-600 de theme.css. */
 .chat-page {
   position: fixed;
   inset: 0;
   height: 100dvh;
   background: #fff;
   z-index: 50;
+  --ui-primary: #ef9600;
+}
+.chat-column { height: 100%; }
+/* Escritorio: columna centrada en vez de estirar la conversación a todo el ancho. */
+@media (min-width: 768px) {
+  .chat-page { background: #eef0f2; }
+  .chat-column {
+    max-width: 720px;
+    margin: 0 auto;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 8px 32px rgba(0, 0, 0, 0.08);
+  }
 }
 .chat-loading {
   display: flex;
@@ -58,5 +74,23 @@ function dismiss() {
   color: #6b7280;
   font-family: sans-serif;
   font-size: 0.9rem;
+}
+</style>
+
+<style>
+/* Mismo motivo que --ui-primary: el preflight de Tailwind vive en entry.css, así que
+   al entrar directo la X de cerrar salía con el fondo gris del navegador y los
+   controles en Arial. :where() deja la especificidad en 0 → cualquier regla del
+   chat (fondo del botón enviar, radios) sigue ganando, igual que en el panel. */
+:where(.chat-page) :where(*, ::before, ::after) { box-sizing: border-box; }
+:where(.chat-page) :where(button, input, textarea) {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background-color: transparent;
+  border-radius: 0;
+  border: 0 solid;
+  margin: 0;
+  padding: 0;
 }
 </style>
