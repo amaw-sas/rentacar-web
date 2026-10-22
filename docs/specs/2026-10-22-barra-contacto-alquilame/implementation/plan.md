@@ -168,8 +168,12 @@ Cliente en móvil baja al final → el último enlace legal queda encima de la b
   `pnpm --filter ui-alquicarros build` (cada uno usa `--dotenv ../../.env.prod`;
   si el worktree no tiene ese archivo, ver Prerrequisitos).
 - [ ] Aceptación: 0 fallos, 0 omitidos nuevos; build exit 0 en las 3; `git diff
-  --stat` sin archivos de `ui-alquilatucarro`/`ui-alquicarros` salvo
-  `ChatWidget.shift.test.ts`.
+  --stat` sin archivos de `ui-alquilatucarro`/`ui-alquicarros` salvo las cuatro
+  guardias cruzadas que fijaban el lanzador de alquilame (SCEN-BC-12, ver tabla
+  de `../design.md`): `ChatWidget.shift.test.ts`,
+  `ChatWidget.panel-clearance.test.ts` (ui-alquilatucarro),
+  `ChatWidget.fab-reservation.test.ts` y `ChatWidget.burbuja-mission.test.ts`
+  (ui-alquicarros). Solo cambian tests, nunca el runtime de esas marcas.
 
 ### Paso 8 — QA en navegador real (M) · SCEN-BC-01..13 en runtime, SCEN-BC-11
 

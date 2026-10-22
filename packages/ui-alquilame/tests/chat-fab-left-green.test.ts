@@ -1,10 +1,12 @@
 /**
- * SCEN-FAB1 — one launcher FAB, bottom-right, expanding into the channel menu.
+ * SCEN-BC-01/03/04 — contact bar: Chat IA, Llamar and WhatsApp, no launcher.
  *
- * The launcher (restored 2026-10-06, spec contact-fab-collapse) is the only
- * always-visible button. Chat 24/7 and WhatsApp live in the menu it opens,
- * independently gated by the dashboard, and the whole stack stays anchored to
- * the RIGHT in its normal bottom position. alquilame never had a call action.
+ * Rewritten 2026-10-22 (spec 2026-10-22-barra-contacto-alquilame, owner
+ * decision): the single launcher and its `#contact-fab-menu` are gone. Every
+ * channel is a direct child of `<nav aria-label="Contacto">`. Chat IA and
+ * WhatsApp keep their own dashboard gates; Llamar has none, like «Llámanos» on
+ * alquilatucarro. The mount proof (Llamar visible with chat and WhatsApp off)
+ * lives in app/components/__tests__/ChatWidget.bar.test.ts.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -19,55 +21,64 @@ const LAYOUT = readFileSync(
   'utf-8',
 )
 
-describe('SCEN-FAB1: a single launcher opens the dashboard-gated Chat and WhatsApp menu', () => {
-  it('renders the two channels inside the launcher-controlled menu and no call action', () => {
-    // Invariant kept: only Chat + WhatsApp, each behind its own dashboard gate.
-    expect(SRC).toContain('<li v-if="chatEnabled"')
-    expect(SRC).toContain('<li v-if="whatsappVisible"')
-    expect(SRC).toContain('<span class="fab-label">Chat 24 horas</span>')
-    expect(SRC).toContain('<span class="fab-label">WhatsApp</span>')
-    // Re-pointed: the old "no menu" assertion became "menu is collapsed behind one launcher".
-    expect(SRC).toContain('v-show="menuOpen"')
-    expect(SRC).toContain('id="contact-fab-menu"')
-    expect(SRC).toContain('aria-controls="contact-fab-menu"')
-    // Unchanged: alquilame has no call action.
-    expect(SRC).not.toContain('Llámanos')
-    expect(SRC).not.toContain('fab-call')
+const nav = SRC.slice(SRC.indexOf('<nav'), SRC.indexOf('</nav>'))
+const tagOf = (cls: string) => nav.match(new RegExp(`<(?:a|button)\\b[^>]*class="[^"]*\\b${cls}\\b[^"]*"[^>]*>`))?.[0] ?? ''
+
+describe('SCEN-BC-01: one contact bar, three channels in order, no launcher menu', () => {
+  it('renders the channels inside <nav aria-label="Contacto"> as Chat IA, Llamar, WhatsApp', () => {
+    expect(SRC).toContain('aria-label="Contacto"')
+    const chat = nav.indexOf('bar-chat')
+    const call = nav.indexOf('bar-call')
+    const wa = nav.indexOf('bar-whatsapp')
+    expect(chat).toBeGreaterThan(-1)
+    expect(call).toBeGreaterThan(chat)
+    expect(wa).toBeGreaterThan(call)
+    expect(nav).toContain('<span class="bar-label">Chat IA</span>')
+    expect(nav).toContain('<span class="bar-label">Llamar</span>')
+    expect(nav).toContain('<span class="bar-label">WhatsApp</span>')
+  })
+
+  it('has no launcher, menu or menu state left', () => {
+    expect(SRC).not.toContain('contact-fab-menu')
+    expect(SRC).not.toContain('v-show="menuOpen"')
+    expect(SRC).not.toContain('menuOpen')
   })
 })
 
-describe('SCEN-FAB2: FAB stack anchors bottom-right', () => {
-  it('the stack container uses right-6 and items-end', () => {
-    const stack = SRC.match(/class="contact-fab-stack absolute [^"]*"/)
-    expect(stack, 'FAB stack container class not found').not.toBeNull()
-    expect(stack![0]).toMatch(/\bright-6\b/)
-    expect(stack![0]).toMatch(/\bitems-end\b/)
-    expect(stack![0]).not.toMatch(/\bleft-6\b/)
-    expect(SRC).toContain('class="flex flex-col items-end gap-3 pointer-events-auto"')
+describe('SCEN-BC-03: WhatsApp follows its gate, Llamar has none', () => {
+  it('Chat IA behind chatEnabled, WhatsApp behind whatsappVisible', () => {
+    expect(tagOf('bar-chat')).toMatch(/v-if="chatEnabled"/)
+    expect(tagOf('bar-whatsapp')).toMatch(/v-if="whatsappVisible"/)
   })
 
-  it('uses the normal bottom position without a reservation offset', () => {
-    expect(SRC).toContain('.contact-fab-stack { bottom: 1.5rem; }')
-    expect(SRC).not.toContain('contact-fab-stack--reservation')
-  })
-})
-
-describe('SCEN-FAB3: the whole stack disappears when both channels are OFF', () => {
-  it('gates the stack on either live channel', () => {
-    expect(SRC).toContain('v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"')
+  it('Llamar carries no v-if (SCEN-BC-04: any hour)', () => {
+    const call = tagOf('bar-call')
+    expect(call, 'Llamar anchor not found').not.toBe('')
+    expect(call).not.toMatch(/v-if=/)
+    expect(call).not.toMatch(/v-show=/)
   })
 
-  it('hides the stack on every viewport while the reservation overlay is open', () => {
-    // The slideover footer carries its own WhatsApp CTA; the floating stack used
-    // to hide only on mobile and sat exactly on top of that CTA on desktop.
+  it('the surface only hides with the reservation overlay (SCEN-BC-09)', () => {
+    expect(SRC).toContain('v-if="!hideContactButtons"')
     expect(SRC).toContain('const hideContactButtons = computed(() => reservationOverlayOpen.value)')
-    expect(SRC).not.toContain('!isDesktop.value && reservationOverlayOpen.value')
+    expect(SRC).not.toContain('(chatEnabled || whatsappVisible) && !hideContactButtons')
     expect(SRC).toMatch(/enabled: chatEnabled,[\s\S]*whatsappVisible,[\s\S]*useChatStatus/)
   })
 })
 
+describe('SCEN-BC-01: the bar sits flush with the bottom edge, full width', () => {
+  it('anchors at bottom 0, left 0, right 0 with 64px + safe area', () => {
+    const rule = SRC.match(/\.contact-bar \{[^}]*\}/)?.[0] ?? ''
+    expect(rule).toMatch(/bottom: 0;/)
+    expect(rule).toMatch(/left: 0;/)
+    expect(rule).toMatch(/right: 0;/)
+    expect(rule).toContain('height: calc(64px + env(safe-area-inset-bottom));')
+  })
+})
+
+// Unchanged until step 6 (SCEN-BC-08) swaps it for the bar height.
 describe('SCEN-FAB4: footer clearance on mobile', () => {
-  it('reserves black space for both buttons without changing desktop spacing', () => {
+  it('reserves bottom space on mobile without changing desktop spacing', () => {
     expect(LAYOUT).toContain('pt-10 pb-40 md:py-10')
   })
 })

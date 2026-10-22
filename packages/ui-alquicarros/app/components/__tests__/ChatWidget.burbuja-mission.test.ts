@@ -12,6 +12,13 @@ const brandWidgets = ['ui-alquicarros', 'ui-alquilame', 'ui-alquilatucarro'].map
     ),
   }),
 )
+// SCEN-BC-12 (spec 2026-10-22-barra-contacto-alquilame): alquilame cambió el
+// lanzador por su propia barra de contacto y es fork declarado (SCEN-5a de
+// ChatWidget.shift.test.ts). Lo que fija marcado SOLO del lanzador (menú, filas
+// <li>, pulso) corre sobre las dos marcas que siguen compartiendo widget; sus
+// equivalentes sobre la barra viven en
+// ui-alquilame/app/components/__tests__/ChatWidget.bar.test.ts.
+const launcherWidgets = brandWidgets.filter(({ brand }) => brand !== 'ui-alquilame')
 const teaserSource = readFileSync(
   `${repoRoot}/packages/logic/src/composables/useContactTeaser.ts`,
   'utf8',
@@ -25,7 +32,7 @@ const searchHydratorSource = readFileSync(
 
 describe('Burbuja chat mission E1–E4 — widget integration', () => {
   it('E10 — shared widget behavior; tel: is the declared live-brand extra', () => {
-    for (const { brand, source } of brandWidgets) {
+    for (const { brand, source } of launcherWidgets) {
       expect(source, brand).toContain(
         'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
       )
@@ -37,9 +44,8 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
       expect(source, brand).toContain('id="contact-fab-menu"')
       expect(source, brand).toContain('aria-controls="contact-fab-menu"')
       // 2026-07-27, decisión del dueño: el canal tel: se queda en las marcas
-      // vivas; alquilame es la única sin teléfono.
-      if (brand === 'ui-alquilame') expect(source, brand).not.toContain('fab-call')
-      else expect(source, brand).toContain('fab-call')
+      // vivas.
+      expect(source, brand).toContain('fab-call')
     }
   })
 
@@ -103,16 +109,19 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
 
   it('E4 — ON keeps direct Chat + WhatsApp (one tap from the launcher) and the normal teaser start path', () => {
     for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain('<li v-if="chatEnabled"')
-      expect(source, brand).toContain('<li v-if="whatsappVisible"')
+      // Filas, teléfono y menú del lanzador: solo en las marcas que lo
+      // conservan. En alquilame los canales son hijos directos del <nav>
+      // (ChatWidget.bar.test.ts); lo demás de este caso le sigue aplicando.
+      if (brand !== 'ui-alquilame') {
+        expect(source, brand).toContain('<li v-if="chatEnabled"')
+        expect(source, brand).toContain('<li v-if="whatsappVisible"')
+      }
       expect(source, brand).toContain('aria-label="Abrir WhatsApp"')
-      if (brand === 'ui-alquilame')
-        expect(source, brand).not.toContain('class="fab-circle fab-call"')
-      else expect(source, brand).toContain('class="fab-circle fab-call"')
+      if (brand !== 'ui-alquilame') expect(source, brand).toContain('class="fab-circle fab-call"')
       // Invariante intacto: Chat y WhatsApp siguen siendo opciones directas, sin
       // pasos intermedios; el menú es un solo nivel (v-show) y no hay submenús
       // ni role="menu" que la hoja base.css pueda recolorear.
-      expect(source, brand).toMatch(/<ul[^>]*v-show="menuOpen"/)
+      if (brand !== 'ui-alquilame') expect(source, brand).toMatch(/<ul[^>]*v-show="menuOpen"/)
       expect(source, brand).not.toMatch(/<ul[^>]*role="menu"/)
       expect(source, brand).toMatch(
         /teaser\.start\(\{[\s\S]*allowed: \(\) => teaserAllowed\.value/,
@@ -121,10 +130,11 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
   })
 
   // Issue #386 — the FAB pulse must not fix one brand's colour on every brand,
-  // and must not blink forever (WCAG 2.2.2). Asserted across all three copies so
-  // it rides the E10 byte-identical invariant instead of drifting per brand.
+  // and must not blink forever (WCAG 2.2.2). Asserted across every copy that
+  // keeps the launcher so it rides the E10 byte-identical invariant instead of
+  // drifting per brand (alquilame dropped the pulse with it, SCEN-BC-12).
   it('P386 — the FAB attention pulse is brand-tokened and bounded', () => {
-    for (const { brand, source } of brandWidgets) {
+    for (const { brand, source } of launcherWidgets) {
       const keyframe = source.match(/@keyframes pulse-attention \{[\s\S]*?\n\}/)?.[0] ?? ''
       // Colour resolves from the per-brand primary token, never the hardcoded
       // alquilame red (rgba(204, 2, 43) === #cc022b).

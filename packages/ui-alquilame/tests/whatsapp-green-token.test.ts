@@ -53,8 +53,15 @@ describe('issue #284 — WhatsApp green token (alquilame)', () => {
     expect(offenders).toEqual([])
   })
 
-  it('ChatWidget FAB icon color resolves via --color-whatsapp', () => {
+  // SCEN-BC-01 (spec 2026-10-22-barra-contacto-alquilame): the contact bar
+  // paints WhatsApp as a FILLED block with white text, and white on #25D366 is
+  // ~2:1. It uses its own darker token (#14843F, 4.77:1 measured) so
+  // --color-whatsapp above keeps its black-text CTAs untouched.
+  it('ChatWidget WhatsApp block fills with --color-contact-whatsapp (#14843F) and white text', () => {
     const widget = readFileSync(join(appRoot, 'components/ChatWidget.vue'), 'utf-8')
-    expect(widget).toMatch(/\.fab-whatsapp\s*\{\s*color:\s*var\(--color-whatsapp/)
+    expect(theme).toMatch(/--color-contact-whatsapp:\s*#14843F/i)
+    expect(widget).toMatch(/\.bar-whatsapp\s*\{\s*background:\s*var\(--color-contact-whatsapp, #14843f\);\s*\}/i)
+    expect(widget).toMatch(/\.bar-item \{[^}]*color: #fff;/)
+    expect(widget).not.toMatch(/var\(--color-whatsapp\b/)
   })
 })

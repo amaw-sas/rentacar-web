@@ -12,6 +12,12 @@ const brandWidgets = ['ui-alquicarros', 'ui-alquilame', 'ui-alquilatucarro'].map
     ),
   }),
 )
+// SCEN-BC-12 (spec 2026-10-22-barra-contacto-alquilame): alquilame cambió el
+// lanzador por su propia barra de contacto y es fork declarado (SCEN-5a de
+// ChatWidget.shift.test.ts). Lo que fija marcado SOLO del lanzador corre sobre
+// las dos marcas que siguen compartiendo widget; sus equivalentes sobre la barra
+// viven en ui-alquilame/app/components/__tests__/ChatWidget.bar.test.ts.
+const launcherWidgets = brandWidgets.filter(({ brand }) => brand !== 'ui-alquilame')
 const searchStore = readFileSync(
   `${repoRoot}/packages/logic/src/stores/useStoreSearchData.ts`,
   'utf8',
@@ -44,7 +50,7 @@ function brandSources(brand: string): { file: string, source: string }[] {
 
 describe('FAB de contacto móvil durante la solicitud', () => {
   it('mantiene los canales abajo a la derecha sin elevarlos en reservas', () => {
-    for (const { brand, source } of brandWidgets) {
+    for (const { brand, source } of launcherWidgets) {
       expect(source, brand).toMatch(
         /class="contact-fab-stack absolute right-6 flex flex-col items-end/,
       )
@@ -55,9 +61,14 @@ describe('FAB de contacto móvil durante la solicitud', () => {
 
   it('oculta ambos canales sólo en móvil mientras el overlay está abierto', () => {
     for (const { brand, source } of brandWidgets) {
-      expect(source, brand).toContain(
-        'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
-      )
+      // Gate y etiqueta del lanzador: solo en las marcas que lo conservan.
+      // alquilame oculta la superficie con `v-if="!hideContactButtons"` (Llamar
+      // no tiene interruptor), fijado en ChatWidget.bar.test.ts.
+      if (brand !== 'ui-alquilame') {
+        expect(source, brand).toContain(
+          'v-if="(chatEnabled || whatsappVisible) && !hideContactButtons"',
+        )
+      }
       expect(source, brand).toMatch(
         /const \{ reservationOverlayOpen \} = storeToRefs\(useStoreSearchData\(\)\)/,
       )
@@ -68,7 +79,7 @@ describe('FAB de contacto móvil durante la solicitud', () => {
       expect(source, brand).toMatch(
         /const hideContactButtons = computed\(\(\) => reservationOverlayOpen\.value\)/,
       )
-      expect(source, brand).toContain("'Abrir Chat 24 horas'")
+      if (brand !== 'ui-alquilame') expect(source, brand).toContain("'Abrir Chat 24 horas'")
       expect(source, brand).toContain('aria-label="Abrir WhatsApp"')
     }
   })

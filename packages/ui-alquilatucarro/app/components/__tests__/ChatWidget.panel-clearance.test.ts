@@ -11,6 +11,13 @@ const brandWidgets = brands.map(brand => ({
     'utf8',
   ),
 }))
+// SCEN-BC-12 (spec 2026-10-22-barra-contacto-alquilame): alquilame cambió el
+// lanzador por su propia barra de contacto y es fork declarado (SCEN-5a de
+// ChatWidget.shift.test.ts). Lo que fija marcado SOLO del lanzador corre sobre
+// las dos marcas que siguen compartiendo widget; lo que sigue siendo cierto para
+// alquilame se queda en `brandWidgets`, y sus equivalentes sobre la barra viven
+// en ui-alquilame/app/components/__tests__/ChatWidget.bar.test.ts.
+const launcherWidgets = brandWidgets.filter(({ brand }) => brand !== 'ui-alquilame')
 
 // Medido en producción antes del arreglo (viewport 1487×889): el panel terminaba
 // en bottom:745 y la fila `Chat 24 horas` ocupaba 697→745, o sea 185×48px de
@@ -30,12 +37,12 @@ const brandWidgets = brands.map(brand => ({
 // jsdom no tiene motor de maquetación y un test de fuente por sí solo ya dejó
 // pasar un bug de render en este repo.
 describe('SCEN-001/002 — el panel se ancla sobre la pila medida, no sobre una constante', () => {
-  it.each(brandWidgets)('deriva el bottom de --panel-lift con el fallback del lanzador (5.75rem) — $brand', ({ brand, source }) => {
+  it.each(launcherWidgets)('deriva el bottom de --panel-lift con el fallback del lanzador (5.75rem) — $brand', ({ brand, source }) => {
     expect(source, brand).toContain('bottom: var(--panel-lift, 5.75rem);')
     expect(source, brand).not.toMatch(/^\s*bottom: \d+(\.\d+)?rem;$/m)
   })
 
-  it.each(brandWidgets)('mide el lanzador, no el stack entero ni el menú colapsado — $brand', ({ brand, source }) => {
+  it.each(launcherWidgets)('mide el lanzador, no el stack entero ni el menú colapsado — $brand', ({ brand, source }) => {
     // El stack incluye el teaser-sizer oculto y su hueco (122px medidos):
     // medirlo sobre-elevaría el panel. El <ul> con v-show mide 0 colapsado.
     expect(source, brand).toMatch(/<button\s+ref="launcherEl"/)
@@ -100,7 +107,7 @@ describe('SCEN-004/005 — el panel usa el área aprobada y se encoge en pantall
   // El tope de 52rem solo llega a aplicar con ventanas de unos 940 px o más de
   // alto. Por debajo — cualquier portátil de 13" o 14" —
   // manda el espacio disponible y el alto es el mismo que antes de subir el tope.
-  it.each(brandWidgets)('techo de 52rem que cede al alto disponible en vez de desbordar — $brand', ({ brand, source }) => {
+  it.each(launcherWidgets)('techo de 52rem que cede al alto disponible en vez de desbordar — $brand', ({ brand, source }) => {
     expect(source, brand).toContain(
       'height: min(52rem, calc(100dvh - var(--panel-lift, 5.75rem) - 1.5rem));',
     )
@@ -112,7 +119,7 @@ describe('SCEN-004/005 — el panel usa el área aprobada y se encoge en pantall
 })
 
 describe('SCEN-007 — el cambio no toca lo que otros guardias congelan', () => {
-  it.each(brandWidgets)('la pila conserva su literal de posición — $brand', ({ brand, source }) => {
+  it.each(launcherWidgets)('la pila conserva su literal de posición — $brand', ({ brand, source }) => {
     expect(source, brand).toContain('.contact-fab-stack { bottom: 1.5rem; }')
   })
 

@@ -47,6 +47,14 @@
   --color-whatsapp: #25D366;
   --color-whatsapp-hover: #1EBE5A;
 
+  /* Barra de contacto (ChatWidget): bloques rellenos con texto e icono BLANCOS.
+     Contraste medido con blanco: 7,10 / 6,70 / 4,77. El verde es más oscuro que
+     --color-whatsapp porque blanco sobre #25D366 da ~2:1; aquel sigue para los
+     CTA con texto negro. */
+  --color-contact-chat: #6d28d9;
+  --color-contact-call: #1d4ed8;
+  --color-contact-whatsapp: #14843f;
+
   /* Fuentes de marca (self-hosted vía @nuxt/fonts; ver nuxt.config.ts) */
   --font-heading: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-sans:    'DM Sans', ui-sans-serif, system-ui, sans-serif;
