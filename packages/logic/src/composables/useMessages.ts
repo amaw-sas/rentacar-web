@@ -3,11 +3,24 @@
 // Types
 import type { LocalizaErrorResponse, Message } from '@rentacar-main/logic/utils';
 
+// Ids of the toasts this module raised, shared by every useMessages() instance:
+// flushMessages() drops only these, so a search never erases a toast raised by
+// someone else (e.g. the advisor-mode notice shown on landing). Client-only: on
+// the server the set would be shared by every request, so there a flush clears.
+const ownToastIds = new Set<string>();
+
 export default function useMessages(){
     const toast = useToast();
+    // Nuxt UI returns the created toast (with its id); typed loosely because the
+    // layer's ambient useToast declaration types add() as void.
+    const track = (created: unknown): void => {
+        if (import.meta.server) return;
+        const id = (created as { id?: string | number } | undefined)?.id;
+        if (id !== undefined) ownToastIds.add(String(id));
+    };
 
     const createMessage = (message: Message) => {
-        toast.add({
+        track(toast.add({
             title: message.title,
             description: message.message,
             duration: 20000,
@@ -20,7 +33,7 @@ export default function useMessages(){
                 title: 'text-gray-900 text-base font-semibold',
                 description: 'text-gray-600',
             }
-        });
+        }));
     }
 
     const createErrorMessage = (message: LocalizaErrorResponse) => {
@@ -95,7 +108,7 @@ export default function useMessages(){
             error.message = "Ocurrió un problema al consultar la disponibilidad. Por favor intenta de nuevo en unos minutos.";
         }
 
-        toast.add({
+        track(toast.add({
             title: error.title,
             description: error.message,
             duration: 20000,
@@ -116,7 +129,7 @@ export default function useMessages(){
                 title: 'text-gray-900 text-base font-semibold',
                 description: 'text-gray-600',
             },
-        })
+        }));
     }
 
     /**
@@ -125,7 +138,7 @@ export default function useMessages(){
      * exist (issue 322 SCEN-322-E01).
      */
     const createReservationTechnicalErrorMessage = () => {
-        toast.add({
+        track(toast.add({
             title: 'No pudimos confirmar tu reserva',
             description:
                 'Revisa tu correo o escríbenos por WhatsApp antes de reintentar. Si no te llegó confirmación, puedes intentar de nuevo.',
@@ -139,7 +152,7 @@ export default function useMessages(){
                 title: 'text-gray-900 text-base font-semibold',
                 description: 'text-gray-600',
             },
-        })
+        }));
     }
 
     /**
@@ -150,7 +163,7 @@ export default function useMessages(){
         const codeHint = reserveCode
             ? ` Si tienes un código (${reserveCode}), consérvalo y contáctanos.`
             : ' Revisa tu correo o escríbenos por WhatsApp antes de volver a enviar.';
-        toast.add({
+        track(toast.add({
             title: 'Recibimos tu solicitud, pero no pudimos confirmar el estado',
             description: `No reenvíes el formulario para evitar una reserva duplicada.${codeHint}`,
             duration: 25000,
@@ -163,11 +176,16 @@ export default function useMessages(){
                 title: 'text-gray-900 text-base font-semibold',
                 description: 'text-gray-600',
             },
-        })
+        }));
     }
 
     const flushMessages = () => {
-        toast.clear();
+        if (import.meta.server) {
+            toast.clear();
+            return;
+        }
+        for (const id of ownToastIds) toast.remove(id);
+        ownToastIds.clear();
     }
 
     return {
