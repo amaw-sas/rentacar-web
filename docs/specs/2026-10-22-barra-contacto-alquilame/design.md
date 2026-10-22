@@ -221,6 +221,22 @@ atada a un SCEN-BC.
   cliente pulsa Escape o el fondo, entonces el panel se cierra y el foco queda
   en el botón Chat IA.
 
+### Escenarios añadidos tras la revisión de calidad (2026-10-22)
+
+- **SCEN-BC-14** Dado un móvil en la portada, cuando el cliente abre la lista
+  de «Sede de recogida» (o cualquier slideover/modal) y baja a la última
+  opción, entonces la lista queda por encima de la barra y del saludo, y
+  tocar la última opción la elige; no llama, no abre WhatsApp ni el chat.
+- **SCEN-BC-15** Dado un cliente que toca Llamar o WhatsApp en la barra o en
+  las píldoras, cuando se registra el `contact_click`, entonces sale con
+  `placement: 'fab'` en cualquier página (portada, categoría, reservado).
+- **SCEN-BC-16** Dado una carga de página en móvil, cuando todavía no
+  responde el estado del chat, entonces la barra no se pinta incompleta para
+  luego reordenarse: aparece una sola vez con su composición final; si el
+  estado no llega en 1,5 s aparece igual, con Llamar siempre presente.
+- **SCEN-BC-17** Dado un escritorio de 1280–1700 px al final de la página,
+  entonces las píldoras no tapan los créditos del pie.
+
 ## Fuera de alcance
 
 - Botón «Llamar» en las otras marcas o número de desvío de Google en alquilame.
