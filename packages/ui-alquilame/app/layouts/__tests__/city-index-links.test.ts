@@ -107,10 +107,11 @@ describe('city landing — CTA y "Inicio" del footer', () => {
     const chat = read('app/components/ChatWidget.vue')
     // Ambos surfaces deben limpiar espacios → tel:+573002436677 (no "+57 300 …").
     expect(layout).toMatch(/tel:\$\{franchise\.phone\.replace\(\/\\s\/g/)
-    // Redesign 2026-07: alquilame's ChatWidget has NO phone entry by owner
-    // decision (only the live brands keep it). The invariant stays as the
-    // negative: any tel: that ever returns must strip spaces.
+    // SCEN-BC-04/12 (2026-10-22): the contact bar brought Llamar back. Its
+    // href comes from useCallPhone().telHref, which strips the spaces.
     // Ningún tel: debe usar franchise.phone crudo (con espacios).
     expect(chat).not.toMatch(/tel:\$\{franchise\.phone\}/)
+    expect(chat).toMatch(/const \{ telHref: callHref, display: callDisplay \} = useCallPhone\(\)/)
+    expect(chat).toMatch(/<a\b[^>]*:href="callHref"/)
   })
 })

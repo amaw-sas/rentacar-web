@@ -88,9 +88,27 @@ describe('SCEN-BC-02: on desktop the bar becomes pills at bottom 1.5rem', () => 
   })
 })
 
-// Unchanged until step 6 (SCEN-BC-08) swaps it for the bar height.
-describe('SCEN-FAB4: footer clearance on mobile', () => {
-  it('reserves bottom space on mobile without changing desktop spacing', () => {
-    expect(LAYOUT).toContain('pt-10 pb-40 md:py-10')
+// SCEN-BC-08 (replaces SCEN-FAB4, which reserved pb-40 for the removed
+// launcher): on mobile the last footer line clears the bar — 40px of air plus
+// the bar's own 64px + safe area. md+ keeps the old 2.5rem; one padding each,
+// never stacked.
+describe('SCEN-BC-08: footer clears the contact bar on mobile', () => {
+  const footerBar = LAYOUT.match(/<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 [^"]*"/)?.[0] ?? ''
+
+  it('reserves 2.5rem + 64px + safe area below the legal links, desktop unchanged', () => {
+    expect(footerBar, 'footer bottom bar container').not.toBe('')
+    expect(footerBar).toContain('pb-[calc(2.5rem+64px+env(safe-area-inset-bottom))]')
+    expect(footerBar).toMatch(/\bmd:pb-10\b/)
+    expect(footerBar).toMatch(/\bpt-10\b/)
+  })
+
+  it('no leftover launcher clearance or stacked bottom paddings', () => {
+    expect(LAYOUT).not.toContain('pb-40')
+    expect(footerBar).not.toMatch(/\bmd:py-10\b/)
+    const bottomPaddings = footerBar.match(/(?:^|\s|")(?:md:)?(?:pb|py|p)-[^\s"]+/g) ?? []
+    expect(bottomPaddings.map(c => c.trim().replace(/^"/, ''))).toEqual([
+      'pb-[calc(2.5rem+64px+env(safe-area-inset-bottom))]',
+      'md:pb-10',
+    ])
   })
 })
