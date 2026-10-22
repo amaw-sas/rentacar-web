@@ -55,6 +55,10 @@ describe('chat-direct-entry SCEN-3: /chat is a centered column on desktop', () =
 describe('chat-direct-entry SCEN-1b: /chat resets form controls without entry.css', () => {
   it.each(Object.keys(expected))('%s declares a zero-specificity control reset under .chat-page', (brand) => {
     const page = pkg(brand, 'app/pages/chat.vue')
+    // Must be an UNSCOPED <style>: scoped would append [data-v-*] and stop matching
+    // the buttons that live inside ChatConversation.
+    const unscoped = [...page.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(m => m[1]).join('\n')
+    expect(unscoped).toContain(':where(.chat-page) :where(button, input, textarea)')
     const reset = page.match(/:where\(\.chat-page\) :where\(button, input, textarea\) \{([^}]*)\}/)?.[1] ?? ''
     expect(reset).toContain('font: inherit;')
     expect(reset).toContain('background-color: transparent;')

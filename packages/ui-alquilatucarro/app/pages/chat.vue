@@ -82,7 +82,10 @@ function dismiss() {
    al entrar directo la X de cerrar salía con el fondo gris del navegador y los
    controles en Arial. :where() deja la especificidad en 0 → cualquier regla del
    chat (fondo del botón enviar, radios) sigue ganando, igual que en el panel. */
-:where(.chat-page) :where(*, ::before, ::after) { box-sizing: border-box; }
+:where(.chat-page) *,
+:where(.chat-page) ::before,
+:where(.chat-page) ::after { box-sizing: border-box; }
+:where(.chat-page) :where(p) { margin: 0; }
 :where(.chat-page) :where(button, input, textarea) {
   font: inherit;
   letter-spacing: inherit;
