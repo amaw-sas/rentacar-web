@@ -54,35 +54,46 @@
       <!-- Toda la superficie (saludo + barra) se oculta con el resumen de reserva
            abierto: su pie ya trae su propio CTA de WhatsApp. -->
       <template v-if="!hideContactButtons">
-        <!-- Reserva estable para las dos etapas del teaser. La burbuja aparece
-             con transform/opacity sin cambiar la geometría del contenedor. -->
-        <div v-if="chatEnabled" class="teaser-anchor">
-          <div class="teaser-slot">
-            <div class="teaser-bubble teaser-sizer" aria-hidden="true">
-              <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
-              <p class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+        <!-- Dock: el saludo y la barra comparten ancla. En móvil la barra va a lo
+             ancho y el saludo sale del borde izquierdo, sobre Chat IA; en
+             escritorio el dock es la fila de píldoras y el saludo se apila
+             encima, desde el borde de Chat IA. -->
+        <div class="contact-dock">
+          <!-- --bar-items: cuántos bloques comparten la barra, para que la cola
+               apunte al centro de Chat IA (el primero). -->
+          <div v-if="chatEnabled" class="teaser-slot" :style="{ '--bar-items': barItemCount }">
+            <!-- Reserva estable para las dos burbujas: aparecen con
+                 transform/opacity sin cambiar la geometría del contenedor. -->
+            <div class="teaser-stack teaser-sizer" aria-hidden="true">
+              <p class="teaser-bubble teaser-bubble-1">{{ TEASER_LINE_1 }}</p>
+              <p class="teaser-bubble teaser-bubble-2">{{ teaserLine2 }}</p>
+              <svg class="teaser-tail" width="18" height="10" viewBox="0 0 18 10" aria-hidden="true"><path d="M0 0h18L9 10z" fill="#fff" /></svg>
             </div>
-            <div
-              v-if="teaserOpen"
-              :key="teaserStep"
-              class="teaser-bubble pointer-events-auto"
-              :class="{ 'teaser-bubble-entering': teaserStep === 1 }"
-              @click="openChat('teaser')"
-            >
-              <button
-                ref="teaserCloseEl"
-                type="button"
-                class="teaser-close"
-                aria-label="Cerrar mensaje"
-                @click.stop="teaser.dismiss()"
+            <div v-if="teaserOpen" class="teaser-stack teaser-live">
+              <div
+                class="teaser-bubble teaser-bubble-1 teaser-bubble-entering pointer-events-auto"
+                @click="openChat('teaser')"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-              </button>
-              <p class="teaser-line">{{ TEASER_LINE_1 }}</p>
-              <p v-if="teaserStep === 2" class="teaser-line teaser-line-2">{{ TEASER_LINE_2 }}</p>
+                <button
+                  type="button"
+                  class="teaser-close"
+                  aria-label="Cerrar mensaje"
+                  @click.stop="teaser.dismiss()"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+                {{ TEASER_LINE_1 }}
+              </div>
+              <div
+                v-if="teaserStep === 2"
+                class="teaser-bubble teaser-bubble-2 teaser-bubble-entering pointer-events-auto"
+                @click="openChat('teaser')"
+              >
+                {{ teaserLine2 }}
+              </div>
+              <svg class="teaser-tail" width="18" height="10" viewBox="0 0 18 10" aria-hidden="true"><path d="M0 0h18L9 10z" fill="#fff" /></svg>
             </div>
           </div>
-        </div>
 
         <!-- La barra es lo único que queda bajo el panel: se mide para anclarlo. -->
         <nav
@@ -133,6 +144,7 @@
             <span class="bar-label">WhatsApp</span>
           </a>
         </nav>
+        </div>
       </template>
     </div>
     </Teleport>
@@ -175,12 +187,11 @@ const {
 const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const chatButtonEl = ref<HTMLButtonElement | null>(null)
-const teaserCloseEl = ref<HTMLButtonElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
 // El panel se ancla SOBRE lo único que queda visible debajo de él: la barra de
-// contacto (<nav>). No se mide el teaser-anchor, que incluye el teaser-sizer
-// oculto y su hueco (122 px medidos).
+// contacto (<nav>). No se mide el dock, que incluye el teaser-sizer oculto y su
+// hueco.
 const launcherEl = ref<HTMLElement | null>(null)
 const launcherHeight = ref(0)
 let launcherObserver: ResizeObserver | null = null
@@ -261,14 +272,13 @@ const teaserOpen = computed(
     !panelOpen.value,
 )
 
-// Step 2 replaces the compact bubble inside its reserved slot so no existing
-// layout box moves. If a keyboard user was on Close, carry focus to the new
-// button instead of dropping it when that keyed subtree is replaced.
-watch(teaserStep, async () => {
-  if (typeof document === 'undefined' || document.activeElement !== teaserCloseEl.value) return
-  await nextTick()
-  teaserCloseEl.value?.focus({ preventScroll: true })
-})
+// Línea 2 del saludo: override de la marca en app.config (`chatGreeting.line2`),
+// igual que ChatConversation; si falta, la compartida.
+const teaserLine2 =
+  (useAppConfig() as { chatGreeting?: { line2?: string } }).chatGreeting?.line2 ?? TEASER_LINE_2
+// Bloques de la barra cuando el saludo existe (Chat IA está encendido): Chat IA,
+// Llamar y WhatsApp si su horario lo deja. La cola apunta al centro del primero.
+const barItemCount = computed(() => (whatsappVisible.value ? 3 : 2))
 
 // Wait for the status request to settle before scheduling anything: enabled is
 // fail-closed and initially false, but that loading value must not terminally
@@ -418,45 +428,128 @@ button { -webkit-tap-highlight-color: transparent; }
 .bar-whatsapp { background: var(--color-contact-whatsapp, #14843f); }
 .bar-icon { position: relative; display: flex; flex-shrink: 0; }
 .bar-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-/* Insignia roja de mensajes sobre el icono de Chat IA. */
+/* Insignia roja de mensajes sobre el icono de Chat IA (artboard G). */
 .bar-badge {
   position: absolute;
-  top: -0.45rem;
-  right: -0.6rem;
-  min-width: 1.1rem;
-  height: 1.1rem;
-  padding: 0 0.25rem;
+  top: -6px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
-  background: #ef4444;
+  border-radius: 9px;
+  background: #e50a35;
   color: #fff;
-  font-size: 0.7rem;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1;
-  border: 2px solid #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--color-contact-chat, #6d28d9);
 }
 
-/* --- Burbuja de saludo proactiva (teaser) ---
-   Por ahora a la derecha, encima de la barra (o de las píldoras en escritorio). */
-.teaser-anchor {
+/* Dock: ancla común del saludo y la barra. En móvil ocupa el borde inferior a
+   lo ancho (la barra va absoluta dentro, en bottom 0). */
+.contact-dock {
   position: absolute;
-  right: 1rem;
-  bottom: calc(64px + env(safe-area-inset-bottom) + 0.75rem);
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* --- Saludo proactivo (teaser), sobre Chat IA ---
+   Móvil: desde el borde izquierdo (Chat IA es el primer bloque), 34 px por
+   encima de la barra, así nunca tapa Llamar ni WhatsApp. 280 px con 12 px de
+   margen a cada lado: cabe a 320 px sin desbordar. */
+.teaser-slot {
+  position: absolute;
+  left: 12px;
+  bottom: calc(64px + env(safe-area-inset-bottom) + 34px);
+  width: min(280px, calc(100vw - 24px));
   pointer-events: none;
 }
+.teaser-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.teaser-sizer {
+  visibility: hidden;
+  pointer-events: none;
+}
+.teaser-live {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+.teaser-bubble {
+  position: relative;
+  margin: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #141414;
+  box-shadow: 0 6px 20px rgba(20, 20, 20, 0.16);
+  cursor: pointer;
+  transform-origin: bottom left;
+  will-change: transform, opacity;
+}
+.teaser-bubble-1 {
+  border-radius: 16px 16px 16px 4px;
+  padding-right: 36px; /* hueco para la × */
+}
+.teaser-bubble-2 { border-radius: 4px 16px 16px 16px; }
+.teaser-bubble-entering { animation: teaser-pop 0.2s ease-out; }
+/* Cola hacia el centro de Chat IA: ancho del bloque / 2, menos el margen
+   izquierdo (12) y media cola (9). */
+.teaser-tail {
+  display: block;
+  flex-shrink: 0;
+  margin-top: -6px;
+  margin-left: calc(100vw / var(--bar-items, 3) / 2 - 21px);
+}
+.teaser-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: #f4f5f9;
+  color: #5b6170;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.teaser-close:hover { background: #e3e6ec; color: #141414; }
+@keyframes teaser-pop {
+  from { opacity: 0; transform: scale(0.9) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .teaser-bubble-entering { animation: none; } }
 
 /* --- Escritorio (≥ 768 px): sin barra, tres píldoras en fila abajo a la
    derecha, mismo orden y colores; icono a la izquierda del texto. La fila queda
    en bottom 1.5rem y cada píldora mide 44 px, así que FAB_STACK_BOTTOM_PX = 24
-   de chatPanelLift sigue siendo cierto y el fallback del panel es 5rem. --- */
+   de chatPanelLift sigue siendo cierto y el fallback del panel es 5rem. El dock
+   mide lo mismo que la fila y el saludo se apila 10 px encima. --- */
 @media (min-width: 768px) {
-  .contact-bar {
+  .contact-dock {
     left: auto;
     right: 1.5rem;
     bottom: 1.5rem;
+  }
+  .contact-bar {
+    position: relative;
     height: auto;
     gap: 0.75rem;
     box-shadow: none;
@@ -472,59 +565,26 @@ button { -webkit-tap-highlight-color: transparent; }
     font-size: 0.9375rem;
   }
   .bar-item:focus-visible { outline: 3px solid #111827; outline-offset: 2px; }
-  .teaser-anchor {
-    right: 1.5rem;
-    bottom: calc(1.5rem + 44px + 0.75rem);
+  /* La insignia va a la esquina de la píldora Chat IA, no al icono. */
+  .bar-chat { position: relative; }
+  .bar-icon { position: static; }
+  .bar-badge {
+    top: -6px;
+    left: -6px;
+    right: auto;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    border-color: #fff;
   }
+  /* Desde el borde de Chat IA; si la fila mide menos de 280 px se corre a la
+     izquierda para no salirse por la derecha. */
+  .teaser-slot {
+    left: min(0px, calc(100% - 280px));
+    bottom: calc(100% + 10px);
+  }
+  .teaser-tail { margin-left: 40px; }
 }
-.teaser-slot {
-  position: relative;
-  width: min(16rem, calc(100vw - 6rem));
-  pointer-events: none;
-}
-.teaser-bubble {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  max-width: 100%;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(4px);
-  color: #111827;
-  padding: 0.75rem 2rem 0.75rem 0.9rem; /* margen derecho para la X */
-  border-radius: 1rem 1rem 0.25rem 1rem; /* esquina hacia la barra */
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  transform-origin: bottom right;
-  will-change: transform, opacity;
-}
-.teaser-bubble-entering { animation: teaser-pop 0.2s ease-out; }
-.teaser-sizer {
-  position: relative;
-  visibility: hidden;
-  pointer-events: none;
-}
-.teaser-line { font-size: 0.875rem; font-weight: 500; line-height: 1.35; }
-.teaser-line-2 { margin-top: 0.4rem; color: #374151; font-weight: 400; }
-.teaser-close {
-  position: absolute;
-  top: 0.15rem;
-  right: 0.15rem;
-  width: 2rem;
-  height: 2rem; /* hit area ≥ 2rem */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  color: #6b7280;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.teaser-close:hover { background: rgba(0, 0, 0, 0.06); color: #111827; }
-@keyframes teaser-pop {
-  from { opacity: 0; transform: scale(0.9) translateY(6px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) { .teaser-bubble-entering { animation: none; } }
 
 /* Solo lector de pantalla (región aria-live). */
 .sr-only {

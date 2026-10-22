@@ -77,10 +77,11 @@ describe('SCEN-BC-01: the bar sits flush with the bottom edge, full width', () =
 })
 
 describe('SCEN-BC-02: on desktop the bar becomes pills at bottom 1.5rem', () => {
+  // Step 5: the dock (pills + greeting) carries the anchor; same values.
   it('md+ anchors the row bottom-right at 1.5rem, not full width', () => {
     const media = SRC.slice(SRC.indexOf('@media (min-width: 768px) {'))
     expect(SRC).toContain('@media (min-width: 768px) {')
-    const rule = media.match(/\.contact-bar \{[^}]*\}/)?.[0] ?? ''
+    const rule = media.match(/\.contact-dock \{[^}]*\}/)?.[0] ?? ''
     expect(rule).toMatch(/bottom: 1\.5rem;/)
     expect(rule).toMatch(/right: 1\.5rem;/)
     expect(rule).toMatch(/left: auto;/)

@@ -17,6 +17,14 @@ import { dirname, resolve } from 'node:path'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent, type Ref } from 'vue'
 import { useCallPhone } from '@rentacar-main/logic/composables/useCallPhone'
 import { chatPanelLiftPx } from '@rentacar-main/logic/utils/chatPanelLift'
+import {
+  createContactTeaser,
+  TEASER_FIRST_DELAY_MS,
+  TEASER_SECOND_DELAY_MS,
+  TEASER_SUPPRESS_MS,
+  TEASER_LINE_1,
+  TEASER_LINE_2,
+} from '@rentacar-main/logic/composables/useContactTeaser'
 import ChatWidget from '../ChatWidget.vue'
 
 // The panel body is irrelevant here; avoid loading the real conversation graph.
@@ -35,6 +43,9 @@ const franchise = {
   phone: '+57 300 243 6677',
   whatsapp: 'https://wa.me/573002436677',
 }
+// Same key and copy as packages/ui-alquilame/app/app.config.ts.
+const ALQUILAME_LINE_2 = '¿Dudas de requisitos o precios? Estamos en línea 24 horas.'
+let chatGreeting: { line2?: string } | undefined
 
 interface Harness {
   chatEnabled: Ref<boolean>
@@ -43,6 +54,8 @@ interface Harness {
   unread: Ref<number>
   syntheticCount: Ref<number>
   teaserVisible: Ref<boolean>
+  teaserStep: Ref<0 | 1 | 2>
+  dismiss: ReturnType<typeof vi.fn>
   engage: ReturnType<typeof vi.fn>
   navigateTo: ReturnType<typeof vi.fn>
   prepareChatOpen: ReturnType<typeof vi.fn>
@@ -71,6 +84,8 @@ function stubNuxtGlobals(route = '/') {
     unread: ref(0),
     syntheticCount: ref(0),
     teaserVisible: ref(false),
+    teaserStep: ref(1),
+    dismiss: vi.fn(),
     engage: vi.fn(),
     navigateTo: vi.fn(),
     prepareChatOpen: vi.fn(),
@@ -82,7 +97,7 @@ function stubNuxtGlobals(route = '/') {
   vi.stubGlobal('onBeforeUnmount', onBeforeUnmount)
   vi.stubGlobal('nextTick', nextTick)
   vi.stubGlobal('defineAsyncComponent', defineAsyncComponent)
-  vi.stubGlobal('useAppConfig', () => ({ franchise }))
+  vi.stubGlobal('useAppConfig', () => ({ franchise, chatGreeting }))
   vi.stubGlobal('useRoute', () => ({ path: route }))
   vi.stubGlobal('useStoreSearchData', () => ({ reservationOverlayOpen: h.overlayOpen }))
   vi.stubGlobal('storeToRefs', (store: Record<string, unknown>) => store)
@@ -108,11 +123,11 @@ function stubNuxtGlobals(route = '/') {
   vi.stubGlobal('useContactTeaser', () => ({
     syntheticCount: h.syntheticCount,
     teaserVisible: h.teaserVisible,
-    teaserStep: ref(1),
+    teaserStep: h.teaserStep,
     teaserAnnounce: ref(''),
     start: vi.fn(),
     stop: vi.fn(),
-    dismiss: vi.fn(),
+    dismiss: h.dismiss,
     engage: h.engage,
     suppressForSession: vi.fn(),
   }))
@@ -147,6 +162,7 @@ async function click(el: Element | null) {
 
 beforeEach(() => {
   state = new Map()
+  chatGreeting = { line2: ALQUILAME_LINE_2 }
   stubMatchMedia(false)
   stubNuxtGlobals()
   const appRoot = document.createElement('div')
@@ -394,6 +410,192 @@ describe('unread badge on Chat IA', () => {
   })
 })
 
+const bubbles = () => [...document.body.querySelectorAll<HTMLElement>('.teaser-live > .teaser-bubble')]
+const teaserSlot = () => q<HTMLElement>('.teaser-slot')
+const closeTeaser = () => q<HTMLButtonElement>('.teaser-live button.teaser-close')
+
+describe('SCEN-BC-06 — the greeting sits over Chat IA with «×» and badge', () => {
+  it('step 1: one bubble with TEASER_LINE_1 and the «×»; no second bubble yet', async () => {
+    h.teaserVisible.value = true
+    h.syntheticCount.value = 1
+    await mountWidget()
+    expect(bubbles()).toHaveLength(1)
+    expect(bubbles()[0]!.textContent).toContain(TEASER_LINE_1)
+    expect(bubbles()[0]!.contains(closeTeaser())).toBe(true)
+    expect(closeTeaser()!.getAttribute('aria-label')).toBe('Cerrar mensaje')
+    expect(badge()!.textContent).toBe('1')
+    expect(chatButton()!.getAttribute('aria-label')).toBe('Chat IA, 1 mensaje nuevo')
+  })
+
+  it('step 2: a second, separate bubble with alquilame\'s «…24 horas.» from app.config', async () => {
+    h.teaserVisible.value = true
+    h.teaserStep.value = 2
+    h.syntheticCount.value = 2
+    await mountWidget()
+    expect(bubbles()).toHaveLength(2)
+    expect(bubbles()[0]!.textContent).toContain(TEASER_LINE_1)
+    expect(bubbles()[1]!.textContent?.trim()).toBe(ALQUILAME_LINE_2)
+    // The «×» stays on the first bubble only.
+    expect(document.body.querySelectorAll('.teaser-live button.teaser-close')).toHaveLength(1)
+    expect(bubbles()[1]!.querySelector('button')).toBeNull()
+    expect(chatButton()!.getAttribute('aria-label')).toBe('Chat IA, 2 mensajes nuevos')
+  })
+
+  it('step 2 without a brand override falls back to TEASER_LINE_2', async () => {
+    chatGreeting = undefined
+    h.teaserVisible.value = true
+    h.teaserStep.value = 2
+    await mountWidget()
+    expect(bubbles()[1]!.textContent?.trim()).toBe(TEASER_LINE_2)
+  })
+
+  it('the hidden sizer reserves both lines with the same brand copy', async () => {
+    await mountWidget()
+    const sizer = q('.teaser-slot > .teaser-sizer')!
+    expect(sizer.getAttribute('aria-hidden')).toBe('true')
+    expect(sizer.textContent).toContain(TEASER_LINE_1)
+    expect(sizer.textContent).toContain(ALQUILAME_LINE_2)
+  })
+
+  it('the bubbles live beside the <nav>, never inside it, and sit before it in the dock', async () => {
+    h.teaserVisible.value = true
+    await mountWidget()
+    const slot = teaserSlot()!
+    expect(bar()!.contains(slot)).toBe(false)
+    expect(slot.parentElement).toBe(bar()!.parentElement)
+    expect(slot.parentElement!.classList.contains('contact-dock')).toBe(true)
+    expect(slot.compareDocumentPosition(bar()!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('the tail points at Chat IA: the slot knows how many blocks share the bar', async () => {
+    h.teaserVisible.value = true
+    await mountWidget()
+    expect(teaserSlot()!.style.getPropertyValue('--bar-items')).toBe('3')
+    h.whatsappVisible.value = false
+    await settle()
+    expect(teaserSlot()!.style.getPropertyValue('--bar-items')).toBe('2')
+    expect(q('.teaser-live .teaser-tail')).not.toBeNull()
+  })
+
+  it('tapping either bubble opens the chat as teaser; the «×» only dismisses', async () => {
+    h.teaserVisible.value = true
+    h.teaserStep.value = 2
+    await mountWidget()
+    await click(closeTeaser())
+    expect(h.dismiss).toHaveBeenCalledTimes(1)
+    expect(h.navigateTo).not.toHaveBeenCalled()
+    await click(bubbles()[1]!)
+    expect(h.prepareChatOpen).toHaveBeenCalledWith('teaser')
+    expect(h.navigateTo).toHaveBeenCalledWith('/chat')
+  })
+
+  it('reservation funnel route: no bubble', async () => {
+    stubNuxtGlobals('/reservas')
+    h.teaserVisible.value = true
+    await mountWidget()
+    expect(bubbles()).toHaveLength(0)
+  })
+
+  it('a real unread wins: no bubble, the badge shows the real count', async () => {
+    h.teaserVisible.value = true
+    h.syntheticCount.value = 2
+    h.unread.value = 4
+    await mountWidget()
+    expect(bubbles()).toHaveLength(0)
+    expect(badge()!.textContent).toBe('4')
+  })
+
+  it('chat off: no teaser slot at all', async () => {
+    h.chatEnabled.value = false
+    h.teaserVisible.value = true
+    await mountWidget()
+    expect(teaserSlot()).toBeNull()
+  })
+})
+
+// SCEN-BC-06/10 end to end with the REAL teaser state machine and storage:
+// only the clock is fake. Each mount gets a fresh instance, as a new page load.
+describe('SCEN-BC-06/10 — real teaser: 5 s / +20 s, engage suppresses for 15 days', () => {
+  const brand = 'alquilame'
+  const keys = { shownKey: `rentacar-teaser:${brand}:shown`, engagedKey: `rentacar-teaser:${brand}:engagedAt` }
+
+  function useRealTeaser() {
+    vi.stubGlobal('useContactTeaser', () => createContactTeaser({ brand, ...keys, line2: ALQUILAME_LINE_2 }))
+  }
+  async function advance(ms: number) {
+    vi.advanceTimersByTime(ms)
+    await settle()
+  }
+  async function newPageLoad() {
+    wrapper?.unmount()
+    wrapper = null
+    await mountWidget()
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    vi.setSystemTime(new Date('2026-10-22T15:00:00Z'))
+    localStorage.clear()
+    sessionStorage.clear()
+    useRealTeaser()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+
+  it('bubble 1 at 5 s, bubble 2 «…24 horas.» 20 s later', async () => {
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS - 1)
+    expect(bubbles()).toHaveLength(0)
+    await advance(1)
+    expect(bubbles()).toHaveLength(1)
+    expect(badge()!.textContent).toBe('1')
+    await advance(TEASER_SECOND_DELAY_MS)
+    expect(bubbles()).toHaveLength(2)
+    expect(bubbles()[1]!.textContent?.trim()).toBe(ALQUILAME_LINE_2)
+    expect(badge()!.textContent).toBe('2')
+  })
+
+  for (const [name, target] of [['Llamar', () => callLink()], ['WhatsApp', () => waLink()], ['Chat IA', () => chatButton()]] as const) {
+    it(`tapping ${name} closes the greeting and it does not return within 15 days`, async () => {
+      await mountWidget()
+      await advance(TEASER_FIRST_DELAY_MS)
+      expect(bubbles()).toHaveLength(1)
+      await click(target())
+      expect(bubbles()).toHaveLength(0)
+      expect(badge()).toBeNull()
+      // A new session 14 days later: no greeting.
+      sessionStorage.clear()
+      vi.setSystemTime(Date.now() + TEASER_SUPPRESS_MS - 24 * 60 * 60 * 1000)
+      await newPageLoad()
+      await advance(TEASER_FIRST_DELAY_MS + TEASER_SECOND_DELAY_MS)
+      expect(bubbles()).toHaveLength(0)
+      // Past the 15-day window it may greet again.
+      sessionStorage.clear()
+      vi.setSystemTime(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      await newPageLoad()
+      await advance(TEASER_FIRST_DELAY_MS)
+      expect(bubbles()).toHaveLength(1)
+    })
+  }
+
+  // SCEN-BC-10 asks «×» for the same 15 days, but plan Paso 5 wires it to
+  // teaser.dismiss(), which the composable (unchanged since Paso 1) keeps
+  // session-only. This pins what ships today: closed and gone for the session.
+  it('«×» closes the greeting for the rest of the session', async () => {
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS)
+    await click(closeTeaser())
+    expect(bubbles()).toHaveLength(0)
+    expect(badge()).toBeNull()
+    await newPageLoad()
+    await advance(TEASER_FIRST_DELAY_MS + TEASER_SECOND_DELAY_MS)
+    expect(bubbles()).toHaveLength(0)
+  })
+})
+
 describe('SCEN-BC-02 — desktop renders the same three channels, in order', () => {
   it('same <nav>, same order; the pill layout is CSS only (no viewport branch in the markup)', async () => {
     stubMatchMedia(true)
@@ -467,12 +669,16 @@ describe('source-level wiring a mount cannot observe', () => {
     desktopCss.match(new RegExp(`${sel.replace(/[.]/g, '\\.')} \\{[^}]*\\}`))?.[0] ?? ''
   const template = source.slice(0, source.indexOf('<script setup'))
 
+  // Step 5 moved the bottom-right anchor from the <nav> to the dock that also
+  // carries the greeting (so the bubbles can sit over Chat IA); same values.
   it('SCEN-BC-02: md+ turns the bar into a bottom-right row of pills (no full-width bar)', () => {
     expect(desktopCss, '@media (min-width: 768px) block').not.toBe('')
+    const dock = desktopRule('.contact-dock')
+    expect(dock).toMatch(/left: auto;/)
+    expect(dock).toMatch(/right: 1\.5rem;/)
+    expect(dock).toMatch(/bottom: 1\.5rem;/)
     const nav = desktopRule('.contact-bar')
-    expect(nav).toMatch(/left: auto;/)
-    expect(nav).toMatch(/right: 1\.5rem;/)
-    expect(nav).toMatch(/bottom: 1\.5rem;/)
+    expect(nav).toMatch(/position: relative;/)
     expect(nav).toMatch(/height: auto;/)
     expect(nav).toMatch(/gap: 0\.75rem;/)
     expect(nav).toMatch(/box-shadow: none;/)
@@ -501,10 +707,74 @@ describe('source-level wiring a mount cannot observe', () => {
     expect(source).not.toContain('5.75rem')
   })
 
-  it('provisional teaser sits above the pills on desktop, never over them', () => {
-    const anchor = desktopRule('.teaser-anchor')
-    expect(anchor).toMatch(/right: 1\.5rem;/)
-    expect(anchor).toMatch(/bottom: calc\(1\.5rem \+ 44px \+ 0\.75rem\);/)
+  const rule = (sel: string) => {
+    const css = source.slice(source.indexOf('<style scoped>'), source.indexOf('@media (min-width: 768px) {'))
+    return css.match(new RegExp(`${sel.replace(/[.]/g, '\\.')} \\{[^}]*\\}`))?.[0] ?? ''
+  }
+
+  it('mobile dock spans the bottom edge; the bar inside it keeps bottom 0', () => {
+    const dock = rule('.contact-dock')
+    expect(dock).toMatch(/position: absolute;/)
+    expect(dock).toMatch(/left: 0;/)
+    expect(dock).toMatch(/right: 0;/)
+    expect(dock).toMatch(/bottom: 0;/)
+  })
+
+  it('SCEN-BC-06 mobile: greeting at the left edge over Chat IA, above the bar, never wider than the viewport', () => {
+    const slot = rule('.teaser-slot')
+    expect(slot).toMatch(/position: absolute;/)
+    expect(slot).toMatch(/left: 12px;/)
+    // Above the bar's 64px + safe area: it can never cover Llamar or WhatsApp.
+    expect(slot).toMatch(/bottom: calc\(64px \+ env\(safe-area-inset-bottom\) \+ 34px\);/)
+    // 12px gutters each side: 280px fits at 320px wide, and never overflows.
+    expect(slot).toMatch(/width: min\(280px, calc\(100vw - 24px\)\);/)
+    // The tail points at the centre of the first block (Chat IA).
+    expect(rule('.teaser-tail')).toMatch(/margin-left: calc\(100vw \/ var\(--bar-items, 3\) \/ 2 - 21px\);/)
+  })
+
+  it('SCEN-BC-06 desktop: greeting stacked above the pills, from the Chat IA edge', () => {
+    const slot = desktopRule('.teaser-slot')
+    expect(slot).toMatch(/bottom: calc\(100% \+ 10px\);/)
+    // Left edge on Chat IA; slides left only if the row is narrower than 280px.
+    expect(slot).toMatch(/left: min\(0px, calc\(100% - 280px\)\);/)
+    expect(desktopRule('.teaser-tail')).toMatch(/margin-left: 40px;/)
+  })
+
+  it('bubbles follow the approved artboard: white, 14px, radii, shadow, 6px gap', () => {
+    expect(rule('.teaser-stack')).toMatch(/gap: 6px;/)
+    const b = rule('.teaser-bubble')
+    expect(b).toMatch(/background: #fff;/)
+    expect(b).toMatch(/padding: 10px 12px;/)
+    expect(b).toMatch(/font-size: 14px;/)
+    expect(b).toMatch(/line-height: 1\.35;/)
+    expect(b).toMatch(/color: #141414;/)
+    expect(b).toMatch(/box-shadow: 0 6px 20px rgba\(20, 20, 20, 0\.16\);/)
+    expect(rule('.teaser-bubble-1')).toMatch(/border-radius: 16px 16px 16px 4px;/)
+    expect(rule('.teaser-bubble-1')).toMatch(/padding-right: 36px;/)
+    expect(rule('.teaser-bubble-2')).toMatch(/border-radius: 4px 16px 16px 16px;/)
+    const x = rule('.teaser-close')
+    expect(x).toMatch(/top: 4px;/)
+    expect(x).toMatch(/right: 4px;/)
+    expect(x).toMatch(/width: 28px;/)
+    expect(x).toMatch(/height: 28px;/)
+    expect(x).toMatch(/background: #f4f5f9;/)
+    expect(x).toMatch(/color: #5b6170;/)
+  })
+
+  it('badge follows the artboard: red over the Chat IA icon on mobile, pill corner on desktop', () => {
+    const b = rule('.bar-badge')
+    expect(b).toMatch(/top: -6px;/)
+    expect(b).toMatch(/right: -10px;/)
+    expect(b).toMatch(/background: #e50a35;/)
+    expect(b).toMatch(/border: 2px solid var\(--color-contact-chat, #6d28d9\);/)
+    const d = desktopRule('.bar-badge')
+    expect(d).toMatch(/left: -6px;/)
+    expect(d).toMatch(/right: auto;/)
+    expect(d).toMatch(/border-color: #fff;/)
+  })
+
+  it('the provisional anchor from steps 3–4 is gone', () => {
+    expect(source).not.toContain('teaser-anchor')
   })
   const theme = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../assets/css/theme.css'), 'utf8')
 
