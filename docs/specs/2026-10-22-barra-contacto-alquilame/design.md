@@ -204,9 +204,13 @@ atada a un SCEN-BC.
   `safe-area-inset-bottom` > 0.
 - **SCEN-BC-09** Dado el resumen de reserva abierto, cuando se muestra,
   entonces la barra/píldoras y el saludo no se ven; al cerrarlo vuelven.
-- **SCEN-BC-10** Dado el saludo visible, cuando el cliente toca «×» o
-  cualquiera de los tres canales, entonces el saludo se cierra y no vuelve en
-  15 días.
+- **SCEN-BC-10** Dado el saludo visible, cuando el cliente toca cualquiera de
+  los tres canales, entonces el saludo se cierra y no vuelve en 15 días; cuando
+  toca «×», se cierra y no vuelve en lo que queda de la visita (vuelve en la
+  siguiente).
+  _Enmienda 2026-10-22, decisión del dueño: la «×» conserva la regla de hoy de
+  las 3 marcas (`dismiss()` no sella los 15 días). El texto original pedía 15
+  días también para la «×»; describía mal el comportamiento existente._
 - **SCEN-BC-11** Dado el sitio en producción, cuando se navega por portada,
   ciudad y resultados en móvil y escritorio, entonces cero errores de consola,
   cero peticiones fallidas y sin desbordamiento horizontal.
