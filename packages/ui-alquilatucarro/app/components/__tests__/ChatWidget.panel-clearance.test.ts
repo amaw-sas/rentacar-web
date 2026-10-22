@@ -17,6 +17,9 @@ const brandWidgets = brands.map(brand => ({
 // las dos marcas que siguen compartiendo widget; lo que sigue siendo cierto para
 // alquilame se queda en `brandWidgets`, y sus equivalentes sobre la barra viven
 // en ui-alquilame/app/components/__tests__/ChatWidget.bar.test.ts.
+// Los casos que nombran `measureLauncher`/`launcherObserver` también: alquilame
+// los llama `measureBar`/`barObserver` (mide la barra, no un lanzador), y su
+// equivalente exacto vive en ChatWidget.bar.test.ts.
 const launcherWidgets = brandWidgets.filter(({ brand }) => brand !== 'ui-alquilame')
 
 // Medido en producción antes del arreglo (viewport 1487×889): el panel terminaba
@@ -57,7 +60,7 @@ describe('SCEN-001/002 — el panel se ancla sobre la pila medida, no sobre una 
     )
   })
 
-  it.each(brandWidgets)('mide antes de abrir para que el panel no nazca en el sitio equivocado — $brand', ({ brand, source }) => {
+  it.each(launcherWidgets)('mide antes de abrir para que el panel no nazca en el sitio equivocado — $brand', ({ brand, source }) => {
     const openChat = source.slice(source.indexOf('function openChat'))
     const measure = openChat.indexOf('measureLauncher()')
     const open = openChat.indexOf('panelOpen.value = true')
@@ -84,7 +87,7 @@ describe('SCEN-001/002 — el panel se ancla sobre la pila medida, no sobre una 
 
   // Invariante intacto: la medida sigue viva ante cambios de tamaño del elemento
   // medido (ahora el lanzador) y el observer no sobrevive al unmount.
-  it.each(brandWidgets)('SCEN-006 — reobserva el lanzador y suelta el observer al desmontar — $brand', ({ brand, source }) => {
+  it.each(launcherWidgets)('SCEN-006 — reobserva el lanzador y suelta el observer al desmontar — $brand', ({ brand, source }) => {
     expect(source, brand).toContain('ResizeObserver')
     expect(source, brand).toMatch(/launcherObserver\?\.disconnect\(\)/)
     expect(

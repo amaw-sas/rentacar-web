@@ -140,6 +140,44 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
     }
   })
 
+  // SCEN-BC-12: el fork cambió la plantilla y el lanzador, no el motor. Estas
+  // regiones del <script> siguen idénticas a la copia base (comentarios aparte,
+  // que sí cuentan la historia de cada marca), así que un arreglo que aterrice en
+  // una copia y no en la otra vuelve a enrojecer, como hacía la comparación línea
+  // a línea. Lo que el fork cambia a propósito (medida de la barra, cierre con
+  // foco, Llamar, saludo) queda fuera.
+  const SHARED_SCRIPT_REGIONS: ReadonlyArray<readonly [string, string]> = [
+    ['const ChatConversation = defineAsyncComponent(', '\n'],
+    ['const {\n  enabled: chatEnabled,', '} = useChatStatus(franchise.shortname as string)'],
+    ['const { unread, announce, emitReopenedFromBadge, prepareChatOpen } = useChatUnreadBadge(', '\n'],
+    ['const teaser = useContactTeaser()', 'const badgeCount = computed('],
+    ['const badgeCount = computed(', '\n})\n'],
+    ['watch(\n  [chatStatusResolved, teaserAllowed],', '  { immediate: true },\n)'],
+    ['watch(unread, (v) =>', '\n'],
+    ['function onKeydown(e: KeyboardEvent) {', 'onBeforeUnmount(() => {\n  if (import.meta.client) window.removeEventListener'],
+    ['onBeforeUnmount(() => {\n  if (import.meta.client) window.removeEventListener', '\n})\n'],
+  ]
+  const codeOnly = (src: string) => src.split('\n').filter(line => !line.trim().startsWith('//')).join('\n')
+  const region = (src: string, start: string, end: string) => {
+    const from = src.indexOf(start)
+    if (from === -1) return null
+    const to = src.indexOf(end, from + start.length)
+    return to === -1 ? null : codeOnly(src.slice(from, to + end.length))
+  }
+
+  it.each(SHARED_SCRIPT_REGIONS)('SCEN-5a — alquilame comparte con la base, sin deriva: %s', (start, end) => {
+    const base = region(brandWidgets[2] ?? '', start, end)
+    const alq = region(brandWidgets[1] ?? '', start, end)
+    expect(base, 'la región ya no existe en la copia base').not.toBeNull()
+    expect(alq, 'la región ya no existe en alquilame').not.toBeNull()
+    expect(
+      alq,
+      'divergencia NO declarada entre alquilame y la copia base del ChatWidget: '
+      + 'un arreglo aterrizó en una marca y no en la otra. Si es intencional, '
+      + 'saca la región de SHARED_SCRIPT_REGIONS y deja constancia del porqué.',
+    ).toBe(base)
+  })
+
   it('SCEN-5b — el composable useReservationSlideover fue eliminado (inline useState)', () => {
     expect(chatWidget).not.toContain('useReservationSlideover')
     expect(atcSection).not.toContain('useReservationSlideover')

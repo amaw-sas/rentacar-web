@@ -676,12 +676,8 @@ export default defineNuxtConfig({
               left: 12px;
               bottom: calc(64px + env(safe-area-inset-bottom) + 34px);
               width: min(280px, calc(100vw - 24px));
-              pointer-events: none;
             }
-            .teaser-sizer {
-              visibility: hidden;
-              pointer-events: none;
-            }
+            .teaser-sizer { visibility: hidden; }
             @media (min-width: 768px) {
               .contact-dock {
                 left: auto;

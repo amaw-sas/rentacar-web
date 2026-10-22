@@ -90,15 +90,17 @@ describe('SCEN-BC-02: on desktop the bar becomes pills at bottom 1.5rem', () => 
 
 // SCEN-BC-08 (replaces SCEN-FAB4, which reserved pb-40 for the removed
 // launcher): on mobile the last footer line clears the bar — 40px of air plus
-// the bar's own 64px + safe area. md+ keeps the old 2.5rem; one padding each,
-// never stacked.
-describe('SCEN-BC-08: footer clears the contact bar on mobile', () => {
+// the bar's own 64px + safe area. md+ clears the pill row instead (SCEN-BC-17);
+// one bottom padding per breakpoint, never stacked.
+describe('SCEN-BC-08/17: footer clears the contact bar (mobile) and the pills (md+)', () => {
   const footerBar = LAYOUT.match(/<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 [^"]*"/)?.[0] ?? ''
 
-  it('reserves 2.5rem + 64px + safe area below the legal links, desktop unchanged', () => {
+  it('reserves 2.5rem + 64px + safe area on mobile and the pill row on md+', () => {
     expect(footerBar, 'footer bottom bar container').not.toBe('')
     expect(footerBar).toContain('pb-[calc(2.5rem+64px+env(safe-area-inset-bottom))]')
-    expect(footerBar).toMatch(/\bmd:pb-10\b/)
+    // SCEN-BC-17: at md+ the pill row (24–68px from the bottom) must clear the
+    // right-aligned credits: 2.5rem of air + 44px pill + its 1.5rem offset.
+    expect(footerBar).toContain('md:pb-[calc(2.5rem+44px+1.5rem)]')
     expect(footerBar).toMatch(/\bpt-10\b/)
   })
 
@@ -108,7 +110,7 @@ describe('SCEN-BC-08: footer clears the contact bar on mobile', () => {
     const bottomPaddings = footerBar.match(/(?:^|\s|")(?:md:)?(?:pb|py|p)-[^\s"]+/g) ?? []
     expect(bottomPaddings.map(c => c.trim().replace(/^"/, ''))).toEqual([
       'pb-[calc(2.5rem+64px+env(safe-area-inset-bottom))]',
-      'md:pb-10',
+      'md:pb-[calc(2.5rem+44px+1.5rem)]',
     ])
   })
 })

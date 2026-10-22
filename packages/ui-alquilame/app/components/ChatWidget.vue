@@ -58,7 +58,10 @@
              ancho y el saludo sale del borde izquierdo, sobre Chat IA; en
              escritorio el dock es la fila de píldoras y el saludo se apila
              encima, desde el borde de Chat IA. -->
-        <div class="contact-dock">
+        <!-- Además espera al estado del chat (SCEN-BC-16: se pinta una sola vez,
+             ya con su composición final) y se aparta mientras un slideover o
+             modal tiene la página inerte (SCEN-BC-14). -->
+        <div v-if="surfaceVisible" class="contact-dock">
           <!-- --bar-items: cuántos bloques comparten la barra, para que la cola
                apunte al centro de Chat IA (el primero). -->
           <div v-if="chatEnabled" class="teaser-slot" :style="{ '--bar-items': barItemCount }">
@@ -96,9 +99,12 @@
           </div>
 
         <!-- La barra es lo único que queda bajo el panel: se mide para anclarlo. -->
+        <!-- data-analytics-placement: el plugin de analítica atribuye los
+             clics de Llamar y WhatsApp a 'fab' (SCEN-BC-15). -->
         <nav
-          ref="launcherEl"
+          ref="barEl"
           aria-label="Contacto"
+          data-analytics-placement="fab"
           class="contact-bar pointer-events-auto"
         >
           <button
@@ -119,10 +125,11 @@
             <span class="bar-label">Chat IA</span>
           </button>
           <a
+            ref="callLinkEl"
             :href="callHref"
             class="bar-item bar-call"
             :aria-label="`Llamar al ${callDisplay}`"
-            @click="onChannelLink('llamada')"
+            @click="teaser.engage('llamada')"
           >
             <span class="bar-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
@@ -136,7 +143,7 @@
             rel="noopener noreferrer"
             class="bar-item bar-whatsapp"
             aria-label="Abrir WhatsApp"
-            @click="onChannelLink('whatsapp')"
+            @click="teaser.engage('whatsapp')"
           >
             <span class="bar-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.69 8.24-8.23 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07s.89 2.4 1.01 2.56c.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.11-.22-.17-.47-.29" /></svg>
@@ -166,7 +173,10 @@ import { chatPanelLiftPx } from '@rentacar-main/logic/utils/chatPanelLift'
 // opened (mobile keeps using the already route-split /chat page).
 const ChatConversation = defineAsyncComponent(() => import('./ChatConversation.vue'))
 
-const { franchise } = useAppConfig()
+const appConfig = useAppConfig() as ReturnType<typeof useAppConfig> & {
+  chatGreeting?: { line2?: string }
+}
+const { franchise } = appConfig
 // Llamar marca con el número que resuelve el composable compartido (el de desvío
 // de Google si algún día alquilame lo tiene), nunca con el teléfono crudo de la
 // franquicia (SCEN-LINK-08).
@@ -187,48 +197,89 @@ const {
 const panelOpen = ref(false)
 const panelEl = ref<HTMLElement | null>(null)
 const chatButtonEl = ref<HTMLButtonElement | null>(null)
+const callLinkEl = ref<HTMLAnchorElement | null>(null)
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
 // El panel se ancla SOBRE lo único que queda visible debajo de él: la barra de
 // contacto (<nav>). No se mide el dock, que incluye el teaser-sizer oculto y su
 // hueco.
-const launcherEl = ref<HTMLElement | null>(null)
-const launcherHeight = ref(0)
-let launcherObserver: ResizeObserver | null = null
+const barEl = ref<HTMLElement | null>(null)
+const barHeight = ref(0)
+let barObserver: ResizeObserver | null = null
 const panelLiftStyle = computed(() => {
-  const lift = chatPanelLiftPx(launcherHeight.value)
+  const lift = chatPanelLiftPx(barHeight.value)
   return lift === null ? undefined : `--panel-lift: ${lift}px`
 })
-function measureLauncher() {
-  launcherHeight.value = launcherEl.value?.getBoundingClientRect().height ?? 0
+function measureBar() {
+  barHeight.value = barEl.value?.getBoundingClientRect().height ?? 0
 }
-// La barra vive detrás de un v-if (overlay de reserva), así que el observer se
-// re-engancha cuando el elemento aparece o desaparece.
+// La barra vive detrás de varios v-if (overlay de reserva, estado del chat,
+// modales), así que el observer se re-engancha cuando aparece o desaparece.
 // En servidor el ref es null y ResizeObserver nunca se toca.
-watch(launcherEl, (el) => {
-  launcherObserver?.disconnect()
-  launcherObserver = null
+watch(barEl, (el) => {
+  barObserver?.disconnect()
+  barObserver = null
   if (!el) return
-  measureLauncher()
+  measureBar()
   // jsdom no implementa ResizeObserver. La medida sincrónica de `openChat`
   // basta para colocar el panel; sin observador solo se pierde el reajuste
   // posterior, que en un entorno sin layout no tiene nada que observar.
   if (typeof ResizeObserver === 'undefined') return
-  launcherObserver = new ResizeObserver(measureLauncher)
-  launcherObserver.observe(el)
+  barObserver = new ResizeObserver(measureBar)
+  barObserver.observe(el)
 }, { immediate: true })
-onBeforeUnmount(() => launcherObserver?.disconnect())
+onBeforeUnmount(() => barObserver?.disconnect())
 
 // El pie del slideover de reserva ya trae su propio CTA de WhatsApp y la barra
 // se le montaría encima, así que la superficie se oculta en TODO viewport
-// mientras el overlay está abierto. Absorbe la partición en 1024 que traíamos:
-// ocultar siempre cubre por definición la banda de 768 a 1023 donde la barra
-// inferior del wizard de alquicarros (`lg:hidden fixed inset-x-0 bottom-0`)
-// ocupa el ancho completo. `isDesktop` sigue vivo para el panel inline del chat.
+// mientras el overlay está abierto. `isDesktop` solo decide panel o /chat.
 const hideContactButtons = computed(() => reservationOverlayOpen.value)
 
+// SCEN-BC-14: los slideovers y modales de Nuxt UI no llevan z-index, así que la
+// capa fija (z-60) quedaría encima y robaría los toques de su última fila.
+// Mientras una capa modal de reka está abierta pone `body { pointer-events:
+// none }` (la página de fuera queda inerte): la superficie se aparta igual.
+// Las capas no modales (popover) no lo hacen y no la ocultan.
+const modalLayerOpen = ref(false)
+let bodyObserver: MutationObserver | null = null
+function syncModalLayer() {
+  modalLayerOpen.value = document.body.style.pointerEvents === 'none'
+}
+onMounted(() => {
+  if (typeof MutationObserver === 'undefined') return
+  syncModalLayer()
+  bodyObserver = new MutationObserver(syncModalLayer)
+  bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['style'] })
+})
+onBeforeUnmount(() => bodyObserver?.disconnect())
+
+// SCEN-BC-16: el estado arranca con el chat apagado y WhatsApp encendido hasta
+// que responde el dashboard. Pintar antes mostraría [Llamar|WhatsApp] y luego
+// tres bloques. La barra espera esa respuesta; si no llega en 1,5 s sale igual
+// (Llamar nunca depende del dashboard).
+const STATUS_FALLBACK_MS = 1500
+const statusFallbackElapsed = ref(false)
+let statusFallbackTimer: ReturnType<typeof setTimeout> | null = null
+function clearStatusFallback() {
+  if (statusFallbackTimer === null) return
+  clearTimeout(statusFallbackTimer)
+  statusFallbackTimer = null
+}
+onMounted(() => {
+  if (chatStatusResolved.value) return
+  statusFallbackTimer = setTimeout(() => {
+    statusFallbackTimer = null
+    statusFallbackElapsed.value = true
+  }, STATUS_FALLBACK_MS)
+})
+watch(chatStatusResolved, (resolved) => { if (resolved) clearStatusFallback() })
+onBeforeUnmount(clearStatusFallback)
+const surfaceVisible = computed(
+  () => (chatStatusResolved.value || statusFallbackElapsed.value) && !modalLayerOpen.value,
+)
+
 // Singleton compartido con ChatConversation: leemos el contador de no leídos para
-// la insignia del FAB y la región aria-live. El getter es SSR-safe (instancia
+// la insignia de Chat IA y la región aria-live. El getter es SSR-safe (instancia
 // inerte en servidor). La insignia se limpia cuando la SUPERFICIE monta
 // (onSurfaceMounted → markRead), no aquí: marcar leído en openChat borraría el
 // separador "Mensajes nuevos" antes de que ChatConversation capture su ancla.
@@ -274,8 +325,7 @@ const teaserOpen = computed(
 
 // Línea 2 del saludo: override de la marca en app.config (`chatGreeting.line2`),
 // igual que ChatConversation; si falta, la compartida.
-const teaserLine2 =
-  (useAppConfig() as { chatGreeting?: { line2?: string } }).chatGreeting?.line2 ?? TEASER_LINE_2
+const teaserLine2 = appConfig.chatGreeting?.line2 ?? TEASER_LINE_2
 // Bloques de la barra cuando el saludo existe (Chat IA está encendido): Chat IA,
 // Llamar y WhatsApp si su horario lo deja. La cola apunta al centro del primero.
 const barItemCount = computed(() => (whatsappVisible.value ? 3 : 2))
@@ -301,8 +351,14 @@ watch(
 
 // A focus revalidation can turn the switch OFF while the panel is open. Close
 // it locally so ChatConversation (and its typing indicator) immediately unmounts.
+// Chat IA desaparece con el switch, así que si el foco estaba dentro del panel
+// pasa a Llamar antes de cerrar, en vez de caer a <body>.
 watch(chatEnabled, (enabled) => {
-  if (!enabled) panelOpen.value = false
+  if (enabled) return
+  if (typeof document !== 'undefined' && panelEl.value?.contains(document.activeElement)) {
+    callLinkEl.value?.focus({ preventScroll: true })
+  }
+  panelOpen.value = false
 })
 
 // Cuando aparece un no leído REAL, el teaser sintético queda cancelado para toda
@@ -342,22 +398,16 @@ onBeforeUnmount(() => {
   teaser.stop()
 })
 
-function closePanel() {
-  panelOpen.value = false
-}
 // Escape, backdrop o la «×» del panel: el panel se cierra y el foco vuelve a
 // Chat IA, que es quien lo abrió. Sin panel abierto no hay nada que cerrar ni
 // foco que mover.
 function closeAll() {
   if (!panelOpen.value) return
-  closePanel()
+  panelOpen.value = false
   chatButtonEl.value?.focus({ preventScroll: true })
 }
-function onChannelLink(channel: 'whatsapp' | 'llamada') {
-  teaser.engage(channel)
-}
 function toggleChat() {
-  if (panelOpen.value) closePanel()
+  if (panelOpen.value) panelOpen.value = false
   else openChat('fab')
 }
 // `source` es quién abrió: la burbuja del teaser o el botón Chat IA. Ahora
@@ -376,7 +426,7 @@ function openChat(source: 'teaser' | 'fab') {
   if (isDesktop.value) {
     // Medida sincrónica antes de abrir: el panel nace con el bottom correcto en
     // vez de saltar un frame desde el fallback.
-    measureLauncher()
+    measureBar()
     panelOpen.value = true
   }
   else navigateTo('/chat')
@@ -467,7 +517,6 @@ button { -webkit-tap-highlight-color: transparent; }
   left: 12px;
   bottom: calc(64px + env(safe-area-inset-bottom) + 34px);
   width: min(280px, calc(100vw - 24px));
-  pointer-events: none;
 }
 .teaser-stack {
   display: flex;
@@ -475,10 +524,7 @@ button { -webkit-tap-highlight-color: transparent; }
   align-items: flex-start;
   gap: 6px;
 }
-.teaser-sizer {
-  visibility: hidden;
-  pointer-events: none;
-}
+.teaser-sizer { visibility: hidden; }
 .teaser-live {
   position: absolute;
   left: 0;
@@ -569,7 +615,6 @@ button { -webkit-tap-highlight-color: transparent; }
   .bar-chat { position: relative; }
   .bar-icon { position: static; }
   .bar-badge {
-    top: -6px;
     left: -6px;
     right: auto;
     min-width: 20px;

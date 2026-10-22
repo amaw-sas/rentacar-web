@@ -17,6 +17,7 @@ import { dirname, resolve } from 'node:path'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent, type Ref } from 'vue'
 import { useCallPhone } from '@rentacar-main/logic/composables/useCallPhone'
 import { chatPanelLiftPx } from '@rentacar-main/logic/utils/chatPanelLift'
+import { createContactClickHandler } from '@rentacar-main/logic/utils/analytics'
 import {
   createContactTeaser,
   TEASER_FIRST_DELAY_MS,
@@ -49,6 +50,7 @@ let chatGreeting: { line2?: string } | undefined
 
 interface Harness {
   chatEnabled: Ref<boolean>
+  resolved: Ref<boolean>
   whatsappVisible: Ref<boolean>
   overlayOpen: Ref<boolean>
   unread: Ref<number>
@@ -79,6 +81,7 @@ function stubMatchMedia(desktop: boolean) {
 function stubNuxtGlobals(route = '/') {
   h = {
     chatEnabled: ref(true),
+    resolved: ref(true),
     whatsappVisible: ref(true),
     overlayOpen: ref(false),
     unread: ref(0),
@@ -112,7 +115,7 @@ function stubNuxtGlobals(route = '/') {
   vi.stubGlobal('useChatStatus', () => ({
     enabled: h.chatEnabled,
     whatsappVisible: h.whatsappVisible,
-    resolved: ref(true),
+    resolved: h.resolved,
   }))
   vi.stubGlobal('useChatUnreadBadge', () => ({
     unread: h.unread,
@@ -596,6 +599,160 @@ describe('SCEN-BC-06/10 — real teaser: 5 s / +20 s, engage suppresses for 15 d
   })
 })
 
+// SCEN-BC-15: the shared analytics plugin attributes a contact click to the
+// FAB by `data-analytics-placement` (or the old launcher classes). Without it,
+// a tap on the bar goes out as the page's fallback ('category', 'result'...).
+describe('SCEN-BC-15 — Llamar and WhatsApp clicks are attributed to the fab', () => {
+  let events: Array<{ name: string, params: Record<string, unknown> }>
+  let handler: (e: Event) => void
+  beforeEach(() => {
+    events = []
+    vi.stubGlobal('gtag', (_kind: string, name: string, params: Record<string, unknown>) => {
+      events.push({ name, params })
+    })
+    ;(window as unknown as { gtag: unknown }).gtag = (globalThis as unknown as { gtag: unknown }).gtag
+    // The same delegated handler the brand plugin installs, on a page whose
+    // fallback placement would otherwise be 'category'.
+    handler = createContactClickHandler('alquilame', () => ({ pageType: 'category' }))
+    document.addEventListener('click', handler, true)
+  })
+  afterEach(() => {
+    document.removeEventListener('click', handler, true)
+    delete (window as unknown as { gtag?: unknown }).gtag
+  })
+
+  for (const [name, el, method] of [['Llamar', () => callLink(), 'telephone'], ['WhatsApp', () => waLink(), 'whatsapp']] as const) {
+    it(`${name} → contact_click { placement: 'fab' }, on mobile and desktop`, async () => {
+      for (const desktop of [false, true]) {
+        stubMatchMedia(desktop)
+        wrapper?.unmount()
+        await mountWidget()
+        events = []
+        await click(el())
+        const contact = events.filter(e => e.name === 'contact_click')
+        expect(contact, `${name} desktop=${desktop}`).toHaveLength(1)
+        expect(contact[0]!.params).toMatchObject({ brand: 'alquilame', method, placement: 'fab', page_type: 'category' })
+      }
+    })
+  }
+
+  it('the placement is declared once, on the <nav>', async () => {
+    await mountWidget()
+    expect(bar()!.dataset.analyticsPlacement).toBe('fab')
+  })
+})
+
+// SCEN-BC-14: Nuxt UI slideovers/modals have no z-index, so the fixed contact
+// layer (z-60) would sit over them and steal taps on their last row. While a
+// modal reka layer is open it sets `body { pointer-events: none }` — the page
+// outside it is inert, and the contact surface follows it out of the way.
+describe('SCEN-BC-14 — the surface steps aside while a modal slideover/modal is open', () => {
+  afterEach(() => {
+    document.body.style.pointerEvents = ''
+  })
+
+  it('hides the bar and greeting while body pointer-events is none, and returns after', async () => {
+    h.teaserVisible.value = true
+    await mountWidget()
+    expect(bar()).not.toBeNull()
+    document.body.style.pointerEvents = 'none'
+    await settle()
+    expect(bar()).toBeNull()
+    expect(q('.teaser-slot')).toBeNull()
+    document.body.style.pointerEvents = ''
+    await settle()
+    expect(bar()).not.toBeNull()
+    expect(q('.teaser-slot')).not.toBeNull()
+  })
+
+  it('a modal already open at mount keeps the surface hidden from the first paint', async () => {
+    document.body.style.pointerEvents = 'none'
+    await mountWidget()
+    expect(bar()).toBeNull()
+  })
+
+  it('an open desktop chat panel is not a modal layer: it never hides its own bar', async () => {
+    stubMatchMedia(true)
+    await mountWidget()
+    await click(chatButton())
+    expect(panel()).not.toBeNull()
+    expect(bar()).not.toBeNull()
+  })
+})
+
+// SCEN-BC-16: useChatStatus starts chat OFF / WhatsApp ON until the dashboard
+// answers, so painting early shows [Llamar|WhatsApp] and then reflows to three.
+describe('SCEN-BC-16 — the bar paints once, in its final composition', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    h.resolved.value = false
+    h.chatEnabled.value = false
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('nothing before the status resolves; then all three blocks at once', async () => {
+    await mountWidget()
+    expect(bar()).toBeNull()
+    h.chatEnabled.value = true
+    h.resolved.value = true
+    await settle()
+    expect(items().map(b => b.textContent?.trim())).toEqual(['Chat IA', 'Llamar', 'WhatsApp'])
+  })
+
+  it('if the status never arrives, the bar appears at 1.5 s with Llamar (WhatsApp fail-open)', async () => {
+    await mountWidget()
+    vi.advanceTimersByTime(1499)
+    await settle()
+    expect(bar()).toBeNull()
+    vi.advanceTimersByTime(1)
+    await settle()
+    expect(items().map(b => b.textContent?.trim())).toEqual(['Llamar', 'WhatsApp'])
+  })
+
+  it('resolving first cancels the fallback timer; unmounting before 1.5 s leaves none behind', async () => {
+    await mountWidget()
+    h.resolved.value = true
+    await settle()
+    expect(vi.getTimerCount()).toBe(0)
+    wrapper!.unmount()
+    wrapper = null
+    h.resolved.value = false
+    await mountWidget()
+    expect(vi.getTimerCount()).toBe(1)
+    wrapper!.unmount()
+    wrapper = null
+    expect(vi.getTimerCount()).toBe(0)
+  })
+})
+
+describe('chat switched off while the desktop panel holds focus', () => {
+  it('focus moves to Llamar instead of dropping to <body>', async () => {
+    stubMatchMedia(true)
+    await mountWidget()
+    await click(chatButton())
+    panel()!.focus()
+    expect(document.activeElement).toBe(panel())
+    h.chatEnabled.value = false
+    await settle()
+    expect(panel()).toBeNull()
+    expect(document.activeElement).toBe(callLink())
+  })
+
+  it('focus elsewhere on the page is left alone', async () => {
+    stubMatchMedia(true)
+    await mountWidget()
+    await click(chatButton())
+    const outside = document.createElement('button')
+    document.body.appendChild(outside)
+    outside.focus()
+    h.chatEnabled.value = false
+    await settle()
+    expect(document.activeElement).toBe(outside)
+  })
+})
+
 describe('SCEN-BC-02 — desktop renders the same three channels, in order', () => {
   it('same <nav>, same order; the pill layout is CSS only (no viewport branch in the markup)', async () => {
     stubMatchMedia(true)
@@ -827,7 +984,7 @@ describe('source-level wiring a mount cannot observe', () => {
   // component and this harness cannot settle its real import across tests.
   it('SCEN-BC-13: the panel «×» (ChatConversation dismiss) runs closeAll', () => {
     expect(source).toMatch(/<ChatConversation [^>]*@dismiss="closeAll"/)
-    expect(source).toMatch(/function closeAll\(\) \{\s*if \(!panelOpen\.value\) return\s*closePanel\(\)\s*chatButtonEl\.value\?\.focus\(\{ preventScroll: true \}\)\s*\}/)
+    expect(source).toMatch(/function closeAll\(\) \{\s*if \(!panelOpen\.value\) return\s*panelOpen\.value = false\s*chatButtonEl\.value\?\.focus\(\{ preventScroll: true \}\)\s*\}/)
     expect(source).toMatch(/<button\s+v-if="chatEnabled"\s+ref="chatButtonEl"/)
   })
 
@@ -836,14 +993,30 @@ describe('source-level wiring a mount cannot observe', () => {
     expect(source).toMatch(/window\.addEventListener\('keydown', onKeydown\)/)
   })
 
+  // Equivalents of ChatWidget.panel-clearance «mide antes de abrir» and
+  // SCEN-006 (ui-alquilatucarro), which pin the launcher names on the base copies.
   it('measures the <nav>, and re-observes it while it lives', () => {
-    expect(source).toMatch(/<nav\s+ref="launcherEl"/)
-    expect(source).toMatch(/launcherEl\.value\?\.getBoundingClientRect\(\)/)
-    expect(source).toMatch(/onBeforeUnmount\(\(\) => launcherObserver\?\.disconnect\(\)\)/)
+    expect(source).toMatch(/<nav\s+ref="barEl"/)
+    expect(source).toMatch(/barEl\.value\?\.getBoundingClientRect\(\)/)
+    expect(source).toMatch(/barObserver\?\.disconnect\(\)/)
+    expect(source).toMatch(/onBeforeUnmount\(\(\) => barObserver\?\.disconnect\(\)\)/)
+  })
+
+  it('measures the bar before opening the panel, so it never lands a frame late', () => {
+    const fn = source.slice(source.indexOf('function openChat'))
+    const measure = fn.indexOf('measureBar()')
+    const open = fn.indexOf('panelOpen.value = true')
+    expect(measure).toBeGreaterThan(-1)
+    expect(open).toBeGreaterThan(measure)
+  })
+
+  it('the modal watcher and the status fallback timer are released on unmount', () => {
+    expect(source).toMatch(/bodyObserver\?\.disconnect\(\)/)
+    expect(source).toMatch(/clearTimeout\(statusFallbackTimer\)/)
   })
 
   it('removed launcher-era state stays removed', () => {
-    for (const gone of ['menuOpen', 'contact-fab-menu', 'restoreFocusToLauncher', 'function toggle()', 'animate-pulse-attention', 'pulse-attention', 'fab-chip', 'shiftLeft', 'isWideViewport', 'data-shift-left', 'contact-fab-stack--reservation']) {
+    for (const gone of ['menuOpen', 'contact-fab-menu', 'restoreFocusToLauncher', 'function toggle()', 'animate-pulse-attention', 'pulse-attention', 'fab-chip', 'shiftLeft', 'isWideViewport', 'data-shift-left', 'contact-fab-stack--reservation', 'launcherEl', 'launcherHeight', 'launcherObserver', 'measureLauncher', 'onChannelLink', 'closePanel']) {
       expect(source, gone).not.toContain(gone)
     }
   })
