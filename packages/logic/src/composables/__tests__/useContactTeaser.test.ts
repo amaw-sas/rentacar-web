@@ -10,6 +10,7 @@ import {
   TEASER_SUPPRESS_MS,
   type ContactTeaserConfig,
 } from '../useContactTeaser';
+import { TEASER_LINE_1_PLAIN, TEASER_LINE_2 } from '../../utils/chatGreeting';
 
 // Contact teaser: proactive greeting + synthetic FAB badge
 // (contact-teaser-synthetic-badge.scenarios.md). Browser access in the factory
@@ -123,6 +124,30 @@ describe('SCEN-001/002 — greeting at 5s, second line at +20s (badge capped at 
       .filter((e) => e.name === 'contact_teaser_shown')
       .map((e) => e.params?.step);
     expect(shownSteps).toEqual([1, 2]);
+  });
+});
+
+describe('SCEN-BC-06 — per-brand line2 override in the aria-live announcement', () => {
+  beforeEach(() => {
+    setupBrowser();
+    vi.useFakeTimers();
+  });
+
+  it('line2 override: the announcement after step 2 ends with the override', () => {
+    const inst = createContactTeaser({ ...cfg(), line2: 'X override' });
+    inst.start({ realUnread: () => 0 });
+    vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS);
+    vi.advanceTimersByTime(TEASER_SECOND_DELAY_MS);
+    expect(inst.teaserAnnounce.value.endsWith('X override')).toBe(true);
+    expect(inst.teaserAnnounce.value).toBe(`${TEASER_LINE_1_PLAIN} X override`);
+  });
+
+  it('no line2: the announcement is exactly today\'s text', () => {
+    const inst = createContactTeaser(cfg());
+    inst.start({ realUnread: () => 0 });
+    vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS);
+    vi.advanceTimersByTime(TEASER_SECOND_DELAY_MS);
+    expect(inst.teaserAnnounce.value).toBe(`${TEASER_LINE_1_PLAIN} ${TEASER_LINE_2}`);
   });
 });
 

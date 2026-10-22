@@ -48,7 +48,7 @@
     <div ref="scrollEl" class="cc-messages" @scroll.passive="onMessagesScroll">
       <template v-if="!messages.length">
         <div class="cc-msg is-assistant is-group-start" data-greeting>{{ TEASER_LINE_1 }}</div>
-        <div class="cc-msg is-assistant" data-greeting>{{ TEASER_LINE_2 }}</div>
+        <div class="cc-msg is-assistant" data-greeting>{{ greetingLine2 }}</div>
       </template>
       <template v-for="(m, msgIdx) in messages" :key="m.id">
         <!-- Separador "Mensajes nuevos": antes del primer mensaje no leído -->
@@ -255,6 +255,10 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { layoutChatBubbles, renderChatMarkdown, type ChatBubble, type ChatBubbleSource } from '@rentacar-main/logic/utils'
 import { TEASER_LINE_1, TEASER_LINE_2 } from '@rentacar-main/logic/utils/chatGreeting'
+
+// Brand override from app.config (`chatGreeting.line2`), shared default otherwise.
+const greetingLine2 =
+  (useAppConfig() as { chatGreeting?: { line2?: string } }).chatGreeting?.line2 ?? TEASER_LINE_2
 
 // Hora por mensaje (estilo WhatsApp), hora de Colombia, 12h.
 const timeFmt = new Intl.DateTimeFormat('es-CO', {

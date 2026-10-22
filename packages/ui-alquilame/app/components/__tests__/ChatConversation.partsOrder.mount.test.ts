@@ -172,6 +172,8 @@ beforeEach(() => {
   // jsdom lacks these; the component calls them on mount / quote jump.
   if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {}
   if (typeof globalThis.CSS === 'undefined') vi.stubGlobal('CSS', { escape: (s: string) => s })
+  // ChatConversation reads app.config (chatGreeting.line2); none set → shared default.
+  vi.stubGlobal('useAppConfig', () => ({}))
   consoleError = vi.spyOn(console, 'error')
   consoleWarn = vi.spyOn(console, 'warn')
 })
