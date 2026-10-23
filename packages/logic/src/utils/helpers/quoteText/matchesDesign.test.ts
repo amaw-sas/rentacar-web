@@ -5,7 +5,7 @@ import { it, expect } from 'vitest';
 import { buildBrandQuoteText } from './index';
 
 const design = readFileSync(resolve(__dirname, '../../../../../../docs/specs/cotizacion-por-asesor/design.md'), 'utf8');
-// First fenced block after the heading (Alquilatucarro has prose before it).
+// First fenced block after the heading (Alquilame and Alquilatucarro have prose before it).
 const block = (h: string) => {
   const section = design.split(`### ${h}\n`)[1]!;
   const open = section.indexOf('```\n');
@@ -38,9 +38,22 @@ const alquilatucarroInput = {
 it('Alquilatucarro reproduces the owner-approved text in design.md byte for byte', () => {
   expect(buildBrandQuoteText(alquilatucarroInput as never, 'alquilatucarro')).toBe(block('Alquilatucarro'));
 });
-for (const [h, f] of [['Alquilame', 'alquilame'], ['Alquicarros', 'alquicarros']] as const) {
-  it(`${h} reproduces the owner-approved text in design.md byte for byte`, () => {
-    const expected = block(h).replace(/\$XX\.XXX COP \(2 días × \$XX\.XXX COP\)/, '$30.000 COP (2 días × $15.000 COP)').replace(/\$XX\.XXX/g, '$30.000');
-    expect(buildBrandQuoteText(input as never, f)).toBe(expected);
-  });
-}
+const alquilameInput = {
+  pickupBranch: 'Bogotá Aeropuerto', returnBranch: 'Bogotá Aeropuerto',
+  pickupDate: '2026-10-23', pickupTime: '12:00', returnDate: '2026-10-30', returnTime: '12:00',
+  days: 7, extraHours: 0, monthly: false, totalCoverage: false, returnFee: false,
+  rows: [
+    ['Compacto Mecánico', 1155000], ['Compacto Automático', 1232000], ['Sedán Mecánico', 1281000],
+    ['Sedán Automático', 1470000], ['Sedán Automático Híbrido', 1708000], ['Camioneta Mecánica 4X4', 2387000],
+    ['Camioneta Automática Híbrida 7 puestos', 3773000], ['Camioneta Automática Especial', 3038000],
+  ].map(([description, price]) => ({ description, price })),
+  babySeat: null,
+  optionalExtras: { babySeat: { total: 84000, dailyPrice: 12000, monthly: false }, washPrice: 20000 },
+};
+it('Alquilame reproduces the owner-approved text in design.md byte for byte', () => {
+  expect(buildBrandQuoteText(alquilameInput as never, 'alquilame')).toBe(block('Alquilame'));
+});
+it('Alquicarros reproduces the owner-approved text in design.md byte for byte', () => {
+  const expected = block('Alquicarros').replace(/\$XX\.XXX COP \(2 días × \$XX\.XXX COP\)/, '$30.000 COP (2 días × $15.000 COP)').replace(/\$XX\.XXX/g, '$30.000');
+  expect(buildBrandQuoteText(input as never, 'alquicarros')).toBe(expected);
+});

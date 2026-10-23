@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { buildBrandQuoteText, type QuoteFranchise, type QuoteTextInput } from './index';
 
 const BRANDS: QuoteFranchise[] = ['alquilame', 'alquilatucarro', 'alquicarros'];
-type OldBrand = 'alquilame' | 'alquicarros';
-const OLD_BRANDS: OldBrand[] = ['alquilame', 'alquicarros'];
+type OldBrand = 'alquicarros';
+const OLD_BRANDS: OldBrand[] = ['alquicarros'];
 
 const base: QuoteTextInput = {
   pickupBranch: 'Cali Aeropuerto',
@@ -29,19 +29,34 @@ const base: QuoteTextInput = {
 const make = (over: Partial<QuoteTextInput> = {}): QuoteTextInput => ({ ...base, ...over });
 const text = (b: QuoteFranchise, over: Partial<QuoteTextInput> = {}) => buildBrandQuoteText(make(over), b);
 
-const ALQUILAME = `¡Hola! Esta es tu cotización en Alquilame 🚗
+const ALQUILAME = `Esta es tu cotización:
 
-📍 *Recoges:* Cali Aeropuerto, viernes 23 oct. 7:30am
-📍 *Entregas:* Cali Norte Chipichape, domingo 25 oct. 10:30am
-⏱️ 2 días y 3 horas extra, con Seguro Total
+📍*Recoges:*
+Cali Aeropuerto
+viernes 23 oct. 7:30am
+📍*Entregas:*
+Cali Norte Chipichape
+domingo 25 oct. 10:30am
 
-🚙 Económico — *$668.810 COP*
-🚙 Sedán — *$932.301 COP*
-🚙 Camioneta — *$1.894.620 COP*
+🚗 Económico
+*$668.810 COP*
+🚗 Sedán
+*$932.301 COP*
+🚙 Camioneta
+*$1.894.620 COP*
 
-El precio ya incluye IVA, las horas extra, la entrega en otra sede y kilometraje ilimitado.
-Silla de bebé: $30.000 COP (2 días × $15.000 COP), se paga al recoger.
-⚠️ Este precio se mantiene 20 minutos.
+*Cantidad:* 2 días + 3 horas extra
+*Seguro:* Seguro Total
+*Impuestos:* Incluye IVA y Tax
+*Devolución en otra sede:* Incluida en el precio
+*Kilometraje:* Ilimitado
+*Precio:* Se mantiene 20 minutos, luego debes recotizar
+
+*OPCIONALES*
+*Silla de bebé:*
+$30.000 COP por 2 días
+*Lavada pago anticipado:*
+$20.000 COP
 
 *Con Alquilame:*
 ✅ Reservas con 4 datos y congelas el precio
@@ -85,16 +100,14 @@ const cases: Case[] = [
     name: 'sin Seguro Total',
     over: { totalCoverage: false },
     expected: {
-      alquilame: ['⏱️ 2 días y 3 horas extra, con seguro básico'],
       alquicarros: ['2 días + 3 h extra · Seguro básico'],
     },
-    absent: { alquilame: ['Seguro Total'], alquicarros: ['Seguro Total'] },
+    absent: { alquicarros: ['Seguro Total'] },
   },
   {
     name: 'Seguro Total en algunas gamas',
     over: { rows: [{ description: 'Económico', price: 668810 }, { description: 'Sedán', price: 932301, withoutTotalCoverage: true }] },
     expected: {
-      alquilame: ['🚙 Económico — *$668.810 COP*\n', '🚙 Sedán — *$932.301 COP* (sin Seguro Total)', 'con Seguro Total'],
       alquicarros: ['• Económico $668.810 COP\n', '• Sedán $932.301 COP (sin Seguro Total)', 'Seguro Total'],
     },
   },
@@ -102,29 +115,22 @@ const cases: Case[] = [
     name: 'sin horas extra',
     over: { extraHours: 0 },
     expected: {
-      alquilame: ['⏱️ 2 días, con Seguro Total', 'El precio ya incluye IVA, la entrega en otra sede y kilometraje ilimitado.'],
       alquicarros: ['2 días · Seguro Total', 'Incluye: IVA, otra sede, km ilimitado.'],
     },
-    absent: { alquilame: ['hora'], alquicarros: ['h extra', 'horas'] },
+    absent: { alquicarros: ['h extra', 'horas'] },
   },
   {
     name: 'misma sede',
     over: sameBranch,
     expected: {
-      alquilame: [
-        '📍 *Recoges:* Cali Aeropuerto, viernes',
-        '📍 *Entregas:* Cali Aeropuerto, domingo',
-        'El precio ya incluye IVA, las horas extra y kilometraje ilimitado.',
-      ],
       alquicarros: ['Cali Aeropuerto → Cali Aeropuerto', 'Incluye: IVA, horas extra, km ilimitado.'],
     },
-    absent: { alquilame: ['otra sede'], alquicarros: ['otra sede'] },
+    absent: { alquicarros: ['otra sede'] },
   },
   {
     name: 'ni horas extra ni otra sede',
     over: { extraHours: 0, ...sameBranch },
     expected: {
-      alquilame: ['El precio ya incluye IVA y kilometraje ilimitado.'],
       alquicarros: ['Incluye: IVA, km ilimitado.'],
     },
   },
@@ -132,34 +138,31 @@ const cases: Case[] = [
     name: 'mensual, mismo plan',
     over: { days: 30, extraHours: 0, monthly: true, rows: monthlyRows(['1k_kms', '1k_kms']), babySeat: null },
     expected: {
-      alquilame: ['⏱️ 30 días, plan de 1.000 km al mes, con Seguro Total', 'IVA, la entrega en otra sede y 1.000 km al mes.'],
       alquicarros: ['30 días · plan 1.000 km/mes · Seguro Total', 'Incluye: IVA, otra sede, 1.000 km/mes.'],
     },
-    absent: { alquilame: ['ilimitado'], alquicarros: ['ilimitado'] },
+    absent: { alquicarros: ['ilimitado'] },
   },
   {
     name: 'mensual, planes distintos',
     over: { days: 30, extraHours: 0, monthly: true, rows: monthlyRows(['1k_kms', '2k_kms']), babySeat: null },
     expected: {
-      alquilame: ['*$1.000.000 COP* (plan 1.000 km)', '*$1.000.001 COP* (plan 2.000 km)', 'los km del plan de cada gama.'],
       alquicarros: ['$1.000.000 COP (plan 1.000 km)', '$1.000.001 COP (plan 2.000 km)', 'km del plan de cada gama.'],
     },
-    absent: { alquilame: ['ilimitado', 'plan de 1.000'], alquicarros: ['ilimitado', 'plan 1.000 km/mes'] },
+    absent: { alquicarros: ['ilimitado', 'plan 1.000 km/mes'] },
   },
   {
     name: 'silla mensual',
     over: { days: 30, monthly: true, rows: monthlyRows(['1k_kms']), babySeat: { total: 90000, dailyPrice: 3000, monthly: true } },
     expected: {
-      alquilame: ['Silla de bebé: $90.000 COP el mes, se paga al recoger.'],
       alquicarros: ['+ Silla de bebé $90.000 COP el mes (pagas al recoger)'],
     },
-    absent: { alquilame: ['×'], alquicarros: ['×'] },
+    absent: { alquicarros: ['×'] },
   },
   {
     name: 'sin silla',
     over: { babySeat: null },
-    expected: { alquilame: [], alquicarros: [] },
-    absent: { alquilame: ['Silla'], alquicarros: ['Silla'] },
+    expected: { alquicarros: [] },
+    absent: { alquicarros: ['Silla'] },
   },
 ];
 
@@ -175,13 +178,13 @@ describe('variant table (SCEN-011)', () => {
   }
 
   it('singular: 1 día + 1 hora extra', () => {
-    expect(text('alquilame', { days: 1, extraHours: 1 })).toContain('⏱️ 1 día y 1 hora extra');
+    expect(text('alquilame', { days: 1, extraHours: 1 })).toContain('*Cantidad:* 1 día + 1 hora extra');
     expect(text('alquilatucarro', { days: 1, extraHours: 1 })).toContain('*Cantidad:* 1 día + 1 hora extra');
     expect(text('alquicarros', { days: 1, extraHours: 1 })).toContain('1 día + 1 h extra');
   });
 
   it('formats 4-digit amounts with thousands separator', () => {
-    expect(text('alquilame', { rows: [{ description: 'Económico', price: 2500 }] })).toContain('*$2.500 COP*');
+    expect(text('alquilame', { rows: [{ description: 'Económico', price: 2500 }] })).toContain('\n*$2.500 COP*\n');
   });
 });
 
@@ -221,7 +224,7 @@ describe('guards', () => {
 
 describe('returnFee wording', () => {
   const sentence: Record<QuoteFranchise, string> = {
-    alquilame: 'la entrega en otra sede',
+    alquilame: 'Devolución en otra sede',
     alquilatucarro: 'Devolución en otra sede',
     alquicarros: 'otra sede',
   };
@@ -250,7 +253,6 @@ describe('Alquilatucarro v3 (SCEN-021/022/023)', () => {
       expect(out).toContain(`*${name}:*`);
     }
     expect(att({ rows })).not.toContain('Camioneta Mecánica');
-    expect(buildBrandQuoteText(make({ rows: [{ description: 'Camioneta Automática', price: 1 }] }), 'alquilame')).toContain('Camioneta Automática');
     expect(buildBrandQuoteText(make({ rows: [{ description: 'Camioneta Automática', price: 1 }] }), 'alquicarros')).toContain('Camioneta Automática');
   });
 
@@ -323,5 +325,87 @@ describe('Alquilatucarro v3 (SCEN-021/022/023)', () => {
     const out = att();
     for (const gone of ['Solo necesita 4 datos', 'http', 'Buen día']) expect(out).not.toContain(gone);
     expect(out).toContain('Le comparto la cotización solicitada:');
+  });
+});
+
+describe('Alquilame v3 (SCEN-026/027/028)', () => {
+  const alq = (over: Partial<QuoteTextInput> = {}) =>
+    text('alquilame', { returnBranch: 'Cali Aeropuerto', returnFee: false, extraHours: 0, ...over });
+
+  it('SCEN-026: emoji and camioneta abbreviation', () => {
+    const rows = [
+      'Compacto Mecánico', 'Sedán Automático Híbrido', 'Camioneta Mecánica 4X4', 'Camioneta Automática Híbrida 7 puestos', 'Camioneta Automática Especial',
+    ].map((description, i) => ({ description, price: 1000 + i }));
+    const out = alq({ rows });
+    for (const line of [
+      '🚗 Compacto Mecánico', '🚗 Sedán Automático Híbrido', '🚙 Camioneta MT 4X4', '🚙 Camioneta AT Híbrida 7 puestos', '🚙 Camioneta AT Especial',
+    ]) {
+      expect(out.split('\n')).toContain(line);
+    }
+    expect(out).not.toContain('Camioneta Mecánica');
+    expect(out).not.toContain('Camioneta Automática');
+  });
+
+  it('SCEN-027: OPCIONALES always, daily seat and prepaid wash', () => {
+    const out = alq({ days: 7, babySeat: null, optionalExtras: { babySeat: { total: 84000, dailyPrice: 12000, monthly: false }, washPrice: 20000 } });
+    expect(out).toContain('*OPCIONALES*\n*Silla de bebé:*\n$84.000 COP por 7 días\n*Lavada pago anticipado:*\n$20.000 COP\n');
+  });
+
+  it('SCEN-027: monthly seat, catalog prices drive the text, null omits the section', () => {
+    const monthly = alq({
+      days: 30, monthly: true, rows: monthlyRows(['1k_kms']),
+      optionalExtras: { babySeat: { total: 100000, dailyPrice: 12000, monthly: true }, washPrice: 25000 },
+    });
+    expect(monthly).toContain('$100.000 COP por el mes\n');
+    expect(monthly).toContain('$25.000 COP\n');
+    expect(alq({ optionalExtras: { babySeat: { total: 2, dailyPrice: 1, monthly: false }, washPrice: 9000 } })).toContain('$9.000 COP');
+    expect(alq({ optionalExtras: null })).not.toContain('OPCIONALES');
+  });
+
+  it('SCEN-027: ignores the legacy babySeat checkbox value', () => {
+    expect(alq({ babySeat: { total: 777, dailyPrice: 1, monthly: false } })).not.toContain('$777');
+  });
+
+  it('SCEN-028: Seguro Total vs básico', () => {
+    expect(alq()).toContain('*Seguro:* Seguro Total\n');
+    expect(alq({ totalCoverage: false })).toContain('*Seguro:* Seguro básico\n');
+    expect(alq({ totalCoverage: false })).not.toContain('sin Seguro Total');
+  });
+
+  it('SCEN-028: a gama without Seguro Total is flagged after the bold price', () => {
+    const rows = [{ description: 'Económico', price: 668810 }, { description: 'Sedán', price: 932301, withoutTotalCoverage: true }];
+    const out = alq({ rows });
+    expect(out).toContain('🚗 Económico\n*$668.810 COP*\n');
+    expect(out).toContain('🚗 Sedán\n*$932.301 COP* (sin Seguro Total)\n');
+  });
+
+  it('SCEN-028: extra hours', () => {
+    expect(alq({ days: 7, extraHours: 3 })).toContain('*Cantidad:* 7 días + 3 horas extra\n');
+    expect(alq({ days: 7, extraHours: 1 })).toContain('*Cantidad:* 7 días + 1 hora extra\n');
+  });
+
+  it('SCEN-028: other-branch fee line only with a fee, right after Impuestos', () => {
+    expect(alq({ returnFee: true })).toContain('*Impuestos:* Incluye IVA y Tax\n*Devolución en otra sede:* Incluida en el precio\n*Kilometraje:*');
+    expect(alq({ returnFee: false })).not.toContain('Devolución en otra sede');
+    expect(alq({ returnFee: false, returnBranch: 'Cali Norte Chipichape' })).not.toContain('Devolución en otra sede');
+  });
+
+  it('SCEN-028: monthly with one plan', () => {
+    const out = alq({ days: 30, monthly: true, rows: monthlyRows(['1k_kms', '1k_kms']) });
+    expect(out).toContain('*Cantidad:* 30 días\n');
+    expect(out).toContain('*Kilometraje:* 1.000 km al mes\n');
+    expect(out).not.toContain('Ilimitado');
+    expect(out).not.toContain('(plan');
+  });
+
+  it('SCEN-028: monthly with different plans', () => {
+    const rows = [
+      { description: 'Económico', price: 1000000, plan: '1k_kms' as const },
+      { description: 'Sedán', price: 1000001, plan: '2k_kms' as const, withoutTotalCoverage: true },
+    ];
+    const out = alq({ days: 30, monthly: true, rows });
+    expect(out).toContain('*Kilometraje:* Según el plan de cada gama\n');
+    expect(out).toContain('*$1.000.000 COP* (plan 1.000 km)\n');
+    expect(out).toContain('*$1.000.001 COP* (plan 2.000 km) (sin Seguro Total)\n');
   });
 });

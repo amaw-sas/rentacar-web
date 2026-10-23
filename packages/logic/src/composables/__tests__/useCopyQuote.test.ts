@@ -125,8 +125,8 @@ describe('SCEN-004: gamas agotadas', () => {
       row({ categoryCode: 'G', categoryDescription: 'Camioneta', estimatedTotalAmount: 1_234_000 }),
     ])
     const text = useCopyQuote(rows).buildText(OFF)!
-    expect(text).toContain('🚙 Económico — *$250.000 COP*')
-    expect(text).toContain('🚙 Camioneta — *$1.234.000 COP*')
+    expect(text).toContain('🚗 Económico\n*$250.000 COP*')
+    expect(text).toContain('🚙 Camioneta\n*$1.234.000 COP*')
     expect(text).not.toContain('Sedán')
     expect(text).not.toContain('999.999.999')
   })
@@ -155,9 +155,9 @@ describe('SCEN-006: Seguro Total', () => {
     expect(expected).toBe(315_588)
 
     const text = useCopyQuote(ref([quotable, unquotable])).buildText({ totalCoverage: true, babySeat: false })!
-    expect(text).toContain('🚙 Económico — *$315.588 COP*')
-    expect(text).toContain('🚙 Sedán — *$310.000 COP* (sin Seguro Total)')
-    expect(text).toContain('con Seguro Total')
+    expect(text).toContain('🚗 Económico\n*$315.588 COP*')
+    expect(text).toContain('🚗 Sedán\n*$310.000 COP* (sin Seguro Total)')
+    expect(text).toContain('*Seguro:* Seguro Total')
   })
 
   it('en mensual exige total_insurance_price > 0 en la fila del mes', () => {
@@ -182,8 +182,8 @@ describe('SCEN-011: reserva mensual', () => {
     const only2k = row({ categoryMonthPrices: [monthRow({ '1k_kms': 0 })] })
     const text = useCopyQuote(ref([only2k])).buildText(OFF)!
     expect(text).toContain('$3.500.000 COP')
-    expect(text).toContain('plan de 2.000 km al mes')
-    expect(text).toContain('30 días')
+    expect(text).toContain('*Kilometraje:* 2.000 km al mes')
+    expect(text).toContain('*Cantidad:* 30 días\n')
     expect(text).not.toContain('horas extra')
   })
 
@@ -192,35 +192,40 @@ describe('SCEN-011: reserva mensual', () => {
     const noPrice = row({ categoryCode: 'F', categoryMonthPrices: [], returnFeeAmount: 80_000 })
     const text = useCopyQuote(ref([noPrice, good])).buildText(OFF)!
     expect(text).toContain('*$3.000.000 COP*')
-    expect(text.match(/🚙/g)).toHaveLength(1)
+    expect(text.match(/🚗/g)).toHaveLength(1)
     expect(text).not.toContain('$80.000')
   })
 
   it('con silla: precio fijo del mes', () => {
+    h.franchise = 'alquicarros'
     const text = useCopyQuote(ref([row({ categoryMonthPrices: [monthRow()] })])).buildText({
       totalCoverage: false,
       babySeat: true,
     })!
-    expect(text).toContain('Silla de bebé: $100.000 COP el mes, se paga al recoger.')
+    expect(text).toContain('+ Silla de bebé $100.000 COP el mes (pagas al recoger)')
   })
 })
 
-describe('SCEN-007: silla de bebé aparte', () => {
+describe('SCEN-007: silla de bebé aparte (casilla solo en alquicarros)', () => {
+  beforeEach(() => {
+    h.franchise = 'alquicarros'
+  })
+
   it('no cambia las líneas de precio y agrega la línea de la silla', () => {
     const rows = ref([row({ categoryCode: 'C', categoryDescription: 'Económico' })])
     const q = useCopyQuote(rows)
-    const priceLines = (t: string) => t.split('\n').filter((l) => l.startsWith('🚙'))
+    const priceLines = (t: string) => t.split('\n').filter((l) => l.startsWith('• '))
     const off = q.buildText(OFF)!
     const on = q.buildText({ totalCoverage: false, babySeat: true })!
     expect(priceLines(on)).toEqual(priceLines(off))
-    expect(on).toContain('Silla de bebé: $24.000 COP (2 días × $12.000 COP), se paga al recoger.')
+    expect(on).toContain('+ Silla de bebé $24.000 COP (pagas al recoger)')
     expect(off).not.toContain('Silla de bebé')
   })
 
   it('usa el diario de extras cuando existe', () => {
     h.extras = { babySeatDayPrice: 15_000, babySeatMonthPrice: null }
     const text = useCopyQuote(ref([row()])).buildText({ totalCoverage: false, babySeat: true })!
-    expect(text).toContain('Silla de bebé: $30.000 COP (2 días × $15.000 COP), se paga al recoger.')
+    expect(text).toContain('+ Silla de bebé $30.000 COP (pagas al recoger)')
   })
 })
 
@@ -252,9 +257,38 @@ describe('SCEN-022: opcionales de alquilatucarro salen siempre, del catálogo', 
     expect(text).toContain('$100.000 COP por el mes')
   })
 
-  it('alquilame no muestra opcionales sin casilla', () => {
-    h.franchise = 'alquilame'
+  it('alquicarros no muestra opcionales sin casilla', () => {
+    h.franchise = 'alquicarros'
     expect(useCopyQuote(ref([row()])).buildText(OFF)).not.toContain('Silla')
+  })
+})
+
+describe('SCEN-027: opcionales de alquilame salen siempre, del catálogo', () => {
+  beforeEach(() => {
+    h.franchise = 'alquilame'
+  })
+
+  it('silla diario x días y lavado por defecto, sin casilla', () => {
+    const text = useCopyQuote(ref([row()])).buildText(OFF)!
+    expect(text).toContain('*OPCIONALES*\n*Silla de bebé:*\n$24.000 COP por 2 días\n*Lavada pago anticipado:*\n$20.000 COP\n')
+  })
+
+  it('siguen los precios del catálogo', () => {
+    h.extras = { babySeatDayPrice: 15_000, babySeatMonthPrice: null, washPrice: 27_000 }
+    const text = useCopyQuote(ref([row()])).buildText(OFF)!
+    expect(text).toContain('$30.000 COP por 2 días')
+    expect(text).toContain('$27.000 COP\n')
+  })
+
+  it('el estado de la casilla no cambia el texto', () => {
+    const q = useCopyQuote(ref([row()]))
+    expect(q.buildText({ totalCoverage: false, babySeat: true })).toBe(q.buildText(OFF))
+  })
+
+  it('mensual: silla a precio fijo del mes', () => {
+    h.form.haveMonthlyReservation.value = true
+    const text = useCopyQuote(ref([row({ categoryMonthPrices: [monthRow()] })])).buildText(OFF)!
+    expect(text).toContain('$100.000 COP por el mes')
   })
 })
 
@@ -347,8 +381,8 @@ describe('SCEN-005: otra sede y horas extra', () => {
     const r = row({ extraHoursQuantity: 3, extraHoursTotalAmount: 30_000, returnFeeAmount: 50_000, estimatedTotalAmount: 300_000 })
     const text = useCopyQuote(ref([r])).buildText(OFF)!
     expect(text).toContain('Cali Centro')
-    expect(text).toContain('2 días y 3 horas extra')
-    expect(text).toContain('la entrega en otra sede')
+    expect(text).toContain('2 días + 3 horas extra')
+    expect(text).toContain('*Devolución en otra sede:* Incluida en el precio')
     expect(text).toContain('$300.000 COP')
   })
   it('sin cargo por devolver en otra sede, el texto no lo menciona aunque la sede cambie', () => {
@@ -374,7 +408,7 @@ describe('plantilla por marca (SCEN-014)', () => {
     for (const f of [undefined, 'otra']) {
       h.franchise = f
       const text = useCopyQuote(ref([row()])).buildText(OFF)!
-      expect(text).toContain('Esta es tu cotización en Alquilame')
+      expect(text).toContain('Con Alquilame')
     }
   })
 
@@ -402,5 +436,20 @@ describe('plantilla por marca (SCEN-014)', () => {
   it('el código de la gama no aparece en el texto', () => {
     const text = useCopyQuote(ref([row({ categoryCode: 'ZZQ' })])).buildText(OFF)!
     expect(text).not.toContain('ZZQ')
+  })
+})
+
+describe('SCEN-030: la gama exenta de pico y placa se nombra aparte', () => {
+  beforeEach(() => {
+    h.franchise = 'alquilame'
+  })
+
+  it('toma picoyplacaExempt de la disponibilidad, como la etiqueta de la tarjeta', () => {
+    const rows = ref([
+      row({ categoryCode: 'GC', categoryDescription: 'Camioneta Automática', estimatedTotalAmount: 300_000 }),
+      row({ categoryCode: 'GL', categoryDescription: 'Camioneta Automática', estimatedTotalAmount: 400_000, picoyplacaExempt: true }),
+    ])
+    const lines = useCopyQuote(rows).buildText(OFF)!.split('\n').filter((l) => l.startsWith('🚙 '))
+    expect(lines).toEqual(['🚙 Camioneta AT', '🚙 Camioneta AT sin pico y placa'])
   })
 })

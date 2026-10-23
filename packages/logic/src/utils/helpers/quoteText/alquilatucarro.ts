@@ -1,12 +1,5 @@
 import { formatQuoteDateTime } from '../../useDateFunctions';
-import { deriveFacts, money, plural, rowSuffix, trimmed, type QuoteTextInput, type QuoteTextRow } from './model';
-
-// Solo las camionetas abrevian la transmisión: «Camioneta Mecánica 4X4» -> «Camioneta MT 4X4».
-function rowName(row: QuoteTextRow): string {
-  const name = trimmed(row);
-  if (!/^camioneta\b/i.test(name)) return name;
-  return name.replace(/\bMec[aá]nic[ao]\b/gi, 'MT').replace(/\bAutom[aá]tic[ao]\b/gi, 'AT');
-}
+import { abbreviatedName, deriveFacts, money, plural, rowSuffix, seatPriceText, type QuoteTextInput } from './model';
 
 export function buildAlquilatucarroText(input: QuoteTextInput): string {
   const facts = deriveFacts(input);
@@ -24,9 +17,7 @@ export function buildAlquilatucarroText(input: QuoteTextInput): string {
         '',
         '*OPCIONAL*',
         '*Silla de bebé:*',
-        `${money(optionalExtras.babySeat.total)} ${
-          optionalExtras.babySeat.monthly ? 'por el mes' : `por ${plural(days, 'día', 'días')}`
-        }`,
+        seatPriceText(optionalExtras.babySeat, days),
         '*Lavada prepagada:*',
         money(optionalExtras.washPrice),
       ]
@@ -42,7 +33,7 @@ export function buildAlquilatucarroText(input: QuoteTextInput): string {
     input.returnBranch,
     formatQuoteDateTime(input.returnDate, input.returnTime),
     '',
-    ...input.rows.flatMap((row) => [`*${rowName(row)}:*`, `${money(row.price)}${rowSuffix(input, facts, row)}`]),
+    ...input.rows.flatMap((row) => [`*${abbreviatedName(row)}:*`, `${money(row.price)}${rowSuffix(input, facts, row)}`]),
     '',
     `*Cantidad:* ${quantity}`,
     `*Seguro:* ${facts.quotableTotal ? 'Total' : 'Básico'}`,

@@ -102,22 +102,26 @@ test.describe('Copiar cotización por asesor — alquilame', () => {
     await expect(button).toContainText('Copiada');
 
     const text = await lastCopied(page);
-    expect(text.startsWith('¡Hola! Esta es tu cotización en Alquilame 🚗')).toBe(true);
-    // Una línea por gama con precio (el nombre sale del catálogo, sin código); la agotada no.
-    const gamaLines = text.split('\n').filter((l) => l.startsWith('🚙 '));
-    expect(gamaLines).toHaveLength(PRICED.length);
-    for (const line of gamaLines) expect(line).toMatch(/^🚙 .+ — \*\$[\d.]+ COP\*$/);
+    expect(text.startsWith('Esta es tu cotización:')).toBe(true);
+    // Un renglón de nombre seguido de otro con «*$X COP*» por gama con precio (el nombre sale del catálogo, sin código); la agotada no.
+    const lines = text.split('\n');
+    const priceLines = lines.filter((l) => /^\*\$[\d.]+ COP\*$/.test(l));
+    expect(priceLines).toHaveLength(PRICED.length);
+    for (const [i, line] of lines.entries()) {
+      if (/^\*\$[\d.]+ COP\*$/.test(line)) expect(lines[i - 1]).toMatch(/^(🚗|🚙) .+$/);
+    }
     expect(text).toContain('*$500.000 COP*');
     expect(text).toContain('*$420.000 COP*');
-    expect(text).toContain('con seguro básico');
-    expect(text).toContain('⚠️ Este precio se mantiene 20 minutos.');
+    expect(text).not.toContain(`Gama ${SOLD_OUT}`);
+    expect(text).toContain('*Seguro:* Seguro básico');
+    expect(text).toContain('*Precio:* Se mantiene 20 minutos, luego debes recotizar');
     expect(text).not.toMatch(/deducible|http/);
 
     await page.reload();
     await expect(page.getByTestId('copy-quote-advisor')).toHaveText('Asesor: Daniela', { timeout: 30_000 });
   });
 
-  test('«Con Seguro Total» marcado: la cotización dice con Seguro Total', async ({ page }) => {
+  test('«Con Seguro Total» marcado: la cotización dice Seguro Total', async ({ page }) => {
     await stubClipboardAndAvailability(page);
     await page.goto(`${SEARCH_PATH}?asesor=daniela`);
 
@@ -126,8 +130,8 @@ test.describe('Copiar cotización por asesor — alquilame', () => {
     await page.getByTestId('copy-quote-button').click();
 
     const text = await lastCopied(page);
-    expect(text).toContain('con Seguro Total');
-    expect(text).not.toContain('seguro básico');
+    expect(text).toContain('*Seguro:* Seguro Total');
+    expect(text).not.toContain('Seguro básico');
   });
 
   test('SCEN-002: un código inexistente avisa y no activa el panel', async ({ page }) => {

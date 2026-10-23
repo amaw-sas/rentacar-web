@@ -14,6 +14,8 @@ export interface QuoteTextRow {
   withoutTotalCoverage?: boolean;
   /** Solo mensual. */
   plan?: Extract<MonthlyMileage, '1k_kms' | '2k_kms'>;
+  /** `picoyplaca_exempt` del panel: la tarjeta muestra la etiqueta «sin pico y placa». */
+  picoyplacaExempt?: boolean;
 }
 
 export interface QuoteTextInput {
@@ -90,4 +92,22 @@ export function joinList(items: string[]): string {
   return `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}`;
 }
 
-export const trimmed = (row: QuoteTextRow): string => row.description.trim();
+/**
+ * Nombre de la gama en el texto: la descripción del catálogo y, si la gama está exenta,
+ * « sin pico y placa» (la misma etiqueta de la tarjeta). Distingue gamas con igual
+ * descripción, como GC y GL «Camioneta Automática» en Bogotá.
+ */
+export const trimmed = (row: QuoteTextRow): string =>
+  `${row.description.trim()}${row.picoyplacaExempt ? ' sin pico y placa' : ''}`;
+
+/** Solo las camionetas abrevian la transmisión: «Camioneta Mecánica 4X4» -> «Camioneta MT 4X4». */
+export function abbreviatedName(row: QuoteTextRow): string {
+  const name = trimmed(row);
+  if (!/^camioneta\b/i.test(name)) return name;
+  return name.replace(/\bMec[aá]nic[ao]\b/gi, 'MT').replace(/\bAutom[aá]tic[ao]\b/gi, 'AT');
+}
+
+/** «$84.000 COP por 7 días» / «$100.000 COP por el mes» */
+export function seatPriceText(seat: { total: number; monthly: boolean }, days: number): string {
+  return `${money(seat.total)} ${seat.monthly ? 'por el mes' : `por ${plural(days, 'día', 'días')}`}`;
+}
