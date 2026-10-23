@@ -150,37 +150,70 @@ Silla de bebé: $XX.XXX COP (2 días × $XX.XXX COP), se paga al recoger.
 
 ### Alquilatucarro
 
+Formato nuevo aprobado por el dueño el 2026-10-22 (reemplaza al del 2026-10-20). Ejemplo:
+Barranquilla Aeropuerto, 7 días, Seguro Total, silla $12.000/día y lavado prepagado $20.000 del
+catálogo.
+
 ```
-Buen día. Le comparto la cotización solicitada:
+Le comparto la cotización solicitada:
 
 *RECOGIDA*
-Cali Aeropuerto
-viernes 23 oct. 7:30am
-
+Barranquilla Aeropuerto
+viernes 23 oct. 12:00pm
 *DEVOLUCIÓN*
-Cali Norte Chipichape
-domingo 25 oct. 10:30am
+Barranquilla Aeropuerto
+viernes 30 oct. 12:00pm
 
-*Duración:* 2 días + 3 horas extra
-*Cobertura:* Seguro Total
+*Compacto Mecánico:*
+$1.608.195 COP
+*Compacto Automático:*
+$1.692.194 COP
+*Sedán Mecánico:*
+$1.720.824 COP
+*Sedán Automático:*
+$1.909.824 COP
+*Sedán Automático Híbrido:*
+$2.147.824 COP
+*Camioneta MT 4X4:*
+$2.740.150 COP
+*Camioneta AT Híbrida:*
+$3.635.639 COP
+*Camioneta AT Híbrida 7 puestos:*
+$4.258.639 COP
+*Camioneta AT:*
+$3.397.639 COP
 
-*Opciones disponibles*
-1) Económico: $668.810 COP
-2) Sedán: $932.301 COP
-3) Camioneta: $1.894.620 COP
+*Cantidad:* 7 días
+*Seguro:* Total
+*Impuestos:* Incluidos
+*Kilometraje:* Ilimitado
+*Precios:* Dinámicos, válidos por 20 minutos.
 
-Valores con IVA incluido. Ya suman las horas extra, el cargo por devolver en otra sede y kilometraje ilimitado.
-Silla de bebé (opcional): $XX.XXX COP por el alquiler, se paga en la oficina.
-Precios dinámicos, válidos por 20 minutos.
+*OPCIONAL*
+*Silla de bebé:*
+$84.000 COP por 7 días
+*Lavada prepagada:*
+$20.000 COP
 
 *¿Por qué reservar con Alquilatucarro?*
-- Solo necesita 4 datos
-- El precio queda congelado
-- No paga nada por adelantado
-- Puede cancelar sin costo
-- No bloqueamos cupo en su tarjeta
-- Paga al recoger el vehículo
+•  El precio queda congelado
+•  No paga nada por adelantado
+•  Puede cancelar sin costo
+•  No bloqueamos cupo en su tarjeta
+•  Paga al recoger el vehículo
 ```
+
+Reglas de Alquilatucarro:
+- Nombre de gama = descripción del catálogo; solo en las que empiezan por «Camioneta»,
+  «Mecánica/Mecánico» → «MT» y «Automática/Automático» → «AT».
+- *OPCIONAL* sale siempre: silla = precio diario × días («por N días»; mensual «por el mes»),
+  lavado = `getWashPrice` del catálogo. En Alquilatucarro no hay casilla de silla.
+- Variantes: horas extra → «*Cantidad:* 7 días + 3 horas extra»; sin Seguro Total → «*Seguro:*
+  Básico»; gama sin Seguro Total → « (sin Seguro Total)» tras el precio; cargo por otra sede →
+  línea «*Devolución en otra sede:* Incluida en el precio» tras *Impuestos*; mensual →
+  «*Cantidad:* 30 días» y «*Kilometraje:* 1.000 km al mes» (planes distintos: «Según el plan de
+  cada gama» y « (plan 2.000 km)» por gama).
+- La columna Alquilatucarro de la tabla de variantes de abajo queda sustituida por estas reglas.
 
 ### Alquicarros
 

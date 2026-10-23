@@ -56,11 +56,11 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers())
 
 describe('CopyQuotePanel — montaje', () => {
-  it('pasa solo «Con silla de bebé» a copy', async () => {
+  it('SCEN-024: solo existe la casilla «Con Seguro Total»', () => {
     const w = factory()
-    await box(w, 'Con silla de bebé').setValue(true)
-    await button(w).trigger('click')
-    expect(copy).toHaveBeenCalledWith({ totalCoverage: false, babySeat: true })
+    expect(w.findAll('input[type="checkbox"]')).toHaveLength(1)
+    expect(w.findAll('label').map((l) => l.text())).toEqual(['Con Seguro Total'])
+    expect(w.text()).not.toContain('silla')
   })
 
   it('pasa solo «Con Seguro Total» a copy', async () => {
@@ -68,6 +68,7 @@ describe('CopyQuotePanel — montaje', () => {
     await box(w, 'Con Seguro Total').setValue(true)
     await button(w).trigger('click')
     expect(copy).toHaveBeenCalledWith({ totalCoverage: true, babySeat: false })
+    expect(w.find('[data-testid="copy-quote-seat"]').exists()).toBe(false)
   })
 
   it('muestra «Copiada» y a los 2000 ms vuelve a «Copiar cotización»', async () => {

@@ -20,13 +20,6 @@
       label="Con Seguro Total"
       :ui="{ label: 'text-white' }"
     />
-    <UCheckbox
-      v-model="babySeat"
-      data-testid="copy-quote-seat"
-      color="success"
-      label="Con silla de bebé"
-      :ui="{ label: 'text-white' }"
-    />
   </div>
 </template>
 
@@ -38,12 +31,11 @@ const props = defineProps<{ rows: CategoryAvailabilityData[]; advisorName?: stri
 const { canCopy, copy } = useCopyQuote(toRef(props, 'rows'))
 
 const totalCoverage = ref(false)
-const babySeat = ref(false)
 const copied = ref(false)
 let resetTimer: ReturnType<typeof setTimeout> | undefined
 
 const onCopy = async () => {
-  const ok = await copy({ totalCoverage: totalCoverage.value, babySeat: babySeat.value })
+  const ok = await copy({ totalCoverage: totalCoverage.value, babySeat: false })
   if (!ok) return
   copied.value = true
   clearTimeout(resetTimer)
