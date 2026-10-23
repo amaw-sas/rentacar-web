@@ -36,6 +36,11 @@ export interface QuoteTextInput {
   totalCoverage: boolean;
   rows: QuoteTextRow[];
   babySeat: null | { total: number; dailyPrice: number; monthly: boolean };
+  /** Silla y lavado del catálogo, siempre calculados (la plantilla de Alquilatucarro los muestra sin casilla). */
+  optionalExtras?: null | {
+    babySeat: { total: number; dailyPrice: number; monthly: boolean };
+    washPrice: number;
+  };
 }
 
 export interface QuoteFacts {

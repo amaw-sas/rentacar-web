@@ -12,7 +12,7 @@ import type { CategoryAvailabilityData, CategoryMonthPriceData } from '@rentacar
 const h = vi.hoisted(() => ({
   form: null as unknown as Record<string, Ref<unknown>>,
   search: null as unknown as Record<string, Ref<unknown>>,
-  extras: null as null | { babySeatDayPrice: number | null; babySeatMonthPrice: number | null },
+  extras: null as null | { babySeatDayPrice: number | null; babySeatMonthPrice: number | null; washPrice?: number | null },
   toast: { add: vi.fn() },
   franchise: 'alquilame' as string | undefined,
 }))
@@ -221,6 +221,40 @@ describe('SCEN-007: silla de bebé aparte', () => {
     h.extras = { babySeatDayPrice: 15_000, babySeatMonthPrice: null }
     const text = useCopyQuote(ref([row()])).buildText({ totalCoverage: false, babySeat: true })!
     expect(text).toContain('Silla de bebé: $30.000 COP (2 días × $15.000 COP), se paga al recoger.')
+  })
+})
+
+describe('SCEN-022: opcionales de alquilatucarro salen siempre, del catálogo', () => {
+  beforeEach(() => {
+    h.franchise = 'alquilatucarro'
+  })
+
+  it('silla diario x días y lavado por defecto, sin casilla', () => {
+    const text = useCopyQuote(ref([row()])).buildText(OFF)!
+    expect(text).toContain('*OPCIONAL*\n*Silla de bebé:*\n$24.000 COP por 2 días\n*Lavada prepagada:*\n$20.000 COP\n')
+  })
+
+  it('siguen los precios del catálogo', () => {
+    h.extras = { babySeatDayPrice: 15_000, babySeatMonthPrice: null, washPrice: 27_000 }
+    const text = useCopyQuote(ref([row()])).buildText(OFF)!
+    expect(text).toContain('$30.000 COP por 2 días')
+    expect(text).toContain('$27.000 COP\n')
+  })
+
+  it('el estado de la casilla no cambia el texto', () => {
+    const q = useCopyQuote(ref([row()]))
+    expect(q.buildText({ totalCoverage: false, babySeat: true })).toBe(q.buildText(OFF))
+  })
+
+  it('mensual: silla a precio fijo del mes', () => {
+    h.form.haveMonthlyReservation.value = true
+    const text = useCopyQuote(ref([row({ categoryMonthPrices: [monthRow()] })])).buildText(OFF)!
+    expect(text).toContain('$100.000 COP por el mes')
+  })
+
+  it('alquilame no muestra opcionales sin casilla', () => {
+    h.franchise = 'alquilame'
+    expect(useCopyQuote(ref([row()])).buildText(OFF)).not.toContain('Silla')
   })
 })
 

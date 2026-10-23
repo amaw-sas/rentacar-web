@@ -121,6 +121,13 @@ export default function useCopyQuote(
     const pickupBranch = selectedPickupLocation.value?.name ?? '';
     const returnBranch = selectedReturnLocation.value?.name ?? pickupBranch;
 
+    const seat = {
+      total: first.getBabySeatPrice.value,
+      // Mismo respaldo que useCategory.BABY_SEAT_DAY_PRICE.
+      dailyPrice: extras?.babySeatDayPrice ?? 12000,
+      monthly,
+    };
+
     return buildBrandQuoteText({
       pickupBranch,
       returnBranch,
@@ -134,14 +141,9 @@ export default function useCopyQuote(
       returnFee,
       totalCoverage: opts.totalCoverage,
       rows: kept,
-      babySeat: opts.babySeat
-        ? {
-            total: first.getBabySeatPrice.value,
-            // Mismo respaldo que useCategory.BABY_SEAT_DAY_PRICE.
-            dailyPrice: extras?.babySeatDayPrice ?? 12000,
-            monthly,
-          }
-        : null,
+      babySeat: opts.babySeat ? seat : null,
+      // Siempre: la plantilla de alquilatucarro muestra silla y lavado sin casilla.
+      optionalExtras: { babySeat: seat, washPrice: first.getWashPrice.value },
     }, franchise);
   };
 
