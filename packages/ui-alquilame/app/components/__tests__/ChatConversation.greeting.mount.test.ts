@@ -15,7 +15,7 @@ import {
   type ChatConversation as ChatInstance,
   type ChatConversationConfig,
 } from '@rentacar-main/logic/composables/useChatConversation'
-import { TEASER_LINE_1, TEASER_LINE_2 } from '@rentacar-main/logic/utils/chatGreeting'
+import { TEASER_LINE_1 } from '@rentacar-main/logic/utils/chatGreeting'
 import ChatConversation from '../ChatConversation.vue'
 
 const sse = (events: unknown[]) =>
@@ -36,6 +36,9 @@ function replyFetch() {
     })
   })
 }
+
+// SCEN-BC-07: alquilame overrides line 2 via app.config `chatGreeting.line2`.
+const LINE_2_ALQUILAME = '¿Dudas de requisitos o precios? Estamos en línea 24 horas.'
 
 let brandSeq = 0
 function cfg(): ChatConversationConfig {
@@ -60,6 +63,7 @@ async function render(instance: ChatInstance, variant: 'page' | 'panel' = 'page'
 
 beforeEach(() => {
   localStorage.clear()
+  vi.stubGlobal('useAppConfig', () => ({ chatGreeting: { line2: LINE_2_ALQUILAME } }))
   if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {}
   if (typeof globalThis.CSS === 'undefined') vi.stubGlobal('CSS', { escape: (s: string) => s })
 })
@@ -80,7 +84,7 @@ describe('SCEN-G1 — an empty chat greets with the two teaser lines', () => {
     expect(bubbles[1]!.classes()).not.toContain('is-group-start')
     // Exact equality: `.cc-msg` is pre-wrap, so template indentation would show up here.
     expect(bubbles[0]!.element.textContent).toBe(TEASER_LINE_1)
-    expect(bubbles[1]!.element.textContent).toBe(TEASER_LINE_2)
+    expect(bubbles[1]!.element.textContent).toBe(LINE_2_ALQUILAME)
     expect(w.findAll('.cc-msg')).toHaveLength(2)
   })
 
@@ -107,11 +111,11 @@ describe('SCEN-G2 — the greeting is presentation only', () => {
     expect(w.findAll('[data-greeting]')).toHaveLength(0)
     expect(w.findAll('.cc-msg').length).toBeGreaterThan(0)
     expect(w.text()).not.toContain(TEASER_LINE_1)
-    expect(w.text()).not.toContain(TEASER_LINE_2)
+    expect(w.text()).not.toContain(LINE_2_ALQUILAME)
 
     const stored = localStorage.getItem(config.messagesKey) ?? ''
     expect(JSON.parse(stored)).toHaveLength(2)
-    for (const line of [TEASER_LINE_1, TEASER_LINE_2]) {
+    for (const line of [TEASER_LINE_1, LINE_2_ALQUILAME]) {
       expect(stored).not.toContain(line)
       expect(fetchMock.mock.calls[0]![1].body).not.toContain(line)
     }
@@ -144,5 +148,14 @@ describe('chunk isolation — the greeting never drags the teaser module', () =>
     const src = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../ChatConversation.vue'), 'utf8')
     expect(src).toContain("from '@rentacar-main/logic/utils/chatGreeting'")
     expect(src).not.toContain('useContactTeaser')
+  })
+})
+
+// SCEN-BC-07: the stubbed override above must be the one the real app.config ships.
+describe('SCEN-BC-07 — alquilame app.config carries the "24 horas" line 2', () => {
+  it('chatGreeting.line2 in app.config.ts equals the copy the bubbles render', () => {
+    const src = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../app.config.ts'), 'utf8')
+    expect(src).toMatch(/chatGreeting:\s*\{\s*line2:\s*'([^']*)'/)
+    expect(src.match(/chatGreeting:\s*\{\s*line2:\s*'([^']*)'/)![1]).toBe(LINE_2_ALQUILAME)
   })
 })

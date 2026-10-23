@@ -114,88 +114,70 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
   // E10 en ui-alquicarros, pero con feedback local rápido) y sin dejar rastro
   // del composable eliminado.
   //
-  // El rediseño de alquilame ancla su burbuja y su panel al lado contrario, así
-  // que la identidad byte a byte dejó de ser cierta para esa marca. En vez de
-  // borrar la guardia se ENUMERA la excepción: alquicarros y alquilatucarro
-  // siguen idénticos, y alquilame sólo puede diferir en estas líneas. Cualquier
-  // deriva nueva —un arreglo que aterrice en una copia y no en las otras, que es
-  // lo que E10 existe para atrapar— sigue enrojeciendo.
-  const DELTA_ALQUILAME: ReadonlyArray<readonly [string, string]> = [
-    // 2026-10-06 (contact-fab-collapse): la cabecera del widget documenta los
-    // canales del menú del lanzador. Las marcas vivas listan Llámanos; alquilame
-    // deja constancia de que no lo ofrece (misma decisión del dueño del <li>
-    // tel: de abajo — contact-announcement.test.ts veta la palabra en su widget).
-    [
-      '    de canales: Chat 24/7 y WhatsApp.',
-      '    de canales: Chat 24/7, WhatsApp y Llámanos.',
-    ],
-    [
-      '      - Sin acceso telefónico: delta de marca, alquilame no lo ofrece (no hay',
-      '      - Llámanos → enlace tel: (número de desvío de Google si el visitante llegó',
-    ],
-    [
-      '                   fila de llamada ni número de desvío).',
-      '                   por un anuncio).',
-    ],
-    // PageSpeed wave 4: ancla el CSS crítico del FAB desde el primer paint y
-    // elimina el desplazamiento de 226 px medido en producción.
-    [
-      '    <div class="contact-fab-layer fixed inset-0 pointer-events-none z-[60]">',
-      '    <div class="fixed inset-0 pointer-events-none z-[60]">',
-    ],
-    // 2026-07-29, decisión del dueño: el chat de alquilame tiene identidad
-    // propia y su FAB va relleno de marca con el icono en blanco, no en blanco
-    // con el icono de marca. Pintado con el token, nunca con el hex quemado
-    // (P386 en ui-alquicarros).
-    // 2026-09-23: las marcas vivas marcan con el número de llamada (el de
-    // desvío de Google si el visitante llegó por un anuncio). alquilame no
-    // tiene acceso tel:, así que en esa línea sólo deja constancia.
-    [
-      '// alquilame no tiene acceso tel: (delta de marca), así que no usa useCallPhone.',
-      'const { tel: callTel, display: callDisplay } = useCallPhone()',
-    ],
-    [
-      '.fab-chat { background: var(--ui-primary, #cc022b); color: #fff; }',
-      '.fab-chat { color: var(--ui-primary, #cc022b); }',
-    ],
-  ]
-
+  // 2026-10-22 (spec 2026-10-22-barra-contacto-alquilame, SCEN-BC-12): alquilame
+  // cambió su lanzador por una barra de contacto propia, así que deja de ser
+  // copia de la base. La paridad que E10 vigila queda entre las dos marcas que
+  // SÍ comparten widget —alquicarros y alquilatucarro—, y alquilame pasa a una
+  // guardia de bifurcación: tiene que seguir declarándose fork, o una vuelta
+  // atrás a medias volvería a parecer copia sin que nadie lo note.
   it('SCEN-5 — alquicarros y alquilatucarro siguen byte-idénticos', () => {
     expect(brandWidgets[2]).toBe(brandWidgets[0])
   })
 
-  // 2026-07-27, decisión del dueño: el acceso tel: 'Llámanos' SE QUEDA en las
-  // dos marcas vivas y alquilame es la única sin él. El <li> del teléfono es un
-  // delta ESTRUCTURAL declarado: se retira de la copia base antes de comparar
-  // línea a línea, así cualquier OTRA deriva sigue enrojeciendo esta prueba.
-  const stripPhoneEntry = (src: string): string => {
-    const tel = src.indexOf(':href="`tel:')
-    if (tel === -1) return src
-    const start = src.lastIndexOf('<li class="flex">', tel)
-    const end = src.indexOf('</li>', tel) + '</li>'.length
-    return src.slice(0, src.lastIndexOf('\n', start)) + src.slice(end)
+  it('SCEN-5a — alquilame es fork declarado: barra de contacto con Llamar, sin lanzador', () => {
+    const alquilame = brandWidgets[1] ?? ''
+    expect(alquilame).not.toBe(brandWidgets[0])
+    expect(alquilame).toContain('<nav')
+    expect(alquilame).toContain('aria-label="Contacto"')
+    // Llamar marca con el número que resuelve el composable compartido (tel:).
+    expect(alquilame).toMatch(/useCallPhone\(\)/)
+    expect(alquilame).toContain('telHref')
+    expect(alquilame).not.toContain('id="contact-fab-menu"')
+    // Las marcas base conservan su lanzador: el fork no se coló en ellas.
+    for (const base of [brandWidgets[0], brandWidgets[2]]) {
+      expect(base).toContain('id="contact-fab-menu"')
+      expect(base).not.toContain('aria-label="Contacto"')
+    }
+  })
+
+  // SCEN-BC-12: el fork cambió la plantilla y el lanzador, no el motor. Estas
+  // regiones del <script> siguen idénticas a la copia base (comentarios aparte,
+  // que sí cuentan la historia de cada marca), así que un arreglo que aterrice en
+  // una copia y no en la otra vuelve a enrojecer, como hacía la comparación línea
+  // a línea. Lo que el fork cambia a propósito (medida de la barra, cierre con
+  // foco, Llamar, saludo) queda fuera.
+  const SHARED_SCRIPT_REGIONS: ReadonlyArray<readonly [string, string]> = [
+    ['const ChatConversation = defineAsyncComponent(', '\n'],
+    ['const {\n  enabled: chatEnabled,', '} = useChatStatus(franchise.shortname as string)'],
+    ['const { unread, announce, emitReopenedFromBadge, prepareChatOpen } = useChatUnreadBadge(', '\n'],
+    ['const teaser = useContactTeaser()', 'const badgeCount = computed('],
+    ['const badgeCount = computed(', '\n})\n'],
+    ['watch(\n  [chatStatusResolved, teaserAllowed],', '  { immediate: true },\n)'],
+    ['watch(unread, (v) =>', '\n'],
+    ['function onKeydown(e: KeyboardEvent) {', 'onBeforeUnmount(() => {\n  if (import.meta.client) window.removeEventListener'],
+    ['onBeforeUnmount(() => {\n  if (import.meta.client) window.removeEventListener', '\n})\n'],
+  ]
+  const codeOnly = (src: string) => src.split('\n').filter(line => !line.trim().startsWith('//')).join('\n')
+  const region = (src: string, start: string, end: string) => {
+    const from = src.indexOf(start)
+    if (from === -1) return null
+    const to = src.indexOf(end, from + start.length)
+    return to === -1 ? null : codeOnly(src.slice(from, to + end.length))
   }
 
-  it('SCEN-5a — alquilame sólo difiere en el delta de marca declarado', () => {
-    // La parte estructural del delta: las vivas llevan tel:, alquilame no.
-    expect(brandWidgets[0]).toContain(':href="`tel:')
-    expect(brandWidgets[1]).not.toContain(':href="`tel:')
-
-    const base = stripPhoneEntry(brandWidgets[0] ?? '').split('\n')
-    const alq = (brandWidgets[1] ?? '').split('\n')
-    expect(alq.length, 'alquilame cambió el número de líneas del widget').toBe(base.length)
-
-    const differing = base
-      .map((line, i) => [alq[i] as string, line] as const)
-      .filter(([a, b]) => a !== b)
-
+  it.each(SHARED_SCRIPT_REGIONS)('SCEN-5a — alquilame comparte con la base, sin deriva: %s', (start, end) => {
+    const base = region(brandWidgets[2] ?? '', start, end)
+    const alq = region(brandWidgets[1] ?? '', start, end)
+    expect(base, 'la región ya no existe en la copia base').not.toBeNull()
+    expect(alq, 'la región ya no existe en alquilame').not.toBeNull()
     expect(
-      differing,
-      'divergencia NO declarada entre las copias del ChatWidget: un arreglo '
-      + 'aterrizó en una marca y no en las otras, o el delta de marca cambió. '
-      + 'Si es intencional, decláralo en DELTA_ALQUILAME.',
-    ).toEqual(DELTA_ALQUILAME.map(pair => [pair[0], pair[1]]))
+      alq,
+      'divergencia NO declarada entre alquilame y la copia base del ChatWidget: '
+      + 'un arreglo aterrizó en una marca y no en la otra. Si es intencional, '
+      + 'saca la región de SHARED_SCRIPT_REGIONS y deja constancia del porqué.',
+    ).toBe(base)
   })
+
   it('SCEN-5b — el composable useReservationSlideover fue eliminado (inline useState)', () => {
     expect(chatWidget).not.toContain('useReservationSlideover')
     expect(atcSection).not.toContain('useReservationSlideover')

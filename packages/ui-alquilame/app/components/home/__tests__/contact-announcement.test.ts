@@ -185,10 +185,17 @@ describe('F1 step07a — AnnouncementBar.vue', () => {
 describe('F1 step07a — ChatWidget.vue (FAB restyle in place)', () => {
   const fab = read('app/components/ChatWidget.vue')
 
-  it('drives WhatsApp from config and removes the former floating call action', () => {
+  // SCEN-BC-04 (spec 2026-10-22-barra-contacto-alquilame): inverted. The bar
+  // now offers Llamar, and its tel: href comes from useCallPhone() — never from
+  // franchise.phone, so a forwarding number would be honoured like on the
+  // live brands.
+  it('drives WhatsApp from config and Llamar from useCallPhone', () => {
     expect(fab).toMatch(/:href="franchise\.whatsapp"/)
     expect(fab).toMatch(/v-if="whatsappVisible"/)
-    expect(fab).not.toMatch(/fab-call|Llámanos|`tel:/)
+    expect(fab).toMatch(/const \{ telHref: callHref, display: callDisplay \} = useCallPhone\(\)/)
+    expect(fab).toMatch(/<a\b[^>]*:href="callHref"/)
+    expect(fab).toMatch(/:aria-label="`Llamar al \$\{callDisplay\}`"/)
+    expect(fab).not.toMatch(/franchise\.phone/)
     expect(fab).toMatch(/useAppConfig\(\)/)
   })
 

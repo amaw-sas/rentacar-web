@@ -59,6 +59,9 @@ export interface ContactTeaserConfig {
   shownKey: string;
   // localStorage: epoch ms of the last contact engagement (15d suppression).
   engagedKey: string;
+  // Per-brand override of the second greeting line (aria-live copy). Falls back
+  // to the shared TEASER_LINE_2.
+  line2?: string;
 }
 
 // The teaser instance. Browser access is FEATURE-DETECTED so it stays inert
@@ -69,6 +72,7 @@ export interface ContactTeaserConfig {
 // runs inside ChatWidget's setup — an escaped throw unmounts the contact FAB.
 export function createContactTeaser(cfg: ContactTeaserConfig) {
   const { brand, shownKey, engagedKey } = cfg;
+  const line2 = cfg.line2 ?? TEASER_LINE_2;
   const hasWindow = typeof window !== 'undefined';
   const sessionStore = getSessionStorageSafe();
   const localStore = getLocalStorageSafe();
@@ -168,7 +172,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     teaserStep.value = 2;
     syntheticCount.value = 2; // capped at 2
     teaserVisible.value = true;
-    teaserAnnounce.value = `${TEASER_LINE_1_PLAIN} ${TEASER_LINE_2}`;
+    teaserAnnounce.value = `${TEASER_LINE_1_PLAIN} ${line2}`;
     trackAnalyticsEvent('contact_teaser_shown', { brand, step: 2 });
   }
 
@@ -273,12 +277,15 @@ export function getOrCreateTeaser(brand: string, factory: () => ContactTeaser): 
 }
 
 export function useContactTeaser(): ContactTeaser {
-  const { franchise } = useAppConfig();
+  const { franchise, chatGreeting } = useAppConfig() as ReturnType<typeof useAppConfig> & {
+    chatGreeting?: { line2?: string };
+  };
   const brand = franchise.shortname as string;
   const cfg: ContactTeaserConfig = {
     brand,
     shownKey: `rentacar-teaser:${brand}:shown`,
     engagedKey: `rentacar-teaser:${brand}:engagedAt`,
+    line2: chatGreeting?.line2,
   };
 
   // HARD SSR guard: on the server return a FRESH, never-memoized instance per

@@ -33,9 +33,8 @@ describe('SCEN-ALQ-CHAT-09: el chat se sale del auto-dark de Android', () => {
   })
 
   it('la capa flotante teleportada se declara light desde el CSS crítico', () => {
-    // Va en el CSS crítico y no en el <style> del widget a propósito: el widget
-    // tiene el número de líneas congelado contra la copia base (SCEN-5a en
-    // ui-alquilatucarro), y aquí además aplica desde el primer paint.
+    // Va en el CSS crítico y no en el <style> del widget: así aplica desde el
+    // primer paint, antes de que llegue el CSS del widget (que es lazy).
     expect(config).toMatch(/\.contact-fab-layer \{[^}]*color-scheme: light;/)
   })
 
