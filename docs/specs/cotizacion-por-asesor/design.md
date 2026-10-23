@@ -127,26 +127,66 @@ Seguro Total, silla de bebé) están aprobadas así:
 
 ### Alquilame
 
+Formato nuevo aprobado por el dueño el 2026-10-23 (reemplaza al del 2026-10-20). Ejemplo: Bogotá
+Aeropuerto, 7 días, seguro básico, silla $12.000/día y lavado prepagado $20.000 del catálogo.
+
 ```
-¡Hola! Esta es tu cotización en Alquilame 🚗
+Esta es tu cotización:
 
-📍 *Recoges:* Cali Aeropuerto, viernes 23 oct. 7:30am
-📍 *Entregas:* Cali Norte Chipichape, domingo 25 oct. 10:30am
-⏱️ 2 días y 3 horas extra, con Seguro Total
+📍*Recoges:*
+Bogotá Aeropuerto
+viernes 23 oct. 12:00pm
+📍*Entregas:*
+Bogotá Aeropuerto
+viernes 30 oct. 12:00pm
 
-🚙 Económico — *$668.810 COP*
-🚙 Sedán — *$932.301 COP*
-🚙 Camioneta — *$1.894.620 COP*
+🚗 Compacto Mecánico
+*$1.155.000 COP*
+🚗 Compacto Automático
+*$1.232.000 COP*
+🚗 Sedán Mecánico
+*$1.281.000 COP*
+🚗 Sedán Automático
+*$1.470.000 COP*
+🚗 Sedán Automático Híbrido
+*$1.708.000 COP*
+🚙 Camioneta MT 4X4
+*$2.387.000 COP*
+🚙 Camioneta AT Híbrida 7 puestos
+*$3.773.000 COP*
+🚙 Camioneta AT Especial
+*$3.038.000 COP*
 
-El precio ya incluye IVA, las horas extra, la entrega en otra sede y kilometraje ilimitado.
-Silla de bebé: $XX.XXX COP (2 días × $XX.XXX COP), se paga al recoger.
-⚠️ Este precio se mantiene 20 minutos.
+*Cantidad:* 7 días
+*Seguro:* Seguro básico
+*Impuestos:* Incluye IVA y Tax
+*Kilometraje:* Ilimitado
+*Precio:* Se mantiene 20 minutos, luego debes recotizar
+
+*OPCIONALES*
+*Silla de bebé:*
+$84.000 COP por 7 días
+*Lavada pago anticipado:*
+$20.000 COP
 
 *Con Alquilame:*
 ✅ Reservas con 4 datos y congelas el precio
 ✅ No pagas nada hoy y no bloqueamos cupo de tarjeta
 ✅ Cancelas cuando quieras y pagas al recoger
 ```
+
+Reglas de Alquilame:
+- 🚙 si la descripción empieza por «Camioneta», 🚗 en las demás. Camionetas con MT/AT como en
+  Alquilatucarro.
+- *Seguro:* «Seguro básico» o «Seguro Total»; gama sin Seguro Total → « (sin Seguro Total)» tras
+  el precio en negrilla.
+- *OPCIONALES* siempre (silla «por N días» o «por el mes», lavado `getWashPrice`); el panel de
+  Alquilame no tiene casilla de silla.
+- Variantes como Alquilatucarro: «*Cantidad:* 7 días + 3 horas extra»; línea «*Devolución en otra
+  sede:* Incluida en el precio» tras *Impuestos* solo con cargo; mensual «*Cantidad:* 30 días» y
+  «*Kilometraje:* 1.000 km al mes» (planes distintos: «Según el plan de cada gama» y « (plan 2.000
+  km)» por gama).
+- La columna Alquilame de la tabla de variantes de abajo queda sustituida por estas reglas.
 
 ### Alquilatucarro
 

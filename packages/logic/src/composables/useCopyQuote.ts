@@ -113,6 +113,7 @@ export default function useCopyQuote(
         price,
         ...(withoutTotalCoverage && { withoutTotalCoverage }),
         ...(plan && { plan }),
+        ...(cat.isPicoyPlacaExempt() && { picoyplacaExempt: true }),
       });
     }
 
@@ -141,8 +142,9 @@ export default function useCopyQuote(
       returnFee,
       totalCoverage: opts.totalCoverage,
       rows: kept,
-      babySeat: opts.babySeat ? seat : null,
-      // Siempre: la plantilla de alquilatucarro muestra silla y lavado sin casilla.
+      // La casilla solo existe en alquicarros.
+      babySeat: opts.babySeat && franchise === 'alquicarros' ? seat : null,
+      // Siempre: las plantillas de alquilame y alquilatucarro muestran silla y lavado sin casilla.
       optionalExtras: { babySeat: seat, washPrice: first.getWashPrice.value },
     }, franchise);
   };
