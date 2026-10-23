@@ -501,3 +501,51 @@ describe('Burbuja chat mission E1–E4', () => {
     expect(inst.syntheticCount.value).toBe(2);
   });
 });
+
+// SCEN-CM-07 (spec 2026-10-22-contactanos-movil-alquilame): alquilame's mobile
+// greeting is one bubble, so it starts the teaser with maxStep 1. Step 2 must
+// never fire there (no event for a bubble never painted, badge stays 1).
+// Omitting maxStep keeps the two-step progression for every other caller.
+describe('maxStep — a caller can stop the teaser at step 1', () => {
+  beforeEach(() => {
+    setupBrowser();
+    vi.useFakeTimers();
+  });
+
+  it('maxStep 1: step 1 at 5s, then nothing — no step-2 event, badge stays 1', () => {
+    const inst = createContactTeaser(cfg());
+    inst.start({ realUnread: () => 0, maxStep: 1 });
+    vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS);
+    expect(inst.teaserStep.value).toBe(1);
+    expect(inst.syntheticCount.value).toBe(1);
+    vi.advanceTimersByTime(TEASER_SECOND_DELAY_MS * 3);
+    expect(inst.teaserStep.value).toBe(1);
+    expect(inst.syntheticCount.value).toBe(1);
+    expect(inst.teaserAnnounce.value).toBe(TEASER_LINE_1_PLAIN);
+    const shownSteps = win.events
+      .filter((e) => e.name === 'contact_teaser_shown')
+      .map((e) => e.params?.step);
+    expect(shownSteps).toEqual([1]);
+  });
+
+  it('maxStep 1: a remount mid-progression does not arm step 2 either', () => {
+    const inst = createContactTeaser(cfg());
+    inst.start({ realUnread: () => 0, maxStep: 1 });
+    vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS);
+    inst.stop();
+    inst.start({ realUnread: () => 0, maxStep: 1 });
+    expect(vi.getTimerCount()).toBe(0);
+    vi.advanceTimersByTime(TEASER_SECOND_DELAY_MS * 3);
+    expect(inst.teaserStep.value).toBe(1);
+  });
+
+  it('default (maxStep omitted, or 2): the two-step progression is unchanged', () => {
+    for (const maxStep of [undefined, 2] as const) {
+      const inst = createContactTeaser(cfg());
+      inst.start({ realUnread: () => 0, ...(maxStep ? { maxStep } : {}) });
+      vi.advanceTimersByTime(TEASER_FIRST_DELAY_MS + TEASER_SECOND_DELAY_MS);
+      expect(inst.teaserStep.value, String(maxStep)).toBe(2);
+      expect(inst.syntheticCount.value, String(maxStep)).toBe(2);
+    }
+  });
+});

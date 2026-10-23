@@ -53,15 +53,20 @@ describe('issue #284 — WhatsApp green token (alquilame)', () => {
     expect(offenders).toEqual([])
   })
 
-  // SCEN-BC-01 (spec 2026-10-22-barra-contacto-alquilame): the contact bar
-  // paints WhatsApp as a FILLED block with white text, and white on #25D366 is
-  // ~2:1. It uses its own darker token (#14843F, 4.77:1 measured) so
-  // --color-whatsapp above keeps its black-text CTAs untouched.
-  it('ChatWidget WhatsApp block fills with --color-contact-whatsapp (#14843F) and white text', () => {
+  // SCEN-BC-01 (spec 2026-10-22-barra-contacto-alquilame): the contact widget
+  // paints WhatsApp green UNDER white text, and white on #25D366 is ~2:1. It
+  // uses its own darker token (#14843F, 4.77:1 measured) so --color-whatsapp
+  // above keeps its black-text CTAs untouched. Since SCEN-CM-01/02 that token
+  // fills the mobile «Contáctanos» button and WhatsApp's icon circle on mobile,
+  // and the whole WhatsApp pill on desktop.
+  it('ChatWidget WhatsApp fills with --color-contact-whatsapp (#14843F) under white text', () => {
     const widget = readFileSync(join(appRoot, 'components/ChatWidget.vue'), 'utf-8')
     expect(theme).toMatch(/--color-contact-whatsapp:\s*#14843F/i)
-    expect(widget).toMatch(/\.bar-whatsapp\s*\{\s*background:\s*var\(--color-contact-whatsapp, #14843f\);\s*\}/i)
-    expect(widget).toMatch(/\.bar-item \{[^}]*color: #fff;/)
+    expect(widget).toMatch(/\.bar-whatsapp\s*\{\s*--channel-color:\s*var\(--color-contact-whatsapp, #14843f\);\s*\}/i)
+    expect(widget).toMatch(/\.bar-icon \{[^}]*background: var\(--channel-color\);[^}]*color: #fff;/)
+    expect(widget).toMatch(/\.contact-toggle \{[^}]*background: var\(--color-contact-whatsapp, #14843f\);[^}]*color: #fff;/)
+    const desktop = widget.slice(widget.indexOf('@media (min-width: 768px) {'))
+    expect(desktop).toMatch(/\.bar-item \{[^}]*background: var\(--channel-color\);[^}]*color: #fff;/)
     expect(widget).not.toMatch(/var\(--color-whatsapp\b/)
   })
 })

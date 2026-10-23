@@ -84,6 +84,10 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
 
   let realUnread: () => number = () => 0;
   let allowed: () => boolean = () => true;
+  // Last step this caller paints. 2 (default) is the two-bubble greeting; 1 is
+  // a single-bubble surface (alquilame mobile), where step 2 would announce
+  // and count a bubble nobody sees.
+  let maxStep: 1 | 2 = 2;
   // Terminal latch (suppressed | dismissed | engaged). Once set, start() is a
   // no-op for the rest of this instance's life — the teaser is DONE for the
   // session. NOT a "started" flag: an unshown/mid-progression teaser stays
@@ -162,7 +166,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
     teaserVisible.value = true;
     teaserAnnounce.value = TEASER_LINE_1_PLAIN;
     trackAnalyticsEvent('contact_teaser_shown', { brand, step: 1 });
-    timer2 = setTimeout(showStep2, TEASER_SECOND_DELAY_MS);
+    if (maxStep === 2) timer2 = setTimeout(showStep2, TEASER_SECOND_DELAY_MS);
   }
 
   function showStep2() {
@@ -181,9 +185,10 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
   // off — schedule step 1 if unshown, re-arm step 2 if mid-progression. Terminal
   // → done. "unless already pending" keeps it idempotent within a mounted
   // lifetime (double start never double-schedules).
-  function start(deps: { realUnread: () => number; allowed?: () => boolean }) {
+  function start(deps: { realUnread: () => number; allowed?: () => boolean; maxStep?: 1 | 2 }) {
     realUnread = deps.realUnread;
     allowed = deps.allowed ?? (() => true);
+    maxStep = deps.maxStep ?? 2;
     if (terminal) return;
     if (!hasWindow) return;
     if (!allowed()) return;
@@ -196,6 +201,7 @@ export function createContactTeaser(cfg: ContactTeaserConfig) {
       if (realUnread() > 0) return;
       timer1 = setTimeout(showStep1, TEASER_FIRST_DELAY_MS);
     } else if (teaserStep.value === 1) {
+      if (maxStep < 2) return; // single-bubble caller: step 1 is the end
       if (timer2 !== null) return; // already pending
       timer2 = setTimeout(showStep2, TEASER_SECOND_DELAY_MS);
     }

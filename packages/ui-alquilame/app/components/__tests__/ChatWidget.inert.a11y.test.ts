@@ -28,11 +28,14 @@ describe('SCEN-322-X05 — background is inert while the chat panel is open', ()
     expect(source).toMatch(/onBeforeUnmount\(\(\) => setBackgroundInert\(false\)\)/)
   })
 
-  // Invariant: el inert del fondo es solo del PANEL (modal). El menú es una
-  // capa de descarte (atenuada, clic para cerrar), no un modal.
-  it('menuOpen never drives the background inert', () => {
+  // Invariant: el inert del fondo es solo del PANEL (modal). El menú
+  // «Contáctanos» del móvil (SCEN-CM-06) se cierra con un toque fuera y no
+  // atenúa la página: no es un modal.
+  it('the mobile contact menu never drives the background inert', () => {
     expect(source).not.toMatch(/setBackgroundInert\(menuOpen/)
     expect(source).not.toMatch(/watch\(menuOpen/)
+    expect(source).not.toMatch(/setBackgroundInert\(contactMenuOpen/)
+    expect(source).not.toMatch(/watch\(contactMenuOpen, \(?open\)? => setBackgroundInert/)
   })
 
   it('is SSR-safe (document guarded)', () => {

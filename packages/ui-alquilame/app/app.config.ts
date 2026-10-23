@@ -30,9 +30,11 @@ export default defineAppConfig({
   },
 
   // Second greeting line (empty-chat bubble + teaser aria-live); other brands
-  // keep the shared TEASER_LINE_2.
+  // keep the shared TEASER_LINE_2. mobileLine is the single short bubble (and
+  // its aria-live copy) over the mobile «Contáctanos» button.
   chatGreeting: {
     line2: '¿Dudas de requisitos o precios? Estamos en línea 24 horas.',
+    mobileLine: '¡Hola! ¿Dudas? Estamos en línea 24 horas.',
   },
 
   // Brand-specific reservation configuration
