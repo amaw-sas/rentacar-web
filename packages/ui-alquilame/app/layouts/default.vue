@@ -245,12 +245,12 @@
 
       <!-- Bottom Bar -->
       <div class="bg-black">
-        <!-- En móvil el espacio negro final deja 40 px de aire más el alto de la
-             barra de contacto (64 px + safe area), así no tapa créditos ni
-             enlaces legales. En escritorio deja el mismo aire más la fila de
-             píldoras (44 px a 1.5rem del borde), que si no tapa los créditos
-             alineados a la derecha. -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-[calc(2.5rem+64px+env(safe-area-inset-bottom))] md:pb-[calc(2.5rem+44px+1.5rem)] flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <!-- En móvil el espacio negro final deja 24 px de aire sobre el botón
+             «Contáctanos» (50 px a 16 px del borde + safe area), así al llegar
+             al final no tapa créditos ni enlaces legales. En escritorio deja
+             40 px de aire más la fila de píldoras (44 px a 1.5rem del borde),
+             que si no tapa los créditos alineados a la derecha. -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-[calc(1.5rem+66px+env(safe-area-inset-bottom))] md:pb-[calc(2.5rem+44px+1.5rem)] flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <!-- Legales -->
           <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-start">
             <li v-for="legal in legalLinks" :key="legal.link">

@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 // SCEN-BC-01, 03, 04, 05 (mobile), 09, 10 (channels) of
-// docs/specs/2026-10-22-barra-contacto-alquilame/design.md — mounted DOM.
-// Replaces ChatWidget.launcher.test.ts: the single launcher and its menu are
-// gone by owner decision. alquilame now shows a contact bar with Chat IA,
-// Llamar and WhatsApp always one tap away. Gates (chatEnabled /
+// docs/specs/2026-10-22-barra-contacto-alquilame/design.md — mounted DOM — and
+// SCEN-CM-* of docs/specs/2026-10-22-contactanos-movil-alquilame/design.md,
+// which replaces the mobile bar: on phones the three channels fold behind one
+// green «Contáctanos» toggle; desktop keeps the PR #525 pill row. The channel
+// tests below click the options directly (jsdom applies no CSS, so a folded
+// option is still clickable here); the SCEN-CM block drives the toggle. Gates (chatEnabled /
 // whatsappVisible), unread counts, the teaser and the reservation overlay are
 // driven through refs so every state is reachable. Source assertions at the
 // bottom cover only what a mount cannot observe: colours (jsdom does not apply
@@ -44,9 +46,10 @@ const franchise = {
   phone: '+57 300 243 6677',
   whatsapp: 'https://wa.me/573002436677',
 }
-// Same key and copy as packages/ui-alquilame/app/app.config.ts.
+// Same keys and copy as packages/ui-alquilame/app/app.config.ts.
 const ALQUILAME_LINE_2 = '¿Dudas de requisitos o precios? Estamos en línea 24 horas.'
-let chatGreeting: { line2?: string } | undefined
+const ALQUILAME_MOBILE_LINE = '¡Hola! ¿Dudas? Estamos en línea 24 horas.'
+let chatGreeting: { line2?: string, mobileLine?: string } | undefined
 
 interface Harness {
   chatEnabled: Ref<boolean>
@@ -64,6 +67,9 @@ interface Harness {
 }
 
 let h: Harness
+declare global {
+  interface Window { __gaEvents?: Array<{ name: string, params?: Record<string, unknown> }> }
+}
 let wrapper: VueWrapper | null = null
 let state: Map<string, Ref<unknown>>
 
@@ -165,7 +171,7 @@ async function click(el: Element | null) {
 
 beforeEach(() => {
   state = new Map()
-  chatGreeting = { line2: ALQUILAME_LINE_2 }
+  chatGreeting = { line2: ALQUILAME_LINE_2, mobileLine: ALQUILAME_MOBILE_LINE }
   stubMatchMedia(false)
   stubNuxtGlobals()
   const appRoot = document.createElement('div')
@@ -203,11 +209,14 @@ describe('SCEN-BC-01 — mobile: one bar, Chat IA · Llamar · WhatsApp, in that
     expect(wa!.classList.contains('bar-whatsapp')).toBe(true)
   })
 
-  it('no launcher, no channel menu: nothing to expand first', async () => {
+  // SCEN-CM-01 brought a toggle back on mobile; the old launcher's menu stays
+  // gone, and the only expandable controls are «Contáctanos» and Chat IA.
+  it('no launcher-era menu: the expandable controls are the toggle and Chat IA', async () => {
     await mountWidget()
     expect(q('#contact-fab-menu')).toBeNull()
     expect(q('[aria-controls="contact-fab-menu"]')).toBeNull()
-    expect(document.body.querySelectorAll('[aria-expanded]').length).toBeLessThanOrEqual(1)
+    const expandable = [...document.body.querySelectorAll('[aria-expanded]')]
+    expect(expandable).toEqual([q('button.contact-toggle'), chatButton()])
     expect(backdrop()).toBeNull()
   })
 
@@ -218,7 +227,7 @@ describe('SCEN-BC-01 — mobile: one bar, Chat IA · Llamar · WhatsApp, in that
       const svg = block.querySelector('svg')
       expect(svg, block.textContent ?? '').not.toBeNull()
       expect(svg!.getAttribute('aria-hidden')).toBe('true')
-      // Icon comes first in the block, so the column renders it above the label.
+      // Icon comes first in the block, so it renders left of the label.
       const label = block.querySelector('.bar-label')!
       expect(svg!.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     }
@@ -417,7 +426,10 @@ const bubbles = () => [...document.body.querySelectorAll<HTMLElement>('.teaser-l
 const teaserSlot = () => q<HTMLElement>('.teaser-slot')
 const closeTeaser = () => q<HTMLButtonElement>('.teaser-live button.teaser-close')
 
-describe('SCEN-BC-06 — the greeting sits over Chat IA with «×» and badge', () => {
+// Desktop since SCEN-CM-07: the phone shows one short bubble instead.
+describe('SCEN-BC-06 (desktop) — the greeting sits over Chat IA with «×» and badge', () => {
+  beforeEach(() => stubMatchMedia(true))
+
   it('step 1: one bubble with TEASER_LINE_1 and the «×»; no second bubble yet', async () => {
     h.teaserVisible.value = true
     h.syntheticCount.value = 1
@@ -470,13 +482,9 @@ describe('SCEN-BC-06 — the greeting sits over Chat IA with «×» and badge', 
     expect(slot.compareDocumentPosition(bar()!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('the tail points at Chat IA: the slot knows how many blocks share the bar', async () => {
+  it('the live stack carries its tail', async () => {
     h.teaserVisible.value = true
     await mountWidget()
-    expect(teaserSlot()!.style.getPropertyValue('--bar-items')).toBe('3')
-    h.whatsappVisible.value = false
-    await settle()
-    expect(teaserSlot()!.style.getPropertyValue('--bar-items')).toBe('2')
     expect(q('.teaser-live .teaser-tail')).not.toBeNull()
   })
 
@@ -489,11 +497,14 @@ describe('SCEN-BC-06 — the greeting sits over Chat IA with «×» and badge', 
     expect(h.navigateTo).not.toHaveBeenCalled()
     await click(bubbles()[1]!)
     expect(h.prepareChatOpen).toHaveBeenCalledWith('teaser')
-    expect(h.navigateTo).toHaveBeenCalledWith('/chat')
+    // Desktop: the bubble opens the inline panel, it never navigates.
+    expect(panel()).not.toBeNull()
+    expect(h.navigateTo).not.toHaveBeenCalled()
   })
 
   it('reservation funnel route: no bubble', async () => {
     stubNuxtGlobals('/reservas')
+    stubMatchMedia(true)
     h.teaserVisible.value = true
     await mountWidget()
     expect(bubbles()).toHaveLength(0)
@@ -548,7 +559,8 @@ describe('SCEN-BC-06/10 — real teaser: 5 s / +20 s, engage suppresses for 15 d
     sessionStorage.clear()
   })
 
-  it('bubble 1 at 5 s, bubble 2 «…24 horas.» 20 s later', async () => {
+  it('desktop: bubble 1 at 5 s, bubble 2 «…24 horas.» 20 s later', async () => {
+    stubMatchMedia(true)
     await mountWidget()
     await advance(TEASER_FIRST_DELAY_MS - 1)
     expect(bubbles()).toHaveLength(0)
@@ -878,6 +890,587 @@ describe('SCEN-BC-05 (desktop) / SCEN-BC-13 — Chat IA opens the inline panel, 
   })
 })
 
+// SCEN-CM-* of docs/specs/2026-10-22-contactanos-movil-alquilame/design.md:
+// on mobile the bar becomes one green «Contáctanos» toggle that unfolds the
+// same three channels. The <nav> keeps living in the DOM (hidden by CSS until
+// the menu opens, so the first paint never jumps); jsdom applies no scoped
+// CSS, so "hidden" is read from the dock's open class here and the CSS that
+// turns it into display none/flex is pinned at source level further down.
+const toggle = () => q<HTMLButtonElement>('button.contact-toggle')
+// Both labels stay in the toggle so its width never jumps (item 8 of the
+// review); the inactive one is visibility:hidden + aria-hidden.
+const toggleLabel = () => toggle()?.querySelector('.toggle-label > span:not(.toggle-label-off)')?.textContent?.trim()
+const dock = () => q<HTMLElement>('.contact-dock')
+const isMenuOpen = () => dock()?.classList.contains('contact-dock--open') ?? false
+const teaserLive = () => document.body.querySelectorAll<HTMLElement>('span.sr-only[role="status"]')[1]!
+const mobileBubbles = () => [...document.body.querySelectorAll<HTMLElement>('.teaser-live > .teaser-bubble')]
+
+async function openMenu() {
+  await click(toggle())
+  expect(isMenuOpen(), 'menu should be open').toBe(true)
+}
+async function pressEscape() {
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+  await settle()
+}
+async function pointerDownOn(el: Element) {
+  el.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+  await settle()
+}
+
+describe('SCEN-CM-01 — mobile: one «Contáctanos» toggle, channels folded away', () => {
+  it('renders exactly one toggle with the label, closed, controlling the <nav>', async () => {
+    await mountWidget()
+    expect(document.body.querySelectorAll('button.contact-toggle')).toHaveLength(1)
+    expect(toggleLabel()).toBe('Contáctanos')
+    expect(toggle()!.getAttribute('type')).toBe('button')
+    expect(toggle()!.getAttribute('aria-expanded')).toBe('false')
+    expect(toggle()!.getAttribute('aria-controls')).toBe(bar()!.id)
+    expect(bar()!.id).not.toBe('')
+    expect(isMenuOpen()).toBe(false)
+  })
+
+  it('the toggle lives in the dock BEFORE the <nav>: Tab goes toggle → Chat IA → Llamar → WhatsApp', async () => {
+    await mountWidget()
+    expect(toggle()!.parentElement).toBe(dock())
+    expect(bar()!.contains(toggle())).toBe(false)
+    expect(toggle()!.compareDocumentPosition(bar()!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // Its icon is decorative: the visible text is the accessible name.
+    expect(toggle()!.querySelector('svg')!.getAttribute('aria-hidden')).toBe('true')
+    expect(toggle()!.hasAttribute('aria-label')).toBe(false)
+  })
+})
+
+describe('SCEN-CM-02 — tapping «Contáctanos» unfolds Chat IA, Llamar, WhatsApp', () => {
+  it('aria-expanded true, label «Cerrar», the three options in order with their icon circle', async () => {
+    await mountWidget()
+    await openMenu()
+    expect(toggle()!.getAttribute('aria-expanded')).toBe('true')
+    expect(toggleLabel()).toBe('Cerrar')
+    expect(items().map(b => b.textContent?.trim())).toEqual(['Chat IA', 'Llamar', 'WhatsApp'])
+    for (const item of items()) expect(item.querySelector(':scope > .bar-icon > svg'), item.textContent ?? '').not.toBeNull()
+  })
+
+  it('both labels share the toggle so its width never jumps; the inactive one is hidden from AT', async () => {
+    await mountWidget()
+    const labels = () => [...toggle()!.querySelectorAll<HTMLElement>('.toggle-label > span')]
+    expect(labels().map(l => l.textContent?.trim())).toEqual(['Contáctanos', 'Cerrar'])
+    expect(labels()[0]!.classList.contains('toggle-label-off')).toBe(false)
+    expect(labels()[0]!.hasAttribute('aria-hidden')).toBe(false)
+    expect(labels()[1]!.classList.contains('toggle-label-off')).toBe(true)
+    expect(labels()[1]!.getAttribute('aria-hidden')).toBe('true')
+    await openMenu()
+    expect(labels()[0]!.classList.contains('toggle-label-off')).toBe(true)
+    expect(labels()[0]!.getAttribute('aria-hidden')).toBe('true')
+    expect(labels()[1]!.classList.contains('toggle-label-off')).toBe(false)
+    expect(labels()[1]!.hasAttribute('aria-hidden')).toBe(false)
+  })
+
+  it('tapping «Cerrar» folds it again', async () => {
+    await mountWidget()
+    await openMenu()
+    await click(toggle())
+    expect(isMenuOpen()).toBe(false)
+    expect(toggle()!.getAttribute('aria-expanded')).toBe('false')
+    expect(toggleLabel()).toBe('Contáctanos')
+  })
+})
+
+describe('SCEN-CM-03 — the menu follows each channel gate', () => {
+  for (const [chat, wa, expected] of [
+    [true, false, ['Chat IA', 'Llamar']],
+    [false, true, ['Llamar', 'WhatsApp']],
+    [false, false, ['Llamar']],
+  ] as const) {
+    it(`chat ${chat ? 'on' : 'off'}, WhatsApp ${wa ? 'in' : 'out of'} hours → ${expected.join(', ')}`, async () => {
+      h.chatEnabled.value = chat
+      h.whatsappVisible.value = wa
+      await mountWidget()
+      expect(toggle()).not.toBeNull()
+      await openMenu()
+      expect(items().map(b => b.textContent?.trim())).toEqual(expected)
+    })
+  }
+})
+
+describe('SCEN-CM-04/05 — choosing an option does its job and folds the menu', () => {
+  const brand = 'alquilame'
+  const keys = { shownKey: `rentacar-teaser:${brand}:shown`, engagedKey: `rentacar-teaser:${brand}:engagedAt` }
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+  afterEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+
+  it('Llamar: tel:+573002436677, 15-day suppression stamped, menu closed', async () => {
+    vi.stubGlobal('useContactTeaser', () => createContactTeaser({ brand, ...keys, line2: ALQUILAME_LINE_2 }))
+    await mountWidget()
+    await openMenu()
+    expect(callLink()!.getAttribute('href')).toBe('tel:+573002436677')
+    await click(callLink())
+    expect(localStorage.getItem(keys.engagedKey)).not.toBeNull()
+    expect(isMenuOpen()).toBe(false)
+  })
+
+  it('WhatsApp: wa.me in a new tab, 15-day suppression stamped, menu closed', async () => {
+    vi.stubGlobal('useContactTeaser', () => createContactTeaser({ brand, ...keys, line2: ALQUILAME_LINE_2 }))
+    await mountWidget()
+    await openMenu()
+    expect(waLink()!.getAttribute('href')).toBe('https://wa.me/573002436677')
+    expect(waLink()!.getAttribute('target')).toBe('_blank')
+    await click(waLink())
+    expect(localStorage.getItem(keys.engagedKey)).not.toBeNull()
+    expect(isMenuOpen()).toBe(false)
+  })
+
+  it('Chat IA: /chat with source fab, menu closed', async () => {
+    await mountWidget()
+    await openMenu()
+    await click(chatButton())
+    expect(h.navigateTo).toHaveBeenCalledWith('/chat')
+    expect(h.prepareChatOpen).toHaveBeenCalledWith('fab')
+    expect(isMenuOpen()).toBe(false)
+    expect(panel()).toBeNull()
+  })
+
+  it('Chat IA with real unread: source unread_badge', async () => {
+    h.unread.value = 2
+    await mountWidget()
+    await openMenu()
+    await click(chatButton())
+    expect(h.prepareChatOpen).toHaveBeenCalledWith('unread_badge')
+    expect(isMenuOpen()).toBe(false)
+  })
+})
+
+describe('SCEN-CM-06 — «Cerrar», Escape and an outside tap close the menu', () => {
+  it('«Cerrar» returns focus to the toggle', async () => {
+    await mountWidget()
+    await openMenu()
+    callLink()!.focus()
+    await click(toggle())
+    expect(isMenuOpen()).toBe(false)
+    expect(document.activeElement).toBe(toggle())
+  })
+
+  it('Escape closes it and returns focus to the toggle', async () => {
+    await mountWidget()
+    await openMenu()
+    callLink()!.focus()
+    await pressEscape()
+    expect(isMenuOpen()).toBe(false)
+    expect(document.activeElement).toBe(toggle())
+  })
+
+  it('Escape already handled by someone else (defaultPrevented) is ignored', async () => {
+    await mountWidget()
+    await openMenu()
+    const e = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    e.preventDefault()
+    document.dispatchEvent(e)
+    await settle()
+    expect(isMenuOpen()).toBe(true)
+  })
+
+  it('Escape with focus elsewhere on the page closes the menu but leaves focus there', async () => {
+    await mountWidget()
+    await openMenu()
+    const field = document.createElement('input')
+    document.body.appendChild(field)
+    field.focus()
+    await pressEscape()
+    expect(isMenuOpen()).toBe(false)
+    expect(document.activeElement).toBe(field)
+  })
+
+  it('Escape with focus on <body> closes and returns focus to the toggle', async () => {
+    await mountWidget()
+    await openMenu()
+    ;(document.activeElement as HTMLElement | null)?.blur()
+    expect(document.activeElement).toBe(document.body)
+    await pressEscape()
+    expect(isMenuOpen()).toBe(false)
+    expect(document.activeElement).toBe(toggle())
+  })
+
+  it('Escape with the menu closed does nothing to focus', async () => {
+    await mountWidget()
+    const outside = document.createElement('button')
+    document.body.appendChild(outside)
+    outside.focus()
+    await pressEscape()
+    expect(document.activeElement).toBe(outside)
+  })
+
+  it('a tap outside the dock closes it; a tap on an option area does not', async () => {
+    await mountWidget()
+    await openMenu()
+    await pointerDownOn(bar()!)
+    expect(isMenuOpen()).toBe(true)
+    await pointerDownOn(toggle()!)
+    expect(isMenuOpen()).toBe(true)
+    const outside = document.createElement('div')
+    document.body.appendChild(outside)
+    await pointerDownOn(outside)
+    expect(isMenuOpen()).toBe(false)
+  })
+
+  it('the viewport crossing to desktop folds the menu without moving focus', async () => {
+    const listeners: Array<(e: { matches: boolean }) => void> = []
+    let desktop = false
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      get matches() { return desktop && query.includes('768px') },
+      media: query,
+      addEventListener: (_t: string, cb: (e: { matches: boolean }) => void) => listeners.push(cb),
+      removeEventListener: () => {},
+      addListener: (cb: (e: { matches: boolean }) => void) => listeners.push(cb),
+      removeListener: () => {},
+    }))
+    await mountWidget()
+    await openMenu()
+    const outside = document.createElement('button')
+    document.body.appendChild(outside)
+    outside.focus()
+    desktop = true
+    for (const cb of listeners) cb({ matches: true })
+    await settle()
+    expect(isMenuOpen()).toBe(false)
+    expect(document.activeElement).toBe(outside)
+  })
+
+  it('no dimming backdrop and no inert page while the menu is open', async () => {
+    await mountWidget()
+    await openMenu()
+    expect(backdrop()).toBeNull()
+    expect(document.getElementById('__nuxt')!.hasAttribute('inert')).toBe(false)
+  })
+
+  it('the outside-tap and Escape listeners leave with the menu and the widget', async () => {
+    const add = vi.spyOn(document, 'addEventListener')
+    const remove = vi.spyOn(document, 'removeEventListener')
+    await mountWidget()
+    expect(add.mock.calls.filter(([t]) => t === 'pointerdown')).toHaveLength(0)
+    await openMenu()
+    expect(add.mock.calls.filter(([t]) => t === 'pointerdown')).toHaveLength(1)
+    await click(toggle())
+    expect(remove.mock.calls.filter(([t]) => t === 'pointerdown')).toHaveLength(1)
+    await openMenu()
+    wrapper!.unmount()
+    wrapper = null
+    expect(remove.mock.calls.filter(([t]) => t === 'pointerdown')).toHaveLength(2)
+    add.mockRestore()
+    remove.mockRestore()
+  })
+})
+
+describe('SCEN-CM-07/08 — mobile greeting: ONE bubble over the toggle', () => {
+  const brand = 'alquilame'
+  const keys = { shownKey: `rentacar-teaser:${brand}:shown`, engagedKey: `rentacar-teaser:${brand}:engagedAt` }
+  async function advance(ms: number) {
+    vi.advanceTimersByTime(ms)
+    await settle()
+  }
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    vi.setSystemTime(new Date('2026-10-22T15:00:00Z'))
+    localStorage.clear()
+    sessionStorage.clear()
+    vi.stubGlobal('useContactTeaser', () => createContactTeaser({ brand, ...keys, line2: ALQUILAME_LINE_2 }))
+    window.__gaEvents = []
+    ;(window as unknown as { gtag: unknown }).gtag = (_kind: string, name: string, params?: Record<string, unknown>) => {
+      window.__gaEvents!.push({ name, params })
+    }
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    localStorage.clear()
+    sessionStorage.clear()
+    delete (window as unknown as { gtag?: unknown }).gtag
+    delete window.__gaEvents
+  })
+  const gaEvents = () => window.__gaEvents!.map(e => e.name)
+  const gaParams = (name: string) => window.__gaEvents!.find(e => e.name === name)?.params
+
+  it('at 5 s one bubble with the short line and the «×»; never a second one', async () => {
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS - 1)
+    expect(mobileBubbles()).toHaveLength(0)
+    await advance(1)
+    expect(mobileBubbles()).toHaveLength(1)
+    expect(mobileBubbles()[0]!.textContent?.trim()).toBe(ALQUILAME_MOBILE_LINE)
+    expect(mobileBubbles()[0]!.querySelector('button.teaser-close')!.getAttribute('aria-label')).toBe('Cerrar mensaje')
+    await advance(TEASER_SECOND_DELAY_MS)
+    expect(mobileBubbles()).toHaveLength(1)
+    expect(document.body.textContent).not.toContain(ALQUILAME_LINE_2)
+    expect(document.body.textContent).not.toContain(TEASER_LINE_1)
+  })
+
+  it('the screen reader hears the same short line, not line 1 + line 2', async () => {
+    await mountWidget()
+    expect(teaserLive().textContent).toBe('')
+    await advance(TEASER_FIRST_DELAY_MS)
+    expect(teaserLive().textContent).toBe(ALQUILAME_MOBILE_LINE)
+    await advance(TEASER_SECOND_DELAY_MS)
+    expect(teaserLive().textContent).toBe(ALQUILAME_MOBILE_LINE)
+  })
+
+  it('the hidden sizer reserves only the short line', async () => {
+    await mountWidget()
+    const sizer = q('.teaser-slot > .teaser-sizer')!
+    expect(sizer.textContent?.trim()).toBe(ALQUILAME_MOBILE_LINE)
+  })
+
+  it('tapping the bubble opens /chat as teaser', async () => {
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS)
+    await click(mobileBubbles()[0]!)
+    expect(h.navigateTo).toHaveBeenCalledWith('/chat')
+    expect(h.prepareChatOpen).toHaveBeenCalledWith('teaser')
+  })
+
+  it('«×» closes it for the session', async () => {
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS)
+    await click(q('.teaser-live button.teaser-close'))
+    expect(mobileBubbles()).toHaveLength(0)
+    wrapper!.unmount()
+    wrapper = null
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS + TEASER_SECOND_DELAY_MS)
+    expect(mobileBubbles()).toHaveLength(0)
+  })
+
+  // SCEN-CM-08 as amended by review: opening the menu only HIDES the bubble.
+  // Choosing a channel is an engage (GA4 contact_teaser_engaged + 15 days);
+  // folding the menu without choosing is a dismiss, like the «×».
+  it('SCEN-CM-08: opening the menu hides the bubble but does not dismiss it', async () => {
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS)
+    await openMenu()
+    expect(mobileBubbles()).toHaveLength(0)
+    expect(gaEvents()).not.toContain('contact_teaser_dismissed')
+    // The synthetic count is still alive: Chat IA in the menu carries it.
+    expect(chatButton()!.getAttribute('aria-label')).toBe('Chat IA, 1 mensaje nuevo')
+  })
+
+  for (const [name, target, method] of [['WhatsApp', () => waLink(), 'whatsapp'], ['Llamar', () => callLink(), 'llamada'], ['Chat IA', () => chatButton(), 'chat']] as const) {
+    it(`SCEN-CM-08: bubble visible → open menu → ${name} ⇒ engaged (target ${method}), never dismissed, 15 days stamped`, async () => {
+      await mountWidget()
+      await advance(TEASER_FIRST_DELAY_MS)
+      await openMenu()
+      await click(target())
+      expect(gaEvents()).toContain('contact_teaser_engaged')
+      expect(gaEvents()).not.toContain('contact_teaser_dismissed')
+      expect(gaParams('contact_teaser_engaged')).toMatchObject({ brand, target: method })
+      expect(localStorage.getItem(keys.engagedKey)).not.toBeNull()
+      expect(isMenuOpen()).toBe(false)
+      expect(mobileBubbles()).toHaveLength(0)
+    })
+  }
+
+  for (const [how, close] of [
+    ['«Cerrar»', async () => click(toggle())],
+    ['Escape', async () => pressEscape()],
+    ['an outside tap', async () => pointerDownOn(document.body.appendChild(document.createElement('div')))],
+  ] as const) {
+    it(`SCEN-CM-08: bubble visible → open menu → ${how} ⇒ dismissed, gone for the session, no 15-day stamp`, async () => {
+      await mountWidget()
+      await advance(TEASER_FIRST_DELAY_MS)
+      await openMenu()
+      await close()
+      expect(isMenuOpen()).toBe(false)
+      expect(gaEvents()).toContain('contact_teaser_dismissed')
+      expect(gaEvents()).not.toContain('contact_teaser_engaged')
+      expect(mobileBubbles()).toHaveLength(0)
+      expect(localStorage.getItem(keys.engagedKey)).toBeNull()
+      wrapper!.unmount()
+      wrapper = null
+      await mountWidget()
+      await advance(TEASER_FIRST_DELAY_MS + TEASER_SECOND_DELAY_MS)
+      expect(mobileBubbles()).toHaveLength(0)
+    })
+  }
+
+  // Item 3 of the review: mobile never reaches step 2.
+  it('mobile at 25 s+: no step-2 event, badge stays 1, «Contáctanos, 1 mensaje nuevo»', async () => {
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS + TEASER_SECOND_DELAY_MS + 60_000)
+    const shown = window.__gaEvents!.filter(e => e.name === 'contact_teaser_shown').map(e => e.params?.step)
+    expect(shown).toEqual([1])
+    expect(toggle()!.querySelector('.toggle-badge')!.textContent).toBe('1')
+    expect(toggle()!.getAttribute('aria-label')).toBe('Contáctanos, 1 mensaje nuevo')
+    expect(teaserLive().textContent).toBe(ALQUILAME_MOBILE_LINE)
+  })
+
+  it('desktop still advances to step 2 (badge 2, event {step:2})', async () => {
+    stubMatchMedia(true)
+    await mountWidget()
+    await advance(TEASER_FIRST_DELAY_MS + TEASER_SECOND_DELAY_MS)
+    const shown = window.__gaEvents!.filter(e => e.name === 'contact_teaser_shown').map(e => e.params?.step)
+    expect(shown).toEqual([1, 2])
+    expect(badge()!.textContent).toBe('2')
+  })
+})
+
+describe('SCEN-CM-09 — unread count rides on the closed toggle', () => {
+  const toggleBadge = () => toggle()?.querySelector('.toggle-badge') ?? null
+
+  it('2 real unread: badge «2», name «Contáctanos, 2 mensajes nuevos»', async () => {
+    h.unread.value = 2
+    await mountWidget()
+    expect(toggleBadge()!.textContent).toBe('2')
+    expect(toggleBadge()!.getAttribute('aria-hidden')).toBe('true')
+    expect(toggle()!.getAttribute('aria-label')).toBe('Contáctanos, 2 mensajes nuevos')
+  })
+
+  it('singular, 9+ cap and the synthetic teaser count', async () => {
+    h.unread.value = 1
+    await mountWidget()
+    expect(toggle()!.getAttribute('aria-label')).toBe('Contáctanos, 1 mensaje nuevo')
+    h.unread.value = 12
+    await settle()
+    expect(toggleBadge()!.textContent).toBe('9+')
+    h.unread.value = 0
+    h.syntheticCount.value = 1
+    await settle()
+    expect(toggleBadge()!.textContent).toBe('1')
+  })
+
+  it('no count: no badge, visible text is the name', async () => {
+    await mountWidget()
+    expect(toggleBadge()).toBeNull()
+    expect(toggle()!.hasAttribute('aria-label')).toBe(false)
+  })
+
+  it('open menu: the toggle reads «Cerrar» without the count (Chat IA keeps its own)', async () => {
+    h.unread.value = 2
+    await mountWidget()
+    await openMenu()
+    expect(toggleBadge()).toBeNull()
+    expect(toggle()!.hasAttribute('aria-label')).toBe(false)
+    expect(chatButton()!.getAttribute('aria-label')).toBe('Chat IA, 2 mensajes nuevos')
+  })
+})
+
+describe('SCEN-CM-11 — reservation summary and modal layers hide toggle and menu', () => {
+  it('the reservation overlay unmounts toggle and menu; it comes back closed', async () => {
+    await mountWidget()
+    await openMenu()
+    h.overlayOpen.value = true
+    await settle()
+    expect(toggle()).toBeNull()
+    expect(bar()).toBeNull()
+    h.overlayOpen.value = false
+    await settle()
+    expect(toggle()).not.toBeNull()
+    expect(isMenuOpen()).toBe(false)
+    expect(toggle()!.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('a modal layer (sedes list) hides the toggle; closing it brings it back', async () => {
+    await mountWidget()
+    const layer = document.createElement('div')
+    layer.setAttribute('data-dismissable-layer', '')
+    document.body.appendChild(layer)
+    document.body.style.pointerEvents = 'none'
+    await settle()
+    expect(toggle()).toBeNull()
+    layer.remove()
+    document.body.style.pointerEvents = ''
+    await settle()
+    expect(toggle()).not.toBeNull()
+  })
+
+  it('stale lock with no layer: the toggle stays visible and still opens the menu', async () => {
+    document.body.style.pointerEvents = 'none'
+    await mountWidget()
+    expect(toggle()).not.toBeNull()
+    await openMenu()
+    expect(items().map(b => b.textContent?.trim())).toEqual(['Chat IA', 'Llamar', 'WhatsApp'])
+    document.body.style.pointerEvents = ''
+  })
+})
+
+describe('SCEN-CM-12 — options in the mobile menu are attributed to the fab', () => {
+  let events: Array<{ name: string, params: Record<string, unknown> }>
+  let handler: (e: Event) => void
+  beforeEach(() => {
+    events = []
+    ;(window as unknown as { gtag: unknown }).gtag = (_kind: string, name: string, params: Record<string, unknown>) => {
+      events.push({ name, params })
+    }
+    handler = createContactClickHandler('alquilame', () => ({ pageType: 'home' }))
+    document.addEventListener('click', handler, true)
+  })
+  afterEach(() => {
+    document.removeEventListener('click', handler, true)
+    delete (window as unknown as { gtag?: unknown }).gtag
+  })
+
+  for (const [name, el, method] of [['Llamar', () => callLink(), 'telephone'], ['WhatsApp', () => waLink(), 'whatsapp']] as const) {
+    it(`${name} from the open menu → contact_click { placement: 'fab' }`, async () => {
+      await mountWidget()
+      await openMenu()
+      events = []
+      await click(el())
+      const contact = events.filter(e => e.name === 'contact_click')
+      expect(contact).toHaveLength(1)
+      expect(contact[0]!.params).toMatchObject({ brand: 'alquilame', method, placement: 'fab' })
+    })
+  }
+
+  it('opening and closing the menu is not a contact click', async () => {
+    await mountWidget()
+    await openMenu()
+    await click(toggle())
+    expect(events.filter(e => e.name === 'contact_click')).toHaveLength(0)
+  })
+})
+
+describe('SCEN-CM-14 — chat switched off with focus on Chat IA in the open menu', () => {
+  it('Chat IA leaves the menu and focus moves to Llamar', async () => {
+    await mountWidget()
+    await openMenu()
+    chatButton()!.focus()
+    h.chatEnabled.value = false
+    await settle()
+    expect(chatButton()).toBeNull()
+    expect(isMenuOpen()).toBe(true)
+    expect(document.activeElement).toBe(callLink())
+  })
+
+  it('focus on the toggle is left alone', async () => {
+    await mountWidget()
+    toggle()!.focus()
+    h.chatEnabled.value = false
+    await settle()
+    expect(document.activeElement).toBe(toggle())
+  })
+})
+
+describe('SCEN-CM-10 — desktop markup is the PR #525 pill row', () => {
+  it('Chat IA still opens the inline panel; the toggle never opens a menu there', async () => {
+    stubMatchMedia(true)
+    await mountWidget()
+    expect(items().map(b => b.textContent?.trim())).toEqual(['Chat IA', 'Llamar', 'WhatsApp'])
+    await click(chatButton())
+    expect(panel()).not.toBeNull()
+    expect(h.navigateTo).not.toHaveBeenCalled()
+  })
+
+  it('two greeting bubbles on desktop, no short mobile line', async () => {
+    stubMatchMedia(true)
+    h.teaserVisible.value = true
+    h.teaserStep.value = 2
+    await mountWidget()
+    expect(bubbles()).toHaveLength(2)
+    expect(document.body.textContent).not.toContain(ALQUILAME_MOBILE_LINE)
+  })
+})
+
 describe('source-level wiring a mount cannot observe', () => {
   const source = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../ChatWidget.vue'), 'utf8')
   // Body of the first `@media (min-width: 768px)` block (balanced braces).
@@ -922,8 +1515,26 @@ describe('source-level wiring a mount cannot observe', () => {
     expect(pill).toMatch(/font-size: 0\.9375rem;/)
   })
 
-  it('SCEN-BC-02: the layout switch is CSS, never a viewport branch in the template', () => {
+  // SCEN-CM-07 adds the one JS viewport branch: how many greeting bubbles to
+  // paint (it changes the announced copy, not just geometry). Channels and the
+  // toggle still switch layout through CSS only.
+  it('SCEN-BC-02: the channel/toggle layout switch is CSS, never a viewport branch in the template', () => {
     expect(template).not.toContain('isDesktop')
+    const nav = template.slice(template.indexOf('<nav'), template.indexOf('</nav>'))
+    const toggleTag = template.slice(template.indexOf('class="contact-toggle'), template.indexOf('</button>', template.indexOf('class="contact-toggle')))
+    expect(nav).not.toBe('')
+    expect(toggleTag).not.toBe('')
+    for (const markup of [nav, toggleTag]) expect(markup).not.toContain('compactGreeting')
+    const slot = template.slice(template.indexOf('class="teaser-slot"'), template.indexOf('<nav'))
+    expect(template.split('compactGreeting').length - 1).toBe(slot.split('compactGreeting').length - 1)
+  })
+
+  it('SCEN-CM-10: md+ removes the toggle and always shows the pill row', () => {
+    expect(desktopRule('.contact-toggle')).toMatch(/display: none;/)
+    const nav = desktopRule('.contact-bar')
+    expect(nav).toMatch(/display: flex;/)
+    expect(nav).toMatch(/flex-direction: row;/)
+    expect(nav).toMatch(/bottom: auto;/)
   })
 
   it('panel fallback is the pill row: 44 + 24 + 12 = 80px = 5rem, in bottom and height', () => {
@@ -938,24 +1549,66 @@ describe('source-level wiring a mount cannot observe', () => {
     return css.match(new RegExp(`${sel.replace(/[.]/g, '\\.')} \\{[^}]*\\}`))?.[0] ?? ''
   }
 
-  it('mobile dock spans the bottom edge; the bar inside it keeps bottom 0', () => {
+  it('SCEN-CM-01: the mobile dock is the toggle, 16px from the right and bottom (+ safe area)', () => {
     const dock = rule('.contact-dock')
     expect(dock).toMatch(/position: absolute;/)
-    expect(dock).toMatch(/left: 0;/)
-    expect(dock).toMatch(/right: 0;/)
-    expect(dock).toMatch(/bottom: 0;/)
+    expect(dock).toMatch(/right: 16px;/)
+    expect(dock).toMatch(/bottom: calc\(16px \+ env\(safe-area-inset-bottom\)\);/)
+    expect(dock).not.toMatch(/left: 0;/)
   })
 
-  it('SCEN-BC-06 mobile: greeting at the left edge over Chat IA, above the bar, never wider than the viewport', () => {
+  it('SCEN-CM-01: the toggle is a 50px green pill with white text', () => {
+    const t = rule('.contact-toggle')
+    expect(t).toMatch(/height: 50px;/)
+    expect(t).toMatch(/border-radius: 9999px;/)
+    expect(t).toMatch(/background: var\(--color-contact-whatsapp, #14843f\);/)
+    expect(t).toMatch(/color: #fff;/)
+    expect(t).toMatch(/white-space: nowrap;/)
+    const b = rule('.toggle-badge')
+    expect(b).toMatch(/position: absolute;/)
+    expect(b).toMatch(/top: -6px;/)
+    expect(b).toMatch(/right: -4px;/)
+    expect(b).toMatch(/background: #e50a35;/)
+  })
+
+  it('SCEN-CM-01/02: the menu is folded (display none) until the dock opens', () => {
+    const nav = rule('.contact-bar')
+    expect(nav).toMatch(/display: none;/)
+    expect(nav).toMatch(/flex-direction: column;/)
+    expect(nav).toMatch(/align-items: flex-end;/)
+    expect(nav).toMatch(/gap: 10px;/)
+    expect(nav).toMatch(/bottom: calc\(100% \+ 10px\);/)
+    expect(source).toContain('.contact-dock--open .contact-bar { display: flex; }')
+    // No full-width bar left on mobile.
+    expect(nav).not.toMatch(/left: 0;/)
+    expect(source).not.toContain('calc(64px + env(safe-area-inset-bottom))')
+  })
+
+  it('mobile menu dead zone: the <nav> lets taps through, only the pills catch them; desktop unchanged', () => {
+    expect(rule('.contact-bar')).toMatch(/pointer-events: none;/)
+    expect(rule('.bar-item')).toMatch(/pointer-events: auto;/)
+    expect(desktopRule('.contact-bar')).toMatch(/pointer-events: auto;/)
+  })
+
+  it('toggle width is fixed: both labels share one grid cell, the inactive one invisible', () => {
+    expect(rule('.toggle-label')).toMatch(/display: grid;/)
+    expect(source).toContain('.toggle-label > span { grid-area: 1 / 1; text-align: center; }')
+    expect(rule('.toggle-label-off')).toMatch(/visibility: hidden;/)
+  })
+
+  it('SCEN-CM-07: one bubble right-aligned above the toggle, never wider than a 320px screen', () => {
     const slot = rule('.teaser-slot')
     expect(slot).toMatch(/position: absolute;/)
-    expect(slot).toMatch(/left: 12px;/)
-    // Above the bar's 64px + safe area: it can never cover Llamar or WhatsApp.
-    expect(slot).toMatch(/bottom: calc\(64px \+ env\(safe-area-inset-bottom\) \+ 34px\);/)
-    // 12px gutters each side: 280px fits at 320px wide, and never overflows.
-    expect(slot).toMatch(/width: min\(280px, calc\(100vw - 24px\)\);/)
-    // The tail points at the centre of the first block (Chat IA).
-    expect(rule('.teaser-tail')).toMatch(/margin-left: calc\(100vw \/ var\(--bar-items, 3\) \/ 2 - 21px\);/)
+    expect(slot).toMatch(/right: 0;/)
+    expect(slot).toMatch(/bottom: calc\(100% \+ 12px\);/)
+    // 16px gutters each side: 280px fits at 320px wide, and never overflows.
+    expect(slot).toMatch(/width: min\(280px, calc\(100vw - 32px\)\);/)
+    expect(rule('.teaser-stack')).toMatch(/align-items: flex-end;/)
+    expect(rule('.teaser-bubble-solo')).toMatch(/border-radius: 16px 16px 4px 16px;/)
+    expect(rule('.teaser-tail')).toMatch(/margin-right: 28px;/)
+    // Desktop keeps its left-anchored stack.
+    expect(desktopRule('.teaser-slot')).toMatch(/right: auto;/)
+    expect(desktopRule('.teaser-stack')).toMatch(/align-items: flex-start;/)
   })
 
   it('SCEN-BC-06 desktop: greeting stacked above the pills, from the Chat IA edge', () => {
@@ -987,12 +1640,12 @@ describe('source-level wiring a mount cannot observe', () => {
     expect(x).toMatch(/color: #5b6170;/)
   })
 
-  it('badge follows the artboard: red over the Chat IA icon on mobile, pill corner on desktop', () => {
+  it('badge follows the artboard: red over the Chat IA circle on mobile, pill corner on desktop', () => {
     const b = rule('.bar-badge')
     expect(b).toMatch(/top: -6px;/)
     expect(b).toMatch(/right: -10px;/)
     expect(b).toMatch(/background: #e50a35;/)
-    expect(b).toMatch(/border: 2px solid var\(--color-contact-chat, #6d28d9\);/)
+    expect(b).toMatch(/border: 2px solid #fff;/)
     const d = desktopRule('.bar-badge')
     expect(d).toMatch(/left: -6px;/)
     expect(d).toMatch(/right: auto;/)
@@ -1010,41 +1663,40 @@ describe('source-level wiring a mount cannot observe', () => {
     expect(theme).toMatch(/--color-contact-whatsapp:\s*#14843f/i)
   })
 
-  it('SCEN-BC-01: each block paints its token with white text and icon', () => {
-    expect(source).toMatch(/\.bar-chat \{ background: var\(--color-contact-chat, #6d28d9\); \}/)
-    expect(source).toMatch(/\.bar-call \{ background: var\(--color-contact-call, #1d4ed8\); \}/)
-    expect(source).toMatch(/\.bar-whatsapp \{ background: var\(--color-contact-whatsapp, #14843f\); \}/)
-    const item = source.match(/\.bar-item \{[^}]*\}/)?.[0] ?? ''
-    expect(item).toMatch(/color: #fff;/)
-    expect(item).toMatch(/flex: 1 1 0;/)
-    expect(item).toMatch(/font-weight: 700;/)
+  // Each channel carries its token in --channel-color: the icon circle on
+  // mobile (SCEN-CM-02), the whole pill on desktop (SCEN-BC-02).
+  it('SCEN-BC-01/CM-02: each channel declares its token once', () => {
+    expect(source).toMatch(/\.bar-chat \{ --channel-color: var\(--color-contact-chat, #6d28d9\); \}/)
+    expect(source).toMatch(/\.bar-call \{ --channel-color: var\(--color-contact-call, #1d4ed8\); \}/)
+    expect(source).toMatch(/\.bar-whatsapp \{ --channel-color: var\(--color-contact-whatsapp, #14843f\); \}/)
+    expect(rule('.bar-icon')).toMatch(/background: var\(--channel-color\);/)
+    const pill = desktopRule('.bar-item')
+    expect(pill).toMatch(/background: var\(--channel-color\);/)
+    expect(pill).toMatch(/color: #fff;/)
+    expect(pill).toMatch(/border: 0;/)
   })
 
-  // Owner-approved artboard G: each block is a column, icon ABOVE label.
-  it('SCEN-BC-01: each block stacks a ~22px icon above a 13px bold label, centred in 64px', () => {
-    const item = source.match(/\.bar-item \{[^}]*\}/)?.[0] ?? ''
-    expect(item).toMatch(/flex-direction: column;/)
-    expect(item).toMatch(/align-items: center;/)
-    expect(item).toMatch(/justify-content: center;/)
-    expect(item).toMatch(/gap: 4px;/)
-    expect(item).toMatch(/font-size: 13px;/)
-    expect(item).not.toMatch(/font-size: 1rem;/)
-    // Content box is the top 64px; the safe area is padding below it.
-    expect(item).toMatch(/height: 100%;/)
-    expect(item).toMatch(/box-sizing: border-box;/)
-    expect(item).toMatch(/padding: 0 0\.25rem env\(safe-area-inset-bottom\);/)
+  it('SCEN-CM-02: mobile options are 44px white pills with a 30px colour circle', () => {
+    const item = rule('.bar-item')
+    expect(item).toMatch(/height: 44px;/)
+    expect(item).toMatch(/flex-direction: row;/)
+    expect(item).toMatch(/background: #fff;/)
+    expect(item).toMatch(/border: 1px solid #e5e7eb;/)
+    expect(item).toMatch(/color: #111827;/)
+    expect(item).toMatch(/border-radius: 9999px;/)
+    expect(item).toMatch(/font-weight: 700;/)
+    const icon = rule('.bar-icon')
+    expect(icon).toMatch(/width: 30px;/)
+    expect(icon).toMatch(/height: 30px;/)
+    expect(icon).toMatch(/color: #fff;/)
+    // The desktop pill keeps its 22px icon; the circle scales it down to 18.
     const nav = source.match(/<nav[\s\S]*?<\/nav>/)?.[0] ?? ''
     const icons = nav.match(/<svg width="(\d+)" height="(\d+)"/g) ?? []
     expect(icons).toHaveLength(3)
     for (const icon of icons) expect(icon).toBe('<svg width="22" height="22"')
-  })
-
-  it('SCEN-BC-01: bar height is 64px plus the safe area, in pure CSS', () => {
-    const nav = source.match(/\.contact-bar \{[^}]*\}/)?.[0] ?? ''
-    expect(nav).toContain('height: calc(64px + env(safe-area-inset-bottom));')
-    expect(nav).toMatch(/bottom: 0;/)
-    expect(nav).toMatch(/left: 0;/)
-    expect(nav).toMatch(/right: 0;/)
+    expect(rule('.bar-icon svg')).toMatch(/width: 18px;/)
+    expect(desktopRule('.bar-icon svg')).toMatch(/width: 22px;/)
+    expect(desktopRule('.bar-icon')).toMatch(/background: none;/)
   })
 
   // SCEN-BC-13: Escape, backdrop and the panel «×» all go through closeAll,

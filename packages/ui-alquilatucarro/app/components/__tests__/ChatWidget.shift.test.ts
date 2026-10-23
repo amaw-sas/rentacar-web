@@ -124,6 +124,14 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
     expect(brandWidgets[2]).toBe(brandWidgets[0])
   })
 
+  it('SCEN-5a — cada línea de fork declarada existe de verdad en alquilame (y en ninguna base)', () => {
+    for (const line of ALQUILAME_FORK_LINES) {
+      expect(brandWidgets[1]!.split('\n')).toContain(line)
+      expect(brandWidgets[0]!.split('\n')).not.toContain(line)
+      expect(brandWidgets[2]!.split('\n')).not.toContain(line)
+    }
+  })
+
   it('SCEN-5a — alquilame es fork declarado: barra de contacto con Llamar, sin lanzador', () => {
     const alquilame = brandWidgets[1] ?? ''
     expect(alquilame).not.toBe(brandWidgets[0])
@@ -158,6 +166,13 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
     ['onBeforeUnmount(() => {\n  if (import.meta.client) window.removeEventListener', '\n})\n'],
   ]
   const codeOnly = (src: string) => src.split('\n').filter(line => !line.trim().startsWith('//')).join('\n')
+  // Líneas que alquilame añade a propósito dentro de una región compartida. Se
+  // quitan SOLO de su copia antes de comparar, así el resto de la región sigue
+  // vigilada byte a byte. Spec 2026-10-22-contactanos-movil-alquilame: en el
+  // celular el saludo es una burbuja y el teaser se queda en el paso 1.
+  const ALQUILAME_FORK_LINES = ['        maxStep: compactGreeting.value ? 1 : 2,']
+  const withoutForkLines = (src: string) =>
+    src.split('\n').filter(line => !ALQUILAME_FORK_LINES.includes(line)).join('\n')
   const region = (src: string, start: string, end: string) => {
     const from = src.indexOf(start)
     if (from === -1) return null
@@ -167,7 +182,8 @@ describe('FAB de chat — salta a la izquierda solo con el resumen abierto (escr
 
   it.each(SHARED_SCRIPT_REGIONS)('SCEN-5a — alquilame comparte con la base, sin deriva: %s', (start, end) => {
     const base = region(brandWidgets[2] ?? '', start, end)
-    const alq = region(brandWidgets[1] ?? '', start, end)
+    const alqRaw = region(brandWidgets[1] ?? '', start, end)
+    const alq = alqRaw === null ? null : withoutForkLines(alqRaw)
     expect(base, 'la región ya no existe en la copia base').not.toBeNull()
     expect(alq, 'la región ya no existe en alquilame').not.toBeNull()
     expect(

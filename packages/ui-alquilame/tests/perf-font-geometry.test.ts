@@ -132,18 +132,30 @@ describe('home first-paint geometry', () => {
     const widgetBase = parse(widgetCss.slice(0, desktopStart(widgetCss)))
     const widgetDesktop = parse(mediaBody(widgetCss))
 
-    it('is present and covers the dock, bar, blocks, colours and the hidden sizer', () => {
+    // SCEN-CM-01: on mobile the first frame is the «Contáctanos» button alone,
+    // with the channel menu folded; desktop paints the pill row and no button.
+    it('is present and covers the dock, toggle, folded menu, options, colours and the hidden sizer', () => {
       expect(critical, 'contact-surface markers in nuxt.config.ts').not.toBe('')
-      for (const sel of ['.contact-dock', '.contact-bar', '.bar-item', '.bar-chat', '.bar-call', '.bar-whatsapp', '.teaser-slot', '.teaser-sizer']) {
+      for (const sel of ['.contact-dock', '.contact-toggle', '.toggle-label', '.toggle-label > span', '.toggle-label-off', '.contact-bar', '.contact-dock--open .contact-bar', '.bar-item', '.bar-chat', '.bar-call', '.bar-whatsapp', '.teaser-slot', '.teaser-sizer']) {
         expect(criticalBase.has(sel), sel).toBe(true)
       }
-      for (const sel of ['.contact-dock', '.contact-bar', '.bar-item', '.teaser-slot']) {
+      for (const sel of ['.contact-dock', '.contact-toggle', '.contact-bar', '.bar-item', '.teaser-slot']) {
         expect(criticalDesktop.has(sel), `@media ${sel}`).toBe(true)
       }
-      expect(criticalBase.get('.contact-bar')!.get('height')).toBe('calc(64px + env(safe-area-inset-bottom))')
-      expect(criticalBase.get('.bar-whatsapp')!.get('background')).toBe('var(--color-contact-whatsapp, #14843f)')
+      expect(criticalBase.get('.contact-toggle')!.get('height')).toBe('50px')
+      expect(criticalBase.get('.contact-toggle')!.get('background')).toBe('var(--color-contact-whatsapp, #14843f)')
+      expect(criticalBase.get('.contact-bar')!.get('display')).toBe('none')
+      expect(criticalBase.get('.contact-bar')!.get('pointer-events')).toBe('none')
+      expect(criticalBase.get('.bar-item')!.get('pointer-events')).toBe('auto')
+      // Both toggle labels share a cell from the first frame (no side-by-side flash).
+      expect(criticalBase.get('.toggle-label')!.get('display')).toBe('grid')
+      expect(criticalBase.get('.toggle-label-off')!.get('visibility')).toBe('hidden')
+      expect(criticalBase.get('.bar-whatsapp')!.get('--channel-color')).toBe('var(--color-contact-whatsapp, #14843f)')
       expect(criticalDesktop.get('.contact-dock')!.get('bottom')).toBe('1.5rem')
+      expect(criticalDesktop.get('.contact-toggle')!.get('display')).toBe('none')
+      expect(criticalDesktop.get('.contact-bar')!.get('display')).toBe('flex')
       expect(criticalDesktop.get('.bar-item')!.get('height')).toBe('44px')
+      expect(criticalDesktop.get('.bar-item')!.get('background')).toBe('var(--channel-color)')
     })
 
     it('every critical declaration matches the widget rule it pre-paints', () => {

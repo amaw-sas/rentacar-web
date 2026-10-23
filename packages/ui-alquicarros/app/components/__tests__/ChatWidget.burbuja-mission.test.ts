@@ -59,9 +59,20 @@ describe('Burbuja chat mission E1–E4 — widget integration', () => {
       )
       expect(source, brand).toContain('v-if="chatEnabled && panelOpen"')
       expect(source, brand).toContain("{{ chatEnabled ? announce : '' }}")
-      expect(source, brand).toContain(
-        "{{ teaserAllowed ? teaserAnnounce : '' }}",
-      )
+      // SCEN-CM-07 (spec 2026-10-22-contactanos-movil-alquilame): alquilame
+      // announces its one short mobile bubble instead of line 1 + line 2, so its
+      // region reads teaserLiveText, which still derives from teaserAnnounce.
+      // The gate on teaserAllowed is the same for the three brands.
+      if (brand === 'ui-alquilame') {
+        expect(source, brand).toContain("{{ teaserAllowed ? teaserLiveText : '' }}")
+        expect(source, brand).toMatch(
+          /const teaserLiveText = computed\(\(\) => \{\s*if \(!compactGreeting\.value\) return teaserAnnounce\.value\s*return teaserAnnounce\.value \? mobileLine : ''\s*\}\)/,
+        )
+      } else {
+        expect(source, brand).toContain(
+          "{{ teaserAllowed ? teaserAnnounce : '' }}",
+        )
+      }
       expect(source, brand).not.toMatch(
         /!chatEnabled\s*&&\s*unread\s*===\s*0\s*&&\s*syntheticCount/,
       )

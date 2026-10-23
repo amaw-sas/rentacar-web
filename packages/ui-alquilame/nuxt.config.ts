@@ -631,51 +631,76 @@ export default defineNuxtConfig({
               color-scheme: light;
             }
             /*
-              Barra de contacto (ChatWidget, lazy y client-only): geometría fija
-              y colores desde el primer frame, antes de que llegue su CSS, para
-              que no se pinte en el flujo ni sin color. Subconjunto exacto de las
-              reglas del widget (perf-font-geometry lo compara).
+              Contacto (ChatWidget, lazy y client-only): geometría fija y
+              colores desde el primer frame, antes de que llegue su CSS, para
+              que no se pinte en el flujo ni sin color. En móvil solo se ve el
+              botón «Contáctanos»; el menú nace plegado. Subconjunto exacto de
+              las reglas del widget (perf-font-geometry lo compara).
             */
             /* contact-surface:start */
             .contact-dock {
               position: absolute;
-              left: 0;
-              right: 0;
-              bottom: 0;
+              right: 16px;
+              bottom: calc(16px + env(safe-area-inset-bottom));
             }
+            .contact-toggle {
+              position: relative;
+              box-sizing: border-box;
+              height: 50px;
+              padding: 0 18px 0 14px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              border: 0;
+              border-radius: 9999px;
+              background: var(--color-contact-whatsapp, #14843f);
+              color: #fff;
+              font-size: 15px;
+              font-weight: 700;
+              line-height: 1;
+              white-space: nowrap;
+            }
+            .toggle-label { display: grid; }
+            .toggle-label > span { grid-area: 1 / 1; text-align: center; }
+            .toggle-label-off { visibility: hidden; }
             .contact-bar {
               position: absolute;
-              bottom: 0;
-              left: 0;
               right: 0;
-              display: flex;
-              height: calc(64px + env(safe-area-inset-bottom));
-            }
-            .bar-item {
-              flex: 1 1 0;
-              min-width: 0;
-              box-sizing: border-box;
-              height: 100%;
-              padding: 0 0.25rem env(safe-area-inset-bottom);
-              display: flex;
+              bottom: calc(100% + 10px);
+              display: none;
               flex-direction: column;
+              align-items: flex-end;
+              gap: 10px;
+              pointer-events: none;
+            }
+            .contact-dock--open .contact-bar { display: flex; }
+            .bar-chat { --channel-color: var(--color-contact-chat, #6d28d9); }
+            .bar-call { --channel-color: var(--color-contact-call, #1d4ed8); }
+            .bar-whatsapp { --channel-color: var(--color-contact-whatsapp, #14843f); }
+            .bar-item {
+              box-sizing: border-box;
+              height: 44px;
+              padding: 0 16px 0 6px;
+              display: flex;
+              flex-direction: row;
               align-items: center;
               justify-content: center;
-              gap: 4px;
-              color: #fff;
-              font-size: 13px;
+              gap: 10px;
+              border: 1px solid #e5e7eb;
+              border-radius: 9999px;
+              background: #fff;
+              color: #111827;
+              font-size: 15px;
               font-weight: 700;
               line-height: 1.2;
               white-space: nowrap;
+              pointer-events: auto;
             }
-            .bar-chat { background: var(--color-contact-chat, #6d28d9); }
-            .bar-call { background: var(--color-contact-call, #1d4ed8); }
-            .bar-whatsapp { background: var(--color-contact-whatsapp, #14843f); }
             .teaser-slot {
               position: absolute;
-              left: 12px;
-              bottom: calc(64px + env(safe-area-inset-bottom) + 34px);
-              width: min(280px, calc(100vw - 24px));
+              right: 0;
+              bottom: calc(100% + 12px);
+              width: min(280px, calc(100vw - 32px));
             }
             .teaser-sizer { visibility: hidden; }
             @media (min-width: 768px) {
@@ -684,10 +709,17 @@ export default defineNuxtConfig({
                 right: 1.5rem;
                 bottom: 1.5rem;
               }
+              .contact-toggle { display: none; }
               .contact-bar {
                 position: relative;
+                right: auto;
+                bottom: auto;
+                display: flex;
+                flex-direction: row;
+                align-items: stretch;
                 height: auto;
                 gap: 0.75rem;
+                pointer-events: auto;
               }
               .bar-item {
                 flex: 0 0 auto;
@@ -695,11 +727,15 @@ export default defineNuxtConfig({
                 height: 44px;
                 padding: 0 1.25rem;
                 gap: 0.5rem;
+                border: 0;
                 border-radius: 9999px;
+                background: var(--channel-color);
+                color: #fff;
                 font-size: 0.9375rem;
               }
               .teaser-slot {
                 left: min(0px, calc(100% - 280px));
+                right: auto;
                 bottom: calc(100% + 10px);
               }
             }
